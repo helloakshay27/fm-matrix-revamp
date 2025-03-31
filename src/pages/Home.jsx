@@ -5,9 +5,12 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import TaskActions from '../components/TaskActions.jsx';
 import BoardsSection from '../components/BoardsSection.jsx';
+import TasksList from '../components/TasksList.jsx';
 
 const Home = () => {
     const [activeTab, setActiveTab] = useState(tabs[0].id);
+    const [selectedType, setSelectedType] = useState("Kanban");
+
 
     const tabRefs = useRef({});
     const underlineRef = useRef(null);
@@ -51,11 +54,17 @@ const Home = () => {
 
             <hr className="border border-gray-200" />
 
-            <TaskActions />
+            <TaskActions selectedType={selectedType} setSelectedType={setSelectedType} addType={"Task"} />
 
             <hr className="border border-[#E95420]" />
 
-            <BoardsSection />
+            {
+                selectedType === "Kanban" ? (
+                    <BoardsSection />
+                ) : selectedType === "List" ? (
+                    <TasksList />
+                ) : <BoardsSection />
+            }
         </div>
     )
 }

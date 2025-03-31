@@ -10,9 +10,9 @@ const Navbar = () => {
                         <img src="/logo.webp" alt="Lockated" className="w-[159px] h-[35px]" />
                     </Link>
                     <div className="flex items-center gap-4">
-                        <Links href="/">Home</Links>
-                        <Links href="/dashboard">Dashboard</Links>
-                        <Links href="/setup">Setup</Links>
+                        <Link to="/" className="px-4 py-2 text-[14px] text-white bg-[#E95420] rounded-md">Home</Link>
+                        <Link to="/dashboard" className="px-4 py-2 text-[14px]">Dashboard</Link>
+                        <Link to="/setup" className="px-4 py-2 text-[14px]">Setup</Link>
                     </div>
                 </div>
                 <div>
@@ -27,20 +27,6 @@ const Navbar = () => {
                 </div>
             </div>
         </div>
-    );
-};
-
-const Links = ({ href, children }) => {
-    return (
-        <NavLink
-            to={href}
-            className={({ isActive }) =>
-                `px-4 py-2 text-[14px] ${isActive ? "text-white bg-[#E95420] rounded-md" : ""
-                }`
-            }
-        >
-            <span>{children}</span>
-        </NavLink>
     );
 };
 
