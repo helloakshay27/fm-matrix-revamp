@@ -3,12 +3,118 @@ import gsap from "gsap";
 import { ArrowLeft, ChevronDown, ChevronDownCircle, MoreHorizontal } from "lucide-react"
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom"
+import SourceIcon from '@mui/icons-material/Source';
+
+
+
+
+
+const Issues =()=>{
+  return(
+    <div className="p-3">
+        <table className="text-[14px] rounded-[0px]  border-[1px]  ">
+            <thead >
+                <tr>
+                    <th className="bg-white" >Issue ID</th>
+                    <th className="bg-white">Issue Title</th>
+                    <th className="bg-white">Issue Status</th>
+                    <th className="bg-white">Responsible Person</th>
+                    <th className="bg-white">Issue Type</th>
+                    <th className="bg-white">End Date</th>
+                    <th className="bg-white">Priority</th>
+                    <th className="bg-white">Comments</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Issue 1</td>
+                    <td>Open</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Issue 2</td>
+                    <td>Open</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+  )
+}
+
+const Members=()=>{
+    const allNames = [
+        'Abdul Ghaffar', 'Bilal Shaikh', 'Mahendra Lungare',
+        'Komal Shinde', 'Dinesh Shinde', 'Chetan Bafna',
+        'Name G', 'Name H', 'Name I', 
+        'Name J', 'Name K', 'Name L', 
+      ];
+      
+        return (
+          <div className="flex items-start p-4 bg-[rgba(247, 247, 247, 0.51)] shadow rounded-lg text-[12px] my-3"> {/* Main container with some styling */}
+            {/* Left Fixed Item */}
+            <div className="left-name-container w-35 flex-shrink-0 pr-4 py-2 my-auto mx-auto"> {/* Fixed width, adjust as needed */}
+              <span className="text-gray-700">Anshil Bansari</span>
+            </div>
+      
+            <div className="divider w-px bg-pink-500 self-stretch mx-4"></div> {/* self-stretch to match height of flex items */}
+      
+            <div className="names-grid-container flex-grow overflow-x-auto"> {/* Allows horizontal scrolling for names */}
+              <div
+                className="
+                  grid grid-flow-col grid-rows-3 auto-cols-min gap-x-8 gap-y-2 py-2
+                "
+              >
+                {allNames.map((name, index) => (
+                  <span key={index} className="text-gray-600 whitespace-nowrap"> {/* whitespace-nowrap if names shouldn't wrap */}
+                    {name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const Status=()=>{
+        return(
+            <div className="flex items-start p-5 gap-5">
+                <div>
+                   <button className="bg-[#88D760] py-1 px-4 text-white rounded-[30px] w-[94px] h-[30px] text-[12px]">Active</button>
+                </div>
+                <div className>
+                    <h1 className="text-[12px]">1 hr 23 mins 10 sec</h1>
+                    <img src="/arrow.png" />
+                </div>
+                <div>
+                   <button className="bg-[#D6D6D6] py-1 px-4 text-white rounded-[30px] w-[140px] h-[30px] text-[12px] text-[#000000]">yet to compelete</button>
+
+                </div>
+
+            </div>
+        )
+      }
+
+      const Documents=()=>{
+        return(
+            <div>
+            <div className="flex items-start gap-2 p-5">
+              <SourceIcon />
+              <h1 className="text-[#0063AF]">BRD.xls</h1>
+              </div>
+            <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
+            </div>
+
+        )
+      }
+
 
 const ProjectDetails = () => {
     const [isFirstCollapsed, setIsFirstCollapsed] = useState(false);
     const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
     const firstContentRef = useRef(null);
     const secondContentRef = useRef(null);
+    const [tab,setTab] = useState("");
 
     useGSAP(() => {
         gsap.set(firstContentRef.current, { height: "auto" });
@@ -55,21 +161,20 @@ const ProjectDetails = () => {
 
     return (
         <div className="m-4">
-            <div className="px-4 pt-4">
-                <Link to={"/projects"}>
-                    <ArrowLeft size={30} color="#E95420" />
-                </Link>
+            <div className="px-4 pt-1">
 
-                <h2 className="text-[30px] mt-4">
-                    Internal Products
+                <h2 className="text-[15px] p-3 px-0">
+                    <span className=" mr-3">Project-ID</span>
+                    <span >Project Name</span>    
                 </h2>
 
-                <div className="flex items-center justify-between my-3">
+                <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
+                <div className="flex items-center justify-between my-3 text-[12px]">
                     <div className="flex items-center gap-3 text-[#323232]">
-                        <span>Kshitij Rasal</span>
+                        <span>Created By : Kshitij Rasal</span>
                         <span className="h-6 w-[1px] border border-gray-300"></span>
                         <span className="flex items-center gap-3">
-                            01-01-2024  09:00 AM
+                            Created On : 01-01-2024  09:00 AM
                         </span>
                         <span className="h-6 w-[1px] border border-gray-300"></span>
                         <span className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm text-white bg-[#9CE463]">
@@ -78,29 +183,7 @@ const ProjectDetails = () => {
                     </div>
                     <MoreHorizontal color="#E95420" className="cursor-pointer" />
                 </div>
-
-                <div className="border rounded-md shadow-custom p-5 mb-4">
-                    <div
-                        className="font-[600] text-[16px] flex items-center gap-4"
-                        onClick={toggleFirstCollapse}
-                    >
-                        <ChevronDownCircle
-                            color="#E95420"
-                            size={30}
-                            className={`${isFirstCollapsed ? "rotate-180" : "rotate-0"
-                                } transition-transform`}
-                        />{" "}
-                        Description
-                    </div>
-                    <p ref={firstContentRef} className="ms-12 mt-3 overflow-hidden">
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Odit
-                        explicabo ad facilis ratione consectetur repellat laboriosam, velit
-                        est, nesciunt officia earum aperiam dolorum, error illo assumenda
-                        dolore iure pariatur vel molestias nostrum eum quaerat eaque
-                        corporis? Aut minus fugit fugiat eveniet, cumque non, esse
-                        asperiores eos iure ipsa reiciendis nobis?
-                    </p>
-                </div>
+                <div className="border-b-[3px] border-grey my-3 "></div>
 
                 <div className="border rounded-md shadow-custom p-5 mb-4">
                     <div
@@ -113,30 +196,40 @@ const ProjectDetails = () => {
                             className={`${isSecondCollapsed ? "rotate-180" : "rotate-0"
                                 } transition-transform`}
                         />{" "}
-                        Task Information
+                        Details
                     </div>
 
-                    <div className="mt-3 overflow-hidden" ref={secondContentRef}>
+                    <div className="mt-3 overflow-hidden " ref={secondContentRef}>
                         <div className="flex items-center">
                             <div className="w-1/2 flex items-center justify-center gap-3">
-                                <div className="text-right text-[16px] font-semibold">
+                                <div className="text-right text-[12px] font-[500]">
+                                    Project Manager :
+                                </div>
+                                <div className="text-left text-[12px]">Sohail Ansari</div>
+                            </div>
+                            <div className="w-1/2 flex items-center justify-center gap-3">
+                                <div className="text-right text-[12px] font-[500]]">
                                     Priority :
                                 </div>
-                                <div className="text-left text-[14px]">High</div>
+                                <div className="text-left text-[12px]">High</div>
                             </div>
-                            <div className="w-1/2 flex items-center justify-start gap-3">
-                                <div className="text-right">Members :</div>
-                                <div className="text-left flex items-center gap-2">
-                                    <span className="h-6 px-2 flex items-center justify-center bg-gray-100 text-[12px] rounded-md">
-                                        Dinesh Shinde
-                                    </span>
-                                    <span className="h-6 px-2 flex items-center justify-center bg-gray-100 text-[12px] rounded-md">
-                                        Dinesh Shinde
-                                    </span>
-                                    <span className="h-6 px-2 flex items-center justify-center bg-gray-100 text-[12px] rounded-md">
-                                        Dinesh Shinde
-                                    </span>
+                            
+                        </div>
+
+                        <span className="border h-[1px] inline-block w-full my-4"></span>
+
+                        <div className="flex items-center">
+                            <div className="w-1/2 flex items-center justify-center gap-3">
+                                <div className="text-right text-[12px] font-[500]">
+                                    Project Type:
                                 </div>
+                                <div className="text-left text-[12px]">Client</div>
+                            </div>
+                            <div className="w-1/2 flex items-center justify-center gap-3">
+                                <div className="text-right text-[12px] font-[500]">
+                                MileStones :
+                                </div>
+                                <div className="text-left text-[12px]">0/1</div>
                             </div>
                         </div>
 
@@ -144,47 +237,73 @@ const ProjectDetails = () => {
 
                         <div className="flex items-center">
                             <div className="w-1/2 flex items-center justify-center gap-3">
-                                <div className="text-right text-[16px] font-semibold">
-                                    Project Owner :
-                                </div>
-                                <div className="text-left text-[14px]">Devesh Jain</div>
-                            </div>
-                        </div>
-
-                        <span className="border h-[1px] inline-block w-full my-4"></span>
-
-                        <div className="flex items-center">
-                            <div className="w-1/2 flex items-center justify-center gap-3">
-                                <div className="text-right text-[16px] font-semibold">
+                                <div className="text-right text-[12px] font-[500]">
                                     Start Date :
                                 </div>
-                                <div className="text-left text-[14px]">30/01/2023</div>
+                                <div className="text-left text-[12px]">30/01/2023</div>
                             </div>
-                            <div className="w-1/2 flex items-center justify-start gap-3">
-                                <div className="text-right">Tags :</div>
-                                <div className="text-left flex items-center gap-2">
-                                    <span className="h-6 px-2 flex items-center justify-center bg-gray-100 text-[12px] rounded-md">
-                                        Rustomjee
-                                    </span>
-                                    <span className="h-6 px-2 flex items-center justify-center bg-gray-100 text-[12px] rounded-md">
-                                        Dashboard
-                                    </span>
+                            <div className="w-1/2 flex items-center justify-center gap-3">
+                                <div className="text-right text-[12px] font-semibold">
+                                    Tasks : 
                                 </div>
+                                <div className="text-left text-[12px]">0/3</div>
                             </div>
-                        </div>
+                            
+                                                    </div>
 
                         <span className="border h-[1px] inline-block w-full my-4"></span>
 
                         <div className="flex items-center">
                             <div className="w-1/2 flex items-center justify-center gap-3">
-                                <div className="text-right text-[16px] font-semibold">
+                                <div className="text-right text-[12px] font-[500]">
                                     End Date :
                                 </div>
-                                <div className="text-left text-[14px]"> - </div>
+                                <div className="text-left text-[12px]"> - </div>
+                            </div>
+                            <div className="w-1/2 flex items-center justify-center gap-3">
+                                <div className="text-right text-[12px] font-[500]">
+                                    Issues :
+                                </div>
+                                <div className="text-left text-[12px]"> 3/5 </div>
                             </div>
                         </div>
-                    </div>
+
                 </div>
+                 </div>
+                        <div>
+                            <div className="flex items-center justify-between my-3" >
+                                <div className="flex items-center gap-10">
+                                    { tab=="Member"?
+                                    <div id={1} className="text-[14px] font-[400] selected" onClick={()=>{setTab("Member")}}>Members</div>:
+                                    <div id={1} className="text-[14px] font-[400] cursor-pointer" onClick={()=>{setTab("Member")}}>Members</div>}
+                                    
+                                    {tab=="Documents"?
+                                    <div id={2} className="text-[14px] font-[400] selected"onClick={()=>{setTab("Documents")}}>Documents</div>:
+                                    <div id={2} className="text-[14px] font-[400]  cursor-pointer" onClick={()=>{setTab("Documents")}}>Documents</div>}
+                                    
+                                    {tab=="Status"?
+                                    <div id={3} className="text-[14px] font-[400] selected"onClick={()=>{setTab("Status")}}>Status Timelines</div>:
+                                    <div id={3} className="text-[14px] font-[400]  cursor-pointer"onClick={()=>{setTab("Status")}}>Status Timelines</div>}
+
+                                    {tab=="Issues"?
+                                    <div id={4} className="text-[14px] font-[400] selected"onClick={()=>{setTab("Issues")}}>Issues</div>:
+                                    <div id={4} className="text-[14px] font-[400]  cursor-pointer"onClick={()=>{setTab("Issues")}}>Issues</div>}
+
+
+                                </div>
+                             
+                            </div>
+                               <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
+
+                            <div>
+                              {tab=="Member"&& <Members/>}
+                              {tab=="Documents"&& <Documents/>}
+                              {tab=="Status"&& <Status/>}
+                              {tab=="Issues"&& <Issues/>}
+
+                            </div>
+                        </div>
+                    
             </div>
         </div>
     )
