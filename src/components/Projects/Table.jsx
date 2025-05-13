@@ -1,5 +1,5 @@
-import StatusBadge from "./statusBadge"
-import React, { useState, useMemo, use } from 'react';
+import React, { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import LoginTwoToneIcon from '@mui/icons-material/LoginTwoTone';
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
@@ -8,29 +8,43 @@ import {
   useReactTable,
   getCoreRowModel,
   flexRender,
-  getSortedRowModel, // Optional: for sorting
-  getPaginationRowModel, // Optional: for pagination
-  getFilteredRowModel, // Optional: for filtering
+  getPaginationRowModel,
 } from '@tanstack/react-table';
-import './Table.css'; // We'll create this CSS file
 
+import StatusBadge from './statusBadge';
+import './Table.css';
 
 const ActionIcons = ({ row }) => (
-    <div className="action-icons">
-    <button onClick={() => alert(`Editing: ${row.original.title}`)} title="Edit"><OpenInFullIcon sx={{fontSize: "1.2em"}}/></button>
-    <button onClick={() => alert(`Viewing: ${row.original.title}`)} title="View"><LoginTwoToneIcon sx={{fontSize: "1.2em"}} /></button>
-    <button onClick={() => alert(`Deleting: ${row.original.title}`)} title="Delete"><DeleteOutlineOutlinedIcon sx={{fontSize: "1.2em"}}/></button>
-    <button onClick={() => alert(`Archiving: ${row.original.title}`)} title="Archive"><ArchiveOutlinedIcon sx={{fontSize: "1.2em"}}/></button>
+  <div className="action-icons flex justify-around items-center">
+    <button onClick={() => alert(`Viewing/Editing Project ID: ${row.original.id}`)} title="View/Edit Details">
+      <OpenInFullIcon sx={{ fontSize: "1.2em" }} />
+    </button>
+    <button onClick={() => alert(`Some other action for: ${row.original.title}`)} title="Other Action">
+      <LoginTwoToneIcon sx={{ fontSize: "1.2em" }} />
+    </button>
+    <button onClick={() => alert(`Archiving: ${row.original.title}`)} title="Archive">
+      <ArchiveOutlinedIcon sx={{ fontSize: "1.2em" }} />
+    </button>
+    <button onClick={() => alert(`Deleting: ${row.original.title}`)} title="Delete">
+      <DeleteOutlineOutlinedIcon sx={{ fontSize: "1.2em" }} />
+    </button>
   </div>
 );
 
+const ProgressBar = ({ progressString }) => {
+  const numericValue = parseInt(progressString, 10);
+  const isValidPercentage = !isNaN(numericValue) && numericValue >= 0 && numericValue <= 100;
 
+  return (
+   <div className="progress-bar-container">
+      <div className="progress-bar">
+        <div className="progress-bar-fill" style={{ width: `${isValidPercentage ? numericValue : 0}%` }}></div>
+        <div className="progress-bar-label">{isValidPercentage ? `${numericValue}%` : 'Invalid Percentage'}</div>
+      </div>
+   </div>
+  );
+};
 
-
-
-
-
-// Sample data - in a real app, this would come from props, state, or an API
 const defaultData = [
     {
         id: 'P-01',
@@ -86,23 +100,27 @@ const defaultData = [
     },
 ];
 
-
 const ProjectTable = () => {
-    const [data, setData] = useState(defaultData);
-    const [sorting, setSorting] = useState([]); // Optional: for sorting state
-    const [globalFilter, setGlobalFilter] = useState(''); // Optional: for global filter state
+  const [data, setData] = useState(defaultData);
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
 
-
-    
-
-    
-    // Define columns
-    const columns = useMemo(
-        () => [
-            {
-                accessorKey: 'id',
-                header: 'Project ID',
-        size: 100, // Example size (TanStack Table uses this for flex-basis like calculations)
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: 'id',
+        header: 'Project ID',
+        size: 110,
+        cell: ({ row, getValue }) => (
+          <Link
+            to={`/projects/${row.original.id.replace('P-', '')}`}
+            className="text-blue-600 hover:text-blue-800 hover:underline"
+          >
+            {getValue()}
+          </Link>
+        ),
       },
       {
         accessorKey: 'title',
@@ -112,11 +130,16 @@ const ProjectTable = () => {
       {
         accessorKey: 'status',
         header: 'Status',
-        size: 120,
-        // Example of custom cell rendering for status
-        cell: (info)=>{return(
-              <StatusBadge status={info.getValue()} />
-        );}
+        size: 150,
+        cell: (info) => <StatusBadge status={info.getValue()} onStatusChange={(newStatus) => {
+            const newData = data.map(row => {
+                if (row.id === info.row.original.id) {
+                    return { ...row, status: newStatus };
+                }
+                return row;
+            });
+            setData(newData);
+        }} />,
       },
       {
         accessorKey: 'type',
@@ -131,45 +154,15 @@ const ProjectTable = () => {
       {
         accessorKey: 'milestones',
         header: 'Milestones',
-        size: 120,
-
-        cell: (info) => {
-            const progress = info.getValue();
-            return (
-              <div className="progress-bar-container">
-                <div className="progress-bar">
-                <div className="progress-bar-label">{progress}</div>
-                <div
-                  className="progress-bar-fill"
-                  style={{ width: `${progress}` }}
-                >
-                </div>
-              </div>
-              </div>
-            );
-          },
+        size: 130,
+        cell: (info) => <ProgressBar progressString={info.getValue()} />,
       },
       {
         accessorKey: 'tasks',
         header: 'Tasks',
-        size: 100,
-        cell: (info) => {
-            const progress = info.getValue();
-            return (
-              <div className="progress-bar-container">
-                <div className="progress-bar">
-                <div className="progress-bar-label">{progress}</div>
-                <div
-                  className="progress-bar-fill"
-                  style={{ width: `${progress}` }}
-                >
-                </div>
-              </div>
-              </div>
-            );
-          },
+        size: 110,
+        cell: (info) => <ProgressBar progressString={info.getValue()} />,
       },
-      
       {
         accessorKey: 'issues',
         header: 'Issues',
@@ -179,52 +172,49 @@ const ProjectTable = () => {
         accessorKey: 'startDate',
         header: 'Start Date',
         size: 120,
-        meta: {
-            isDarkColumn: true // Custom meta to identify darker columns
-        }
+        meta: { isDarkColumn: true },
       },
       {
         accessorKey: 'endDate',
         header: 'End Date',
         size: 120,
-        meta: {
-            isDarkColumn: true
-        }
+        meta: { isDarkColumn: true },
       },
       {
         accessorKey: 'priority',
         header: 'Priority',
         size: 100,
-        meta: {
-            isDarkColumn: true
-        }
+        meta: { isDarkColumn: true },
       },
       {
-        id: 'actions', // id is required if not using accessorKey
+        id: 'actions',
         header: 'Actions',
-        size: 120,
+        size: 150,
         cell: ({ row }) => <ActionIcons row={row} />,
-        enableSorting: false,
         meta: {
-            isDarkColumn: true,
-            cellClassName: 'actions-cell-content' // for specific centering
-        }
+          isDarkColumn: true,
+          cellClassName: 'actions-cell-content',
+        },
       },
     ],
-    []
+    [data]
   );
 
   const table = useReactTable({
     data,
     columns,
+    state: {
+      pagination,
+    },
+    onPaginationChange: setPagination,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
   });
 
   return (
-    <div className="project-table-container text-[14px] font-[300] ">
-
-
-      <div className="table-wrapper"> 
-        <table>
+    <div className="project-table-container text-[14px] font-light">
+      <div className="table-wrapper overflow-x-auto">
+        <table className="w-full">
           <thead>
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id}>
@@ -233,25 +223,14 @@ const ProjectTable = () => {
                     key={header.id}
                     colSpan={header.colSpan}
                     style={{ width: header.getSize() }}
-                    className={header.column.columnDef.meta?.isDarkColumn ? 'dark-column-header' : ''}
+                    className={`${header.column.columnDef.meta?.isDarkColumn ? 'dark-column-header' : ''} px-3 py-3.5 text-left text-gray-800`}
                   >
                     {header.isPlaceholder ? null : (
-                      <div
-                        {...{
-                          className: header.column.getCanSort()
-                            ? 'cursor-pointer select-none sortable-header'
-                            : '',
-                          onClick: header.column.getToggleSortingHandler(),
-                        }}
-                      >
+                      <div>
                         {flexRender(
                           header.column.columnDef.header,
                           header.getContext()
                         )}
-                        {{
-                          asc: ' 🔼',
-                          desc: ' 🔽',
-                        }[header.column.getIsSorted()] ?? null}
                       </div>
                     )}
                   </th>
@@ -261,21 +240,21 @@ const ProjectTable = () => {
           </thead>
           <tbody>
             {table.getRowModel().rows.map(row => (
-              <tr key={row.id}>
+              <tr key={row.id} className="hover:bg-gray-50">
                 {row.getVisibleCells().map(cell => (
                   <td
                     key={cell.id}
                     style={{ width: cell.column.getSize() }}
-                    className={`${cell.column.columnDef.meta?.isDarkColumn ? 'dark-column-cell' : ''} ${cell.column.columnDef.meta?.cellClassName || ''}`}
+                    className={`${cell.column.columnDef.meta?.isDarkColumn ? 'dark-column-cell' : ''} ${cell.column.columnDef.meta?.cellClassName || ''} whitespace-nowrap px-3 py-4 text-gray-500`}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
               </tr>
             ))}
-             {table.getRowModel().rows.length === 0 && (
+            {table.getRowModel().rows.length === 0 && (
               <tr>
-                <td colSpan={columns.length} className="no-data-message">
+                <td colSpan={columns.length} className="no-data-message text-center py-10 text-gray-500">
                   No data found.
                 </td>
               </tr>
@@ -284,6 +263,57 @@ const ProjectTable = () => {
         </table>
       </div>
 
+      <div className="pagination-controls flex items-center justify-between gap-2 mt-4 text-sm">
+        <div className="flex items-center gap-2">
+            <button
+            onClick={() => table.setPageIndex(0)}
+            disabled={!table.getCanPreviousPage()}
+            className="p-1 border rounded disabled:opacity-50"
+            >
+            {'<<'}
+            </button>
+            <button
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+            className="p-1 border rounded disabled:opacity-50"
+            >
+            {'<'}
+            </button>
+            <button
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+            className="p-1 border rounded disabled:opacity-50"
+            >
+            {'>'}
+            </button>
+            <button
+            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+            disabled={!table.getCanNextPage()}
+            className="p-1 border rounded disabled:opacity-50"
+            >
+            {'>>'}
+            </button>
+        </div>
+        <span className="flex items-center gap-1">
+          <div>Page</div>
+          <strong>
+            {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+          </strong>
+        </span>
+        <select
+            value={table.getState().pagination.pageSize}
+            onChange={e => {
+                table.setPageSize(Number(e.target.value))
+            }}
+            className="p-1 border rounded"
+        >
+            {[10, 20, 30, 40, 50].map(pageSize => (
+                <option key={pageSize} value={pageSize}>
+                    Show {pageSize}
+                </option>
+            ))}
+        </select>
+      </div>
     </div>
   );
 };
