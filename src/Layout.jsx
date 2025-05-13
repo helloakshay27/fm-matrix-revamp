@@ -1,4 +1,3 @@
-import { ChevronRight } from "lucide-react"
 import { useState } from "react"
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
@@ -8,9 +7,9 @@ const Layout = ({ children }) => {
     return (
         <div className="h-screen w-screen">
             <Navbar />
-            <div className="flex h-[calc(100vh-66px)] w-screen">
+            <div className="flex h-[calc(100vh-58px)] w-screen">
                 <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
-                <main className={`relative overflow-auto ${isSidebarOpen ? "w-[calc(100vw-12rem)]" : "w-full"}`}>
+                <main className={`relative overflow-auto ${isSidebarOpen ? "w-[calc(100vw-13rem)]" : "w-full"}`}>
                     {children}
                 </main>
             </div>

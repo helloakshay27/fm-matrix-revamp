@@ -4,8 +4,16 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+    --red: #C72030
+}
+
 * {
     font-family: "Poppins", sans-serif;
+}
+
+.bg-red {
+    background-color: var(--red);
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -49,4 +57,50 @@
 
 .tag span {
     margin: 1.5rem 0.5rem !important;
+}
+
+.dropdown-menu {
+    min-width: 180px;
+    z-index: 1000;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    text-align: left;
+}
+
+.dropdown-item:hover {
+    background-color: #f3f4f6;
+}
+
+.dropdown-item.selected {
+    background-color: #f3f4f6;
+    font-weight: 600;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    color: #000;
+    border-bottom: 1.5px solid #d5dbdb;
+    font-size: 14px;
+    font-weight: 400px;
+}
+
+.sidebar-link:hover {
+    background-color: var(--red);
+    color: #fff;
+    cursor: pointer;
+    border-bottom: 1.5px solid #fff;
+}
+
+.sidebar ul a.active .sidebar-link {
+    background-color: var(--red);
+    color: #fff;
+    border-bottom: 1.5px solid #fff;
 }
