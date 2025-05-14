@@ -5,6 +5,7 @@ import TaskDetails from "./pages/TaskDetails"
 import Projects from "./pages/Projects"
 import ProjectDetails from "./pages/ProjectDetails"
 import Sprints from "./pages/Sprints"
+import MileStoneMain from "./Milestone/MileStoneMain"
 
 const App = () => {
   return (
@@ -15,6 +16,8 @@ const App = () => {
         <Route path="/projects" element={<Projects />} />
         <Route path="/projects/:id" element={<ProjectDetails />} />
         <Route path="/sprint" element={<Sprints />} />
+        <Route path="/MileStoneMain" element={<MileStoneMain />} />
+
       </Routes>
     </Layout>
   )
