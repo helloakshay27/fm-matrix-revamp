@@ -1,112 +1,133 @@
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import { ArrowLeft, ChevronDown, ChevronDownCircle, MoreHorizontal } from "lucide-react"
+import {
+    ChevronDown,
+    ChevronDownCircle,
+    MoreHorizontal,
+} from "lucide-react";
 import { useRef, useState } from "react";
-import { Link } from "react-router-dom"
-import SourceIcon from '@mui/icons-material/Source';
+import SourceIcon from "@mui/icons-material/Source";
 
-
-
-
-
-const Issues =()=>{
-  return(
-    <div className="p-3">
-        <table className="text-[14px] rounded-[0px]  border-[1px]  ">
-            <thead >
-                <tr>
-                    <th className="bg-white" >Issue ID</th>
-                    <th className="bg-white">Issue Title</th>
-                    <th className="bg-white">Issue Status</th>
-                    <th className="bg-white">Responsible Person</th>
-                    <th className="bg-white">Issue Type</th>
-                    <th className="bg-white">End Date</th>
-                    <th className="bg-white">Priority</th>
-                    <th className="bg-white">Comments</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>Issue 1</td>
-                    <td>Open</td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>Issue 2</td>
-                    <td>Open</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-  )
+const Issues = () => {
+    return (
+        <div className="p-3">
+            <table className="text-[14px] rounded-[0px]  border-[1px]  ">
+                <thead >
+                    <tr>
+                        <th className="bg-white" >Issue ID</th>
+                        <th className="bg-white">Issue Title</th>
+                        <th className="bg-white">Issue Status</th>
+                        <th className="bg-white">Responsible Person</th>
+                        <th className="bg-white">Issue Type</th>
+                        <th className="bg-white">End Date</th>
+                        <th className="bg-white">Priority</th>
+                        <th className="bg-white">Comments</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Issue 1</td>
+                        <td>Open</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Issue 2</td>
+                        <td>Open</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    )
 }
 
-const Members=()=>{
+const Members = () => {
     const allNames = [
         'Abdul Ghaffar', 'Bilal Shaikh', 'Mahendra Lungare',
         'Komal Shinde', 'Dinesh Shinde', 'Chetan Bafna',
-        'Name G', 'Name H', 'Name I', 
-        'Name J', 'Name K', 'Name L', 
-      ];
-      
-        return (
-          <div className="flex items-start p-4 bg-[rgba(247, 247, 247, 0.51)] shadow rounded-lg text-[12px] my-3"> {/* Main container with some styling */}
+        'Name G', 'Name H', 'Name I',
+        'Name J', 'Name K', 'Name L',
+    ];
+
+    return (
+        <div className="flex items-start p-4 bg-[rgba(247, 247, 247, 0.51)] shadow rounded-lg text-[12px] my-3"> {/* Main container with some styling */}
             {/* Left Fixed Item */}
             <div className="left-name-container w-35 flex-shrink-0 pr-4 py-2 my-auto mx-auto"> {/* Fixed width, adjust as needed */}
-              <span className="text-gray-700">Anshil Bansari</span>
+                <span className="text-gray-700">Anshil Bansari</span>
             </div>
-      
+
             <div className="divider w-px bg-pink-500 self-stretch mx-4"></div> {/* self-stretch to match height of flex items */}
-      
+
             <div className="names-grid-container flex-grow overflow-x-auto"> {/* Allows horizontal scrolling for names */}
-              <div
-                className="
+                <div
+                    className="
                   grid grid-flow-col grid-rows-3 auto-cols-min gap-x-8 gap-y-2 py-2
                 "
-              >
-                {allNames.map((name, index) => (
-                  <span key={index} className="text-gray-600 whitespace-nowrap"> {/* whitespace-nowrap if names shouldn't wrap */}
-                    {name}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-      };
-
-      const Status=()=>{
-        return(
-            <div className="flex items-start p-5 gap-5">
-                <div>
-                   <button className="bg-[#88D760] py-1 px-4 text-white rounded-[30px] w-[94px] h-[30px] text-[12px]">Active</button>
+                >
+                    {allNames.map((name, index) => (
+                        <span key={index} className="text-gray-600 whitespace-nowrap"> {/* whitespace-nowrap if names shouldn't wrap */}
+                            {name}
+                        </span>
+                    ))}
                 </div>
-                <div className>
-                    <h1 className="text-[12px]">1 hr 23 mins 10 sec</h1>
-                    <img src="/arrow.png" />
+            </div>
+        </div>
+    );
+};
+
+const Status = () => {
+    return (
+        <div className="overflow-x-auto w-full">
+            <div className="flex items-start p-5 gap-5 bg-[rgba(247, 247, 247, 0.51)] shadow rounded-lg text-[12px] my-3 min-w-[800px]">
+                <div>
+                    <button className="bg-[#88D760] py-1 px-4 text-white rounded-[30px] w-[94px] h-[30px] text-[12px]">Active</button>
                 </div>
                 <div>
-                   <button className="bg-[#D6D6D6] py-1 px-4 text-white rounded-[30px] w-[140px] h-[30px] text-[12px] text-[#000000]">yet to compelete</button>
-
+                    <h1 className="text-[12px] text-center  w-[200px]">1 hr 23 mins 10 sec</h1>
+                    <img src="/arrow.png" alt="arrow" />
+                </div>
+                <div>
+                    <button className="bg-[#D6D6D6] py-1 px-4 rounded-[30px] w-[140px] h-[30px] text-[12px] text-[#000000]">Yet to Complete</button>
+                </div>
+                <div>
+                    <h1 className="text-[12px] text-center  w-[200px]">1 hr 23 mins 10 sec</h1>
+                    <img src="/arrow.png" alt="arrow" />
+                </div>
+                <div>
+                    <button className="bg-[#D6D6D6] py-1 px-4 rounded-[30px] w-[140px] h-[30px] text-[12px] text-[#000000]">Yet to Complete</button>
                 </div>
 
+                <div>
+                    <h1 className="text-[12px] text-center  w-[200px]">1 hr 23 mins 10 sec</h1>
+                    <img src="/arrow.png" alt="arrow" />
+                </div>
+                <div>
+                    <button className="bg-[#D6D6D6] py-1 px-4 rounded-[30px] w-[140px] h-[30px] text-[12px] text-[#000000]">Yet to Complete</button>
+                </div>
+                <div>
+                    <h1 className="text-[12px] text-center  w-[200px]">1 hr 23 mins 10 sec</h1>
+                    <img src="/arrow.png" alt="arrow" />
+                </div>
+                <div>
+                    <button className="bg-[#D6D6D6] py-1 px-4 rounded-[30px] w-[140px] h-[30px] text-[12px] text-[#000000]">Yet to Complete</button>
+                </div>
             </div>
-        )
-      }
+        </div>
+    );
+}
 
-      const Documents=()=>{
-        return(
-            <div>
+const Documents = () => {
+    return (
+        <div>
             <div className="flex items-start gap-2 p-5">
-              <SourceIcon />
-              <h1 className="text-[#0063AF]">BRD.xls</h1>
-              </div>
-            <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
+                <SourceIcon />
+                <h1 className="text-[#0063AF]">BRD.xls</h1>
             </div>
+            <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
+        </div>
 
-        )
-      }
+    )
+}
 
 
 const ProjectDetails = () => {
@@ -114,7 +135,7 @@ const ProjectDetails = () => {
     const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
     const firstContentRef = useRef(null);
     const secondContentRef = useRef(null);
-    const [tab,setTab] = useState("");
+    const [tab, setTab] = useState("");
 
     useGSAP(() => {
         gsap.set(firstContentRef.current, { height: "auto" });
@@ -162,10 +183,9 @@ const ProjectDetails = () => {
     return (
         <div className="m-4">
             <div className="px-4 pt-1">
-
                 <h2 className="text-[15px] p-3 px-0">
                     <span className=" mr-3">Project-ID</span>
-                    <span >Project Name</span>    
+                    <span >Project Name</span>
                 </h2>
 
                 <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
@@ -174,7 +194,7 @@ const ProjectDetails = () => {
                         <span>Created By : Kshitij Rasal</span>
                         <span className="h-6 w-[1px] border border-gray-300"></span>
                         <span className="flex items-center gap-3">
-                            Created On : 01-01-2024  09:00 AM
+                            Created On : 01-01-2024 09:00 AM
                         </span>
                         <span className="h-6 w-[1px] border border-gray-300"></span>
                         <span className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm text-white bg-[#9CE463]">
@@ -213,7 +233,6 @@ const ProjectDetails = () => {
                                 </div>
                                 <div className="text-left text-[12px]">High</div>
                             </div>
-                            
                         </div>
 
                         <span className="border h-[1px] inline-block w-full my-4"></span>
@@ -227,7 +246,7 @@ const ProjectDetails = () => {
                             </div>
                             <div className="w-1/2 flex items-center justify-center gap-3">
                                 <div className="text-right text-[12px] font-[500]">
-                                MileStones :
+                                    MileStones :
                                 </div>
                                 <div className="text-left text-[12px]">0/1</div>
                             </div>
@@ -244,12 +263,11 @@ const ProjectDetails = () => {
                             </div>
                             <div className="w-1/2 flex items-center justify-center gap-3">
                                 <div className="text-right text-[12px] font-semibold">
-                                    Tasks : 
+                                    Tasks :
                                 </div>
                                 <div className="text-left text-[12px]">0/3</div>
                             </div>
-                            
-                                                    </div>
+                        </div>
 
                         <span className="border h-[1px] inline-block w-full my-4"></span>
 
@@ -268,45 +286,45 @@ const ProjectDetails = () => {
                             </div>
                         </div>
 
+                    </div>
                 </div>
-                 </div>
-                        <div>
-                            <div className="flex items-center justify-between my-3" >
-                                <div className="flex items-center gap-10">
-                                    { tab=="Member"?
-                                    <div id={1} className="text-[14px] font-[400] selected" onClick={()=>{setTab("Member")}}>Members</div>:
-                                    <div id={1} className="text-[14px] font-[400] cursor-pointer" onClick={()=>{setTab("Member")}}>Members</div>}
-                                    
-                                    {tab=="Documents"?
-                                    <div id={2} className="text-[14px] font-[400] selected"onClick={()=>{setTab("Documents")}}>Documents</div>:
-                                    <div id={2} className="text-[14px] font-[400]  cursor-pointer" onClick={()=>{setTab("Documents")}}>Documents</div>}
-                                    
-                                    {tab=="Status"?
-                                    <div id={3} className="text-[14px] font-[400] selected"onClick={()=>{setTab("Status")}}>Status Timelines</div>:
-                                    <div id={3} className="text-[14px] font-[400]  cursor-pointer"onClick={()=>{setTab("Status")}}>Status Timelines</div>}
+                <div>
+                    <div className="flex items-center justify-between my-3" >
+                        <div className="flex items-center gap-10">
+                            {tab == "Member" ?
+                                <div id={1} className="text-[14px] font-[400] selected" onClick={() => { setTab("Member") }}>Members</div> :
+                                <div id={1} className="text-[14px] font-[400] cursor-pointer" onClick={() => { setTab("Member") }}>Members</div>}
 
-                                    {tab=="Issues"?
-                                    <div id={4} className="text-[14px] font-[400] selected"onClick={()=>{setTab("Issues")}}>Issues</div>:
-                                    <div id={4} className="text-[14px] font-[400]  cursor-pointer"onClick={()=>{setTab("Issues")}}>Issues</div>}
+                            {tab == "Documents" ?
+                                <div id={2} className="text-[14px] font-[400] selected" onClick={() => { setTab("Documents") }}>Documents</div> :
+                                <div id={2} className="text-[14px] font-[400]  cursor-pointer" onClick={() => { setTab("Documents") }}>Documents</div>}
+
+                            {tab == "Status" ?
+                                <div id={3} className="text-[14px] font-[400] selected" onClick={() => { setTab("Status") }}>Status Timelines</div> :
+                                <div id={3} className="text-[14px] font-[400]  cursor-pointer" onClick={() => { setTab("Status") }}>Status Timelines</div>}
+
+                            {tab == "Issues" ?
+                                <div id={4} className="text-[14px] font-[400] selected" onClick={() => { setTab("Issues") }}>Issues</div> :
+                                <div id={4} className="text-[14px] font-[400]  cursor-pointer" onClick={() => { setTab("Issues") }}>Issues</div>}
 
 
-                                </div>
-                             
-                            </div>
-                               <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
-
-                            <div>
-                              {tab=="Member"&& <Members/>}
-                              {tab=="Documents"&& <Documents/>}
-                              {tab=="Status"&& <Status/>}
-                              {tab=="Issues"&& <Issues/>}
-
-                            </div>
                         </div>
-                    
+
+                    </div>
+                    <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
+
+                    <div>
+                        {tab == "Member" && <Members />}
+                        {tab == "Documents" && <Documents />}
+                        {tab == "Status" && <Status />}
+                        {tab == "Issues" && <Issues />}
+
+                    </div>
+                </div>
+
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default ProjectDetails
+export default ProjectDetails;

@@ -181,9 +181,9 @@ export const projects = [
         startDate: "2025-01-01",
         endDate: "2025-04-01",
         milestones: {
-            completed: 0,
+            completed: 2,
             total: 2,
-            progress: 0,
+            progress: 100,
         },
         tasks: {
             completed: 0,
@@ -194,6 +194,44 @@ export const projects = [
             resolved: 0,
             total: 0,
             progress: 0,
+        },
+        members: [
+            { initials: "S", color: "#F9D875" },
+            { initials: "AC", color: "#FFCEAE" },
+            { initials: "B", color: "#A6E6A6" },
+            { initials: "N", color: "#AEE6FF" },
+            { initials: "K", color: "#C4A9F9" },
+            { initials: "D", color: "#FFB8E1" },
+            { initials: "CB", color: "#F7A9A8" },
+        ],
+    },
+    {
+        id: "P1-02",
+        title: "Project 1",
+        status: "Overdue",
+        duration: {
+            days: 91,
+            hours: 2160,
+            minutes: 0,
+        },
+        client: "Client",
+        manager: "Sohail Ansari",
+        startDate: "2025-01-01",
+        endDate: "2025-04-01",
+        milestones: {
+            completed: 1,
+            total: 2,
+            progress: 50,
+        },
+        tasks: {
+            completed: 5,
+            total: 5,
+            progress: 100,
+        },
+        issues: {
+            resolved: 1,
+            total: 4,
+            progress: 25,
         },
         members: [
             { initials: "S", color: "#F9D875" },
@@ -239,39 +277,39 @@ export const projects = [
             { initials: "EK", color: "#AEE6FF" },
         ],
     },
-    {
-        id: "P3-01",
-        title: "Project 3",
-        status: "In Progress",
-        duration: {
-            days: 60,
-            hours: 1440,
-            minutes: 0,
-        },
-        client: "Startup X",
-        manager: "Neha Patel",
-        startDate: "2025-02-15",
-        endDate: "2025-04-15",
-        milestones: {
-            completed: 2,
-            total: 4,
-            progress: 50,
-        },
-        tasks: {
-            completed: 3,
-            total: 6,
-            progress: 50,
-        },
-        issues: {
-            resolved: 1,
-            total: 2,
-            progress: 50,
-        },
-        members: [
-            { initials: "NP", color: "#C4A9F9" },
-            { initials: "JD", color: "#F7A9A8" },
-        ],
-    },
+    // {
+    //     id: "P3-01",
+    //     title: "Project 3",
+    //     status: "In Progress",
+    //     duration: {
+    //         days: 60,
+    //         hours: 1440,
+    //         minutes: 0,
+    //     },
+    //     client: "Startup X",
+    //     manager: "Neha Patel",
+    //     startDate: "2025-02-15",
+    //     endDate: "2025-04-15",
+    //     milestones: {
+    //         completed: 2,
+    //         total: 4,
+    //         progress: 50,
+    //     },
+    //     tasks: {
+    //         completed: 3,
+    //         total: 6,
+    //         progress: 50,
+    //     },
+    //     issues: {
+    //         resolved: 1,
+    //         total: 2,
+    //         progress: 50,
+    //     },
+    //     members: [
+    //         { initials: "NP", color: "#C4A9F9" },
+    //         { initials: "JD", color: "#F7A9A8" },
+    //     ],
+    // },
     {
         id: "P4-01",
         title: "Project 4",
@@ -337,5 +375,5 @@ export const projects = [
             { initials: "MB", color: "#83D17A" },
             { initials: "AB", color: "#C4A9F9" },
         ],
-    },
+    }
 ];
