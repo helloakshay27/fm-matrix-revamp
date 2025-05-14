@@ -1,13 +1,12 @@
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import { ArrowLeft, ChevronDown, ChevronDownCircle, MoreHorizontal } from "lucide-react"
+import {
+    ChevronDown,
+    ChevronDownCircle,
+    MoreHorizontal,
+} from "lucide-react";
 import { useRef, useState } from "react";
-import { Link } from "react-router-dom"
-import SourceIcon from '@mui/icons-material/Source';
-
-
-
-
+import SourceIcon from "@mui/icons-material/Source";
 
 const Issues = () => {
     return (
@@ -97,7 +96,7 @@ const Status = () => {
                 <div>
                     <button className="bg-[#D6D6D6] py-1 px-4 rounded-[30px] w-[140px] h-[30px] text-[12px] text-[#000000]">Yet to Complete</button>
                 </div>
-                
+
                 <div>
                     <h1 className="text-[12px] text-center  w-[200px]">1 hr 23 mins 10 sec</h1>
                     <img src="/arrow.png" alt="arrow" />
@@ -184,7 +183,6 @@ const ProjectDetails = () => {
     return (
         <div className="m-4">
             <div className="px-4 pt-1">
-
                 <h2 className="text-[15px] p-3 px-0">
                     <span className=" mr-3">Project-ID</span>
                     <span >Project Name</span>
@@ -196,7 +194,7 @@ const ProjectDetails = () => {
                         <span>Created By : Kshitij Rasal</span>
                         <span className="h-6 w-[1px] border border-gray-300"></span>
                         <span className="flex items-center gap-3">
-                            Created On : 01-01-2024  09:00 AM
+                            Created On : 01-01-2024 09:00 AM
                         </span>
                         <span className="h-6 w-[1px] border border-gray-300"></span>
                         <span className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm text-white bg-[#9CE463]">
@@ -235,7 +233,6 @@ const ProjectDetails = () => {
                                 </div>
                                 <div className="text-left text-[12px]">High</div>
                             </div>
-
                         </div>
 
                         <span className="border h-[1px] inline-block w-full my-4"></span>
@@ -270,7 +267,6 @@ const ProjectDetails = () => {
                                 </div>
                                 <div className="text-left text-[12px]">0/3</div>
                             </div>
-
                         </div>
 
                         <span className="border h-[1px] inline-block w-full my-4"></span>
@@ -328,7 +324,7 @@ const ProjectDetails = () => {
 
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default ProjectDetails
+export default ProjectDetails;

@@ -2,7 +2,8 @@ import { useState } from "react";
 import Boards from "./Boards";
 import TaskCard from "./TaskCard";
 import TaskSubCard from "./TaskSubCard";
-import { cardsTitle } from "../data/Data";
+import { cardsTitle, projects } from "../data/Data";
+import ProjectCard from "./ProjectCard";
 
 const BoardsSection = ({ tasks, section }) => {
     const [subCardVisibility, setSubCardVisibility] = useState({});
@@ -51,7 +52,15 @@ const BoardsSection = ({ tasks, section }) => {
                                     <img src="/draganddrop.svg" alt="svg" className="w-full" />
                                 )
                             ) : (
-                                <></>
+                                projects.filter(project => project.status === card.title).length > 0 ? (
+                                    projects
+                                        .filter(project => project.status === card.title)
+                                        .map((project) => (
+                                            <ProjectCard key={project.id} project={project} />
+                                        ))
+                                ) : (
+                                    <img src="/draganddrop.svg" alt="svg" className="w-full" />
+                                )
                             )
                         }
                     </Boards>
