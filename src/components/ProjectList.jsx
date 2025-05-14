@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChartNoAxesGantt, Filter, List, MoreHorizontal, Plus } from "lucide-react";
+import SprintsTable from "./Sprints/Table";
 import ProjectTable from "./Projects/Table";
 
 const ProjectList = ({ tasks, setIsEdit }) => {

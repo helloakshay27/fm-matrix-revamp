@@ -6,7 +6,6 @@ import {
   getPaginationRowModel,
 } from '@tanstack/react-table';
 
-import StatusBadge from './statusBadge';
 import './Table.css';
 
 
@@ -82,7 +81,7 @@ const SprintsTable = () => {
   const columns = useMemo(
     () => [
       {
-        accessorKey: 'id',
+        accessorKey: 'Id',
         header: 'Id',
         size: 110,
         
@@ -201,4 +200,4 @@ const SprintsTable = () => {
   );
 };
 
-export default ProjectTable;
+export default SprintsTable;
