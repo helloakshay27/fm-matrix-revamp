@@ -1,16 +1,15 @@
 import {
-    ArrowLeftToLine,
     ChartNoAxesColumn,
     ChartNoAxesGantt,
     Filter,
     List,
     Plus,
-    Search,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import AddTaskModal from "./AddTaskModal";
 import TaskFilterModal from "./TaskFilterModal";
 import AddSprintModal from "./AddSprintModal";
+import AddProjectModal from "./AddProjectModal";
 
 const TaskActions = ({ selectedType, setSelectedType, addType }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,27 +17,128 @@ const TaskActions = ({ selectedType, setSelectedType, addType }) => {
     const [isStatusOpen, setIsStatusOpen] = useState(false);
     const [isSprintModalOpen, setIsSprintModalOpen] = useState(false);
     const [isFilterModalOpan, setIsFilterModalOpan] = useState(false);
+    const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState("Status");
+
+    const typeDropdownRef = useRef(null);
+    const statusDropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                typeDropdownRef.current &&
+                !typeDropdownRef.current.contains(event.target)
+            ) {
+                setIsTypeOpen(false);
+            }
+            if (
+                statusDropdownRef.current &&
+                !statusDropdownRef.current.contains(event.target)
+            ) {
+                setIsStatusOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     return (
         <>
-            <div className="flex items-center justify-between mx-3 my-3 text-sm">
+            <div className="flex items-center justify-end mx-4 my-3 text-sm">
                 <div className="flex items-center gap-3 divide-x divide-gray-400">
-                    <div className="flex items-center gap-1 cursor-pointer">
+                    <div className="cursor-pointer" ref={typeDropdownRef}>
                         <div className="relative">
                             <button
                                 className="text-sm flex items-center justify-between gap-2"
+                                onClick={() => setIsTypeOpen(!isTypeOpen)}
+                            >
+                                {selectedType === "Kanban" ? (
+                                    <ChartNoAxesColumn
+                                        size={20}
+                                        className="rotate-180 text-[#C72030]"
+                                    />
+                                ) : selectedType === "List" ? (
+                                    <List size={20} className="text-[#C72030]" />
+                                ) : (
+                                    <ChartNoAxesGantt
+                                        size={20}
+                                        className="rotate-180 text-[#C72030]"
+                                    />
+                                )}
+                                <span className="text-[#C72030]">{selectedType}</span>
+                                <span>▾</span>
+                            </button>
+
+                            {isTypeOpen && (
+                                <ul className="absolute left-0 mt-2 w-[150px] bg-white border border-gray-300 shadow-xl rounded-md z-10">
+                                    <li>
+                                        <button
+                                            className="w-full text-left px-4 py-2 text-[13px] hover:bg-gray-100 flex items-center gap-2"
+                                            onClick={() => {
+                                                setSelectedType("Kanban");
+                                                setIsTypeOpen(false);
+                                            }}
+                                        >
+                                            <ChartNoAxesColumn
+                                                size={18}
+                                                className="rotate-180 text-[#C72030]"
+                                            />{" "}
+                                            Kanban
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button
+                                            className="w-full text-left px-4 py-2 text-[13px] hover:bg-gray-100 flex items-center gap-2"
+                                            onClick={() => {
+                                                setSelectedType("List");
+                                                setIsTypeOpen(false);
+                                            }}
+                                        >
+                                            <List size={20} className="text-[#C72030]" /> List
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button
+                                            className="w-full text-left px-4 py-2 text-[13px] hover:bg-gray-100 flex items-center gap-2"
+                                            onClick={() => {
+                                                setSelectedType("Gantt");
+                                                setIsTypeOpen(false);
+                                            }}
+                                        >
+                                            <ChartNoAxesGantt size={20} className="text-[#C72030]" />
+                                            Gantt
+                                        </button>
+                                    </li>
+                                </ul>
+                            )}
+                        </div>
+                    </div>
+                    <div
+                        className="flex items-center gap-1 cursor-pointer pl-4"
+                        onClick={() => addType !== "Sprint" && setIsFilterModalOpan(true)}
+                    >
+                        <Filter size={18} className="text-gray-600" />
+                    </div>
+                    <div
+                        className="flex items-center gap-1 cursor-pointer pl-4"
+                        ref={statusDropdownRef}
+                    >
+                        <div className="relative">
+                            <button
+                                className="text-[13px] flex items-center justify-between gap-2"
                                 onClick={() => setIsStatusOpen(!isStatusOpen)}
                             >
-                                <span className="text-[#E95420]">{selectedStatus}</span>
-                                <span>&#9662;</span>
+                                <span className="text-[#C72030]">{selectedStatus}</span>
+                                <span>▾</span>
                             </button>
 
                             {isStatusOpen && (
                                 <ul className="absolute left-0 mt-2 w-[150px] bg-white border border-gray-300 shadow-xl rounded-md z-10">
                                     <li>
                                         <button
-                                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                            className="w-full text-left px-4 py-2 text-[13px] hover:bg-gray-100"
                                             onClick={() => {
                                                 setSelectedStatus("On Hold");
                                                 setIsStatusOpen(false);
@@ -49,7 +149,7 @@ const TaskActions = ({ selectedType, setSelectedType, addType }) => {
                                     </li>
                                     <li>
                                         <button
-                                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                            className="w-full text-left px-4 py-2 text-[13px] hover:bg-gray-100"
                                             onClick={() => {
                                                 setSelectedStatus("Completed");
                                                 setIsStatusOpen(false);
@@ -62,91 +162,19 @@ const TaskActions = ({ selectedType, setSelectedType, addType }) => {
                             )}
                         </div>
                     </div>
-                    <div className="cursor-pointer pl-3">
-                        <div className="relative">
-                            <button
-                                className="text-sm flex items-center justify-between gap-2"
-                                onClick={() => setIsTypeOpen(!isTypeOpen)}
-                            >
-                                {selectedType === "Kanban" ? (
-                                    <ChartNoAxesColumn
-                                        size={20}
-                                        className="rotate-180 text-[#E95420]"
-                                    />
-                                ) : selectedType === "List" ? (
-                                    <List size={20} className="text-[#E95420]" />
-                                ) : (
-                                    <ChartNoAxesGantt
-                                        size={20}
-                                        className="rotate-180 text-[#E95420]"
-                                    />
-                                )}
-                                <span className="text-[#E95420]">{selectedType}</span>
-                                <span>&#9662;</span>
-                            </button>
-
-                            {isTypeOpen && (
-                                <ul className="absolute left-0 mt-2 w-[150px] bg-white border border-gray-300 shadow-xl rounded-md z-10">
-                                    <li>
-                                        <button
-                                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
-                                            onClick={() => {
-                                                setSelectedType("Kanban");
-                                                setIsTypeOpen(false);
-                                            }}
-                                        >
-                                            <ChartNoAxesColumn
-                                                size={20}
-                                                className="rotate-180 text-[#E95420]"
-                                            />{" "}
-                                            Kanban
-                                        </button>
-                                    </li>
-                                    <li>
-                                        <button
-                                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
-                                            onClick={() => {
-                                                setSelectedType("List");
-                                                setIsTypeOpen(false);
-                                            }}
-                                        >
-                                            <List size={20} className="text-[#E95420]" /> List
-                                        </button>
-                                    </li>
-                                    <li>
-                                        <button
-                                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
-                                            onClick={() => {
-                                                setSelectedType("Gantt");
-                                                setIsTypeOpen(false);
-                                            }}
-                                        >
-                                            <ChartNoAxesGantt size={20} className="text-[#E95420]" />
-                                            Gantt
-                                        </button>
-                                    </li>
-                                </ul>
-                            )}
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-1 cursor-pointer pl-3">
-                        <Search size={20} className="text-gray-600" />
-                    </div>
-                    <div className="flex items-center gap-1 cursor-pointer pl-3" onClick={() => addType !== "Sprint" && setIsFilterModalOpan(true)}>
-                        <Filter size={20} className="text-gray-600" />
-                    </div>
-                    <div className="flex items-center gap-1 cursor-pointer pl-3">
-                        <ArrowLeftToLine size={20} className={`text-[#E95420]`} />
-                    </div>
+                    <button
+                        onClick={() => {
+                            addType === "Sprint"
+                                ? setIsSprintModalOpen(true)
+                                : addType === "Project"
+                                    ? setIsAddProjectModalOpen(true)
+                                    : setIsModalOpen(true);
+                        }}
+                        className="text-[12px] flex items-center justify-center gap-1 bg-red text-white px-3 py-2 w-40"
+                    >
+                        <Plus size={18} /> {addType === "Sprint" ? "Add Sprint" : addType === "Project" ? "Add Project" : "Add Task"}
+                    </button>
                 </div>
-                <button
-                    onClick={() => {
-                        addType === "Sprint" ? setIsSprintModalOpen(true) : setIsModalOpen(true);
-                    }}
-                    className="flex items-center justify-center gap-1 bg-[#E95420] text-white px-4 py-2 rounded-full w-52"
-                >
-                    <Plus /> Add Task
-                </button>
             </div>
 
             {isModalOpen && (
@@ -156,23 +184,26 @@ const TaskActions = ({ selectedType, setSelectedType, addType }) => {
                 />
             )}
 
-            {
-                isFilterModalOpan && (
-                    <TaskFilterModal
-                        isModalOpen={isFilterModalOpan}
-                        setIsModalOpen={setIsFilterModalOpan}
-                    />
-                )
-            }
+            {isFilterModalOpan && (
+                <TaskFilterModal
+                    isModalOpen={isFilterModalOpan}
+                    setIsModalOpen={setIsFilterModalOpan}
+                />
+            )}
 
-            {
-                isSprintModalOpen && (
-                    <AddSprintModal
-                        isModalOpen={isSprintModalOpen}
-                        setIsModalOpen={setIsSprintModalOpen}
-                    />
-                )
-            }
+            {isSprintModalOpen && (
+                <AddSprintModal
+                    isModalOpen={isSprintModalOpen}
+                    setIsModalOpen={setIsSprintModalOpen}
+                />
+            )}
+
+            {isAddProjectModalOpen && (
+                <AddProjectModal
+                    isModalOpen={isAddProjectModalOpen}
+                    setIsModalOpen={setIsAddProjectModalOpen}
+                />
+            )}
         </>
     );
 };

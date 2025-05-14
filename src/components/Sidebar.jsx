@@ -69,6 +69,12 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
                                 {isSidebarOpen ? "Reports" : ""}
                             </li>
                         </NavLink>
+                        <NavLink to="/task">
+                            <li className={`sidebar-link ${!isSidebarOpen ? "justify-center" : ""}`}>
+                                <GanttChartSquare size={20} />
+                                {isSidebarOpen ? "Tasks" : ""}
+                            </li>
+                        </NavLink>
                     </ul>
                 </div>
             </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { tabs } from '../data/Data.js'
+import { tabs, tasks } from '../data/Data.js'
 import { useRef } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -31,10 +31,10 @@ const Home = () => {
 
     return (
         <div className="h-full overflow-y-auto no-scrollbar">
-            <h3 className="font-semibold text-base mx-3 mt-3 mb-2">Project Name</h3>
+            <h3 className="text-[11px] text-gray-400 mx-6 my-4">Project 1 / Milestone / Task</h3>
             <hr className="border border-gray-200" />
 
-            <div className="relative flex items-center mx-3 mt-3 mb-0 gap-10 text-sm">
+            {/* <div className="relative flex items-center mx-3 mt-3 mb-0 gap-10 text-sm">
                 {tabs.map((tab) => (
                     <div
                         key={tab.id}
@@ -52,15 +52,13 @@ const Home = () => {
                 />
             </div>
 
-            <hr className="border border-gray-200" />
+            <hr className="border border-gray-200" /> */}
 
             <TaskActions selectedType={selectedType} setSelectedType={setSelectedType} addType={"Task"} />
 
-            <hr className="border border-[#E95420]" />
-
             {
                 selectedType === "Kanban" ? (
-                    <BoardsSection />
+                    <BoardsSection tasks={tasks} section={"Tasks"} />
                 ) : selectedType === "List" ? (
                     <TasksList />
                 ) : <BoardsSection />
