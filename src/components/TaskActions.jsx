@@ -10,6 +10,7 @@ import AddTaskModal from "./AddTaskModal";
 import TaskFilterModal from "./TaskFilterModal";
 import AddSprintModal from "./AddSprintModal";
 import AddProjectModal from "./AddProjectModal";
+import AddMilestoneModal from "../Milestone/AddMilestoneModal";
 
 const TaskActions = ({ selectedType, setSelectedType, addType }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,6 +19,7 @@ const TaskActions = ({ selectedType, setSelectedType, addType }) => {
     const [isSprintModalOpen, setIsSprintModalOpen] = useState(false);
     const [isFilterModalOpan, setIsFilterModalOpan] = useState(false);
     const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
+    const [isAddMilestoneModalOpen, setIsAddMilestoneModalOpen] = useState(false); // State for Milestone modal
     const [selectedStatus, setSelectedStatus] = useState("Status");
 
     const typeDropdownRef = useRef(null);
@@ -61,10 +63,15 @@ const TaskActions = ({ selectedType, setSelectedType, addType }) => {
                                     />
                                 ) : selectedType === "List" ? (
                                     <List size={20} className="text-[#C72030]" />
-                                ) : (
+                                ) : selectedType === "Milestone" ? (
                                     <ChartNoAxesGantt
                                         size={20}
                                         className="rotate-180 text-[#C72030]"
+                                    />
+                                ) : (
+                                    <ChartNoAxesGantt
+                                        size={20}
+                                        className="text-[#C72030]"
                                     />
                                 )}
                                 <span className="text-[#C72030]">{selectedType}</span>
@@ -168,11 +175,20 @@ const TaskActions = ({ selectedType, setSelectedType, addType }) => {
                                 ? setIsSprintModalOpen(true)
                                 : addType === "Project"
                                     ? setIsAddProjectModalOpen(true)
-                                    : setIsModalOpen(true);
+                                    : addType === "Milestone"
+                                        ? setIsAddMilestoneModalOpen(true)
+                                        : setIsModalOpen(true);
                         }}
                         className="text-[12px] flex items-center justify-center gap-1 bg-red text-white px-3 py-2 w-40"
                     >
-                        <Plus size={18} /> {addType === "Sprint" ? "Add Sprint" : addType === "Project" ? "Add Project" : "Add Task"}
+                        <Plus size={18} />{" "}
+                        {addType === "Sprint"
+                            ? "Add Sprint"
+                            : addType === "Project"
+                                ? "Add Project"
+                                : addType === "Milestone"
+                                    ? "Add Milestone"
+                                    : "Add Task"}
                     </button>
                 </div>
             </div>
@@ -202,6 +218,13 @@ const TaskActions = ({ selectedType, setSelectedType, addType }) => {
                 <AddProjectModal
                     isModalOpen={isAddProjectModalOpen}
                     setIsModalOpen={setIsAddProjectModalOpen}
+                />
+            )}
+
+            {isAddMilestoneModalOpen && (
+                <AddMilestoneModal
+                    isModalOpen={isAddMilestoneModalOpen}
+                    setIsModalOpen={setIsAddMilestoneModalOpen}
                 />
             )}
         </>

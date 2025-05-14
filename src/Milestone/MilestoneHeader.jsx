@@ -1,27 +1,36 @@
 import React from "react";
 import { Filter } from "lucide-react"; // Importing a filter icon from lucide-react
+import TaskActions from "../components/TaskActions";
 
 const MilestoneHeader = () => {
     return (
-        <div className="p-4">
-            {/* Header Section */}
-            <div className="flex justify-between items-center border-b border-gray-300 pb-4">
-                <div className="text-sm text-gray-500">
-                    <span className="font-medium">Project 1</span> / Milestones
-                </div>
+      <div className="h-full overflow-y-auto no-scrollbar">
+            <h3 className="text-[11px] text-gray-400 mx-6 my-4">Project 1 / Milestone / Task</h3>
+            <hr className="border border-gray-200" />
 
+            {/* <div className="relative flex items-center mx-3 mt-3 mb-0 gap-10 text-sm">
+                {tabs.map((tab) => (
+                    <div
+                        key={tab.id}
+                        ref={(el) => (tabRefs.current[tab.id] = el)}
+                        className={`relative cursor-pointer pb-3 ${activeTab === tab.id ? "text-[#E95420]" : "text-gray-600"
+                            }`}
+                        onClick={() => setActiveTab(tab.id)}
+                    >
+                        {tab.label}
+                    </div>
+                ))}
+                <div
+                    ref={underlineRef}
+                    className="absolute bottom-0 h-[2px] bg-[#E95420]"
+                />
             </div>
 
-            {/* Button Section */}
-            <div className="flex justify-end mt-4 space-x-4">
-                <div className="flex items-center space-x-6 px-4 py-2 ">
-                    {/* <span className="text-red-500 text-sm cursor-pointer hover:underline">Gantt</span> */}
-                    <Filter className="text-gray-500 cursor-pointer hover:text-gray-700" />
-                </div>
-                <button className="bg-red-500 text-white text-sm px-6 py-2 rounded hover:bg-red-600 flex items-center">
-                    + New Milestone
-                </button>
-            </div>
+            <hr className="border border-gray-200" /> */}
+
+            <TaskActions selectedType={"Gantt"} setSelectedType={"Gantt"} addType={"Milestone"} />
+
+           
         </div>
     );
 };
