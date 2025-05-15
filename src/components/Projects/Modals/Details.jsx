@@ -167,48 +167,25 @@ const CustomDropdownMultiple = ({ options, value, onSelect }) => {
   );
 };
 
-const AddNewTeamModel=({id,deleteTeam})=>{
+
+
+const Details=({setTab})=>{
      const [options, setOptions] = useState(["Option 1", "Option 2", "Option 3"]);
+    const[startDate, setStartDate] = useState(new Date());
+    const[endDate, setEndDate] = useState(new Date());
 
-     return(
-          <div className="flex flex-col relative justify-start gap-4 w-full bottom-0 py-3 bg-white my-10">
-                                   <DeleteOutlinedIcon onClick={()=>deleteTeam(id)} className="absolute top-3 right-3 text-red-600 cursor-pointer "/>
-                                  <div>
-                                    <label className="block mb-2 ">Project Team</label>
-                                    <CustomDropdown options={options} value={"Project Team"}/>
-                                  </div>
-                                  <div className="flex items-center gap-4">
-                                    <div className="w-1/2">
-                                      <label className="block mb-2 ">Project Type</label>
-                                      <CustomDropdown options={options} value={"Project Type"}/>
+   const handleDuration=()=>{
+    if(startDate==null || endDate==null) return;
+    const ms = new Date(endDate) - new Date(startDate); // difference in milliseconds
 
-                                    </div>
-                                    <div className="w-1/2">
-                                       <label className="block mb-2 ">Priority</label>
-                                      <CustomDropdown options={options} value={"Priority"}/>
-                                      
-                                     </div>
-                                </div>
-                                      <div>
-                                       <label className="block mb-2 ">Tags</label>
-                                      <CustomDropdownMultiple options={options} value={"Priority"}/>
-                                      </div>
-                                </div>
-     );
-}
+  const totalMinutes = Math.floor(ms / (1000 * 60));
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
 
-const Details=()=>{
-     const [options, setOptions] = useState(["Option 1", "Option 2", "Option 3"]);
-    const [Teams, setTeams] = useState([]);
-    const [nextId, setNextId] = useState(1);
-
-    const handleAddNewTeam=()=>{
-        setTeams([...Teams,{id:nextId}]);
-        setNextId(nextId+1);
-    }
-    const handleDeleteTeam=(id)=>{
-        setTeams(Teams.filter(team=>team.id!==id));
-    }
+  return `${days}:${hours}:${minutes}`;
+   }
+    
 
     return (
         
@@ -270,31 +247,51 @@ const Details=()=>{
                         <div className="flex items-start gap-4 mt-4 text-[12px]">
                             <div className="w-1/3 space-y-2">
                                 <label className="block ms-2">Start Date</label>
-                                <input type="date" className="w-full border outline-none border-gray-300  py-3 px-4 text-sm placeholder-shown:text-transparent" />
+                                <input value={startDate} onChange={(e)=>{setStartDate(e.target.value)}} type="date" className="w-full border outline-none border-gray-300  py-3 px-4 text-sm placeholder-shown:text-transparent" />
                             </div>
 
                             <div className="w-1/3 space-y-2">
                                 <label className="block ms-2">End Date</label>
-                                <input type="date" className="w-full border outline-none border-gray-300 py-3 px-4 text-sm" />
+                                <input type="date" value={endDate} onChange={(e)=>{setEndDate(e.target.value)}} className="w-full border outline-none border-gray-300 py-3 px-4 text-sm" />
                             </div>
 
                             <div className="w-[100px] space-y-2">
                                  <label className="block ms-2">Duration</label>
-                                <input type="text" className="w-full border outline-none border-gray-300  py-3 px-4 text-sm" readOnly/>
+                                <input value={handleDuration(startDate,endDate)} type="text" className="w-full border outline-none border-gray-300  py-3 px-4 text-sm bg-gray-200" readOnly/>
                             </div>
                         </div>
 
                         <div className="relative">
-                            <label onClick={handleAddNewTeam} className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer">Create new team</label>
+                            <label  className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer"><i>Create new team</i></label>
                         </div>
 
-                        {
-                            Teams.map(team=>(<AddNewTeamModel  id={team.id} deleteTeam={handleDeleteTeam}/>))
-                        }
+                         <div className="flex flex-col relative justify-start gap-4 w-full bottom-0 py-3 bg-white my-10">
+                                    <div>
+                                    <label className="block mb-2 ">Project Team</label>
+                                    <CustomDropdown options={options} value={"Project Team"}/>
+                                  </div>
+                                  <div className="flex items-center gap-4">
+                                    <div className="w-1/2">
+                                      <label className="block mb-2 ">Project Type</label>
+                                      <CustomDropdown options={options} value={"Project Type"}/>
+
+                                    </div>
+                                    <div className="w-1/2">
+                                       <label className="block mb-2 ">Priority</label>
+                                      <CustomDropdown options={options} value={"Priority"}/>
+                                      
+                                     </div>
+                                </div>
+                                      <div>
+                                       <label className="block mb-2 ">Tags</label>
+                                      <CustomDropdownMultiple options={options} value={"Tags"}/>
+                                      </div>
+                                </div>
 
                          <div className="flex items-center justify-center gap-4  w-full bottom-0 py-3 bg-white mt-10">
                         <button
                             type="submit"
+                            onClick={() => setTab("Milestone")}
                             className="flex items-center justify-center border-2  border-[red] px-4 py-2 text-[black] w-[100px]"
                         >
                             Next

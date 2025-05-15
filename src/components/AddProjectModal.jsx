@@ -86,7 +86,7 @@ const AddProjectModal = ({ isModalOpen, setIsModalOpen }) => {
 
                 <hr className="border  " />
                  
-                 {tab=="Details" && <Details/>}
+                 {tab=="Details" && <Details setTab={setTab}/>}
                  {tab=="Milestone" && <Milestones />}
             </div>
         </div>

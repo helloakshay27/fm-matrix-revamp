@@ -140,7 +140,7 @@
   }
   .status-badge-wrapper {
     width:100%;
-    height:50px;
+    height:39px;
     position: relative;
     /* border-radius: 10px; */
   }
@@ -148,26 +148,27 @@
   .status-display {
     
     cursor: pointer;
-    border: 1px solid #ccc;
     height:100%;
     width:100%  ;
     user-select: none;
     display:flex;
     justify-content: center;
     align-items: center;
+    border:none !important;
   }
   
   .status-display.status-completed { background-color: #28a745; color: white; border-color: #1e7e34;}
   .status-display.status-in-progress { background-color: #ffc107; color: #212529; border-color: #d39e00;}
   .status-display.status-planning { background-color: #007bff; color: white; border-color: #0056b3;}
   .status-display.status-on-hold { background-color: #6c757d; color: white; border-color: #545b62;}
+  .status-display.status-open{ background-color: #C85E68; color: white;}
+  .status-display.status-urgent{background-color:#AA0414; color: white;}
   
   .status-dropdown {
     position: absolute;
     /* top: 100%;    */
     left: 0;
     background-color: white;
-    border: 1px solid #ccc;
     border-radius: 4px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.15);
     z-index: 10;

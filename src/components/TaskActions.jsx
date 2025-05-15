@@ -11,6 +11,7 @@ import TaskFilterModal from "./TaskFilterModal";
 import AddSprintModal from "./AddSprintModal";
 import AddProjectModal from "./AddProjectModal";
 import AddMilestoneModal from "../Milestone/AddMilestoneModal";
+import AddProjectTemplate from "./AddProjectTempelateModal";
 
 const TaskActions = ({ selectedType, setSelectedType, addType }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -215,7 +216,7 @@ const TaskActions = ({ selectedType, setSelectedType, addType }) => {
             )}
 
             {isAddProjectModalOpen && (
-                <AddProjectModal
+                <AddProjectTemplate
                     isModalOpen={isAddProjectModalOpen}
                     setIsModalOpen={setIsAddProjectModalOpen}
                 />

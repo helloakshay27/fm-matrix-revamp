@@ -3,24 +3,92 @@ import gsap from "gsap";
 import {
     ChevronDown,
     ChevronDownCircle,
-    LucideShoppingBag,
+    Delete,
     MoreHorizontal,
 } from "lucide-react";
-import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useRef, useState ,useMemo,useEffect} from "react";
+import SourceIcon from "@mui/icons-material/Source";
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
+import SubtaskTable from "../components/Task/Modals/subtaskTable";
+
+
+
+
+const Members = () => {
+    const allNames = [
+        'Abdul Ghaffar', 'Bilal Shaikh', 'Mahendra Lungare',
+        'Komal Shinde', 'Dinesh Shinde', 'Chetan Bafna',
+        'Name G', 'Name H', 'Name I',
+        'Name J', 'Name K', 'Name L',
+    ];
+
+    return (
+        <div className="flex items-start p-4 bg-[rgba(247, 247, 247, 0.51)] shadow rounded-lg text-[12px] my-3"> {/* Main container with some styling */}
+            {/* Left Fixed Item */}
+            <div className="left-name-container w-35 flex-shrink-0 pr-4 py-2 my-auto mx-auto"> {/* Fixed width, adjust as needed */}
+                <span className="text-gray-700">Anshil Bansari</span>
+            </div>
+
+            <div className="divider w-px bg-pink-500 self-stretch mx-4"></div> {/* self-stretch to match height of flex items */}
+
+            <div className="names-grid-container flex-grow overflow-x-auto"> {/* Allows horizontal scrolling for names */}
+                <div
+                    className="
+                  grid grid-flow-col grid-rows-3 auto-cols-min gap-x-8 gap-y-2 py-2
+                "
+                >
+                    {allNames.map((name, index) => (
+                        <span key={index} className="text-gray-600 whitespace-nowrap"> {/* whitespace-nowrap if names shouldn't wrap */}
+                            {name}
+                        </span>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const Status = () => {
+    return (
+        <div className="overflow-x-auto w-full">
+            <div className="flex items-start p-5 gap-5 bg-[rgba(247, 247, 247, 0.51)] shadow rounded-lg text-[12px] my-3 min-w-[800px]">
+                <div>
+                    <button className="bg-[#88D760] py-1 px-4 text-white rounded-[30px] w-[94px] h-[30px] text-[12px]">Active</button>
+                </div>
+                
+                <div>
+                    <h1 className="text-[12px] text-center  w-[200px]">1 hr 23 mins 10 sec</h1>
+                    <img src="/arrow.png" alt="arrow" />
+                </div>
+                <div>
+                    <button className="bg-[#D6D6D6] py-1 px-4 rounded-[30px] w-[140px] h-[30px] text-[12px] text-[#000000]">Yet to Complete</button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+const Documents = () => {
+    return (
+        <div>
+            <div className="flex items-start gap-2 p-5">
+                <SourceIcon />
+                <h1 className="text-[#0063AF]">BRD.xls</h1>
+            </div>
+            <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
+        </div>
+
+    )
+}
+
 
 const TaskDetails = () => {
     const [isFirstCollapsed, setIsFirstCollapsed] = useState(false);
     const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
-    const [activeTab, setActiveTab] = useState("comments");
-    const tabs = [
-        { id: "comments", label: "Comments" },
-        { id: "subtasks", label: "Subtasks" },
-        { id: "attachments", label: "Attachements" },
-        { id: "dependency", label: "Dependency" },
-    ];
     const firstContentRef = useRef(null);
     const secondContentRef = useRef(null);
+    const [tab, setTab] = useState("");
 
     useGSAP(() => {
         gsap.set(firstContentRef.current, { height: "auto" });
@@ -67,32 +135,40 @@ const TaskDetails = () => {
 
     return (
         <div className="m-4">
-            <Link to="">Task Management</Link> {">"}{" "}
-            <span className="text-[#E95420]">Task Details</span>
-            <div className="px-4 pt-4">
-                <h2 className="text-[30px]">
-                    <span className="text-[#006BA4]">#XXXX</span> Design Task Management
-                    Web Screens
+            <div className="px-4 pt-1">
+                <h2 className="text-[15px] p-3 px-0">
+                    <span className=" mr-3">Project-ID</span>
+                    <span >Project Name</span>
                 </h2>
 
-                <div className="flex items-center justify-between my-3">
+                <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
+                <div className="flex items-center justify-between my-3 text-[12px]">
                     <div className="flex items-center gap-3 text-[#323232]">
-                        <span>By Kshitij Rasal</span>
+                        <span>Created By : Kshitij Rasal</span>
                         <span className="h-6 w-[1px] border border-gray-300"></span>
                         <span className="flex items-center gap-3">
-                            {" "}
-                            <LucideShoppingBag color="#E95420" size={18} />
-                            Internal Products
+                            Created On : 01-01-2024 09:00 AM
                         </span>
                         <span className="h-6 w-[1px] border border-gray-300"></span>
-                        <span className="flex items-center gap-2 cursor-pointer">
-                            Open <ChevronDown />
+                        <span className="flex relative items-center gap-2 cursor-pointer px-2 py-1 w-[150px] rounded-md text-sm text-white bg-[#C85E68]">
+                            Active <ChevronDown className="absolute right-2" />
+                        </span>
+                        <span className="h-6 w-[1px] border border-gray-300"></span>
+                        <span>
+                        <EditOutlinedIcon className="mx-1" sx={{fontSize: "12px"}}/>                       Edit Task
+                        </span>
+                        <span className="h-6 w-[1px] border border-gray-300"></span>
+
+                        <span>
+                            <DeleteOutlinedIcon className="mx-1" sx={{fontSize: "12px"}}/>
+                            Delete Task
                         </span>
                     </div>
                     <MoreHorizontal color="#E95420" className="cursor-pointer" />
                 </div>
+                <div className="border-b-[3px] border-grey my-3 "></div>
 
-                <div className="border rounded-md shadow-custom p-5 mb-4">
+                <div className="border rounded-md shadow-custom p-5 mb-4 text-[14px]">
                     <div
                         className="font-[600] text-[16px] flex items-center gap-4"
                         onClick={toggleFirstCollapse}
@@ -105,14 +181,11 @@ const TaskDetails = () => {
                         />{" "}
                         Description
                     </div>
-                    <p ref={firstContentRef} className="ms-12 mt-3 overflow-hidden">
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Odit
-                        explicabo ad facilis ratione consectetur repellat laboriosam, velit
-                        est, nesciunt officia earum aperiam dolorum, error illo assumenda
-                        dolore iure pariatur vel molestias nostrum eum quaerat eaque
-                        corporis? Aut minus fugit fugiat eveniet, cumque non, esse
-                        asperiores eos iure ipsa reiciendis nobis?
-                    </p>
+                    <div className="mt-3 overflow-hidden " ref={firstContentRef}>
+                        <p>
+                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Minus amet quaerat in libero quod esse fugiat praesentium? Reiciendis pariatur officiis provident cupiditate dolor aut, aliquid, perspiciatis quod a quis obcaecati.
+                        </p>
+                    </div>
                 </div>
 
                 <div className="border rounded-md shadow-custom p-5 mb-4">
@@ -126,266 +199,136 @@ const TaskDetails = () => {
                             className={`${isSecondCollapsed ? "rotate-180" : "rotate-0"
                                 } transition-transform`}
                         />{" "}
-                        Task Information
+                        Details
                     </div>
 
-                    <div className="mt-3 overflow-hidden" ref={secondContentRef}>
+                    <div className="mt-3 overflow-hidden " ref={secondContentRef}>
                         <div className="flex items-center">
                             <div className="w-1/2 flex items-center justify-center gap-3">
-                                <div className="text-right text-[16px] font-semibold">
+                                <div className="text-right text-[12px] font-[500]">
+                                    Responsible Person  :
+                                </div>
+                                <div className="text-left text-[12px]">Sohail Ansari</div>
+                            </div>
+                            <div className="w-1/2 flex items-center justify-center gap-3">
+                                <div className="text-right text-[12px] font-[500]]">
                                     Priority :
                                 </div>
-                                <div className="text-left text-[14px]">High</div>
-                            </div>
-                            <div className="w-1/2 flex items-center justify-start gap-3">
-                                <div className="text-right">Observers :</div>
-                                <div className="text-left flex items-center gap-1">
-                                    <span className="h-6 w-6 flex items-center justify-center bg-blue-900 text-white rounded-full text-[8px] font-light">
-                                        AK
-                                    </span>
-                                    <span className="h-6 w-6 flex items-center justify-center bg-blue-900 text-white rounded-full text-[8px] font-light">
-                                        AK
-                                    </span>
-                                </div>
+                                <div className="text-left text-[12px]">High</div>
                             </div>
                         </div>
 
                         <span className="border h-[1px] inline-block w-full my-4"></span>
 
                         <div className="flex items-center">
-                            <div className="w-1/2 flex items-center justify-center gap-3">
-                                <div className="text-right text-[16px] font-semibold">
-                                    Assign To :
-                                </div>
-                                <div className="text-left text-[14px]">Devesh Jain</div>
-                            </div>
-                            <div className="w-1/2 flex items-center justify-start gap-3">
-                                <div className="text-right">Created On :</div>
-                                <div className="text-left flex items-center gap-4">
-                                    28/01/2023 <span>15:35</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <span className="border h-[1px] inline-block w-full my-4"></span>
-
-                        <div className="flex items-center">
-                            <div className="w-1/2 flex items-center justify-center gap-3">
-                                <div className="text-right text-[16px] font-semibold">
-                                    Due Date :
-                                </div>
-                                <div className="text-left text-[14px]">30/01/2023</div>
-                            </div>
-                            <div className="w-1/2 flex items-center justify-start gap-3">
-                                <div className="text-right">Tags :</div>
-                                <div className="text-left flex items-center gap-4">
-                                    <div className="flex items-center flex-wrap">
-                                        <span className="tag">
-                                            <span>Web Pages</span>
-                                        </span>
-                                        <span className="tag">
-                                            <span>FM Matrix</span>
-                                        </span>
-                                        <span className="tag">
-                                            <span>Hisociety</span>
-                                        </span>
-                                        <span className="tag">
-                                            <span>Hisociety</span>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <span className="border h-[1px] inline-block w-full my-4"></span>
-
-                        <div className="flex items-center">
-                            <div className="w-1/2 flex items-center justify-center gap-3">
-                                <div className="text-right text-[16px] font-semibold">
+                             <div className="w-1/2 flex items-center justify-center gap-3">
+                                <div className="text-right text-[12px] font-[500]">
                                     Start Date :
                                 </div>
-                                <div className="text-left text-[14px]">15/01/2023</div>
+                                <div className="text-left text-[12px]">30/01/2023</div>
                             </div>
-                            <div className="w-1/2 flex items-center justify-start gap-3">
-                                <div className="text-right">Special Initiative :</div>
-                                <div className="text-left flex items-center gap-4"></div>
+                            <div className="w-1/2 flex items-center justify-center gap-3">
+                                <div className="text-right text-[12px] font-[500]">
+                                    MileStones :
+                                </div>
+                                <div className="text-left text-[12px]">0/1</div>
                             </div>
                         </div>
+
+                        <span className="border h-[1px] inline-block w-full my-4"></span>
+
+                        <div className="flex items-center">
+                            <div className="w-1/2 flex items-center justify-center gap-3">
+                                <div className="text-right text-[12px] font-[500]">
+                                    End Date :
+                                </div>
+                                <div className="text-left text-[12px]"> - </div>
+                            </div>
+                            <div className="w-1/2 flex items-center justify-center gap-3">
+                                <div className="text-right text-[12px] font-semibold">
+                                    Tags :
+                                </div>
+                                <div className="text-left text-[12px] flex items-start gap 2">
+                                     { ["Newtask","FM Matrix"].map((item)=>{
+                                        return(
+                                          <div className="border-2  border-[#E95420] rounded-full p-2 text-[12px] mx-2">
+                                            {item}
+                                          </div>
+                                        );
+                                      })}
+                                    
+                                    
+                                </div>
+                            </div>
+                        </div>
+
+                        <span className="border h-[1px] inline-block w-full my-4"></span>
+
+                        <div className="flex items-center">
+                            <div className="w-1/2 flex items-center justify-center gap-3">
+                                <div className="text-right text-[12px] font-[500]">
+                                    Duration :
+                                </div>
+                                <div className="text-left text-[#029464] text-[12px]">00d : 00h : 30m</div>
+                            </div>
+                           <div className="w-1/2 flex items-center justify-center gap-3">
+                                <div className="text-right text-[12px] font-semibold">
+                                    Observer :
+                                </div>
+                                <div className="text-left text-[12px] flex items-start gap 2">
+                                     { ["Chetan Bafna","Mahendra Lungare"].map((item)=>{
+                                        return(
+                                          <div className="border-2  border-[#E95420] rounded-full p-2 text-[12px] mx-2">
+                                            {item}
+                                          </div>
+                                        );
+                                      })}
+                                    
+                                    
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div>
+                    <div className="flex items-center justify-between my-3" >
+                        <div className="flex items-center gap-10">
+                            {tab == "Subtask" ?
+                                <div id={1} className="text-[14px] font-[400] selected" onClick={() => { setTab("Subtasks") }}>Subtasks</div> :
+                                <div id={1} className="text-[14px] font-[400] cursor-pointer" onClick={() => { setTab("Subtasks") }}>Subtasks</div>}
+
+                            {tab == "Dependency" ?
+                                <div id={2} className="text-[14px] font-[400] selected" onClick={() => { setTab("Dependency") }}>Dependency</div> :
+                                <div id={2} className="text-[14px] font-[400]  cursor-pointer" onClick={() => { setTab("Dependency") }}>Dependency</div>}
+
+                            {tab == "Comments" ?
+                                <div id={3} className="text-[14px] font-[400] selected" onClick={() => { setTab("Comments") }}>Comments</div> :
+                                <div id={3} className="text-[14px] font-[400]  cursor-pointer" onClick={() => { setTab("Comments") }}>Comments</div>}
+
+                            {tab == "Attachments" ?
+                                <div id={4} className="text-[14px] font-[400] selected" onClick={() => { setTab("Attachments") }}>Issues</div> :
+                                <div id={4} className="text-[14px] font-[400]  cursor-pointer" onClick={() => { setTab("Attachments") }}>Issues</div>}
+
+                            {tab == "Activity Log" ?
+                                <div id={5} className="text-[14px] font-[400] selected" onClick={() => { setTab("Activity Log") }}>Activity Log</div> :
+                                <div id={5} className="text-[14px] font-[400]  cursor-pointer" onClick={() => { setTab("Activity Log") }}>Activity Log</div>}
+
+
+                        </div>
+
+                    </div>
+                    <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
+
+                    <div>
+                        {tab == "Subtasks" && <SubtaskTable />}
+                        {tab == "Documents" && <Documents />}
+                        {tab == "Status" && <Status />}
+                        {tab == "Issues" && <Issues />}
+
                     </div>
                 </div>
 
-                <div className="border rounded-md shadow-custom p-5 mb-4">
-                    <div className="flex items-center gap-10">
-                        {tabs.map((tab) => (
-                            <span
-                                key={tab.id}
-                                className={`cursor-pointer relative after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-full after:h-[2px] after:bg-[#E95420] ${activeTab === tab.id ? "after:block" : "after:hidden"
-                                    }`}
-                                onClick={() => setActiveTab(tab.id)}
-                            >
-                                {tab.label}
-                            </span>
-                        ))}
-                    </div>
-
-                    <div className="mt-6">
-                        {activeTab === "comments" && (
-                            <div className="flex items-start justify-between gap-3">
-                                <span className="h-10 w-10 bg-[#019E78] rounded-full p-3 text-white flex items-center justify-center">
-                                    KR
-                                </span>
-                                <form className="w-full">
-                                    <textarea
-                                        rows={7}
-                                        className="border focus:outline-none p-3 rounded-md w-full"
-                                    ></textarea>
-                                    <div className="flex items-center justify-end gap-4 mt-2">
-                                        <button
-                                            type="submit"
-                                            className="flex items-center justify-center bg-[#E95420] text-white px-4 py-2 rounded-full w-52"
-                                        >
-                                            Save Comment
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="flex items-center justify-center border border-[#E95420] px-4 py-2 rounded-full w-40"
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        )}
-
-                        {activeTab === "subtasks" && (
-                            <div className="overflow-x-auto bg-white border">
-                                <table className="min-w-full border-collapse">
-                                    <thead>
-                                        <tr className="border-b border-gray-200">
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                                                Id
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[30rem]">
-                                                Task Title
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                                                Status
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                                                Assignee
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                                                Start Date
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                                                Due Date
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                                                Priority
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-r">
-                                                xxxx
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-r">
-                                                Design Task Management Web Screens
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-r">
-                                                Open
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-r">
-                                                {" "}
-                                                <span className="h-6 w-6 flex items-center justify-center bg-blue-900 text-white rounded-full text-[8px] font-light">
-                                                    AK
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-r">
-                                                15/01/2023
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-r">
-                                                30/01/2023
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-r">
-                                                High
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                        {activeTab === "attachments" && (
-                            <div className="my-12">
-                                <p className="text-[16px]">No Documents Associated</p>
-                                <p className="text-[#DFDFDF] text-[14px] mt-3 mb-5">Drop or attach relevant documents here</p>
-                                <button
-                                    type="button"
-                                    className="flex items-center justify-center bg-[#E95420] text-white px-4 py-2 rounded-full w-52"
-                                >
-                                    Save Comment
-                                </button>
-                            </div>
-                        )}
-                        {activeTab === "dependency" && (
-                            <div className="overflow-x-auto bg-white border">
-                                <table className="min-w-full border-collapse">
-                                    <thead>
-                                        <tr className="border-b border-gray-200">
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                                                Id
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r w-[30rem]">
-                                                Task Title
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                                                Status
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                                                Assignee
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                                                Start Date
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                                                Due Date
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                                                Priority
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-r">
-
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-r">
-                                                Predecessor Tasks
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-r">
-
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-r">
-
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-r">
-
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-r">
-
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-r">
-
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
-                </div>
             </div>
         </div>
     );

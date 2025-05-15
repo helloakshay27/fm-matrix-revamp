@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-import { format, addDays } from 'date-fns';
 
 const WeekProgressPicker = () => {
   const [startDate, setStartDate] = useState(new Date());

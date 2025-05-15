@@ -212,7 +212,6 @@ const AddMilestoneModal = ({ id, deleteMilestone }) => {
 
                                       <div>
                                        <label className="block mb-2 ">Depends On</label>
-                                      <CustomDropdownMultiple options={options} value={"Depends On"}/>
                                       </div>
                                 </div>
   );
@@ -220,10 +219,30 @@ const AddMilestoneModal = ({ id, deleteMilestone }) => {
 
 const Milestones=()=>{
      const [options, setOptions] = useState(["Option 1", "Option 2", "Option 3"]);
+     const [dependencyOptions, setDependencyOptions] = useState([]);
     const [createTeamModal, setCreateTeamModal] = useState(false);
     const [nextId,setNextId]=useState(1);
     const [milestones,setMilestones]=useState([
     ])
+     const[startDate, setStartDate] = useState();
+        const[endDate, setEndDate] = useState();
+    
+       const handleDuration=()=>{
+        if(startDate==null || endDate==null) return;
+        const ms = new Date(endDate) - new Date(startDate); // difference in milliseconds
+    
+      const totalMinutes = Math.floor(ms / (1000 * 60));
+      const days = Math.floor(totalMinutes / (60 * 24));
+      const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+      const minutes = totalMinutes % 60;
+    
+      return `${days}:${hours}:${minutes}`;
+       }
+
+     useEffect(() => {
+  const options = milestones.map(milestone => `Milestone ${milestone.id}`);
+  setDependencyOptions(options); 
+}, [milestones]);
 
 
     const handleDeleteMilestone=(id)=>{
@@ -271,17 +290,17 @@ const Milestones=()=>{
                         <div className="flex items-start gap-4 mt-4 text-[12px]">
                             <div className="w-1/3 space-y-2">
                                 <label className="block ms-2">Start Date</label>
-                                <input type="date" className="w-full border outline-none border-gray-300  py-3 px-4 text-sm placeholder-shown:text-transparent" />
+                                <input value={startDate} onChange={(e)=>{setStartDate(e.target.value)}}type="date" className="w-full border outline-none border-gray-300  py-3 px-4 text-sm placeholder-shown:text-transparent" />
                             </div>
 
                             <div className="w-1/3 space-y-2">
                                 <label className="block ms-2">End Date</label>
-                                <input type="date" className="w-full border outline-none border-gray-300 py-3 px-4 text-sm" />
+                                <input type="date" value={endDate} onChange={(e)=>{setEndDate(e.target.value)}}className="w-full border outline-none border-gray-300 py-3 px-4 text-sm" />
                             </div>
 
                             <div className="w-[100px] space-y-2">
                                  <label className="block ms-2">Duration</label>
-                                <input type="text" className="w-full border outline-none border-gray-300  py-3 px-4 text-sm" readOnly/>
+                                <input type="text" value={handleDuration()} className="w-full border outline-none border-gray-300  py-3 px-4 text-sm bg-gray-200" readOnly/>
                             </div>
 
                         </div>
@@ -291,7 +310,7 @@ const Milestones=()=>{
                                     <label className="block mb-2">
                                       Depends On <span className="text-red-600">*</span>
                                    </label>
-                                   <CustomDropdownMultiple options={options} value={"Depends On"} />
+                                   <CustomDropdownMultiple options={dependencyOptions} value={"Depends On"} />
                                 </div>
 
                             
@@ -299,7 +318,7 @@ const Milestones=()=>{
                         
 
                         <div className="relative">
-                            <label onClick={handleAddMilestone} className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer">Add Milestone</label>
+                            <label onClick={handleAddMilestone} className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer"><i>Add Milestone</i></label>
                         </div>
 
                         {
