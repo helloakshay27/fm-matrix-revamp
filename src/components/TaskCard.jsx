@@ -1,7 +1,6 @@
 import { Flag, Timer, User2 } from "lucide-react";
 
 const TaskCard = ({ task, toggleSubCard }) => {
-    console.log(task)
     return (
         <div className="w-full h-max bg-white p-2 shadow-xl text-sm flex flex-col space-y-3 mb-2">
             <p className="mb-4">

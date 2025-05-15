@@ -1,24 +1,20 @@
 export const tabs = [
     {
-        id: "tasks",
-        label: "Tasks",
+        id: "active_projects",
+        label: "Active Projects",
     },
     {
-        id: "reports",
-        label: "Reports",
+        id: "templates",
+        label: "Templates",
     },
     {
-        id: "documents",
-        label: "Documents",
+        id: "archived",
+        label: "Archived",
     },
     {
-        id: "milestones",
-        label: "Milestones",
-    },
-    {
-        id: "timesheet",
-        label: "Timesheet",
-    },
+        id: "issues",
+        label: "Issues",
+    }
 ];
 
 export const cardsTitle = [
@@ -54,6 +50,32 @@ export const cardsTitle = [
     },
 ];
 
+export const sprintTitle = [
+    {
+        id: 1,
+        title: "Open",
+        color: "#C85E68",
+        add: false,
+    },
+    {
+        id: 2,
+        title: "In Progress",
+        color: "#EDAE01",
+        add: false,
+    },
+    {
+        id: 3,
+        title: "Overdue",
+        color: "#BB0000",
+        add: false,
+    },
+    {
+        id: 4,
+        title: "On Hold",
+        color: "#027A94",
+        add: false,
+    },
+];
 
 export const tasks = [
     {
