@@ -1,4 +1,6 @@
 import React, { useEffect, useRef } from "react";
+import "dhtmlx-gantt";
+import "dhtmlx-gantt/codebase/dhtmlxgantt.css";
 
 const GanttChart = () => {
     const ganttContainer = useRef(null);
