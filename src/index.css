@@ -120,3 +120,17 @@
   color: white;
   border-radius: 50%;
 }
+
+.custom-switch {
+  width: 65px;
+  height: 24px;
+}
+
+.custom-switch:checked {
+  background-color: var(--red);
+  border-color: var(--red);
+}
+
+.form-switch .form-check-input {
+  width: 3em !important;
+}
