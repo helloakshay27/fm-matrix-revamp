@@ -75,6 +75,18 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
                                 {isSidebarOpen ? "Tasks" : ""}
                             </li>
                         </NavLink>
+                        <NavLink to="/channels">
+                            <li className={`sidebar-link ${!isSidebarOpen ? "justify-center" : ""}`}>
+                                <GanttChartSquare size={20} />
+                                {isSidebarOpen ? "Channels" : ""}
+                            </li>
+                        </NavLink>
+                        <NavLink to="/mom">
+                            <li className={`sidebar-link ${!isSidebarOpen ? "justify-center" : ""}`}>
+                                <GanttChartSquare size={20} />
+                                {isSidebarOpen ? "Minutes of Meeting" : ""}
+                            </li>
+                        </NavLink>
                     </ul>
                 </div>
             </div>

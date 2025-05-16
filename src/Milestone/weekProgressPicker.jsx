@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { addDays, format } from 'date-fns'
 
 const WeekProgressPicker = () => {
   const [startDate, setStartDate] = useState(new Date());
@@ -17,12 +18,12 @@ const WeekProgressPicker = () => {
 
       // Replace this with your real API
       const response = await simulateApiCall(startDateStr);
-// const response = await fetch(`https://your-api.com/progress?start_date=${startDateStr}`);
-// const json = await response.json();
-// [
-//   { "date": "2025-06-01", "percentage": 40 },
-//   ...
-// ]
+      // const response = await fetch(`https://your-api.com/progress?start_date=${startDateStr}`);
+      // const json = await response.json();
+      // [
+      //   { "date": "2025-06-01", "percentage": 40 },
+      //   ...
+      // ]
 
 
       const data = response.map((item) => {
@@ -72,7 +73,7 @@ const WeekProgressPicker = () => {
       /> */}
 
       <div className="flex items-center gap-3 overflow-x-auto">
-        <button className="p-2" onClick={() => setStartDate(addDays(startDate, -7))}>
+        <button type='button' className="p-2" onClick={() => setStartDate(addDays(startDate, -7))}>
           <ChevronLeft size={20} />
         </button>
 
@@ -80,9 +81,8 @@ const WeekProgressPicker = () => {
           <div
             key={index}
             onClick={() => setSelectedIndex(index)}
-            className={`flex flex-col items-center cursor-pointer px-2 py-1 rounded-lg min-w-[40px] ${
-              selectedIndex === index ? 'border border-red-400' : ''
-            }`}
+            className={`flex flex-col items-center cursor-pointer px-2 py-1 rounded-lg min-w-[40px] ${selectedIndex === index ? 'border border-red-400' : ''
+              }`}
           >
             <span className="text-xs font-medium">{item.day}</span>
             <span className="text-sm">{item.date}</span>
@@ -94,7 +94,7 @@ const WeekProgressPicker = () => {
           </div>
         ))}
 
-        <button className="p-2" onClick={() => setStartDate(addDays(startDate, 7))}>
+        <button type='button' className="p-2" onClick={() => setStartDate(addDays(startDate, 7))}>
           <ChevronRight size={20} />
         </button>
       </div>

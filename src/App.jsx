@@ -22,7 +22,8 @@ const App = () => {
         <Route path="/sprint" element={<Sprints />} />
         <Route path="/milestones" element={<MileStoneMain />} />
         <Route path="tasks/:id" element={<TaskDetails />} />
-
+        <Route path="channels" element={<></>} />
+        <Route path="mom" element={<></>} />
       </Routes>
     </Layout>
   )
