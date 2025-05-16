@@ -1,4 +1,4 @@
-import { Calendar1, ChevronLeft, ChevronRight, CircleCheckBig, File, FlagTriangleRight, GanttChartSquare, Globe, Home, Settings, Timer } from "lucide-react";
+import { Calendar1, ChevronLeft, ChevronRight, CircleCheckBig, File, FlagTriangleRight, GanttChartSquare, Globe, Home, MessageSquareText, Settings, Timer } from "lucide-react";
 import { useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
@@ -9,7 +9,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
     useGSAP(() => {
         gsap.to(sidebarRef.current, {
-            width: isSidebarOpen ? "13rem" : "6rem",
+            width: isSidebarOpen ? "14rem" : "6rem",
             duration: 0.4,
         });
     }, [isSidebarOpen]);
@@ -17,7 +17,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
     return (
         <div
             ref={sidebarRef}
-            className="sidebar w-[13rem] shadow-lg shadow-gray-500/50 overflow-hidden flex flex-col bg-[#D5DBDB]"
+            className="sidebar w-[14rem] shadow-lg shadow-gray-500/50 overflow-hidden flex flex-col bg-[#D5DBDB]"
         >
             <div className={`flex items-center ${isSidebarOpen ? "justify-end" : "justify-center"} px-5 py-6`}>
                 {
@@ -71,7 +71,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
                         </NavLink>
                         <NavLink to="/task">
                             <li className={`sidebar-link ${!isSidebarOpen ? "justify-center" : ""}`}>
-                                <GanttChartSquare size={20} />
+                                <CircleCheckBig size={20} />
                                 {isSidebarOpen ? "Tasks" : ""}
                             </li>
                         </NavLink>
@@ -83,7 +83,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
                         </NavLink>
                         <NavLink to="/mom">
                             <li className={`sidebar-link ${!isSidebarOpen ? "justify-center" : ""}`}>
-                                <GanttChartSquare size={20} />
+                                <MessageSquareText size={20} />
                                 {isSidebarOpen ? "Minutes of Meeting" : ""}
                             </li>
                         </NavLink>

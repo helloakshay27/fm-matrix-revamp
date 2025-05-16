@@ -9,7 +9,7 @@ const Layout = ({ children, isSidebarOpen, setIsSidebarOpen }) => {
             <Navbar />
             <div className="flex h-[calc(100vh-58px)] w-screen">
                 <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
-                <main className={`relative overflow-auto ${isSidebarOpen ? "w-[calc(100vw-13rem)]" : "w-full"}`}>
+                <main className={`relative overflow-auto ${isSidebarOpen ? "w-[calc(100vw-14rem)]" : "w-full"}`}>
                     {children}
                 </main>
             </div>

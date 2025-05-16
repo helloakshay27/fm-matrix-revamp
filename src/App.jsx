@@ -7,6 +7,8 @@ import ProjectDetails from "./pages/ProjectDetails"
 import Sprints from "./pages/Sprints"
 import MileStoneMain from "./Milestone/MileStoneMain"
 import { useState } from "react"
+import MinutesOfMeeting from "./pages/MinutesOfMeeting"
+import MoMAdd from "./pages/MoMAdd"
 
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -23,7 +25,8 @@ const App = () => {
         <Route path="/milestones" element={<MileStoneMain />} />
         <Route path="tasks/:id" element={<TaskDetails />} />
         <Route path="channels" element={<></>} />
-        <Route path="mom" element={<></>} />
+        <Route path="mom" element={<MinutesOfMeeting />} />
+        <Route path="new-mom" element={<MoMAdd />} />
       </Routes>
     </Layout>
   )

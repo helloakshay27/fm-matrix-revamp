@@ -17,6 +17,13 @@ export const tabs = [
     }
 ];
 
+export const momTabs = [
+    {
+        id: "minutes_of_meeting",
+        label: "Minutes Of Meeting",
+    },
+];
+
 export const cardsTitle = [
     {
         id: 1,
