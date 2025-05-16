@@ -107,6 +107,7 @@
 .selected {
   border-bottom: 2px solid red;
 }
+
 .custom-task {
   background-color: #d9534f !important;
   border: 1px solid #b52b27;

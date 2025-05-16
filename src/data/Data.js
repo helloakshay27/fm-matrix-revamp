@@ -133,6 +133,22 @@ export const tasks = [
         status: "Open",
     },
     {
+        id: "P9-T1",
+        title: "Task 5",
+        milestone: "Milestone 3",
+        assignee: "Bob Wilson",
+        time: "1 h : 00",
+        subtasks: [
+            {
+                id: "P5-T2",
+                title: "Subtask 4",
+                assignee: "Emma Davis",
+                date: "30 Nov",
+            },
+        ],
+        status: "In Progress",
+    },
+    {
         id: "P8-T1",
         title: "Task 4",
         milestone: "Milestone 4 asfalt",

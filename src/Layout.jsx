@@ -2,8 +2,8 @@ import { useState } from "react"
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 
-const Layout = ({ children }) => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+const Layout = ({ children, isSidebarOpen, setIsSidebarOpen }) => {
+
     return (
         <div className="h-screen w-screen">
             <Navbar />

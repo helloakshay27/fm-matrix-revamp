@@ -13,7 +13,7 @@ import AddProjectModal from "./AddProjectModal";
 import AddMilestoneModal from "../Milestone/AddMilestoneModal";
 import AddProjectTemplate from "./AddProjectTempelateModal";
 
-const TaskActions = ({ selectedType, setSelectedType, addType }) => {
+const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isTypeOpen, setIsTypeOpen] = useState(false);
     const [isStatusOpen, setIsStatusOpen] = useState(false);
@@ -87,6 +87,7 @@ const TaskActions = ({ selectedType, setSelectedType, addType }) => {
                                             onClick={() => {
                                                 setSelectedType("Kanban");
                                                 setIsTypeOpen(false);
+                                                setIsSidebarOpen(false)
                                             }}
                                         >
                                             <ChartNoAxesColumn

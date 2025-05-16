@@ -12,36 +12,42 @@ const Boards = ({ color, add, title, count = 0, children, className }) => {
 
     useGSAP(() => {
         gsap.to(cardRef.current, {
-            width: isCollapsed ? "4rem" : "300px",
+            width: isCollapsed ? "4rem" : "100%",
             duration: 0.2,
         });
 
         gsap.to(titleRef.current, {
-            position: isCollapsed ? "absolute" : "",
-            top: isCollapsed ? -15 : "0",
-            left: isCollapsed ? 60 : "",
+            position: isCollapsed ? "absolute" : "static",
+            top: isCollapsed ? -15 : 0,
+            left: isCollapsed ? 60 : 0,
+            duration: 0.2,
         });
 
         gsap.to(btnRef.current, {
-            position: isCollapsed ? "absolute" : "",
-            top: isCollapsed ? -11 : "0",
-            left: isCollapsed ? -20 : "",
+            position: isCollapsed ? "absolute" : "static",
+            top: isCollapsed ? -11 : 0,
+            left: isCollapsed ? -20 : 0,
             rotate: isCollapsed ? 90 : 0,
+            duration: 0.2,
         });
     }, [isCollapsed]);
 
     return (
         <div
             ref={cardRef}
-            className={`bg-[#DEE6E8] h-full rounded-md px-2 py-3 flex flex-col gap-14 ${className}`}
-            style={{ minWidth: isCollapsed ? "4rem" : "300px" }}
+            className={`bg-[#DEE6E8] h-full rounded-md px-2 py-3 flex flex-col gap-4 ${className}`}
+            style={
+                window.location.pathname === '/sprint'
+                    ? { minWidth: isCollapsed ? '4rem' : '250px', maxWidth: !isCollapsed && "250px" }
+                    : { minWidth: isCollapsed && "4rem", maxWidth: !isCollapsed && "250px" }
+            }
         >
             <div
                 className={`w-full relative ${isCollapsed ? "rotate-90" : "rotate-0"}`}
             >
                 <h3
                     ref={titleRef}
-                    className="text-white py-2 px-4 rounded-md text-xs w-max absolute top-0 left-0 z-10"
+                    className="text-white py-2 px-4 rounded-md text-xs w-max z-10"
                     style={{ backgroundColor: color }}
                 >
                     {count} {title}
@@ -56,9 +62,7 @@ const Boards = ({ color, add, title, count = 0, children, className }) => {
                     <button
                         ref={btnRef}
                         className="bg-white p-1 rounded-md shadow-md"
-                        onClick={() => {
-                            setIsCollapsed(!isCollapsed);
-                        }}
+                        onClick={() => setIsCollapsed(!isCollapsed)}
                     >
                         <ArrowLeftToLine size={15} className="text-[#E95420]" />
                     </button>

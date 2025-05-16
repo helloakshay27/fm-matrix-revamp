@@ -7,9 +7,9 @@ import TaskActions from '../components/TaskActions.jsx';
 import BoardsSection from '../components/BoardsSection.jsx';
 import TasksList from '../components/TasksList.jsx';
 
-const Home = () => {
+const Tasks = ({ setIsSidebarOpen }) => {
     const [activeTab, setActiveTab] = useState(tabs[0].id);
-    const [selectedType, setSelectedType] = useState("Kanban");
+    const [selectedType, setSelectedType] = useState("List");
 
 
     const tabRefs = useRef({});
@@ -54,17 +54,17 @@ const Home = () => {
 
             <hr className="border border-gray-200" /> */}
 
-            <TaskActions selectedType={selectedType} setSelectedType={setSelectedType} addType={"Task"} />
+            <TaskActions setIsSidebarOpen={setIsSidebarOpen} selectedType={selectedType} setSelectedType={setSelectedType} addType={"Task"} />
 
             {
                 selectedType === "Kanban" ? (
                     <BoardsSection tasks={tasks} section={"Tasks"} />
                 ) : selectedType === "List" ? (
                     <TasksList />
-                ) : <BoardsSection />
+                ) : <></>
             }
         </div>
     )
 }
 
-export default Home
+export default Tasks

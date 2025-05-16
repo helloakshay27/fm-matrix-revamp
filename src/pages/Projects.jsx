@@ -50,7 +50,7 @@ const tasks = [
     },
 ]
 
-const Projects = () => {
+const Projects = ({ setIsSidebarOpen }) => {
     const [activeTab, setActiveTab] = useState(tabs[0].id);
     const [selectedType, setSelectedType] = useState("List")
     const [isEdit, setIsEdit] = useState(false)
@@ -94,7 +94,7 @@ const Projects = () => {
 
             <hr className="border border-gray-200" />
 
-            <TaskActions selectedType={selectedType} setSelectedType={setSelectedType} addType={"Project"} />
+            <TaskActions setIsSidebarOpen={setIsSidebarOpen} selectedType={selectedType} setSelectedType={setSelectedType} addType={"Project"} />
 
             {
                 selectedType === 'List' ? (
