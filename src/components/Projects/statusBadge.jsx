@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 const StatusBadge = ({ status:initialStatus ,statusOptions, onStatusChange}) => {
   const [currentStatus, setCurrentStatus] = useState(initialStatus);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  console.log(statusOptions);
 
   useEffect(() => {
     setCurrentStatus(initialStatus);
@@ -21,7 +22,6 @@ const StatusBadge = ({ status:initialStatus ,statusOptions, onStatusChange}) => 
     setIsDropdownOpen(!isDropdownOpen);
   };
 
-  // const statusOptions = ['Completed', 'In Progress', 'Planning', 'On Hold'];
 
   return (
     <div className="status-badge-wrapper">

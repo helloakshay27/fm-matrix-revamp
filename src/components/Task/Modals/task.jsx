@@ -13,7 +13,7 @@ import { set } from "react-hook-form";
 import WeekProgressPicker from "../../../Milestone/weekProgressPicker";
 
 
-const CustomDropdown = ({ options, value }) => {
+const CustomDropdown = ({ options, value}) => {
   const [selectedOption, setSelectedOption] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,10 +29,10 @@ const CustomDropdown = ({ options, value }) => {
   };
 
   return (
-    <div className="relative w-34 text-[12px] ">
+    <div className="relative w-30 text-[12px] ">
       <Listbox value={selectedOption} onChange={handleSelect}>
         <div className="relative border-2 border-gray-300">
-          <ListboxButton className="relative w-full cursor-default rounded-md bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-opacity-75 sm:text-sm">
+          <ListboxButton className="relative w-full cursor-default rounded-md bg-white pr-10 text-left shadow-sm focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-opacity-75 sm:text-sm">
             <input
               type="input"
               className="p-2 w-[90%] text-[12px] "
@@ -60,7 +60,8 @@ const CustomDropdown = ({ options, value }) => {
               <React.Fragment key={index}>
                 <ListboxOption
                   className={({ active }) =>
-                    `relative cursor-default select-none py-2 pl-3 pr-4 text-[12px] ${active ? 'bg-red-600 text-white' : 'text-gray-900'
+                    `relative cursor-default select-none py-2 pl-3 pr-4 text-[12px] ${
+                      active ? 'bg-red-600 text-white' : 'text-gray-900'
                     }`
                   }
                   value={option}
@@ -86,37 +87,43 @@ const CustomDropdown = ({ options, value }) => {
   );
 };
 
-const CustomDropdownMultiple = ({ options, value, onSelect }) => {
-  const [selectedOptions, setSelectedOptions] = useState([]); // For multi-select
-  const [isOpen, setIsOpen] = useState(false);
+const CustomDropdownMultiple = ({ options, value, onSelect, initialSelected }) => {
+  const [selectedOptions, setSelectedOptions] = useState(initialSelected || []);
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredOptions = options.filter((option) =>
     option.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSelect = (option) => {
-    const isSelected = selectedOptions.includes(option);
-    if (isSelected) {
-      setSelectedOptions(selectedOptions.filter((item) => item !== option));
-    } else {
-      setSelectedOptions([...selectedOptions, option]);
-    }
-    onSelect(selectedOptions);
+  const handleMultiSelectChange = (newlySelectedOptions) => {
+    setSelectedOptions(newlySelectedOptions);
+    onSelect(newlySelectedOptions);
+  };
+
+  const handleDeselectItem = (e, optionToDeselect) => {
+    e.stopPropagation();
+    const newSelectedOptions = selectedOptions.filter((item) => item !== optionToDeselect);
+    setSelectedOptions(newSelectedOptions);
+    onSelect(newSelectedOptions);
   };
 
   return (
-    <div className="relative w-34 text-[12px] ">
-      <Listbox value={selectedOptions} multiple onChange={setSelectedOptions}>
+    <div className="relative w-auto text-[12px]">
+      <Listbox value={selectedOptions} multiple onChange={handleMultiSelectChange}>
         <div className="relative border-2 border-gray-300">
-          <ListboxButton className="relative w-full cursor-default rounded-md bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-opacity-75 sm:text-sm overflow-hidden flex flex-wrap items-center">
+          <ListboxButton className="relative w-full cursor-default bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-opacity-75 sm:text-sm min-h-[40px] flex flex-wrap items-center gap-1">
             {selectedOptions.length > 0 ? (
               selectedOptions.map((option) => (
                 <span
                   key={option}
-                  className=" border-2 border-red-400 rounded-[20px] px-2 py-1 mr-1 mb-1 text-gray-700 text-xs"
+                  className="flex items-center border-2 border-red-400 rounded-full px-2 py-1 text-gray-700 text-xs"
                 >
                   {option}
+                  <XMarkIcon
+                    className="ml-1.5 h-4 w-4 cursor-pointer text-red-700 hover:text-red-900"
+                    onClick={(e) => handleDeselectItem(e, option)}
+                    aria-hidden="true"
+                  />
                 </span>
               ))
             ) : (
@@ -128,36 +135,39 @@ const CustomDropdownMultiple = ({ options, value, onSelect }) => {
           </ListboxButton>
 
           <ListboxOptions
-            className={`absolute mt-1 p-3 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none text-[12px] z-10`} // Consistent styling for ListboxOptions
+            className={`absolute mt-1 p-3 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none text-[12px] z-20`}
           >
-            <div className="sticky top-0 bg-white px-2 py-1 rounded-[30px] border-2 border-grey-400 m-2 h-[40px] flex items-center">
+            <div className="sticky top-0 bg-white px-2 py-1 rounded-[30px] border-2 border-gray-300 m-2 h-[40px] flex items-center">
               <SearchOutlinedIcon style={{ color: 'red' }} className="mr-2" />
               <input
                 type="text"
                 placeholder={`Search ${value}`}
-                className="w-[80%] h-[30px] text-[12px] shadow-sm sm:text-sm p-2 focus:outline-none" // Consistent styling for input
+                className="w-[80%] h-[30px] text-[12px] shadow-sm sm:text-sm p-2 focus:outline-none bg-transparent"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             {filteredOptions.map((option, index) => (
-              <Fragment key={index}>
+              <Fragment key={option}>
                 <ListboxOption
-                  className={({ active }) =>
-                    `relative cursor-default select-none py-2 pl-3 pr-4 text-[12px] ${active ? 'bg-red-600 text-white' : 'text-gray-900'
-                    } ${selectedOptions.includes(option) ? 'bg-red-100' : ''}`
+                  className={({ active, selected }) =>
+                    `relative cursor-default select-none py-2 pl-3 pr-4 text-[12px] ${
+                      active ? 'bg-red-600 text-white' : 'text-gray-900'
+                    } ${selected ?  ' border-1 border-red-400 font-semibold' : 'font-normal'}`
                   }
                   value={option}
                 >
-                  <span className={`block truncate ${selectedOptions.includes(option) ? 'font-semibold' : 'font-normal'}`}>
-                    {option}
-                  </span>
+                  {({ selected }) => (
+                    <span className={`block truncate ${selected ? 'font-semibold' : 'font-normal'}`}>
+                      {option}
+                    </span>
+                  )}
                 </ListboxOption>
                 {index < filteredOptions.length - 1 && <hr className="border-t border-gray-200 my-1" />}
               </Fragment>
             ))}
-            {filteredOptions.length === 0 && (
-              <li className="text-gray-500 px-4 py-2">No options found</li>
+            {filteredOptions.length === 0 && searchTerm && (
+              <div className="text-gray-500 px-4 py-2 relative cursor-default select-none">No options found</div>
             )}
           </ListboxOptions>
         </div>
@@ -165,124 +175,6 @@ const CustomDropdownMultiple = ({ options, value, onSelect }) => {
     </div>
   );
 };
-
-// const AddTasksModal = ({ id, deleteTasks }) => {
-//        const [options, setOptions] = useState(["Option 1", "Option 2", "Option 3"]);
-
-//   return(
-//        <>            <div className="flex items-center justify-between">
-//                             <div className="mt-4 space-y-2 w-1/3">
-//                                 <label className="block ms-2">
-//                                     Project <span className="text-red-600">*</span>
-//                                 </label>
-//                                 <input
-//                                     type="text"
-//                                     placeholder={`Project ${nextId-1}`}
-//                                     className="w-full border h-[40px] outline-none border-gray-300 py-3 px-4 text-sm"
-//                                     readOnly
-//                                 />
-//                             </div>
-//                             <div className="mt-4 space-y-2 w-auto">
-//                                 <label className="block ms-2">
-//                                     Milestone<span className="text-red-600">*</span>
-//                                 </label>
-//                                 <input
-//                                     type="text"
-//                                     placeholder={`Milestone ${nextId-1}`}
-//                                     className="w-full border h-[40px] outline-none border-gray-300 py-3 px-4 text-sm"
-//                                 />
-//                             </div>
-//                                 </div>
-
-
-
-
-//                                     <div className="flex items-start gap-4 mt-3">
-//                                     <div className="w-full flex flex-col justify-between">
-//                                         <label className="block mb-2">
-//                                         Task Title <span className="text-red-600">*</span>
-//                                     </label>
-//                                     <input
-//                                     type="text"
-//                                     placeholder="Enter Task Title"
-//                                     className="w-full border h-[40px] outline-none border-gray-300 py-3 px-4 text-sm"
-//                                     />
-//                                     </div>
-//                                     </div>
-
-//                             <div className="mt-4 space-y-2 h-[100px]">
-//                                 <label className="block ms-2">
-//                                     Description
-//                                 </label>
-//                                 <textarea
-//                                     type="text"
-//                                     rows={5}
-//                                     placeholder="Enter Description"
-//                                     className="w-full border outline-none border-gray-300 py-3 px-4 text-sm h-[70%]"
-//                                 />
-//                             </div>
-
-
-//                             <div className="flex justify-between gap-40 mt-3">
-//                                     <div className="w-1/2 flex flex-col justify-between">
-//                                         <label className="block mb-2">
-//                                         Responsible Person<span className="text-red-600">*</span>
-//                                     </label>
-//                                     <CustomDropdown options={options} value={"Responsible Person"} />
-//                                     </div>
-//                                     <div className="w-1/2 flex flex-col justify-between ">
-//                                         <label className="block mb-2">
-//                                         Department<span className="text-red-600">*</span>
-//                                     </label>
-//                                     <input
-//                                     type="text"
-//                                     placeholder="Tech"
-//                                     className="w-full border h-[40px] outline-none border-gray-300 px-4 py-3 text-sm"
-//                                     readOnly
-//                                     />
-
-//                                     </div>
-
-//                             </div>
-
-//                             <div className="flex items-start gap-40 mt-4 text-[12px]">
-//                                 <div className="w-[150px] space-y-2">
-//                                     <label className="block ms-2">Priority</label>
-//                                     <CustomDropdown options={options} value={"Priority"} />
-//                                 </div>
-
-//                                 <div className="w-[100px] space-y-2">
-//                                     <label className="block ms-2">Duration</label>
-//                                     <input type="text" className="w-full border outline-none border-gray-300  py-3 px-4 text-sm" readOnly/>
-//                                 </div>
-
-//                             </div>
-
-//                             <div className="flex items-start gap-4 mt-3">
-//                                     <div className="flex flex-col justify-between w-2/3">
-//                                         <label className="block mb-2">
-//                                         Observer<span className="text-red-600">*</span>
-//                                     </label>
-//                                     <CustomDropdownMultiple options={options} value={"Observer"} />
-//                                     </div>
-
-
-//                             </div>
-
-//                             <div className="flex items-start gap-4 mt-3">
-//                                     <div className=" flex flex-col justify-between w-full">
-//                                         <label className="block mb-2">
-//                                         Tags<span className="text-red-600">*</span>
-//                                     </label>
-//                                     <CustomDropdownMultiple options={options} value={"Tags"} />
-//                                     </div>
-
-
-//                             </div>  
-//                         </>
-
-//                         );
-// }
 
 const Tasks = () => {
   const [options, setOptions] = useState(["Option 1", "Option 2", "Option 3"]);
@@ -376,7 +268,7 @@ const Tasks = () => {
             <input
               type="text"
               placeholder="Tech"
-              className="w-full border-2 border-grey-300 py-3 px-4 bg-gray-200"
+              className="w-full border-2 border-grey-300 p-2 bg-gray-200"
               readOnly
             />
 
@@ -392,7 +284,7 @@ const Tasks = () => {
 
           <div className="w-[130px] space-y-2">
             <label className="block ms-2">Duration</label>
-            <input type="text" className="w-full border outline-none border-gray-300  py-3 px-4 text-sm" />
+            <input type="text" className="w-full border outline-none border-gray-300 p-2 text-sm" placeholder="00d:00h:00m" />
           </div>
 
         </div>

@@ -126,12 +126,13 @@ const ProjectTable = () => {
         accessorKey: 'title',
         header: 'Project Title',
         size: 250,
+        cell:({row,getValue}) => <Link to={`/milestones`} className="cursor-pointer">{getValue()}</Link>,
       },
       {
         accessorKey: 'status',
         header: 'Status',
         size: 150,
-        cell: (info) => <StatusBadge status={info.getValue()} onStatusChange={(newStatus) => {
+        cell: (info) => <StatusBadge statusOptions={['Completed', 'In Progress', 'Planning', 'On Hold']} status={info.getValue()} onStatusChange={(newStatus) => {
             const newData = data.map(row => {
                 if (row.id === info.row.original.id) {
                     return { ...row, status: newStatus };

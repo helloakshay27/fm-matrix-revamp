@@ -28,10 +28,10 @@ const CustomDropdown = ({ options, value}) => {
   };
 
   return (
-    <div className="relative w-34 text-[12px] ">
+    <div className="relative w-30 text-[12px] ">
       <Listbox value={selectedOption} onChange={handleSelect}>
         <div className="relative border-2 border-gray-300">
-          <ListboxButton className="relative w-full cursor-default rounded-md bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-opacity-75 sm:text-sm">
+          <ListboxButton className="relative w-full cursor-default rounded-md bg-white pr-10 text-left shadow-sm focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-opacity-75 sm:text-sm">
             <input
               type="input"
               className="p-2 w-[90%] text-[12px] "
@@ -86,37 +86,43 @@ const CustomDropdown = ({ options, value}) => {
   );
 };
 
-const CustomDropdownMultiple = ({ options, value, onSelect }) => {
-  const [selectedOptions, setSelectedOptions] = useState([]); // For multi-select
-  const [isOpen, setIsOpen] = useState(false);
+const CustomDropdownMultiple = ({ options, value, onSelect, initialSelected }) => {
+  const [selectedOptions, setSelectedOptions] = useState(initialSelected || []);
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredOptions = options.filter((option) =>
     option.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSelect = (option) => {
-    const isSelected = selectedOptions.includes(option);
-    if (isSelected) {
-      setSelectedOptions(selectedOptions.filter((item) => item !== option));
-    } else {
-      setSelectedOptions([...selectedOptions, option]);
-    }
-    onSelect(selectedOptions);
+  const handleMultiSelectChange = (newlySelectedOptions) => {
+    setSelectedOptions(newlySelectedOptions);
+    onSelect(newlySelectedOptions);
+  };
+
+  const handleDeselectItem = (e, optionToDeselect) => {
+    e.stopPropagation();
+    const newSelectedOptions = selectedOptions.filter((item) => item !== optionToDeselect);
+    setSelectedOptions(newSelectedOptions);
+    onSelect(newSelectedOptions);
   };
 
   return (
-    <div className="relative w-34 text-[12px] ">
-      <Listbox value={selectedOptions} multiple onChange={setSelectedOptions}>
+    <div className="relative w-auto text-[12px]">
+      <Listbox value={selectedOptions} multiple onChange={handleMultiSelectChange}>
         <div className="relative border-2 border-gray-300">
-          <ListboxButton className="relative w-full cursor-default rounded-md bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-opacity-75 sm:text-sm overflow-hidden flex flex-wrap items-center">
+          <ListboxButton className="relative w-full cursor-default bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-opacity-75 sm:text-sm min-h-[40px] flex flex-wrap items-center gap-1">
             {selectedOptions.length > 0 ? (
               selectedOptions.map((option) => (
                 <span
                   key={option}
-                  className=" border-2 border-red-400 rounded-[20px] px-2 py-1 mr-1 mb-1 text-gray-700 text-xs"
+                  className="flex items-center border-2 border-red-400 rounded-full px-2 py-1 text-gray-700 text-xs"
                 >
                   {option}
+                  <XMarkIcon
+                    className="ml-1.5 h-4 w-4 cursor-pointer text-red-700 hover:text-red-900"
+                    onClick={(e) => handleDeselectItem(e, option)}
+                    aria-hidden="true"
+                  />
                 </span>
               ))
             ) : (
@@ -128,37 +134,39 @@ const CustomDropdownMultiple = ({ options, value, onSelect }) => {
           </ListboxButton>
 
           <ListboxOptions
-            className={`absolute mt-1 p-3 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none text-[12px] z-10`} // Consistent styling for ListboxOptions
+            className={`absolute mt-1 p-3 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none text-[12px] z-20`}
           >
-            <div className="sticky top-0 bg-white px-2 py-1 rounded-[30px] border-2 border-grey-400 m-2 h-[40px] flex items-center">
+            <div className="sticky top-0 bg-white px-2 py-1 rounded-[30px] border-2 border-gray-300 m-2 h-[40px] flex items-center">
               <SearchOutlinedIcon style={{ color: 'red' }} className="mr-2" />
               <input
                 type="text"
                 placeholder={`Search ${value}`}
-                className="w-[80%] h-[30px] text-[12px] shadow-sm sm:text-sm p-2 focus:outline-none" // Consistent styling for input
+                className="w-[80%] h-[30px] text-[12px] shadow-sm sm:text-sm p-2 focus:outline-none bg-transparent"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             {filteredOptions.map((option, index) => (
-              <Fragment key={index}>
+              <Fragment key={option}>
                 <ListboxOption
-                  className={({ active }) =>
+                  className={({ active, selected }) =>
                     `relative cursor-default select-none py-2 pl-3 pr-4 text-[12px] ${
                       active ? 'bg-red-600 text-white' : 'text-gray-900'
-                    } ${selectedOptions.includes(option) ? 'bg-red-100' : ''}`
+                    } ${selected ?  ' border-1 border-red-400 font-semibold' : 'font-normal'}`
                   }
                   value={option}
                 >
-                  <span className={`block truncate ${selectedOptions.includes(option) ? 'font-semibold' : 'font-normal'}`}>
-                    {option}
-                  </span>
+                  {({ selected }) => (
+                    <span className={`block truncate ${selected ? 'font-semibold' : 'font-normal'}`}>
+                      {option}
+                    </span>
+                  )}
                 </ListboxOption>
                 {index < filteredOptions.length - 1 && <hr className="border-t border-gray-200 my-1" />}
               </Fragment>
             ))}
-            {filteredOptions.length === 0 && (
-              <li className="text-gray-500 px-4 py-2">No options found</li>
+            {filteredOptions.length === 0 && searchTerm && (
+              <div className="text-gray-500 px-4 py-2 relative cursor-default select-none">No options found</div>
             )}
           </ListboxOptions>
         </div>
@@ -234,12 +242,27 @@ const Sprints=()=>{
      const [options, setOptions] = useState(["Option 1", "Option 2", "Option 3"]);
     const [nextId,setNextId]=useState(1);
     const [sprints,setSprints]=useState([
-    ])
+    ]);
+    const [startDate, setStartDate] = useState(null);
+    const [endDate, setEndDate] = useState(null);
 
 
     const handleDeleteSprints=(id)=>{
       setSprints(sprints.filter(sprints=>sprints.id!==id));
     }
+
+       const handleDuration=()=>{
+    if(startDate==null || endDate==null) return;
+    const ms = new Date(endDate) - new Date(startDate); // difference in milliseconds
+
+  const totalMinutes = Math.floor(ms / (1000 * 60));
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+
+  return `${days}:${hours}:${minutes}`;
+   }
+    
 
     const handleAddSprints=()=>{
       setSprints([...sprints,{id:nextId}]);
@@ -282,17 +305,17 @@ const Sprints=()=>{
                         <div className="flex items-start gap-4 mt-4 text-[12px]">
                             <div className="w-1/3 space-y-2">
                                 <label className="block ms-2">Start Date</label>
-                                <input type="date" className="w-full border outline-none border-gray-300  py-3 px-4 text-sm placeholder-shown:text-transparent" />
+                                <input value={startDate} onChange={(e)=>setStartDate(e.target.value)} type="date" className="w-full border outline-none border-gray-300  py-3 px-4 text-sm placeholder-shown:text-transparent" />
                             </div>
 
                             <div className="w-1/3 space-y-2">
                                 <label className="block ms-2">End Date</label>
-                                <input type="date" className="w-full border outline-none border-gray-300 py-3 px-4 text-sm" />
+                                <input value={endDate} onChange={(e)=>setEndDate(e.target.value)} type="date" className="w-full border outline-none border-gray-300 py-3 px-4 text-sm" />
                             </div>
 
                             <div className="w-[100px] space-y-2">
                                  <label className="block ms-2">Duration</label>
-                                <input type="text" className="w-full border outline-none border-gray-300  py-3 px-4 text-sm" readOnly/>
+                                <input value={handleDuration ()} type="text" className="w-full bg-gray-200 border outline-none border-gray-300 py-3 px-4 text-sm" readOnly/>
                             </div>
 
                         </div>
