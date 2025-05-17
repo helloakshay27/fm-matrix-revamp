@@ -9,6 +9,7 @@ import MileStoneMain from "./Milestone/MileStoneMain"
 import { useState } from "react"
 import MinutesOfMeeting from "./pages/MinutesOfMeeting"
 import MoMAdd from "./pages/MoMAdd"
+import Channel from "./components/Channel/Channel"
 
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -24,9 +25,9 @@ const App = () => {
         <Route path="/sprint" element={<Sprints />} />
         <Route path="/milestones" element={<MileStoneMain />} />
         <Route path="tasks/:id" element={<TaskDetails />} />
-        <Route path="channels" element={<></>} />
         <Route path="mom" element={<MinutesOfMeeting />} />
         <Route path="new-mom" element={<MoMAdd />} />
+        <Route path="channels" element={<Channel/>} />
       </Routes>
     </Layout>
   )
