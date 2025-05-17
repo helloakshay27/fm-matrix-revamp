@@ -81,6 +81,12 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
                                 {isSidebarOpen ? "Channels" : ""}
                             </li>
                         </NavLink>
+                        <NavLink to="/milestones">
+                            <li className={`sidebar-link ${!isSidebarOpen ? "justify-center" : ""}`}>
+                                <MessageSquareText size={20} />
+                                {isSidebarOpen ? "Minutes of Meeting" : ""}
+                            </li>
+                        </NavLink>
                         <NavLink to="/mom">
                             <li className={`sidebar-link ${!isSidebarOpen ? "justify-center" : ""}`}>
                                 <MessageSquareText size={20} />
