@@ -24,10 +24,10 @@ const App = () => {
         <Route path="/projects/:id" element={<ProjectDetails />} />
         <Route path="/sprint" element={<Sprints />} />
         <Route path="/milestones" element={<MileStoneMain />} />
-        <Route path="tasks/:id" element={<TaskDetails />} />
-        <Route path="mom" element={<MinutesOfMeeting />} />
-        <Route path="new-mom" element={<MoMAdd />} />
-        <Route path="channels" element={<Channel/>} />
+        <Route path="/tasks/:id" element={<TaskDetails />} />
+        <Route path="/mom" element={<MinutesOfMeeting />} />
+        <Route path="/new-mom" element={<MoMAdd />} />
+        <Route path="/channels" element={<Channel/>} />
       </Routes>
     </Layout>
   )
