@@ -1,8 +1,19 @@
 import { User2 } from "lucide-react";
+import { useDrag } from "react-dnd";
 
-const TaskSubCard = ({ isVisible }) => {
+const TaskSubCard = ({ subtask, isVisible }) => {
+    const [{ isDragging }, dragRef] = useDrag(() => ({
+        type: "SUBTASK",
+        item: { type: "SUBTASK", id: subtask.id, fromTaskId: subtask.parentId },
+        collect: (monitor) => ({
+            isDragging: monitor.isDragging(),
+        }),
+    }));
+
     return (
         <div
+            ref={dragRef}
+            style={{ opacity: isDragging ? 0.5 : 1, cursor: "move" }}
             className={`w-[90%] h-max bg-white p-2 shadow-xl text-sm flex flex-col space-y-3 mb-2 float-right transition-all duration-300 ${isVisible ? "block" : "hidden pointer-events-none"
                 }`}
         >

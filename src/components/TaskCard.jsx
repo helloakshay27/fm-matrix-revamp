@@ -1,8 +1,17 @@
 import { Flag, Timer, User2 } from "lucide-react";
+import { useDrag } from "react-dnd";
 
 const TaskCard = ({ task, toggleSubCard }) => {
+    const [{ isDragging }, dragRef] = useDrag(() => ({
+        type: "TASK",
+        item: { id: task.id, fromStatus: task.status },
+        collect: (monitor) => ({
+            isDragging: monitor.isDragging(),
+        }),
+    }));
+
     return (
-        <div className="w-full h-max bg-white p-2 shadow-xl text-xs flex flex-col space-y-2 mb-2">
+        <div ref={dragRef} style={{ opacity: isDragging ? 0.5 : 1, cursor: 'move' }} className="w-full h-max bg-white p-2 shadow-xl text-xs flex flex-col space-y-2 mb-2">
             <p className="mb-2 truncate">
                 <span className="text-blue-500">{task.id}</span> {task.title}
             </p>

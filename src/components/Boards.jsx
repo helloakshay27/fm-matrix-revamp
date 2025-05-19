@@ -2,17 +2,27 @@ import { useGSAP } from "@gsap/react";
 import { ArrowLeftToLine, Plus } from "lucide-react";
 import { useRef, useState } from "react";
 import gsap from "gsap";
+import { useDrop } from "react-dnd";
 
-const Boards = ({ color, add, title, count = 0, children, className }) => {
+const Boards = ({ color, add, title, count = 0, children, className, onDrop }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
 
     const cardRef = useRef(null);
     const titleRef = useRef(null);
     const btnRef = useRef(null);
 
+    const [, dropRef] = useDrop(() => ({
+        accept: ["TASK", "SUBTASK", "PROJECT"], // Accept all three types
+        drop: (item) => {
+            if (onDrop) {
+                onDrop({ type: item.type || "TASK", id: item.id, fromTaskId: item.fromTaskId }, title);
+            }
+        },
+    }));
+
     useGSAP(() => {
         gsap.to(cardRef.current, {
-            width: isCollapsed ? "4rem" : "100%",
+            width: isCollapsed ? "4rem" : "20%",
             duration: 0.2,
         });
 
@@ -34,12 +44,15 @@ const Boards = ({ color, add, title, count = 0, children, className }) => {
 
     return (
         <div
-            ref={cardRef}
+            ref={(el) => {
+                cardRef.current = el;
+                dropRef(el); // 🟢 Connect DnD drop to this div
+            }}
             className={`bg-[#DEE6E8] h-full rounded-md px-2 py-3 flex flex-col gap-4 ${className}`}
             style={
                 window.location.pathname === '/sprint'
                     ? { minWidth: isCollapsed ? '4rem' : '250px', maxWidth: !isCollapsed && "250px" }
-                    : { minWidth: isCollapsed && "4rem", maxWidth: !isCollapsed && "250px" }
+                    : { minWidth: isCollapsed && "4rem", maxWidth: !isCollapsed && "20%" }
             }
         >
             <div

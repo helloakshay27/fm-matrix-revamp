@@ -1,4 +1,4 @@
-import { Calendar1, ChevronLeft, ChevronRight, CircleCheckBig, File, FlagTriangleRight, GanttChartSquare, Globe, Home, MessageSquareText, Settings, Timer } from "lucide-react";
+import { Calendar1, ChevronLeft, ChevronRight, CircleCheckBig, File, FlagTriangleRight, GanttChartSquare, Globe, Home, MessageSquareText, Milestone, Settings, Timer } from "lucide-react";
 import { useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
@@ -83,8 +83,8 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
                         </NavLink>
                         <NavLink to="/milestones">
                             <li className={`sidebar-link ${!isSidebarOpen ? "justify-center" : ""}`}>
-                                <MessageSquareText size={20} />
-                                {isSidebarOpen ? "Minutes of Meeting" : ""}
+                                <Milestone size={20} />
+                                {isSidebarOpen ? "Milestones" : ""}
                             </li>
                         </NavLink>
                         <NavLink to="/mom">
