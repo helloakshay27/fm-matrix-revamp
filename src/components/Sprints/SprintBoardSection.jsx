@@ -1,18 +1,44 @@
 import Boards from "../Boards"
 import TaskCard from "../TaskCard";
 import TaskSubCard from "../TaskSubCard";
-import { sprintTitle, tasks } from "../../data/Data";
+import { sprintTitle, tasks as initialTasks } from "../../data/Data";
 import { Circle, Play, Timer } from "lucide-react";
 import { useState } from "react";
 
 const SprintBoardSection = () => {
     const [subCardVisibility, setSubCardVisibility] = useState({});
+    const [tasks, setTasks] = useState(initialTasks);
 
     const toggleSubCard = (taskId) => {
         setSubCardVisibility((prev) => ({
             ...prev,
             [taskId]: !prev[taskId],
         }));
+    };
+
+    const handleDrop = (item, newStatus) => {
+        const { type, id, fromTaskId } = item;
+
+        if (type === "TASK") {
+            setTasks((prev) =>
+                prev.map((task) =>
+                    task.id === id ? { ...task, status: newStatus } : task
+                )
+            );
+        } else if (type === "SUBTASK") {
+            setTasks((prev) =>
+                prev.map((task) =>
+                    task.id === fromTaskId
+                        ? {
+                            ...task,
+                            subtasks: task.subtasks.map((subtask) =>
+                                subtask.id === id ? { ...subtask, status: newStatus } : subtask
+                            ),
+                        }
+                        : task
+                )
+            );
+        }
     };
 
     return (
@@ -73,9 +99,10 @@ const SprintBoardSection = () => {
                         <Boards
                             add={sprint.add}
                             color={sprint.color}
-                            count={sprint.count}
+                            count={tasks.filter((task) => task.status === sprint.title).length}
                             title={sprint.title}
                             className="flex items-start justify-start"
+                            onDrop={handleDrop}
                         >
                             {
                                 tasks.filter(task => task.status === sprint.title).length > 0 ? (

@@ -46,7 +46,7 @@ const Boards = ({ color, add, title, count = 0, children, className, onDrop }) =
         <div
             ref={(el) => {
                 cardRef.current = el;
-                dropRef(el); // 🟢 Connect DnD drop to this div
+                dropRef(el);
             }}
             className={`bg-[#DEE6E8] h-full rounded-md px-2 py-3 flex flex-col gap-4 ${className}`}
             style={

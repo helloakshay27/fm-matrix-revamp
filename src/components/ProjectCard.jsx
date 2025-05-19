@@ -5,7 +5,9 @@ const getRandomColor = () => {
     const r = Math.floor(Math.random() * 76) + 180;
     const g = Math.floor(Math.random() * 76) + 180;
     const b = Math.floor(Math.random() * 76) + 180;
-    return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+    return `#${r.toString(16).padStart(2, "0")}${g
+        .toString(16)
+        .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 };
 
 const ProjectCard = ({ project }) => {
@@ -18,8 +20,11 @@ const ProjectCard = ({ project }) => {
     }));
 
     return (
-        <div ref={dragRef}
-            style={{ opacity: isDragging ? 0.5 : 1, cursor: "move" }} className="w-full h-max bg-white p-2 shadow-xl text-xs flex flex-col space-y-2 mb-2 rounded-sm">
+        <div
+            ref={dragRef}
+            style={{ opacity: isDragging ? 0.5 : 1, cursor: "move" }}
+            className="w-full h-max bg-white p-2 shadow-xl text-xs flex flex-col space-y-2 mb-2 rounded-sm"
+        >
             <p className="mb-2 truncate">
                 <span className="text-blue-500">{project.id}</span> {project.title}
             </p>
@@ -28,7 +33,8 @@ const ProjectCard = ({ project }) => {
                 <div className="flex items-start gap-2">
                     <Timer className="text-[#029464] flex-shrink-0" size={14} />
                     <span className="text-[10px] text-[#029464] truncate">
-                        {project.duration.days}d : {project.duration.hours}h : {project.duration.minutes}m
+                        {project.duration.days}d : {project.duration.hours}h :{" "}
+                        {project.duration.minutes}m
                     </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -53,7 +59,9 @@ const ProjectCard = ({ project }) => {
 
             <div className="space-y-2 text-xs">
                 <div className="flex items-center gap-2">
-                    <div className="w-16 font-light text-gray-600 shrink-0">Milestone</div>
+                    <div className="w-16 font-light text-gray-600 shrink-0">
+                        Milestone
+                    </div>
                     <div className="w-4 text-center">{project.milestones.completed}</div>
                     <div className="flex-1 relative bg-gray-200 rounded-full h-3">
                         <div
@@ -106,7 +114,8 @@ const ProjectCard = ({ project }) => {
                     {project.members.map((member, index) => (
                         <div
                             key={member.initials}
-                            className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-gray-800 ${index !== 0 ? "-ml-2" : ""}`}
+                            className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-gray-800 ${index !== 0 ? "-ml-2" : ""
+                                }`}
                             style={{ backgroundColor: getRandomColor() }}
                         >
                             {member.initials}
