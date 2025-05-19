@@ -224,7 +224,7 @@ const ProjectTable = () => {
                     key={header.id}
                     colSpan={header.colSpan}
                     style={{ width: header.getSize() }}
-                    className={`${header.column.columnDef.meta?.isDarkColumn ? 'dark-column-header' : ''} px-3 py-3.5 text-left text-gray-800`}
+                    className={"bg-[#D5DBDB] px-3 py-3.5 text-left text-gray-800 "}
                   >
                     {header.isPlaceholder ? null : (
                       <div>
@@ -241,12 +241,12 @@ const ProjectTable = () => {
           </thead>
           <tbody>
             {table.getRowModel().rows.map(row => (
-              <tr key={row.id} className="hover:bg-gray-50">
+              <tr key={row.id} className="hover:bg-gray-50 even:bg-[#D5DBDB4D]">
                 {row.getVisibleCells().map(cell => (
                   <td
                     key={cell.id}
                     style={{ width: cell.column.getSize() }}
-                    className={`${cell.column.columnDef.meta?.isDarkColumn ? 'dark-column-cell' : ''} ${cell.column.columnDef.meta?.cellClassName || ''} whitespace-nowrap px-3 py-4 text-gray-500`}
+                    className={`${cell.column.columnDef.meta?.cellClassName || ''} whitespace-nowrap px-3 py-4 text-gray-500`}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>

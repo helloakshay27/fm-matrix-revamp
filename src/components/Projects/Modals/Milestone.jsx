@@ -264,7 +264,7 @@ const Milestones = () => {
 
   return (
 
-    <form className="pt-2 pb-12 h-full">
+    <form className="pt-2 pb-12 h-full text-[12px]">
       <div
         id="addTask"
         className="max-w-[90%] mx-auto h-[calc(100%-4rem)] overflow-y-auto pr-3"

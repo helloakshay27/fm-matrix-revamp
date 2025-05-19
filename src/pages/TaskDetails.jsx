@@ -13,56 +13,22 @@ import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import SubtaskTable from "../components/Task/Modals/subtaskTable";
 
 
-
-
-const Members = () => {
-    const allNames = [
-        'Abdul Ghaffar', 'Bilal Shaikh', 'Mahendra Lungare',
-        'Komal Shinde', 'Dinesh Shinde', 'Chetan Bafna',
-        'Name G', 'Name H', 'Name I',
-        'Name J', 'Name K', 'Name L',
-    ];
-
-    return (
-        <div className="flex items-start p-4 bg-[rgba(247, 247, 247, 0.51)] shadow rounded-lg text-[12px] my-3"> {/* Main container with some styling */}
-            {/* Left Fixed Item */}
-            <div className="left-name-container w-35 flex-shrink-0 pr-4 py-2 my-auto mx-auto"> {/* Fixed width, adjust as needed */}
-                <span className="text-gray-700">Anshil Bansari</span>
-            </div>
-
-            <div className="divider w-px bg-pink-500 self-stretch mx-4"></div> {/* self-stretch to match height of flex items */}
-
-            <div className="names-grid-container flex-grow overflow-x-auto"> {/* Allows horizontal scrolling for names */}
-                <div
-                    className="
-                  grid grid-flow-col grid-rows-3 auto-cols-min gap-x-8 gap-y-2 py-2
-                "
-                >
-                    {allNames.map((name, index) => (
-                        <span key={index} className="text-gray-600 whitespace-nowrap"> {/* whitespace-nowrap if names shouldn't wrap */}
-                            {name}
-                        </span>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-};
-
 const Status = () => {
     return (
         <div className="overflow-x-auto w-full">
             <div className="flex items-start p-5 gap-5 bg-[rgba(247, 247, 247, 0.51)] shadow rounded-lg text-[12px] my-3 min-w-[800px]">
-                <div>
-                    <button className="bg-[#88D760] py-1 px-4 text-white rounded-[30px] w-[94px] h-[30px] text-[12px]">Active</button>
+                <div className="flex flex-col gap-2">
+                    <span><i>Chetan Bafna <span className="text-[#C72030]">added</span> task</i></span>
+                    <span><i>01 Jan 2025 09:30 AM</i></span>
                 </div>
                 
                 <div>
                     <h1 className="text-[12px] text-center  w-[200px]">1 hr 23 mins 10 sec</h1>
                     <img src="/arrow.png" alt="arrow" />
                 </div>
-                <div>
-                    <button className="bg-[#D6D6D6] py-1 px-4 rounded-[30px] w-[140px] h-[30px] text-[12px] text-[#000000]">Yet to Complete</button>
+                <div className="flex flex-col gap-2">
+                    <span><i>Chetan Bafna <span className="text-[#C72030]">added</span> task</i></span>
+                    <span><i>01 Jan 2025 09:30 AM</i></span>
                 </div>
             </div>
         </div>
@@ -80,6 +46,67 @@ const Documents = () => {
         </div>
 
     )
+}
+
+const Comments=()=>{
+    const[comments,setComments]=useState([]);
+    const [comment, setComment] = useState("");
+
+    const handleAddComment=()=>{
+        console.log(comment);
+        if(comment){
+            setComments([...comments,comment]);
+            setComment("");
+            console.log(comments);
+        }
+    }
+    const handleCancelComment=()=>{
+        setComment("");
+    }
+
+    return (
+       <div className="text-[14px] flex flex-col gap-2">
+        <div className="flex justify-start m-2 gap-5">
+            <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white  text-center p-1.5">
+               <span className="">CB</span>
+            </div>
+            <textarea value={comment} onChange={(e) => setComment(e.target.value)} className="w-[95%] h-[70px] bg-[#F2F4F4] p-2 border-2 b-[#DFDFDF]" placeholder="Add comment here. Type @ to mentions users. Type # to mention tags"></textarea>
+        </div>
+        <div className="flex justify-end">
+            <button type="submit" className="bg-red text-white h-[30px] px-3 cursor-pointer p-1 mr-2" onClick={handleAddComment}>Add Comment</button>
+            <button className="border-2 border-[#C72030] h-[30px] cursor-pointer p-1 px-3" onClick={handleCancelComment}>Cancel</button>
+        </div>
+        {comments.map((comment)=>{
+            
+        return(
+        <div className="relative flex justify-start m-2 gap-5">
+            <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white  text-center p-1.5">
+               <span className="">CB</span>
+            </div>
+            <div className="flex flex-col gap-2 w-full border-b-[2px] pb-3 border-[rgba(190, 190, 190, 1)]">
+                <h1 className="font-bold">Chetan Bafna</h1>
+                <span>{comment}</span>
+                <div className="flex gap-2 text-[10px]">
+                    <span>DD/MM/YYYY HH:MM</span>
+                    <span>Edit</span>
+                    <span>Delete</span>
+                </div>  
+            </div>
+        </div>
+        );
+        })}
+        </div>
+    )
+}
+
+const Attachments=()=>{
+    return(
+    <div className="flex justify-start flex-col gap-3 p-5 text-[14px] mt-2">
+       <span>No Documents Attahced</span>
+       <span className="text-[#C2C2C2]">Drop or attach relevant documents here</span>
+       <button className="bg-[#C72030] h-[40px] w-[240px] text-white px-5">Attach Files</button>
+    </div>
+    );
 }
 
 
@@ -307,8 +334,8 @@ const TaskDetails = () => {
                                 <div id={3} className="text-[14px] font-[400]  cursor-pointer" onClick={() => { setTab("Comments") }}>Comments</div>}
 
                             {tab == "Attachments" ?
-                                <div id={4} className="text-[14px] font-[400] selected" onClick={() => { setTab("Attachments") }}>Issues</div> :
-                                <div id={4} className="text-[14px] font-[400]  cursor-pointer" onClick={() => { setTab("Attachments") }}>Issues</div>}
+                                <div id={4} className="text-[14px] font-[400] selected" onClick={() => { setTab("Attachments") }}>Attachments</div> :
+                                <div id={4} className="text-[14px] font-[400]  cursor-pointer" onClick={() => { setTab("Attachments") }}>Attachments</div>}
 
                             {tab == "Activity Log" ?
                                 <div id={5} className="text-[14px] font-[400] selected" onClick={() => { setTab("Activity Log") }}>Activity Log</div> :
@@ -322,9 +349,9 @@ const TaskDetails = () => {
 
                     <div>
                         {tab == "Subtasks" && <SubtaskTable />}
-                        {tab == "Documents" && <Documents />}
-                        {tab == "Status" && <Status />}
-                        {tab == "Issues" && <Issues />}
+                        {tab == "Comments" && <Comments />}
+                        {tab == "Attachments" && <Attachments />}
+                        {tab == "Activity Log" && <Status />}
 
                     </div>
                 </div>
