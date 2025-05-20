@@ -1,8 +1,8 @@
-import { Calendar1, ChevronLeft, ChevronRight, CircleCheckBig, File, FlagTriangleRight, GanttChartSquare, Globe, Home, MessageSquareText, Milestone, Settings, Timer } from "lucide-react";
-import { useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, CircleCheckBig, File, FlagTriangleRight, GanttChartSquare, Home, MessageSquareText, Milestone } from "lucide-react";
+import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
     const sidebarRef = useRef(null);

@@ -5,7 +5,6 @@ const SideBar = () => {
     const [openSections, setOpenSections] = useState({
         dms: true,
         groups: true,
-
     });
 
     const toggleSection = (section) => {
@@ -16,7 +15,7 @@ const SideBar = () => {
     };
 
     return (
-        <div className="w-64 h-full border-r shadow-sm p-4 space-y-6">         
+        <div className="w-64 h-full border-r shadow-sm p-4 space-y-6">
             <button className="bg-[#C72030] text-white w-full py-3 flex items-center justify-center rounded-sm font-normal hover:bg-red-800">
                 <Plus size={12} className="mr-2 text-xs" />
                 <span className="font-normal text-xs">New Chat</span>

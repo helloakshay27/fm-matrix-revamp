@@ -3,16 +3,14 @@ import gsap from "gsap";
 import {
     ChevronDown,
     ChevronDownCircle,
-    Delete,
     MoreHorizontal,
 } from "lucide-react";
-import { useRef, useState, useMemo, useEffect } from "react";
+import { useRef, useState } from "react";
 import SourceIcon from "@mui/icons-material/Source";
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
-import SubtaskTable from "../components/Task/Modals/subtaskTable";
-import DependancyKanban from "../components/DependancyKanban";
-
+import SubtaskTable from "../../components/Task/Modals/subtaskTable";
+import DependancyKanban from "../../components/DependancyKanban";
 
 const Status = () => {
     return (

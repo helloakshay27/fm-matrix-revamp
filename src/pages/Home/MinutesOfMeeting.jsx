@@ -1,9 +1,9 @@
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { useRef, useState } from "react";
-import { momTabs } from "../data/Data";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { momTabs } from "../../data/Data";
 
 const MinutesOfMeeting = () => {
     const navigate = useNavigate();

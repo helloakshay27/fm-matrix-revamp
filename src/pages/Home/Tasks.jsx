@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { tabs, tasks } from '../data/Data.js'
+import { tabs, tasks } from '../../data/Data.js'
 import { useRef } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-import TaskActions from '../components/TaskActions.jsx';
-import BoardsSection from '../components/BoardsSection.jsx';
-import TasksList from '../components/TasksList.jsx';
+import TaskActions from '../../components/TaskActions.jsx';
+import BoardsSection from '../../components/BoardsSection.jsx';
+import TasksList from '../../components/TasksList.jsx';
 
 const Tasks = ({ setIsSidebarOpen }) => {
     const [activeTab, setActiveTab] = useState(tabs[0].id);

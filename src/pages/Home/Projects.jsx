@@ -1,11 +1,11 @@
 import { useRef, useState } from "react";
-import EditProjectModal from "../components/EditProjectModal";
-import TaskActions from "../components/TaskActions";
-import ProjectList from "../components/ProjectList";
-import BoardsSection from "../components/BoardsSection";
-import { projects, tabs } from "../data/Data";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import { projects, tabs } from "../../data/Data";
+import TaskActions from "../../components/TaskActions";
+import ProjectList from "../../components/ProjectList";
+import BoardsSection from "../../components/BoardsSection";
+import EditProjectModal from "../../components/EditProjectModal";
 
 const tasks = [
     {
@@ -113,7 +113,7 @@ const Projects = ({ setIsSidebarOpen }) => {
                     />
                 )
             }
-                 
+
         </div>
     )
 }
