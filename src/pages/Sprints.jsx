@@ -42,7 +42,29 @@ const Sprints = () => {
                 addType={"Sprint"}
             />
 
-            <hr className="border border-[#E95420]" />
+            <hr className="border border-gray-200" />
+
+            <div className="flex items-center justify-between mx-4 mt-3 mb-2 gap-2">
+                <select className="border border-gray-300 rounded-none p-2 text-[14px] w-full">
+                    <option value="Kanban">Kanban</option>
+                    <option value="Table">Table</option>
+                </select>
+                <select className="border border-gray-300 rounded-none p-2 text-[14px] w-full">
+                    <option value="All">All</option>
+                    <option value="Active">Active</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Upcoming">Upcoming</option>
+                </select>
+                <select className="border border-gray-300 rounded-none p-2 text-[14px] w-full">
+                    <option value="All">All</option>
+                    <option value="Active">Active</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Upcoming">Upcoming</option>
+                </select>
+                <button className="bg-[#C72030] text-white rounded-none p-2 text-[14px] w-[30rem]">
+                    Search
+                </button>
+            </div>
 
             {
                 selectedType === 'Kanban' ? <SprintBoardSection /> : <SprintsTable />
