@@ -6,11 +6,12 @@ import {
     Delete,
     MoreHorizontal,
 } from "lucide-react";
-import { useRef, useState ,useMemo,useEffect} from "react";
+import { useRef, useState, useMemo, useEffect } from "react";
 import SourceIcon from "@mui/icons-material/Source";
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import SubtaskTable from "../components/Task/Modals/subtaskTable";
+import DependancyKanban from "../components/DependancyKanban";
 
 
 const Status = () => {
@@ -21,7 +22,7 @@ const Status = () => {
                     <span><i>Chetan Bafna <span className="text-[#C72030]">added</span> task</i></span>
                     <span><i>01 Jan 2025 09:30 AM</i></span>
                 </div>
-                
+
                 <div>
                     <h1 className="text-[12px] text-center  w-[200px]">1 hr 23 mins 10 sec</h1>
                     <img src="/arrow.png" alt="arrow" />
@@ -48,64 +49,64 @@ const Documents = () => {
     )
 }
 
-const Comments=()=>{
-    const[comments,setComments]=useState([]);
+const Comments = () => {
+    const [comments, setComments] = useState([]);
     const [comment, setComment] = useState("");
 
-    const handleAddComment=()=>{
+    const handleAddComment = () => {
         console.log(comment);
-        if(comment){
-            setComments([...comments,comment]);
+        if (comment) {
+            setComments([...comments, comment]);
             setComment("");
             console.log(comments);
         }
     }
-    const handleCancelComment=()=>{
+    const handleCancelComment = () => {
         setComment("");
     }
 
     return (
-       <div className="text-[14px] flex flex-col gap-2">
-        <div className="flex justify-start m-2 gap-5">
-            <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white  text-center p-1.5">
-               <span className="">CB</span>
+        <div className="text-[14px] flex flex-col gap-2">
+            <div className="flex justify-start m-2 gap-5">
+                <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white  text-center p-1.5">
+                    <span className="">CB</span>
+                </div>
+                <textarea value={comment} onChange={(e) => setComment(e.target.value)} className="w-[95%] h-[70px] bg-[#F2F4F4] p-2 border-2 b-[#DFDFDF]" placeholder="Add comment here. Type @ to mentions users. Type # to mention tags"></textarea>
             </div>
-            <textarea value={comment} onChange={(e) => setComment(e.target.value)} className="w-[95%] h-[70px] bg-[#F2F4F4] p-2 border-2 b-[#DFDFDF]" placeholder="Add comment here. Type @ to mentions users. Type # to mention tags"></textarea>
-        </div>
-        <div className="flex justify-end">
-            <button type="submit" className="bg-red text-white h-[30px] px-3 cursor-pointer p-1 mr-2" onClick={handleAddComment}>Add Comment</button>
-            <button className="border-2 border-[#C72030] h-[30px] cursor-pointer p-1 px-3" onClick={handleCancelComment}>Cancel</button>
-        </div>
-        {comments.map((comment)=>{
-            
-        return(
-        <div className="relative flex justify-start m-2 gap-5">
-            <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white  text-center p-1.5">
-               <span className="">CB</span>
+            <div className="flex justify-end">
+                <button type="submit" className="bg-red text-white h-[30px] px-3 cursor-pointer p-1 mr-2" onClick={handleAddComment}>Add Comment</button>
+                <button className="border-2 border-[#C72030] h-[30px] cursor-pointer p-1 px-3" onClick={handleCancelComment}>Cancel</button>
             </div>
-            <div className="flex flex-col gap-2 w-full border-b-[2px] pb-3 border-[rgba(190, 190, 190, 1)]">
-                <h1 className="font-bold">Chetan Bafna</h1>
-                <span>{comment}</span>
-                <div className="flex gap-2 text-[10px]">
-                    <span>DD/MM/YYYY HH:MM</span>
-                    <span>Edit</span>
-                    <span>Delete</span>
-                </div>  
-            </div>
-        </div>
-        );
-        })}
+            {comments.map((comment) => {
+
+                return (
+                    <div className="relative flex justify-start m-2 gap-5">
+                        <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white  text-center p-1.5">
+                            <span className="">CB</span>
+                        </div>
+                        <div className="flex flex-col gap-2 w-full border-b-[2px] pb-3 border-[rgba(190, 190, 190, 1)]">
+                            <h1 className="font-bold">Chetan Bafna</h1>
+                            <span>{comment}</span>
+                            <div className="flex gap-2 text-[10px]">
+                                <span>DD/MM/YYYY HH:MM</span>
+                                <span>Edit</span>
+                                <span>Delete</span>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })}
         </div>
     )
 }
 
-const Attachments=()=>{
-    return(
-    <div className="flex justify-start flex-col gap-3 p-5 text-[14px] mt-2">
-       <span>No Documents Attahced</span>
-       <span className="text-[#C2C2C2]">Drop or attach relevant documents here</span>
-       <button className="bg-[#C72030] h-[40px] w-[240px] text-white px-5">Attach Files</button>
-    </div>
+const Attachments = () => {
+    return (
+        <div className="flex justify-start flex-col gap-3 p-5 text-[14px] mt-2">
+            <span>No Documents Attahced</span>
+            <span className="text-[#C2C2C2]">Drop or attach relevant documents here</span>
+            <button className="bg-[#C72030] h-[40px] w-[240px] text-white px-5">Attach Files</button>
+        </div>
     );
 }
 
@@ -115,7 +116,7 @@ const TaskDetails = () => {
     const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
     const firstContentRef = useRef(null);
     const secondContentRef = useRef(null);
-    const [tab, setTab] = useState("");
+    const [tab, setTab] = useState("Subtasks");
 
     useGSAP(() => {
         gsap.set(firstContentRef.current, { height: "auto" });
@@ -182,12 +183,12 @@ const TaskDetails = () => {
                         </span>
                         <span className="h-6 w-[1px] border border-gray-300"></span>
                         <span>
-                        <EditOutlinedIcon className="mx-1" sx={{fontSize: "12px"}}/>                       Edit Task
+                            <EditOutlinedIcon className="mx-1" sx={{ fontSize: "12px" }} />                       Edit Task
                         </span>
                         <span className="h-6 w-[1px] border border-gray-300"></span>
 
                         <span>
-                            <DeleteOutlinedIcon className="mx-1" sx={{fontSize: "12px"}}/>
+                            <DeleteOutlinedIcon className="mx-1" sx={{ fontSize: "12px" }} />
                             Delete Task
                         </span>
                     </div>
@@ -248,7 +249,7 @@ const TaskDetails = () => {
                         <span className="border h-[1px] inline-block w-full my-4"></span>
 
                         <div className="flex items-center">
-                             <div className="w-1/2 flex items-center justify-center gap-3">
+                            <div className="w-1/2 flex items-center justify-center gap-3">
                                 <div className="text-right text-[12px] font-[500]">
                                     Start Date :
                                 </div>
@@ -276,15 +277,15 @@ const TaskDetails = () => {
                                     Tags :
                                 </div>
                                 <div className="text-left text-[12px] flex items-start gap 2">
-                                     { ["Newtask","FM Matrix"].map((item)=>{
-                                        return(
-                                          <div className="border-2  border-[#E95420] rounded-full p-2 text-[12px] mx-2">
-                                            {item}
-                                          </div>
+                                    {["Newtask", "FM Matrix"].map((item) => {
+                                        return (
+                                            <div className="border-2  border-[#E95420] rounded-full p-2 text-[12px] mx-2">
+                                                {item}
+                                            </div>
                                         );
-                                      })}
-                                    
-                                    
+                                    })}
+
+
                                 </div>
                             </div>
                         </div>
@@ -298,20 +299,20 @@ const TaskDetails = () => {
                                 </div>
                                 <div className="text-left text-[#029464] text-[12px]">00d : 00h : 30m</div>
                             </div>
-                           <div className="w-1/2 flex items-center justify-center gap-3">
+                            <div className="w-1/2 flex items-center justify-center gap-3">
                                 <div className="text-right text-[12px] font-semibold">
                                     Observer :
                                 </div>
                                 <div className="text-left text-[12px] flex items-start gap 2">
-                                     { ["Chetan Bafna","Mahendra Lungare"].map((item)=>{
-                                        return(
-                                          <div className="border-2  border-[#E95420] rounded-full p-2 text-[12px] mx-2">
-                                            {item}
-                                          </div>
+                                    {["Chetan Bafna", "Mahendra Lungare"].map((item) => {
+                                        return (
+                                            <div className="border-2  border-[#E95420] rounded-full p-2 text-[12px] mx-2">
+                                                {item}
+                                            </div>
                                         );
-                                      })}
-                                    
-                                    
+                                    })}
+
+
                                 </div>
                             </div>
                         </div>
@@ -321,27 +322,18 @@ const TaskDetails = () => {
                 <div>
                     <div className="flex items-center justify-between my-3" >
                         <div className="flex items-center gap-10">
-                            {tab == "Subtask" ?
-                                <div id={1} className="text-[14px] font-[400] selected" onClick={() => { setTab("Subtasks") }}>Subtasks</div> :
-                                <div id={1} className="text-[14px] font-[400] cursor-pointer" onClick={() => { setTab("Subtasks") }}>Subtasks</div>}
-
-                            {tab == "Dependency" ?
-                                <div id={2} className="text-[14px] font-[400] selected" onClick={() => { setTab("Dependency") }}>Dependency</div> :
-                                <div id={2} className="text-[14px] font-[400]  cursor-pointer" onClick={() => { setTab("Dependency") }}>Dependency</div>}
-
-                            {tab == "Comments" ?
-                                <div id={3} className="text-[14px] font-[400] selected" onClick={() => { setTab("Comments") }}>Comments</div> :
-                                <div id={3} className="text-[14px] font-[400]  cursor-pointer" onClick={() => { setTab("Comments") }}>Comments</div>}
-
-                            {tab == "Attachments" ?
-                                <div id={4} className="text-[14px] font-[400] selected" onClick={() => { setTab("Attachments") }}>Attachments</div> :
-                                <div id={4} className="text-[14px] font-[400]  cursor-pointer" onClick={() => { setTab("Attachments") }}>Attachments</div>}
-
-                            {tab == "Activity Log" ?
-                                <div id={5} className="text-[14px] font-[400] selected" onClick={() => { setTab("Activity Log") }}>Activity Log</div> :
-                                <div id={5} className="text-[14px] font-[400]  cursor-pointer" onClick={() => { setTab("Activity Log") }}>Activity Log</div>}
-
-
+                            {
+                                ["Subtasks", "Dependency", "Comments", "Attachments", "Activity Log"].map((tabName, index) => (
+                                    <div
+                                        key={index}
+                                        id={index + 1}
+                                        className={`text-[14px] font-[400] ${tab === tabName ? "selected" : "cursor-pointer"}`}
+                                        onClick={() => setTab(tabName)}
+                                    >
+                                        {tabName}
+                                    </div>
+                                ))
+                            }
                         </div>
 
                     </div>
@@ -349,6 +341,7 @@ const TaskDetails = () => {
 
                     <div>
                         {tab == "Subtasks" && <SubtaskTable />}
+                        {tab == "Dependency" && <DependancyKanban />}
                         {tab == "Comments" && <Comments />}
                         {tab == "Attachments" && <Attachments />}
                         {tab == "Activity Log" && <Status />}

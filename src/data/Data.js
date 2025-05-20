@@ -422,3 +422,39 @@ export const projects = [
         ],
     }
 ];
+
+
+export const dependancyData = [
+     {
+        id: "P1-T1",
+        title: "Share a presentation of inspirations",
+        milestone: "Stakeholders Interviews, Research, Inspira",
+        assignee: "Michael Brown",
+        time: "1 h : 30",
+        section: "List of Tasks",
+    },
+     {
+        id: "P2-T1",
+        title: "Share a presentation of inspirations",
+        milestone: "Stakeholders Interviews, Research, Inspira",
+        assignee: "Michael Brown",
+        time: "1 h : 30",
+        section: "Main Task",
+    },
+     {
+        id: "P3-T1",
+        title: "Share a presentation of inspirations",
+        milestone: "Stakeholders Interviews, Research, Inspira",
+        assignee: "Michael Brown",
+        time: "1 h : 30",
+        section: "Successor",
+    },
+     {
+        id: "P4-T1",
+        title: "Share a presentation of inspirations",
+        milestone: "Stakeholders Interviews, Research, Inspira",
+        assignee: "Michael Brown",
+        time: "1 h : 30",
+        section: "Predecessor",
+    },
+]

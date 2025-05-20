@@ -135,7 +135,7 @@ const ProjectDetails = () => {
     const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
     const firstContentRef = useRef(null);
     const secondContentRef = useRef(null);
-    const [tab, setTab] = useState("");
+    const [tab, setTab] = useState("Member");
 
     useGSAP(() => {
         gsap.set(firstContentRef.current, { height: "auto" });
@@ -291,23 +291,18 @@ const ProjectDetails = () => {
                 <div>
                     <div className="flex items-center justify-between my-3" >
                         <div className="flex items-center gap-10">
-                            {tab == "Member" ?
-                                <div id={1} className="text-[14px] font-[400] selected" onClick={() => { setTab("Member") }}>Members</div> :
-                                <div id={1} className="text-[14px] font-[400] cursor-pointer" onClick={() => { setTab("Member") }}>Members</div>}
-
-                            {tab == "Documents" ?
-                                <div id={2} className="text-[14px] font-[400] selected" onClick={() => { setTab("Documents") }}>Documents</div> :
-                                <div id={2} className="text-[14px] font-[400]  cursor-pointer" onClick={() => { setTab("Documents") }}>Documents</div>}
-
-                            {tab == "Status" ?
-                                <div id={3} className="text-[14px] font-[400] selected" onClick={() => { setTab("Status") }}>Status Timelines</div> :
-                                <div id={3} className="text-[14px] font-[400]  cursor-pointer" onClick={() => { setTab("Status") }}>Status Timelines</div>}
-
-                            {tab == "Issues" ?
-                                <div id={4} className="text-[14px] font-[400] selected" onClick={() => { setTab("Issues") }}>Issues</div> :
-                                <div id={4} className="text-[14px] font-[400]  cursor-pointer" onClick={() => { setTab("Issues") }}>Issues</div>}
-
-
+                            {
+                                ["Member", "Documents", "Status", "Issues"].map((item, idx) => (
+                                    <div
+                                        key={item}
+                                        id={idx + 1}
+                                        className={`text-[14px] font-[400] ${tab === item ? "selected" : "cursor-pointer"}`}
+                                        onClick={() => setTab(item)}
+                                    >
+                                        {item}
+                                    </div>
+                                ))
+                            }
                         </div>
 
                     </div>
