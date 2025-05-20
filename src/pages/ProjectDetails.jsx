@@ -7,37 +7,11 @@ import {
 } from "lucide-react";
 import { useRef, useState } from "react";
 import SourceIcon from "@mui/icons-material/Source";
+import IssuesTable from "../components/Issues/Table";
 
 const Issues = () => {
     return (
-        <div className="p-3">
-            <table className="text-[14px] rounded-[0px]  border-[1px]  ">
-                <thead >
-                    <tr>
-                        <th className="bg-white" >Issue ID</th>
-                        <th className="bg-white">Issue Title</th>
-                        <th className="bg-white">Issue Status</th>
-                        <th className="bg-white">Responsible Person</th>
-                        <th className="bg-white">Issue Type</th>
-                        <th className="bg-white">End Date</th>
-                        <th className="bg-white">Priority</th>
-                        <th className="bg-white">Comments</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>Issue 1</td>
-                        <td>Open</td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>Issue 2</td>
-                        <td>Open</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+     <IssuesTable />
     )
 }
 

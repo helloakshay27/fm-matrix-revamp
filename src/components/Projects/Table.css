@@ -82,10 +82,6 @@
   }
   
   /* Example status styling */
-  .status-completed { background-color: green; font-weight: bold; }
-  .status-in-progress { background-color: orange; }
-  .status-planning { background-color: blue; }
-  .status-on-hold { background-color: grey; }
   
   
   .action-icons button {
@@ -146,23 +142,25 @@
   }
   
   .status-display {
-    
     cursor: pointer;
     height:100%;
     width:100%  ;
     user-select: none;
     display:flex;
-    justify-content: center;
+    justify-content: start;
     align-items: center;
     border:none !important;
+    gap:8px;
+    padding:10px;
   }
   
-  .status-display.status-completed { background-color: #28a745; color: white; border-color: #1e7e34;}
-  .status-display.status-in-progress { background-color: #ffc107; color: #212529; border-color: #d39e00;}
-  .status-display.status-planning { background-color: #007bff; color: white; border-color: #0056b3;}
-  .status-display.status-on-hold { background-color: #6c757d; color: white; border-color: #545b62;}
-  .status-display.status-open{ background-color: #C85E68; color: white;}
-  .status-display.status-urgent{background-color:#AA0414; color: white;}
+  .status-completed { background-color: #28a745; color: white; border-color: #1e7e34;}
+  .status-in-progress { background-color: #ffc107; color: #212529; border-color: #d39e00;}
+  .status-planning { background-color: #007bff; color: white; border-color: #0056b3;}
+  .status-on-hold { background-color: #6c757d; color: white; border-color: #545b62;}
+  .status-open{ background-color: #C85E68; color: white;}
+  .status-urgent{background-color:#AA0414; color: white;}
+  .status-bug{background-color:#FFA15E; color: white;}  
   
   .status-dropdown {
     position: absolute;

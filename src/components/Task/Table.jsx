@@ -95,16 +95,16 @@ const EditableTextField = ({ value, onUpdate, rowId, columnId, saveRow, inputRef
   return <input ref={inputRef} type="text" value={localValue} onChange={e => setLocalValue(e.target.value)} onBlur={handleBlur} onKeyDown={handleKeyDown} className=" focus:outline-none w-full h-full p-1 rounded text-sm"/>;
 };
 
-const StatusBadgeAsEditor = ({ value, options, onUpdate, rowId, columnId, saveRow }) => {
-    const handleChange = (changeArg) => {
-      const newValue = (changeArg && typeof changeArg.data !== 'undefined') ? changeArg.data : changeArg;
-      onUpdate(newValue, rowId, columnId);
-    };
-    const handleKeyDown = (event) => {
-      if (event.key === 'Enter') { event.preventDefault(); saveRow(rowId); }
-    };
-    return (<div onKeyDown={handleKeyDown} className="w-full" tabIndex={-1}><StatusBadge status={value} statusOptions={options} onStatusChange={handleChange} /></div>);
-};
+// const StatusBadgeAsEditor = ({ value, options, onUpdate, rowId, columnId, saveRow }) => {
+//     const handleChange = (changeArg) => {
+//       const newValue = (changeArg && typeof changeArg.data !== 'undefined') ? changeArg.data : changeArg;
+//       onUpdate(newValue, rowId, columnId);
+//     };
+//     const handleKeyDown = (event) => {
+//       if (event.key === 'Enter') { event.preventDefault(); saveRow(rowId); }
+//     };
+//     return (<div onKeyDown={handleKeyDown} className="w-full" tabIndex={-1}><StatusBadge status={value} statusOptions={options} onStatusChange={handleChange} /></div>);
+// };
 
 const DateEditor = ({ value, onUpdate, rowId, columnId, saveRow }) => {
   const [date, setDate] = useState(value ? new Date(value).toISOString().split('T')[0] : '');
@@ -235,9 +235,8 @@ const TaskTable = () => {
       },
       {
         accessorKey: 'status', header: 'Status', size: 120,
-        cell: ({ row, getValue, column, table }) => (row.original.isEditing ?
-          <StatusBadgeAsEditor value={getValue()} options={globalStatusOptions} onUpdate={table.options.meta?.updateCellData} rowId={row.original.id} columnId={column.id} saveRow={table.options.meta?.handleFinalizeRow}/> :
-          <StatusBadge status={getValue()} statusOptions={globalStatusOptions} />
+        cell: ({ row, getValue, column, table }) => (
+          <StatusBadge status={getValue()} statusOptions={globalStatusOptions}  />
         ),
       },
       {
@@ -261,8 +260,7 @@ const TaskTable = () => {
       },
       {
         accessorKey: 'priority', header: 'Priority', size: 110,
-        cell: ({ row, getValue, column,table }) => (row.original.isEditing ?
-          <StatusBadgeAsEditor value={getValue()} options={globalPriorityOptions} onUpdate={table.options.meta?.updateCellData} rowId={row.original.id} columnId={column.id} saveRow={table.options.meta?.handleFinalizeRow}/> :
+        cell: ({ row, getValue, column,table }) => (
           <StatusBadge status={getValue()} statusOptions={globalPriorityOptions} />
         ),
       },

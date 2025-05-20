@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const StatusBadge = ({ status:initialStatus ,statusOptions, onStatusChange}) => {
+const StatusBadge = ({ status:initialStatus ,statusOptions}) => {
   const [currentStatus, setCurrentStatus] = useState(initialStatus);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   console.log(statusOptions);
@@ -12,7 +12,6 @@ const StatusBadge = ({ status:initialStatus ,statusOptions, onStatusChange}) => 
   const handleStatusSelect = (newStatus) => {
     setCurrentStatus(newStatus);
     setIsDropdownOpen(false);
-    onStatusChange(newStatus);
     // if (onStatusChange) {
     //   onStatusChange(newStatus);
     // }
@@ -27,12 +26,13 @@ const StatusBadge = ({ status:initialStatus ,statusOptions, onStatusChange}) => 
     <div className="status-badge-wrapper">
       <div
         onClick={toggleDropdown}
-        className={`status-display status-${currentStatus.toLowerCase().replace(' ', '-')}`}
+        className="status-display"
         role="button"
         tabIndex={0}
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleDropdown()}
       >
-        {currentStatus}
+          <span className={`status-${currentStatus.toLowerCase().replace(' ', '-')} rounded-full w-[5px] h-[5px]`} ></span>
+          <span >{currentStatus}</span>
       </div>
 
       {isDropdownOpen && (

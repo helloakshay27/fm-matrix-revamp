@@ -7,8 +7,11 @@ import {
 } from '@tanstack/react-table';
 
 import './Table.css';
+import StatusBadge from '../Projects/statusBadge';
 
 
+const globalPriorityOptions=['None', 'Low', 'Medium', 'High', 'Urgent'];
+const globalStatusOptions = ['Open', 'In Progress', 'Completed', 'On Hold'];
 
 
 const defaultData = [
@@ -95,7 +98,9 @@ const SprintsTable = () => {
         accessorKey: 'Status',
         header: 'Status',
         size: 150,
-        
+        cell: ({ row, getValue, column,table }) => (
+          <StatusBadge status={getValue()} statusOptions={globalStatusOptions} />
+        ),
       },
       {
         accessorKey: 'Sprint Owner',
@@ -121,6 +126,9 @@ const SprintsTable = () => {
         accessorKey: 'Priority',
         header: 'Priority',
         size: 100,
+        cell: ({ row, getValue, column,table }) => (
+          <StatusBadge status={getValue()} statusOptions={globalPriorityOptions} />
+        ),
       },
       {
         accessorKey: 'No Of Projects',
