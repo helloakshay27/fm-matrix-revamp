@@ -134,3 +134,7 @@
 .form-switch .form-check-input {
   width: 3em !important;
 }
+
+svg {
+  z-index: 1;
+}
