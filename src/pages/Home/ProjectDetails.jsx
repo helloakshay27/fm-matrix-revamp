@@ -63,28 +63,6 @@ const Status = () => {
                 <div>
                     <button className="bg-[#D6D6D6] py-1 px-4 rounded-[30px] w-[140px] h-[30px] text-[12px] text-[#000000]">Yet to Complete</button>
                 </div>
-                <div>
-                    <h1 className="text-[12px] text-center  w-[200px]">1 hr 23 mins 10 sec</h1>
-                    <img src="/arrow.png" alt="arrow" />
-                </div>
-                <div>
-                    <button className="bg-[#D6D6D6] py-1 px-4 rounded-[30px] w-[140px] h-[30px] text-[12px] text-[#000000]">Yet to Complete</button>
-                </div>
-
-                <div>
-                    <h1 className="text-[12px] text-center  w-[200px]">1 hr 23 mins 10 sec</h1>
-                    <img src="/arrow.png" alt="arrow" />
-                </div>
-                <div>
-                    <button className="bg-[#D6D6D6] py-1 px-4 rounded-[30px] w-[140px] h-[30px] text-[12px] text-[#000000]">Yet to Complete</button>
-                </div>
-                <div>
-                    <h1 className="text-[12px] text-center  w-[200px]">1 hr 23 mins 10 sec</h1>
-                    <img src="/arrow.png" alt="arrow" />
-                </div>
-                <div>
-                    <button className="bg-[#D6D6D6] py-1 px-4 rounded-[30px] w-[140px] h-[30px] text-[12px] text-[#000000]">Yet to Complete</button>
-                </div>
             </div>
         </div>
     );

@@ -36,12 +36,12 @@ const ProgressBar = ({ progressString }) => {
   const isValidPercentage = !isNaN(numericValue) && numericValue >= 0 && numericValue <= 100;
 
   return (
-   <div className="progress-bar-container">
+    <div className="progress-bar-container">
       <div className="progress-bar">
         <div className="progress-bar-fill" style={{ width: `${isValidPercentage ? numericValue : 0}%` }}></div>
         <div className="progress-bar-label">{isValidPercentage ? `${numericValue}%` : 'Invalid Percentage'}</div>
       </div>
-   </div>
+    </div>
   );
 };
 
@@ -102,9 +102,10 @@ const defaultData = [
 
 const ProjectTable = () => {
   const [data, setData] = useState(defaultData);
+  const fixedRowsPerPage = 10; // This table was already using 10 as pageSize.
   const [pagination, setPagination] = useState({
     pageIndex: 0,
-    pageSize: 10,
+    pageSize: fixedRowsPerPage,
   });
 
   const columns = useMemo(
@@ -212,9 +213,22 @@ const ProjectTable = () => {
     getPaginationRowModel: getPaginationRowModel(),
   });
 
+  const pageRows = table.getRowModel().rows;
+  const numDataRowsOnPage = pageRows.length;
+  const numEmptyRowsToAdd = Math.max(0, fixedRowsPerPage - numDataRowsOnPage);
+
+  const rowHeight = 60; // Adjusted based on your py-4 padding
+  const headerHeight = 48; // from px-3 py-3.5
+
+  const desiredTableHeight = (fixedRowsPerPage * rowHeight) + headerHeight;
+
+
   return (
     <div className="project-table-container text-[14px] font-light">
-      <div className="table-wrapper overflow-x-auto">
+      <div
+        className="table-wrapper overflow-x-auto"
+        style={{ height: `${desiredTableHeight}px` }}
+      >
         <table className="w-full">
           <thead>
             {table.getHeaderGroups().map(headerGroup => (
@@ -239,9 +253,9 @@ const ProjectTable = () => {
               </tr>
             ))}
           </thead>
-          <tbody>
-            {table.getRowModel().rows.map(row => (
-              <tr key={row.id} className="hover:bg-gray-50 even:bg-[#D5DBDB4D]">
+          <tbody className="divide-y" style={{ height: `${fixedRowsPerPage * rowHeight}px` }}>
+            {pageRows.map(row => (
+              <tr key={row.id} className="hover:bg-gray-50 even:bg-[#D5DBDB4D]" style={{ height: `${rowHeight}px` }}>
                 {row.getVisibleCells().map(cell => (
                   <td
                     key={cell.id}
@@ -253,13 +267,23 @@ const ProjectTable = () => {
                 ))}
               </tr>
             ))}
-            {table.getRowModel().rows.length === 0 && (
-              <tr>
-                <td colSpan={columns.length} className="no-data-message text-center py-10 text-gray-500">
-                  No data found.
-                </td>
+            {numEmptyRowsToAdd > 0 && Array.from({ length: numEmptyRowsToAdd }).map((_, index) => (
+              <tr
+                key={`empty-row-${index}`}
+                style={{ height: `${rowHeight}px` }}
+                className="even:bg-[#D5DBDB4D] pointer-events-none"
+              >
+                {table.getAllLeafColumns().map(column => (
+                  <td
+                    key={`empty-cell-${index}-${column.id}`}
+                    style={{ width: column.getSize() }}
+                    className="whitespace-nowrap px-3 py-4 text-transparent"
+                  >
+                    &nbsp;
+                  </td>
+                ))}
               </tr>
-            )}
+            ))}
           </tbody>
         </table>
       </div>

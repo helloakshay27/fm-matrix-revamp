@@ -9,6 +9,7 @@ import { ChevronDownIcon, XMarkIcon } from '@heroicons/react/20/solid';
 
 
 
+
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headlessui/react';
 
 
@@ -176,10 +177,13 @@ const CustomDropdownMultiple = ({ options, value, onSelect, initialSelected }) =
 };
 
 
-const Details=({setTab})=>{
+
+
+const Details=({setTab,setOpenModal})=>{
      const [options, setOptions] = useState(["Option 1", "Option 2", "Option 3"]);
     const[startDate, setStartDate] = useState(new Date());
     const[endDate, setEndDate] = useState(new Date());
+    const [closeModal,setCloseModal] = useState(true);
 
    const handleDuration=()=>{
     if(startDate==null || endDate==null) return;
@@ -192,10 +196,10 @@ const Details=({setTab})=>{
 
   return `${days}:${hours}:${minutes}`;
    }
-    
+    console.log(closeModal);
 
     return (
-        
+        <>
           <form className="pt-2 pb-12 h-full">
                     <div
                         id="addTask"
@@ -269,7 +273,7 @@ const Details=({setTab})=>{
                         </div>
 
                         <div className="relative">
-                            <label  className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer"><i>Create new team</i></label>
+                            <label  className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer" onClick={()=>setOpenModal(true)}><i>Create new team</i></label>
                         </div>
 
                          <div className="flex flex-col relative justify-start gap-4 w-full bottom-0 py-3 bg-white my-10">
@@ -307,7 +311,9 @@ const Details=({setTab})=>{
                     </div>
              </div>
                    
+            
                 </form>
+              </>
            
     )
 }

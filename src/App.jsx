@@ -10,6 +10,8 @@ import MileStoneMain from "./Milestone/MileStoneMain";
 import MinutesOfMeeting from "./pages/Home/MinutesOfMeeting";
 import MoMAdd from "./pages/Home/MoMAdd";
 import Channel from "./components/Channel/Channel";
+import Role from "./pages/Setup/Role";
+import EscalationMatrix from "./pages/Setup/EscalationMatrix";
 
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -29,6 +31,8 @@ const App = () => {
         <Route path="/new-mom" element={<MoMAdd />} />
         <Route path="/channels" element={<Channel />} />
         <Route path="/setup" element={<Navigate to="/setup/roles" />} />
+        <Route path="/setup/roles" element={<Role />} />
+        <Route path="/setup/matrix" element={<EscalationMatrix />} />
       </Routes>
     </Layout>
   )

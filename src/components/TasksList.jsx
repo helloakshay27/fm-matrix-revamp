@@ -153,7 +153,7 @@ const TasksList = () => {
 
     return (
         <div className="m-3">
-            <div className="overflow-x-auto bg-white border">
+            <div className="overflow-x-auto ">
             <TaskTable />
                 
             </div>
