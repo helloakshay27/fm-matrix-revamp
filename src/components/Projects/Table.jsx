@@ -81,9 +81,9 @@ const ProjectTable = () => {
       status: project.status.charAt(0).toUpperCase() + project.status.slice(1),
       type: project.resource_type || "Unknown",
       manager: project.project_members?.[0]?.name || "Unassigned",
-      milestones: "0%",
-      tasks: "0%",
-      issues: "0/0",
+      milestones: "70%",
+      tasks: "90%",
+      issues: "8/10",
       startDate: project.start_date,
       endDate: project.end_date,
       priority:
