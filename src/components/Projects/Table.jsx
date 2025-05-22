@@ -65,6 +65,7 @@ const ProgressBar = ({ progressString }) => {
 };
 
 const ProjectTable = () => {
+  const fixedRowsPerPage = 10;
   const dispatch = useDispatch();
   const {
     fetchProjects: projects,
