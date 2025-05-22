@@ -11,6 +11,7 @@ import { ChevronDownIcon, XMarkIcon } from '@heroicons/react/20/solid';
 const AddProjectModal = ({ isModalOpen, setIsModalOpen }) => {
   const addTaskModalRef = useRef(null);
   const [tab, setTab] = useState("Details");
+  const [openModal, setOpenModal] = useState(false);
 
   useEffect(() => {
     if (!isModalOpen) {
