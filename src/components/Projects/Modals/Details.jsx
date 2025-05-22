@@ -6,7 +6,7 @@ import { createProject } from '../../../redux/slices/projectSlice'
 import { fetchUsers } from '../../../redux/slices/userSlice'
 import { fetchTags } from '../../../redux/slices/tagsSlice'
 
-const Details = ({ setTab }) => {
+const Details = ({ setTab ,setOpenModal,openModal}) => {
   const dispatch = useDispatch();
   const { loading, success, error } = useSelector((state) => state.createProject);
   const { users } = useSelector((state) => state.user);
@@ -218,7 +218,8 @@ const Details = ({ setTab }) => {
         </div>
 
         <div className="relative">
-          <label className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer">
+          <label className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer" onClick={()=>{setOpenModal(true)}
+          }>
             <i>Create new team</i>
           </label>
         </div>
