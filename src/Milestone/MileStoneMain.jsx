@@ -8,7 +8,8 @@ const MileStoneMain = () => {
         <div>
             <MilestoneHeader />
             <MilestoneBody />
-            <DateMilestone/>
+            {/* <DateMilestone/> */}
+            {/* <NodeConnection /> */}
         </div>
     );
 };
