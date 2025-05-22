@@ -36,7 +36,7 @@
 }
 
 #addTask::-webkit-scrollbar-thumb {
-  background: #e95420;
+  background: #c72030;
   border-radius: 5px;
   cursor: pointer;
 }
