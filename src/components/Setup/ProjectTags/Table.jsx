@@ -12,7 +12,6 @@ import {
 
 const ActionIcons = ({ row }) => (
   <div className="action-icons flex justify-between gap-5">
-    <Switch color="danger" />
     <div>
       <EditOutlinedIcon sx={{ fontSize: "20px" }} />
       <button
@@ -26,17 +25,39 @@ const ActionIcons = ({ row }) => (
 );
 
 const defaultData = [
+{
+    name: "FM matrix revamp",
+    type: "Internal",
+    status: false, // false = Inactive, true = Active
+    createdOn: "01/01/2025"
+  },
   {
-    userName: "Rajkumar",
-    organisation: "Panchshil Realty",
-    emailId: "rajkumar.sharma@panchshil.com",
-    role: "Project IT Head",
-    invitationStatus: "Accepted",
+    name: "Project management tool",
+    type: "Internal",
+    status: true,
+    createdOn: "01/01/2025"
+  },
+  {
+    name: "Gophygital",
+    type: "Internal",
+    status: true,
+    createdOn: "01/01/2025"
+  },
+  {
+    name: "Customerapp",
+    type: "Client",
+    status: false,
+    createdOn: "01/01/2025"
+  },
+  {
+    name: "Loyalty management",
+    type: "Internal",
+    status: false,
+    createdOn: "01/01/2025"
   }
-
 ];
 
-const ExternalTable = () => {
+const TagsTable = () => {
   const [data, setData] = useState(defaultData);
   const fixedRowsPerPage = 13;
 
@@ -48,45 +69,39 @@ const ExternalTable = () => {
   const columns = useMemo(
     () => [
       {
-        accessorKey: 'userName',
-        header: 'User Name',
-        size: 250,
+        accessorKey: 'name',
+        header: 'Tag Name',
+        size: 450,
         cell: ({ row, getValue }) => {
           return row.original ? getValue() : null;
         },
       },
-      {
-        accessorKey: 'organisation',
-        header: 'Organisation',
+      
+             {
+        accessorKey: 'type',
+        header: 'Tag Type',
+        size: 150,
+        cell: ({ row, getValue }) => {
+          return row.original ?getValue() : null;
+        },
+      },
+         {
+        accessorKey: 'status',
+        header: 'Status',
+        size: 150,
+        cell: ({ row, getValue }) => {
+          return row.original ? <div className="flex gap-4"><span>Inactive</span><Switch color="danger" checked={getValue()} /><span>Active</span></div>: null;
+        },
+      },
+             {
+        accessorKey: 'createdOn',
+        header: 'CreatedOn',
         size: 150,
         cell: ({ row, getValue }) => {
           return row.original ? getValue() : null;
         },
       },
-      {
-        accessorKey: 'emailId',
-        header: 'Email Id',
-        size: 150,
-        cell: ({ row, getValue }) => {
-          return row.original ? getValue() : null;
-        },
-      },
-      {
-        accessorKey: 'role',
-        header: 'Role',
-        size: 150,
-        cell: ({ row, getValue }) => {
-          return row.original ? getValue() : null;
-        },
-      },
-      {
-        accessorKey: 'invitationStatus',
-        header: 'Invitation Status',
-        size: 150,
-        cell: ({ row, getValue }) => {
-          return row.original ? <span className={`${getValue() === 'Accepted' ? 'text-green-600' : 'text-yellow-600'}`}>{getValue()}</span> : null;
-        },
-      },
+        
       {
         id: 'actions',
         header: 'Actions',
@@ -116,14 +131,14 @@ const ExternalTable = () => {
   const numDataRowsOnPage = pageRows.length;
   const numEmptyRowsToAdd = Math.max(0, fixedRowsPerPage - numDataRowsOnPage);
 
-  const rowHeight = 40;
+  const rowHeight = 40; 
 
-  const headerHeight = 48;
+  const headerHeight = 48; 
   const desiredTableHeight = (fixedRowsPerPage * rowHeight) + headerHeight;
 
 
   return (
-    <div className="project-table-container text-[14px] ">
+    <div className="project-table-container text-[14px] font-light">
       <div
         className="table-wrapper overflow-x-auto"
         style={{ height: `${desiredTableHeight}px` }}
@@ -166,9 +181,12 @@ const ExternalTable = () => {
                     <td
                       key={cell.id}
                       style={{ width: cell.column.getSize() }}
-                      className={`${cell.column.columnDef.meta?.cellClassName || ''
-                        } whitespace-nowrap px-3 py-2 border-r-2
-                        }`}
+                      className={`${
+                        cell.column.columnDef.meta?.cellClassName || ''
+                      } whitespace-nowrap px-3 py-2 border-r-2
+                          
+                      }
+                      }`}
                     >
                       {!isDataRowConsideredEmpty
                         ? flexRender(cell.column.columnDef.cell, cell.getContext())
@@ -241,4 +259,4 @@ const ExternalTable = () => {
   );
 };
 
-export default ExternalTable;
+export default TagsTable;

@@ -93,7 +93,6 @@ const ProjectTable = () => {
 
   const [data, setData] = useState(transformedData);
 
-  console.log(data);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: fixedRowsPerPage,
@@ -106,6 +105,10 @@ const ProjectTable = () => {
   useEffect(() => {
     setData(transformedData);
   }, [transformedData]);
+
+  const rowHeight = 40; // px
+  const headerHeight = 48; // px
+  const desiredTableHeight = fixedRowsPerPage * rowHeight + headerHeight;
 
   const columns = useMemo(
     () => [
@@ -226,26 +229,20 @@ const ProjectTable = () => {
     getPaginationRowModel: getPaginationRowModel(),
   });
 
-  const pageRows = table.getRowModel().rows;
-  const numDataRowsOnPage = pageRows.length;
-  const numEmptyRowsToAdd = Math.max(0, fixedRowsPerPage - numDataRowsOnPage);
-
-  const rowHeight = 60; // Adjusted based on your py-4 padding
-  const headerHeight = 48; // from px-3 py-3.5
-
-  const desiredTableHeight = (fixedRowsPerPage * rowHeight) + headerHeight;
-
-
   return (
-    <div className="project-table-container text-[14px] font-light">
+    <div
+      className="project-table-container text-[14px] font-light"
+      style={{ height: `${desiredTableHeight}px` }}
+    >
       {loading && <div className="text-center py-4">Loading...</div>}
       {error && (
         <div className="text-center py-4 text-red-500">
           Error: {error.message || "Failed to fetch projects"}
         </div>
       )}
+
       <div className="table-wrapper overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full border-collapse">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
@@ -253,8 +250,8 @@ const ProjectTable = () => {
                   <th
                     key={header.id}
                     colSpan={header.colSpan}
-                    style={{ width: header.getSize() }}
-                    className="bg-[#D5DBDB] px-3 py-3.5 text-left text-gray-800"
+                    style={{ width: header.getSize(), height: `${headerHeight}px` }}
+                    className="bg-[#D5DBDB] px-3 py-3.5 text-left text-gray-800 text-center font-[500] border-r-2 border-[#FFFFFF]"  
                   >
                     {header.isPlaceholder ? null : (
                       <div>
@@ -271,13 +268,18 @@ const ProjectTable = () => {
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="hover:bg-gray-50 even:bg-[#D5DBDB4D]">
+              <tr
+                key={row.id}
+                className="hover:bg-gray-50 even:bg-[#D5DBDB4D]"
+                style={{ height: `${rowHeight}px` }}
+              >
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}
                     style={{ width: cell.column.getSize() }}
-                    className={`${cell.column.columnDef.meta?.cellClassName || ""
-                      } whitespace-nowrap px-3 py-4 text-gray-500`}
+                    className={`${
+                      cell.column.columnDef.meta?.cellClassName || ""
+                    } whitespace-nowrap border-r-2`}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
@@ -285,7 +287,7 @@ const ProjectTable = () => {
               </tr>
             ))}
             {table.getRowModel().rows.length === 0 && (
-              <tr>
+              <tr style={{ height: `${rowHeight}px` }}>
                 <td
                   colSpan={columns.length}
                   className="no-data-message text-center py-10 text-gray-500"

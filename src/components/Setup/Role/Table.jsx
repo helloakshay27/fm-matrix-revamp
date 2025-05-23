@@ -106,12 +106,12 @@ const RoleTable = () => {
 
 
   return (
-    <div className="project-table-container text-[14px] font-light">
+    <div className="project-table-container text-[14px] font-light ">
       <div
         className="table-wrapper overflow-x-auto"
         style={{ height: `${desiredTableHeight}px` }}
       >
-        <table className="w-full">
+        <table className="w-[100%]">
           <thead>
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id}>
@@ -120,7 +120,7 @@ const RoleTable = () => {
                     key={header.id}
                     colSpan={header.colSpan}
                     style={{ width: header.getSize() }}
-                    className="bg-[#D5DBDB] px-3 py-3.5 text-left text-gray-800"
+                    className="bg-[#D5DBDB] px-3 py-3.5 text-center font-[500] border-r-2 border-[#FFFFFF]"
                   >
                     {header.isPlaceholder ? null : (
                       <div>
@@ -151,8 +151,7 @@ const RoleTable = () => {
                       style={{ width: cell.column.getSize() }}
                       className={`${
                         cell.column.columnDef.meta?.cellClassName || ''
-                      } whitespace-nowrap px-3 py-2 ${
-                        isDataRowConsideredEmpty ? 'text-transparent' : 'text-gray-500'
+                      } whitespace-nowrap px-3 py-2 border-r-2
                       }`}
                     >
                       {!isDataRowConsideredEmpty
@@ -173,7 +172,7 @@ const RoleTable = () => {
                   <td
                     key={`empty-cell-${index}-${column.id}`}
                     style={{ width: column.getSize() }}
-                    className="whitespace-nowrap px-3 py-2 text-transparent"
+                    className="whitespace-nowrap px-3 py-2 text-transparent border-r-2"
                   >
                     &nbsp;
                   </td>

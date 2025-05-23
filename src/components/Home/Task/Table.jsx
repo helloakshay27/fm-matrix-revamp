@@ -367,7 +367,7 @@ const TaskTable = () => {
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map(header => (
-                  <th key={header.id} style={{width: header.getSize()}} className="border p-2 text-center text-gray-600 font-semibold">
+                  <th key={header.id} style={{width: header.getSize()}} className="border-r-2 p-2 text-center text-gray-600 font-semibold">
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </th>
                 ))}
@@ -383,7 +383,7 @@ const TaskTable = () => {
                     style={{ height: `${ROW_HEIGHT}px` }}
                 >
                   {row.getVisibleCells().map(cell => (
-                    <td key={cell.id} style={{width: cell.column.getSize()}} className={`border text-left p-0 align-middle`}>
+                    <td key={cell.id} style={{width: cell.column.getSize()}} className={`border-r-2 text-left p-0 align-middle`}>
                       <div className="h-full w-full flex items-center px-2">
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </div>
@@ -394,7 +394,7 @@ const TaskTable = () => {
             ))}
             {showTopLevelAddTaskButton && (
                 <tr style={{ height: `${ROW_HEIGHT}px` }}>
-                    <td colSpan={table.getAllColumns().length} className="border p-2 text-left text-[12px]">
+                    <td colSpan={table.getAllColumns().length} className="border text-left text-[12px]">
                         <button 
                             onClick={() => addNewTaskOnClick()} 
                             className="text-red-500 hover:underline text-sm"
@@ -406,7 +406,7 @@ const TaskTable = () => {
             )}
             {Array.from({ length: numEmptyRowsToFill }).map((_, index) => (
                 <tr key={`empty-${index}`} style={{ height: `${ROW_HEIGHT}px` }}>
-                    <td colSpan={table.getAllColumns().length} className="border p-2">&nbsp;</td>
+                    <td colSpan={table.getAllColumns().length} className="border-r-2 p-2">&nbsp;</td>
                 </tr>
             ))}
           </tbody>

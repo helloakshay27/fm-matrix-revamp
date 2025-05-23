@@ -9,6 +9,7 @@ import {
   flexRender,
   getPaginationRowModel,
 } from '@tanstack/react-table';
+import { Link } from 'react-router-dom';
 
 const ActionIcons = ({ row }) => (
   <div className="action-icons flex justify-between gap-5">
@@ -71,7 +72,7 @@ const defaultData = [
 
 ];
 
-const ExternalTable = () => {
+const InternalTable = () => {
   const [data, setData] = useState(defaultData);
   const fixedRowsPerPage = 13;
 
@@ -85,9 +86,9 @@ const ExternalTable = () => {
       {
         accessorKey: 'name',
         header: 'User Name',
-        size: 450,
+        size: 250,
         cell: ({ row, getValue }) => {
-          return row.original ? getValue() : null;
+          return row.original ?<Link to="/setup/internal-users/details" className="text-blue-600 hover:text-blue-800 hover:underline">{getValue()}</Link> : null;
         },
       },
          {
@@ -111,7 +112,7 @@ const ExternalTable = () => {
         header: 'Reports to',
         size: 150,
         cell: ({ row, getValue }) => {
-          return row.original ? <span className={`${getValue() === 'Accepted' ? 'text-green-600' : 'text-yellow-600'}`}>{getValue()}</span> : null;
+          return row.original ? <span>{getValue()}</span> : null;
         },
       },
            {
@@ -119,7 +120,7 @@ const ExternalTable = () => {
         header: 'Associated Projects',
         size: 150,
         cell: ({ row, getValue }) => {
-          return row.original ? <span className={`${getValue() === 'Accepted' ? 'text-green-600' : 'text-yellow-600'}`}>{getValue()}</span> : null;
+          return row.original ? <span >{getValue()}</span> : null;
         },
       },
       {
@@ -158,7 +159,7 @@ const ExternalTable = () => {
 
 
   return (
-    <div className="project-table-container text-[14px] font-light">
+    <div className="project-table-container text-[14px] ">
       <div
         className="table-wrapper overflow-x-auto"
         style={{ height: `${desiredTableHeight}px` }}
@@ -172,7 +173,7 @@ const ExternalTable = () => {
                     key={header.id}
                     colSpan={header.colSpan}
                     style={{ width: header.getSize() }}
-                    className="bg-[#D5DBDB] px-3 py-3.5 text-left text-gray-800"
+                    className="bg-[#D5DBDB] px-3 py-3.5 text-center font-[500] border-r-2 border-[#FFFFFF]"
                   >
                     {header.isPlaceholder ? null : (
                       <div>
@@ -203,8 +204,7 @@ const ExternalTable = () => {
                       style={{ width: cell.column.getSize() }}
                       className={`${
                         cell.column.columnDef.meta?.cellClassName || ''
-                      } whitespace-nowrap px-3 py-2 ${
-                        isDataRowConsideredEmpty ? 'text-transparent' : 'text-gray-500'
+                      } whitespace-nowrap px-3 py-2 border-r-2
                       }`}
                     >
                       {!isDataRowConsideredEmpty
@@ -225,7 +225,7 @@ const ExternalTable = () => {
                   <td
                     key={`empty-cell-${index}-${column.id}`}
                     style={{ width: column.getSize() }}
-                    className="whitespace-nowrap px-3 py-2 text-transparent"
+                    className="whitespace-nowrap px-3 py-2 text-transparent border-r-2"
                   >
                     &nbsp;
                   </td>
@@ -278,4 +278,4 @@ const ExternalTable = () => {
   );
 };
 
-export default ExternalTable;
+export default InternalTable;

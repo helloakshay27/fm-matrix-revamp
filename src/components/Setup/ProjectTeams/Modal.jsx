@@ -6,9 +6,11 @@ import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headless
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import SelectBox from "../../SelectBox";
+import MultiSelectBox from '../../MultiSelectBox';
 
 
-const AddEscalationModal = ({ isModalOpen, setIsModalOpen }) => {
+
+const TeamModal = ({ isModalOpen, setIsModalOpen }) => {
     const addTaskModalRef = useRef(null);
     const [openModal,setOpenModal]=useState(false);
     const [noOfEscalations, setNoOfEscalations] = useState(0);
@@ -53,7 +55,7 @@ const AddEscalationModal = ({ isModalOpen, setIsModalOpen }) => {
                 ref={addTaskModalRef}
                 className="bg-white py-6 rounded-lg shadow-lg w-1/3 relative h-full right-0"
             >
-                <h3 className="text-[14px] font-medium text-center ">Escalation Details</h3>
+                <h3 className="text-[14px] font-medium text-center ">New team</h3>
                 <CloseIcon
                     className="absolute top-[26px] right-8 cursor-pointer"
                     onClick={closeModal}
@@ -63,36 +65,19 @@ const AddEscalationModal = ({ isModalOpen, setIsModalOpen }) => {
 
                 <div className="flex flex-col gap-5 text-[12px] p-4">
                        <div className="flex flex-col gap-2">
-                        <label>Matrix Title <span>*</span></label>
+                        <label>Team Name<span>*</span></label>
                         <input placeholder="Enter Matrix Title" className="w-full border-[0.5px] border-[#C0C0C0] p-2" />
                        </div>
                        <div className="flex flex-col gap-2">
-                        <label>Trigger Event <span>*</span></label>
-                        <input placeholder="Enter Trigger Event" className="w-full border-[0.5px] border-[#C0C0C0] p-2" />
+                        <SelectBox label="Team Lead" placeholder="Select team Lead" options={["Option 1", "Option 2", "Option 3"]}/>
                        </div>
                        <div className="flex flex-col gap-2 w-1/2">
-                        <label>Notification Type<span>*</span></label>
-                         <SelectBox options={["Email","SMS"]} value={"Email"} />
+                        <SelectBox label="Project" placeholder="Select Project" options={["Option 1", "Option 2", "Option 3"]}/>
                        </div>
                        <div className="flex flex-col gap-2">
-                        <label>No Of escalations<span>*</span></label>
-                        <input type="text"  onChange={(e)=>{setNoOfEscalations(e.target.value)}} className="w-1/2 border-[0.5px] border-[#C0C0C0] p-2" placeholder="Enter Number of Escalations" />
+                        <MultiSelectBox label="Team Members" placeholder="Select Team Members" options={["Option 1", "Option 2", "Option 3"]}/>
                        </div>
-                      {noOfEscalations > 0 &&
-  [...Array(Number(noOfEscalations)).keys()].map((id) => (
-    <div key={id} className="flex gap-2 justify-start mb-4">
-      <div className="w-1/2 flex flex-col gap-2">
-        <label>{`Level ${id + 1} escalates to`}<span>*</span></label>
-        <SelectBox options={["Manager", "CEO", "Founder"]} value={"Manager"} />
-      </div>
-      <div className="w-1/2 flex flex-col gap-2">
-        <label>After<span>*</span></label>
-        <input placeholder="Enter Days" className="w-full border-[0.5px] border-[#C0C0C0] p-2" />
-      </div>
-    </div>
-  ))
-}
-
+                
                 </div>
                 <div className="absolute flex justify-center gap-6 bottom-10 left-[30%] ">
                     <button className="bg-[#C72030] text-white px-4 h-[30px] w-[100px]">Save</button>
@@ -104,4 +89,4 @@ const AddEscalationModal = ({ isModalOpen, setIsModalOpen }) => {
       )
 }
 
-export default AddEscalationModal;
+export default TeamModal;

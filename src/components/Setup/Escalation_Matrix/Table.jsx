@@ -123,7 +123,7 @@ const EscalationTable = () => {
 
 
   return (
-    <div className="project-table-container text-[14px] font-light">
+    <div className="project-table-container text-[14px] ">
       <div
         className="table-wrapper overflow-x-auto"
         style={{ height: `${desiredTableHeight}px` }}
@@ -137,7 +137,7 @@ const EscalationTable = () => {
                     key={header.id}
                     colSpan={header.colSpan}
                     style={{ width: header.getSize() }}
-                    className="bg-[#D5DBDB] px-3 py-3.5 text-left text-gray-800"
+                    className="bg-[#D5DBDB] px-3 py-3.5 text-center border-r-2 font-[500] border-[#FFFFFF]"
                   >
                     {header.isPlaceholder ? null : (
                       <div>
@@ -168,9 +168,7 @@ const EscalationTable = () => {
                       style={{ width: cell.column.getSize() }}
                       className={`${
                         cell.column.columnDef.meta?.cellClassName || ''
-                      } whitespace-nowrap px-3 py-2 ${
-                        isDataRowConsideredEmpty ? 'text-transparent' : 'text-gray-500'
-                      }`}
+                      } whitespace-nowrap px-4 py-2 border-r-2`}
                     >
                       {!isDataRowConsideredEmpty
                         ? flexRender(cell.column.columnDef.cell, cell.getContext())
@@ -190,7 +188,7 @@ const EscalationTable = () => {
                   <td
                     key={`empty-cell-${index}-${column.id}`}
                     style={{ width: column.getSize() }}
-                    className="whitespace-nowrap px-3 py-2 text-transparent"
+                    className="whitespace-nowrap px-3 py-2 text-transparent border-r-2"
                   >
                     &nbsp;
                   </td>

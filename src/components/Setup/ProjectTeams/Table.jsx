@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import Switch from '@mui/joy/Switch';
+import { Link } from 'react-router-dom';
 
 import {
   useReactTable,
@@ -12,7 +13,6 @@ import {
 
 const ActionIcons = ({ row }) => (
   <div className="action-icons flex justify-between gap-5">
-    <Switch color="danger" />
     <div>
       <EditOutlinedIcon sx={{ fontSize: "20px" }} />
       <button
@@ -27,16 +27,21 @@ const ActionIcons = ({ row }) => (
 
 const defaultData = [
   {
-    userName: "Rajkumar",
-    organisation: "Panchshil Realty",
-    emailId: "rajkumar.sharma@panchshil.com",
-    role: "Project IT Head",
-    invitationStatus: "Accepted",
-  }
+    name: "Customer app dev",
+    lead: "Mahendra Lungare",
+    associatedProjects: 3,
+    TeamMember: 7,
+  },
+  {
+    name: "Customer app support",
+    lead: "Abdul",
+    associatedProjects: 5,
+    TeamMember: 6,
+  },
 
 ];
 
-const ExternalTable = () => {
+const TeamsTable = () => {
   const [data, setData] = useState(defaultData);
   const fixedRowsPerPage = 13;
 
@@ -48,45 +53,37 @@ const ExternalTable = () => {
   const columns = useMemo(
     () => [
       {
-        accessorKey: 'userName',
-        header: 'User Name',
-        size: 250,
+        accessorKey: 'name',
+        header: 'Team name',
+        size: 350,
         cell: ({ row, getValue }) => {
-          return row.original ? getValue() : null;
+          return row.original ?<Link to="/setup/project-teams/details" className='text-blue-600 hover:text-blue-800 hover:underline'>{getValue()}</Link> : null;
         },
       },
-      {
-        accessorKey: 'organisation',
-        header: 'Organisation',
+         {
+        accessorKey: 'lead',
+        header: 'Team Lead',
         size: 150,
         cell: ({ row, getValue }) => {
           return row.original ? getValue() : null;
         },
       },
-      {
-        accessorKey: 'emailId',
-        header: 'Email Id',
+             {
+        accessorKey: 'associatedProjects',
+        header: 'Associated Projects',
         size: 150,
         cell: ({ row, getValue }) => {
-          return row.original ? getValue() : null;
+          return row.original ? <span className="ml-2">{getValue()}</span> : null;
         },
       },
-      {
-        accessorKey: 'role',
-        header: 'Role',
+             {
+        accessorKey: 'TeamMember',
+        header: ()=>{return <>Team Members(<i>TL+Memebers</i>) </>},
         size: 150,
         cell: ({ row, getValue }) => {
-          return row.original ? getValue() : null;
+          return row.original ? <span>{getValue()}</span> : null;
         },
-      },
-      {
-        accessorKey: 'invitationStatus',
-        header: 'Invitation Status',
-        size: 150,
-        cell: ({ row, getValue }) => {
-          return row.original ? <span className={`${getValue() === 'Accepted' ? 'text-green-600' : 'text-yellow-600'}`}>{getValue()}</span> : null;
-        },
-      },
+      },    
       {
         id: 'actions',
         header: 'Actions',
@@ -116,14 +113,14 @@ const ExternalTable = () => {
   const numDataRowsOnPage = pageRows.length;
   const numEmptyRowsToAdd = Math.max(0, fixedRowsPerPage - numDataRowsOnPage);
 
-  const rowHeight = 40;
+  const rowHeight = 40; 
 
-  const headerHeight = 48;
+  const headerHeight = 48; 
   const desiredTableHeight = (fixedRowsPerPage * rowHeight) + headerHeight;
 
 
   return (
-    <div className="project-table-container text-[14px] ">
+    <div className="project-table-container text-[14px] font-light">
       <div
         className="table-wrapper overflow-x-auto"
         style={{ height: `${desiredTableHeight}px` }}
@@ -137,7 +134,7 @@ const ExternalTable = () => {
                     key={header.id}
                     colSpan={header.colSpan}
                     style={{ width: header.getSize() }}
-                    className="bg-[#D5DBDB] px-3 py-3.5 text-center font-[500] border-r-2 border-[#FFFFFF]"
+                    className="bg-[#D5DBDB] px-3 py-3.5 text-center font-[500] border-r-2 border-[#FFFFFF66]"
                   >
                     {header.isPlaceholder ? null : (
                       <div>
@@ -166,9 +163,10 @@ const ExternalTable = () => {
                     <td
                       key={cell.id}
                       style={{ width: cell.column.getSize() }}
-                      className={`${cell.column.columnDef.meta?.cellClassName || ''
-                        } whitespace-nowrap px-3 py-2 border-r-2
-                        }`}
+                      className={`${
+                        cell.column.columnDef.meta?.cellClassName || ''
+                      } whitespace-nowrap px-3 py-2 border-r-2
+                      }`}
                     >
                       {!isDataRowConsideredEmpty
                         ? flexRender(cell.column.columnDef.cell, cell.getContext())
@@ -241,4 +239,4 @@ const ExternalTable = () => {
   );
 };
 
-export default ExternalTable;
+export default TeamsTable;
