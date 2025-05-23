@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { dependancyData } from "../data/Data"
-import DependancyBoardCard from "./DependancyBoardCard";
-import DependancyKanbanBoard from "./DependancyKanbanBoard"
+import { dependancyData } from "../../data/Data"
+import DependancyBoardCard from "../Home/DependancyBoardCard";
+import DependancyKanbanBoard from "../Home/DependancyKanbanBoard"
 
 const DependancyKanban = () => {
     const [taskData, setTaskData] = useState(dependancyData);

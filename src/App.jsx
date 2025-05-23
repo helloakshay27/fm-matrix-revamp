@@ -9,7 +9,7 @@ import Sprints from "./pages/Home/Sprints";
 import MileStoneMain from "./Milestone/MileStoneMain";
 import MinutesOfMeeting from "./pages/Home/MinutesOfMeeting";
 import MoMAdd from "./pages/Home/MoMAdd";
-import Channel from "./components/Channel/Channel";
+import Channel from "./components/Home/Channel/Channel";
 import Role from "./pages/Setup/Role";
 import EscalationMatrix from "./pages/Setup/EscalationMatrix";
 

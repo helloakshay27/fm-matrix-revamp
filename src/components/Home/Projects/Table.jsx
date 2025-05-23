@@ -11,7 +11,7 @@ import {
   getPaginationRowModel,
 } from "@tanstack/react-table";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchProjects } from "../../redux/slices/projectSlice";
+import { fetchProjects } from "../../../redux/slices/projectSlice";
 import StatusBadge from "./statusBadge";
 import "./Table.css";
 

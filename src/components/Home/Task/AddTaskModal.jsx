@@ -2,9 +2,9 @@ import { useGSAP } from "@gsap/react";
 import { useRef, useEffect } from "react";
 import { X } from "lucide-react";
 import gsap from "gsap";
-import Milestones from "../components/Home/Projects/Modals/Milestone";
+import Tasks from "./Modals/task";
 
-const AddMilestoneModal = ({ isModalOpen, setIsModalOpen }) => {
+const AddTaskModal = ({ isModalOpen, setIsModalOpen }) => {
     const addTaskModalRef = useRef(null);
 
     useEffect(() => {
@@ -38,7 +38,6 @@ const AddMilestoneModal = ({ isModalOpen, setIsModalOpen }) => {
 
         localStorage.setItem("tasks", JSON.stringify(updatedTasks));
 
-        reset();
         setIsModalOpen(false);
     };
 
@@ -48,17 +47,18 @@ const AddMilestoneModal = ({ isModalOpen, setIsModalOpen }) => {
                 ref={addTaskModalRef}
                 className="bg-white py-6 rounded-lg shadow-lg w-1/3 relative h-full right-0"
             >
-                <h3 className="text-[14px] font-medium text-center">Add Milestone</h3>
+                <h3 className="text-lg font-medium text-center">New Task</h3>
                 <X
                     className="absolute top-[26px] right-8 cursor-pointer"
                     onClick={closeModal}
                 />
 
                 <hr className="border border-[#E95420] my-4" />
-                <Milestones />
+
+                <Tasks />
             </div>
         </div>
     );
 };
 
-export default AddMilestoneModal;
+export default AddTaskModal;

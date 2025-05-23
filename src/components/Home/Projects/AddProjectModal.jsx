@@ -2,51 +2,51 @@ import { useGSAP } from "@gsap/react";
 import { useRef, useEffect, useState } from "react";
 import { X } from "lucide-react";
 import gsap from "gsap";
-import Details from "./Projects/Modals/Details.jsx";
-import Milestones from "./Projects/Modals/Milestone.jsx";
+import Details from "./Modals/Details.jsx";
+import Milestones from "./Modals/Milestone.jsx";
 import CloseIcon from '@mui/icons-material/Close';
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headlessui/react';
 import { ChevronDownIcon, XMarkIcon } from '@heroicons/react/20/solid';
 
-const CreateNewTeam=({openModal,setOpenModal})=>{
-      return(
-        <div className=" w-[560px] h-[280px] bg-white absolute top-[40%] left-[45%]  translate-x-[-50%] translate-y-[-50%] border-[0.5px] border-[#C0C0C0] p-4  shadow-md z-50">
-          <span className="bg-[#C72030] text-white px-3 py-1  absolute top-[-12px] left-[20%] text-sm">
-            New Team
-          </span>
+const CreateNewTeam = ({ openModal, setOpenModal }) => {
+  return (
+    <div className=" w-[560px] h-[280px] bg-white absolute top-[40%] left-[45%]  translate-x-[-50%] translate-y-[-50%] border-[0.5px] border-[#C0C0C0] p-4  shadow-md z-50">
+      <span className="bg-[#C72030] text-white px-3 py-1  absolute top-[-12px] left-[20%] text-sm">
+        New Team
+      </span>
 
-          <div className="h-full flex flex-col gap-5 justify-between">
-            <div className="flex justify-end">
-              <CloseIcon
-                className="cursor-pointer"
-                onClick={() => setOpenModal(false)}
-              />
-            </div>
-
-            <input
-              placeholder="Enter Team Title"
-              className="border-[0.5px] border-[#C0C0C0] p-2  text-sm"
-            />
-            <input
-              placeholder="Select Team Members"
-              className="border-[0.5px] border-[#C0C0C0] p-2  text-sm"
-            />
-            
-
-            <div className="flex justify-center gap-3 mt-2 bg-[]">
-              <button className="bg-[#C72030] h-[28px] cursor-pointer text-white px-4  ">
-                Save
-              </button>
-              <button
-                className="border-2 border-[#C72030] h-[28px] cursor-pointer text-[#C72030] px-4  "
-               onClick={()=>setOpenModal(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+      <div className="h-full flex flex-col gap-5 justify-between">
+        <div className="flex justify-end">
+          <CloseIcon
+            className="cursor-pointer"
+            onClick={() => setOpenModal(false)}
+          />
         </div>
-      )
+
+        <input
+          placeholder="Enter Team Title"
+          className="border-[0.5px] border-[#C0C0C0] p-2  text-sm"
+        />
+        <input
+          placeholder="Select Team Members"
+          className="border-[0.5px] border-[#C0C0C0] p-2  text-sm"
+        />
+
+
+        <div className="flex justify-center gap-3 mt-2 bg-[]">
+          <button className="bg-[#C72030] h-[28px] cursor-pointer text-white px-4  ">
+            Save
+          </button>
+          <button
+            className="border-2 border-[#C72030] h-[28px] cursor-pointer text-[#C72030] px-4  "
+            onClick={() => setOpenModal(false)}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 const AddProjectModal = ({ isModalOpen, setIsModalOpen }) => {

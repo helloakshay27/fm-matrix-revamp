@@ -10,10 +10,10 @@ import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import { set } from "react-hook-form";
-import WeekProgressPicker from "../../../Milestone/weekProgressPicker";
+import WeekProgressPicker from "../../../../Milestone/weekProgressPicker";
 
 
-const CustomDropdown = ({ options, value}) => {
+const CustomDropdown = ({ options, value }) => {
   const [selectedOption, setSelectedOption] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -60,8 +60,7 @@ const CustomDropdown = ({ options, value}) => {
               <React.Fragment key={index}>
                 <ListboxOption
                   className={({ active }) =>
-                    `relative cursor-default select-none py-2 pl-3 pr-4 text-[12px] ${
-                      active ? 'bg-red-600 text-white' : 'text-gray-900'
+                    `relative cursor-default select-none py-2 pl-3 pr-4 text-[12px] ${active ? 'bg-red-600 text-white' : 'text-gray-900'
                     }`
                   }
                   value={option}
@@ -151,9 +150,8 @@ const CustomDropdownMultiple = ({ options, value, onSelect, initialSelected }) =
               <Fragment key={option}>
                 <ListboxOption
                   className={({ active, selected }) =>
-                    `relative cursor-default select-none py-2 pl-3 pr-4 text-[12px] ${
-                      active ? 'bg-red-600 text-white' : 'text-gray-900'
-                    } ${selected ?  ' border-1 border-red-400 font-semibold' : 'font-normal'}`
+                    `relative cursor-default select-none py-2 pl-3 pr-4 text-[12px] ${active ? 'bg-red-600 text-white' : 'text-gray-900'
+                    } ${selected ? ' border-1 border-red-400 font-semibold' : 'font-normal'}`
                   }
                   value={option}
                 >

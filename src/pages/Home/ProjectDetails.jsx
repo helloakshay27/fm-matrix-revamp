@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { useRef, useState } from "react";
 import SourceIcon from "@mui/icons-material/Source";
-import IssuesTable from "../../components/Issues/Table";
+import IssuesTable from "../../components/Home/Issues/Table";
 
 const Issues = () => {
     return (

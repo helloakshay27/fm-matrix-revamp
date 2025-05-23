@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { ArrowLeft, Edit3, Trash2 } from "lucide-react";
-import TaskActions from "../../components/TaskActions";
-import SprintBoardSection from "../../components/Sprints/SprintBoardSection";
-import SprintsTable from "../../components/Sprints/Table";
+import TaskActions from "../../components/Home/TaskActions";
+import SprintBoardSection from "../../components/Home/Sprints/SprintBoardSection";
+import SprintsTable from "../../components/Home/Sprints/Table";
 
 const Sprints = () => {
     const [selectedType, setSelectedType] = useState("Kanban");

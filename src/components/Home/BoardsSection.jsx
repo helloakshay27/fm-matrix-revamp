@@ -1,10 +1,10 @@
 import { useState } from "react";
 import Boards from "./Boards";
-import TaskCard from "./TaskCard";
-import ProjectCard from "./ProjectCard";
+import TaskCard from "./Task/TaskCard";
+import ProjectCard from "./Projects/ProjectCard";
 import Xarrow from "react-xarrows";
-import { cardsTitle, projects as initialProjects } from "../data/Data";
-import TaskSubCard from "./TaskSubCard";
+import { cardsTitle, projects as initialProjects } from "../../data/Data";
+import TaskSubCard from "./Task/TaskSubCard";
 
 const BoardsSection = ({ tasks, section }) => {
     const [subCardVisibility, setSubCardVisibility] = useState({});

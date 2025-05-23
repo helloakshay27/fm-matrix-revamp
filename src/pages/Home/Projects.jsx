@@ -2,10 +2,10 @@ import { useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { projects, tabs } from "../../data/Data";
-import TaskActions from "../../components/TaskActions";
-import ProjectList from "../../components/ProjectList";
-import BoardsSection from "../../components/BoardsSection";
-import EditProjectModal from "../../components/EditProjectModal";
+import TaskActions from "../../components/Home/TaskActions";
+import ProjectList from "../../components/Home/Projects/ProjectList";
+import BoardsSection from "../../components/Home/BoardsSection";
+import EditProjectModal from "../../components/Home/Projects/EditProjectModal";
 
 const tasks = [
     {

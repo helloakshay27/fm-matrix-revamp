@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import SelectBox from "../../SelectBox";
-import MultiSelectBox from "../../MultiSelectBox";
+import SelectBox from "../../../SelectBox";
+import MultiSelectBox from "../../../MultiSelectBox";
 import { useDispatch, useSelector } from 'react-redux';
-import { createProject } from '../../../redux/slices/projectSlice'
-import { fetchUsers } from '../../../redux/slices/userSlice'
-import { fetchTags } from '../../../redux/slices/tagsSlice'
+import { createProject } from '../../../../redux/slices/projectSlice'
+import { fetchUsers } from '../../../../redux/slices/userSlice'
+import { fetchTags } from '../../../../redux/slices/tagsSlice'
 
-const Details = ({ setTab ,setOpenModal,openModal}) => {
+const Details = ({ setTab, setOpenModal, openModal }) => {
   const dispatch = useDispatch();
   const { loading, success, error } = useSelector((state) => state.createProject);
   const { users } = useSelector((state) => state.user);
@@ -218,7 +218,7 @@ const Details = ({ setTab ,setOpenModal,openModal}) => {
         </div>
 
         <div className="relative">
-          <label className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer" onClick={()=>{setOpenModal(true)}
+          <label className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer" onClick={() => { setOpenModal(true) }
           }>
             <i>Create new team</i>
           </label>

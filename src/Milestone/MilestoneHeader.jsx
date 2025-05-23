@@ -1,10 +1,10 @@
 import React from "react";
 import { Filter } from "lucide-react"; // Importing a filter icon from lucide-react
-import TaskActions from "../components/TaskActions";
+import TaskActions from "../components/Home/TaskActions";
 
 const MilestoneHeader = () => {
     return (
-      <div className="h-full overflow-y-auto no-scrollbar">
+        <div className="h-full overflow-y-auto no-scrollbar">
             <h3 className="text-[11px] text-gray-400 mx-6 my-4">Project 1 / Milestone / Task</h3>
             <hr className="border border-gray-200" />
 
@@ -30,7 +30,7 @@ const MilestoneHeader = () => {
 
             <TaskActions selectedType={"Gantt"} setSelectedType={"Gantt"} addType={"Milestone"} />
 
-           
+
         </div>
     );
 };

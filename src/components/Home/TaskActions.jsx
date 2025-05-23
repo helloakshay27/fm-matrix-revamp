@@ -6,12 +6,11 @@ import {
     Plus,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import AddTaskModal from "./AddTaskModal";
-import TaskFilterModal from "./TaskFilterModal";
-import AddSprintModal from "./AddSprintModal";
-import AddProjectModal from "./AddProjectModal";
-import AddMilestoneModal from "../Milestone/AddMilestoneModal";
-import AddProjectTemplate from "./AddProjectTempelateModal";
+import AddTaskModal from "./Task/AddTaskModal";
+import TaskFilterModal from "./Task/TaskFilterModal";
+import AddSprintModal from "./Sprints/AddSprintModal";
+import AddMilestoneModal from "../../Milestone/AddMilestoneModal";
+import AddProjectTemplate from "./Projects/AddProjectTempelateModal";
 
 const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);

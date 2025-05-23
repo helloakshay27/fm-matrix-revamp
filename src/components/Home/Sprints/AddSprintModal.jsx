@@ -1,10 +1,10 @@
 import { useGSAP } from "@gsap/react";
-import { useRef, useEffect } from "react";
-import { X } from "lucide-react";
 import gsap from "gsap";
-import Tasks from "./Task/Modals/task";
+import { X } from "lucide-react";
+import { useEffect, useRef } from "react";
+import Sprints from "./Modals/Sprint";
 
-const AddTaskModal = ({ isModalOpen, setIsModalOpen }) => {
+const AddSprintModal = ({ isModalOpen, setIsModalOpen }) => {
     const addTaskModalRef = useRef(null);
 
     useEffect(() => {
@@ -38,16 +38,17 @@ const AddTaskModal = ({ isModalOpen, setIsModalOpen }) => {
 
         localStorage.setItem("tasks", JSON.stringify(updatedTasks));
 
+        reset();
         setIsModalOpen(false);
     };
-
     return (
-        <div className="fixed inset-0 flex items-center justify-end bg-black bg-opacity-50 z-10">
+
+        <div className="fixed inset-0 flex items-center justify-end bg-black bg-opacity-50 z-10 text-[12px]">
             <div
                 ref={addTaskModalRef}
                 className="bg-white py-6 rounded-lg shadow-lg w-1/3 relative h-full right-0"
             >
-                <h3 className="text-lg font-medium text-center">New Task</h3>
+                <h3 className="text-[14px] font-medium text-center ">New Sprints</h3>
                 <X
                     className="absolute top-[26px] right-8 cursor-pointer"
                     onClick={closeModal}
@@ -55,10 +56,10 @@ const AddTaskModal = ({ isModalOpen, setIsModalOpen }) => {
 
                 <hr className="border border-[#E95420] my-4" />
 
-                 <Tasks />
+                <Sprints />
             </div>
         </div>
     );
-};
+}
 
-export default AddTaskModal;
+export default AddSprintModal

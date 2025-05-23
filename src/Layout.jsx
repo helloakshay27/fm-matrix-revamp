@@ -1,4 +1,4 @@
-import Sidebar from "./components/Sidebar";
+import Sidebar from "./components/Home/Sidebar";
 import Navbar from "./components/Navbar";
 import { useLocation } from "react-router-dom";
 import SetupSidebar from "./components/SetupSidebar";

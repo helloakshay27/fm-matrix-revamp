@@ -1,7 +1,7 @@
 import Boards from "../Boards"
-import TaskCard from "../TaskCard";
-import TaskSubCard from "../TaskSubCard";
-import { sprintTitle, tasks as initialTasks } from "../../data/Data";
+import TaskCard from "../Task/TaskCard";
+import TaskSubCard from "../Task/TaskSubCard";
+import { sprintTitle, tasks as initialTasks } from "../../../data/Data";
 import { Circle, Play, Timer } from "lucide-react";
 import { useState } from "react";
 
