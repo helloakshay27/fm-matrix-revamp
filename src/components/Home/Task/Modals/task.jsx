@@ -11,6 +11,8 @@ import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headless
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import { set } from "react-hook-form";
 import WeekProgressPicker from "../../../../Milestone/weekProgressPicker";
+import MultiSelectBox from "../../../MultiSelectBox";
+import SelectBox from "../../../SelectBox";
 
 
 const CustomDropdown = ({ options, value }) => {
@@ -207,7 +209,7 @@ const Tasks = () => {
             <input
               type="text"
               placeholder={`Project ${nextId - 1}`}
-              className="w-full border h-[40px] outline-none border-gray-300 py-3 px-4 text-sm bg-gray-200"
+              className="w-full border h-[40px] outline-none border-gray-300 py-2 px-4 text-[13px] bg-gray-200"
               readOnly
             />
           </div>
@@ -218,7 +220,7 @@ const Tasks = () => {
             <input
               type="text"
               placeholder={`Milestone ${nextId - 1}`}
-              className="w-full border h-[40px] outline-none border-gray-300 py-3 px-4 text-sm bg-gray-200"
+              className="w-full border h-[40px] outline-none border-gray-300 py-2 px-4 text-[13px] bg-gray-200"
             />
           </div>
         </div>
@@ -234,7 +236,7 @@ const Tasks = () => {
             <input
               type="text"
               placeholder="Enter Task Title"
-              className="w-full border h-[40px] outline-none border-gray-300 py-3 px-4 text-sm"
+              className="w-full border h-[40px] outline-none border-gray-300 py-2 px-4 text-[13px]"
             />
           </div>
         </div>
@@ -247,17 +249,24 @@ const Tasks = () => {
             type="text"
             rows={5}
             placeholder="Enter Description"
-            className="w-full border outline-none border-gray-300 py-3 px-4 text-sm h-[70%]"
+            className="w-full border outline-none border-gray-300 py-3 px-4 text-[13px] h-[70%]"
           />
         </div>
 
 
         <div className="flex justify-between gap-20 mt-1">
           <div className="mt-4 space-y-2 h-[100px]">
-            <label className="block mb-2">
+            <label className="block mb-2 ">
               Responsible Person<span className="text-red-600">*</span>
             </label>
-            <CustomDropdown options={options} value={"Responsible Person"} />
+            <SelectBox
+              options={[
+                { label: "User", value: "op1" },
+              ]}
+
+              placeholder="Select Person "
+
+            />
           </div>
           <div className="mt-4 space-y-2 h-[100px] ">
             <label className="block">
@@ -266,7 +275,7 @@ const Tasks = () => {
             <input
               type="text"
               placeholder="Tech"
-              className="w-full border-2 border-grey-300 p-2 bg-gray-200"
+              className="w-full text-[13px] border-2 border-grey-300 p-2 bg-gray-200"
               readOnly
             />
 
@@ -274,15 +283,20 @@ const Tasks = () => {
 
         </div>
 
-        <div className="flex items-start gap-20 mt-1 text-[12px]">
-          <div className=" space-y-2">
+        <div className="flex justify-between gap-20 mt-1 text-[12px]">
+          <div className="space-y-2">
             <label className="block ms-2">Priority</label>
-            <CustomDropdown options={options} value={"Priority"} />
+            <MultiSelectBox options={[
+              { label: "User1", value: "op1" },
+              { label: "User2", value: "op1" },
+
+            ]} value={"Priority"} placeholder="Select Priority"
+            />
           </div>
 
-          <div className="w-[130px] space-y-2">
+          <div className="w-[130px] space-y-2 ">
             <label className="block ms-2">Duration</label>
-            <input type="text" className="w-full border outline-none border-gray-300 p-2 text-sm" placeholder="00d:00h:00m" />
+            <input type="text" className="w-full border outline-none border-gray-300 p-2 text-[13px]" placeholder="00d:00h:00m" />
           </div>
 
         </div>
@@ -296,7 +310,11 @@ const Tasks = () => {
             <label className="block mb-2">
               Observer<span className="text-red-600">*</span>
             </label>
-            <CustomDropdownMultiple options={options} value={"Observer"} />
+            <MultiSelectBox  options={[
+              { label: "User1", value: "op1" },
+              { label: "User2", value: "op1" },
+            ]}
+              value={"Observer"}  placeholder="Select Observer"/>
           </div>
 
 
@@ -307,7 +325,10 @@ const Tasks = () => {
             <label className="block mb-2">
               Tags<span className="text-red-600">*</span>
             </label>
-            <CustomDropdownMultiple options={options} value={"Tags"} />
+            <MultiSelectBox options={[
+              { label: "User1", value: "op1" },
+              { label: "User2", value: "op1" },
+            ]} value={"Tags"} placeholder="Select Tags" />
           </div>
 
 
