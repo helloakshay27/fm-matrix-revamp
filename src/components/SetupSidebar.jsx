@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 // import { ChevronLeft, ChevronRight, Home } from "lucide-react";
 // import { useRef, useState } from "react";
 // import { NavLink } from "react-router-dom";
