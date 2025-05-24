@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React, { useState, useMemo } from 'react';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';

@@ -13,9 +13,9 @@ import Channel from "./components/Home/Channel/Channel";
 import Role from "./pages/Setup/Role";
 import EscalationMatrix from "./pages/Setup/EscalationMatrix";
 import ProjectTeams from "./pages/Setup/ProjectTeams";
-import TypesTable from "./components/Setup/ProjectTypes/Table";
-import StatusTable from "./components/Setup/Status/Table";
-import Modal from "./components/Setup/Status/Modal";
+// import TypesTable from "./components/Setup/ProjectTypes/Table";
+// import StatusTable from "./components/Setup/Status/Table";
+// import Modal from "./components/Setup/Status/Modal";
 import InternalUsers from "./pages/Setup/InternalUsers";
 import Details from "./components/Setup/Internal_Users/Details";
 import ExternalUsers from "./pages/Setup/ExternalUsers";
@@ -24,6 +24,12 @@ import ProjectTypes from "./pages/Setup/ProjectTypes.jsx";
 import ProjectTags from "./pages/Setup/ProjectTags.jsx";
 import Status from "./pages/Setup/Status.jsx";
 // import {Details as ExternalDetails} from "./components/Setup/ProjectTeams/Details";
+import InternalUser from "./pages/Setup/InternalUser";
+import InternalDetails from "./components/Setup/Internal_Users/InternalDetails";
+import ExternalTable from "./components/Setup/External_Users/ExternalTable";
+import ProjectTable from "./components/Setup/Project/ProjectTable";
+import ProjectDetail from "./components/Setup/Project/ProjectDetail";
+
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -46,6 +52,11 @@ const App = () => {
 
         <Route path="/setup" element={<Navigate to="/setup/roles" />} />
         <Route path="/setup/roles" element={<Role />} />
+        <Route path="/setup/internal-users" element={<InternalUser />} />
+        <Route path="setup/internal-users/internal-details" element={<InternalDetails />} />
+        <Route path="/setup/external-users" element={<ExternalTable />} />
+        <Route path="/setup/project-teams" element={<ProjectTable />} />
+        <Route path="/setup/project-teams/project-details" element={<ProjectDetail />} />
         <Route path="/setup/matrix" element={<EscalationMatrix />} />
         <Route path="/setup/project-teams" element={<ProjectTeams />} />
         <Route path="/setup/project-teams/details" element={<TeamDetails />} />
