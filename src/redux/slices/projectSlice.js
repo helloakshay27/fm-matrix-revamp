@@ -78,7 +78,7 @@ export const fetchProjectDetails = createAsyncThunk('fetchProjectDetails', async
     }
 })
 
-export const changeProjectStatus = createAsyncThunk('changeProjectStatus', async (id, payload) => {
+export const changeProjectStatus = createAsyncThunk('changeProjectStatus', async ({ id, payload }) => {
     try {
         const response = await axios.put(`https://api-tasks.lockated.com/project_managements/${id}.json`, payload, {
             headers: {

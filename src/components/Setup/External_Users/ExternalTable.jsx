@@ -1,9 +1,12 @@
 /* eslint-disable react/prop-types */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import Switch from '@mui/joy/Switch';
 import CustomTable from '../CustomTable';
+import AddExternalUserModal from './AddExternalUserModal';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchExternalUser } from '../../../redux/slices/userSlice';
 
 const ActionIcons = ({ row }) => (
   <div className="flex gap-3 items-center">
@@ -17,41 +20,35 @@ const ActionIcons = ({ row }) => (
 );
 
 const ExternalTable = () => {
-  const [userData] = useState([
-    {
-      userName: 'Rajkumar',
-      organisation: 'Panchshil Realty',
-      emailId: 'rajkumar.sharma@panchshil.com',
-      role: 'Project IT Head',
-      status: 'Accepted',
-    },
-    {
-      userName: 'Ameya',
-      organisation: 'Panchshil Realty',
-      emailId: 'ameya1@panchshil.com',
-      role: 'Marketing Manager',
-      status: 'Pending',
-    },
-  ]);
+
+  const dispatch = useDispatch();
+  const { fetchExternalUser: externalUsers } = useSelector(state => state.fetchExternalUser)
+
+  useEffect(() => {
+    dispatch(fetchExternalUser())
+  }, [])
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userData] = useState(externalUsers);
 
   const columns = useMemo(() => [
     {
-      accessorKey: 'userName',
+      accessorKey: 'firstname',
       header: 'User Name',
       size: 150,
     },
     {
-      accessorKey: 'organisation',
+      accessorKey: 'organization_id',
       header: 'Organisation',
       size: 200,
     },
     {
-      accessorKey: 'emailId',
+      accessorKey: 'email',
       header: 'Email Id',
       size: 250,
     },
     {
-      accessorKey: 'role',
+      accessorKey: 'role_id',
       header: 'Role',
       size: 180,
     },
@@ -78,14 +75,21 @@ const ExternalTable = () => {
   ], []);
 
   return (
-    <CustomTable
-      data={userData}
-      columns={columns}
-      title="User Table"
-      layout="inline"
-      buttonText="Add Users"
-      showDropdown
-    />
+    <div>
+      <CustomTable
+        data={externalUsers}
+        columns={columns}
+        title="User Table"
+        layout="inline"
+        buttonText="Add Users"
+        showDropdown
+        onAdd={() => { setIsModalOpen(true) }}
+      />
+      <AddExternalUserModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
+    </div>
   );
 };
 

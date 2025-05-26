@@ -1,9 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { changeProjectStatusReducer, createProjectReducer, fetchProjectDetailsReducer, fetchProjectsReducer } from './slices/projectSlice'
-import { createExternalUserReducer, createInternalUserReducer, fetchInternalUserReducer, userReducer } from './slices/userSlice'
+import { createExternalUserReducer, createInternalUserReducer, fetchExternalUserReducer, fetchInternalUserReducer, userReducer } from './slices/userSlice'
 import { createTagReducer, fetchTagsReducer } from './slices/tagsSlice'
 import { createRoleReducer, editRoleReducer, fetchRolesReducer } from './slices/roleSlice'
-import { createTaskCommentReducer, createTaskReducer, editTaskCommentReducer, fetchTasksCommentsReducer, fetchTasksReducer, taskDetailsReducer } from './slices/taskSlice'
+import { changeTaskStatusReducer, createTaskCommentReducer, createTaskReducer, editTaskCommentReducer, fetchTasksCommentsReducer, fetchTasksReducer, taskDetailsReducer } from './slices/taskSlice'
+import { fetchOrganizationsReducer } from './slices/organizationSlice'
 
 export const store = configureStore({
   reducer: {
@@ -17,6 +18,7 @@ export const store = configureStore({
     createTask: createTaskReducer,
     fetchTasks: fetchTasksReducer,
     taskDetails: taskDetailsReducer,
+    changeTaskStatus: changeTaskStatusReducer,
     fetchTasksComments: fetchTasksCommentsReducer,
     createTaskComment: createTaskCommentReducer,
     editTaskComment: editTaskCommentReducer,
@@ -31,9 +33,13 @@ export const store = configureStore({
     createInternalUser: createInternalUserReducer,
     fetchInternalUser: fetchInternalUserReducer,
     createExternalUser: createExternalUserReducer,
+    fetchExternalUser: fetchExternalUserReducer,
 
     //tags
     fetchTags: fetchTagsReducer,
-    createTag: createTagReducer
+    createTag: createTagReducer,
+
+    //organizations
+    fetchOrganizations: fetchOrganizationsReducer,
   },
 })

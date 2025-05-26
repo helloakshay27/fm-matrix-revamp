@@ -9,6 +9,7 @@ import {
   flexRender,
   getPaginationRowModel,
 } from '@tanstack/react-table';
+import { useDispatch, useSelector } from 'react-redux';
 
 const ActionIcons = ({ row }) => (
   <div className="action-icons flex justify-between gap-5">
@@ -37,7 +38,10 @@ const defaultData = [
 ];
 
 const ExternalTable = () => {
-  const [data, setData] = useState(defaultData);
+  const dispatch = useDispatch();
+  const { fetchExternalUser: externalUsers } = useSelector(state => state.fetchExternalUser)
+
+  const [data, setData] = useState(externalUsers);
   const fixedRowsPerPage = 13;
 
   const [pagination, setPagination] = useState({
@@ -48,7 +52,7 @@ const ExternalTable = () => {
   const columns = useMemo(
     () => [
       {
-        accessorKey: 'userName',
+        accessorKey: 'firstname',
         header: 'User Name',
         size: 250,
         cell: ({ row, getValue }) => {
@@ -56,7 +60,7 @@ const ExternalTable = () => {
         },
       },
       {
-        accessorKey: 'organisation',
+        accessorKey: 'organization_id',
         header: 'Organisation',
         size: 150,
         cell: ({ row, getValue }) => {
@@ -64,7 +68,7 @@ const ExternalTable = () => {
         },
       },
       {
-        accessorKey: 'emailId',
+        accessorKey: 'email',
         header: 'Email Id',
         size: 150,
         cell: ({ row, getValue }) => {
@@ -72,7 +76,7 @@ const ExternalTable = () => {
         },
       },
       {
-        accessorKey: 'role',
+        accessorKey: 'role_id',
         header: 'Role',
         size: 150,
         cell: ({ row, getValue }) => {

@@ -62,7 +62,7 @@ const App = () => {
         <Route path="/setup/project-teams/details" element={<TeamDetails />} />
         {/* <Route path="/setup/internal-users" element={<InternalUsers />} /> */}
         <Route path="/setup/internal-users/details" element={<Details />} />
-        <Route path="/setup/external-users" element={<ExternalUsers />} />
+        {/* <Route path="/setup/external-users" element={<ExternalUsers />} /> */}
         <Route path="/setup/types" element={<ProjectTypes />} />
         <Route path="/setup/tags" element={<ProjectTags />} />
 

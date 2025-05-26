@@ -109,7 +109,7 @@ export const createTaskComment = createAsyncThunk('createTaskComment', async (pa
     }
 })
 
-export const editTaskComment = createAsyncThunk('editTaskComment', async (id, payload) => {
+export const editTaskComment = createAsyncThunk('editTaskComment', async ({ id, payload }) => {
     console.log(payload)
     try {
         const response = await axios.put(`https://api-tasks.lockated.com/comments/${id}.json`, payload, {
@@ -126,12 +126,28 @@ export const editTaskComment = createAsyncThunk('editTaskComment', async (id, pa
     }
 })
 
+export const changeTaskStatus = createAsyncThunk('changeTaskStatus', async ({ id, payload }) => {
+    try {
+        const response = await axios.put(`https://api-tasks.lockated.com/task_managements/${id}/update_status.json`, payload, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            }
+        });
+
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        return error.response.data;
+    }
+})
+
 export const createTaskSlice = createApiSlice('createTask', createTask);
 export const fetchTasksSlice = createApiSlice('fetchTasks', fetchTasks);
 export const taskDetailsSlice = createApiSlice('taskDetails', taskDetails);
 export const fetchTasksCommentsSlice = createApiSlice('fetchTasksComments', fetchTasksComments);
 export const createTaskCommentSlice = createApiSlice('createTaskComment', createTaskComment);
 export const editTaskCommentSlice = createApiSlice('editTaskComment', editTaskComment);
+export const changeTaskStatusSlice = createApiSlice('changeTaskStatus', changeTaskStatus);
 
 export const createTaskReducer = createTaskSlice.reducer;
 export const fetchTasksReducer = fetchTasksSlice.reducer;
@@ -139,3 +155,4 @@ export const taskDetailsReducer = taskDetailsSlice.reducer;
 export const fetchTasksCommentsReducer = fetchTasksCommentsSlice.reducer;
 export const createTaskCommentReducer = createTaskCommentSlice.reducer;
 export const editTaskCommentReducer = editTaskCommentSlice.reducer;
+export const changeTaskStatusReducer = changeTaskStatusSlice.reducer;

@@ -9,25 +9,21 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchProjects } from "../../redux/slices/projectSlice";
 import { fetchTasks } from "../../redux/slices/taskSlice";
 
-const BoardsSection = ({ tasks, section }) => {
+const BoardsSection = ({ section }) => {
     const [subCardVisibility, setSubCardVisibility] = useState({});
     const [arrowLinks, setArrowLinks] = useState([]);
 
     const dispatch = useDispatch();
     const { fetchProjects: project } = useSelector(state => state.fetchProjects)
-    const { fetchTasks: task } = useSelector(state => state.fetchTasks)
-
-    console.log(task)
-
-    const [projects, setProjects] = useState(project);
-    const [taskData, setTaskData] = useState(task);
-
-    console.log(taskData)
+    const { fetchTasks: tasks } = useSelector(state => state.fetchTasks)
 
     useEffect(() => {
         dispatch(fetchProjects())
         dispatch(fetchTasks())
     }, [])
+
+    const [projects, setProjects] = useState(project);
+    const [taskData, setTaskData] = useState(tasks);
 
     const toggleSubCard = (taskId) => {
         setSubCardVisibility((prev) => ({
@@ -95,13 +91,12 @@ const BoardsSection = ({ tasks, section }) => {
             <div className="h-[80%] mx-3 my-3 flex items-start gap-1 max-w-full overflow-x-auto overflow-y-auto flex-nowrap" style={{ height: "75vh" }}>
                 {cardsTitle.map((card) => {
                     const filteredTasks = taskData.filter(
-                        (task) => task.status === card.title
+                        (task) => task.status === card.title.replace(" ", "_").toLocaleLowerCase()
                     );
+                    console.log(filteredTasks)
                     const filteredProjects = projects.filter(
                         (project) => project.status === card.title.replace(" ", "_").toLocaleLowerCase()
                     );
-
-                    console.log(filteredProjects)
 
                     return (
                         <Boards

@@ -127,7 +127,7 @@ const ProjectDetails = () => {
                 status: selectedOption
             }
         }
-        dispatch(changeProjectStatus(id, payload))
+        dispatch(changeProjectStatus({ id, payload }))
     }, [selectedOption])
 
     useGSAP(() => {
