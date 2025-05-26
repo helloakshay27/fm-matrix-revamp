@@ -1,17 +1,17 @@
 import React from "react";
 import Select from "react-select";
 
-export default function SelectBox({
-  label,
-  options,
-  value,
-  onChange,
-  style = {},
-  className = "",
-  isDisableFirstOption = false,
-  card = false,
-  placeholder
-}) {
+  export default function SelectBox({
+    label,
+    options,
+    value,
+    onChange,
+    style = {},
+    className = "",
+    isDisableFirstOption = false,
+    card = false,
+    placeholder
+  }) {
   const customStyles = {
     control: (base, state) => ({
       ...base,
