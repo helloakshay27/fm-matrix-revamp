@@ -1,11 +1,14 @@
 /* eslint-disable react/prop-types */
-import  { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import Switch from '@mui/joy/Switch';
 import CustomTable from '../CustomTable';
 import CustomModal from '../CustomModel';
 import { useNavigate } from 'react-router-dom';
+import AddInternalUser from './AddInternalUserModal';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchInternalUser } from '../../../redux/slices/userSlice';
 
 const ActionIcons = ({ row }) => (
   <div className="action-icons flex justify-between gap-5">
@@ -70,17 +73,25 @@ const defaultData = [
 const InternalTable = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
-  
+
+  const dispatch = useDispatch();
+  const { fetchInternalUser: internalUser } = useSelector(state => state.fetchInternalUser);
+
+  console.log(internalUser)
+
+  useEffect(() => {
+    dispatch(fetchInternalUser())
+  }, [])
 
   const handleRowClick = (rowData) => {
-    sessionStorage.setItem('selectedUser', JSON.stringify(rowData)); 
-    navigate('/setup/internal-users/internal-details', { state: rowData });
+    sessionStorage.setItem('selectedUser', JSON.stringify(rowData));
+    navigate('/setup/internal-users/details', { state: rowData });
   };
 
   const columns = useMemo(
     () => [
       {
-        accessorKey: 'name',
+        accessorKey: 'firstname',
         header: 'User Name',
         size: 250,
         cell: ({ row, getValue }) => (
@@ -100,7 +111,7 @@ const InternalTable = () => {
         ),
       },
       {
-        accessorKey: 'role',
+        accessorKey: 'role_id',
         header: 'Role',
         size: 150,
         cell: ({ row, getValue }) => (
@@ -142,7 +153,7 @@ const InternalTable = () => {
   return (
     <>
       <CustomTable
-        data={defaultData}
+        data={internalUser}
         columns={columns}
         title="Active Users"
         buttonText="Add User"
@@ -150,10 +161,9 @@ const InternalTable = () => {
         onAdd={() => setIsModalOpen(true)}
         showDropdown
       />
-      <CustomModal
+      <AddInternalUser
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        placeholder="Project SPOC"
       />
     </>
   );

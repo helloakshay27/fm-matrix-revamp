@@ -63,8 +63,42 @@ export const fetchProjects = createAsyncThunk('fetchProjects', async () => {
     }
 })
 
+export const fetchProjectDetails = createAsyncThunk('fetchProjectDetails', async (id) => {
+    try {
+        const response = await axios.get(`https://api-tasks.lockated.com/project_managements/${id}.json`, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            }
+        })
+
+        return response.data
+    } catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
+export const changeProjectStatus = createAsyncThunk('changeProjectStatus', async (id, payload) => {
+    try {
+        const response = await axios.put(`https://api-tasks.lockated.com/project_managements/${id}.json`, payload, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            }
+        })
+
+        return response.data
+    } catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
 export const createProjectSlice = createApiSlice('createProject', createProject);
 export const fetchProjectsSlice = createApiSlice('fetchProjects', fetchProjects);
+export const fetchProjectDetailsSlice = createApiSlice('fetchProjectDetails', fetchProjectDetails);
+export const changeProjectStatusSlice = createApiSlice('changeProjectStatus', changeProjectStatus);
 
 export const createProjectReducer = createProjectSlice.reducer;
 export const fetchProjectsReducer = fetchProjectsSlice.reducer;
+export const fetchProjectDetailsReducer = fetchProjectDetailsSlice.reducer;
+export const changeProjectStatusReducer = changeProjectStatusSlice.reducer;

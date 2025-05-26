@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import Switch from '@mui/joy/Switch';
@@ -9,11 +9,13 @@ import {
   flexRender,
   getPaginationRowModel,
 } from '@tanstack/react-table';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchTags } from '../../../redux/slices/tagsSlice';
 
 const ActionIcons = ({ row }) => (
   <div className="action-icons flex justify-between gap-5">
     <div>
-      <EditOutlinedIcon sx={{ fontSize: "20px" }} />
+      <EditOutlinedIcon sx={{ fontSize: "20px" }} className='cursor-pointer' />
       <button
         onClick={() => alert(`Deleting: ${row.original.roles}`)}
         title="Delete"
@@ -22,49 +24,38 @@ const ActionIcons = ({ row }) => (
       </button>
     </div>
   </div>
-);
-
-const defaultData = [
-{
-    name: "FM matrix revamp",
-    type: "Internal",
-    status: false, // false = Inactive, true = Active
-    createdOn: "01/01/2025"
-  },
-  {
-    name: "Project management tool",
-    type: "Internal",
-    status: true,
-    createdOn: "01/01/2025"
-  },
-  {
-    name: "Gophygital",
-    type: "Internal",
-    status: true,
-    createdOn: "01/01/2025"
-  },
-  {
-    name: "Customerapp",
-    type: "Client",
-    status: false,
-    createdOn: "01/01/2025"
-  },
-  {
-    name: "Loyalty management",
-    type: "Internal",
-    status: false,
-    createdOn: "01/01/2025"
-  }
-];
+)
 
 const TagsTable = () => {
-  const [data, setData] = useState(defaultData);
+  const dispatch = useDispatch();
+  const { fetchTags: tags, error } = useSelector(state => state.fetchTags)
+
+  const transformedData = useMemo(() => {
+    if (!tags || !Array.isArray(tags)) return [];
+    return tags.map(tag => ({
+      name: tag.name,
+      tag_type: tag.tag_type,
+      active: !!tag.active,
+      created_at: new Date(tag.created_at).toLocaleDateString("en-IN"),
+    }));
+  }, [tags]);
+
+  const [data, setData] = useState([]);
   const fixedRowsPerPage = 13;
 
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: fixedRowsPerPage,
   });
+
+
+  useEffect(() => {
+    dispatch(fetchTags())
+  }, [])
+
+  useEffect(() => {
+    setData(transformedData);
+  }, [transformedData]);
 
   const columns = useMemo(
     () => [
@@ -76,32 +67,32 @@ const TagsTable = () => {
           return row.original ? getValue() : null;
         },
       },
-      
-             {
-        accessorKey: 'type',
+
+      {
+        accessorKey: 'tag_type',
         header: 'Tag Type',
         size: 150,
         cell: ({ row, getValue }) => {
-          return row.original ?getValue() : null;
+          return row.original ? getValue() : null;
         },
       },
-         {
-        accessorKey: 'status',
+      {
+        accessorKey: 'active',
         header: 'Status',
         size: 150,
         cell: ({ row, getValue }) => {
-          return row.original ? <div className="flex gap-4"><span>Inactive</span><Switch color="danger" checked={getValue()} /><span>Active</span></div>: null;
+          return row.original ? <div className="flex gap-4"><span>Inactive</span><Switch color="danger" checked={getValue()} /><span>Active</span></div> : null;
         },
       },
-             {
-        accessorKey: 'createdOn',
+      {
+        accessorKey: 'created_at',
         header: 'CreatedOn',
         size: 150,
         cell: ({ row, getValue }) => {
           return row.original ? getValue() : null;
         },
       },
-        
+
       {
         id: 'actions',
         header: 'Actions',
@@ -131,9 +122,9 @@ const TagsTable = () => {
   const numDataRowsOnPage = pageRows.length;
   const numEmptyRowsToAdd = Math.max(0, fixedRowsPerPage - numDataRowsOnPage);
 
-  const rowHeight = 40; 
+  const rowHeight = 40;
 
-  const headerHeight = 48; 
+  const headerHeight = 48;
   const desiredTableHeight = (fixedRowsPerPage * rowHeight) + headerHeight;
 
 
@@ -181,9 +172,8 @@ const TagsTable = () => {
                     <td
                       key={cell.id}
                       style={{ width: cell.column.getSize() }}
-                      className={`${
-                        cell.column.columnDef.meta?.cellClassName || ''
-                      } whitespace-nowrap px-3 py-2 border-r-2
+                      className={`${cell.column.columnDef.meta?.cellClassName || ''
+                        } whitespace-nowrap px-3 py-2 border-r-2
                           
                       }
                       }`}

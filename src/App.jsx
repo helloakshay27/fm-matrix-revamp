@@ -53,21 +53,21 @@ const App = () => {
         <Route path="/setup" element={<Navigate to="/setup/roles" />} />
         <Route path="/setup/roles" element={<Role />} />
         <Route path="/setup/internal-users" element={<InternalUser />} />
-        <Route path="setup/internal-users/internal-details" element={<InternalDetails />} />
+        {/* <Route path="setup/internal-users/internal-details" element={<InternalDetails />} /> */}
         <Route path="/setup/external-users" element={<ExternalTable />} />
         <Route path="/setup/project-teams" element={<ProjectTable />} />
         <Route path="/setup/project-teams/project-details" element={<ProjectDetail />} />
         <Route path="/setup/matrix" element={<EscalationMatrix />} />
         <Route path="/setup/project-teams" element={<ProjectTeams />} />
         <Route path="/setup/project-teams/details" element={<TeamDetails />} />
-        <Route path="/setup/internal-users" element={<InternalUsers />} />
-        <Route path="/setup/internal-users/details" element={<Details/>} />
+        {/* <Route path="/setup/internal-users" element={<InternalUsers />} /> */}
+        <Route path="/setup/internal-users/details" element={<Details />} />
         <Route path="/setup/external-users" element={<ExternalUsers />} />
         <Route path="/setup/types" element={<ProjectTypes />} />
         <Route path="/setup/tags" element={<ProjectTags />} />
-         
+
         <Route path="/setup/status" element={<Status />} />
-        
+
       </Routes>
     </Layout>
   )

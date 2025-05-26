@@ -33,7 +33,7 @@ export const cardsTitle = [
   },
   {
     id: 2,
-    title: "Open",
+    title: "Active",
     color: "#E4636A",
     add: true,
   },

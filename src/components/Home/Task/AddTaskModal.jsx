@@ -7,11 +7,6 @@ import Tasks from "./Modals/task";
 const AddTaskModal = ({ isModalOpen, setIsModalOpen }) => {
     const addTaskModalRef = useRef(null);
 
-    useEffect(() => {
-        if (!isModalOpen) {
-        }
-    }, [isModalOpen]);
-
     useGSAP(() => {
         if (isModalOpen) {
             gsap.fromTo(
@@ -29,16 +24,6 @@ const AddTaskModal = ({ isModalOpen, setIsModalOpen }) => {
             ease: "power3.in",
             onComplete: () => setIsModalOpen(false),
         });
-    };
-
-    const onSubmit = (data) => {
-        const existingTasks = JSON.parse(localStorage.getItem("tasks")) || [];
-
-        const updatedTasks = [...existingTasks, data];
-
-        localStorage.setItem("tasks", JSON.stringify(updatedTasks));
-
-        setIsModalOpen(false);
     };
 
     return (

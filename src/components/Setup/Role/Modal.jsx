@@ -1,36 +1,90 @@
-import React from 'react'
+/* eslint-disable react/prop-types */
 import CloseIcon from '@mui/icons-material/Close';
-import { useState } from 'react';
-import { set } from 'date-fns';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { createRole, editRole } from '../../../redux/slices/roleSlice';
 
-// import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'; // Kept as per user's code (though not used in this snippet)
+const RoleModal = ({ open, onClose, role, mode }) => {
+  if (!open) return null;
 
+  const [roleInput, setRoleInput] = useState(role ? role.display_name : '');
 
+  const dispatch = useDispatch();
+  const { loading, success, error } = useSelector((state) => state.createRole);
+  const { loading: editLoading, success: editSuccess, error: editError } = useSelector((state) => state.editRole);
 
-const Modal = ({setOpenModal,openModal}) => {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const payload = {
+      lock_role: {
+        name: roleInput.toLowerCase().replace(' ', '_').trim(),
+        display_name: roleInput,
+        active: 1,
+      },
+    };
+
+    if (mode === 'edit' && role?.id) {
+      dispatch(editRole({ id: role.id, payload }));
+    } else {
+      dispatch(createRole(payload));
+    }
+  };
+
+  useEffect(() => {
+    if (success || editSuccess) {
+      window.location.reload();
+    }
+  }, [success, editSuccess]);
+
+  useEffect(() => {
+    if (role && mode === 'edit') {
+      setRoleInput(role.display_name);
+    } else {
+      setRoleInput('');
+    }
+  }, [role, mode]);
 
   return (
-    <>
-    (
-    <div className='flex flex-col gap-5 w-[560px] h-[280px] bg-white absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] border-[0.5px] border-[#C0C0C0] z-20 '>
-        <div className='flex justify-end p-2'>
-            <CloseIcon  className="cursor-pointer" onClick={()=>{
-                setOpenModal(false);
-            }}/>
+    <div className="fixed inset-0 bg-black bg-opacity-30 z-50">
+      <div className="w-[560px] h-[280px] bg-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-[#C0C0C0]">
+        {/* Close Icon */}
+        <div className="flex justify-end p-4">
+          <CloseIcon className="cursor-pointer" onClick={onClose} />
         </div>
-        <div className="p-5">
-            <label>New Role<span>*</span></label>
-            <input type="text" placeholder="Enter New Role Here" className="border-[0.5px] border-[#C0C0C0] p-2 w-full mt-2" />
+
+        {/* Input Section */}
+        <div className="px-6">
+          <label className="block text-[16px] text-[#1B1B1B] mb-1">
+            {mode === 'edit' ? 'Edit Role' : 'New Role'}
+            <span className="text-red-500 ml-1">*</span>
+          </label>
+          <input
+            type="text"
+            placeholder="Enter role name here..."
+            className="border border-[#C0C0C0] w-full px-4 py-3 text-[#1B1B1B] text-[13px]"
+            value={roleInput}
+            onChange={(e) => setRoleInput(e.target.value)}
+          />
         </div>
-        <div className="flex justify-center gap-3 bg-[#D5DBDB] h-[130px] items-center">
-            <button className="border-2 border-[#C72030] h-[30px] cursor-pointer px-3">Save</button>
-            <button className="border-2 border-[#C72030] h-[30px] cursor-pointer  px-3" onClick={()=>setOpenModal(false)}>Cancel</button>
+
+        {/* Footer Buttons */}
+        <div className="absolute bottom-0 left-0 right-0 bg-[#D5DBDB] h-[90px] flex justify-center items-center gap-4">
+          <button
+            className="border border-[#C72030] text-[#1B1B1B] text-[16px] px-8 py-2"
+            onClick={handleSubmit}
+          >
+            {loading || editLoading ? 'Submitting...' : mode === 'edit' ? 'Update' : 'Save'}
+          </button>
+          <button
+            className="border border-[#C72030] text-[#1B1B1B] text-[16px] px-8 py-2"
+            onClick={onClose}
+          >
+            Cancel
+          </button>
         </div>
+      </div>
     </div>
-  )
+  );
+};
 
-</>
-  )
-}
-
-export default Modal
+export default RoleModal;

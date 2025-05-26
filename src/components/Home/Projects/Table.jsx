@@ -76,7 +76,7 @@ const ProjectTable = () => {
   const transformedData = useMemo(() => {
     if (!projects || !Array.isArray(projects)) return [];
     return projects.map((project) => ({
-      id: `P-${project.id.toString().padStart(2, "0")}`,
+      id: `P-${project.id.toString()}`,
       title: project.title,
       status: project.status.charAt(0).toUpperCase() + project.status.slice(1),
       type: project.resource_type || "Unknown",
@@ -251,7 +251,7 @@ const ProjectTable = () => {
                     key={header.id}
                     colSpan={header.colSpan}
                     style={{ width: header.getSize(), height: `${headerHeight}px` }}
-                    className="bg-[#D5DBDB] px-3 py-3.5 text-left text-gray-800 text-center font-[500] border-r-2 border-[#FFFFFF]"  
+                    className="bg-[#D5DBDB] px-3 py-3.5 text-gray-800 text-center font-[500] border-r-2 border-[#FFFFFF]"
                   >
                     {header.isPlaceholder ? null : (
                       <div>
@@ -277,9 +277,8 @@ const ProjectTable = () => {
                   <td
                     key={cell.id}
                     style={{ width: cell.column.getSize() }}
-                    className={`${
-                      cell.column.columnDef.meta?.cellClassName || ""
-                    } whitespace-nowrap border-r-2`}
+                    className={`${cell.column.columnDef.meta?.cellClassName || ""
+                      } whitespace-nowrap border-r-2`}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>

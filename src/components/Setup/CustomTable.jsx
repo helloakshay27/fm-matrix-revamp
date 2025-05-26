@@ -10,7 +10,7 @@ import {
 const CustomTable = ({
   data,
   columns,
-  fixedRowsPerPage = 7,
+  fixedRowsPerPage = 10,
   rowHeight = 40,
   headerHeight = 48,
   title, buttonText, onAdd, layout = "block",

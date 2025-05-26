@@ -128,34 +128,10 @@ const tasks = [
 ]
 
 const TasksList = () => {
-    const navigate = useNavigate();
-    const [taskStatusMap, setTaskStatusMap] = useState(() => {
-        return tasks.reduce((acc, task) => {
-            acc[task.id] = "Open"; // Default status
-            return acc;
-        }, {});
-    });
-
-    const [openDropdown, setOpenDropdown] = useState(null);
-    const dropdownRefs = useRef({});
-
-    const toggleDropdown = (taskId) => {
-        setOpenDropdown(openDropdown === taskId ? null : taskId);
-    };
-
-    const handleStatusChange = (taskId, status) => {
-        setTaskStatusMap((prev) => ({
-            ...prev,
-            [taskId]: status,
-        }));
-        setOpenDropdown(null);
-    };
-
     return (
         <div className="m-3">
             <div className="overflow-x-auto ">
                 <TaskTable />
-
             </div>
         </div>
     );
