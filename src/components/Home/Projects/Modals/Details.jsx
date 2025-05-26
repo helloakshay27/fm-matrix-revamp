@@ -10,7 +10,7 @@ const Details = ({ setTab, setOpenModal, openModal }) => {
   const dispatch = useDispatch();
   const { loading, success, error } = useSelector((state) => state.createProject);
   const { users } = useSelector((state) => state.user);
-  const { tags } = useSelector((state) => state.fetchTag);
+  const { fetchTags: tags } = useSelector((state) => state.fetchTags);
 
   useEffect(() => {
     dispatch(fetchUsers())
