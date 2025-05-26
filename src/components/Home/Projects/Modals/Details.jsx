@@ -163,7 +163,8 @@ const Details = ({ setTab, setOpenModal, openModal }) => {
                 }))
               }
               value={formData.projectOwner}
-              onChange={(value) => handleSelectChange("projectOwner", value)}
+              onChange={(value) => {
+                handleSelectChange("projectOwner", value)}}
               placeholder="Select Owner"
             />
           </div>

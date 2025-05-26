@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const StatusBadge = ({ status:initialStatus ,statusOptions}) => {
+const StatusBadge = ({ status:initialStatus ,statusOptions, onStatusChange}) => {
   const [currentStatus, setCurrentStatus] = useState(initialStatus);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   console.log(statusOptions);
@@ -12,9 +12,10 @@ const StatusBadge = ({ status:initialStatus ,statusOptions}) => {
   const handleStatusSelect = (newStatus) => {
     setCurrentStatus(newStatus);
     setIsDropdownOpen(false);
-    // if (onStatusChange) {
-    //   onStatusChange(newStatus);
-    // }
+    
+    if (onStatusChange) {
+      onStatusChange(newStatus);
+    }
   };
 
   const toggleDropdown = () => {
