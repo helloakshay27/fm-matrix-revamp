@@ -11,7 +11,7 @@ const Tasks = () => {
   const dispatch = useDispatch();
   const { loading, success, error } = useSelector((state) => state.createTask);
   const { users } = useSelector((state) => state.user);
-  const { tags } = useSelector((state) => state.fetchTag);
+  const { fetchTags: tags } = useSelector((state) => state.fetchTags);
 
   useEffect(() => {
     dispatch(fetchUsers());
