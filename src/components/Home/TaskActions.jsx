@@ -54,7 +54,12 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen 
                         <div className="relative">
                             <button
                                 className="text-sm flex items-center justify-between gap-2"
-                                onClick={() => setIsTypeOpen(!isTypeOpen)}
+                                onClick={() => {
+                                    // Disable dropdown for Milestone
+                                    if (selectedType !== "Gantt") setIsTypeOpen(!isTypeOpen);
+                                }}
+                                disabled={selectedType === "Gantt"}
+                                style={selectedType === "Gantt" ? { cursor: "not-allowed", marginRight:"12px" } : {}}
                             >
                                 {selectedType === "Kanban" ? (
                                     <ChartNoAxesColumn
@@ -63,7 +68,7 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen 
                                     />
                                 ) : selectedType === "List" ? (
                                     <List size={20} className="text-[#C72030]" />
-                                ) : selectedType === "Milestone" ? (
+                                ) : selectedType === "Gantt" ? (
                                     <ChartNoAxesGantt
                                         size={20}
                                         className="rotate-180 text-[#C72030]"
@@ -75,10 +80,12 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen 
                                     />
                                 )}
                                 <span className="text-[#C72030]">{selectedType}</span>
-                                <span>▾</span>
+                                {/* Hide down arrow if Milestone */}
+                                {selectedType !== "Gantt" && <span>▾</span>}
                             </button>
 
-                            {isTypeOpen && (
+                            {/* Only show dropdown if not Milestone */}
+                            {isTypeOpen && selectedType !== "Gantt" && (
                                 <ul className="absolute left-0 mt-2 w-[150px] bg-white border border-gray-300 shadow-xl rounded-md z-10">
                                     <li>
                                         <button
@@ -123,53 +130,59 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen 
                             )}
                         </div>
                     </div>
-                    <div
-                        className="flex items-center gap-1 cursor-pointer pl-4"
-                        onClick={() => addType !== "Sprint" && setIsFilterModalOpan(true)}
-                    >
-                        <Filter size={18} className="text-gray-600" />
-                    </div>
-                    <div
-                        className="flex items-center gap-1 cursor-pointer pl-4"
-                        ref={statusDropdownRef}
-                    >
-                        <div className="relative">
-                            <button
-                                className="text-[13px] flex items-center justify-between gap-2"
-                                onClick={() => setIsStatusOpen(!isStatusOpen)}
-                            >
-                                <span className="text-[#C72030]">{selectedStatus}</span>
-                                <span>▾</span>
-                            </button>
-
-                            {isStatusOpen && (
-                                <ul className="absolute left-0 mt-2 w-[150px] bg-white border border-gray-300 shadow-xl rounded-md z-10">
-                                    <li>
-                                        <button
-                                            className="w-full text-left px-4 py-2 text-[13px] hover:bg-gray-100"
-                                            onClick={() => {
-                                                setSelectedStatus("On Hold");
-                                                setIsStatusOpen(false);
-                                            }}
-                                        >
-                                            On Hold
-                                        </button>
-                                    </li>
-                                    <li>
-                                        <button
-                                            className="w-full text-left px-4 py-2 text-[13px] hover:bg-gray-100"
-                                            onClick={() => {
-                                                setSelectedStatus("Completed");
-                                                setIsStatusOpen(false);
-                                            }}
-                                        >
-                                            Completed
-                                        </button>
-                                    </li>
-                                </ul>
-                            )}
+                    {addType !== "Milestone" && (
+                        <div
+                            className="flex items-center gap-1 cursor-pointer pl-4"
+                            onClick={() => addType !== "Sprint" && setIsFilterModalOpan(true)}
+                        >
+                            <Filter size={18} className="text-gray-600" />
                         </div>
-                    </div>
+                    )}
+
+                    {addType !== "Milestone" && (
+                        <div
+                            className="flex items-center gap-1 cursor-pointer pl-4"
+                            ref={statusDropdownRef}
+                        >
+                            <div className="relative">
+                                <button
+                                    className="text-[13px] flex items-center justify-between gap-2"
+                                    onClick={() => setIsStatusOpen(!isStatusOpen)}
+                                >
+                                    <span className="text-[#C72030]">{selectedStatus}</span>
+                                    <span>▾</span>
+                                </button>
+
+                                {isStatusOpen && (
+                                    <ul className="absolute left-0 mt-2 w-[150px] bg-white border border-gray-300 shadow-xl rounded-md z-10">
+                                        <li>
+                                            <button
+                                                className="w-full text-left px-4 py-2 text-[13px] hover:bg-gray-100"
+                                                onClick={() => {
+                                                    setSelectedStatus("On Hold");
+                                                    setIsStatusOpen(false);
+                                                }}
+                                            >
+                                                On Hold
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button
+                                                className="w-full text-left px-4 py-2 text-[13px] hover:bg-gray-100"
+                                                onClick={() => {
+                                                    setSelectedStatus("Completed");
+                                                    setIsStatusOpen(false);
+                                                }}
+                                            >
+                                                Completed
+                                            </button>
+                                        </li>
+                                    </ul>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     <button
                         onClick={() => {
                             addType === "Sprint"
