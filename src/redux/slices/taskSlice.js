@@ -35,14 +35,14 @@ const createApiSlice = (name, fetchThunk) => createSlice({
 
 export const createTask = createAsyncThunk('createTask', async (payload) => {
     try {
-        const response = await axios.post(`https://api-tasks.lockated.com/task_managements.json`, 
-           { task_management:payload},
-            { 
-            headers: {
-                Authorization: `Bearer ${access_token}`,
-                'Content-Type': 'application/json'
-            }
-        });
+        const response = await axios.post(`https://api-tasks.lockated.com/task_managements.json`,
+            { task_management: payload },
+            {
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
 
         return response.data;
     } catch (error) {
@@ -92,6 +92,24 @@ export const taskDetails = createAsyncThunk('taskDetails', async (id) => {
                 Authorization: `Bearer ${access_token}`,
             }
         });
+
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        return error.response.data;
+    }
+})
+
+export const editTask = createAsyncThunk('editTask', async ({ id, payload }) => {
+    try {
+        const response = await axios.put(`https://api-tasks.lockated.com/task_managements/${id}.json`,
+            payload,
+            {
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
 
         return response.data;
     } catch (error) {
@@ -164,6 +182,7 @@ export const changeTaskStatus = createAsyncThunk('changeTaskStatus', async ({ id
 
 export const createTaskSlice = createApiSlice('createTask', createTask);
 export const fetchTasksSlice = createApiSlice('fetchTasks', fetchTasks);
+export const editTaskSlice = createApiSlice('editTask', editTask);
 export const taskDetailsSlice = createApiSlice('taskDetails', taskDetails);
 export const fetchTasksCommentsSlice = createApiSlice('fetchTasksComments', fetchTasksComments);
 export const createTaskCommentSlice = createApiSlice('createTaskComment', createTaskComment);
@@ -173,6 +192,7 @@ export const createSubtaskSlice= createApiSlice('createSubTask', createSubTask);
 
 export const createTaskReducer = createTaskSlice.reducer;
 export const fetchTasksReducer = fetchTasksSlice.reducer;
+export const editTaskReducer = editTaskSlice.reducer;
 export const taskDetailsReducer = taskDetailsSlice.reducer;
 export const fetchTasksCommentsReducer = fetchTasksCommentsSlice.reducer;
 export const createTaskCommentReducer = createTaskCommentSlice.reducer;

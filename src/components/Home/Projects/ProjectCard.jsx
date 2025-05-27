@@ -1,5 +1,6 @@
 import { Briefcase, CalendarDays, Timer, User2 } from "lucide-react";
 import { useDrag } from "react-dnd";
+import { useNavigate } from "react-router-dom";
 
 const getRandomColor = () => {
     const r = Math.floor(Math.random() * 76) + 180;
@@ -11,6 +12,7 @@ const getRandomColor = () => {
 };
 
 const ProjectCard = ({ project }) => {
+    const navigate = useNavigate();
     const [{ isDragging }, dragRef] = useDrag(() => ({
         type: "PROJECT",
         item: { type: "PROJECT", id: project.id, fromStatus: project.status },
@@ -25,7 +27,7 @@ const ProjectCard = ({ project }) => {
             style={{ opacity: isDragging ? 0.5 : 1, cursor: "move" }}
             className="w-full h-max bg-white p-2 shadow-xl text-xs flex flex-col space-y-2 mb-2 rounded-sm"
         >
-            <p className="mb-2 truncate">
+            <p className="mb-2 truncate cursor-pointer" onClick={() => navigate(`/projects/${project.id}`)}>
                 <span className="text-blue-500">{project.id}</span> {project.title}
             </p>
 

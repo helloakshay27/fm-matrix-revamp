@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
-const StatusBadge = ({ status:initialStatus ,statusOptions, onStatusChange}) => {
+const StatusBadge = ({ status: initialStatus, statusOptions, onStatusChange }) => {
   const [currentStatus, setCurrentStatus] = useState(initialStatus);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  console.log(statusOptions);
 
   useEffect(() => {
     setCurrentStatus(initialStatus);
@@ -12,7 +11,7 @@ const StatusBadge = ({ status:initialStatus ,statusOptions, onStatusChange}) => 
   const handleStatusSelect = (newStatus) => {
     setCurrentStatus(newStatus);
     setIsDropdownOpen(false);
-    
+
     if (onStatusChange) {
       onStatusChange(newStatus);
     }
@@ -32,8 +31,8 @@ const StatusBadge = ({ status:initialStatus ,statusOptions, onStatusChange}) => 
         tabIndex={0}
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleDropdown()}
       >
-          <span className={`status-${currentStatus.toLowerCase().replace(' ', '-')} rounded-full w-[5px] h-[5px]`} ></span>
-          <span >{currentStatus.toLowerCase().replace('_', ' ')}</span>
+        <span className={`status-${currentStatus.toLowerCase().replace(' ', '-')} rounded-full w-[5px] h-[5px]`} ></span>
+        <span >{currentStatus.toLowerCase().replace('_', ' ')}</span>
       </div>
 
       {isDropdownOpen && (

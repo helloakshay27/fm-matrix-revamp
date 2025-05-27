@@ -84,18 +84,6 @@ const AddInternalUser = ({ open, onClose, placeholder }) => {
                     </div>
                     <div className="px-6">
                         <label className="block text-[11px] text-[#1B1B1B] mb-1">
-                            Email Id<span className="text-red-500 ml-1">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            placeholder="Enter email id here"
-                            className="border border-[#C0C0C0] w-full py-2 px-3 text-[#1B1B1B] text-[13px] focus:outline-none"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        />
-                    </div>
-                    <div className="px-6">
-                        <label className="block text-[11px] text-[#1B1B1B] mb-1">
                             Role<span className="text-red-500 ml-1">*</span>
                         </label>
                         <SelectBox
@@ -110,6 +98,19 @@ const AddInternalUser = ({ open, onClose, placeholder }) => {
                             onChange={(value) => setFormData({ ...formData, role: value })}
                         />
                     </div>
+                    <div className="px-6">
+                        <label className="block text-[11px] text-[#1B1B1B] mb-1">
+                            Email Id<span className="text-red-500 ml-1">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="Enter email id here"
+                            className="border border-[#C0C0C0] w-full py-2 px-3 text-[#1B1B1B] text-[13px] focus:outline-none"
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        />
+                    </div>
+                   
                     <div className="px-6">
                         <label className="block text-[11px] text-[#1B1B1B] mb-1">
                             Reports To<span className="text-red-500 ml-1">*</span>

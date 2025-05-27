@@ -18,11 +18,11 @@ const TaskSubCard = ({ subtask, isVisible }) => {
                 }`}
         >
             <p className="mb-2">
-                <span className="text-blue-500">P1-T2</span> Subtask 1
+                <span className="text-blue-500">{`T${subtask.parent_id}-S${subtask.id}`}</span> {subtask.title}
             </p>
             <div className="flex items-start gap-2">
                 <User2 className="text-[#C72030]" size={15} />{" "}
-                <span className="text-[11px]">Duhita Raut</span>
+                <span className="text-[11px]">{subtask?.responsible_person.name}</span>
             </div>
 
             <hr className="border border-gray-200" />

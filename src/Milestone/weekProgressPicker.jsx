@@ -159,7 +159,7 @@ const WeekProgressPicker = ({ onDateSelect, selectedDate }) => {
   return (
     <div className="w-full max-w-3xl mx-auto  mt-3  rounded-lg">
       <label className="block text-sm font-medium mb-2"> End Date</label>
-      <div className="flex items-center gap-3 overflow-x-auto">
+      <div className="flex items-center  overflow-x-auto">
         <button
           type="button"
           className="p-2"

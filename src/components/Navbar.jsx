@@ -40,7 +40,7 @@ const Navbar = () => {
                     </Link>
                     <div className="flex items-center">
                         <NavLink
-                            to="/"
+                            to="/projects"
                             className={({ isActive }) =>
                                 `px-6 py-2 text-[12px] ${isActive ? "bg-red text-white" : "text-gray-700"
                                 }`

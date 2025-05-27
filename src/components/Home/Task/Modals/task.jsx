@@ -5,18 +5,17 @@ import { fetchTags } from "../../../../redux/slices/tagsSlice";
 import WeekProgressPicker from "../../../../Milestone/weekProgressPicker";
 import MultiSelectBox from "../../../MultiSelectBox";
 import SelectBox from "../../../SelectBox";
-import { createTask } from "../../../../redux/slices/taskSlice";
+import { createTask, editTask, taskDetails } from "../../../../redux/slices/taskSlice";
+import { useParams } from "react-router-dom";
 
-const Tasks = () => {
+const Tasks = ({ isEdit }) => {
+  const { id } = useParams();
   const dispatch = useDispatch();
   const { loading, success, error } = useSelector((state) => state.createTask);
   const { fetchUsers: users } = useSelector((state) => state.fetchUsers);
   const { fetchTags: tags } = useSelector((state) => state.fetchTags);
-
-  useEffect(() => {
-    dispatch(fetchUsers());
-    dispatch(fetchTags());
-  }, []);
+  const { taskDetails: task } = useSelector((state) => state.taskDetails);
+  const { loading: editLoading, success: editSuccess, error: editError } = useSelector((state) => state.editTask);
 
   const [formData, setFormData] = useState({
     project: "",
@@ -32,11 +31,50 @@ const Tasks = () => {
     tags: [],
   });
 
+  useEffect(() => {
+    console.log(formData)
+  }, [formData]);
+
+  useEffect(() => {
+    dispatch(fetchUsers());
+    dispatch(fetchTags());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (isEdit) {
+      dispatch(taskDetails(id));
+    }
+  }, [dispatch, id, isEdit]);
+
+  useEffect(() => {
+    if (isEdit && task) {
+      setFormData({
+        project: formData.project,
+        milestone: formData.milestone,
+        taskTitle: task.title || "",
+        description: task.description || "",
+        responsiblePerson: task.responsible_person_id || "",
+        department: formData.department,
+        priority: task.priority || "",
+        duration: formData.duration,
+        expected_start_date: task.expected_start_date || null,
+        observer: task.observers.map(observer => ({
+          label: observer.user_name,
+          value: observer.user_id,
+        })),
+        tags: task.task_tags.map(tag => ({
+          label: tag.company_tag.name,
+          value: tag.company_tag.id,
+        })),
+      });
+    }
+  }, [isEdit, task]);
+
   const handleDateSelect = (date) => {
     setFormData({ ...formData, expected_start_date: date });
   };
 
-  const handleAddTask = (e) => {
+  const handleAddTask = (e, id) => {
     e.preventDefault();
 
     const payload = {
@@ -53,17 +91,21 @@ const Tasks = () => {
       },
     };
 
-    dispatch(createTask(payload))
+    if (isEdit) {
+      dispatch(editTask({ id, payload }));
+    } else {
+      dispatch(createTask(payload));
+    }
   };
 
   useEffect(() => {
-    if (success) {
+    if (success || editSuccess) {
       window.location.reload();
     }
-  }, [success]);
+  }, [success, editSuccess]);
 
   return (
-    <form className="pt-2 pb-12 h-full overflow-y-auto text-[12px]" onSubmit={handleAddTask}>
+    <form className="pt-2 pb-12 h-full overflow-y-auto text-[12px]" onSubmit={(e) => handleAddTask(e, id)}>
       <div
         id="addTask"
         className="max-w-[90%] mx-auto h-[calc(100%-4rem)] overflow-y-auto pr-3"
@@ -163,7 +205,7 @@ const Tasks = () => {
             />
           </div>
 
-          <div className=" space-y-2 w-full">
+          <div className="space-y-2 w-full">
             <label className="block ms-2">Duration</label>
             <input
               type="text"
@@ -200,7 +242,7 @@ const Tasks = () => {
         </div>
 
         <div className="flex items-start gap-4 mt-3">
-          <div className=" flex flex-col justify-between w-full">
+          <div className="flex flex-col justify-between w-full">
             <label className="block mb-2">
               Tags<span className="text-red-600">*</span>
             </label>
@@ -221,10 +263,10 @@ const Tasks = () => {
             type="submit"
             className="flex items-center justify-center border-2 text-[white] border-[red] px-4 py-2 w-[100px] bg-[red]"
           >
-            {loading ? "Creating..." : "Create"}
+            {loading ? "Creating..." : isEdit ? "Update" : "Create"}
           </button>
           <button
-            type="button" // Changed to type="button" to prevent form submission
+            type="button"
             className="flex items-center justify-center border-2 text-[black] border-[red] px-4 py-2"
           >
             Add New task

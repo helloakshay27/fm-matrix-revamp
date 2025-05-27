@@ -2,20 +2,67 @@ import { useEffect, useState } from "react";
 import SelectBox from "../../../SelectBox";
 import MultiSelectBox from "../../../MultiSelectBox";
 import { useDispatch, useSelector } from 'react-redux';
-import { createProject } from '../../../../redux/slices/projectSlice'
+import { changeProjectStatus, createProject, editProject, fetchProjectDetails } from '../../../../redux/slices/projectSlice'
 import { fetchUsers } from '../../../../redux/slices/userSlice'
 import { fetchTags } from '../../../../redux/slices/tagsSlice'
+import { useParams } from "react-router-dom";
 
-const Details = ({ setTab, setOpenModal, openModal }) => {
+const Details = ({ setTab, setOpenModal, openModal, endText = "Next", isEdit = false }) => {
+  const { id } = useParams();
   const dispatch = useDispatch();
   const { loading, success, error } = useSelector((state) => state.createProject);
   const { fetchUsers: users } = useSelector((state) => state.fetchUsers);
   const { fetchTags: tags } = useSelector((state) => state.fetchTags);
+  const { fetchProjectDetails: editData } = useSelector((state) => state.fetchProjectDetails)
+  const { success: editsuccess } = useSelector((state) => state.editProject)
+
+  const getUserName = (id) => {
+    const user = users.find(u => u.id === id);
+    return user ? `${user.firstname} ${user.lastname}` : "";
+  };
+
+  const getTagName = (id) => {
+    const tag = tags.find(t => t.id === id);
+    return tag ? tag.name : "";
+  };
+
 
   useEffect(() => {
-    dispatch(fetchUsers())
-    dispatch(fetchTags())
-  }, [])
+    dispatch(fetchUsers());
+    dispatch(fetchTags());
+  }, []);
+
+  useEffect(() => {
+    if (isEdit) {
+      dispatch(fetchProjectDetails(id))
+    }
+  }, [isEdit, id])
+
+  useEffect(() => {
+    if (isEdit && editData) {
+      setFormData({
+        projectTitle: editData.title || "",
+        description: editData.description || "",
+        projectOwner: editData.owner_id || "",
+        template: editData.template || "",
+        startDate: editData.start_date || "",
+        endDate: editData.end_date || "",
+        team: editData.member_ids?.map(id => ({
+          value: id,
+          label: getUserName(id)
+        })) || [],
+        projectType: editData.projectType || "",
+        priority: editData.priority || "",
+        tags: editData.task_tag_ids?.map(id => ({
+          value: id,
+          label: getTagName(id)
+        })) || [],
+        createChannel: editData.createChannel || false,
+        createTemplate: editData.createTemplate || false,
+      });
+    }
+  }, [isEdit, editData]);
+
 
   const [formData, setFormData] = useState({
     projectTitle: "",
@@ -70,8 +117,9 @@ const Details = ({ setTab, setOpenModal, openModal }) => {
     return `${days} : ${hours} : ${minutes}`;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e, id) => {
     e.preventDefault();
+
     const payload = {
       project_management: {
         title: formData.projectTitle,
@@ -85,15 +133,26 @@ const Details = ({ setTab, setOpenModal, openModal }) => {
       },
       member_ids: formData.team.map((member) => member.value),
       task_tag_ids: formData.tags.map((tag) => tag.value),
+    };
+
+    if (isEdit) {
+      dispatch(editProject({ id: id, payload: payload }));
+    } else {
+      const resultAction = await dispatch(createProject(payload));
+      if (resultAction.meta.requestStatus === 'fulfilled') {
+        setTab("Milestone");
+      }
     }
-
-    dispatch(createProject(payload))
-
-    success && setTab("Milestone");
   };
 
+  useEffect(() => {
+    if (editsuccess) {
+      window.location.reload()
+    }
+  }, [editsuccess])
+
   return (
-    <form className="pt-2 pb-12 h-full" onSubmit={handleSubmit}>
+    <form className="pt-2 pb-12 h-full" onSubmit={(e) => handleSubmit(e, id)}>
       <div
         id="addTask"
         className="max-w-[90%] mx-auto h-[calc(100%-4rem)] overflow-y-auto pr-3"
@@ -290,7 +349,7 @@ const Details = ({ setTab, setOpenModal, openModal }) => {
             type="submit"
             className="flex items-center justify-center border-2 border-[red] px-4 py-2 text-[black] w-[100px]"
           >
-            Next
+            {endText}
           </button>
         </div>
       </div>

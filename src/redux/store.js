@@ -1,9 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit'
-import { changeProjectStatusReducer, createProjectReducer, fetchProjectDetailsReducer, fetchProjectsReducer } from './slices/projectSlice'
+import { changeProjectStatusReducer, createProjectReducer, editProjectReducer, fetchProjectDetailsReducer, fetchProjectsReducer } from './slices/projectSlice'
 import { createExternalUserReducer, createInternalUserReducer, fetchExternalUserReducer, fetchInternalUserReducer, userReducer } from './slices/userSlice'
 import { createTagReducer, fetchTagsReducer } from './slices/tagsSlice'
 import { createRoleReducer, editRoleReducer, fetchRolesReducer } from './slices/roleSlice'
-import { changeTaskStatusReducer, createTaskCommentReducer, createTaskReducer, editTaskCommentReducer, fetchTasksCommentsReducer, fetchTasksReducer, taskDetailsReducer } from './slices/taskSlice'
+import { changeTaskStatusReducer, createTaskCommentReducer, createTaskReducer, editTaskCommentReducer, editTaskReducer, fetchTasksCommentsReducer, fetchTasksReducer, taskDetailsReducer } from './slices/taskSlice'
 import { fetchOrganizationsReducer } from './slices/organizationSlice'
 
 export const store = configureStore({
@@ -13,10 +13,12 @@ export const store = configureStore({
     fetchProjects: fetchProjectsReducer,
     fetchProjectDetails: fetchProjectDetailsReducer,
     changeProjectStatus: changeProjectStatusReducer,
+    editProject: editProjectReducer,
 
     //tasks
     createTask: createTaskReducer,
     fetchTasks: fetchTasksReducer,
+    editTask: editTaskReducer,
     taskDetails: taskDetailsReducer,
     changeTaskStatus: changeTaskStatusReducer,
     fetchTasksComments: fetchTasksCommentsReducer,
