@@ -183,7 +183,7 @@ const Tasks = () => {
         </div>
 
         <div className="flex items-start gap-4 mt-3">
-          <div className="flex flex-col justify-between w-2/3">
+          <div className="flex flex-col justify-between w-full">
             <label className="block mb-2">
               Observer<span className="text-red-600">*</span>
             </label>
