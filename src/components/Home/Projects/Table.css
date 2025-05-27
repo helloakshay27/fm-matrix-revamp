@@ -142,7 +142,7 @@ tbody tr:hover {
 .status-badge-wrapper {
   width: 100%;
   height: 39px;
-  position: relative;
+  /* position: relative; 
   /* border-radius: 10px; */
 }
 
@@ -153,14 +153,14 @@ tbody tr:hover {
   user-select: none;
   display: flex;
   justify-content: start;
-  align-items: center;
+  /* align-items: start;   */
   border: none !important;
   gap: 8px;
   padding: 10px;
 }
 
 .status-completed {
-  background-color: #28a745;
+  background-color: darkgreen;
   color: white;
   border-color: #1e7e34;
 }
@@ -183,7 +183,7 @@ tbody tr:hover {
   background-color: #c85e68;
   color: white;
 }
-.status-urgent {
+.status-urgent,.status-overdue {
   background-color: #aa0414;
   color: white;
 }
@@ -191,6 +191,11 @@ tbody tr:hover {
   background-color: #ffa15e;
   color: white;
 }
+.status-active{
+  background-color: lightgreen;
+  color: white;
+}
+
 
 .status-dropdown {
   position: absolute;

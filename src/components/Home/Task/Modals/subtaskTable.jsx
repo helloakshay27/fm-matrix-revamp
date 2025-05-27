@@ -429,7 +429,7 @@ const SubtaskTable = () => {
                 </tr>
               ))}
               {isAddingNewSubtask && (
-                <tr className="bg-yellow-50 border-t-2 border-yellow-200">
+                <tr >
                   <td className="border p-1 text-xs text-gray-400 align-middle">NEW</td>
                   <td className="border p-1 align-middle">
                     <NewSubtaskTextField
@@ -506,13 +506,7 @@ const SubtaskTable = () => {
                   </td>
                 </tr>
               )}
-               {data.length === 0 && !isAddingNewSubtask && parentTaskLookupStatus === 'found' && (
-                  <tr>
-                      <td colSpan={columns.length} className="p-4 text-center text-gray-500">
-                          No subtasks available for "{parentTaskForSubtasks?.title || parentId}". Click "+ Add subtask" to create one.
-                      </td>
-                  </tr>
-              )}
+               
             </tbody>
           </table>
         </div>

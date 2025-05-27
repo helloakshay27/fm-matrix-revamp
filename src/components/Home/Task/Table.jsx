@@ -349,7 +349,7 @@ const TaskTable = () => {
       accessorKey: "taskTitle", header: "Task Title", size: 200, cell: ({ getValue, row }) => ( // Added row for depth
         <span
           className="truncate block"  // Added block for padding
-          style={{ paddingLeft: row.depth > 0 ? `${row.depth * 1.5 + 0.5}rem` : '0.25rem' }} // Indentation for subtask titles, 0.25rem is p-1
+          style={{ paddingLeft: row.depth > 0 ? `${row.depth * 1.5 + 0.5}rem` : '0.55rem' }} // Indentation for subtask titles, 0.25rem is p-1
         >
           {getValue()}
         </span>
@@ -427,7 +427,7 @@ const TaskTable = () => {
     content = (
       <div className="table-wrapper border-none overflow-x-auto" style={{ minHeight: `${desiredTableHeight}px`, maxHeight: '80vh', overflowY: 'auto' }}>
         <table className="w-full table-auto text-sm table-fixed">
-          <thead className="sticky top-0 bg-gray-50 z-1">
+          <thead className="sticky top-0 bg-gray-50 z-10">
             {table.getHeaderGroups().map(hg => <tr key={hg.id}>{hg.headers.map(h => <th key={h.id} style={{ width: `${h.getSize()}px` }} className="border-r-2 p-2 text-center text-gray-600 font-semibold break-words">{h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}</th>)}</tr>)}
           </thead>
           <tbody className="bg-white">
@@ -454,8 +454,8 @@ const TaskTable = () => {
             {(actualDataRows.length === 0 && !isAddingNewTask && !showTopLevelAddTaskButton && !loadingTasks && !isCreatingTask && !isUpdatingTask) && (<tr style={{ height: `${ROW_HEIGHT*2}px` }}><td colSpan={mainTableColumns.length} className="text-center text-gray-500 p-4">No tasks available.</td></tr>)}
             {actualDataRows.map(row => (
               <Fragment key={row.id}>
-                <tr className={`hover:bg-gray-50 ${row.getIsExpanded() ? "bg-gray-100" : "even:bg-slate-50"} relative z-1`} style={{ height: `${ROW_HEIGHT}px` }} >
-                  {row.getVisibleCells().map(cell => ( <td key={cell.id} style={{ width: `${cell.column.getSize()}px`}} className={`border-r-2 text-left pl-2 align-middle`}><div className="h-full w-full flex items-center">{flexRender(cell.column.columnDef.cell, cell.getContext())}</div></td> ))}
+                <tr className={`hover:bg-gray-50 ${row.getIsExpanded() ? "bg-gray-100" : "even:bg-[#D5DBDB4D]"} font-[300] relative z-1`} style={{ height: `${ROW_HEIGHT}px` }} >
+                  {row.getVisibleCells().map(cell => ( <td key={cell.id} style={{ width: `${cell.column.getSize()}px`}} className={`border-r-2 text-left pl-2 align-middle p-0`}><div className="h-full w-full flex items-center">{flexRender(cell.column.columnDef.cell, cell.getContext())}</div></td> ))}
                 </tr>
               </Fragment>
             ))}
