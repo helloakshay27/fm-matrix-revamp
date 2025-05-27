@@ -111,7 +111,7 @@ const InternalTable = () => {
         ),
       },
       {
-        accessorKey: 'role_id',
+        accessorKey: 'lock_role.name',
         header: 'Role',
         size: 150,
         cell: ({ row, getValue }) => (

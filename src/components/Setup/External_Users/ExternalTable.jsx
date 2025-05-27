@@ -48,7 +48,7 @@ const ExternalTable = () => {
       size: 250,
     },
     {
-      accessorKey: 'role_id',
+      accessorKey: 'lock_role.name',
       header: 'Role',
       size: 180,
     },

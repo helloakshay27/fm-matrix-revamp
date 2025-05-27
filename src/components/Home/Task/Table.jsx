@@ -421,7 +421,7 @@ const TaskTable = () => {
     content = (
       <div className="table-wrapper border-none overflow-x-auto" style={{ minHeight: `${desiredTableHeight}px`, maxHeight: '80vh', overflowY: 'auto' }}>
         <table className="w-full table-auto text-sm table-fixed">
-          <thead className="sticky top-0 bg-gray-50 z-20">
+          <thead className="sticky top-0 bg-gray-50 z-1">
             {table.getHeaderGroups().map(hg => <tr key={hg.id}>{hg.headers.map(h => <th key={h.id} style={{ width: `${h.getSize()}px` }} className="border-r-2 p-2 text-center text-gray-600 font-semibold break-words">{h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}</th>)}</tr>)}
           </thead>
           <tbody className="bg-white">
