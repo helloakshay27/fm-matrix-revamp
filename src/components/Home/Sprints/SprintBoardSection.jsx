@@ -114,13 +114,13 @@ const SprintBoardSection = () => {
                                                     task={task}
                                                     toggleSubCard={() => toggleSubCard(task.id)}
                                                 />
-                                                {task.subtasks.map((subtask) => (
+                                                {/* {task.subtasks.map((subtask) => (
                                                     <TaskSubCard
                                                         key={subtask.id}
                                                         subtask={subtask}
                                                         isVisible={subCardVisibility[task.id] || false}
                                                     />
-                                                ))}
+                                                ))} */}
                                             </div>
                                         ))
                                 ) : (
