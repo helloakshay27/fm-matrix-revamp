@@ -143,7 +143,7 @@ const TaskTable = () => {
     if (!loadingUsers && usersArray.length === 0 && !isCreatingTask) {
         dispatch(fetchUsers());
     }
-  }, [dispatch, users, loadingUsers, isCreatingTask]);
+  }, [dispatch, isCreatingTask]);
 
   useEffect(() => {
     if (isCreatingTask) return;
