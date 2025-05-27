@@ -10,7 +10,7 @@ import { createTask } from "../../../../redux/slices/taskSlice";
 const Tasks = () => {
   const dispatch = useDispatch();
   const { loading, success, error } = useSelector((state) => state.createTask);
-  const { users } = useSelector((state) => state.user);
+  const { fetchUsers: users } = useSelector((state) => state.fetchUsers);
   const { fetchTags: tags } = useSelector((state) => state.fetchTags);
 
   useEffect(() => {

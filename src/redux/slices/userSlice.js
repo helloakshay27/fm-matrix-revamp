@@ -43,7 +43,7 @@ export const fetchUsers = createAsyncThunk('fetchUsers', async () => {
             },
         });
 
-        return response.data.users;
+        return response.data;
     } catch (error) {
         console.log(error)
     }
@@ -71,7 +71,7 @@ export const fetchInternalUser = createAsyncThunk('fetchInternalUser', async () 
             },
         });
 
-        return response.data.users;
+        return response.data;
     } catch (error) {
         console.log(error);
     }
@@ -85,7 +85,7 @@ export const createExternalUser = createAsyncThunk('createExternalUser', async (
             },
         });
 
-        return response.data.users;
+        return response.data;
     } catch (error) {
         console.log(error);
     }
@@ -99,14 +99,14 @@ export const fetchExternalUser = createAsyncThunk('fetchExternalUser', async () 
             },
         });
 
-        return response.data.users;
+        return response.data;
     } catch (error) {
         console.log(error);
     }
 });
 
 // Create slices
-export const userSlice = createApiSlice('users', fetchUsers);
+export const userSlice = createApiSlice('fetchUsers', fetchUsers);
 export const createInternalUserSlice = createApiSlice('createInternalUser', createInternalUser);
 export const fetchInternalUserSlice = createApiSlice('fetchInternalUser', fetchInternalUser);
 export const createExternalUserSlice = createApiSlice('createExternalUser', createExternalUser);

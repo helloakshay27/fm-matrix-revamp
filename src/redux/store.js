@@ -29,7 +29,7 @@ export const store = configureStore({
     editRole: editRoleReducer,
 
     //users
-    user: userReducer,
+    fetchUsers: userReducer,
     createInternalUser: createInternalUserReducer,
     fetchInternalUser: fetchInternalUserReducer,
     createExternalUser: createExternalUserReducer,

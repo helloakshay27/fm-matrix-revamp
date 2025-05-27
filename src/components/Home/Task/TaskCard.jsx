@@ -25,7 +25,7 @@ const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232" }) =>
             </div>
             <div className="flex items-start gap-1">
                 <User2 className="text-[#C72030] flex-shrink-0" size={14} />
-                <span className="text-[10px] truncate">{task.assignee}</span>
+                <span className="text-[10px] truncate">{task.responsible_person?.name}</span>
             </div>
             <div className="flex items-start gap-1">
                 <Timer className="text-[#029464] flex-shrink-0" size={14} />

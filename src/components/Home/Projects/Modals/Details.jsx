@@ -9,7 +9,7 @@ import { fetchTags } from '../../../../redux/slices/tagsSlice'
 const Details = ({ setTab, setOpenModal, openModal }) => {
   const dispatch = useDispatch();
   const { loading, success, error } = useSelector((state) => state.createProject);
-  const { users } = useSelector((state) => state.user);
+  const { fetchUsers: users } = useSelector((state) => state.fetchUsers);
   const { fetchTags: tags } = useSelector((state) => state.fetchTags);
 
   useEffect(() => {
@@ -157,14 +157,15 @@ const Details = ({ setTab, setOpenModal, openModal }) => {
             </label>
             <SelectBox
               options={
-                users.map((user) => ({
+                users?.map((user) => ({
                   value: user.id,
-                  label: user.firstname + " " + user.lastname,
+                  label: user?.firstname + " " + user?.lastname,
                 }))
               }
               value={formData.projectOwner}
               onChange={(value) => {
-                handleSelectChange("projectOwner", value)}}
+                handleSelectChange("projectOwner", value)
+              }}
               placeholder="Select Owner"
             />
           </div>
