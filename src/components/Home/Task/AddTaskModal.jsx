@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import gsap from "gsap";
 import Tasks from "./Modals/task";
 
-const AddTaskModal = ({ isModalOpen, setIsModalOpen }) => {
+const AddTaskModal = ({ title, isEdit, isModalOpen, setIsModalOpen }) => {
     const addTaskModalRef = useRef(null);
 
     useGSAP(() => {
@@ -32,7 +32,7 @@ const AddTaskModal = ({ isModalOpen, setIsModalOpen }) => {
                 ref={addTaskModalRef}
                 className="bg-white py-6 rounded-lg shadow-lg w-1/3 relative h-full right-0"
             >
-                <h3 className="text-lg font-medium text-center">New Task</h3>
+                <h3 className="text-lg font-medium text-center">{title}</h3>
                 <X
                     className="absolute top-[26px] right-8 cursor-pointer"
                     onClick={closeModal}
@@ -40,7 +40,7 @@ const AddTaskModal = ({ isModalOpen, setIsModalOpen }) => {
 
                 <hr className="border border-[#E95420] my-4" />
 
-                <Tasks />
+                <Tasks isEdit={isEdit} />
             </div>
         </div>
     );

@@ -198,6 +198,8 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen 
                 <AddTaskModal
                     isModalOpen={isModalOpen}
                     setIsModalOpen={setIsModalOpen}
+                    title={"Add Task"}
+                    isEdit={false}
                 />
             )}
 

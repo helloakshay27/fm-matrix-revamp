@@ -37,8 +37,8 @@ const App = () => {
     <Layout isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}>
       <Routes>
         <Route path="/" element={<Navigate to="/projects" />} />
-        <Route path="/task" element={<Tasks setIsSidebarOpen={setIsSidebarOpen} />} />
-        <Route path="/task/:id" element={<TaskDetails />} />
+        <Route path="/tasks" element={<Tasks setIsSidebarOpen={setIsSidebarOpen} />} />
+        {/* <Route path="/task/:id" element={<TaskDetails />} /> */}
         <Route path="/projects" element={<Projects setIsSidebarOpen={setIsSidebarOpen} />} />
         <Route path="/projects/:id" element={<ProjectDetails />} />
         <Route path="/sprint" element={<Sprints />} />

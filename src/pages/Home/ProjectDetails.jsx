@@ -83,6 +83,29 @@ const Documents = () => {
     );
 };
 
+const mapStatusToDisplay = (rawStatus) => {
+    const statusMap = {
+        open: "Active",
+        in_progress: "In Progress",
+        on_hold: "On Hold",
+        overdue: "Overdue",
+        completed: "Completed",
+    };
+    return statusMap[rawStatus?.toLowerCase()] || "Active"; // Default to "Active" if unknown
+};
+
+// Utility function to map display status back to API format
+const mapDisplayToApiStatus = (displayStatus) => {
+    const reverseStatusMap = {
+        Active: "open",
+        "In Progress": "in_progress",
+        "On Hold": "on_hold",
+        Overdue: "overdue",
+        Completed: "completed",
+    };
+    return reverseStatusMap[displayStatus] || "open"; // Default to "open" if unknown
+};
+
 const ProjectDetails = () => {
     const { id } = useParams();
 
@@ -99,6 +122,12 @@ const ProjectDetails = () => {
 
     const [openDropdown, setOpenDropdown] = useState(false);
     const [selectedOption, setSelectedOption] = useState("Active");
+
+    useEffect(() => {
+        if (project?.status) {
+            setSelectedOption(mapStatusToDisplay(project.status));
+        }
+    }, [project?.status]);
 
     const dropdownRef = useRef(null);
 
@@ -119,16 +148,9 @@ const ProjectDetails = () => {
     const handleOptionSelect = (option) => {
         setSelectedOption(option);
         setOpenDropdown(false);
-    };
 
-    useEffect(() => {
-        const payload = {
-            project_management: {
-                status: selectedOption
-            }
-        }
-        dispatch(changeProjectStatus({ id, payload }))
-    }, [selectedOption])
+        dispatch(changeProjectStatus({ id, payload: { project_management: { status: mapDisplayToApiStatus(option) } } }));
+    };
 
     useGSAP(() => {
         gsap.set(firstContentRef.current, { height: "auto" });
@@ -215,7 +237,7 @@ const ProjectDetails = () => {
                                         e.key === "Enter" && setOpenDropdown(!openDropdown)
                                     }
                                 >
-                                    <span className="text-[13px]">{project.status}</span> {/* Display selected option */}
+                                    <span className="text-[13px]">{selectedOption}</span> {/* Display selected option */}
                                     <ChevronDown
                                         size={15}
                                         className={`${openDropdown ? "rotate-180" : ""
