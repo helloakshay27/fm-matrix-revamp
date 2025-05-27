@@ -30,7 +30,7 @@ table {
   min-width: max-content; /* Ensures table content dictates min width for scrolling */
 }
 
-th{
+th, thead{
   z-index: 9 !important;
 }
 
