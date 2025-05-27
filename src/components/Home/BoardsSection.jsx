@@ -356,13 +356,13 @@ const BoardsSection = ({ section }) => {
                                                     }}
                                                     iconColor={allLinked ? "#DA2400" : "#A0A0A0"}
                                                 />
-                                                {/* {task.subtasks.map((subtask) => (
+                                                {task?.sub_tasks_managements.map((subtask) => (
                                                     <TaskSubCard
                                                         key={subtask.id}
                                                         subtask={subtask}
                                                         isVisible={subCardVisibility[task.id] || false}
                                                     />
-                                                ))} */}
+                                                ))}
                                             </div>
                                         );
                                     })

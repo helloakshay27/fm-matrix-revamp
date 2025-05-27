@@ -106,7 +106,7 @@ const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232" }) =>
                                 stroke-linejoin="round"
                             />
                         </svg>
-                        {/* {task.subtasks.length} */}
+                        {task.sub_tasks_managements?.length}
                     </span>
 
                     <svg
