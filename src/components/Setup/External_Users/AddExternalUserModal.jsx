@@ -59,8 +59,8 @@ const AddExternalUserModal = ({ open, onClose, placeholder }) => {
         </div>
 
         {/* Input Section */}
-        <div className='space-y-4 h-full overflow-y-auto pb-4'>
-          <div className="px-6">
+        <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto pb-4">
+        <div className="px-6">
             <label className="block text-[11px] text-[#1B1B1B] mb-1">
               Username<span className="text-red-500 ml-1">*</span>
             </label>
@@ -90,6 +90,22 @@ const AddExternalUserModal = ({ open, onClose, placeholder }) => {
           </div>
           <div className="px-6">
             <label className="block text-[11px] text-[#1B1B1B] mb-1">
+              Role<span className="text-red-500 ml-1">*</span>
+            </label>
+            <SelectBox
+              options={
+                roles.map(role => ({
+                  value: role.id,
+                  label: role.display_name
+                }))
+              }
+              className="w-full"
+              value={formData.role}
+              onChange={(value) => setFormData({ ...formData, role: value })}
+            />
+          </div>
+          <div className="px-6">
+            <label className="block text-[11px] text-[#1B1B1B] mb-1">
               Email Id<span className="text-red-500 ml-1">*</span>
             </label>
             <input
@@ -112,22 +128,7 @@ const AddExternalUserModal = ({ open, onClose, placeholder }) => {
               onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
             />
           </div>
-          <div className="px-6">
-            <label className="block text-[11px] text-[#1B1B1B] mb-1">
-              Role<span className="text-red-500 ml-1">*</span>
-            </label>
-            <SelectBox
-              options={
-                roles.map(role => ({
-                  value: role.id,
-                  label: role.display_name
-                }))
-              }
-              className="w-full"
-              value={formData.role}
-              onChange={(value) => setFormData({ ...formData, role: value })}
-            />
-          </div>
+
         </div>
 
         {/* Footer Buttons */}

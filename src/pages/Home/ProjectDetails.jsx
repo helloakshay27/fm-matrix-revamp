@@ -1,12 +1,13 @@
 import gsap from "gsap";
 import SourceIcon from "@mui/icons-material/Source";
 import IssuesTable from "../../components/Home/Issues/Table";
-import { ChevronDown, ChevronDownCircle, MoreHorizontal } from "lucide-react";
+import { ChevronDown, ChevronDownCircle, MoreHorizontal, PencilIcon, TrashIcon, Trash2 } from "lucide-react";
 import { useGSAP } from "@gsap/react";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { changeProjectStatus, fetchProjectDetails } from "../../redux/slices/projectSlice";
+import AddProjectModal from "../../components/Home/Projects/AddProjectModal";
 
 const Issues = () => {
     return <IssuesTable />;
@@ -118,10 +119,10 @@ const ProjectDetails = () => {
 
     const dispatch = useDispatch();
     const { fetchProjectDetails: project } = useSelector((state) => state.fetchProjectDetails);
-    const { loading, success, error } = useSelector((state) => state.changeProjectStatus);
 
     const [openDropdown, setOpenDropdown] = useState(false);
     const [selectedOption, setSelectedOption] = useState("Active");
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     useEffect(() => {
         if (project?.status) {
@@ -207,6 +208,16 @@ const ProjectDetails = () => {
 
     return (
         <div className="m-4">
+            {isEditModalOpen && (
+                <AddProjectModal
+                  isEdit={true}
+                   endText="Updated"
+                    projectname="Edit Project"
+                    isModalOpen={isEditModalOpen}
+                    setIsModalOpen={setIsEditModalOpen}
+                />
+            )}
+
             <div className="px-4 pt-1">
                 <h2 className="text-[15px] p-3 px-0">
                     <span className=" mr-3">Project-ID</span>
@@ -217,14 +228,17 @@ const ProjectDetails = () => {
                 <div className="flex items-center justify-between my-3 text-[12px]">
                     <div className="flex items-center gap-3 text-[#323232]">
                         <span>Created By : {project.created_by_name}</span>
+
                         <span className="h-6 w-[1px] border border-gray-300"></span>
+
                         <span className="flex items-center gap-3">
                             Created On : {formatToDDMMYYYY_AMPM(project.created_at)}
                         </span>
-                        <span className="h-6 w-[1px] border border-gray-300"></span>
-                        <span className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm text-white bg-[#9CE463]">
-                            {/* Active <ChevronDown /> */}
 
+                        <span className="h-6 w-[1px] border border-gray-300"></span>
+
+                        {/* Status Dropdown */}
+                        <span className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm text-white bg-[#9CE463]">
                             <div className="relative" ref={dropdownRef}>
                                 <div
                                     className="flex items-center gap-1 cursor-pointer px-2 py-1"
@@ -233,15 +247,12 @@ const ProjectDetails = () => {
                                     aria-haspopup="true"
                                     aria-expanded={openDropdown}
                                     tabIndex={0}
-                                    onKeyDown={(e) =>
-                                        e.key === "Enter" && setOpenDropdown(!openDropdown)
-                                    }
+                                    onKeyDown={(e) => e.key === "Enter" && setOpenDropdown(!openDropdown)}
                                 >
                                     <span className="text-[13px]">{selectedOption}</span> {/* Display selected option */}
                                     <ChevronDown
                                         size={15}
-                                        className={`${openDropdown ? "rotate-180" : ""
-                                            } transition-transform`}
+                                        className={`${openDropdown ? "rotate-180" : ""} transition-transform`}
                                     />
                                 </div>
                                 <ul
@@ -257,9 +268,7 @@ const ProjectDetails = () => {
                                     {dropdownOptions.map((option, idx) => (
                                         <li key={idx} role="menuitem">
                                             <button
-                                                className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option
-                                                    ? "bg-gray-100 font-semibold"
-                                                    : ""
+                                                className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option ? "bg-gray-100 font-semibold" : ""
                                                     }`}
                                                 onClick={() => handleOptionSelect(option)}
                                             >
@@ -270,8 +279,26 @@ const ProjectDetails = () => {
                                 </ul>
                             </div>
                         </span>
+
+                        <span className="h-6 w-[1px] border border-gray-300"></span>
+
+                        <span
+                            className="flex items-center gap-1 cursor-pointer"
+                            onClick={() => setIsEditModalOpen(true)}                        >
+                            <PencilIcon size={15} />
+                            <span>Edit Project</span>
+                        </span>
+
+                        <span className="h-6 w-[1px] border border-gray-300"></span>
+
+                        <span
+                            className="flex items-center gap-1 cursor-pointer"
+                        >
+                            <Trash2 size={15} />
+                            <span>Delete Project</span>
+                        </span>
                     </div>
-                    <MoreHorizontal color="#E95420" className="cursor-pointer" />
+
                 </div>
                 <div className="border-b-[3px] border-grey my-3 "></div>
 

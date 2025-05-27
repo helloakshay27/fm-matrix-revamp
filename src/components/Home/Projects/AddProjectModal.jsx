@@ -49,7 +49,7 @@ const CreateNewTeam = ({ openModal, setOpenModal }) => {
   )
 }
 
-const AddProjectModal = ({ isModalOpen, setIsModalOpen }) => {
+const AddProjectModal = ({ isModalOpen, setIsModalOpen, projectname ="New Project", endText="Next", isEdit, editData  }) => {
   const addTaskModalRef = useRef(null);
   const [tab, setTab] = useState("Details");
   const [openModal, setOpenModal] = useState(false);
@@ -95,7 +95,7 @@ const AddProjectModal = ({ isModalOpen, setIsModalOpen }) => {
           ref={addTaskModalRef}
           className="bg-white py-6 rounded-lg shadow-lg w-1/3 relative h-full right-0"
         >
-          <h3 className="text-[14px] font-medium text-center ">New Project</h3>
+          <h3 className="text-[14px] font-medium text-center ">{projectname}</h3>
           <X
             className="absolute top-[26px] right-8 cursor-pointer"
             onClick={closeModal}
@@ -124,7 +124,7 @@ const AddProjectModal = ({ isModalOpen, setIsModalOpen }) => {
 
           <hr className="border  " />
 
-          {tab == "Details" && <Details setTab={setTab} openModal={openModal} setOpenModal={setOpenModal} />}
+          {tab == "Details" && <Details endText={endText} setTab={setTab} openModal={openModal} setOpenModal={setOpenModal} isEdit={isEdit} />}
           {tab == "Milestone" && <Milestones />}
         </div>
 

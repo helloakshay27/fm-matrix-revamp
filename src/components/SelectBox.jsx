@@ -98,6 +98,7 @@ import Select from "react-select";
         styles={customStyles}
         menuPortalTarget={document.body}
         placeholder={placeholder}
+       menuPosition="fixed"
       />
     </div>
   );
