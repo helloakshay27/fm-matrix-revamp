@@ -98,7 +98,7 @@ const mapStatusToDisplay = (rawStatus) => {
 // Utility function to map display status back to API format
 const mapDisplayToApiStatus = (displayStatus) => {
     const reverseStatusMap = {
-        Active: "open",
+        Active: "active",
         "In Progress": "in_progress",
         "On Hold": "on_hold",
         Overdue: "overdue",
@@ -210,8 +210,8 @@ const ProjectDetails = () => {
         <div className="m-4">
             {isEditModalOpen && (
                 <AddProjectModal
-                  isEdit={true}
-                   endText="Updated"
+                    isEdit={true}
+                    endText="Updated"
                     projectname="Edit Project"
                     isModalOpen={isEditModalOpen}
                     setIsModalOpen={setIsEditModalOpen}

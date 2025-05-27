@@ -17,8 +17,6 @@ const Tasks = ({ isEdit }) => {
   const { taskDetails: task } = useSelector((state) => state.taskDetails);
   const { loading: editLoading, success: editSuccess, error: editError } = useSelector((state) => state.editTask);
 
-  console.log(task);
-
   const [formData, setFormData] = useState({
     project: "",
     milestone: "",
@@ -34,6 +32,10 @@ const Tasks = ({ isEdit }) => {
   });
 
   useEffect(() => {
+    console.log(formData)
+  }, [formData]);
+
+  useEffect(() => {
     dispatch(fetchUsers());
     dispatch(fetchTags());
   }, [dispatch]);
@@ -47,27 +49,23 @@ const Tasks = ({ isEdit }) => {
   useEffect(() => {
     if (isEdit && task) {
       setFormData({
-        project: formData.project, // Preserve if not part of task
-        milestone: formData.milestone, // Preserve if not part of task
+        project: formData.project,
+        milestone: formData.milestone,
         taskTitle: task.title || "",
         description: task.description || "",
         responsiblePerson: task.responsible_person_id || "",
-        department: formData.department, // Preserve if not part of task
+        department: formData.department,
         priority: task.priority || "",
-        duration: formData.duration, // Preserve if not part of task
+        duration: formData.duration,
         expected_start_date: task.expected_start_date || null,
-        observer: task.observers
-          ? task.observers.map((observer) => ({
-            label: observer.firstname + " " + observer.lastname,
-            value: observer.id,
-          }))
-          : [],
-        tags: task.task_tags
-          ? task.task_tags.map((tag) => ({
-            label: tag.name,
-            value: tag.id,
-          }))
-          : [],
+        observer: task.observers.map(observer => ({
+          label: observer.user_name,
+          value: observer.user_id,
+        })),
+        tags: task.task_tags.map(tag => ({
+          label: tag.company_tag.name,
+          value: tag.company_tag.id,
+        })),
       });
     }
   }, [isEdit, task]);
