@@ -33,7 +33,7 @@ const StatusBadge = ({ status:initialStatus ,statusOptions, onStatusChange}) => 
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleDropdown()}
       >
           <span className={`status-${currentStatus.toLowerCase().replace(' ', '-')} rounded-full w-[5px] h-[5px]`} ></span>
-          <span >{currentStatus}</span>
+          <span >{currentStatus.toLowerCase().replace('_', ' ')}</span>
       </div>
 
       {isDropdownOpen && (
