@@ -7,7 +7,7 @@ import SubtaskTable from "../../components/Home/Task/Modals/subtaskTable";
 import DependancyKanban from "../../components/Home/DependancyKanban";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { changeTaskStatus, createTaskComment, editTaskComment, fetchTasksComments, taskDetails } from "../../redux/slices/taskSlice";
+import { changeTaskStatus, createTaskComment, editTaskComment, taskDetails } from "../../redux/slices/taskSlice";
 import AddTaskModal from "../../components/Home/Task/AddTaskModal";
 
 // Utility function to map raw API status to display-friendly status
@@ -165,20 +165,20 @@ const Documents = () => {
     );
 };
 
-const Comments = () => {
+const Comments = ({ comments }) => {
     const { id } = useParams();
     const [comment, setComment] = useState("");
     const [editingCommentId, setEditingCommentId] = useState(null);
     const textareaRef = useRef(null);
 
     const dispatch = useDispatch();
-    const { fetchTasksComments: comments } = useSelector(state => state.fetchTasksComments);
+    // const { fetchTasksComments: comments } = useSelector(state => state.fetchTasksComments);
     const { loading, success, error } = useSelector(state => state.createTaskComment);
     const { loading: editLoading, success: editSuccess, error: editError } = useSelector(state => state.editTaskComment);
 
-    useEffect(() => {
-        dispatch(fetchTasksComments());
-    }, [success, editSuccess, dispatch]);
+    // useEffect(() => {
+    //     dispatch(fetchTasksComments());
+    // }, [success, editSuccess, dispatch]);
 
     const handleAddComment = (e) => {
         e.preventDefault();
@@ -552,7 +552,7 @@ const TaskDetails = () => {
                         <div>
                             {tab === "Subtasks" && <SubtaskTable />}
                             {tab === "Dependency" && <DependancyKanban />}
-                            {tab === "Comments" && <Comments />}
+                            {tab === "Comments" && <Comments comments={task?.comments} />}
                             {tab === "Attachments" && <Attachments />}
                             {tab === "Activity Log" && <Status taskStatusLogs={task.task_status_logs} />}
                         </div>

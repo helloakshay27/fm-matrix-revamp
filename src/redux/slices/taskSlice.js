@@ -53,14 +53,14 @@ export const createTask = createAsyncThunk('createTask', async (payload) => {
 
 export const createSubTask = createAsyncThunk('createSubTask', async (payload) => {
     try {
-        const response = await axios.post(`https://api-tasks.lockated.com/task_managements.json`, 
-           { task_management:payload},
-            { 
-            headers: {
-                Authorization: `Bearer ${access_token}`,
-                'Content-Type': 'application/json'
-            }
-        });
+        const response = await axios.post(`https://api-tasks.lockated.com/task_managements.json`,
+            { task_management: payload },
+            {
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
 
         return response.data;
     } catch (error) {
@@ -118,20 +118,20 @@ export const editTask = createAsyncThunk('editTask', async ({ id, payload }) => 
     }
 })
 
-export const fetchTasksComments = createAsyncThunk('fetchTasksComments', async (id) => {
-    try {
-        const response = await axios.get(`https://api-tasks.lockated.com/comments.json`, {
-            headers: {
-                Authorization: `Bearer ${access_token}`,
-            }
-        });
+// export const fetchTasksComments = createAsyncThunk('fetchTasksComments', async (id) => {
+//     try {
+//         const response = await axios.get(`https://api-tasks.lockated.com/comments.json`, {
+//             headers: {
+//                 Authorization: `Bearer ${access_token}`,
+//             }
+//         });
 
-        return response.data;
-    } catch (error) {
-        console.log(error);
-        return error.response.data;
-    }
-})
+//         return response.data;
+//     } catch (error) {
+//         console.log(error);
+//         return error.response.data;
+//     }
+// })
 
 export const createTaskComment = createAsyncThunk('createTaskComment', async (payload) => {
     try {
@@ -184,17 +184,17 @@ export const createTaskSlice = createApiSlice('createTask', createTask);
 export const fetchTasksSlice = createApiSlice('fetchTasks', fetchTasks);
 export const editTaskSlice = createApiSlice('editTask', editTask);
 export const taskDetailsSlice = createApiSlice('taskDetails', taskDetails);
-export const fetchTasksCommentsSlice = createApiSlice('fetchTasksComments', fetchTasksComments);
+// export const fetchTasksCommentsSlice = createApiSlice('fetchTasksComments', fetchTasksComments);
 export const createTaskCommentSlice = createApiSlice('createTaskComment', createTaskComment);
 export const editTaskCommentSlice = createApiSlice('editTaskComment', editTaskComment);
 export const changeTaskStatusSlice = createApiSlice('changeTaskStatus', changeTaskStatus);
-export const createSubtaskSlice= createApiSlice('createSubTask', createSubTask);
+export const createSubtaskSlice = createApiSlice('createSubTask', createSubTask);
 
 export const createTaskReducer = createTaskSlice.reducer;
 export const fetchTasksReducer = fetchTasksSlice.reducer;
 export const editTaskReducer = editTaskSlice.reducer;
 export const taskDetailsReducer = taskDetailsSlice.reducer;
-export const fetchTasksCommentsReducer = fetchTasksCommentsSlice.reducer;
+// export const fetchTasksCommentsReducer = fetchTasksCommentsSlice.reducer;
 export const createTaskCommentReducer = createTaskCommentSlice.reducer;
 export const editTaskCommentReducer = editTaskCommentSlice.reducer;
 export const changeTaskStatusReducer = changeTaskStatusSlice.reducer;

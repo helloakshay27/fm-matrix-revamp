@@ -3,7 +3,7 @@ import { changeProjectStatusReducer, createProjectReducer, editProjectReducer, f
 import { createExternalUserReducer, createInternalUserReducer, fetchExternalUserReducer, fetchInternalUserReducer, userReducer } from './slices/userSlice'
 import { createTagReducer, fetchTagsReducer } from './slices/tagsSlice'
 import { createRoleReducer, editRoleReducer, fetchRolesReducer } from './slices/roleSlice'
-import { changeTaskStatusReducer, createTaskCommentReducer, createTaskReducer, editTaskCommentReducer, editTaskReducer, fetchTasksCommentsReducer, fetchTasksReducer, taskDetailsReducer } from './slices/taskSlice'
+import { changeTaskStatusReducer, createTaskCommentReducer, createTaskReducer, editTaskCommentReducer, editTaskReducer, fetchTasksReducer, taskDetailsReducer } from './slices/taskSlice'
 import { fetchOrganizationsReducer } from './slices/organizationSlice'
 
 export const store = configureStore({
@@ -21,7 +21,7 @@ export const store = configureStore({
     editTask: editTaskReducer,
     taskDetails: taskDetailsReducer,
     changeTaskStatus: changeTaskStatusReducer,
-    fetchTasksComments: fetchTasksCommentsReducer,
+    // fetchTasksComments: fetchTasksCommentsReducer,
     createTaskComment: createTaskCommentReducer,
     editTaskComment: editTaskCommentReducer,
 
