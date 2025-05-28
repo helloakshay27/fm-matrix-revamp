@@ -5,17 +5,43 @@ import ProjectCard from "./Projects/ProjectCard";
 import Xarrow from "react-xarrows";
 import { cardsTitle } from "../../data/Data";
 import TaskSubCard from "./Task/TaskSubCard";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchProjects } from "../../redux/slices/projectSlice";
+import { fetchTasks } from "../../redux/slices/taskSlice";
 
 const BoardsSection = ({ section }) => {
     const [subCardVisibility, setSubCardVisibility] = useState({});
     const [arrowLinks, setArrowLinks] = useState([]);
+    const dispatch = useDispatch()
 
-    const { fetchProjects: project } = useSelector(state => state.fetchProjects)
-    const { fetchTasks: tasks } = useSelector(state => state.fetchTasks)
+    const [projects, setProjects] = useState([]);
+    const [taskData, setTaskData] = useState([]);
 
-    const [projects, setProjects] = useState(project);
-    const [taskData, setTaskData] = useState(tasks);
+
+
+    const projectState = useSelector((state) => state.fetchProjects.fetchProjects);
+    const taskState = useSelector((state) => state.fetchTasks.fetchTasks);
+
+    useEffect(() => {
+        dispatch(fetchProjects());
+        dispatch(fetchTasks());
+    }, [dispatch]);
+
+    useEffect(() => {
+        if (projectState?.length) {
+            setProjects(projectState);
+        }
+    }, [projectState]);
+
+    useEffect(() => {
+        if (taskState?.length) {
+            setTaskData(taskState);
+        }
+    }, [taskState]);
+
+
+
+
 
     const toggleSubCard = (taskId) => {
         setSubCardVisibility((prev) => ({

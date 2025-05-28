@@ -1,10 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import TaskActions from '../../components/Home/TaskActions.jsx';
 import BoardsSection from '../../components/Home/BoardsSection.jsx';
 import TasksList from '../../components/Home/Task/TasksList.jsx';
 
 const Tasks = ({ setIsSidebarOpen }) => {
-    const [selectedType, setSelectedType] = useState("List");
+    const [selectedType, setSelectedType] = useState(() => {
+        return localStorage.getItem("selectedTaskType") || "List";
+    });
+
+    useEffect(() => {
+        localStorage.setItem("selectedTaskType", selectedType);
+    }, [selectedType]);
+
+
 
     return (
         <div className="h-full overflow-y-auto no-scrollbar">

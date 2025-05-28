@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { projects, tabs } from "../../data/Data";
@@ -9,7 +9,9 @@ import BoardsSection from "../../components/Home/BoardsSection";
 
 const Projects = ({ setIsSidebarOpen }) => {
     const [activeTab, setActiveTab] = useState(tabs[0].id);
-    const [selectedType, setSelectedType] = useState("List")
+    const [selectedType, setSelectedType] = useState(() => {
+        return localStorage.getItem("selectedTaskType") || "List";
+    })
 
     const tabRefs = useRef({});
     const underlineRef = useRef(null);
@@ -27,6 +29,11 @@ const Projects = ({ setIsSidebarOpen }) => {
             });
         }
     }, [activeTab]);
+
+        useEffect(() => {
+            localStorage.setItem("selectedTaskType", selectedType);
+        }, [selectedType]);    
+    
 
     return (
         <div className="h-full overflow-y-auto no-scrollbar">
