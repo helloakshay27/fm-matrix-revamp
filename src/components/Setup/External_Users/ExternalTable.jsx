@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import { useEffect, useMemo, useState } from 'react';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
@@ -8,10 +7,13 @@ import AddExternalUserModal from './AddExternalUserModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchExternalUser } from '../../../redux/slices/userSlice';
 
-const ActionIcons = ({ row }) => (
+const ActionIcons = ({ row, onEdit }) => (
   <div className="flex gap-3 items-center">
     <Switch color="danger" defaultChecked={row.original.status === 'Accepted'} />
-    <EditOutlinedIcon sx={{ fontSize: 20, cursor: 'pointer' }} />
+    <EditOutlinedIcon
+      sx={{ fontSize: 20, cursor: 'pointer' }}
+      onClick={() => onEdit(row.original)} // call onEdit with user data
+    />
     <DeleteOutlineOutlinedIcon
       sx={{ fontSize: 20, cursor: 'pointer' }}
       onClick={() => alert(`Delete user: ${row.original.userName}`)}
@@ -20,16 +22,28 @@ const ActionIcons = ({ row }) => (
 );
 
 const ExternalTable = () => {
-
   const dispatch = useDispatch();
-  const { fetchExternalUser: externalUsers } = useSelector(state => state.fetchExternalUser)
+  const { fetchExternalUser: externalUsers } = useSelector(state => state.fetchExternalUser);
 
   useEffect(() => {
-    dispatch(fetchExternalUser())
-  }, [])
+    dispatch(fetchExternalUser());
+  }, [dispatch]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [userData] = useState(externalUsers);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  const handleAddUser = () => {
+    setIsEditMode(false);
+    setSelectedUser(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditClick = (user) => {
+    setIsEditMode(true);
+    setSelectedUser(user);
+    setIsModalOpen(true);
+  };
 
   const columns = useMemo(() => [
     {
@@ -70,7 +84,12 @@ const ExternalTable = () => {
       id: 'actions',
       header: 'Actions',
       size: 120,
-      cell: ({ row }) => <ActionIcons row={row} />,
+      cell: ({ row }) => (
+        <ActionIcons
+          row={row}
+          onEdit={handleEditClick}
+        />
+      ),
     },
   ], []);
 
@@ -83,12 +102,16 @@ const ExternalTable = () => {
         layout="inline"
         buttonText="Add Users"
         showDropdown
-        onAdd={() => { setIsModalOpen(true) }}
+        onAdd={handleAddUser}
       />
+
       <AddExternalUserModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        isEditMode={isEditMode}
+        initialData={selectedUser}
       />
+
     </div>
   );
 };
