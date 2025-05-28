@@ -1,16 +1,14 @@
 import { useGSAP } from "@gsap/react";
-import gsap from "gsap";
-import { ChevronDown, ChevronDownCircle, MoreHorizontal, PencilIcon, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "lucide-react";
 import { Fragment, useEffect, useRef, useState } from "react";
-import SourceIcon from "@mui/icons-material/Source";
-import SubtaskTable from "../../components/Home/Task/Modals/subtaskTable";
-import DependancyKanban from "../../components/Home/DependancyKanban";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { changeTaskStatus, createTaskComment, editTaskComment, taskDetails } from "../../redux/slices/taskSlice";
+import gsap from "gsap";
+import SubtaskTable from "../../components/Home/Task/Modals/subtaskTable";
+import DependancyKanban from "../../components/Home/DependancyKanban";
 import AddTaskModal from "../../components/Home/Task/AddTaskModal";
 
-// Utility function to map raw API status to display-friendly status
 const mapStatusToDisplay = (rawStatus) => {
     const statusMap = {
         open: "Active",
@@ -103,12 +101,11 @@ const Status = ({ taskStatusLogs }) => {
         return `${hours} hr ${minutes} mins ${seconds} sec`;
     };
 
-    // Map task_status_logs to activities
     const activities = taskStatusLogs.map((log) => ({
         id: log.id,
         person: log.created_by_name,
         action: getActionFromStatus(log.status),
-        item: "task", // Could use log.task_management if you want the task name
+        item: "task",
         timestamp: formatTimestamp(log.created_at),
         rawTimestamp: log.created_at, // Keep raw for calculateDuration
     }));
@@ -153,18 +150,6 @@ const Status = ({ taskStatusLogs }) => {
     );
 };
 
-const Documents = () => {
-    return (
-        <div>
-            <div className="flex items-start gap-2 p-5">
-                <SourceIcon />
-                <h1 className="text-[#0063AF]">BRD.xls</h1>
-            </div>
-            <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
-        </div>
-    );
-};
-
 const Comments = ({ comments }) => {
     const { id } = useParams();
     const [comment, setComment] = useState("");
@@ -172,13 +157,8 @@ const Comments = ({ comments }) => {
     const textareaRef = useRef(null);
 
     const dispatch = useDispatch();
-    // const { fetchTasksComments: comments } = useSelector(state => state.fetchTasksComments);
-    const { loading, success, error } = useSelector(state => state.createTaskComment);
-    const { loading: editLoading, success: editSuccess, error: editError } = useSelector(state => state.editTaskComment);
-
-    // useEffect(() => {
-    //     dispatch(fetchTasksComments());
-    // }, [success, editSuccess, dispatch]);
+    const { loading, success } = useSelector(state => state.createTaskComment);
+    const { loading: editLoading, success: editSuccess } = useSelector(state => state.editTaskComment);
 
     const handleAddComment = (e) => {
         e.preventDefault();
@@ -289,7 +269,7 @@ const Attachments = () => {
 const TaskDetails = () => {
     const { id } = useParams();
     const dispatch = useDispatch();
-    const { taskDetails: task, status: taskStatus } = useSelector((state) => state.taskDetails);
+    const { taskDetails: task } = useSelector((state) => state.taskDetails);
 
     const [isFirstCollapsed, setIsFirstCollapsed] = useState(false);
     const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
@@ -301,7 +281,6 @@ const TaskDetails = () => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
     const dropdownRef = useRef(null);
 
-    // Sync selectedOption with task.status when task loads or updates
     useEffect(() => {
         if (task?.status) {
             setSelectedOption(mapStatusToDisplay(task.status));

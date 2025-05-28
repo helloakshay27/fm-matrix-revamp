@@ -41,12 +41,6 @@ const Tasks = ({ isEdit }) => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (isEdit) {
-      dispatch(taskDetails(id));
-    }
-  }, [dispatch, id, isEdit]);
-
-  useEffect(() => {
     if (isEdit && task) {
       setFormData({
         project: formData.project,
@@ -58,11 +52,11 @@ const Tasks = ({ isEdit }) => {
         priority: task.priority || "",
         duration: formData.duration,
         expected_start_date: task.expected_start_date || null,
-        observer: task.observers.map(observer => ({
+        observer: task?.observers.map(observer => ({
           label: observer.user_name,
           value: observer.user_id,
         })),
-        tags: task.task_tags.map(tag => ({
+        tags: task?.task_tags.map(tag => ({
           label: tag.company_tag.name,
           value: tag.company_tag.id,
         })),

@@ -1,6 +1,16 @@
 import { Flag, Timer, User2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useDrag } from "react-dnd";
 import { useNavigate } from "react-router-dom";
+
+const formatCountdown = (ms) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const days = Math.floor(totalSeconds / (3600 * 24));
+    const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+};
 
 const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232" }) => {
     const navigate = useNavigate();
@@ -11,6 +21,27 @@ const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232" }) =>
             isDragging: monitor.isDragging(),
         }),
     }));
+
+    const [countdown, setCountdown] = useState("");
+
+    useEffect(() => {
+        if (!task?.target_date) return;
+
+        const interval = setInterval(() => {
+            const now = new Date();
+            const end = new Date(task.target_date);
+            const diff = end - now;
+
+            if (diff <= 0) {
+                setCountdown("Expired");
+                clearInterval(interval);
+            } else {
+                setCountdown(formatCountdown(diff));
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [task.target_date]);
 
     return (
         <div
@@ -31,7 +62,7 @@ const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232" }) =>
             </div>
             <div className="flex items-start gap-1">
                 <Timer className="text-[#029464] flex-shrink-0" size={14} />
-                <span className="text-[10px] text-[#029464] truncate">{task.time}</span>
+                <span className="text-[10px] text-[#029464] truncate">{countdown}</span>
             </div>
 
             <hr className="border border-gray-200 my-2" />
@@ -103,7 +134,7 @@ const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232" }) =>
                         >
                             <path
                                 d="M3.49967 5.25033H6.99967M2.33301 2.91699H4.66634M3.49967 2.91699V9.33366C3.49967 9.48837 3.56113 9.63674 3.67053 9.74614C3.77993 9.85553 3.9283 9.91699 4.08301 9.91699H6.99967M6.99967 4.66699C6.99967 4.51228 7.06113 4.36391 7.17053 4.25451C7.27993 4.14512 7.4283 4.08366 7.58301 4.08366H11.083C11.2377 4.08366 11.3861 4.14512 11.4955 4.25451C11.6049 4.36391 11.6663 4.51228 11.6663 4.66699V5.83366C11.6663 5.98837 11.6049 6.13674 11.4955 6.24614C11.3861 6.35553 11.2377 6.41699 11.083 6.41699H7.58301C7.4283 6.41699 7.27993 6.35553 7.17053 6.24614C7.06113 6.13674 6.99967 5.98837 6.99967 5.83366V4.66699ZM6.99967 9.33366C6.99967 9.17895 7.06113 9.03058 7.17053 8.92118C7.27993 8.81178 7.4283 8.75033 7.58301 8.75033H11.083C11.2377 8.75033 11.3861 8.81178 11.4955 8.92118C11.6049 9.03058 11.6663 9.17895 11.6663 9.33366V10.5003C11.6663 10.655 11.6049 10.8034 11.4955 10.9128C11.3861 11.0222 11.2377 11.0837 11.083 11.0837H7.58301C7.4283 11.0837 7.27993 11.0222 7.17053 10.9128C7.06113 10.8034 6.99967 10.655 6.99967 10.5003V9.33366Z"
-                                stroke="#323232"
+                                stroke={`${task.sub_tasks_managements?.length > 0 ? "#DA2400" : "#323232"}`}
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
                             />

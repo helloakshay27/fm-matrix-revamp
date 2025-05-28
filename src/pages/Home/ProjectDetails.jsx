@@ -1,7 +1,6 @@
 import gsap from "gsap";
-import SourceIcon from "@mui/icons-material/Source";
 import IssuesTable from "../../components/Home/Issues/Table";
-import { ChevronDown, ChevronDownCircle, MoreHorizontal, PencilIcon, TrashIcon, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "lucide-react";
 import { useGSAP } from "@gsap/react";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -17,18 +16,13 @@ const Members = ({ allNames, projectOwner }) => {
     return (
         <div className="flex items-start p-4 bg-[rgba(247, 247, 247, 0.51)] shadow rounded-lg text-[12px] my-3">
             {" "}
-            {/* Main container with some styling */}
-            {/* Left Fixed Item */}
             <div className="left-name-container w-35 flex-shrink-0 pr-4 py-2 my-auto mx-auto">
                 {" "}
-                {/* Fixed width, adjust as needed */}
                 <span className="text-gray-700">{projectOwner}</span>
             </div>
             <div className="divider w-px bg-pink-500 self-stretch mx-4"></div>{" "}
-            {/* self-stretch to match height of flex items */}
             <div className="names-grid-container flex-grow overflow-x-auto">
                 {" "}
-                {/* Allows horizontal scrolling for names */}
                 <div
                     className="
                   grid grid-flow-col grid-rows-3 auto-cols-min gap-x-8 gap-y-2 py-2
@@ -37,7 +31,6 @@ const Members = ({ allNames, projectOwner }) => {
                     {allNames.map((name, index) => (
                         <span key={index} className="text-gray-600 whitespace-nowrap">
                             {" "}
-                            {/* whitespace-nowrap if names shouldn't wrap */}
                             {name}
                         </span>
                     ))}
@@ -92,10 +85,9 @@ const mapStatusToDisplay = (rawStatus) => {
         overdue: "Overdue",
         completed: "Completed",
     };
-    return statusMap[rawStatus?.toLowerCase()] || "Active"; // Default to "Active" if unknown
+    return statusMap[rawStatus?.toLowerCase()] || "Active";
 };
 
-// Utility function to map display status back to API format
 const mapDisplayToApiStatus = (displayStatus) => {
     const reverseStatusMap = {
         Active: "active",
@@ -104,7 +96,7 @@ const mapDisplayToApiStatus = (displayStatus) => {
         Overdue: "overdue",
         Completed: "completed",
     };
-    return reverseStatusMap[displayStatus] || "open"; // Default to "open" if unknown
+    return reverseStatusMap[displayStatus] || "open";
 };
 
 const ProjectDetails = () => {
@@ -192,7 +184,7 @@ const ProjectDetails = () => {
         const date = new Date(dateString);
 
         const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+        const month = String(date.getMonth() + 1).padStart(2, '0');
         const year = date.getFullYear();
 
         let hours = date.getHours();

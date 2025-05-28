@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import { Briefcase, CalendarDays, Timer, User2 } from "lucide-react";
 import { useDrag } from "react-dnd";
 import { useNavigate } from "react-router-dom";
@@ -6,9 +7,16 @@ const getRandomColor = () => {
     const r = Math.floor(Math.random() * 76) + 180;
     const g = Math.floor(Math.random() * 76) + 180;
     const b = Math.floor(Math.random() * 76) + 180;
-    return `#${r.toString(16).padStart(2, "0")}${g
-        .toString(16)
-        .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+    return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+};
+
+const formatCountdown = (ms) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const days = Math.floor(totalSeconds / (3600 * 24));
+    const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
 };
 
 const ProjectCard = ({ project }) => {
@@ -20,6 +28,36 @@ const ProjectCard = ({ project }) => {
             isDragging: monitor.isDragging(),
         }),
     }));
+
+    const [countdown, setCountdown] = useState("");
+
+    useEffect(() => {
+        if (!project?.end_date) return;
+
+        const interval = setInterval(() => {
+            const now = new Date();
+            const end = new Date(project.end_date);
+            const diff = end - now;
+
+            if (diff <= 0) {
+                setCountdown("Expired");
+                clearInterval(interval);
+            } else {
+                setCountdown(formatCountdown(diff));
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [project.end_date]);
+
+    const memberColors = useMemo(() => {
+        const colors = {};
+        project.project_members.forEach((member) => {
+            const id = member.user.id || member.user.firstname; // Use unique ID if available
+            colors[id] = getRandomColor();
+        });
+        return colors;
+    }, [project.project_members]);
 
     return (
         <div
@@ -35,8 +73,7 @@ const ProjectCard = ({ project }) => {
                 <div className="flex items-start gap-2">
                     <Timer className="text-[#029464] flex-shrink-0" size={14} />
                     <span className="text-[10px] text-[#029464] truncate">
-                        {/* {project.duration}d : {project.duration}h :{" "}
-                        {project.duration}m */}
+                        {countdown}
                     </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -59,70 +96,24 @@ const ProjectCard = ({ project }) => {
                 </div>
             </div>
 
-            {/* <div className="space-y-2 text-xs">
-                <div className="flex items-center gap-2">
-                    <div className="w-16 font-light text-gray-600 shrink-0">
-                        Milestone
-                    </div>
-                    <div className="w-4 text-center">{project?.milestones || 2}</div>
-                    <div className="flex-1 relative bg-gray-200 rounded-full h-3">
-                        <div
-                            className="absolute top-0 left-0 h-3 rounded-full bg-blue-500"
-                            style={{ width: `${project?.milestones || 50}%` }}
-                        ></div>
-                        <div className="absolute w-full text-[8px] text-center text-black font-medium">
-                            {project?.milestones || 50}%
-                        </div>
-                    </div>
-                    <div className="w-4 text-center">{project?.milestones || 4}</div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <div className="w-16 font-light text-gray-600 shrink-0">Tasks</div>
-                    <div className="w-4 text-center">{project?.tasks}</div>
-                    <div className="flex-1 relative bg-gray-200 rounded-full h-3">
-                        <div
-                            className="absolute top-0 left-0 h-3 rounded-full bg-green-500"
-                            style={{ width: `${project?.tasks}%` }}
-                        ></div>
-                        <div className="absolute w-full text-[8px] text-center text-black font-medium">
-                            {project?.tasks}%
-                        </div>
-                    </div>
-                    <div className="w-4 text-center">{project?.tasks}</div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <div className="w-16 font-light text-gray-600 shrink-0">Issues</div>
-                    <div className="w-4 text-center">{project?.issues}</div>
-                    <div className="flex-1 relative bg-gray-200 rounded-full h-3">
-                        <div
-                            className="absolute top-0 left-0 h-3 rounded-full bg-red-500"
-                            style={{ width: `${project?.issues}%` }}
-                        ></div>
-                        <div className="absolute w-full text-[8px] text-center text-black font-medium">
-                            {project?.issues}%
-                        </div>
-                    </div>
-                    <div className="w-4 text-center">{project?.issues}</div>
-                </div>
-            </div> */}
-
             <hr className="border border-gray-200 my-2" />
 
             <div className="flex items-center justify-between">
                 <div className="text-gray-600 text-xs">Members</div>
                 <div className="flex items-center">
-                    {/* {project.project_members.map((member, index) => (
-                        <div
-                            key={index}
-                            className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-gray-800 ${index !== 0 ? "-ml-2" : ""
-                                }`}
-                            style={{ backgroundColor: getRandomColor() }}
-                        >
-                            {member.user.firstdemo.charAt(0)}
-                        </div>
-                    ))} */}
+                    {project.project_members.map((member, index) => {
+                        const id = member.user.id || member.user.firstname;
+                        return (
+                            <div
+                                key={index}
+                                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-gray-800 ${index !== 0 ? "-ml-2" : ""
+                                    }`}
+                                style={{ backgroundColor: memberColors[id] }}
+                            >
+                                {member.user.firstname.charAt(0)}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         </div>
