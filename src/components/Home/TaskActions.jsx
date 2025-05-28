@@ -11,6 +11,7 @@ import TaskFilterModal from "./Task/TaskFilterModal";
 import AddSprintModal from "./Sprints/AddSprintModal";
 import AddMilestoneModal from "../../Milestone/AddMilestoneModal";
 import AddProjectTemplate from "./Projects/AddProjectTempelateModal";
+import ProjectFilterModal from "./Projects/ProjectFilterModel";
 
 const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,6 +22,7 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen 
     const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
     const [isAddMilestoneModalOpen, setIsAddMilestoneModalOpen] = useState(false); // State for Milestone modal
     const [selectedStatus, setSelectedStatus] = useState("Status");
+    const [isProjectFilter, setisProjectFilter] = useState(false)
 
     const typeDropdownRef = useRef(null);
     const statusDropdownRef = useRef(null);
@@ -59,7 +61,7 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen 
                                     if (selectedType !== "Gantt") setIsTypeOpen(!isTypeOpen);
                                 }}
                                 disabled={selectedType === "Gantt"}
-                                style={selectedType === "Gantt" ? { cursor: "not-allowed", marginRight:"12px" } : {}}
+                                style={selectedType === "Gantt" ? { cursor: "not-allowed", marginRight: "12px" } : {}}
                             >
                                 {selectedType === "Kanban" ? (
                                     <ChartNoAxesColumn
@@ -133,11 +135,16 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen 
                     {addType !== "Milestone" && (
                         <div
                             className="flex items-center gap-1 cursor-pointer pl-4"
-                            onClick={() => addType !== "Sprint" && setIsFilterModalOpan(true)}
+                            onClick={() =>
+                                addType === "Project"
+                                    ? setisProjectFilter(true)
+                                    : addType !== "Sprint" && setIsFilterModalOpan(true)
+                            }
                         >
                             <Filter size={18} className="text-gray-600" />
                         </div>
                     )}
+
 
                     {addType !== "Milestone" && (
                         <div
@@ -229,6 +236,16 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen 
                     setIsModalOpen={setIsSprintModalOpen}
                 />
             )}
+
+            {isProjectFilter &&
+                <ProjectFilterModal
+                    isModalOpen={isProjectFilter}
+                    setIsModalOpen={setisProjectFilter}
+                />
+            }
+
+
+
 
             {isAddProjectModalOpen && (
                 <AddProjectTemplate
