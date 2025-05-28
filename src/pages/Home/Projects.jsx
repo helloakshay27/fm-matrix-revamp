@@ -5,55 +5,11 @@ import { projects, tabs } from "../../data/Data";
 import TaskActions from "../../components/Home/TaskActions";
 import ProjectList from "../../components/Home/Projects/ProjectList";
 import BoardsSection from "../../components/Home/BoardsSection";
-import EditProjectModal from "../../components/Home/Projects/EditProjectModal";
 
-const tasks = [
-    {
-        id: 23123,
-        projectName: "Internal Project",
-        status: "Active",
-        task: 70,
-        startDate: "01/01/2002",
-        endDate: "01/01/2002",
-        projectOwner: "Sagar Singh",
-        projectCreatedOn: "01/01/2024  09:00 AM"
-    },
-    {
-        id: 23125,
-        projectName: "Internal Project",
-        status: "Active",
-        task: 70,
-        startDate: "01/01/2002",
-        endDate: "01/01/2002",
-        projectOwner: "Sagar Singh",
-        projectCreatedOn: "01/01/2024  09:00 AM"
-    },
-    {
-        id: 23925,
-        projectName: "Internal Project",
-        status: "Active",
-        task: 70,
-        startDate: "01/01/2002",
-        endDate: "01/01/2002",
-        projectOwner: "Sagar Singh",
-        projectCreatedOn: "01/01/2024  09:00 AM"
-    },
-    {
-        id: 93125,
-        projectName: "Internal Project",
-        status: "Active",
-        task: 70,
-        startDate: "01/01/2002",
-        endDate: "01/01/2002",
-        projectOwner: "Sagar Singh",
-        projectCreatedOn: "01/01/2024  09:00 AM"
-    },
-]
 
 const Projects = ({ setIsSidebarOpen }) => {
     const [activeTab, setActiveTab] = useState(tabs[0].id);
     const [selectedType, setSelectedType] = useState("List")
-    const [isEdit, setIsEdit] = useState(false)
 
     const tabRefs = useRef({});
     const underlineRef = useRef(null);
@@ -98,22 +54,11 @@ const Projects = ({ setIsSidebarOpen }) => {
 
             {
                 selectedType === 'List' ? (
-                    <ProjectList tasks={tasks} setIsEdit={setIsEdit} />
+                    <ProjectList />
                 ) : (
                     <BoardsSection tasks={projects} section={"Projects"} />
                 )
             }
-
-
-            {
-                isEdit && (
-                    <EditProjectModal
-                        isModalOpen={isEdit}
-                        setIsModalOpen={setIsEdit}
-                    />
-                )
-            }
-
         </div>
     )
 }
