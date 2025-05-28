@@ -49,15 +49,10 @@ const CreateNewTeam = ({ openModal, setOpenModal }) => {
   )
 }
 
-const AddProjectModal = ({ isModalOpen, setIsModalOpen, projectname ="New Project", endText="Next", isEdit, editData  }) => {
+const AddProjectModal = ({ isModalOpen, setIsModalOpen, projectname = "New Project", endText = "Next", isEdit, editData }) => {
   const addTaskModalRef = useRef(null);
   const [tab, setTab] = useState("Details");
   const [openModal, setOpenModal] = useState(false);
-
-  useEffect(() => {
-    if (!isModalOpen) {
-    }
-  }, [isModalOpen]);
 
   useGSAP(() => {
     if (isModalOpen) {
@@ -78,16 +73,6 @@ const AddProjectModal = ({ isModalOpen, setIsModalOpen, projectname ="New Projec
     });
   };
 
-  const onSubmit = (data) => {
-    const existingTasks = JSON.parse(localStorage.getItem("tasks")) || [];
-
-    const updatedTasks = [...existingTasks, data];
-
-    localStorage.setItem("tasks", JSON.stringify(updatedTasks));
-
-    reset();
-    setIsModalOpen(false);
-  };
   return (
     <div className="z-50">
       <div className="fixed inset-0 flex items-center justify-end bg-black bg-opacity-50 z-10 text-[12px]">
@@ -124,7 +109,7 @@ const AddProjectModal = ({ isModalOpen, setIsModalOpen, projectname ="New Projec
 
           <hr className="border  " />
 
-          {tab == "Details" && <Details endText={endText} setTab={setTab} openModal={openModal} setOpenModal={setOpenModal} isEdit={isEdit} />}
+          {tab == "Details" && <Details setTab={setTab} openModal={openModal} setOpenModal={setOpenModal} isEdit={isEdit} />}
           {tab == "Milestone" && <Milestones />}
         </div>
 

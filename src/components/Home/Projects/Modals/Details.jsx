@@ -32,11 +32,7 @@ const Details = ({ setTab, setOpenModal, openModal, endText = "Next", isEdit = f
     dispatch(fetchTags());
   }, []);
 
-  useEffect(() => {
-    if (isEdit) {
-      dispatch(fetchProjectDetails(id))
-    }
-  }, [isEdit, id])
+
 
   useEffect(() => {
     if (isEdit && editData) {
@@ -57,6 +53,7 @@ const Details = ({ setTab, setOpenModal, openModal, endText = "Next", isEdit = f
           value: id,
           label: getTagName(id)
         })) || [],
+        
         createChannel: editData.createChannel || false,
         createTemplate: editData.createTemplate || false,
       });

@@ -4,11 +4,9 @@ import SelectBox from '../../SelectBox';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { fetchRoles } from '../../../redux/slices/roleSlice';
-import { createInternalUser } from '../../../redux/slices/userSlice';
+import { createInternalUser /*, updateInternalUser*/ } from '../../../redux/slices/userSlice';
 
-const AddInternalUser = ({ open, onClose, placeholder }) => {
-    if (!open) return null;
-
+const AddInternalUser = ({ open, onClose, placeholder, isEditMode = false, selectedUser = null }) => {
     const [formData, setFormData] = useState({
         name: "",
         mobile: "",
@@ -16,22 +14,33 @@ const AddInternalUser = ({ open, onClose, placeholder }) => {
         role: null,
         reportTo: ""
     })
-
     const dispatch = useDispatch();
     const { loading, success, error } = useSelector(state => state.createInternalUser)
     const { fetchRoles: roles } = useSelector(state => state.fetchRoles)
+    const user = null
 
     useEffect(() => {
         dispatch(fetchRoles())
-    }, [])
+    }, [dispatch])
+
+    useEffect(() => {
+        if (isEditMode && selectedUser) {
+          setFormData({
+            name: `${selectedUser.firstname || ''} ${selectedUser.lastname || ''}`,
+            mobile: selectedUser.mobile || '',
+            email: selectedUser.email || '',
+            role: selectedUser.lock_role?.id || null,
+          });
+        }
+      }, [isEditMode, selectedUser]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
 
         const payload = {
             user: {
-                firstname: formData.name.split(" ")[0],
-                lastname: formData.name.split(" ")[1],
+                firstname: formData.name.split(" ")[0] || "",
+                lastname: formData.name.split(" ")[1] || "",
                 mobile: formData.mobile,
                 email: formData.email,
                 role_id: formData.role,
@@ -39,7 +48,12 @@ const AddInternalUser = ({ open, onClose, placeholder }) => {
             }
         }
 
-        dispatch(createInternalUser(payload))
+        if (isEditMode) {
+            // TODO: dispatch updateInternalUser with payload when update functionality is ready
+            console.log("Update user with payload:", payload);
+        } else {
+            dispatch(createInternalUser(payload));
+        }
     }
 
     useEffect(() => {
@@ -47,6 +61,9 @@ const AddInternalUser = ({ open, onClose, placeholder }) => {
             window.location.reload()
         }
     }, [success])
+
+    if (!open) return null;
+
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-30 z-50">
@@ -110,7 +127,7 @@ const AddInternalUser = ({ open, onClose, placeholder }) => {
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         />
                     </div>
-                   
+
                     <div className="px-6">
                         <label className="block text-[11px] text-[#1B1B1B] mb-1">
                             Reports To<span className="text-red-500 ml-1">*</span>
@@ -136,7 +153,7 @@ const AddInternalUser = ({ open, onClose, placeholder }) => {
                         className="border border-[#C72030] text-[#1B1B1B] text-[13px] px-8 py-2"
                         onClick={handleSubmit}
                     >
-                        Save
+                        {isEditMode ? "Update" : "Save"}
                     </button>
                     <button
                         className="border border-[#C72030] text-[#1B1B1B] text-[13px] px-8 py-2"
