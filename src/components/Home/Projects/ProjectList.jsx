@@ -11,7 +11,7 @@ import {
     getPaginationRowModel,
 } from "@tanstack/react-table";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchProjects } from "../../../redux/slices/projectSlice";
+import { fetchProjects, changeProjectStatus } from "../../../redux/slices/projectSlice";
 import StatusBadge from "./statusBadge";
 import "./Table.css";
 
@@ -65,20 +65,26 @@ const ProgressBar = ({ progressString }) => {
 };
 
 const ProjectList = () => {
-
-    // <ProjectTable />
     const fixedRowsPerPage = 10;
     const dispatch = useDispatch();
+
     const {
         fetchProjects: projects,
-        loading,
-        error,
+        loading: fetchProjectsLoading,
+        error: fetchProjectsError,
     } = useSelector((state) => state.fetchProjects);
+
+
+    const {
+        loading: statusChangeLoading,
+        error: statusChangeError
+    } = useSelector((state) => state.changeProjectStatus);
 
     const transformedData = useMemo(() => {
         if (!projects || !Array.isArray(projects)) return [];
         return projects.map((project) => ({
             id: `P-${project.id.toString()}`,
+            actualId: project.id.toString(),
             title: project.title,
             status: project.status.charAt(0).toUpperCase() + project.status.slice(1),
             type: project.resource_type || "Unknown",
@@ -108,8 +114,21 @@ const ProjectList = () => {
         setData(transformedData);
     }, [transformedData]);
 
-    const rowHeight = 40; // px
-    const headerHeight = 48; // px
+    const handleStatusChange = async ({ id: rowId, name, payload: newValue }) => {
+        const actualProjectId = rowId.replace("P-", "");
+        const apiCompatibleValue = newValue.toLowerCase();
+
+        try {
+            await dispatch(changeProjectStatus({id:actualProjectId, payload:{ [name]: apiCompatibleValue }})).unwrap();
+            dispatch(fetchProjects());
+        } catch (err) {
+            console.error(`Failed to update project ${name} for ID ${actualProjectId}:`, err);
+        }
+    };
+
+
+    const rowHeight = 40;
+    const headerHeight = 48;
     const desiredTableHeight = fixedRowsPerPage * rowHeight + headerHeight;
 
     const columns = useMemo(
@@ -120,7 +139,7 @@ const ProjectList = () => {
                 size: 110,
                 cell: ({ row, getValue }) => (
                     <Link
-                        to={`/projects/${row.original.id.replace("P-", "")}`}
+                        to={`/projects/${row.original.actualId}`}
                         className="text-blue-600 hover:text-blue-800 hover:underline"
                     >
                         {getValue()}
@@ -152,13 +171,11 @@ const ProjectList = () => {
                         ]}
                         status={info.getValue()}
                         onStatusChange={(newStatus) => {
-                            const newData = data.map((row) => {
-                                if (row.id === info.row.original.id) {
-                                    return { ...row, status: newStatus };
-                                }
-                                return row;
+                            handleStatusChange({
+                                id: info.row.original.id,
+                                name: 'status',
+                                payload: newStatus
                             });
-                            setData(newData);
                         }}
                     />
                 ),
@@ -206,6 +223,24 @@ const ProjectList = () => {
                 accessorKey: "priority",
                 header: "Priority",
                 size: 100,
+                cell: (info) => (
+                    <StatusBadge
+                        statusOptions={[
+                            "High",
+                            "Low",
+                            "Medium",
+                            "Urgent",
+                        ]}
+                        status={info.getValue()}
+                        onStatusChange={(newPriority) => {
+                            handleStatusChange({
+                                id: info.row.original.id,
+                                name: 'priority',
+                                payload: newPriority
+                            });
+                        }}
+                    />
+                ),
                 meta: { isDarkColumn: true },
             },
             {
@@ -219,7 +254,7 @@ const ProjectList = () => {
                 },
             },
         ],
-        [data]
+        []
     );
 
     const table = useReactTable({
@@ -236,11 +271,21 @@ const ProjectList = () => {
             className="project-table-container text-[14px] font-light"
             style={{ height: `${desiredTableHeight}px` }}
         >
-            {loading && <div className="text-center py-4">Loading...</div>}
-            {error && (
+            {(fetchProjectsLoading || statusChangeLoading) && <div className="text-center py-4">Loading...</div>}
+            {fetchProjectsError && (
                 <div className="text-center py-4 text-red-500">
-                    Error: {error.message || "Failed to fetch projects"}
+                    Error fetching projects: {fetchProjectsError.message || "Failed to fetch projects"}
                 </div>
+            )}
+            {statusChangeError && (
+                <div className="text-center py-4 text-red-500">
+                    Error updating project: {statusChangeError.message || "Failed to update project status/priority"}
+                </div>
+            )}
+
+            {!fetchProjectsLoading && !fetchProjectsError && !statusChangeLoading && !statusChangeError && data.length === 0 && (
+                 <div className="table-wrapper overflow-x-auto" style={{ display: 'none' }}>
+                 </div>
             )}
 
             <div className="table-wrapper overflow-x-auto">
@@ -287,7 +332,7 @@ const ProjectList = () => {
                                 ))}
                             </tr>
                         ))}
-                        {table.getRowModel().rows.length === 0 && (
+                        {table.getRowModel().rows.length === 0 && !fetchProjectsLoading && !statusChangeLoading && (
                             <tr style={{ height: `${rowHeight}px` }}>
                                 <td
                                     colSpan={columns.length}
@@ -357,4 +402,4 @@ const ProjectList = () => {
     );
 }
 
-export default ProjectList
+export default ProjectList;
