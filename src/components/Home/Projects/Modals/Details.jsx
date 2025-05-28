@@ -267,11 +267,12 @@ const Details = ({ setTab, setOpenModal, openModal, endText = "Next", isEdit = f
             />
           </div>
 
-          <div className="w-[250px] space-y-2">
+          <div className="w-[300px] space-y-2">
             <label className="block ms-2">Duration</label>
             <input
               value={handleDuration()}
               type="text"
+              placeholder="00d:00h:00m"
               className="w-full border outline-none border-gray-300 p-2 text-sm bg-gray-200"
               readOnly
             />

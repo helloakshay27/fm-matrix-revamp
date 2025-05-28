@@ -64,6 +64,8 @@ const ProgressBar = ({ progressString }) => {
     );
 };
 
+const globalStatusOptions=["active","inactive","in_progress","overdue","completed","on_hold","abort"];
+
 const ProjectList = () => {
     const fixedRowsPerPage = 10;
     const dispatch = useDispatch();
@@ -162,13 +164,9 @@ const ProjectList = () => {
                 size: 150,
                 cell: (info) => (
                     <StatusBadge
-                        statusOptions={[
-                            "Active",
-                            "Completed",
-                            "In Progress",
-                            "Planning",
-                            "On Hold",
-                        ]}
+                        statusOptions={
+                            globalStatusOptions
+                         }
                         status={info.getValue()}
                         onStatusChange={(newStatus) => {
                             handleStatusChange({

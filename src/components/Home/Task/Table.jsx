@@ -32,7 +32,7 @@ import SelectBox from "../../SelectBox";
 
 
 const globalPriorityOptions = ["None", "Low", "Medium", "High", "Urgent"];
-const globalStatusOptions = ["open", "in_progress", "completed", "on_hold"];
+const globalStatusOptions = ["open", "in_progress", "completed", "on_hold","overdue","reopen","abort"];
 
 const EditableTextField = ({
   value,

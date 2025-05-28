@@ -50,7 +50,7 @@ const Members = ({ allNames, projectOwner }) => {
 const Status = () => {
     return (
         <div className="overflow-x-auto w-full">
-            <div className="flex items-start p-5 gap-5 bg-[rgba(247, 247, 247, 0.51)] shadow rounded-lg text-[12px] my-3 min-w-[800px]">
+            {/* <div className="flex items-start p-5 gap-5 bg-[rgba(247, 247, 247, 0.51)] shadow rounded-lg text-[12px] my-3 min-w-[800px]">
                 <div>
                     <button className="bg-[#88D760] py-1 px-4 text-white rounded-[30px] w-[94px] h-[30px] text-[12px]">
                         Active
@@ -67,7 +67,7 @@ const Status = () => {
                         Yet to Complete
                     </button>
                 </div>
-            </div>
+            </div> */}
         </div>
     );
 };
@@ -75,11 +75,11 @@ const Status = () => {
 const Documents = () => {
     return (
         <div>
-            <div className="flex items-start gap-2 p-5">
+            {/* <div className="flex items-start gap-2 p-5">
                 <SourceIcon />
-                <h1 className="text-[#0063AF]">BRD.xls</h1>
-            </div>
-            <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
+                <h1 className="text-[#0063AF]"></h1>
+            </div> */}
+            {/* <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div> */}
         </div>
     );
 };
@@ -346,7 +346,7 @@ const ProjectDetails = () => {
                                 <div className="text-right text-[12px] font-[500]">
                                     MileStones :
                                 </div>
-                                <div className="text-left text-[12px]">0/1</div>
+                                <div className="text-left text-[12px]"></div>
                             </div>
                         </div>
 
@@ -363,7 +363,7 @@ const ProjectDetails = () => {
                                 <div className="text-right text-[12px] font-semibold">
                                     Tasks :
                                 </div>
-                                <div className="text-left text-[12px]">0/3</div>
+                                <div className="text-left text-[12px]"></div>
                             </div>
                         </div>
 
@@ -380,7 +380,7 @@ const ProjectDetails = () => {
                                 <div className="text-right text-[12px] font-[500]">
                                     Issues :
                                 </div>
-                                <div className="text-left text-[12px]"> 3/5 </div>
+                                <div className="text-left text-[12px]"></div>
                             </div>
                         </div>
                     </div>
