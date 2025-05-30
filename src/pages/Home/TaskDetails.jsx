@@ -207,8 +207,9 @@ const Comments = ({ comments }) => {
         if (success || editSuccess) {
             setComment("");
             setEditingCommentId(null);
+            dispatch(taskDetails(id));
         }
-    }, [success, editSuccess]);
+    }, [success, editSuccess, dispatch, id]);
 
     return (
         <div className="text-[14px] flex flex-col gap-2">
