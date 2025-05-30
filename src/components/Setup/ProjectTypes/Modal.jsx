@@ -1,24 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import { useDispatch, useSelector } from 'react-redux';
-import { createProjectType } from '../../../redux/slices/projectSlice';
+import { createProjectType, fetchProjectTypes, updateProjectType } from '../../../redux/slices/projectSlice';
 
-const Modal = ({ setOpenModal, openModal }) => {
-  const [type, setType] = useState('');
+const Modal = ({ openModal, setOpenModal, editMode = false, existingData = {} }) => {
+  const [type, setType] = useState(editMode ? existingData?.name || '' : '');
   const [warningOpen, setWarningOpen] = useState(false);
 
   const dispatch = useDispatch();
-  const { loading, projectTypes, success } = useSelector((state) => state.createdProjectTypes); // Adjust based on your reducer
+  const { loading, projectTypes, success } = useSelector((state) => state.createdProjectTypes);
+  const { succ } = useSelector((state) => state.updateProjectType);
 
-  // Optional: check if the name already exists
   useEffect(() => {
     if (projectTypes?.length > 0 && type) {
       const alreadyExists = projectTypes.some(
-        (pt) => pt.name.toLowerCase() === type.toLowerCase()
+        (pt) => pt.name.toLowerCase() === type.toLowerCase() && pt.id !== existingData?.id
       );
       setWarningOpen(alreadyExists);
+    } else {
+      setWarningOpen(false);
     }
-  }, [type, projectTypes]);
+  }, [type, projectTypes, existingData]);
 
   const handleSave = () => {
     if (!type || warningOpen) return;
@@ -29,17 +31,25 @@ const Modal = ({ setOpenModal, openModal }) => {
       created_by_id: 158,
     };
 
-    dispatch(createProjectType(payload));
+    if (editMode && existingData?.id) {
+      dispatch(updateProjectType({ id: existingData.id, data: payload })).then(() => {
+        dispatch(fetchProjectTypes()); // Fetch updated data after successful update
+        setOpenModal(false); // Close modal after update
+        setType(''); // Reset input field
+      });
+    } else {
+      dispatch(createProjectType(payload)).then(() => {
+        dispatch(fetchProjectTypes()); // Fetch updated data after successful create
+        setOpenModal(false); // Close modal after create
+        setType(''); // Reset input field
+      });
+    }
   };
 
+  // Remove the success/succ useEffect since we're handling it in handleSave
+  // This avoids duplicate fetching and ensures proper timing
 
-  useEffect(() => {
-    if (success) {
-      setOpenModal(false); // close modal
-      setType(''); // clear input
-      window.location.reload(); // reload page
-    }
-  }, [success]);
+  if (!openModal) return null;
 
   return (
     <div className="w-[560px] h-[200px] bg-white absolute top-[40%] left-[45%] translate-x-[-50%] translate-y-[-50%] border-[0.5px] border-[#C0C0C0] flex flex-col shadow-md z-50">
@@ -52,8 +62,7 @@ const Modal = ({ setOpenModal, openModal }) => {
           value={type}
           onChange={(e) => setType(e.target.value)}
           placeholder="Enter Type"
-          className={`border-[0.5px] ${warningOpen ? 'border-[#C72030]' : 'border-[#C0C0C0]'
-            } p-2 text-sm`}
+          className={`border-[0.5px] ${warningOpen ? 'border-[#C72030]' : 'border-[#C0C0C0]'} p-2 text-sm`}
         />
 
         {warningOpen && (
@@ -67,7 +76,7 @@ const Modal = ({ setOpenModal, openModal }) => {
           onClick={handleSave}
           disabled={loading}
         >
-          Save
+          {editMode ? 'Update' : 'Save'}
         </button>
         <button
           className="border-2 border-[#C72030] h-[28px] w-[100px] cursor-pointer text-[#C72030] px-4"
