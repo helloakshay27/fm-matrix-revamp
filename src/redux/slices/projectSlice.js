@@ -96,24 +96,66 @@ export const changeProjectStatus = createAsyncThunk('changeProjectStatus', async
 export const editProject = createAsyncThunk(
     'editProject',
     async ({ id, payload }, { rejectWithValue }) => {
-      try {
-        const response = await axios.put(
-          `https://api-tasks.lockated.com/project_managements/${id}.json`,
-          payload,
-          {
-            headers: {
-              Authorization: `Bearer ${access_token}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        )
-        return response.data
-      } catch (error) {
-        console.error('Error updating project:', error)
-        return rejectWithValue(error.response?.data || { message: 'Unknown error' })
-      }
+        try {
+            const response = await axios.put(
+                `https://api-tasks.lockated.com/project_managements/${id}.json`,
+                payload,
+                {
+                    headers: {
+                        Authorization: `Bearer ${access_token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error updating project:', error)
+            return rejectWithValue(error.response?.data || { message: 'Unknown error' })
+        }
     }
-  )
+)
+
+
+export const fetchProjectTypes = createAsyncThunk('fetchProjectTypes', async () => {
+    try {
+        const response = await axios.get(`https://api-tasks.lockated.com/project_types.json`, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            }
+        })
+
+        return response.data
+    } catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
+export const createProjectType = createAsyncThunk(
+    'createProjectTypes',
+    async (payload, { rejectWithValue }) => {
+        try {
+            const response = await axios.post(
+                `https://api-tasks.lockated.com/project_types.json`,
+                payload,
+                {
+                    headers: {
+                        Authorization: `Bearer ${access_token}`,
+                    },
+                }
+            );
+
+            return response.data;
+        } catch (error) {
+            console.error(error);
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+
+
+
+
 
 
 
@@ -122,6 +164,12 @@ export const fetchProjectsSlice = createApiSlice('fetchProjects', fetchProjects)
 export const fetchProjectDetailsSlice = createApiSlice('fetchProjectDetails', fetchProjectDetails);
 export const changeProjectStatusSlice = createApiSlice('changeProjectStatus', changeProjectStatus);
 export const editProjectSlice = createApiSlice('editProject', editProject);
+export const fetchProjectTypesSlice = createApiSlice('fetchProjectTypes', fetchProjectTypes);
+export const createProjectTypesSlice = createApiSlice('createProjectTypes', createProjectType);
+
+
+
+
 
 
 export const createProjectReducer = createProjectSlice.reducer;
@@ -129,3 +177,5 @@ export const fetchProjectsReducer = fetchProjectsSlice.reducer;
 export const fetchProjectDetailsReducer = fetchProjectDetailsSlice.reducer;
 export const changeProjectStatusReducer = changeProjectStatusSlice.reducer;
 export const editProjectReducer = editProjectSlice.reducer;
+export const fetchProjectTypeReducer = fetchProjectTypesSlice.reducer;
+export const createProjectTypesReducer = createProjectTypesSlice.reducer;
