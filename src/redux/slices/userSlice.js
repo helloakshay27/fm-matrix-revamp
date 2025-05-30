@@ -105,12 +105,36 @@ export const fetchExternalUser = createAsyncThunk('fetchExternalUser', async () 
     }
 });
 
+export const fetchUpdateUser = createAsyncThunk(
+    'updateUser',
+    async ({ userId, updatedData }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(
+                `https://api-tasks.lockated.com/users/${userId}.json`,
+                 updatedData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${access_token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || 'Unknown error');
+        }
+    }
+);
+
 // Create slices
 export const userSlice = createApiSlice('fetchUsers', fetchUsers);
 export const createInternalUserSlice = createApiSlice('createInternalUser', createInternalUser);
 export const fetchInternalUserSlice = createApiSlice('fetchInternalUser', fetchInternalUser);
 export const createExternalUserSlice = createApiSlice('createExternalUser', createExternalUser);
 export const fetchExternalUserSlice = createApiSlice('fetchExternalUser', fetchExternalUser);
+export const fetchUpdateUserSlice = createApiSlice('fetchUpdateUser', fetchUpdateUser);
+
 
 // Export reducers
 export const userReducer = userSlice.reducer;
@@ -118,3 +142,4 @@ export const createInternalUserReducer = createInternalUserSlice.reducer;
 export const fetchInternalUserReducer = fetchInternalUserSlice.reducer;
 export const createExternalUserReducer = createExternalUserSlice.reducer;
 export const fetchExternalUserReducer = fetchExternalUserSlice.reducer;
+export const fetchUpdatelUserReducer = fetchUpdateUserSlice.reducer;

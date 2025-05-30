@@ -4,7 +4,10 @@ import SelectBox from '../../SelectBox';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { fetchRoles } from '../../../redux/slices/roleSlice';
-import { createInternalUser /*, updateInternalUser*/ } from '../../../redux/slices/userSlice';
+import {
+    createInternalUser,
+    fetchUpdateUser
+} from '../../../redux/slices/userSlice';
 
 const AddInternalUser = ({ open, onClose, placeholder, isEditMode = false, selectedUser = null }) => {
     const [formData, setFormData] = useState({
@@ -15,9 +18,9 @@ const AddInternalUser = ({ open, onClose, placeholder, isEditMode = false, selec
         reportTo: ""
     })
     const dispatch = useDispatch();
-    const { loading, success, error } = useSelector(state => state.createInternalUser)
+    const { success } = useSelector(state => state.createInternalUser)
     const { fetchRoles: roles } = useSelector(state => state.fetchRoles)
-    const user = null
+    const { success: succ } = useSelector(state => state.fetchUpdateUser)
 
     useEffect(() => {
         dispatch(fetchRoles())
@@ -25,14 +28,15 @@ const AddInternalUser = ({ open, onClose, placeholder, isEditMode = false, selec
 
     useEffect(() => {
         if (isEditMode && selectedUser) {
-          setFormData({
-            name: `${selectedUser.firstname || ''} ${selectedUser.lastname || ''}`,
-            mobile: selectedUser.mobile || '',
-            email: selectedUser.email || '',
-            role: selectedUser.lock_role?.id || null,
-          });
+            console.log("Selected User", selectedUser)
+            setFormData({
+                name: `${selectedUser.firstname || ''} ${selectedUser.lastname || ''}`,
+                mobile: selectedUser.mobile || '',
+                email: selectedUser.email || '',
+                role: selectedUser.lock_role?.id || null,
+            });
         }
-      }, [isEditMode, selectedUser]);
+    }, [isEditMode, selectedUser]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -49,18 +53,17 @@ const AddInternalUser = ({ open, onClose, placeholder, isEditMode = false, selec
         }
 
         if (isEditMode) {
-            // TODO: dispatch updateInternalUser with payload when update functionality is ready
-            console.log("Update user with payload:", payload);
+            dispatch(fetchUpdateUser({ userId: selectedUser.id, updatedData: payload }));
         } else {
             dispatch(createInternalUser(payload));
         }
     }
 
     useEffect(() => {
-        if (success) {
+        if (success || succ) {
             window.location.reload()
         }
-    }, [success])
+    }, [succ, success]);
 
     if (!open) return null;
 

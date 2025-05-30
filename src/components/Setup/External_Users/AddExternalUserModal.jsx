@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchRoles } from '../../../redux/slices/roleSlice';
 import { fetchOrganizations } from '../../../redux/slices/organizationSlice';
-import { createExternalUser } from '../../../redux/slices/userSlice';
+import { createExternalUser, fetchUpdateUser } from '../../../redux/slices/userSlice';
+
 
 const AddExternalUserModal = ({
   open,
@@ -23,6 +24,8 @@ const AddExternalUserModal = ({
   const { loading, success, error } = useSelector(
     (state) => state.createExternalUser
   );
+  const { success: succ } = useSelector(state => state.fetchUpdateUser)
+
 
   const [formData, setFormData] = useState({
     username: '',
@@ -73,18 +76,17 @@ const AddExternalUserModal = ({
     };
 
     if (isEditMode && initialData?.id) {
-      // dispatch(updateExternalUser({ id: initialData.id, data: payload }));
-      console.log("Soon")
+      dispatch(fetchUpdateUser({ userId: initialData.id, updatedData: payload }));
     } else {
       dispatch(createExternalUser(payload));
     }
   };
 
   useEffect(() => {
-    if (success) {
+    if (success || succ) {
       window.location.reload();
     }
-  }, [success]);
+  }, [success, succ]);
 
   if (!open) return null;
 
