@@ -153,11 +153,40 @@ export const createProjectType = createAsyncThunk(
     }
 );
 
+export const deleteProject = createAsyncThunk(
+    'deleteProject',
+    async (id, { rejectWithValue }) => {
+        try {
+            const response = await axios.delete(
+                `https://api-tasks.lockated.com/project_managements/${id}.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${access_token}`,
+                    },
+                }
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error deleting project:', error)
+            return rejectWithValue(error.response?.data || { message: 'Unknown error' })
+        }
+    }
+)
 
+export const fetchTemplates = createAsyncThunk('fetchTemplates', async () => {
+    try {
+        const response = await axios.get(`https://api-tasks.lockated.com/project_managements.json?q[is_template_eq]=true`, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            }
+        })
 
-
-
-
+        return response.data
+    } catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
 
 export const createProjectSlice = createApiSlice('createProject', createProject);
 export const fetchProjectsSlice = createApiSlice('fetchProjects', fetchProjects);
@@ -166,10 +195,8 @@ export const changeProjectStatusSlice = createApiSlice('changeProjectStatus', ch
 export const editProjectSlice = createApiSlice('editProject', editProject);
 export const fetchProjectTypesSlice = createApiSlice('fetchProjectTypes', fetchProjectTypes);
 export const createProjectTypesSlice = createApiSlice('createProjectTypes', createProjectType);
-
-
-
-
+export const fetchTemplatesSlice = createApiSlice('fetchTemplates', fetchTemplates);
+export const deleteProjectSlice = createApiSlice('deleteProject', deleteProject);
 
 
 export const createProjectReducer = createProjectSlice.reducer;
@@ -179,3 +206,5 @@ export const changeProjectStatusReducer = changeProjectStatusSlice.reducer;
 export const editProjectReducer = editProjectSlice.reducer;
 export const fetchProjectTypeReducer = fetchProjectTypesSlice.reducer;
 export const createProjectTypesReducer = createProjectTypesSlice.reducer;
+export const fetchTemplatesReducer = fetchTemplatesSlice.reducer;
+export const deleteProjectReducer = deleteProjectSlice.reducer;

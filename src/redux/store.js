@@ -1,10 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit'
-import { changeProjectStatusReducer, createProjectReducer, createProjectTypesReducer, editProjectReducer, fetchProjectDetailsReducer, fetchProjectsReducer, fetchProjectTypeReducer, fetchProjectTypes } from './slices/projectSlice'
+import { changeProjectStatusReducer, createProjectReducer, createProjectTypesReducer, deleteProjectReducer, editProjectReducer, fetchProjectDetailsReducer, fetchProjectsReducer, fetchProjectTypeReducer, fetchProjectTypes, fetchTemplatesReducer } from './slices/projectSlice'
+import { changeProjectStatusReducer, createProjectReducer, deleteProjectReducer, editProjectReducer, fetchProjectDetailsReducer, fetchProjectsReducer, fetchTemplatesReducer } from './slices/projectSlice'
 import { createExternalUserReducer, createInternalUserReducer, fetchExternalUserReducer, fetchInternalUserReducer, fetchUpdatelUserReducer, fetchUpdateUser, userReducer } from './slices/userSlice'
 import { createTagReducer, fetchTagsReducer } from './slices/tagsSlice'
 import { createRoleReducer, editRoleReducer, fetchRolesReducer } from './slices/roleSlice'
 import { changeTaskStatusReducer, createTaskCommentReducer, createTaskReducer, editTaskCommentReducer, editTaskReducer, fetchTasksReducer, taskDetailsReducer } from './slices/taskSlice'
 import { fetchOrganizationsReducer } from './slices/organizationSlice'
+import { createMilestoneReducer } from './slices/milestoneSlice'
 
 export const store = configureStore({
   reducer: {
@@ -14,9 +16,11 @@ export const store = configureStore({
     fetchProjectDetails: fetchProjectDetailsReducer,
     changeProjectStatus: changeProjectStatusReducer,
     editProject: editProjectReducer,
-    fetchProjectTypes: fetchProjectTypeReducer, 
+    fetchProjectTypes: fetchProjectTypeReducer,
     createdProjectTypes: createProjectTypesReducer,
-    
+    fetchTemplates: fetchTemplatesReducer,
+    deleteProject: deleteProjectReducer,
+
     //tasks
     createTask: createTaskReducer,
     fetchTasks: fetchTasksReducer,
@@ -26,6 +30,9 @@ export const store = configureStore({
     // fetchTasksComments: fetchTasksCommentsReducer,
     createTaskComment: createTaskCommentReducer,
     editTaskComment: editTaskCommentReducer,
+
+    //Milestone
+    createMilestone: createMilestoneReducer,
 
     //roles
     createRole: createRoleReducer,
