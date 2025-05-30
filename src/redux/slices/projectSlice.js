@@ -173,6 +173,23 @@ export const updateProjectType = createAsyncThunk(
     }
 );
 
+export const deleteProjectType = createAsyncThunk(
+    'deleteProjectType',
+    async (id, { rejectWithValue }) => {
+      try {
+        await axios.delete(`https://api-tasks.lockated.com/project_types/${id}.json`, {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        });
+  
+        return id; 
+      } catch (error) {
+        return rejectWithValue(error.response?.data || error.message);
+      }
+    }
+  );
+
 
 
 
@@ -222,6 +239,7 @@ export const createProjectTypesSlice = createApiSlice('createProjectTypes', crea
 export const fetchTemplatesSlice = createApiSlice('fetchTemplates', fetchTemplates);
 export const deleteProjectSlice = createApiSlice('deleteProject', deleteProject);
 export const updateProjectTypeSlice = createApiSlice('updateProjectType', updateProjectType);
+export const deleteProjectTypeSlice = createApiSlice('deleteProjectType', deleteProjectType);
 
 
 export const createProjectReducer = createProjectSlice.reducer;
@@ -234,3 +252,4 @@ export const createProjectTypesReducer = createProjectTypesSlice.reducer;
 export const fetchTemplatesReducer = fetchTemplatesSlice.reducer;
 export const deleteProjectReducer = deleteProjectSlice.reducer;
 export const updateProjectTypeReducer = updateProjectTypeSlice.reducer;
+export const deleteProjectTypeReducer = deleteProjectTypeSlice.reducer;

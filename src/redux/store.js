@@ -20,6 +20,7 @@ export const store = configureStore({
     fetchTemplates: fetchTemplatesReducer,
     deleteProject: deleteProjectReducer,
     updateProjectType: updateProjectTypeReducer,
+    deleteProjectType: deleteProjectReducer,
 
     //tasks
     createTask: createTaskReducer,

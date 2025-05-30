@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+/* eslint-disable react/prop-types */
+import { useState, useMemo, useEffect } from 'react';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import Switch from '@mui/joy/Switch';
@@ -9,17 +10,19 @@ import {
   getPaginationRowModel,
 } from '@tanstack/react-table';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProjectTypes } from '../../../redux/slices/projectSlice';
+import { deleteProjectType, fetchProjectTypes, updateProjectType } from '../../../redux/slices/projectSlice';
 import Modal from './Modal';
 
 const TypesTable = () => {
   const [openModal, setOpenModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedData, setSelectedData] = useState(null);
+
   const [data, setData] = useState([]);
 
   const dispatch = useDispatch();
   const { fetchProjectTypes: ProjectTypes } = useSelector((state) => state.fetchProjectTypes);
+
 
   // Initial fetch of project types
   useEffect(() => {
@@ -46,6 +49,31 @@ const TypesTable = () => {
     setOpenModal(true);
   };
 
+  const handleDeleteClick = async (id) => {
+    try {
+      await dispatch(deleteProjectType(id)).unwrap(); // unwrap to handle async correctly
+      dispatch(fetchProjectTypes()); // refetch data after successful delete
+    } catch (error) {
+      console.error('Failed to delete:', error);
+    }
+  };
+
+
+  const handleToggle = async (row) => {
+    const updatedValue = !row.original.active;
+    const payload = {
+      active: updatedValue,
+    };
+
+    try {
+      await dispatch(updateProjectType({ id: row.original.id, data: payload })).unwrap();
+      dispatch(fetchProjectTypes());
+    } catch (error) {
+      console.error('Failed to update toggle:', error);
+    }
+  };
+
+
   const ActionIcons = ({ row }) => (
     <div className="action-icons flex justify-between gap-5">
       <div>
@@ -54,14 +82,16 @@ const TypesTable = () => {
           onClick={() => handleEditClick(row)}
         />
         <button
-          onClick={() => alert(`Deleting: ${row.original.name}`)}
           title="Delete"
         >
-          <DeleteOutlineOutlinedIcon sx={{ fontSize: '20px' }} />
+          <DeleteOutlineOutlinedIcon sx={{ fontSize: '20px' }} onClick={() => handleDeleteClick(row.original.id)} />
         </button>
       </div>
     </div>
   );
+
+
+
 
   function formatToDDMMYYYY(dateString) {
     const date = new Date(dateString);
@@ -70,6 +100,8 @@ const TypesTable = () => {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   }
+
+
 
   const fixedRowsPerPage = 13;
 
@@ -87,14 +119,19 @@ const TypesTable = () => {
         accessorKey: 'status',
         header: 'Status',
         size: 150,
-        cell: ({ row, getValue }) => {
-          return row.original ? (
+        cell: ({ row }) => {
+          const isActive = row.original.active;
+
+          return (
             <div className="flex gap-4">
-              <span>Inactive</span>
-              <Switch color="danger" checked={getValue()} />
-              <span>Active</span>
+              <span>{isActive ? 'Active' : 'Inactive'}</span>
+              <Switch
+                color="danger"
+                checked={isActive}
+                onChange={() => handleToggle(row)} // toggle the row state
+              />
             </div>
-          ) : null;
+          );
         },
       },
       {

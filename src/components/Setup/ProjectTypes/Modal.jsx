@@ -1,86 +1,77 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import { useDispatch, useSelector } from 'react-redux';
-import { createProjectType, fetchProjectTypes, updateProjectType } from '../../../redux/slices/projectSlice';
+import {
+  createProjectType,
+  fetchProjectTypes,
+  updateProjectType
+} from '../../../redux/slices/projectSlice';
 
 const Modal = ({ openModal, setOpenModal, editMode = false, existingData = {} }) => {
   const [type, setType] = useState(editMode ? existingData?.name || '' : '');
   const [warningOpen, setWarningOpen] = useState(false);
 
   const dispatch = useDispatch();
-  const { loading, projectTypes, success } = useSelector((state) => state.createdProjectTypes);
-  const { succ } = useSelector((state) => state.updateProjectType);
+  const { loading } = useSelector((state) => state.createdProjectTypes);
 
-  useEffect(() => {
-    if (projectTypes?.length > 0 && type) {
-      const alreadyExists = projectTypes.some(
-        (pt) => pt.name.toLowerCase() === type.toLowerCase() && pt.id !== existingData?.id
-      );
-      setWarningOpen(alreadyExists);
-    } else {
-      setWarningOpen(false);
-    }
-  }, [type, projectTypes, existingData]);
+  const resetModal = useCallback(() => {
+    setType('');
+    setWarningOpen(false);
+    setOpenModal(false);
+  }, [setOpenModal]);
 
-  const handleSave = () => {
-    if (!type || warningOpen) return;
+  const handleSave = useCallback(() => {
+    const trimmedType = type.trim();
+
+    if (!trimmedType || warningOpen) return;
 
     const payload = {
-      name: type.toLowerCase().trim(),
-      active: true,
+      name: trimmedType.toLowerCase(),
       created_by_id: 158,
     };
 
-    if (editMode && existingData?.id) {
-      dispatch(updateProjectType({ id: existingData.id, data: payload })).then(() => {
-        dispatch(fetchProjectTypes()); // Fetch updated data after successful update
-        setOpenModal(false); // Close modal after update
-        setType(''); // Reset input field
-      });
-    } else {
-      dispatch(createProjectType(payload)).then(() => {
-        dispatch(fetchProjectTypes()); // Fetch updated data after successful create
-        setOpenModal(false); // Close modal after create
-        setType(''); // Reset input field
-      });
-    }
-  };
+    const action = editMode
+      ? updateProjectType({ id: existingData.id, data: payload })
+      : createProjectType(payload);
 
-  // Remove the success/succ useEffect since we're handling it in handleSave
-  // This avoids duplicate fetching and ensures proper timing
+    dispatch(action).then(() => {
+      dispatch(fetchProjectTypes());
+      resetModal();
+    });
+  }, [type, warningOpen, dispatch, editMode, existingData, resetModal]);
 
   if (!openModal) return null;
 
   return (
-    <div className="w-[560px] h-[200px] bg-white absolute top-[40%] left-[45%] translate-x-[-50%] translate-y-[-50%] border-[0.5px] border-[#C0C0C0] flex flex-col shadow-md z-50">
-      <div className="h-full flex flex-col gap-5 p-4">
+    <div className="fixed top-1/2 left-1/2 w-[560px] h-[200px] bg-white border border-gray-300 shadow-md z-50 transform -translate-x-1/2 -translate-y-1/2 flex flex-col justify-between p-4">
+      <div>
         <div className="flex justify-end">
-          <CloseIcon className="cursor-pointer" onClick={() => setOpenModal(false)} />
+          <CloseIcon className="cursor-pointer" onClick={resetModal} />
         </div>
 
         <input
           value={type}
           onChange={(e) => setType(e.target.value)}
           placeholder="Enter Type"
-          className={`border-[0.5px] ${warningOpen ? 'border-[#C72030]' : 'border-[#C0C0C0]'} p-2 text-sm`}
+          className={`w-full border p-2 text-sm ${warningOpen ? 'border-red-600' : 'border-gray-300'}`}
         />
 
         {warningOpen && (
-          <span className="text-[#C72030] text-sm ml-1">Project Type already exists</span>
+          <p className="text-red-600 text-sm mt-1">Project Type already exists</p>
         )}
       </div>
 
-      <div className="flex justify-center items-center gap-3 mt-2 bg-[#D5DBDB] h-full">
+      <div className="flex justify-center items-center gap-4 bg-gray-200 py-2">
         <button
-          className="bg-[#C72030] h-[28px] w-[100px] cursor-pointer text-white px-4"
+          className="bg-red-700 text-white px-4 py-1 w-[100px] h-[28px] disabled:opacity-50"
           onClick={handleSave}
           disabled={loading}
         >
           {editMode ? 'Update' : 'Save'}
         </button>
         <button
-          className="border-2 border-[#C72030] h-[28px] w-[100px] cursor-pointer text-[#C72030] px-4"
-          onClick={() => setOpenModal(false)}
+          className="border-2 border-red-700 text-red-700 px-4 py-1 w-[100px] h-[28px]"
+          onClick={resetModal}
         >
           Cancel
         </button>
