@@ -118,6 +118,23 @@ export const editTask = createAsyncThunk('editTask', async ({ id, payload }) => 
     }
 })
 
+export const deleteTask = createAsyncThunk('deleteTask', async ( id) => {
+    try {
+        const response = await axios.delete(`https://api-tasks.lockated.com/task_managements/${id}.json`,
+            {
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        return error.response.data;
+    }
+})
+
 // export const fetchTasksComments = createAsyncThunk('fetchTasksComments', async (id) => {
 //     try {
 //         const response = await axios.get(`https://api-tasks.lockated.com/comments.json`, {
@@ -189,6 +206,7 @@ export const createTaskCommentSlice = createApiSlice('createTaskComment', create
 export const editTaskCommentSlice = createApiSlice('editTaskComment', editTaskComment);
 export const changeTaskStatusSlice = createApiSlice('changeTaskStatus', changeTaskStatus);
 export const createSubtaskSlice = createApiSlice('createSubTask', createSubTask);
+export const deleteTaskSlice = createApiSlice('deleteTask', deleteTask);
 
 export const createTaskReducer = createTaskSlice.reducer;
 export const fetchTasksReducer = fetchTasksSlice.reducer;
@@ -199,3 +217,4 @@ export const createTaskCommentReducer = createTaskCommentSlice.reducer;
 export const editTaskCommentReducer = editTaskCommentSlice.reducer;
 export const changeTaskStatusReducer = changeTaskStatusSlice.reducer;
 export const createSubtaskReducer = createSubtaskSlice.reducer;
+export const deleteTaskReducer = deleteTaskSlice.reducer;

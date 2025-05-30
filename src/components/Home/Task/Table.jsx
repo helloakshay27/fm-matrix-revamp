@@ -29,10 +29,12 @@ import {
 } from "../../../redux/slices/taskSlice";
 import { fetchUsers } from "../../../redux/slices/userSlice";
 import SelectBox from "../../SelectBox";
-
+import Loader from "../../Loader";
+import { useLocation } from "react-router-dom";
+import { use } from "react";
 
 const globalPriorityOptions = ["None", "Low", "Medium", "High", "Urgent"];
-const globalStatusOptions = ["open", "in_progress", "completed", "on_hold","overdue","reopen","abort"];
+const globalStatusOptions = ["open", "in_progress", "completed", "on_hold", "overdue", "reopen", "abort"];
 
 const EditableTextField = ({
   value,
@@ -163,6 +165,7 @@ const processTaskData = (task) => {
 
 const TaskTable = () => {
   const dispatch = useDispatch();
+  const location=useLocation();
   const {
     loading: loadingTasks,
     error: tasksError,
@@ -217,14 +220,12 @@ const TaskTable = () => {
 
   useEffect(() => {
     if (
-      !loadingTasks &&
-      (!tasksFromStore || tasksFromStore.length === 0) &&
       !isCreatingTask &&
-      !isUpdatingTask
+      !isUpdatingTask && location.pathname=='/tasks'
     ) {
       dispatch(fetchTasks());
     }
-  }, [dispatch, tasksFromStore, loadingTasks, isCreatingTask, isUpdatingTask]);
+  }, [dispatch, isCreatingTask, isUpdatingTask,location.pathname]);
 
   useEffect(() => {
     if (
@@ -605,21 +606,9 @@ const TaskTable = () => {
     let loadingMessage = "Loading tasks...";
     if (isCreatingTask) loadingMessage = "Creating task...";
     if (isUpdatingTask) loadingMessage = "Updating task...";
-    content = (
-      <div className="p-4 flex justify-center items-center min-h-[200px]">
-        <ArrowPathIcon className="h-8 w-8 animate-spin text-gray-500 mr-2" />{" "}
-        {loadingMessage}
-      </div>
-    );
-  } else if (tasksError && !data.length) {
-    content = (
-      <div className="p-4 text-red-600 bg-red-100 border border-red-400 rounded min-h-[100px]">
-        <strong>Error fetching tasks:</strong>{" "}
-        {typeof tasksError === "object"
-          ? JSON.stringify(tasksError)
-          : String(tasksError)}
-      </div>
-    );
+   content=(
+    <Loader message={loadingMessage} error={tasksError}/>
+   )
   } else {
     content = (
       <div

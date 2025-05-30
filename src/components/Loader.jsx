@@ -1,0 +1,27 @@
+import React from 'react'
+import { ArrowPathIcon } from '@heroicons/react/20/solid'
+
+const Loader = ({message,error}) => {
+  return (
+    <>
+    {!error && (
+    <div className="p-4 flex justify-center items-center min-h-[200px]">
+        <ArrowPathIcon className="h-8 w-8 animate-spin text-gray-500 mr-2" />{" "}
+        {message}
+      </div>
+    )
+    }
+   { error  && (
+      <div className="p-4 text-red-600 bg-red-100 border border-red-400 rounded min-h-[100px]">
+        <strong>Error fetching tasks:</strong>{" "}
+        {typeof tasksError === "object"
+          ? JSON.stringify(tasksError)
+          : String(tasksError)}
+      </div>
+    )
+   }
+   </>
+  );
+}
+
+export default Loader

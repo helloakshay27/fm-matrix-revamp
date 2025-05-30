@@ -8,6 +8,7 @@ import {
 import { useState, useEffect, useRef } from "react";
 import AddTaskModal from "./Task/AddTaskModal";
 import TaskFilterModal from "./Task/TaskFilterModal";
+import TaskFilter from "./Task/TaskFilter";
 import AddSprintModal from "./Sprints/AddSprintModal";
 import AddMilestoneModal from "../../Milestone/AddMilestoneModal";
 import AddProjectTemplate from "./Projects/AddProjectTempelateModal";
@@ -138,7 +139,7 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen 
                             onClick={() =>
                                 addType === "Project"
                                     ? setisProjectFilter(true)
-                                    : addType !== "Sprint" && setIsFilterModalOpan(true)
+                                    :  setIsFilterModalOpan(true)
                             }
                         >
                             <Filter size={18} className="text-gray-600" />
@@ -224,7 +225,7 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen 
             )}
 
             {isFilterModalOpan && (
-                <TaskFilterModal
+                <TaskFilter
                     isModalOpen={isFilterModalOpan}
                     setIsModalOpen={setIsFilterModalOpan}
                 />

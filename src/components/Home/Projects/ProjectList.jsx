@@ -14,6 +14,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchProjects, changeProjectStatus } from "../../../redux/slices/projectSlice";
 import StatusBadge from "./statusBadge";
 import "./Table.css";
+import Loader from "../../Loader";
 
 const ActionIcons = ({ row }) => (
     <div className="action-icons flex justify-around items-center">
@@ -264,27 +265,26 @@ const ProjectList = () => {
         getPaginationRowModel: getPaginationRowModel(),
     });
 
-    return (
+    let content;
+if(fetchProjectsLoading || statusChangeLoading || fetchProjectsError || statusChangeError){
+    
+     let loadingmeassage,error;
+     if(fetchProjectsLoading) loadingmeassage="Loading Projects..";
+     if(statusChangeLoading) loadingmeassage="Updating Status..";
+     if(fetchProjectsError) error=fetchProjectsError;
+     if(statusChangeError) error=statusChangeError;
+     
+     content=(
+        <Loader message={loadingmeassage} error={error} /> 
+     )
+    }
+     else{
+        content = (
         <div
             className="project-table-container text-[14px] font-light"
             style={{ height: `${desiredTableHeight}px` }}
         >
-            {(fetchProjectsLoading || statusChangeLoading) && <div className="text-center py-4">Loading...</div>}
-            {fetchProjectsError && (
-                <div className="text-center py-4 text-red-500">
-                    Error fetching projects: {fetchProjectsError.message || "Failed to fetch projects"}
-                </div>
-            )}
-            {statusChangeError && (
-                <div className="text-center py-4 text-red-500">
-                    Error updating project: {statusChangeError.message || "Failed to update project status/priority"}
-                </div>
-            )}
-
-            {!fetchProjectsLoading && !fetchProjectsError && !statusChangeLoading && !statusChangeError && data.length === 0 && (
-                 <div className="table-wrapper overflow-x-auto" style={{ display: 'none' }}>
-                 </div>
-            )}
+            
 
             <div className="table-wrapper overflow-x-auto">
                 <table className="w-full border-collapse">
@@ -399,5 +399,10 @@ const ProjectList = () => {
         </div>
     );
 }
+return(
+    content
+);
+}
+
 
 export default ProjectList;

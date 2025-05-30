@@ -1,7 +1,7 @@
 import { useGSAP } from "@gsap/react";
 import { ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "lucide-react";
 import { Fragment, useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { redirect, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { changeTaskStatus, createTaskComment, editTaskComment, taskDetails } from "../../redux/slices/taskSlice";
 import gsap from "gsap";
@@ -9,6 +9,8 @@ import SubtaskTable from "../../components/Home/Task/Modals/subtaskTable";
 import DependancyKanban from "../../components/Home/DependancyKanban";
 import AddTaskModal from "../../components/Home/Task/AddTaskModal";
 import toast, { Toaster } from "react-hot-toast";
+import { deleteTask } from "../../redux/slices/taskSlice";
+import { useNavigate } from "react-router-dom";
 
 const mapStatusToDisplay = (rawStatus) => {
     const statusMap = {
@@ -20,6 +22,8 @@ const mapStatusToDisplay = (rawStatus) => {
     };
     return statusMap[rawStatus?.toLowerCase()] || "Active"; // Default to "Active" if unknown
 };
+
+
 
 // Utility function to map display status back to API format
 const mapDisplayToApiStatus = (displayStatus) => {
@@ -279,6 +283,7 @@ const Attachments = () => {
 const TaskDetails = () => {
     const { id } = useParams();
     const dispatch = useDispatch();
+    const navigate=useNavigate();
     const { taskDetails: task } = useSelector((state) => state.taskDetails);
 
     const [isFirstCollapsed, setIsFirstCollapsed] = useState(false);
@@ -312,6 +317,15 @@ const TaskDetails = () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);
+
+    const handleDeleteTask=(id)=>{
+        try{
+         dispatch(deleteTask(id));
+         navigate("/tasks");
+        }catch(err){
+            console.log(err)
+        }
+    }
 
     const dropdownOptions = ["Active", "In Progress", "On Hold", "Overdue", "Completed"];
 
@@ -433,7 +447,7 @@ const TaskDetails = () => {
                                 <PencilIcon className="mx-1" size={15} /> Edit Task
                             </span>
                             <span className="h-6 w-[1px] border border-gray-300"></span>
-                            <span className="cursor-pointer flex items-center gap-1" onClick={() => dispatch(taskDetails(id))}>
+                            <span className="cursor-pointer flex items-center gap-1" onClick={() =>{handleDeleteTask(task.id)}}>
                                 <Trash2 className="mx-1" size={15} /> Delete Task
                             </span>
                         </div>
