@@ -1,13 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Boards from "./Boards";
 import TaskCard from "./Task/TaskCard";
 import ProjectCard from "./Projects/ProjectCard";
 import Xarrow from "react-xarrows";
 import { cardsTitle } from "../../data/Data";
 import TaskSubCard from "./Task/TaskSubCard";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchProjects } from "../../redux/slices/projectSlice";
-import { fetchTasks } from "../../redux/slices/taskSlice";
+import { useDispatch, useSelector, batch } from "react-redux";
+import { changeProjectStatus, fetchProjects } from "../../redux/slices/projectSlice";
+import { changeTaskStatus, fetchTasks } from "../../redux/slices/taskSlice";
+import useDeepCompareEffect from "use-deep-compare-effect";
+import { debounce } from "lodash";
+
+
 
 const BoardsSection = ({ section }) => {
     const [subCardVisibility, setSubCardVisibility] = useState({});
@@ -17,68 +21,171 @@ const BoardsSection = ({ section }) => {
     const [projects, setProjects] = useState([]);
     const [taskData, setTaskData] = useState([]);
 
-
-
+    const [isUpdatingTask, setIsUpdatingTask] = useState(false);
+    const [localError, setLocalError] = useState(null);
+    // Selectors with memoization (assuming createSelector in slice, else plain)
     const projectState = useSelector((state) => state.fetchProjects.fetchProjects);
     const taskState = useSelector((state) => state.fetchTasks.fetchTasks);
 
+    // Local state
+
+
+
     useEffect(() => {
-        dispatch(fetchProjects());
-        dispatch(fetchTasks());
+        batch(() => {
+            if (section === "Tasks") {
+                dispatch(fetchTasks());
+            } else {
+                dispatch(fetchProjects());
+            }
+        });
     }, [dispatch]);
 
-    useEffect(() => {
-        if (projectState?.length) {
-            setProjects(projectState);
-        }
+    // Sync projects with deep comparison to avoid unnecessary sets/rerenders
+    useDeepCompareEffect(() => {
+        setProjects(projectState);
     }, [projectState]);
 
-    useEffect(() => {
-        if (taskState?.length) {
-            setTaskData(taskState);
-        }
+    // Sync tasks similarly
+    useDeepCompareEffect(() => {
+        setTaskData(taskState);
     }, [taskState]);
 
-
-
-
-
-    const toggleSubCard = (taskId) => {
+    // Toggle subtask visibility
+    const toggleSubCard = useCallback((taskId) => {
         setSubCardVisibility((prev) => ({
             ...prev,
             [taskId]: !prev[taskId],
         }));
-    };
+    }, []);
 
-    const handleDrop = (item, newStatus) => {
-        const { type, id, fromTaskId } = item;
-        if (type === "TASK") {
-            setTaskData((prev) =>
-                prev.map((task) =>
-                    task.id === id ? { ...task, status: newStatus } : task
-                )
-            );
-        } else if (type === "SUBTASK") {
-            // setTaskData((prev) =>
-            //     prev.map((task) =>
-            //         task.id === fromTaskId
-            //             ? {
-            //                 ...task,
-            //                 subtasks: task.subtasks.map((subtask) =>
-            //                     subtask.id === id ? { ...subtask, status: newStatus } : subtask
-            //                 ),
-            //             }
-            //             : task
-            //     )
-            // );
-        } else if (type === "PROJECT") {
+    // Update local task field only if value changed
+    const updateTaskDataField = useCallback((taskId, fieldName, newValue) => {
+        setTaskData((prev) => {
+            let changed = false;
+            const updated = prev.map((task) => {
+                if (task.id === taskId) {
+                    if (task[fieldName] === newValue) return task; // no change
+                    changed = true;
+                    return { ...task, [fieldName]: newValue };
+                }
+                return task;
+            });
+            return changed ? updated : prev;
+        });
+    }, []);
+
+    // Debounced dispatch for task update to reduce backend calls on rapid changes
+    const debouncedUpdateTaskField = useCallback(
+        debounce(async (taskId, fieldName, newValue) => {
+            try {
+                await dispatch(
+                    changeTaskStatus({ id: taskId, payload: { [fieldName]: newValue } })
+                ).unwrap();
+            } catch (error) {
+                console.error(`Task update failed for ${taskId}:`, error);
+                setLocalError(
+                    `Update failed: ${error?.response?.data?.errors || error?.message || "Server error"
+                    }`
+                );
+                dispatch(fetchTasks());
+            }
+        }, 300),
+        [dispatch]
+    );
+
+    // Optimistic Task Field Update handler
+    const handleUpdateTaskFieldCell = useCallback(
+        (taskId, fieldName, newValue) => {
+            if (isUpdatingTask) return;
+
+            setIsUpdatingTask(true);
+            setLocalError(null);
+
+            // Optimistic update locally
+            updateTaskDataField(taskId, fieldName, newValue);
+
+            // Debounced backend update
+            debouncedUpdateTaskField(taskId, fieldName, newValue);
+
+            // Release lock immediately (debounced call handles backend)
+            setIsUpdatingTask(false);
+        },
+        [debouncedUpdateTaskField, isUpdatingTask, updateTaskDataField]
+    );
+
+    // Optimistic Project Status Update
+    const handleStatusChange = useCallback(
+        async ({ id: rowId, payload: newValue }) => {
+            const actualProjectId = rowId.replace("P-", "");
+            const apiCompatibleValue = newValue.toLowerCase().replace(/\s+/g, "_");
+
+            try {
+                await dispatch(
+                    changeProjectStatus({
+                        id: actualProjectId,
+                        payload: { status: apiCompatibleValue },
+                    })
+                ).unwrap();
+
+                dispatch(fetchProjects()); // Re-sync project list after update
+            } catch (err) {
+                console.error(
+                    `Failed to update project status for ID ${actualProjectId}:`,
+                    err
+                );
+            }
+        },
+        [dispatch]
+    );
+
+    // Optimistically update project status locally
+    const handleProjectStatusChange = useCallback(
+        ({ id, status }) => {
             setProjects((prev) =>
-                prev.map((project) =>
-                    project.id === id ? { ...project, status: newStatus } : project
-                )
+                prev.map((proj) => (proj.id === id ? { ...proj, status } : proj))
             );
-        }
-    };
+            handleStatusChange({
+                id: `P-${id}`,
+                payload: status,
+            });
+        },
+        [handleStatusChange]
+    );
+
+    // Handle Drop for Task, Subtask, Project
+    const handleDrop = useCallback(
+        (item, newStatus) => {
+            const { type, id, fromTaskId } = item;
+
+            if (type === "TASK") {
+                handleUpdateTaskFieldCell(id, "status", newStatus);
+            } else if (type === "SUBTASK") {
+                setTaskData((prev) =>
+                    prev.map((task) =>
+                        task.id === fromTaskId
+                            ? {
+                                ...task,
+                                sub_tasks_managements: task.sub_tasks_managements.map((subtask) =>
+                                    subtask.id === id ? { ...subtask, status: newStatus } : subtask
+                                ),
+                            }
+                            : task
+                    )
+                );
+
+                console.log("Subtask dropped:", id, "New Status:", newStatus);
+                handleUpdateTaskFieldCell(id, "status", newStatus);
+            } else if (type === "PROJECT") {
+                handleProjectStatusChange({ id, status: newStatus });
+                console.log("Project dropped:", id, "New Status:", newStatus);
+            }
+        },
+        [handleUpdateTaskFieldCell, handleProjectStatusChange]
+    );
+
+
+
 
     // NEW: Handle multiple arrow toggle per task
     const handleLink = (sourceId, targetIds = []) => {

@@ -12,14 +12,22 @@ const Boards = ({ color, add, title, count = 0, children, className, onDrop }) =
     const btnRef = useRef(null);
 
     const [, dropRef] = useDrop(() => ({
-        accept: ["TASK", "SUBTASK", "PROJECT"], // Accept all three types
+        accept: ["TASK", "SUBTASK", "PROJECT"], // Accept drag items of these types
         drop: (item) => {
             if (onDrop) {
-                onDrop({ type: item.type || "TASK", id: item.id, fromTaskId: item.fromTaskId }, title);
+                // Safely extract type, id, and fromTaskId from item
+                const dropItem = {
+                    type: item.type || "TASK",
+                    id: item.id,
+                    fromTaskId: item.fromTaskId
+                };
+                const formattedTitle = title.toLowerCase().replace(/\s+/g, "_");
+                // console.log("Dropped item:", dropItem, "on title:", formattedTitle);
+                // Call the provided onDrop handler with the item and target status
+                onDrop(dropItem, formattedTitle); // 'title' likely represents the drop zone's status (e.g., "To Do", "In Progress")
             }
-        },
+        }
     }));
-
     useGSAP(() => {
         gsap.to(cardRef.current, {
             width: isCollapsed ? "4rem" : "20%",
