@@ -8,6 +8,7 @@ import gsap from "gsap";
 import SubtaskTable from "../../components/Home/Task/Modals/subtaskTable";
 import DependancyKanban from "../../components/Home/DependancyKanban";
 import AddTaskModal from "../../components/Home/Task/AddTaskModal";
+import toast, { Toaster } from "react-hot-toast";
 
 const mapStatusToDisplay = (rawStatus) => {
     const statusMap = {
@@ -162,22 +163,30 @@ const Comments = ({ comments }) => {
 
     const handleAddComment = (e) => {
         e.preventDefault();
+
+        if (!comment?.trim()) {
+            toast.error("Comment cannot be empty", {
+                duration: 1000,
+            });
+            return;
+        };
+
         if (editingCommentId) {
-            const payload = new FormData();
-            payload.append("comment[body]", comment);
-            dispatch(editTaskComment({ id: editingCommentId, payload }));
-        } else {
-            const payload = {
-                comment: {
-                    body: comment,
-                    commentable_id: id,
-                    commentable_type: "TaskManagement",
-                    commentor_id: 364,
-                    active: true,
-                },
-            };
-            dispatch(createTaskComment(payload));
+            const formData = new FormData();
+            formData.append("comment[body]", comment);
+            return dispatch(editTaskComment({ id: editingCommentId, payload: formData }));
         }
+        const payload = {
+            comment: {
+                body: comment,
+                commentable_id: id,
+                commentable_type: "TaskManagement",
+                commentor_id: 364,
+                active: true,
+            },
+        };
+
+        dispatch(createTaskComment(payload));
     };
 
     const handleEdit = (comment) => {
@@ -363,6 +372,7 @@ const TaskDetails = () => {
     return (
         <>
             <div className="m-4">
+                <Toaster position="top-center" />
                 <div className="px-4 pt-1">
                     <h2 className="text-[15px] p-3 px-0">
                         <span className="mr-3">T-0{task.id}</span>
