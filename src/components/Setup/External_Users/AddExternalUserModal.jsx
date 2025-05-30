@@ -14,6 +14,7 @@ const AddExternalUserModal = ({
   placeholder,
   isEditMode = false,
   initialData = null,
+  onSuccess
 }) => {
 
   const dispatch = useDispatch();
@@ -24,7 +25,8 @@ const AddExternalUserModal = ({
   const { loading, success, error } = useSelector(
     (state) => state.createExternalUser
   );
-  const { success: succ } = useSelector(state => state.fetchUpdateUser)
+  const { loading: editLoading,
+    success: editSuccess, } = useSelector(state => state.fetchUpdateUser)
 
 
   const [formData, setFormData] = useState({
@@ -82,11 +84,18 @@ const AddExternalUserModal = ({
     }
   };
 
+  // useEffect(() => {
+  //   if (success || succ) {
+  //     window.location.reload();
+  //   }
+  // }, [success, succ]);
+
+
   useEffect(() => {
-    if (success || succ) {
-      window.location.reload();
+    if (success || editSuccess) {
+      onSuccess();
     }
-  }, [success, succ]);
+  }, [success, editSuccess, onSuccess]);
 
   if (!open) return null;
 
@@ -182,7 +191,7 @@ const AddExternalUserModal = ({
             className="border border-[#C72030] text-[#1B1B1B] text-[13px] px-8 py-2"
             onClick={handleSubmit}
           >
-            {isEditMode ? 'Update' : 'Save'}
+            {loading || editLoading ? 'Submitting...' : isEditMode ? 'Update' : 'Save'}
           </button>
           <button
             className="border border-[#C72030] text-[#1B1B1B] text-[13px] px-8 py-2"

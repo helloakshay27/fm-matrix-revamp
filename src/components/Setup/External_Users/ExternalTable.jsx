@@ -1,25 +1,60 @@
-import { useEffect, useMemo, useState } from 'react';
+/* eslint-disable react/prop-types */
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import Switch from '@mui/joy/Switch';
 import CustomTable from '../CustomTable';
 import AddExternalUserModal from './AddExternalUserModal';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchExternalUser } from '../../../redux/slices/userSlice';
+import { fetchExternalUser, fetchUpdateUser } from '../../../redux/slices/userSlice';
+import { editRole } from '../../../redux/slices/roleSlice';
 
-const ActionIcons = ({ row, onEdit }) => (
-  <div className="flex gap-3 items-center">
-    <Switch color="danger" defaultChecked={row.original.status === 'Accepted'} />
-    <EditOutlinedIcon
-      sx={{ fontSize: 20, cursor: 'pointer' }}
-      onClick={() => onEdit(row.original)} // call onEdit with user data
-    />
-    <DeleteOutlineOutlinedIcon
-      sx={{ fontSize: 20, cursor: 'pointer' }}
-      onClick={() => alert(`Delete user: ${row.original.userName}`)}
-    />
-  </div>
-);
+
+const ActionIcons = ({ row, onEdit }) => {
+  const dispatch = useDispatch();
+  const [isActive, setIsActive] = useState(!!row.original.active);
+
+  const handleToggle = () => {
+    const updatedValue = !isActive;
+    setIsActive(updatedValue);
+
+    const userData = row.original;
+
+
+    const payload = {
+      user: {
+        active: updatedValue ? 1 : 0,
+      },
+    };
+
+    dispatch(fetchUpdateUser({ userId: userData.id, updatedData: payload }))
+      .then(() => {
+        console.log('User active status updated.');
+      })
+      .catch((error) => {
+        console.error('Failed to update status:', error);
+      });
+  };
+
+  return (
+    <div className="flex gap-3 items-center">
+      <Switch
+        color="danger"
+        checked={isActive}
+        onChange={handleToggle}
+      />
+      <EditOutlinedIcon
+        sx={{ fontSize: 20, cursor: 'pointer' }}
+        onClick={() => onEdit(row.original)}
+      />
+      <DeleteOutlineOutlinedIcon
+        sx={{ fontSize: 20, cursor: 'pointer' }}
+        onClick={() => alert(`Delete user: ${row.original.userName}`)}
+      />
+    </div>
+  );
+};
+
 
 const ExternalTable = () => {
   const dispatch = useDispatch();
@@ -44,6 +79,12 @@ const ExternalTable = () => {
     setSelectedUser(user);
     setIsModalOpen(true);
   };
+
+
+  const handleSuccess = useCallback(() => {
+    dispatch(fetchExternalUser()); // refresh roles list
+    setIsModalOpen(false);  // close modal
+  }, [dispatch]);
 
   const columns = useMemo(() => [
     {
@@ -110,6 +151,7 @@ const ExternalTable = () => {
         onClose={() => setIsModalOpen(false)}
         isEditMode={isEditMode}
         initialData={selectedUser}
+        onSuccess={handleSuccess}
       />
 
     </div>

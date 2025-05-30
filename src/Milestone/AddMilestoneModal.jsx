@@ -7,10 +7,6 @@ import Milestones from "../components/Home/Projects/Modals/Milestone";
 const AddMilestoneModal = ({ isModalOpen, setIsModalOpen }) => {
     const addTaskModalRef = useRef(null);
 
-    useEffect(() => {
-        if (!isModalOpen) {
-        }
-    }, [isModalOpen]);
 
     useGSAP(() => {
         if (isModalOpen) {
@@ -31,16 +27,6 @@ const AddMilestoneModal = ({ isModalOpen, setIsModalOpen }) => {
         });
     };
 
-    const onSubmit = (data) => {
-        const existingTasks = JSON.parse(localStorage.getItem("tasks")) || [];
-
-        const updatedTasks = [...existingTasks, data];
-
-        localStorage.setItem("tasks", JSON.stringify(updatedTasks));
-
-        reset();
-        setIsModalOpen(false);
-    };
 
     return (
         <div className="fixed inset-0 flex items-center justify-end bg-black bg-opacity-50 z-10">

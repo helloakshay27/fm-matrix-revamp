@@ -9,7 +9,7 @@ import {
     fetchUpdateUser
 } from '../../../redux/slices/userSlice';
 
-const AddInternalUser = ({ open, onClose, placeholder, isEditMode = false, selectedUser = null }) => {
+const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = false, selectedUser = null }) => {
     const [formData, setFormData] = useState({
         name: "",
         mobile: "",
@@ -18,9 +18,10 @@ const AddInternalUser = ({ open, onClose, placeholder, isEditMode = false, selec
         reportTo: ""
     })
     const dispatch = useDispatch();
-    const { success } = useSelector(state => state.createInternalUser)
+    const { success, loading } = useSelector(state => state.createInternalUser)
     const { fetchRoles: roles } = useSelector(state => state.fetchRoles)
-    const { success: succ } = useSelector(state => state.fetchUpdateUser)
+    const { loading: editLoading,
+        success: editSuccess, } = useSelector(state => state.fetchUpdateUser)
 
     useEffect(() => {
         dispatch(fetchRoles())
@@ -59,11 +60,12 @@ const AddInternalUser = ({ open, onClose, placeholder, isEditMode = false, selec
         }
     }
 
+
     useEffect(() => {
-        if (success || succ) {
-            window.location.reload()
+        if (success || editSuccess) {
+            onSuccess();
         }
-    }, [succ, success]);
+    }, [success, editSuccess, onSuccess]);
 
     if (!open) return null;
 
@@ -156,7 +158,7 @@ const AddInternalUser = ({ open, onClose, placeholder, isEditMode = false, selec
                         className="border border-[#C72030] text-[#1B1B1B] text-[13px] px-8 py-2"
                         onClick={handleSubmit}
                     >
-                        {isEditMode ? "Update" : "Save"}
+                        {loading || editLoading ? "Submitting..." : isEditMode ? "Update" : "Save"}
                     </button>
                     <button
                         className="border border-[#C72030] text-[#1B1B1B] text-[13px] px-8 py-2"

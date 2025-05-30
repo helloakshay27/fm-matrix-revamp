@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import Switch from '@mui/joy/Switch';
@@ -9,6 +9,9 @@ import {
   flexRender,
   getPaginationRowModel,
 } from '@tanstack/react-table';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchProjectTypes } from '../../../redux/slices/projectSlice';
+import { use } from 'react';
 
 const ActionIcons = ({ row }) => (
   <div className="action-icons flex justify-between gap-5">
@@ -25,7 +28,7 @@ const ActionIcons = ({ row }) => (
 );
 
 const defaultData = [
-{
+  {
     name: "Internal project",
     status: false, // false = Inactive, true = Active
     createdOn: "01/01/2025",
@@ -52,8 +55,39 @@ const defaultData = [
 ];
 
 const TypesTable = () => {
-  const [data, setData] = useState(defaultData);
+
+  const [data, setData] = useState([]);
+
+  const dispatch = useDispatch();
+  const { fetchProjectTypes: ProjectTypes } = useSelector((state) => state.fetchProjectTypes);
+
+  console.log("ProjectTypes", ProjectTypes);
+
+  useEffect(() => {
+    dispatch(fetchProjectTypes());
+  }
+    , [dispatch]);
+
+  useEffect(() => {
+    if (ProjectTypes && ProjectTypes.length > 0) {
+      setData(ProjectTypes);
+    }
+  }, [ProjectTypes]);
+
+  function formatToDDMMYYYY(dateString) {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+
+
   const fixedRowsPerPage = 13;
+
+  console.log("data", data);
+
 
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -70,31 +104,33 @@ const TypesTable = () => {
           return row.original ? getValue() : null;
         },
       },
-         {
+      {
         accessorKey: 'status',
         header: 'Status',
         size: 150,
         cell: ({ row, getValue }) => {
-          return row.original ? <div className="flex gap-4"><span>Inactive</span><Switch color="danger" checked={getValue()} /><span>Active</span></div>: null;
+          return row.original ? <div className="flex gap-4"><span>Inactive</span><Switch color="danger" checked={getValue()} /><span>Active</span></div> : null;
         },
       },
-             {
-        accessorKey: 'createdOn',
+      {
+        accessorKey: 'created_at',
         header: 'CreatedOn',
+        size: 150,
+        cell: ({ getValue }) => {
+          const rawDate = getValue();
+          return rawDate ? formatToDDMMYYYY(rawDate) : null;
+        },
+      }
+      ,      
+      {
+        accessorKey: 'created_by',
+        header: 'Created By',
         size: 150,
         cell: ({ row, getValue }) => {
           return row.original ? getValue() : null;
         },
       },
-             {
-        accessorKey: 'owner',
-        header: 'Created By',
-        size: 150,
-        cell: ({ row, getValue }) => {
-          return row.original ?getValue() : null;
-        },
-      },
-        
+
       {
         id: 'actions',
         header: 'Actions',
@@ -124,10 +160,11 @@ const TypesTable = () => {
   const numDataRowsOnPage = pageRows.length;
   const numEmptyRowsToAdd = Math.max(0, fixedRowsPerPage - numDataRowsOnPage);
 
-  const rowHeight = 40; 
+  const rowHeight = 40;
 
-  const headerHeight = 48; 
+  const headerHeight = 48;
   const desiredTableHeight = (fixedRowsPerPage * rowHeight) + headerHeight;
+
 
 
   return (
@@ -174,9 +211,8 @@ const TypesTable = () => {
                     <td
                       key={cell.id}
                       style={{ width: cell.column.getSize() }}
-                      className={`${
-                        cell.column.columnDef.meta?.cellClassName || ''
-                      } whitespace-nowrap px-3 py-2 border-r-2
+                      className={`${cell.column.columnDef.meta?.cellClassName || ''
+                        } whitespace-nowrap px-3 py-2 border-r-2
                       }`}
                     >
                       {!isDataRowConsideredEmpty

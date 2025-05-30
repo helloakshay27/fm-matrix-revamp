@@ -4,14 +4,15 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { createRole, editRole } from '../../../redux/slices/roleSlice';
 
-const RoleModal = ({ open, onClose, role, mode }) => {
-  if (!open) return null;
-
+const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
   const [roleInput, setRoleInput] = useState(role ? role.display_name : '');
 
   const dispatch = useDispatch();
-  const { loading, success, error } = useSelector((state) => state.createRole);
-  const { loading: editLoading, success: editSuccess, error: editError } = useSelector((state) => state.editRole);
+  const { loading, success } = useSelector((state) => state.createRole);
+  const {
+    loading: editLoading,
+    success: editSuccess,
+  } = useSelector((state) => state.editRole);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -32,9 +33,9 @@ const RoleModal = ({ open, onClose, role, mode }) => {
 
   useEffect(() => {
     if (success || editSuccess) {
-      window.location.reload();
+      onSuccess();
     }
-  }, [success, editSuccess]);
+  }, [success, editSuccess, onSuccess]);
 
   useEffect(() => {
     if (role && mode === 'edit') {
@@ -43,6 +44,8 @@ const RoleModal = ({ open, onClose, role, mode }) => {
       setRoleInput('');
     }
   }, [role, mode]);
+
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 z-50">
