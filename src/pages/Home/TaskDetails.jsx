@@ -3,7 +3,7 @@ import { ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "lucide-react
 import { Fragment, useEffect, useRef, useState } from "react";
 import { redirect, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { changeTaskStatus, createTaskComment, editTaskComment, taskDetails } from "../../redux/slices/taskSlice";
+import { changeTaskStatus, createTaskComment, editTaskComment, taskDetails,attachFiles } from "../../redux/slices/taskSlice";
 import gsap from "gsap";
 import SubtaskTable from "../../components/Home/Task/Modals/subtaskTable";
 import DependancyKanban from "../../components/Home/DependancyKanban";
@@ -11,6 +11,7 @@ import AddTaskModal from "../../components/Home/Task/AddTaskModal";
 import toast, { Toaster } from "react-hot-toast";
 import { deleteTask } from "../../redux/slices/taskSlice";
 import { useNavigate } from "react-router-dom";
+import FolderIcon from '@mui/icons-material/Folder';
 
 const mapStatusToDisplay = (rawStatus) => {
     const statusMap = {
@@ -269,15 +270,82 @@ const Comments = ({ comments }) => {
         </div>
     );
 };
+const Attachments = ({ attachments, id }) => {
+  const fileInputRef = useRef(null);
+  const dispatch = useDispatch();
+  const [files, setFiles] = useState(attachments);
 
-const Attachments = () => {
-    return (
-        <div className="flex justify-start flex-col gap-3 p-5 text-[14px] mt-2">
-            <span>No Documents Attached</span>
-            <span className="text-[#C2C2C2]">Drop or attach relevant documents here</span>
-            <button className="bg-[#C72030] h-[40px] w-[240px] text-white px-5">Attach Files</button>
+  const handleAttachFile = () => {
+    fileInputRef.current.click(); // Open file picker
+  };
+
+  const handleFileChange = async (event) => {
+      const selectedFiles = Array.from(event.target.files);
+      if (!selectedFiles.length) return;
+      console.log(selectedFiles);
+     const formData = new FormData();
+
+    selectedFiles.forEach((file) => {
+      formData.append("task_management[attachments][]", file);
+    //   formData.append("task_management[attachment_metadatas][][relation_id]", id);
+    //   formData.append("task_management[attachment_metadatas][][relation]", "TaskManagement");
+    //   formData.append("task_management[attachment_metadatas][][active]", "1");
+    //   formData.append("task_management[attachment_metadatas][][document]", "doc");
+    });
+    
+
+    try {
+      const result =dispatch(attachFiles({ id, payload:formData }));
+      const updatedAttachments = result?.payload?.attachments || []; 
+      setFiles(updatedAttachments);
+    } catch (error){
+      console.error("File upload or task fetch failed:", error);
+    }
+  };
+
+ 
+
+  return (
+    <div className="flex flex-col gap-3 p-5">
+      {files.length > 0 ? (
+        <>
+          {files.map((file) => (
+            <div key={index} className="flex items-center gap-3">
+              <FolderIcon className="h-5 w-5 text-gray-600" />
+              <a href={file.document_url} download={file.document_name} className="text-blue-600 underline">
+                {file.document_name}
+              </a>
+            </div>
+          ))}
+          <button
+            className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
+            onClick={handleAttachFile}
+          >
+            Attach Files
+          </button>
+        </>
+      ) : (
+        <div className="text-[14px] mt-2">
+          <span>No Documents Attached</span>
+          <div className="text-[#C2C2C2]">Drop or attach relevant documents here</div>
+          <button
+            className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
+            onClick={handleAttachFile}
+          >
+            Attach Files
+          </button>
         </div>
-    );
+      )}
+
+      <input
+        type="file"
+        multiple
+        ref={fileInputRef}
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+      />
+    </div>
+  );
 };
 
 const TaskDetails = () => {
@@ -557,7 +625,7 @@ const TaskDetails = () => {
                             {tab === "Subtasks" && <SubtaskTable />}
                             {tab === "Dependency" && <DependancyKanban />}
                             {tab === "Comments" && <Comments comments={task?.comments} />}
-                            {tab === "Attachments" && <Attachments />}
+                            {tab === "Attachments" && <Attachments attachments={task?.attachments} id={task.id} />}
                             {tab === "Activity Log" && <Status taskStatusLogs={task.task_status_logs} />}
                         </div>
                     </div>
