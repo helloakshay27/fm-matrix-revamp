@@ -40,43 +40,56 @@ const Modal = ({ openModal, setOpenModal, editMode = false, existingData = {} })
     });
   }, [type, warningOpen, dispatch, editMode, existingData, resetModal]);
 
+  
+
   if (!openModal) return null;
 
   return (
-    <div className="fixed top-1/2 left-1/2 w-[560px] h-[200px] bg-white border border-gray-300 shadow-md z-50 transform -translate-x-1/2 -translate-y-1/2 flex flex-col justify-between p-4">
-      <div>
-        <div className="flex justify-end">
+    <div className="fixed inset-0 bg-black bg-opacity-30 z-50">
+      <div className="w-[560px] h-[250px] bg-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-[#C0C0C0]">
+
+        {/* Close Icon */}
+        <div className="flex justify-end p-4">
           <CloseIcon className="cursor-pointer" onClick={resetModal} />
         </div>
 
-        <input
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          placeholder="Enter Type"
-          className={`w-full border p-2 text-sm ${warningOpen ? 'border-red-600' : 'border-gray-300'}`}
-        />
+        {/* Input Section */}
+        <div className="px-6">
+          <label className="block text-[16px] text-[#1B1B1B] mb-1">
+            {editMode ? 'Edit Project Type' : 'New Project Type'}
+            <span className="text-red-500 ml-1">*</span>
+          </label>
+          <input
+            type="text"
+            placeholder="Enter project type name here..."
+            className={`border w-full px-4 py-3 text-[#1B1B1B] text-[13px] ${warningOpen ? 'border-red-600' : 'border-[#C0C0C0]'}`}
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+          />
+          {warningOpen && (
+            <p className="text-red-600 text-sm mt-1">Project Type already exists</p>
+          )}
+        </div>
 
-        {warningOpen && (
-          <p className="text-red-600 text-sm mt-1">Project Type already exists</p>
-        )}
-      </div>
-
-      <div className="flex justify-center items-center gap-4 bg-gray-200 py-2">
-        <button
-          className="bg-red-700 text-white px-4 py-1 w-[100px] h-[28px] disabled:opacity-50"
-          onClick={handleSave}
-          disabled={loading}
-        >
-          {editMode ? 'Update' : 'Save'}
-        </button>
-        <button
-          className="border-2 border-red-700 text-red-700 px-4 py-1 w-[100px] h-[28px]"
-          onClick={resetModal}
-        >
-          Cancel
-        </button>
+        {/* Footer Buttons */}
+        <div className="absolute bottom-0 left-0 right-0 bg-[#D5DBDB] h-[90px] flex justify-center items-center gap-4">
+          <button
+            className="border border-[#C72030] text-[#1B1B1B] text-[16px] px-8 py-2"
+            onClick={handleSave}
+            disabled={loading}
+          >
+            {loading ? 'Submitting...' : editMode ? 'Update' : 'Save'}
+          </button>
+          <button
+            className="border border-[#C72030] text-[#1B1B1B] text-[16px] px-8 py-2"
+            onClick={resetModal}
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
+
   );
 };
 

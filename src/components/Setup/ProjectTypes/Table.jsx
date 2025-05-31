@@ -124,12 +124,14 @@ const TypesTable = () => {
 
           return (
             <div className="flex gap-4">
-              <span>{isActive ? 'Active' : 'Inactive'}</span>
+              <span>Inactive</span>
               <Switch
                 color="danger"
                 checked={isActive}
                 onChange={() => handleToggle(row)} // toggle the row state
               />
+              <span>Active</span>
+
             </div>
           );
         },

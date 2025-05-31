@@ -59,8 +59,53 @@ export const createTag = createAsyncThunk('createTag', async (payload) => {
     }
 });
 
+export const updateTag = createAsyncThunk(
+    'tag/update',
+    async ({ id, data }, { rejectWithValue }) => {
+        try {
+            const response = await axios.patch(
+                `https://api-tasks.lockated.com/company_tags/${id}.json`,
+                data,
+                {
+                    headers: {
+                        Authorization: `Bearer ${access_token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+
+export const deleteTag = createAsyncThunk(
+    'deleteTag',
+    async (id, { rejectWithValue }) => {
+      try {
+        await axios.delete(`https://api-tasks.lockated.com/company_tags/${id}.json`, {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        });
+  
+        return id; 
+      } catch (error) {
+        return rejectWithValue(error.response?.data || error.message);
+      }
+    }
+  );
+
+
+
+
+
 export const fetchTagSlice = createApiSlice('fetchTags', fetchTags);
 export const createTagSlice = createApiSlice('createTag', createTag);
+export const updateTagSlice = createApiSlice('updateTag', updateTag);
+export const deleteTagSlice = createApiSlice('deleteTag', deleteTag);
 
 export const fetchTagsReducer = fetchTagSlice.reducer;
 export const createTagReducer = createTagSlice.reducer;
+export const updateTagReducer = updateTagSlice.reducer;
+export const deleteTagReducer = deleteTagSlice.reducer;

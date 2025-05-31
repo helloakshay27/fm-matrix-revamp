@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { changeProjectStatusReducer, createProjectReducer, createProjectTypesReducer, deleteProjectReducer, editProjectReducer, fetchProjectDetailsReducer, fetchProjectsReducer, fetchProjectTypeReducer, fetchTemplatesReducer, updateProjectTypeReducer } from './slices/projectSlice'
 import { createExternalUserReducer, createInternalUserReducer, fetchExternalUserReducer, fetchInternalUserReducer, fetchUpdatelUserReducer, userReducer } from './slices/userSlice'
-import { createTagReducer, fetchTagsReducer } from './slices/tagsSlice'
+import { createTagReducer, deleteTag, deleteTagReducer, fetchTagsReducer, updateTag, updateTagReducer } from './slices/tagsSlice'
 import { createRoleReducer, editRoleReducer, fetchRolesReducer } from './slices/roleSlice'
 import { changeTaskStatusReducer, createTaskCommentReducer, createTaskReducer, editTaskCommentReducer, editTaskReducer, fetchTasksReducer, taskDetailsReducer } from './slices/taskSlice'
 import { fetchOrganizationsReducer } from './slices/organizationSlice'
@@ -51,6 +51,8 @@ export const store = configureStore({
     //tags
     fetchTags: fetchTagsReducer,
     createTag: createTagReducer,
+    updateTag: updateTagReducer,
+    deleteTag: deleteTagReducer,
 
     //organizations
     fetchOrganizations: fetchOrganizationsReducer,
