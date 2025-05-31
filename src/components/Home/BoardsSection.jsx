@@ -3,15 +3,13 @@ import Boards from "./Boards";
 import TaskCard from "./Task/TaskCard";
 import ProjectCard from "./Projects/ProjectCard";
 import Xarrow from "react-xarrows";
-import { cardsTitle } from "../../data/Data";
+import { cardsTitle, tasks } from "../../data/Data";
 import TaskSubCard from "./Task/TaskSubCard";
 import { useDispatch, useSelector, batch } from "react-redux";
 import { changeProjectStatus, fetchProjects } from "../../redux/slices/projectSlice";
 import { changeTaskStatus, fetchTasks } from "../../redux/slices/taskSlice";
 import useDeepCompareEffect from "use-deep-compare-effect";
 import { debounce } from "lodash";
-
-
 
 const BoardsSection = ({ section }) => {
     const [subCardVisibility, setSubCardVisibility] = useState({});
@@ -23,12 +21,8 @@ const BoardsSection = ({ section }) => {
 
     const [isUpdatingTask, setIsUpdatingTask] = useState(false);
     const [localError, setLocalError] = useState(null);
-    // Selectors with memoization (assuming createSelector in slice, else plain)
     const projectState = useSelector((state) => state.fetchProjects.fetchProjects);
-    const taskState = useSelector((state) => state.fetchTasks.fetchTasks);
-
-    // Local state
-
+        const taskState = useSelector((state) => state.fetchTasks.fetchTasks);
 
 
     useEffect(() => {
@@ -41,17 +35,14 @@ const BoardsSection = ({ section }) => {
         });
     }, [dispatch]);
 
-    // Sync projects with deep comparison to avoid unnecessary sets/rerenders
     useDeepCompareEffect(() => {
         setProjects(projectState);
     }, [projectState]);
 
-    // Sync tasks similarly
     useDeepCompareEffect(() => {
         setTaskData(taskState);
     }, [taskState]);
 
-    // Toggle subtask visibility
     const toggleSubCard = useCallback((taskId) => {
         setSubCardVisibility((prev) => ({
             ...prev,
@@ -59,13 +50,12 @@ const BoardsSection = ({ section }) => {
         }));
     }, []);
 
-    // Update local task field only if value changed
     const updateTaskDataField = useCallback((taskId, fieldName, newValue) => {
         setTaskData((prev) => {
             let changed = false;
             const updated = prev.map((task) => {
                 if (task.id === taskId) {
-                    if (task[fieldName] === newValue) return task; // no change
+                    if (task[fieldName] === newValue) return task;
                     changed = true;
                     return { ...task, [fieldName]: newValue };
                 }
@@ -75,7 +65,6 @@ const BoardsSection = ({ section }) => {
         });
     }, []);
 
-    // Debounced dispatch for task update to reduce backend calls on rapid changes
     const debouncedUpdateTaskField = useCallback(
         debounce(async (taskId, fieldName, newValue) => {
             try {
@@ -94,7 +83,6 @@ const BoardsSection = ({ section }) => {
         [dispatch]
     );
 
-    // Optimistic Task Field Update handler
     const handleUpdateTaskFieldCell = useCallback(
         (taskId, fieldName, newValue) => {
             if (isUpdatingTask) return;
@@ -102,19 +90,13 @@ const BoardsSection = ({ section }) => {
             setIsUpdatingTask(true);
             setLocalError(null);
 
-            // Optimistic update locally
             updateTaskDataField(taskId, fieldName, newValue);
-
-            // Debounced backend update
             debouncedUpdateTaskField(taskId, fieldName, newValue);
-
-            // Release lock immediately (debounced call handles backend)
             setIsUpdatingTask(false);
         },
         [debouncedUpdateTaskField, isUpdatingTask, updateTaskDataField]
     );
 
-    // Optimistic Project Status Update
     const handleStatusChange = useCallback(
         async ({ id: rowId, payload: newValue }) => {
             const actualProjectId = rowId.replace("P-", "");
@@ -128,7 +110,7 @@ const BoardsSection = ({ section }) => {
                     })
                 ).unwrap();
 
-                dispatch(fetchProjects()); // Re-sync project list after update
+                dispatch(fetchProjects());
             } catch (err) {
                 console.error(
                     `Failed to update project status for ID ${actualProjectId}:`,
@@ -139,7 +121,6 @@ const BoardsSection = ({ section }) => {
         [dispatch]
     );
 
-    // Optimistically update project status locally
     const handleProjectStatusChange = useCallback(
         ({ id, status }) => {
             setProjects((prev) =>
@@ -153,7 +134,6 @@ const BoardsSection = ({ section }) => {
         [handleStatusChange]
     );
 
-    // Handle Drop for Task, Subtask, Project
     const handleDrop = useCallback(
         (item, newStatus) => {
             const { type, id, fromTaskId } = item;
@@ -173,21 +153,14 @@ const BoardsSection = ({ section }) => {
                             : task
                     )
                 );
-
-                console.log("Subtask dropped:", id, "New Status:", newStatus);
                 handleUpdateTaskFieldCell(id, "status", newStatus);
             } else if (type === "PROJECT") {
                 handleProjectStatusChange({ id, status: newStatus });
-                console.log("Project dropped:", id, "New Status:", newStatus);
             }
         },
         [handleUpdateTaskFieldCell, handleProjectStatusChange]
     );
 
-
-
-
-    // NEW: Handle multiple arrow toggle per task
     const handleLink = (sourceId, targetIds = []) => {
         if (targetIds.length === 0) return;
 
@@ -197,12 +170,10 @@ const BoardsSection = ({ section }) => {
             );
 
             if (areAllLinksActive) {
-                // Remove all current arrows from this task
                 return prevLinks.filter(
                     link => !(link.sourceId === sourceId && targetIds.includes(link.targetId))
                 );
             } else {
-                // Add missing arrows
                 const newLinks = targetIds
                     .filter(targetId => !prevLinks.some(link => link.sourceId === sourceId && link.targetId === targetId))
                     .map(targetId => ({ sourceId, targetId }));
@@ -211,7 +182,62 @@ const BoardsSection = ({ section }) => {
         });
     };
 
+    const buildDependencyArrows = () => {
+        const arrows = [];
 
+        arrowLinks.forEach(link => {
+            const sourceNum = parseInt(link.sourceId.replace("task-", ""));
+            const targetNum = parseInt(link.targetId.replace("task-", ""));
+            const sourceTask = taskData.find(t => t.id === sourceNum);
+            const targetTask = taskData.find(t => t.id === targetNum);
+
+            // Predecessor arrows
+            if (
+                targetTask &&
+                Array.isArray(targetTask.predecessor_task)
+            ) {
+                // Handle both flat array and nested arrays
+                const flatPredecessors = targetTask.predecessor_task.flat();
+                if (flatPredecessors.includes(sourceNum)) {
+                    arrows.push({
+                        sourceId: `task-${sourceNum}`,
+                        targetId: `task-${targetNum}`,
+                        type: "predecessor"
+                    });
+                }
+            }
+
+            // Successor arrows
+            if (
+                sourceTask &&
+                Array.isArray(sourceTask.successor_task)
+            ) {
+                // Handle both flat array and nested arrays
+                const flatSuccessors = sourceTask.successor_task.flat();
+                if (flatSuccessors.includes(targetNum)) {
+                    arrows.push({
+                        sourceId: `task-${sourceNum}`,
+                        targetId: `task-${targetNum}`,
+                        type: "successor"
+                    });
+                }
+            }
+        });
+        return arrows;
+    };
+
+    const dependencyArrows = buildDependencyArrows();
+    const allArrows = [
+        ...arrowLinks,
+        ...dependencyArrows.filter(
+            dep =>
+                !arrowLinks.some(
+                    link =>
+                        link.sourceId === dep.sourceId &&
+                        link.targetId === dep.targetId
+                )
+        ),
+    ];
 
     return (
         <div className="relative">
@@ -226,8 +252,6 @@ const BoardsSection = ({ section }) => {
                         return task.status === cardStatus;
                     });
 
-
-                    console.log("filter", filteredTasks)
                     const filteredProjects = projects.filter(
                         (project) => project.status === card.title.replace(" ", "_").toLocaleLowerCase()
                     );
@@ -249,17 +273,35 @@ const BoardsSection = ({ section }) => {
                                 filteredTasks.length > 0 ? (
                                     filteredTasks.map((task) => {
                                         const taskId = `task-${task.id}`;
-                                        const dependsOnArr = Array.isArray(task.dependsOn)
-                                            ? task.dependsOn
-                                            : task.dependsOn
-                                                ? [task.dependsOn]
-                                                : [];
+                                        let dependsOnArr = [];
 
+                                        // Process predecessor_task
+                                        if (Array.isArray(task.predecessor_task)) {
+                                            dependsOnArr = [
+                                                ...dependsOnArr,
+                                                ...task.predecessor_task.flat().filter(Boolean)
+                                            ];
+                                        }
+
+                                        // Process successor_task
+                                        if (Array.isArray(task.successor_task)) {
+                                            dependsOnArr = [
+                                                ...dependsOnArr,
+                                                ...task.successor_task.flat().filter(Boolean)
+                                            ];
+                                        }
+
+                                        dependsOnArr = [...new Set(dependsOnArr.filter(id => id && id !== task.id))];
                                         const formattedDependsOn = dependsOnArr.map(dep => `task-${dep}`);
 
-                                        const allLinked = formattedDependsOn.length > 0 &&
+                                        const allLinked =
+                                            formattedDependsOn.length > 0 &&
                                             formattedDependsOn.every(depId =>
-                                                arrowLinks.some(link => link.sourceId === taskId && link.targetId === depId)
+                                                arrowLinks.some(
+                                                    link =>
+                                                        (link.sourceId === depId && link.targetId === taskId) ||
+                                                        (link.sourceId === taskId && link.targetId === depId)
+                                                )
                                             );
 
                                         return (
@@ -306,29 +348,52 @@ const BoardsSection = ({ section }) => {
             </div>
 
             {/* Xarrows */}
-            {arrowLinks.map((link, index) => (
-                <Xarrow
-                    key={`${link.sourceId}-${link.targetId}`}
-                    start={link.sourceId}
-                    end={link.targetId}
-                    strokeWidth={1.5}
-                    headSize={6}
-                    curveness={0.3}
-                    color="#DA2400"
-                    lineColor="#DA2400"
-                    showHead={true}
-                    dashness={false}
-                    path="smooth"
-                    // zIndex={1000 + index} // ensures higher layer for newer arrows
-                    // labels={
-                    //     <div className="text-xs text-red-700 bg-white p-1 rounded shadow">
-                    //         {${link.sourceId.replace('task-', '')} ➜ ${link.targetId.replace('task-', '')}}
-                    //     </div>
-                    // }
-                    className="custom-xarrow"
-                />
-            ))}
+            {allArrows.map((link, index) => {
+                const isDependencyArrow = dependencyArrows.some(
+                    dep =>
+                        dep.sourceId === link.sourceId &&
+                        dep.targetId === link.targetId
+                );
 
+                let dashness = false;
+                let strokeWidth = 1.5;
+                let color = "#DA2400";
+
+                if (isDependencyArrow) {
+                    const dependency = dependencyArrows.find(
+                        dep =>
+                            dep.sourceId === link.sourceId &&
+                            dep.targetId === link.targetId
+                    );
+
+                    if (dependency?.type === "predecessor") {
+                        dashness = false;
+                        strokeWidth = 1;
+                        color = "#A0A0A0";
+                    } else if (dependency?.type === "successor") {
+                        dashness = { strokeLen: 8, nonStrokeLen: 6 };
+                        strokeWidth = 1.5;
+                        color = "#DA2400";
+                    }
+                }
+
+                return (
+                    <Xarrow
+                        key={`${link.sourceId}-${link.targetId}-${index}`}
+                        start={link.sourceId}
+                        end={link.targetId}
+                        strokeWidth={strokeWidth}
+                        headSize={6}
+                        curveness={0.3}
+                        color={color}
+                        lineColor={color}
+                        showHead={true}
+                        dashness={dashness}
+                        path="smooth"
+                        className="custom-xarrow"
+                    />
+                );
+            })}
         </div>
     );
 };
