@@ -3,9 +3,9 @@ import IssuesTable from "../../components/Home/Issues/Table";
 import { ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "lucide-react";
 import { useGSAP } from "@gsap/react";
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { changeProjectStatus, fetchProjectDetails } from "../../redux/slices/projectSlice";
+import { changeProjectStatus, createProject, deleteProject, editProject, fetchProjectDetails } from "../../redux/slices/projectSlice";
 import AddProjectModal from "../../components/Home/Projects/AddProjectModal";
 
 const Issues = () => {
@@ -66,8 +66,40 @@ const Status = () => {
 };
 
 const Documents = () => {
+    const { id } = useParams();
+    const dispatch = useDispatch();
+    const attahmentRef = useRef(null);
+
+    const { success } = useSelector(state => state.editProject)
+
+    const handleAttachmentChange = (e) => {
+        const file = e.target.files[0];
+
+        const payload = {
+            project_management: {
+                attachments: file,
+            }
+        }
+
+        if (file) {
+            dispatch(editProject({ id, payload }))
+        }
+    };
+
+    useEffect(() => {
+        if (success) {
+            window.location.reload()
+        }
+    }, [success]);
+
     return (
         <div>
+            <div className="flex justify-start flex-col gap-3 p-5 text-[14px] mt-2">
+                <span>No Documents Attached</span>
+                <span className="text-[#C2C2C2]">Drop or attach relevant documents here</span>
+                <button className="bg-[#C72030] h-[40px] w-[240px] text-white px-5" onClick={() => attahmentRef.current?.click()}>Attach Files</button>
+                <input type="file" accept="image/*" ref={attahmentRef} hidden onChange={handleAttachmentChange} />
+            </div>
             {/* <div className="flex items-start gap-2 p-5">
                 <SourceIcon />
                 <h1 className="text-[#0063AF]"></h1>
@@ -101,6 +133,7 @@ const mapDisplayToApiStatus = (displayStatus) => {
 
 const ProjectDetails = () => {
     const { id } = useParams();
+    const navigate = useNavigate()
 
     const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
     const [tab, setTab] = useState("Member");
@@ -110,7 +143,9 @@ const ProjectDetails = () => {
     const secondContentRef = useRef(null);
 
     const dispatch = useDispatch();
+
     const { fetchProjectDetails: project } = useSelector((state) => state.fetchProjectDetails);
+    const { success } = useSelector((state) => state.deleteProject);
 
     const [openDropdown, setOpenDropdown] = useState(false);
     const [selectedOption, setSelectedOption] = useState("Active");
@@ -175,10 +210,16 @@ const ProjectDetails = () => {
 
     useEffect(() => {
         if (project && project.project_members) {
-            const members = project.project_members.map((member) => member.user.firstname + " " + member.user.lastname);
+            const members = project.project_members.map((member) => member?.user?.firstname + " " + member?.user?.lastname);
             setProjectMembers(members);
         }
     }, [project]);
+
+    useEffect(() => {
+        if (success) {
+            navigate('/projects')
+        }
+    }, [success])
 
     function formatToDDMMYYYY_AMPM(dateString) {
         const date = new Date(dateString);
@@ -212,8 +253,8 @@ const ProjectDetails = () => {
 
             <div className="px-4 pt-1">
                 <h2 className="text-[15px] p-3 px-0">
-                    <span className=" mr-3">Project-ID</span>
-                    <span>Project Name</span>
+                    <span className=" mr-3">Project-{project.id}</span>
+                    <span>{project.title}</span>
                 </h2>
 
                 <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
@@ -285,6 +326,7 @@ const ProjectDetails = () => {
 
                         <span
                             className="flex items-center gap-1 cursor-pointer"
+                            onClick={() => dispatch(deleteProject(project.id))}
                         >
                             <Trash2 size={15} />
                             <span>Delete Project</span>
