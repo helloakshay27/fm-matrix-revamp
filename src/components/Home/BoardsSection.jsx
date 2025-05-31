@@ -22,7 +22,7 @@ const BoardsSection = ({ section }) => {
     const [isUpdatingTask, setIsUpdatingTask] = useState(false);
     const [localError, setLocalError] = useState(null);
     const projectState = useSelector((state) => state.fetchProjects.fetchProjects);
-        const taskState = useSelector((state) => state.fetchTasks.fetchTasks);
+    const taskState = useSelector((state) => state.fetchTasks.fetchTasks);
 
 
     useEffect(() => {
@@ -304,15 +304,18 @@ const BoardsSection = ({ section }) => {
                                                 )
                                             );
 
+                                        console.log("Formatted Depends On:", formattedDependsOn);
+
+                                        // Only show the link icon if there are dependencies
                                         return (
                                             <div key={task.id} id={taskId} className="relative">
                                                 <TaskCard
                                                     task={task}
                                                     toggleSubCard={() => toggleSubCard(task.id)}
-                                                    handleLink={() => {
-                                                        handleLink(taskId, formattedDependsOn);
-                                                    }}
-                                                    iconColor={allLinked ? "#DA2400" : "#A0A0A0"}
+                                                    {...(formattedDependsOn.length > 0 && {
+                                                        handleLink: () => handleLink(taskId, formattedDependsOn),
+                                                        iconColor: allLinked ? "#A0A0A0" : "#DA2400"
+                                                    })}
                                                 />
                                                 {task?.sub_tasks_managements.map((subtask) => (
                                                     <TaskSubCard
