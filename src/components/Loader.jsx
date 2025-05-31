@@ -1,4 +1,3 @@
-import React from 'react'
 import { ArrowPathIcon } from '@heroicons/react/20/solid'
 
 const Loader = ({message,error}) => {
@@ -14,9 +13,9 @@ const Loader = ({message,error}) => {
    { error  && (
       <div className="p-4 text-red-600 bg-red-100 border border-red-400 rounded min-h-[100px]">
         <strong>Error fetching tasks:</strong>{" "}
-        {typeof tasksError === "object"
-          ? JSON.stringify(tasksError)
-          : String(tasksError)}
+        {typeof error === "object"
+          ? JSON.stringify(error)
+          : String(error)}
       </div>
     )
    }

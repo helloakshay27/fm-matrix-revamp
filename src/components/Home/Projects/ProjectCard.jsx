@@ -53,8 +53,10 @@ const ProjectCard = ({ project }) => {
     const memberColors = useMemo(() => {
         const colors = {};
         project.project_members.forEach((member) => {
-            const id = member.user.id || member.user.firstname; // Use unique ID if available
-            colors[id] = getRandomColor();
+            if (member.user) {
+                const id = member.user.id || member.user.firstname; // Use unique ID if available
+                colors[id] = getRandomColor();
+            }
         });
         return colors;
     }, [project.project_members]);
@@ -102,6 +104,7 @@ const ProjectCard = ({ project }) => {
                 <div className="text-gray-600 text-xs">Members</div>
                 <div className="flex items-center">
                     {project.project_members.map((member, index) => {
+                        if (!member.user) return null;
                         const id = member.user.id || member.user.firstname;
                         return (
                             <div
@@ -110,7 +113,7 @@ const ProjectCard = ({ project }) => {
                                     }`}
                                 style={{ backgroundColor: memberColors[id] }}
                             >
-                                {member.user.firstname.charAt(0)}
+                                {member.user.firstname ? member.user.firstname.charAt(0) : ""}
                             </div>
                         );
                     })}
