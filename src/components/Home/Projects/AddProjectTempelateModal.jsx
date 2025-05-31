@@ -1,26 +1,29 @@
 import { useGSAP } from "@gsap/react";
-import React, { useRef, useEffect, useState, Fragment } from "react";
-import { Milestone, X } from "lucide-react";
+import React, { useRef, useEffect, useState } from "react";
+import { X } from "lucide-react";
 import gsap from "gsap";
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
-import Details from "./Modals/Details.jsx";
-import Milestones from "./Modals/Milestone.jsx";
 import FolderIcon from '@mui/icons-material/Folder';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import AddProjectModal from "./AddProjectModal.jsx";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchTemplates } from "../../../redux/slices/projectSlice.js";
 
 
 
 
 const AddProjectTemplate = ({ isModalOpen, setIsModalOpen }) => {
+  const dispatch = useDispatch();
+
+  const { fetchTemplates: templates } = useSelector(state => state.fetchTemplates)
+
   const addTaskModalRef = useRef(null);
   const [tab, setTab] = useState("All");
   const [AddProjectModalOpen, setAddProjectModalOpen] = useState(false);
 
   useEffect(() => {
-    if (!isModalOpen) {
-    }
-  }, [isModalOpen]);
+    dispatch(fetchTemplates())
+  }, [dispatch])
 
   useGSAP(() => {
     if (isModalOpen) {
@@ -41,16 +44,6 @@ const AddProjectTemplate = ({ isModalOpen, setIsModalOpen }) => {
     });
   };
 
-  const onSubmit = (data) => {
-    const existingTasks = JSON.parse(localStorage.getItem("tasks")) || [];
-
-    const updatedTasks = [...existingTasks, data];
-
-    localStorage.setItem("tasks", JSON.stringify(updatedTasks));
-
-    reset();
-    setIsModalOpen(false);
-  };
   return (
     <>
       {AddProjectModalOpen ? (
@@ -117,12 +110,12 @@ const AddProjectTemplate = ({ isModalOpen, setIsModalOpen }) => {
                 <i>Predefined Project Templates</i>
               </div>
 
-              {["Sales Pitch", "Web App Development"].map((template) => (
-                <React.Fragment key={template}>
+              {templates?.map((template) => (
+                <React.Fragment key={template.id}>
                   <div className="flex justify-between gap-3 cursor-pointer mt-2 border-b border-gray-300 pb-2">
                     <div className="flex items-center gap-2 w-2/3">
                       <FolderIcon />
-                      <span>{template}</span>
+                      <span>{template.title}</span>
                     </div>
                     <KeyboardArrowRightIcon />
                   </div>

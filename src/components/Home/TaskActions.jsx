@@ -245,9 +245,6 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen 
                 />
             }
 
-
-
-
             {isAddProjectModalOpen && (
                 <AddProjectTemplate
                     isModalOpen={isAddProjectModalOpen}

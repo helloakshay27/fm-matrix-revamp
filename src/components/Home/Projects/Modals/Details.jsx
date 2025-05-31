@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import SelectBox from "../../../SelectBox";
 import MultiSelectBox from "../../../MultiSelectBox";
 import { useDispatch, useSelector } from 'react-redux';
-import { changeProjectStatus, createProject, editProject, fetchProjectDetails } from '../../../../redux/slices/projectSlice'
+import { createProject, editProject, fetchProjectTypes, fetchTemplates } from '../../../../redux/slices/projectSlice'
 import { fetchUsers } from '../../../../redux/slices/userSlice'
 import { fetchTags } from '../../../../redux/slices/tagsSlice'
 import { useParams } from "react-router-dom";
@@ -10,11 +10,13 @@ import { useParams } from "react-router-dom";
 const Details = ({ setTab, setOpenModal, openModal, endText = "Next", isEdit = false }) => {
   const { id } = useParams();
   const dispatch = useDispatch();
-  const { loading, success, error } = useSelector((state) => state.createProject);
+
   const { fetchUsers: users } = useSelector((state) => state.fetchUsers);
   const { fetchTags: tags } = useSelector((state) => state.fetchTags);
   const { fetchProjectDetails: editData } = useSelector((state) => state.fetchProjectDetails)
   const { success: editsuccess } = useSelector((state) => state.editProject)
+  const { fetchProjectTypes: projectTypes } = useSelector((state) => state.fetchProjectTypes)
+  const { fetchTemplates: templates } = useSelector((state) => state.fetchTemplates)
 
   const getUserName = (id) => {
     const user = users.find(u => u.id === id);
@@ -30,8 +32,9 @@ const Details = ({ setTab, setOpenModal, openModal, endText = "Next", isEdit = f
   useEffect(() => {
     dispatch(fetchUsers());
     dispatch(fetchTags());
+    dispatch(fetchProjectTypes());
+    dispatch(fetchTemplates());
   }, []);
-
 
 
   useEffect(() => {
@@ -53,7 +56,7 @@ const Details = ({ setTab, setOpenModal, openModal, endText = "Next", isEdit = f
           value: id,
           label: getTagName(id)
         })) || [],
-        
+
         createChannel: editData.createChannel || false,
         createTemplate: editData.createTemplate || false,
       });
@@ -127,6 +130,7 @@ const Details = ({ setTab, setOpenModal, openModal, endText = "Next", isEdit = f
         owner_id: formData.projectOwner,
         priority: formData.priority,
         active: true,
+        is_template: formData.createTemplate,
       },
       member_ids: formData.team.map((member) => member.value),
       task_tag_ids: formData.tags.map((tag) => tag.value),
@@ -229,11 +233,12 @@ const Details = ({ setTab, setOpenModal, openModal, endText = "Next", isEdit = f
           <div className="w-1/2 flex flex-col justify-between">
             <label className="block mb-2">Template</label>
             <SelectBox
-              options={[
-                { value: "Option 1", label: "Option 1" },
-                { value: "Option 2", label: "Option 2" },
-                { value: "Option 3", label: "Option 3" },
-              ]}
+              options={
+                templates?.map((template) => ({
+                  value: template.id,
+                  label: template?.title,
+                }))
+              }
               value={formData.template}
               onChange={(value) => handleSelectChange("template", value)}
               placeholder="Select Template"
@@ -302,11 +307,12 @@ const Details = ({ setTab, setOpenModal, openModal, endText = "Next", isEdit = f
             <div className="w-1/2">
               <label className="block mb-2">Project Type</label>
               <SelectBox
-                options={[
-                  { value: "Option 1", label: "Option 1" },
-                  { value: "Option 2", label: "Option 2" },
-                  { value: "Option 3", label: "Option 3" },
-                ]}
+                options={
+                  projectTypes.map((type) => ({
+                    value: type.id,
+                    label: type.name,
+                  }))
+                }
                 value={formData.projectType}
                 onChange={(value) => handleSelectChange("projectType", value)}
                 placeholder="Select Type"
