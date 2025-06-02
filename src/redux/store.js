@@ -3,7 +3,7 @@ import { changeProjectStatusReducer, createProjectReducer, createProjectTypesRed
 import { createExternalUserReducer, createInternalUserReducer, fetchExternalUserReducer, fetchInternalUserReducer, fetchUpdatelUserReducer, userReducer } from './slices/userSlice'
 import { createTagReducer,  deleteTagReducer, fetchTagsReducer,  updateTagReducer } from './slices/tagsSlice'
 import { createRoleReducer, editRoleReducer, fetchRolesReducer } from './slices/roleSlice'
-import { changeTaskStatusReducer, createTaskCommentReducer, createTaskReducer, editTaskCommentReducer, editTaskReducer, fetchTasksOfProjectReducer, fetchTasksReducer, taskDetailsReducer } from './slices/taskSlice'
+import { changeTaskStatusReducer, createTaskCommentReducer, createTaskReducer, editTaskCommentReducer, editTaskReducer, fetchTasksOfProjectReducer, fetchTasksReducer , filterTaskReducer, taskDetailsReducer } from './slices/taskSlice'
 import { fetchOrganizationsReducer } from './slices/organizationSlice'
 import { createMilestoneReducer } from './slices/milestoneSlice'
 // import {filtersReducer} from './slices/filterSlice'
@@ -31,7 +31,7 @@ export const store = configureStore({
     editTask: editTaskReducer,
     taskDetails: taskDetailsReducer,
     changeTaskStatus: changeTaskStatusReducer,
-    // filters: filtersReducer,
+    filterTask: filterTaskReducer,
 
     // fetchTasksComments: fetchTasksCommentsReducer,
     createTaskComment: createTaskCommentReducer,

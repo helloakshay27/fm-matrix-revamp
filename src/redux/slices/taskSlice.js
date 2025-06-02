@@ -72,16 +72,6 @@ export const createSubTask = createAsyncThunk('createSubTask', async (payload) =
 
 export const fetchTasks = createAsyncThunk('fetchTasks', async () => {
     try {
-        // let response = {};
-        // if(Object.keys(params).length > 0){
- 
-        //     const queryString = Object.keys(params).filter(key=>{const value=params[key];return value !== null && value !== undefined && String(value).trim() !== ''}).map(key => (`q[${key}]=${params[key]}`)).join('&');
-        //      response = await axios.get(`https://api-tasks.lockated.com/task_managements.json?${queryString}`, {
-        //         headers: {
-        //             Authorization: `Bearer ${access_token}`,
-        //         }
-        //     })
-        // }else{
          const response = await axios.get(`https://api-tasks.lockated.com/task_managements.json`, {
             headers: {
                 Authorization: `Bearer ${access_token}`,
@@ -260,6 +250,26 @@ export const fetchTasksOfProject = createAsyncThunk('fetchTasksOfProject', async
     }
 });
 
+export const filterTask = createAsyncThunk('filterTask', async (filter) => {
+    try {
+         const params=Object.keys(filter).map((key) => `${key}=${filter[key]}`).join('&');
+        //  const params = filter.map((f) => `${f.key}=${f.value}`).join('&');
+         console.log(params);
+         const response = await axios.get(`https://api-tasks.lockated.com/task_managements.json?${params}`, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            }
+        });
+    
+
+        return response.data;
+    }
+     catch (error) {
+        console.log(error);
+        return error.response.data;
+    }
+});
+
 export const createTaskSlice = createApiSlice('createTask', createTask);
 export const fetchTasksSlice = createApiSlice('fetchTasks', fetchTasks);
 export const editTaskSlice = createApiSlice('editTask', editTask);
@@ -272,6 +282,7 @@ export const deleteTaskSlice = createApiSlice('deleteTask', deleteTask);
 export const attachFilesSlice = createApiSlice('attachFiles', attachFiles);
 export const fetchTasksOfProjectSlice = createApiSlice('fetchTasksOfProject', fetchTasksOfProject);
 export const updateTaskSlice = createApiSlice('updateTask', updateTask);
+export const filterTaskSlice = createApiSlice('filterTask', filterTask);
 
 export const createTaskReducer = createTaskSlice.reducer;
 export const fetchTasksReducer = fetchTasksSlice.reducer;
@@ -285,3 +296,4 @@ export const deleteTaskReducer = deleteTaskSlice.reducer;
 export const attachFilesReducer = attachFilesSlice.reducer;
 export const fetchTasksOfProjectReducer = fetchTasksOfProjectSlice.reducer;
 export const updateTaskReducer = updateTaskSlice.reducer;
+export const filterTaskReducer = filterTaskSlice.reducer;

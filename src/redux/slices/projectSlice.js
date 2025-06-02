@@ -235,7 +235,7 @@ export const filterProjects = createAsyncThunk(
     async (filters, { rejectWithValue }) => {
       try {
         const params = new URLSearchParams(filters).toString();
-  
+        console.log(params);
         const response = await axios.get(
           `https://api-tasks.lockated.com/project_managements.json?${params}`,
           {

@@ -216,6 +216,14 @@ const TaskTable = () => {
     (state) => state.fetchUsers || { users: [], loading: false, error: null }
   );
 
+  const{
+    filterTask,
+    loading: loadingFilterTasks,
+    error: filterTasksError,
+  }=useSelector(
+    (state) => state.filterTask
+  )
+
   const userFetchInitiatedRef = useRef(false);
 
   const [data, setData] = useState([]);
@@ -290,18 +298,23 @@ const TaskTable = () => {
 
   useEffect(() => {
     if (isCreatingTask || isUpdatingTask) return;
-
-    if (tasksFromStore && Array.isArray(tasksFromStore)) {
+    let newProcessedData = [];
+     if(filterTask && filterTask.length>0){
+         newProcessedData = filterTask.map((task) =>
+        processTaskData(task)
+      );
+     }
+    else if(tasksFromStore && Array.isArray(tasksFromStore)) {
       // Use the recursive helper to process tasks and their sub_tasks_managements
-      const newProcessedData = tasksFromStore.map((task) =>
+       newProcessedData = tasksFromStore.map((task) =>
         processTaskData(task)
       );
       setData(newProcessedData);
       setLocalError(null);
-    } else if (tasksError && !tasksFromStore) {
+    } else if (tasksError && !tasksFromStore && filterTasksError && !filterTask) {
       setData([]);
     }
-  }, [tasksFromStore, tasksError, isCreatingTask, isUpdatingTask]);
+  }, [tasksFromStore, tasksError, isCreatingTask, isUpdatingTask,filterTasksError,filterTask]);
 
   useEffect(() => {
     if (isAddingNewTask && newTaskTitleInputRef.current) {

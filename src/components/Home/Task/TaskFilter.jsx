@@ -6,14 +6,14 @@ import clsx from "clsx";
 import { set } from "react-hook-form";
 import {fetchUsers} from "../../../redux/slices/userSlice"
 import { useSelector , useDispatch} from "react-redux";
-
+import { filterTask } from "../../../redux/slices/taskSlice";
 
 const statusOptions = [
-    { label: "Active", color: "bg-green-500" },
-    { label: "Inactive", color: "bg-pink-600" },
-    { label: "On track", color: "bg-yellow-500" },
-    { label: "Delayed", color: "bg-black" },
-    { label: "On Hold", color: "bg-cyan-400" },
+    { label: "Active", color: "bg-green-500",value:"active" },
+    { label: "Inactive", color: "bg-pink-600",value:"inactive" },
+    { label: "On track", color: "bg-yellow-500",value:"on_track" },
+    { label: "Delayed", color: "bg-black" ,value:"delayed"},
+    { label: "On Hold", color: "bg-cyan-400" ,value:"on_hold"},
 ];
 
 
@@ -49,6 +49,30 @@ const {
     error,
 }=useSelector(state=>state.fetchUsers)
 
+// const {
+//     loading:filterLoading,
+//     error:filterError,
+// }=useSelector(state=>state.filterTask)
+    
+
+const  handleApplyFilter=()=>{
+    try{
+            const newFilter={
+                "q[status_eq]": selectedStatuses.length > 0 ? selectedStatuses[0] : '',
+                "q[created_by_id_eq]": selectedCreators.length > 0 ? selectedCreators[0] : '',
+                "q[start_date_eq]": dates["Start date"],
+                "q[end_date_eq]": dates["End date"],
+                "q[responsible_person_id_eq]": selectedResponsible.length > 0 ? selectedResponsible[0] : '',
+            }
+            if(newFilter){
+                dispatch(filterTask(newFilter));
+            }
+            console.log(newFilter);
+    }catch(e){
+      console.log(e);
+    }
+}
+
     // Search inputs inside dropdowns
     const [statusSearch, setStatusSearch] = useState("");
     const [ResponsiblePersonSearch, setResponsiblePersonSearch] = useState("");
@@ -63,7 +87,7 @@ const {
         }catch(error){
             console.log(error);
         }finally{
-            setResponsiblePersonOptions(users.map((user) => ( user.firstname+ " " +user.lastname )));
+            setResponsiblePersonOptions(users.map((user) => ({label:user.firstname+ " " +user.lastname ,value:user.id})));
         }
     },[dispatch,users])
 
@@ -117,13 +141,13 @@ const {
                 ? opt.toLowerCase().includes(searchTerm.toLowerCase())
                 : opt.label.toLowerCase().includes(searchTerm.toLowerCase())
         );
-        console.log(options);
 
         return (
             <div className="max-h-40 overflow-y-auto p-2">
                 {filtered.map((option) => {
                     const label = typeof option === "string" ? option : option.label;
                     const color = typeof option === "string" ? null : option.color;
+                    const value=typeof option === "string" ? option : option.value
 
                     return (
                         <label
@@ -133,8 +157,8 @@ const {
                             <div className="flex items-center gap-2">
                                 <input
                                     type="checkbox"
-                                    checked={selected.includes(label)}
-                                    onChange={() => toggleOption(label, selected, setSelected)}
+                                    checked={selected.includes(value)}
+                                    onChange={() => toggleOption(value, selected, setSelected)}
                                 />
                                 <span>{label}</span>
                             </div>
@@ -346,15 +370,13 @@ const {
                 <div className="flex justify-center items-center gap-4 px-6 py-3 border-t">
                     <button
                         className="bg-[#C62828] text-white rounded px-10 py-2 text-sm font-semibold hover:bg-[#b71c1c]"
-                        onClick={clearAll}
+                        onClick={handleApplyFilter}
                     >
                         Apply
                     </button>
                     <button
                         className="border border-[#C62828] text-[#C62828] rounded px-10 py-2 text-sm font-semibold hover:bg-red-50"
-                        onClick={() => {
-                            closeModal();
-                        }}
+                        onClick={clearAll}
                     >
                         Reset
                     </button>
