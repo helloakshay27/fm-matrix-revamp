@@ -22,6 +22,7 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen,
     const [isFilterModalOpan, setIsFilterModalOpan] = useState(false);
     const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
     const [isAddMilestoneModalOpen, setIsAddMilestoneModalOpen] = useState(false); // State for Milestone modal
+    const [isAddIssueModalOpen, setIsAddIssueModalOpen] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState("Status");
     const [isProjectFilter, setisProjectFilter] = useState(false)
 
@@ -53,6 +54,7 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen,
         <>
             <div className="flex items-center justify-end mx-4 my-3 text-sm">
                 <div className="flex items-center gap-3 divide-x divide-gray-400">
+                    { addType !== "Issues" && (
                     <div className="cursor-pointer" ref={typeDropdownRef}>
                         <div className="relative">
                             <button
@@ -133,6 +135,8 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen,
                             )}
                         </div>
                     </div>
+                    )}   
+
                     {addType !== "Milestone" && (
                         <div
                             className="flex items-center gap-1 cursor-pointer pl-4"
@@ -210,7 +214,9 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen,
                                 ? "Add Project"
                                 : addType === "Milestone"
                                     ? "Add Milestone"
-                                    : "Add Task"}
+                                    : addType === "Issues"
+                                        ? "Add Issue": 
+                                    "Add Task"}
                     </button>
                 </div>
             </div>
@@ -259,6 +265,8 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen,
                     setIsModalOpen={setIsAddMilestoneModalOpen}
                 />
             )}
+
+
 
         </>
     );

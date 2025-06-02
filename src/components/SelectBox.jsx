@@ -10,7 +10,8 @@ import Select from "react-select";
     className = "",
     isDisableFirstOption = false,
     card = false,
-    placeholder
+    placeholder,
+    table=false,
   }) {
   const customStyles = {
     control: (base, state) => ({
@@ -18,14 +19,16 @@ import Select from "react-select";
       minHeight: "30px",
       padding: "1px",
       position: "relative",
-      zIndex: 10,
-      border: "1px solid #b3b2b2",
+      zIndex: 8,
+       border:table?"none":"1px solid #b3b2b2",
+
       boxShadow: state.isFocused ? "#ccc" : base.boxShadow,
       "&:hover": {
         outline: "none",
       },
       borderRadius: "0px",
-      backgroundColor: card ? "#FAF8F5" : "#fff",
+      backgroundColor: table?"none":card ? "#FAF8F5" : "#fff",
+      
       fontSize: "12px",
     }),
     valueContainer: (base) => ({
@@ -88,7 +91,7 @@ import Select from "react-select";
   const selected = formattedOptions.find((opt) => opt.value === value) || null;
 
   return (
-    <div className={`${className}`} style={style}>
+    <div className={`${className}`} style={style} >
       {label && <label>{label}</label>}
       <Select
         options={formattedOptions}

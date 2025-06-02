@@ -78,6 +78,7 @@ const DateEditor = ({
   onEnterPress,
   className,
   placeholder = "Select date",
+
 }) => {
   const [date, setDate] = useState(
     propValue ? new Date(propValue).toISOString().split("T")[0] : ""
@@ -132,7 +133,7 @@ const DateEditor = ({
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       onClick={handleInputClick}
-      className={`w-full focus:outline-none rounded text-[12px] my-custom-date-editor ${className || ''}`}
+      className={`w-full focus:outline-none rounded text-[12px] my-custom-date-editor ${className || ''} `} 
       placeholder={placeholder}
     />
   );
@@ -555,6 +556,7 @@ const TaskTable = () => {
                 padding:"0.5rem"
               }
             }
+            table={true}
           />
           )
         },
@@ -766,6 +768,7 @@ const TaskTable = () => {
                     }
                     }
                     placeholder="Select Person..."
+                    table={true}
                   />
                   {" "}
                 </td>

@@ -13,6 +13,7 @@ import Channel from "./components/Home/Channel/Channel";
 import Role from "./pages/Setup/Role";
 import EscalationMatrix from "./pages/Setup/EscalationMatrix";
 import ProjectTeams from "./pages/Setup/ProjectTeams";
+import IssuesTable from "./components/Home/Issues/Table.jsx";
 // import TypesTable from "./components/Setup/ProjectTypes/Table";
 // import StatusTable from "./components/Setup/Status/Table";
 // import Modal from "./components/Setup/Status/Modal";

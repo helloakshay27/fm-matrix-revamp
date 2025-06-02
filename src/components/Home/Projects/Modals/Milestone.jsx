@@ -27,6 +27,8 @@ const AddMilestoneModal = ({ id, deleteMilestone }) => {
           <label className="block mb-2 ">Milestone Owner<span className="text-red-600">*</span></label>
           <SelectBox
             options={[]}
+                style={{"border":"1px solid #b3b2b2"}}
+
           />
         </div>
 
@@ -57,6 +59,8 @@ const AddMilestoneModal = ({ id, deleteMilestone }) => {
           </label>
           <SelectBox
             options={[]}
+                style={{"border":"1px solid #b3b2b2"}}
+
           />
         </div>
       </div>
@@ -180,6 +184,8 @@ const Milestones = () => {
               }
               onChange={(value) => setFormData({ ...formData, ownerId: value })}
               value={formData.ownerId}
+                style={{"border":"1px solid #b3b2b2"}}
+
             />
           </div>
 
@@ -211,6 +217,8 @@ const Milestones = () => {
             </label>
             <SelectBox
               options={[]}
+                style={{"border":"1px solid #b3b2b2"}}
+
             />
           </div>
         </div>

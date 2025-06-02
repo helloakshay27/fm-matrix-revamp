@@ -5,16 +5,18 @@ import { projects, tabs } from "../../data/Data";
 import TaskActions from "../../components/Home/TaskActions";
 import ProjectList from "../../components/Home/Projects/ProjectList";
 import BoardsSection from "../../components/Home/BoardsSection";
-
+import { useNavigate } from "react-router-dom";
+import IssuesTable from "../../components/Home/Issues/Table";
 const Projects = ({ setIsSidebarOpen }) => {
     const [activeTab, setActiveTab] = useState(tabs[0].id);
-    const [selectedType, setSelectedType] = useState(() => {
-        return localStorage.getItem("selectedTaskType") || "List";
-    });
+    const [activeTabLabel, setActiveTabLabel] = useState(tabs[0].label);
+    const [selectedType, setSelectedType] = useState(
+         "List");
     const [filters, setFilters] = useState({});
 
     const tabRefs = useRef({});
     const underlineRef = useRef(null);
+    const navigate=useNavigate();
 
     useGSAP(() => {
         if (tabRefs.current[activeTab] && underlineRef.current) {
@@ -34,6 +36,7 @@ const Projects = ({ setIsSidebarOpen }) => {
         localStorage.setItem("selectedTaskType", selectedType);
     }, [selectedType]);
 
+
     return (
         <div className="h-full overflow-y-auto no-scrollbar">
             <div className="relative flex items-center mx-6 mt-3 mb-0 gap-10 text-sm">
@@ -43,7 +46,9 @@ const Projects = ({ setIsSidebarOpen }) => {
                         ref={(el) => (tabRefs.current[tab.id] = el)}
                         className={`relative cursor-pointer text-[12px] pb-3 ${activeTab === tab.id ? "text-[#C72030]" : "text-gray-600"
                             }`}
-                        onClick={() => setActiveTab(tab.id)}
+                        onClick={() => {setActiveTab(tab.id);
+                            setActiveTabLabel(tab.label);
+                        }}
                     >
                         {tab.label}
                     </div>
@@ -60,17 +65,37 @@ const Projects = ({ setIsSidebarOpen }) => {
                 setIsSidebarOpen={setIsSidebarOpen}
                 selectedType={selectedType}
                 setSelectedType={setSelectedType}
-                addType={"Project"}
+                addType={activeTabLabel==="Active Projects"?"Project":activeTabLabel}
                 setFilters={setFilters}
                 filters={filters}
-                context="Projects"
+                context={"Projects"}
             />
 
-            {selectedType === "List" ? (
+            {activeTab === tabs[0].id && (
+                <>                 
+                {selectedType === "List" ?(
                 <ProjectList filters={filters} />
             ) : (
                 <BoardsSection section={"Projects"} />
             )}
+            </>
+            )}
+
+            {
+                activeTab===tabs[1].id && (
+                    <div>Tempelate</div>
+                )
+            }
+            {
+                activeTab===tabs[2].id &&  (
+                    <div>Tempelate</div>
+                )
+            }
+            {
+                activeTab===tabs[3].id && selectedType==="List" && (
+                   <IssuesTable />
+                )
+            }
         </div>
     );
 };

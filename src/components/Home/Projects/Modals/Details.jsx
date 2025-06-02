@@ -227,6 +227,8 @@ const Details = ({ setTab, setOpenModal, openModal, endText = "Next", isEdit = f
                 handleSelectChange("projectOwner", value)
               }}
               placeholder="Select Owner"
+                style={{"border":"1px solid #b3b2b2"}}
+
             />
           </div>
 
@@ -242,6 +244,8 @@ const Details = ({ setTab, setOpenModal, openModal, endText = "Next", isEdit = f
               value={formData.template}
               onChange={(value) => handleSelectChange("template", value)}
               placeholder="Select Template"
+                style={{"border":"1px solid #b3b2b2"}}
+
             />
           </div>
         </div>
@@ -316,6 +320,8 @@ const Details = ({ setTab, setOpenModal, openModal, endText = "Next", isEdit = f
                 value={formData.projectType}
                 onChange={(value) => handleSelectChange("projectType", value)}
                 placeholder="Select Type"
+                style={{"border":"1px solid #b3b2b2"}}
+
               />
             </div>
             <div className="w-1/2">
@@ -329,6 +335,8 @@ const Details = ({ setTab, setOpenModal, openModal, endText = "Next", isEdit = f
                 value={formData.priority}
                 onChange={(value) => handleSelectChange("priority", value)}
                 placeholder="Select Priority"
+                style={{"border":"1px solid #b3b2b2"}}
+
               />
             </div>
           </div>

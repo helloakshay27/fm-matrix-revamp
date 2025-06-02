@@ -169,6 +169,7 @@ const Tasks = ({ isEdit }) => {
               placeholder="Select Person "
               value={formData.responsiblePerson}
               onChange={(value) => setFormData({ ...formData, responsiblePerson: value })}
+
             />
           </div>
           <div className="mt-4 space-y-2 w-full">
@@ -196,6 +197,7 @@ const Tasks = ({ isEdit }) => {
               placeholder="Select Priority"
               value={formData.priority}
               onChange={(value) => setFormData({ ...formData, priority: value })}
+
             />
           </div>
 
