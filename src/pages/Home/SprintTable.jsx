@@ -8,6 +8,19 @@ import { Link } from 'react-router-dom';
 
 const globalStatusOptions = ["open", "in_progress", "completed", "on_hold", "overdue", "reopen", "abort"];
 
+// Utility function to format duration from days
+const formatDuration = (days) => {
+    if (!days || isNaN(days)) return "00d:00h:00m:00s";
+
+    const totalSeconds = Math.floor(days * 24 * 60 * 60); // Convert days to seconds
+    const daysPart = Math.floor(totalSeconds / (24 * 60 * 60));
+    const hoursPart = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
+    const minutesPart = Math.floor((totalSeconds % (60 * 60)) / 60);
+    const secondsPart = totalSeconds % 60;
+
+    return `${String(daysPart).padStart(2, '0')}d:${String(hoursPart).padStart(2, '0')}h:${String(minutesPart).padStart(2, '0')}m:${String(secondsPart).padStart(2, '0')}s`;
+};
+
 const SprintTable = () => {
     const dispatch = useDispatch();
     const newSpirints = useSelector((state) => state.fetchSpirints?.fetchSpirints || []);
@@ -84,11 +97,15 @@ const SprintTable = () => {
                     };
 
                     const statusHexColors = {
-                        overdue: '#FF2733',
-                        open: '#E4636A',
-                        in_progress: '#08AEEA',
-                        on_hold: '#7BD2B5',
-                        completed: '#83D17A',
+                        overdue: "#FF2733",
+                        open: "#E4636A",
+                        in_progress: "#08AEEA",
+                        on_hold: "#7BD2B5",
+                        completed: "#83D17A",
+                        active: "grey",
+                        inactive: "orange",
+                        abort: "grey",
+                        reopen: "#FFB400",
                     };
 
                     const bgColor = statusHexColors[currentStatus?.toLowerCase()] || '#000000';
@@ -139,6 +156,10 @@ const SprintTable = () => {
                 accessorKey: 'duration',
                 header: 'Duration',
                 size: 110,
+                cell: ({ getValue }) => {
+                    const durationInDays = getValue();
+                    return <span style={{ color: "green" }}>{formatDuration(durationInDays)}</span>;
+                },
             },
             {
                 accessorKey: 'Priority',
