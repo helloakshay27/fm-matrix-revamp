@@ -1,15 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ChevronDown, Edit3, Search, Trash2 } from "lucide-react";
-import TaskActions from "../../components/Home/TaskActions";
+import { ArrowLeft, ChevronDown, Search } from "lucide-react";
 import SprintBoardSection from "../../components/Home/Sprints/SprintBoardSection";
-import SprintsTable from "../../components/Home/Sprints/Table";
 
 const Sprints = () => {
-    const [selectedType, setSelectedType] = useState("Kanban");
     const [isOpen, setIsOpen] = useState(false);
     const [selectedProject, setSelectedProject] = useState("Select Project");
     const dropdownRef = useRef(null);
-
 
     useEffect(() => {
         const handler = (e) => {
@@ -26,8 +22,6 @@ const Sprints = () => {
         setIsOpen(false);
     };
 
-
-
     return (
         <div className="h-full overflow-y-auto no-scrollbar">
             <div className="flex items-center justify-between mx-6 mt-3 mb-2">
@@ -36,19 +30,6 @@ const Sprints = () => {
                 </h3>
 
                 <div className="flex items-center gap-6">
-                    {/* <div className="flex items-center gap-3 divide-x divide-gray-400">
-                        <div className="text-[11px]">
-                            Created by: Chetan Bafna
-                        </div>
-                        <div className="text-[11px] flex items-center gap-1 pl-3 cursor-pointer">
-                            <Edit3 size={10} />
-                            Edit Sprint
-                        </div>
-                        <div className="text-[11px] flex items-center gap-1 pl-3 cursor-pointer">
-                            <Trash2 className="mb-[2px]" size={10} />
-                            Delete Sprint
-                        </div>
-                    </div> */}
                     <div className="flex items-center gap-1 text-[13px] text-[#E95420] cursor-pointer">
                         <ArrowLeft size={13} color="#000" />
                         Back
@@ -56,13 +37,6 @@ const Sprints = () => {
                 </div>
             </div>
             <hr className="border border-gray-200" />
-
-            {/* <TaskActions
-                selectedType={selectedType}
-                setSelectedType={setSelectedType}
-                addType={"Sprint"}
-            /> */}
-
 
             <div className="flex items-center justify-end mx-4 mt-3 mb-2 gap-2">
                 <div className="w-[30rem] relative" ref={dropdownRef}>
@@ -111,10 +85,7 @@ const Sprints = () => {
                 </button>
             </div>
 
-
-            {
-                selectedType === 'Kanban' ? <SprintBoardSection /> : <SprintsTable />
-            }
+            <SprintBoardSection />
         </div>
     );
 };

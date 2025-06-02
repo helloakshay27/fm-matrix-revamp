@@ -29,6 +29,7 @@ import InternalDetails from "./components/Setup/Internal_Users/InternalDetails";
 import ExternalTable from "./components/Setup/External_Users/ExternalTable";
 import ProjectTable from "./components/Setup/Project/ProjectTable";
 import ProjectDetail from "./components/Setup/Project/ProjectDetail";
+import SprintTable from "./pages/Home/SprintTable.jsx";
 
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -41,6 +42,7 @@ const App = () => {
         {/* <Route path="/task/:id" element={<TaskDetails />} /> */}
         <Route path="/projects" element={<Projects setIsSidebarOpen={setIsSidebarOpen} />} />
         <Route path="/projects/:id" element={<ProjectDetails />} />
+        <Route path="/sprint-list" element={<SprintTable />} />
         <Route path="/sprint" element={<Sprints />} />
         <Route path="/milestones" element={<MileStoneMain />} />
         <Route path="/tasks/:id" element={<TaskDetails />} />

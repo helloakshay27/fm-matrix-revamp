@@ -15,7 +15,6 @@ const CustomTable = ({
   headerHeight = 48,
   title, buttonText, onAdd, layout = "block",
   showDropdown = false,
-
 }) => {
   const [pagination, setPagination] = useState({
     pageIndex: 0,
