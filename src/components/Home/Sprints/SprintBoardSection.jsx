@@ -11,24 +11,22 @@ import { changeProjectStatus, fetchProjects } from "../../../redux/slices/projec
 import { fetchSpirints } from "../../../redux/slices/spirintSlice";
 
 const SprintBoardSection = ({ selectedProject }) => {
-    const { id } = useParams(); // Get the sprint ID from the URL
+    const { id } = useParams();
     const dispatch = useDispatch();
     const projectState = useSelector((state) => state.fetchProjects.fetchProjects);
     const sprintState = useSelector((state) => state.fetchSpirints?.fetchSpirints || []);
     const [projects, setProjects] = useState([]);
     const [selectedSprint, setSelectedSprint] = useState(null);
+    const [countdown, setCountdown] = useState("00d:00h:00m:00s");
 
-    // Fetch projects and sprints
     useEffect(() => {
         dispatch(fetchProjects());
         dispatch(fetchSpirints());
     }, [dispatch]);
 
-    // Find the selected sprint based on the ID from the URL
     useEffect(() => {
         if (id && sprintState.length) {
             const sprint = sprintState.find((s) => {
-                // Convert s.id to string to handle numbers
                 const sprintId = s.id != null ? String(s.id) : '';
                 return sprintId === id;
             });
@@ -37,6 +35,40 @@ const SprintBoardSection = ({ selectedProject }) => {
             setSelectedSprint(null);
         }
     }, [id, sprintState]);
+
+    const calculateCountdown = useCallback(() => {
+        if (!selectedSprint?.end_date) {
+            setCountdown("00d:00h:00m:00s");
+            return;
+        }
+
+        const endDate = new Date(selectedSprint.end_date);
+        const now = new Date();
+        const timeDiff = endDate - now;
+
+        if (timeDiff <= 0) {
+            setCountdown("00d:00h:00m:00s");
+            return;
+        }
+
+        const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+
+        setCountdown(
+            `${String(days).padStart(2, '0')}d:${String(hours).padStart(2, '0')}h:${String(minutes).padStart(2, '0')}m:${String(seconds).padStart(2, '0')}s`
+        );
+    }, [selectedSprint]);
+
+    useEffect(() => {
+        calculateCountdown();
+        const interval = setInterval(() => {
+            calculateCountdown();
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [calculateCountdown]);
 
     useDeepCompareEffect(() => {
         if (selectedProject === "Kalpataru customer app : Post sales") {
@@ -85,15 +117,7 @@ const SprintBoardSection = ({ selectedProject }) => {
 
     const contributors = selectedSprint?.contributors || ["S", "A", "B", "M", "K", "D", "CB"];
 
-    const formatDuration = (days) => {
-        if (!days || isNaN(days)) return "00d:00h:00m:00s";
-        const totalSeconds = Math.floor(days * 24 * 60 * 60);
-        const daysPart = Math.floor(totalSeconds / (24 * 60 * 60));
-        const hoursPart = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
-        const minutesPart = Math.floor((totalSeconds % (60 * 60)) / 60);
-        const secondsPart = totalSeconds % 60;
-        return `${String(daysPart).padStart(2, '0')}d:${String(hoursPart).padStart(2, '0')}h:${String(minutesPart).padStart(2, '0')}m:${String(secondsPart).padStart(2, '0')}s`;
-    };
+
 
     return (
         <div className="h-[80%] mx-3 my-3 flex items-start gap-1 max-w-full overflow-x-auto overflow-y-auto flex-nowrap">
@@ -136,9 +160,7 @@ const SprintBoardSection = ({ selectedProject }) => {
                             <div className="flex items-center gap-2 text-[#029464]">
                                 <Timer size={14} />
                                 <span className="text-[11px]">
-                                    {selectedSprint.duration
-                                        ? formatDuration(selectedSprint.duration)
-                                        : "00d:00h:00m:00s"}
+                                    {countdown}
                                 </span>
                             </div>
                             <div className="border-t border-gray-300 my-4"></div>

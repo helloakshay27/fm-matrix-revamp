@@ -8,11 +8,10 @@ import { Link } from 'react-router-dom';
 
 const globalStatusOptions = ["open", "in_progress", "completed", "on_hold", "overdue", "reopen", "abort"];
 
-// Utility function to format duration from days
 const formatDuration = (days) => {
     if (!days || isNaN(days)) return "00d:00h:00m:00s";
 
-    const totalSeconds = Math.floor(days * 24 * 60 * 60); // Convert days to seconds
+    const totalSeconds = Math.floor(days * 24 * 60 * 60);
     const daysPart = Math.floor(totalSeconds / (24 * 60 * 60));
     const hoursPart = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
     const minutesPart = Math.floor((totalSeconds % (60 * 60)) / 60);
