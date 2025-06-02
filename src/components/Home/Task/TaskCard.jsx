@@ -16,7 +16,7 @@ const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232" }) =>
     const navigate = useNavigate();
     const [{ isDragging }, dragRef] = useDrag(() => ({
         type: "TASK",
-        item: { id: task.id, fromStatus: task.status },
+        item: { id: task.id, fromStatus: task.status ,type: "TASK"},
         collect: (monitor) => ({
             isDragging: monitor.isDragging(),
         }),
@@ -52,7 +52,7 @@ const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232" }) =>
             style={{ opacity: isDragging ? 0.5 : 1, cursor: "move" }}
             className="w-full h-max bg-white p-2 shadow-xl text-xs flex flex-col space-y-2 mb-2"
         >
-            <p className="mb-2 truncate cursor-pointer" onClick={() => navigate(`/tasks/${task.id}`)}>
+            <p className="mb-2 truncate cursor-pointer text-start" onClick={() => navigate(`/tasks/${task.id}`)}>
                 <span className="text-blue-500">{task.id}</span> {task.title}
             </p>
             <div className="flex items-center gap-1">
