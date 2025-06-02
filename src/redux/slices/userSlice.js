@@ -37,13 +37,13 @@ const createApiSlice = (name, fetchThunk) => createSlice({
 // Fetch users thunk
 export const fetchUsers = createAsyncThunk('fetchUsers', async () => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/users.json`, {
+        const response = await axios.get(`https://api-tasks.lockated.com/users/get_users`, {
             headers: {
                 Authorization: `Bearer ${access_token}`,
             },
         });
 
-        return response.data;
+        return response.data.users;
     } catch (error) {
         console.log(error)
     }

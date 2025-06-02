@@ -228,3 +228,10 @@
       height:100%;
       text-align: center;
   }
+
+/* In your CSS file */
+.my-custom-date-editor::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+

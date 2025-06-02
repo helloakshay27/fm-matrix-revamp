@@ -21,11 +21,13 @@ import {
   ArrowPathIcon,
 } from "@heroicons/react/20/solid";
 import { Link } from "react-router-dom";
+import "../../Home/Sprints/Table.css";
 
 import {
   fetchTasks,
   createTask,
   changeTaskStatus,
+  updateTask,
 } from "../../../redux/slices/taskSlice";
 import { fetchUsers } from "../../../redux/slices/userSlice";
 import SelectBox from "../../SelectBox";
@@ -70,35 +72,69 @@ const EditableTextField = ({
   );
 };
 
-const DateEditor = ({ value, onUpdate, isNewRow, onEnterPress }) => {
+const DateEditor = ({
+  value: propValue,
+  onUpdate,
+  isNewRow,
+  onEnterPress,
+  className,
+  placeholder = "Select date",
+}) => {
   const [date, setDate] = useState(
-    value ? new Date(value).toISOString().split("T")[0] : ""
+    propValue ? new Date(propValue).toISOString().split("T")[0] : ""
   );
+  const inputRef = useRef(null);
+
   useEffect(() => {
-    setDate(value ? new Date(value).toISOString().split("T")[0] : "");
-  }, [value]);
-  const formattedDate = date
-    ? new Date(date).toLocaleDateString("en-CA")
-    : null;
+    const initialDate = propValue ? new Date(propValue).toISOString().split("T")[0] : "";
+    setDate(initialDate);
+  }, [propValue]);
+
+  const performUpdate = (dateValue) => {
+    onUpdate(dateValue || null);
+  };
+
+  const handleInputChange = (e) => {
+    const newDate = e.target.value;
+    setDate(newDate);
+    performUpdate(newDate);
+  };
+
   const handleKeyDown = (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
-      onUpdate(formattedDate);
-      onEnterPress();
+      performUpdate(date);
+      if (onEnterPress) {
+        onEnterPress();
+      }
     }
   };
+
   const handleBlur = () => {
-    onUpdate(formattedDate);
+    performUpdate(date);
   };
+
+  const handleInputClick = () => {
+    if (inputRef.current && typeof inputRef.current.showPicker === 'function') {
+      try {
+        inputRef.current.showPicker();
+      } catch (error) {
+        console.error("Error trying to show picker:", error);
+      }
+    }
+  };
+
   return (
     <input
+      ref={inputRef}
       type="date"
       value={date}
-      onChange={(e) => setDate(e.target.value)}
+      onChange={handleInputChange}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
-      className="w-full focus:outline-none rounded text-sm"
-      placeholder="Select date"
+      onClick={handleInputClick}
+      className={`w-full focus:outline-none rounded text-[12px] my-custom-date-editor ${className || ''}`}
+      placeholder={placeholder}
     />
   );
 };
@@ -150,9 +186,9 @@ const processTaskData = (task) => {
     status: task.status,
     responsiblePerson: task.responsible_person?.name || "Unassigned",
     responsiblePersonId: task.responsible_person?.id || null,
-    projectManagementId: task.project_management_id || 1,
-    startDate: task.started_at,
-    endDate: task.target_date,
+    projectManagementId: task.project_management_id || 2,
+    startDate: task.started_at?.split("T")[0],
+    endDate: task.target_date?.split("T")[0],
     priority: task.priority,
     duration: calculateDuration(task.started_at, task.target_date),
     predecessor: task.predecessor || "",
@@ -197,7 +233,6 @@ const TaskTable = () => {
   const newTaskTitleInputRef = useRef(null);
   const newTaskFormRowRef = useRef(null);
 
-  // Removed loadingSubtasksForRow state
   const [localError, setLocalError] = useState(null);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [isUpdatingTask, setIsUpdatingTask] = useState(false);
@@ -230,7 +265,6 @@ const TaskTable = () => {
   useEffect(() => {
     if (
       !loadingUsers &&
-      // Ensure 'users' is an array before checking its length
       Array.isArray(users) &&
       users.length === 0 &&
       !usersFetchError &&
@@ -307,7 +341,7 @@ const TaskTable = () => {
     const taskAttributes = {
       title: newTaskTitle.trim(),
       status: newTaskStatus,
-      project_management_id: 1,
+      project_management_id: 2,
       responsible_person_id: newTaskResponsiblePersonId,
       started_at: newTaskStartDate || null,
       target_date: newTaskEndDate || null,
@@ -347,7 +381,7 @@ const TaskTable = () => {
     const handleClickOutsideNewTaskRow = (event) => {
       if (
         !isAddingNewTask ||
-        isCreatingTask ||
+        
         !newTaskFormRowRef.current ||
         newTaskFormRowRef.current.contains(event.target)
       ) {
@@ -376,16 +410,26 @@ const TaskTable = () => {
 
   const handleUpdateTaskFieldCell = useCallback(
     async (taskId, fieldName, newValue) => {
+      console.log(taskId, fieldName, newValue)
       if (isUpdatingTask) return;
       const payload = { [fieldName]: newValue };
       setIsUpdatingTask(true);
       setLocalError(null);
+      try{
+      if(fieldName === "status"){
       dispatch(changeTaskStatus({ id: taskId, payload })) // Using changeTaskStatus as per import
         .unwrap()
         .then(() => {
           return dispatch(fetchTasks()).unwrap();
+        })}
+        else{
+          dispatch(updateTask({ id: taskId, payload }))
+        .unwrap()
+        .then(() => {
+          return dispatch(fetchTasks()).unwrap();
         })
-        .catch((error) => {
+        }
+      }catch(error){
           console.error(
             `Task field update failed for ${taskId} (${fieldName}):`,
             error
@@ -395,10 +439,10 @@ const TaskTable = () => {
             }`
           );
           dispatch(fetchTasks());
-        })
-        .finally(() => {
+        }
+        finally{
           setIsUpdatingTask(false);
-        });
+        } ;
     },
     [dispatch, isUpdatingTask]
   );
@@ -495,31 +539,53 @@ const TaskTable = () => {
         ),
       },
       {
-        accessorKey: "responsiblePerson",
+        accessorKey: "responsiblePersonId",
         header: "Responsible Person",
         size: 150,
-        cell: ({ getValue }) => {
-          const name = getValue();
-          return name || <span className="text-gray-400">Unassigned</span>;
+        cell: ({ getValue , row}) => {
+          return(
+          <SelectBox 
+            options={users.map((user) => ({ value: user.id, label: `${user.firstname} ${user.lastname}` }))}
+            value={getValue()}
+            onChange={(newValue) => handleUpdateTaskFieldCell(row.original.id, "responsible_person_id", newValue)}
+            style={
+              {
+                border:"none",
+                width:"100%",
+                height:"100%",
+                padding:"0.5rem"
+              }
+            }
+          />
+          )
         },
       },
       {
         accessorKey: "startDate",
         header: "Start Date",
         size: 130,
-        cell: ({ getValue }) =>
-          (getValue() ? new Date(getValue()).toLocaleDateString() : null) || (
-            <span className="text-gray-400 p-1">Select</span>
-          ),
+        cell: ({ getValue,row }) =>
+        (
+         <DateEditor
+                    value={getValue()}
+                    onUpdate={(date) => handleUpdateTaskFieldCell(row.original.id, "started_at", date)}
+                    className="text-[12px]"
+                  />
+        )
+        
       },
       {
         accessorKey: "endDate",
         header: "End Date",
         size: 130,
-        cell: ({ getValue }) =>
-          (getValue() ? new Date(getValue()).toLocaleDateString() : null) || (
-            <span className="text-gray-400 p-1">Select</span>
-          ),
+        cell: ({ getValue ,row}) =>
+          (
+         <DateEditor
+                    value={getValue()}
+                    onUpdate={(date) => handleUpdateTaskFieldCell(row.original.id, "target_date", date)}
+                    className="text-[12px]"
+                  />
+        ),
       },
       {
         accessorKey: "duration",
@@ -562,7 +628,7 @@ const TaskTable = () => {
         ),
       },
     ],
-    [handleUpdateTaskFieldCell]
+    [handleUpdateTaskFieldCell,users]
   ); // Removed loadSubtasksForParent and loadingSubtasksForRow
 
   const table = useReactTable({
@@ -622,7 +688,7 @@ const TaskTable = () => {
         {" "}
         <table className="w-full table-auto text-sm table-fixed">
           {" "}
-          <thead className="sticky top-0 bg-gray-50 z-10">
+          <thead className="sticky top-0 bg-gray-50 z-30">
             {" "}
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
@@ -648,17 +714,21 @@ const TaskTable = () => {
               <tr
                 ref={newTaskFormRowRef}
                 style={{ height: `${ROW_HEIGHT}px` }}
-                className="border-b relative z-30 "
+                className="border-b relative z-1" 
               >
                 {" "}
-                <td className="p-0 align-middle border-r-2"></td>               {" "}
+                <td className="p-0 align-middle border-r-2 text-gray-400">
+                  <div className="h-full w-full flex items-center px-1">
+                  </div>
+                </td>
+                {" "}
                 <td className="p-0 align-middle border-r-2 text-gray-400">
                   <div className="h-full w-full flex items-center px-1">
                     ---
                   </div>
                 </td>
                 {" "}
-                <td className="p-0 align-middle border-r-2">
+                <td className="pl-2 p-0 align-middle border-r-2">
                   <EditableTextField
                     value={newTaskTitle}
                     onUpdate={setNewTaskTitle}
@@ -668,7 +738,8 @@ const TaskTable = () => {
                   />
                 </td>
                 {" "}
-                <td className="p-0 align-middle border-r-2">
+                <td className="pl-2 p-0 align-middle border-r-2">
+                  {" "}
                   <StatusBadge
                     status={newTaskStatus}
                     statusOptions={globalStatusOptions}
@@ -690,8 +761,10 @@ const TaskTable = () => {
                         : []),
                     ]}
                     value={newTaskResponsiblePersonId}
-                    onChange={(selectedId) =>
-                      setNewTaskResponsiblePersonId(selectedId)
+                    onChange={(selectedId) =>{
+                      setNewTaskResponsiblePersonId(selectedId);
+                      console.log(selectedId);
+                    }
                     }
                     placeholder="Select Person..."
                   />
@@ -713,16 +786,17 @@ const TaskTable = () => {
                     onUpdate={setNewTaskEndDate}
                     isNewRow={true}
                     onEnterPress={handleSaveNewTask}
+                    className="text-[12px]"
                   />
                 </td>
                 {" "}
                 <td className="p-0 align-middle border-r-2 text-xs">
-                  <div className="h-full w-full flex items-center px-1">
+                  <div className="h-full w-full flex items-center px-2">
                     {calculateDuration(newTaskStartDate, newTaskEndDate)}
                   </div>
                 </td>
                 {" "}
-                <td className="p-0 align-middle border-r-2">
+                <td className="p-0 pl-2 align-middle border-r-2">
                   <StatusBadge
                     status={newTaskPriority}
                     statusOptions={globalPriorityOptions}
@@ -730,26 +804,11 @@ const TaskTable = () => {
                   />
                 </td>
                 {" "}
-                <td className="p-0 align-middle border-r-2"></td>               {" "}
-                <td className="p-0 align-middle border-r-2">
-                  {" "}
-                  <button
-                    onClick={handleSaveNewTask}
-                    className="text-green-500 hover:text-green-700 p-1 text-xs"
-                  >
-                    Save
-                  </button>
-                  {" "}
-                  <button
-                    onClick={handleCancelNewTask}
-                    className="text-red-500 hover:text-red-700 p-1 text-xs"
-                  >
-                    Cancel
-                  </button>
-                  {" "}
-                </td>
-                {" "}
-              </tr>
+                <td className="p-0 align-middle border-r-2"></td>   
+                {""}
+                <td className="p-0 align-middle border-r-2"></td>   
+                {" "}
+             </tr>
             )}
             {" "}
             {actualDataRows.length === 0 &&
