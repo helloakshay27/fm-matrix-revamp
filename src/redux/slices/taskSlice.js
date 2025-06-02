@@ -70,26 +70,28 @@ export const createSubTask = createAsyncThunk('createSubTask', async (payload) =
 });
 
 
-export const fetchTasks = createAsyncThunk('fetchTasks', async (params) => {
+export const fetchTasks = createAsyncThunk('fetchTasks', async () => {
     try {
-        if(Object.keys(params).length > 0){
-
-            const queryString = Object.keys(params).filter(key=>{const value=params[key];return value !== null && value !== undefined && String(value).trim() !== ''}).map(key => (`q[${key}]=${params[key]}`)).join('&');
-            const response = await axios.get(`https://api-tasks.lockated.com/task_managements.json?${queryString}`, {
-                headers: {
-                    Authorization: `Bearer ${access_token}`,
-                }
-            })
-        }else{
-        const response = await axios.get(`https://api-tasks.lockated.com/task_managements.json`, {
+        // let response = {};
+        // if(Object.keys(params).length > 0){
+ 
+        //     const queryString = Object.keys(params).filter(key=>{const value=params[key];return value !== null && value !== undefined && String(value).trim() !== ''}).map(key => (`q[${key}]=${params[key]}`)).join('&');
+        //      response = await axios.get(`https://api-tasks.lockated.com/task_managements.json?${queryString}`, {
+        //         headers: {
+        //             Authorization: `Bearer ${access_token}`,
+        //         }
+        //     })
+        // }else{
+         const response = await axios.get(`https://api-tasks.lockated.com/task_managements.json`, {
             headers: {
                 Authorization: `Bearer ${access_token}`,
             }
         });
-    }
+    
 
         return response.data;
-    } catch (error) {
+    }
+     catch (error) {
         console.log(error);
         return error.response.data;
     }

@@ -6,6 +6,7 @@ import { createRoleReducer, editRoleReducer, fetchRolesReducer } from './slices/
 import { changeTaskStatusReducer, createTaskCommentReducer, createTaskReducer, editTaskCommentReducer, editTaskReducer, fetchTasksOfProjectReducer, fetchTasksReducer, taskDetailsReducer } from './slices/taskSlice'
 import { fetchOrganizationsReducer } from './slices/organizationSlice'
 import { createMilestoneReducer } from './slices/milestoneSlice'
+// import {filtersReducer} from './slices/filterSlice'
 
 export const store = configureStore({
   reducer: {
@@ -28,6 +29,8 @@ export const store = configureStore({
     editTask: editTaskReducer,
     taskDetails: taskDetailsReducer,
     changeTaskStatus: changeTaskStatusReducer,
+    // filters: filtersReducer,
+
     // fetchTasksComments: fetchTasksCommentsReducer,
     createTaskComment: createTaskCommentReducer,
     editTaskComment: editTaskCommentReducer,
