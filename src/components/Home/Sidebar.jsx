@@ -57,7 +57,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
                                 {isSidebarOpen ? "Projects" : ""}
                             </li>
                         </NavLink>
-                        <NavLink to="/sprint">
+                        <NavLink to="/sprint-list">
                             <li className={`sidebar-link ${!isSidebarOpen ? "justify-center" : ""}`}>
                                 <FlagTriangleRight size={20} />
                                 {isSidebarOpen ? "Sprints" : ""}

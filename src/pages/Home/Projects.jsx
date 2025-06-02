@@ -6,12 +6,12 @@ import TaskActions from "../../components/Home/TaskActions";
 import ProjectList from "../../components/Home/Projects/ProjectList";
 import BoardsSection from "../../components/Home/BoardsSection";
 
-
 const Projects = ({ setIsSidebarOpen }) => {
     const [activeTab, setActiveTab] = useState(tabs[0].id);
     const [selectedType, setSelectedType] = useState(() => {
         return localStorage.getItem("selectedTaskType") || "List";
-    })
+    });
+    const [filters, setFilters] = useState({});
 
     const tabRefs = useRef({});
     const underlineRef = useRef(null);
@@ -30,10 +30,9 @@ const Projects = ({ setIsSidebarOpen }) => {
         }
     }, [activeTab]);
 
-        useEffect(() => {
-            localStorage.setItem("selectedTaskType", selectedType);
-        }, [selectedType]);    
-    
+    useEffect(() => {
+        localStorage.setItem("selectedTaskType", selectedType);
+    }, [selectedType]);
 
     return (
         <div className="h-full overflow-y-auto no-scrollbar">
@@ -57,17 +56,23 @@ const Projects = ({ setIsSidebarOpen }) => {
 
             <hr className="border border-gray-200" />
 
-            <TaskActions setIsSidebarOpen={setIsSidebarOpen} selectedType={selectedType} setSelectedType={setSelectedType} addType={"Project"} />
+            <TaskActions
+                setIsSidebarOpen={setIsSidebarOpen}
+                selectedType={selectedType}
+                setSelectedType={setSelectedType}
+                addType={"Project"}
+                setFilters={setFilters}
+                filters={filters}
+                context="Projects"
+            />
 
-            {
-                selectedType === 'List' ? (
-                    <ProjectList />
-                ) : (
-                    <BoardsSection tasks={projects} section={"Projects"} />
-                )
-            }
+            {selectedType === "List" ? (
+                <ProjectList filters={filters} />
+            ) : (
+                <BoardsSection tasks={projects} section={"Projects"} />
+            )}
         </div>
-    )
-}
+    );
+};
 
-export default Projects
+export default Projects;

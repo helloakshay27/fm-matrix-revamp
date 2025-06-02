@@ -1,16 +1,11 @@
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import Sprints from "./Modals/Sprint";
 
 const AddSprintModal = ({ isModalOpen, setIsModalOpen }) => {
     const addTaskModalRef = useRef(null);
-
-    useEffect(() => {
-        if (!isModalOpen) {
-        }
-    }, [isModalOpen]);
 
     useGSAP(() => {
         if (isModalOpen) {
@@ -31,16 +26,6 @@ const AddSprintModal = ({ isModalOpen, setIsModalOpen }) => {
         });
     };
 
-    const onSubmit = (data) => {
-        const existingTasks = JSON.parse(localStorage.getItem("tasks")) || [];
-
-        const updatedTasks = [...existingTasks, data];
-
-        localStorage.setItem("tasks", JSON.stringify(updatedTasks));
-
-        reset();
-        setIsModalOpen(false);
-    };
     return (
 
         <div className="fixed inset-0 flex items-center justify-end bg-black bg-opacity-50 z-10 text-[12px]">

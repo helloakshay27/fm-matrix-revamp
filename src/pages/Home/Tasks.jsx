@@ -12,14 +12,18 @@ const Tasks = ({ setIsSidebarOpen }) => {
         localStorage.setItem("selectedTaskType", selectedType);
     }, [selectedType]);
 
-
-
     return (
         <div className="h-full overflow-y-auto no-scrollbar">
             <h3 className="text-[11px] text-gray-400 mx-6 my-4">Project 1 / Milestone / Task</h3>
             <hr className="border border-gray-200" />
 
-            <TaskActions setIsSidebarOpen={setIsSidebarOpen} selectedType={selectedType} setSelectedType={setSelectedType} addType={"Task"} />
+            <TaskActions
+                setIsSidebarOpen={setIsSidebarOpen}
+                selectedType={selectedType}
+                setSelectedType={setSelectedType}
+                addType={"Task"}
+                context="Tasks"
+            />
 
             {
                 selectedType === "Kanban" ? (
@@ -29,7 +33,7 @@ const Tasks = ({ setIsSidebarOpen }) => {
                 ) : <></>
             }
         </div>
-    )
-}
+    );
+};
 
-export default Tasks
+export default Tasks;
