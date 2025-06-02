@@ -69,7 +69,7 @@ const Projects = ({ setIsSidebarOpen }) => {
             {selectedType === "List" ? (
                 <ProjectList filters={filters} />
             ) : (
-                <BoardsSection tasks={projects} section={"Projects"} />
+                <BoardsSection section={"Projects"} />
             )}
         </div>
     );

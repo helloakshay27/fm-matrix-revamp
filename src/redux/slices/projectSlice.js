@@ -229,6 +229,30 @@ export const fetchTemplates = createAsyncThunk('fetchTemplates', async () => {
     }
 })
 
+
+export const filterProjects = createAsyncThunk(
+    'filterProjects',
+    async (filters, { rejectWithValue }) => {
+      try {
+        const params = new URLSearchParams(filters).toString();
+  
+        const response = await axios.get(
+          `https://api-tasks.lockated.com/project_managements.json?${params}`,
+          {
+            headers: {
+              Authorization: `Bearer ${access_token}`,
+            },
+          }
+        );
+  
+        return response.data;
+      } catch (error) {
+        return rejectWithValue(error.response?.data || error.message);
+      }
+    }
+  );
+  
+
 export const createProjectSlice = createApiSlice('createProject', createProject);
 export const fetchProjectsSlice = createApiSlice('fetchProjects', fetchProjects);
 export const fetchProjectDetailsSlice = createApiSlice('fetchProjectDetails', fetchProjectDetails);
@@ -240,6 +264,7 @@ export const fetchTemplatesSlice = createApiSlice('fetchTemplates', fetchTemplat
 export const deleteProjectSlice = createApiSlice('deleteProject', deleteProject);
 export const updateProjectTypeSlice = createApiSlice('updateProjectType', updateProjectType);
 export const deleteProjectTypeSlice = createApiSlice('deleteProjectType', deleteProjectType);
+export const filterProjectsSlice = createApiSlice('filterProjects', filterProjects);
 
 
 export const createProjectReducer = createProjectSlice.reducer;
@@ -253,3 +278,4 @@ export const fetchTemplatesReducer = fetchTemplatesSlice.reducer;
 export const deleteProjectReducer = deleteProjectSlice.reducer;
 export const updateProjectTypeReducer = updateProjectTypeSlice.reducer;
 export const deleteProjectTypeReducer = deleteProjectTypeSlice.reducer;
+export const filterProjectsReducer = filterProjectsSlice.reducer;

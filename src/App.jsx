@@ -43,7 +43,7 @@ const App = () => {
         <Route path="/projects" element={<Projects setIsSidebarOpen={setIsSidebarOpen} />} />
         <Route path="/projects/:id" element={<ProjectDetails />} />
         <Route path="/sprint-list" element={<SprintTable />} />
-        <Route path="/sprint" element={<Sprints />} />
+        <Route path="/sprint/:id" element={<Sprints />} />
         <Route path="/milestones" element={<MileStoneMain />} />
         <Route path="/tasks/:id" element={<TaskDetails />} />
         <Route path="/mom" element={<MinutesOfMeeting />} />

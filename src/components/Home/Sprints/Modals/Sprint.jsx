@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import SelectBox from "../../../SelectBox";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchSpirints, postSprint } from "../../../../redux/slices/spirintSlice";
 
 const AddSprintsModal = ({ id, deleteSprints }) => {
   return (
@@ -67,12 +69,25 @@ const AddSprintsModal = ({ id, deleteSprints }) => {
   );
 };
 
-const Sprints = () => {
+const Sprints = ({ closeModal }) => {
   const [options, setOptions] = useState(["Option 1", "Option 2", "Option 3"]);
   const [nextId, setNextId] = useState(1);
   const [sprints, setSprints] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+
+  const { loading, success } = useSelector((state) => state.postSprint?.postSprint || {});
+  const { loading: load,
+    success: succ, } = useSelector((state) => state.fetchSpirints?.fetchSpirints || []);
+
+
+
+  const dispatch = useDispatch();
+
+
+
+
+
 
   const handleDeleteSprints = (id) => {
     setSprints(sprints.filter((sprints) => sprints.id !== id));
@@ -95,8 +110,36 @@ const Sprints = () => {
     setNextId(nextId + 1);
   };
 
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+  
+    const sprintPayload = {
+      name: e.target[0].value,
+      description: "Sprint focused on UI enhancements and bug fixes",
+      project_id: 3,
+      start_date: startDate,
+      end_date: endDate,
+      duration: handleDuration(),
+      start_time: "09:00",
+      end_time: "18:00",
+    };
+  
+    const payload = {
+      sprint: sprintPayload,
+    };
+  
+    dispatch(postSprint(payload));
+  
+    // Fetch latest data before closing modal
+    dispatch(fetchSpirints());
+  
+    closeModal(); // Close modal after fetching
+  };
+  
+
   return (
-    <form className="pt-2 pb-12 h-full overflow-y-auto">
+    <form className="pt-2 pb-12 h-full overflow-y-auto" onSubmit={handleSubmit}>
       <div
         id="addTask"
         className="max-w-[90%] mx-auto h-[calc(100%-4rem)] overflow-y-auto pr-3"
@@ -180,8 +223,9 @@ const Sprints = () => {
           <button
             type="submit"
             className="flex items-center justify-center border-2 text-[black] border-[red] px-4 py-2 w-[100px]"
+
           >
-            Next
+            Submit
           </button>
         </div>
       </div>

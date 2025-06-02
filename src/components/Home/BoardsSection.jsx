@@ -24,6 +24,8 @@ const BoardsSection = ({ section }) => {
     const projectState = useSelector((state) => state.fetchProjects.fetchProjects);
     const taskState = useSelector((state) => state.fetchTasks.fetchTasks);
 
+    console.log("Task State:", taskState);
+
 
     useEffect(() => {
         batch(() => {

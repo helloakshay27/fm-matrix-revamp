@@ -71,111 +71,157 @@ const ProgressBar = ({ progressString }) => {
 // Define all possible project statuses
 const globalStatusOptions = ["active", "inactive", "in_progress", "overdue", "completed", "on_hold", "abort"];
 
-const ProjectList = ({ filters = {} }) => {
+const ProjectList = () => {
     const fixedRowsPerPage = 10;
     const dispatch = useDispatch();
 
     // Select project data, loading, and error states from Redux
     const {
-        fetchProjects: projects,
+        fetchProjects: initialProjects,
         loading: fetchProjectsLoading,
         error: fetchProjectsError,
     } = useSelector((state) => state.fetchProjects);
+
+    const {
+        filterProjects: filteredProjects,
+        loading: filterProjectsLoading,
+        error: filterProjectsError,
+    } = useSelector((state) => state.filterProjects);
 
     const {
         loading: statusChangeLoading,
         error: statusChangeError,
     } = useSelector((state) => state.changeProjectStatus);
 
-    // Transform raw project data for table display
+    // Track whether filters are applied
+    const [isFiltered, setIsFiltered] = useState(false);
+    const [data, setData] = useState([]);
+
+    // Log Redux state for debugging
+    useEffect(() => {
+        console.log("Redux state - fetchProjects:", {
+            initialProjects,
+            fetchProjectsLoading,
+            fetchProjectsError,
+            isArray: Array.isArray(initialProjects),
+            length: initialProjects ? initialProjects.length : "N/A",
+        });
+        console.log("Redux state - filterProjects:", {
+            filteredProjects,
+            filterProjectsLoading,
+            filterProjectsError,
+            isArray: Array.isArray(filteredProjects),
+            length: filteredProjects ? filteredProjects.length : "N/A",
+        });
+    }, [
+        initialProjects,
+        fetchProjectsLoading,
+        fetchProjectsError,
+        filteredProjects,
+        filterProjectsLoading,
+        filterProjectsError,
+    ]);
+
+    // Transform API response data for table display
     const transformedData = useMemo(() => {
-        if (!projects || !Array.isArray(projects)) return [];
-        return projects.map((project) => ({
-            id: `P-${project.id.toString()}`,
-            actualId: project.id.toString(),
-            title: project.title,
-            status: project.status.charAt(0).toUpperCase() + project.status.slice(1),
-            type: project.resource_type || "Unknown",
-            manager: project.project_members?.[0]?.user
-                ? `${project.project_members[0].user.firstname} ${project.project_members[0].user.lastname}`
-                : "Unassigned",
-            managerFirstname: project.project_members?.[0]?.user?.firstname || "Unassigned",
-            milestones: "70%", // Static for demo; replace with real data
-            tasks: "90%", // Static for demo; replace with real data
-            issues: "8/10", // Static for demo; replace with real data
-            startDate: project.start_date,
-            endDate: project.end_date,
-            priority: project.priority.charAt(0).toUpperCase() + project.priority.slice(1),
-        }));
-    }, [projects]);
+        const projects = isFiltered && Array.isArray(filteredProjects) && filteredProjects.length > 0 ? filteredProjects : initialProjects;
+        console.log("Transforming data - isFiltered:", isFiltered, "Using:", isFiltered ? "filteredProjects" : "initialProjects", "Projects length:", projects ? projects.length : "N/A");
 
-    // Apply filters to transformed data (all conditions must match)
-    const filteredData = useMemo(() => {
-        let result = transformedData;
-
-        // Filter by statuses
-        if (filters.statuses?.length > 0) {
-            result = result.filter((project) =>
-                filters.statuses.includes(project.status)
-            );
+        if (!projects) {
+            console.log("Projects is null/undefined");
+            return [];
         }
 
-        // Filter by types
-        if (filters.types?.length > 0) {
-            result = result.filter((project) => filters.types.includes(project.type));
+        if (!Array.isArray(projects)) {
+            console.log("Projects is not an array, received:", projects);
+            if (projects?.data && Array.isArray(projects.data)) {
+                console.log("Found nested data array, using projects.data");
+                return projects.data.map((project, index) => transformProject(project, index));
+            }
+            return [];
         }
 
-        // Filter by managers (case-insensitive)
-        if (filters.managers?.length > 0) {
-            result = result.filter((project) =>
-                filters.managers.some(
-                    (manager) => project.managerFirstname.toLowerCase() === manager.toLowerCase()
-                )
-            );
+        if (projects.length === 0) {
+            console.log("Projects array is empty");
+            return [];
         }
 
-        // Filter by creators
-        if (filters.creators?.length > 0) {
-            // Example: result = result.filter((project) => filters.creators.includes(project.createdBy));
-        }
+        return projects.map((project, index) => transformProject(project, index));
 
-        // Filter by date range
-        if (filters.startDate) {
-            result = result.filter(
-                (project) => new Date(project.startDate) >= new Date(filters.startDate)
-            );
+        function transformProject(project, index) {
+            console.log(`Transforming project ${index}:`, project);
+            try {
+                return {
+                    id: `P-${project.id?.toString() || `unknown-${index}`}`,
+                    actualId: project.id?.toString() || `unknown-${index}`,
+                    title: project.title || "Untitled",
+                    status: project.status
+                        ? project.status.charAt(0).toUpperCase() + project.status.slice(1)
+                        : "Unknown",
+                    type: project.resource_type || "Unknown",
+                    manager: project.project_owner_name || "Unassigned",
+                    milestones: "70%", // Static for demo; replace with real data
+                    tasks: "90%", // Static for demo; replace with real data
+                    issues: "8/10", // Static for demo; replace with real data
+                    startDate: project.start_date || "N/A",
+                    endDate: project.end_date || "N/A",
+                    priority: project.priority
+                        ? project.priority.charAt(0).toUpperCase() + project.priority.slice(1)
+                        : "Unknown",
+                };
+            } catch (error) {
+                console.error(`Error transforming project ${index}:`, error, "Project:", project);
+                return {
+                    id: `P-error-${index}`,
+                    actualId: `error-${index}`,
+                    title: "Error",
+                    status: "Error",
+                    type: "Error",
+                    manager: "Error",
+                    milestones: "0%",
+                    tasks: "0%",
+                    issues: "0/0",
+                    startDate: "N/A",
+                    endDate: "N/A",
+                    priority: "Error",
+                };
+            }
         }
-        if (filters.endDate) {
-            result = result.filter(
-                (project) => new Date(project.endDate) <= new Date(filters.endDate)
-            );
-        }
-
-        return result;
-    }, [transformedData, filters]);
-
-    const [data, setData] = useState(filteredData);
+    }, [initialProjects, filteredProjects, isFiltered]);
 
     const [pagination, setPagination] = useState({
         pageIndex: 0,
         pageSize: fixedRowsPerPage,
     });
 
-    // Fetch projects on mount
+    // Fetch initial projects on mount
     useEffect(() => {
+        console.log("Dispatching fetchProjects at", new Date().toISOString());
         dispatch(fetchProjects());
     }, [dispatch]);
 
-    // Update data when filters change
+    // Update data when transformedData changes
     useEffect(() => {
-        setData(filteredData);
-    }, [filteredData]);
+        console.log("Setting data, transformedData length:", transformedData.length);
+        setData(transformedData);
+    }, [transformedData]);
 
+    // Update filter state when filteredProjects changes
+    useEffect(() => {
+        if (Array.isArray(filteredProjects) && filteredProjects.length > 0) {
+            console.log("filteredProjects has data, setting isFiltered to true:", filteredProjects.length);
+            setIsFiltered(true);
+        } else {
+            console.log("filteredProjects is null or empty, setting isFiltered to false:", filteredProjects);
+            setIsFiltered(false);
+        }
+    }, [filteredProjects]);
 
     const handleStatusChange = useCallback(
         async ({ id: rowId, name, payload: newValue }) => {
             const actualProjectId = rowId.replace("P-", "");
             const apiCompatibleValue = newValue.toLowerCase();
+            console.log("Changing status for project ID:", actualProjectId, "to:", apiCompatibleValue);
 
             try {
                 await dispatch(
@@ -184,7 +230,7 @@ const ProjectList = ({ filters = {} }) => {
                         payload: { [name]: apiCompatibleValue },
                     })
                 ).unwrap();
-
+                console.log("Status change successful, refreshing projects");
                 dispatch(fetchProjects());
             } catch (err) {
                 console.error(`Failed to update project ${name} for ID ${actualProjectId}:`, err);
@@ -327,20 +373,29 @@ const ProjectList = ({ filters = {} }) => {
     });
 
     // Render loading, error, or table content
+    console.log("Rendering ProjectList - data length:", data.length, "loading:", fetchProjectsLoading || filterProjectsLoading || statusChangeLoading);
     let content;
-    if (fetchProjectsLoading || statusChangeLoading || fetchProjectsError || statusChangeError) {
-        let loadingMessage, error;
-        if (fetchProjectsLoading) loadingMessage = "Loading Projects..";
-        if (statusChangeLoading) loadingMessage = "Updating Status..";
-        if (fetchProjectsError) error = fetchProjectsError;
-        if (statusChangeError) error = statusChangeError;
-
-        content = <Loader message={loadingMessage} error={error} />;
+    if (fetchProjectsLoading || filterProjectsLoading || statusChangeLoading) {
+        const loadingMessage = fetchProjectsLoading
+            ? "Loading Projects..."
+            : filterProjectsLoading
+            ? "Applying Filters..."
+            : "Updating Status...";
+        console.log("Rendering loader with message:", loadingMessage);
+        content = <Loader message={loadingMessage} />;
+    } else if (fetchProjectsError || filterProjectsError || statusChangeError) {
+        const error = fetchProjectsError || filterProjectsError || statusChangeError;
+        console.log("Rendering error:", error);
+        content = (
+            <div className="p-4 text-red-600">
+                <p>Error: {typeof error === "string" ? error : JSON.stringify(error)}</p>
+            </div>
+        );
     } else {
         content = (
             <div
                 className="project-table-container text-[14px] font-light"
-                style={{ height: `${desiredTableHeight}px` }}
+                style={{ height: `${desiredTableHeight}px`, minHeight: "200px" }}
             >
                 <div className="table-wrapper overflow-x-auto">
                     <table className="w-full border-collapse">
@@ -368,94 +423,101 @@ const ProjectList = ({ filters = {} }) => {
                             ))}
                         </thead>
                         <tbody>
-                            {table.getRowModel().rows.map((row) => (
-                                <tr
-                                    key={row.id}
-                                    className="hover:bg-gray-50 even:bg-[#D5DBDB4D]"
-                                    style={{ height: `${rowHeight}px` }}
-                                >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <td
-                                            key={cell.id}
-                                            style={{ width: cell.column.getSize() }}
-                                            className={`${cell.column.columnDef.meta?.cellClassName || ""} whitespace-nowrap border-r-2`}
-                                        >
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))}
-                            {table.getRowModel().rows.length === 0 && !fetchProjectsLoading && !statusChangeLoading && (
+                            {data.length === 0 ? (
                                 <tr style={{ height: `${rowHeight}px` }}>
                                     <td
                                         colSpan={columns.length}
                                         className="no-data-message text-center py-10 text-gray-500"
                                     >
-                                        No data found.
+                                        No projects found. {isFiltered ? "Try adjusting filters." : "Please check the API or try refreshing."}
                                     </td>
                                 </tr>
+                            ) : (
+                                table.getRowModel().rows.map((row) => (
+                                    <tr
+                                        key={row.id}
+                                        className="hover:bg-gray-50 even:bg-[#D5DBDB4D]"
+                                        style={{ height: `${rowHeight}px` }}
+                                    >
+                                        {row.getVisibleCells().map((cell) => (
+                                            <td
+                                                key={cell.id}
+                                                style={{ width: cell.column.getSize() }}
+                                                className={`${cell.column.columnDef.meta?.cellClassName || ""} whitespace-nowrap border-r-2`}
+                                            >
+                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                ))
                             )}
                         </tbody>
                     </table>
                 </div>
 
-                <div className="pagination-controls flex items-center justify-between gap-2 mt-4 text-sm">
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => table.setPageIndex(0)}
-                            disabled={!table.getCanPreviousPage()}
-                            className="p-1 border rounded disabled:opacity-50"
+                {data.length > 0 && (
+                    <div className="pagination-controls flex items-center justify-between gap-2 mt-4 text-sm">
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => table.setPageIndex(0)}
+                                disabled={!table.getCanPreviousPage()}
+                                className="p-1 border rounded disabled:opacity-50"
+                            >
+                                {"<<"}
+                            </button>
+                            <button
+                                onClick={() => table.previousPage()}
+                                disabled={!table.getCanPreviousPage()}
+                                className="p-1 border rounded disabled:opacity-50"
+                            >
+                                {"<"}
+                            </button>
+                            <button
+                                onClick={() => table.nextPage()}
+                                disabled={!table.getCanNextPage()}
+                                className="p-1 border rounded disabled:opacity-50"
+                            >
+                                {">"}
+                            </button>
+                            <button
+                                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                                disabled={!table.getCanNextPage()}
+                                className="p-1 border rounded disabled:opacity-50"
+                            >
+                                {">>"}
+                            </button>
+                        </div>
+                        <span className="flex items-center gap-1">
+                            <div>Page</div>
+                            <strong>
+                                {table.getState().pagination.pageIndex + 1} of{" "}
+                                {table.getPageCount()}
+                            </strong>
+                        </span>
+                        <select
+                            value={table.getState().pagination.pageSize}
+                            onChange={(e) => {
+                                table.setPageSize(Number(e.target.value));
+                            }}
+                            className="p-1 border rounded"
                         >
-                            {"<<"}
-                        </button>
-                        <button
-                            onClick={() => table.previousPage()}
-                            disabled={!table.getCanPreviousPage()}
-                            className="p-1 border rounded disabled:opacity-50"
-                        >
-                            {"<"}
-                        </button>
-                        <button
-                            onClick={() => table.nextPage()}
-                            disabled={!table.getCanNextPage()}
-                            className="p-1 border rounded disabled:opacity-50"
-                        >
-                            {">"}
-                        </button>
-                        <button
-                            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                            disabled={!table.getCanNextPage()}
-                            className="p-1 border rounded disabled:opacity-50"
-                        >
-                            {">>"}
-                        </button>
+                            {[10, 20, 30, 40, 50].map((pageSize) => (
+                                <option key={pageSize} value={pageSize}>
+                                    Show {pageSize}
+                                </option>
+                            ))}
+                        </select>
                     </div>
-                    <span className="flex items-center gap-1">
-                        <div>Page</div>
-                        <strong>
-                            {table.getState().pagination.pageIndex + 1} of{" "}
-                            {table.getPageCount()}
-                        </strong>
-                    </span>
-                    <select
-                        value={table.getState().pagination.pageSize}
-                        onChange={(e) => {
-                            table.setPageSize(Number(e.target.value));
-                        }}
-                        className="p-1 border rounded"
-                    >
-                        {[10, 20, 30, 40, 50].map((pageSize) => (
-                            <option key={pageSize} value={pageSize}>
-                                Show {pageSize}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                )}
             </div>
         );
     }
 
-    return content;
+    return (
+        <div className="project-list-wrapper">
+            {content}
+        </div>
+    );
 };
 
 export default ProjectList;

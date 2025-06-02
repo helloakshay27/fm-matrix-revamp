@@ -5,23 +5,24 @@ import { X, Search, ChevronRight, ChevronDown } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import clsx from "clsx";
 import { useDispatch, useSelector } from "react-redux";
+import { fetchProjects, filterProjects } from "../../../redux/slices/projectSlice";
 import { fetchUsers } from "../../../redux/slices/userSlice";
 
-// Define status options with user-friendly labels and colors, matching ProjectList format
+// Define status options with user-friendly labels and API-compatible values
 const statusOptions = [
-    { label: "Active", value: "Active", color: "bg-green-500" },
-    { label: "Inactive", value: "Inactive", color: "bg-pink-600" },
-    { label: "In Progress", value: "In_progress", color: "bg-cyan-400" },
-    { label: "Overdue", value: "Overdue", color: "bg-red-500" },
-    { label: "Completed", value: "Completed", color: "bg-black" },
-    { label: "On Hold", value: "On_hold", color: "bg-yellow-500" },
-    { label: "Abort", value: "Abort", color: "bg-gray-500" },
+    { label: "Active", value: "active", color: "bg-green-500" },
+    { label: "Inactive", value: "inactive", color: "bg-pink-600" },
+    { label: "In Progress", value: "in_progress", color: "bg-cyan-400" },
+    { label: "Overdue", value: "overdue", color: "bg-red-500" },
+    { label: "Completed", value: "completed", color: "bg-black" },
+    { label: "On Hold", value: "on_hold", color: "bg-yellow-500" },
+    { label: "Abort", value: "abort", color: "bg-gray-500" },
 ];
 
 const projectTypeOptions = ["Design", "Development", "Marketing"];
 const createdByOptions = ["Admin", "User", "System"];
 
-const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters, filters }) => {
+const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
     const dispatch = useDispatch();
     const { fetchUsers: users, error: fetchUsersError } = useSelector((state) => state.fetchUsers);
 
@@ -39,27 +40,15 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters, filte
 
     const modalRef = useRef(null);
 
-    // Initialize state with filters prop
-    const [selectedStatuses, setSelectedStatuses] = useState(filters?.statuses || []);
-    const [selectedTypes, setSelectedTypes] = useState(filters?.types || []);
-    const [selectedManagers, setSelectedManagers] = useState(filters?.managers || []);
-    const [selectedCreators, setSelectedCreators] = useState(filters?.creators || []);
+    // Initialize state for filters
+    const [selectedStatuses, setSelectedStatuses] = useState([]);
+    const [selectedTypes, setSelectedTypes] = useState([]);
+    const [selectedManagers, setSelectedManagers] = useState([]);
+    const [selectedCreators, setSelectedCreators] = useState([]);
     const [dates, setDates] = useState({
-        "Start date": filters?.startDate || "",
-        "End date": filters?.endDate || "",
+        "Start date": "",
+        "End date": "",
     });
-
-    // Update state when filters prop changes
-    useEffect(() => {
-        setSelectedStatuses(filters?.statuses || []);
-        setSelectedTypes(filters?.types || []);
-        setSelectedManagers(filters?.managers || []);
-        setSelectedCreators(filters?.creators || []);
-        setDates({
-            "Start date": filters?.startDate || "",
-            "End date": filters?.endDate || "",
-        });
-    }, [filters]);
 
     // Dropdown open/close state (only one open at a time)
     const [dropdowns, setDropdowns] = useState({
@@ -163,8 +152,9 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters, filte
         );
     };
 
-    // Clear all selections and search inputs
+    // Clear all selections and reset to initial data
     const clearAll = () => {
+        console.log("Resetting filters at", new Date().toISOString());
         setSelectedStatuses([]);
         setSelectedTypes([]);
         setSelectedManagers([]);
@@ -174,23 +164,25 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters, filte
         setManagerSearch("");
         setCreatorSearch("");
         setDates({ "Start date": "", "End date": "" });
-        onApplyFilters({});
+        dispatch(filterProjects({})); // Dispatch filterProjects with empty params
+        dispatch(fetchProjects()); // Ensure initialProjects is refreshed
+        closeModal();
     };
 
-    // Apply filters and close modal
+    // Apply filters and dispatch API call
     const handleApplyFilters = () => {
         const newFilters = {
-            statuses: selectedStatuses,
-            types: selectedTypes,
-            managers: selectedManagers.map((value) => {
-                const manager = firstNames.find((m) => m.value === value);
-                return manager ? manager.label : value; // Maps to firstname
-            }),
-            creators: selectedCreators,
-            startDate: dates["Start date"],
-            endDate: dates["End date"],
+            'q[status_eq]': selectedStatuses.length > 0 ? selectedStatuses[0] : '',
+            'q[owner_id_eq]': selectedManagers.length > 0 ? selectedManagers[0] : '',
+            'q[created_by_id_eq]': selectedCreators.length > 0 ? selectedCreators[0] : '',
+            'q[project_type_id_eq]': selectedTypes.length > 0 ? selectedTypes[0] : '',
+            'q[title_cont]': '',
+            'q[is_template_eq]': '',
+            'q[start_date_eq]': dates["Start date"],
+            'q[end_date_eq]': dates["End date"],
         };
-        onApplyFilters(newFilters);
+        console.log("Applying filters:", newFilters);
+        dispatch(filterProjects(newFilters));
         closeModal();
     };
 
@@ -391,10 +383,7 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters, filte
                     </button>
                     <button
                         className="border border-[#C62828] text-[#C62828] rounded px-10 py-2 text-sm font-semibold hover:bg-red-50"
-                        onClick={() => {
-                            clearAll();
-                            closeModal();
-                        }}
+                        onClick={clearAll}
                     >
                         Reset
                     </button>

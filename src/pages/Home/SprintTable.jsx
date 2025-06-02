@@ -1,115 +1,154 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import StatusBadge from '../../components/Home/Projects/statusBadge';
 import CustomTable from '../../components/Setup/CustomTable';
 import AddSprintModal from '../../components/Home/Sprints/AddSprintModal';
+import { fetchSpirints, putSprint } from '../../redux/slices/spirintSlice';
+import { Link } from 'react-router-dom';
 
+// Constants
+// const globalPriorityOptions = ['None', 'Low', 'Medium', 'High', 'Urgent'];
+const globalStatusOptions = ["open", "in_progress", "completed", "on_hold", "overdue", "reopen", "abort"];
 
-const globalPriorityOptions = ['None', 'Low', 'Medium', 'High', 'Urgent'];
-const globalStatusOptions = ['Open', 'In Progress', 'Completed', 'On Hold'];
-
-
-const defaultData = [
-
-    {
-        "Id": "SP-001",
-        "Sprint Title": "Sprint 1",
-        "Status": "Open",
-        "Sprint Owner": "Sehail Ansaro",
-        "Start Date": "15/01/2025",
-        "End Date": "22/01/2025",
-        "Duration": "07d:16h:00m:00s",
-        "Priority": "High",
-        "No Of Projects": "Projects Unassigned"
-    },
-    {
-        "Id": "SP-002",
-        "Sprint Title": "Sprint 2 - Planning",
-        "Status": "In Progress",
-        "Sprint Owner": "Jane Doe",
-        "Start Date": "23/01/2025",
-        "End Date": "30/01/2025",
-        "Duration": "07d:00h:00m:00s",
-        "Priority": "High",
-        "No Of Projects": "3 Projects Assigned"
-    },
-    {
-        "Id": "SP-003",
-        "Sprint Title": "Sprint 3 - Development",
-        "Status": "Open",
-        "Sprint Owner": "John Smith",
-        "Start Date": "01/02/2025",
-        "End Date": "15/02/2025",
-        "Duration": "14d:00h:00m:00s",
-        "Priority": "Medium",
-        "No Of Projects": "5 Projects Assigned"
-    },
-    {
-        "Id": "SP-004",
-        "Sprint Title": "Sprint 4 - Testing",
-        "Status": "Closed",
-        "Sprint Owner": "Alice Brown",
-        "Start Date": "16/02/2025",
-        "End Date": "23/02/2025",
-        "Duration": "07d:00h:00m:00s",
-        "Priority": "High",
-        "No Of Projects": "2 Projects Assigned"
-    },
-    {
-        "Id": "SP-005",
-        "Sprint Title": "Sprint 5 - Deployment",
-        "Status": "Open",
-        "Sprint Owner": "Bob Green",
-        "Start Date": "24/02/2025",
-        "End Date": "28/02/2025",
-        "Duration": "04d:00h:00m:00s",
-        "Priority": "Critical",
-        "No Of Projects": "1 Project Assigned"
-    }
-
-];
 
 const SprintTable = () => {
+    const dispatch = useDispatch();
+    const newSpirints = useSelector((state) => state.fetchSpirints?.fetchSpirints || []);
+
+
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [data, setData] = useState(defaultData);
+    const [data, setData] = useState([]);
+
+    useEffect(() => {
+        dispatch(fetchSpirints())
+    }, [dispatch]);
+
+    useEffect(() => {
+
+        if (newSpirints?.length) {
+            setData(newSpirints);
+        }
+    }, [newSpirints]);
+
 
     const columns = useMemo(
         () => [
             {
-                accessorKey: 'Id',
-                header: 'Id',
+                accessorKey: "id",
+                header: "Sprint Id",
                 size: 110,
+                cell: ({ getValue, row }) => {
+                    const originalId = String(getValue() || "");
+                    let displayId = "";
+                    let linkIdPart = originalId;
 
+                    if (originalId.startsWith("S-")) {
+                        displayId = originalId;
+                        linkIdPart = originalId.substring(2);
+                    } else {
+                        displayId = `S-${originalId}`;
+                    }
+
+                    return (
+                        <Link
+                            to={`/sprint/${linkIdPart}`}
+                            className="text-xs text-blue-600 hover:text-blue-800 hover:underline p-1 block"
+                            style={{ paddingLeft: `${row.depth * 1.5}rem` }}
+                        >
+                            <span>{displayId}</span>
+                        </Link>
+                    );
+                },
             },
+
             {
-                accessorKey: 'Sprint Title',
+                accessorKey: 'name',
                 header: 'Sprint Title',
                 size: 250,
             },
             {
-                accessorKey: 'Status',
+                accessorKey: 'status',
                 header: 'Status',
                 size: 150,
-                cell: ({ row, getValue, column, table }) => (
-                    <StatusBadge status={getValue()} statusOptions={globalStatusOptions} />
-                ),
+                cell: ({ row, getValue }) => {
+                    const currentStatus = getValue();
+                    const sprintId = row.original.id;
+
+                    const handleStatusChange = (e) => {
+                        const newStatus = e.target.value;
+
+                        // Update UI instantly
+                        setData((prev) =>
+                            prev.map((sprint) =>
+                                sprint.id === sprintId ? { ...sprint, status: newStatus } : sprint
+                            )
+                        );
+
+                        // Dispatch PUT
+                        dispatch(
+                            putSprint({
+                                id: sprintId,
+                                payload: { status: newStatus },
+                            })
+                        );
+                    };
+
+                    // Custom color map
+                    const statusHexColors = {
+                        overdue: '#FF2733',
+                        open: '#E4636A',
+                        in_progress: '#08AEEA',
+                        on_hold: '#7BD2B5',
+                        completed: '#83D17A',
+                    };
+
+                    const bgColor = statusHexColors[currentStatus?.toLowerCase()] || '#000000';
+
+                    return (
+                        <select
+                            value={currentStatus}
+                            onChange={handleStatusChange}
+                            style={{
+                                backgroundColor: bgColor,
+                                color: 'white',
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                border: 'none',
+                                fontSize: '14px',
+                                marginLeft: '12px',
+                            }}
+                        >
+                            {globalStatusOptions.map((statusOption) => (
+                                <option
+                                    key={statusOption}
+                                    value={statusOption}
+                                    style={{ color: 'black' }}
+                                >
+                                    {statusOption.replace('_', ' ').toUpperCase()}
+                                </option>
+                            ))}
+                        </select>
+                    );
+                },
             },
+
             {
                 accessorKey: 'Sprint Owner',
                 header: 'Sprint Owner',
                 size: 150,
             },
             {
-                accessorKey: 'Start Date',
+                accessorKey: 'start_date',
                 header: 'Start Date',
                 size: 180,
             },
             {
-                accessorKey: 'End Date',
+                accessorKey: 'end_date',
                 header: 'End Date',
                 size: 130,
             },
             {
-                accessorKey: 'Duration',
+                accessorKey: 'duration',
                 header: 'Duration',
                 size: 110,
             },
@@ -117,37 +156,35 @@ const SprintTable = () => {
                 accessorKey: 'Priority',
                 header: 'Priority',
                 size: 100,
-                cell: ({ row, getValue, column, table }) => (
-                    <StatusBadge status={getValue()} statusOptions={globalPriorityOptions} />
-                ),
+                // cell: ({ getValue }) => (
+                //     // <StatusBadge status={getValue()} statusOptions={globalPriorityOptions} />
+                // ),
             },
             {
                 accessorKey: 'No Of Projects',
                 header: 'No Of Projects',
                 size: 120,
             },
-
         ],
-        [data]
+        []
     );
 
     return (
         <>
             <CustomTable
-                data={data}
+                data={[...data].reverse()}
                 columns={columns}
                 title="Active Sprints"
                 buttonText="New Sprint"
                 layout="block"
                 onAdd={() => setIsModalOpen(true)}
-
             />
-            {
-                isModalOpen && <AddSprintModal
+            {isModalOpen && (
+                <AddSprintModal
                     isModalOpen={isModalOpen}
                     setIsModalOpen={setIsModalOpen}
                 />
-            }
+            )}
         </>
     );
 };

@@ -1,12 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit'
-import { changeProjectStatusReducer, createProjectReducer, createProjectTypesReducer, deleteProjectReducer, editProjectReducer, fetchProjectDetailsReducer, fetchProjectsReducer, fetchProjectTypeReducer, fetchTemplatesReducer, updateProjectTypeReducer } from './slices/projectSlice'
+import { changeProjectStatusReducer, createProjectReducer, createProjectTypesReducer, deleteProjectReducer, editProjectReducer, fetchProjectDetailsReducer, fetchProjectsReducer, fetchProjectTypeReducer, fetchTemplatesReducer, filterProjects, filterProjectsReducer, updateProjectTypeReducer } from './slices/projectSlice'
 import { createExternalUserReducer, createInternalUserReducer, fetchExternalUserReducer, fetchInternalUserReducer, fetchUpdatelUserReducer, userReducer } from './slices/userSlice'
-import { createTagReducer, deleteTag, deleteTagReducer, fetchTagsReducer, updateTag, updateTagReducer } from './slices/tagsSlice'
+import { createTagReducer,  deleteTagReducer, fetchTagsReducer,  updateTagReducer } from './slices/tagsSlice'
 import { createRoleReducer, editRoleReducer, fetchRolesReducer } from './slices/roleSlice'
 import { changeTaskStatusReducer, createTaskCommentReducer, createTaskReducer, editTaskCommentReducer, editTaskReducer, fetchTasksOfProjectReducer, fetchTasksReducer, taskDetailsReducer } from './slices/taskSlice'
 import { fetchOrganizationsReducer } from './slices/organizationSlice'
 import { createMilestoneReducer } from './slices/milestoneSlice'
 // import {filtersReducer} from './slices/filterSlice'
+import {  fetchSpirintsReducer, postSprintReducer, putSprintReducer } from './slices/spirintSlice'
 
 export const store = configureStore({
   reducer: {
@@ -22,6 +23,7 @@ export const store = configureStore({
     deleteProject: deleteProjectReducer,
     updateProjectType: updateProjectTypeReducer,
     deleteProjectType: deleteProjectReducer,
+    filterProjects: filterProjectsReducer,
 
     //tasks
     createTask: createTaskReducer,
@@ -60,5 +62,11 @@ export const store = configureStore({
 
     //organizations
     fetchOrganizations: fetchOrganizationsReducer,
+
+
+    //Spirints
+    fetchSpirints: fetchSpirintsReducer,
+    postSprint: postSprintReducer,
+    putSprint: putSprintReducer, 
   },
 })
