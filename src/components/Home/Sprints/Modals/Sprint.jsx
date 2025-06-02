@@ -110,8 +110,7 @@ const Sprints = ({ closeModal }) => {
     setNextId(nextId + 1);
   };
 
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
   
     const sprintPayload = {
@@ -125,18 +124,24 @@ const Sprints = ({ closeModal }) => {
       end_time: "18:00",
     };
   
-    const payload = {
-      sprint: sprintPayload,
-    };
+    const payload = { sprint: sprintPayload };
   
-    dispatch(postSprint(payload));
+    try {
+      const resultAction = await dispatch(postSprint(payload));
   
-    // Fetch latest data before closing modal
-    dispatch(fetchSpirints());
-  
-    closeModal(); // Close modal after fetching
+      if (postSprint.fulfilled.match(resultAction)) {
+        dispatch(fetchSpirints()); 
+        closeModal(); 
+      } else {
+        console.log("Sprint creation failed.");
+      }
+    } catch (error) {
+      console.error("Error submitting sprint:", error);
+    }
   };
   
+  
+
 
   return (
     <form className="pt-2 pb-12 h-full overflow-y-auto" onSubmit={handleSubmit}>

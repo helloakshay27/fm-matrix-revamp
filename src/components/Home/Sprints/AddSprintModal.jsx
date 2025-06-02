@@ -24,6 +24,8 @@ const AddSprintModal = ({ isModalOpen, setIsModalOpen }) => {
             ease: "power3.in",
             onComplete: () => setIsModalOpen(false),
         });
+
+        
     };
 
     return (
@@ -41,7 +43,7 @@ const AddSprintModal = ({ isModalOpen, setIsModalOpen }) => {
 
                 <hr className="border border-[#E95420] my-4" />
 
-                <Sprints />
+                <Sprints closeModal={closeModal} />
             </div>
         </div>
     );

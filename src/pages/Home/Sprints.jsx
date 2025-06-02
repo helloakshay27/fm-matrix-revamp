@@ -4,7 +4,7 @@ import SprintBoardSection from "../../components/Home/Sprints/SprintBoardSection
 
 const Sprints = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const [selectedProject, setSelectedProject] = useState("Select Project");
+    const [selectedProject, setSelectedProject] = useState("Project Management Revamp"); 
     const dropdownRef = useRef(null);
 
     useEffect(() => {
@@ -50,7 +50,6 @@ const Sprints = () => {
 
                     {isOpen && (
                         <div className="absolute top-full left-0 w-full bg-white shadow-md p-4 border rounded-sm z-10 mt-2">
-                            {/* Search Input */}
                             <div className="flex items-center border px-3 py-2 mb-4">
                                 <Search className="w-4 h-4 text-red-600 mr-2" />
                                 <input
@@ -85,7 +84,7 @@ const Sprints = () => {
                 </button>
             </div>
 
-            <SprintBoardSection />
+            <SprintBoardSection selectedProject={selectedProject} />
         </div>
     );
 };

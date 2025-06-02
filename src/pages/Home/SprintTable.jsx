@@ -172,7 +172,8 @@ const SprintTable = () => {
     return (
         <>
             <CustomTable
-                data={[...data].reverse()}
+                // data={[...data].reverse()}
+                data={data}
                 columns={columns}
                 title="Active Sprints"
                 buttonText="New Sprint"
