@@ -5,25 +5,46 @@ import { sprintTitle } from "../../../data/Data";
 import { CalendarDays, GripHorizontal, Play, Timer, User } from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
 import useDeepCompareEffect from "use-deep-compare-effect";
 import { changeProjectStatus, fetchProjects } from "../../../redux/slices/projectSlice";
+import { fetchSpirints } from "../../../redux/slices/spirintSlice";
 
 const SprintBoardSection = ({ selectedProject }) => {
-    const [projects, setProjects] = useState([]);
+    const { id } = useParams(); // Get the sprint ID from the URL
     const dispatch = useDispatch();
     const projectState = useSelector((state) => state.fetchProjects.fetchProjects);
+    const sprintState = useSelector((state) => state.fetchSpirints?.fetchSpirints || []);
+    const [projects, setProjects] = useState([]);
+    const [selectedSprint, setSelectedSprint] = useState(null);
 
+    // Fetch projects and sprints
     useEffect(() => {
         dispatch(fetchProjects());
+        dispatch(fetchSpirints());
     }, [dispatch]);
+
+    // Find the selected sprint based on the ID from the URL
+    useEffect(() => {
+        if (id && sprintState.length) {
+            const sprint = sprintState.find((s) => {
+                // Convert s.id to string to handle numbers
+                const sprintId = s.id != null ? String(s.id) : '';
+                return sprintId === id;
+            });
+            setSelectedSprint(sprint || null);
+        } else {
+            setSelectedSprint(null);
+        }
+    }, [id, sprintState]);
 
     useDeepCompareEffect(() => {
         if (selectedProject === "Kalpataru customer app : Post sales") {
-            setProjects([]); 
+            setProjects([]);
         } else if (selectedProject === "Project Management Revamp") {
-            setProjects(projectState); 
+            setProjects(projectState);
         } else {
-            setProjects(projectState); 
+            setProjects(projectState);
         }
     }, [projectState, selectedProject]);
 
@@ -62,6 +83,18 @@ const SprintBoardSection = ({ selectedProject }) => {
         return colors[index % colors.length];
     };
 
+    const contributors = selectedSprint?.contributors || ["S", "A", "B", "M", "K", "D", "CB"];
+
+    const formatDuration = (days) => {
+        if (!days || isNaN(days)) return "00d:00h:00m:00s";
+        const totalSeconds = Math.floor(days * 24 * 60 * 60);
+        const daysPart = Math.floor(totalSeconds / (24 * 60 * 60));
+        const hoursPart = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
+        const minutesPart = Math.floor((totalSeconds % (60 * 60)) / 60);
+        const secondsPart = totalSeconds % 60;
+        return `${String(daysPart).padStart(2, '0')}d:${String(hoursPart).padStart(2, '0')}h:${String(minutesPart).padStart(2, '0')}m:${String(secondsPart).padStart(2, '0')}s`;
+    };
+
     return (
         <div className="h-[80%] mx-3 my-3 flex items-start gap-1 max-w-full overflow-x-auto overflow-y-auto flex-nowrap">
             {/* Active section */}
@@ -79,41 +112,76 @@ const SprintBoardSection = ({ selectedProject }) => {
                         </div>
                     </div>
 
-                    <div className="text-[13px] space-y-3 mt-6 bg-white p-5 pt-2">
-                        <div className="flex justify-center items-center">
-                            <GripHorizontal size={15} fill="#000" className="cursor-pointer" />
-                        </div>
-                        <p>
-                            <span className="text-[#62bbec] font-medium">S-01</span> Development 1st phase
-                        </p>
-                        <div className="flex items-center gap-2 text-[#B00020]">
-                            <CalendarDays size={14} />
-                            <span className="text-black">15 Jan 2025 to 22 Jan 2025</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-[#D32F2F]">
-                            <User size={14} />
-                            <span className="text-black">Sohail Ansari</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-[#029464]">
-                            <Timer size={14} />
-                            <span className="text-[11px]">07d : 168h : 00m : 0s</span>
-                        </div>
-                        <div className="border-t border-gray-300 my-4"></div>
-                        <div className="flex justify-between items-center">
-                            <p className="text-[xs] mb-1">Contributors</p>
-                            <div className="flex -space-x-2">
-                                {["S", "A", "B", "M", "K", "D", "CB"].map((char, i) => (
-                                    <div
-                                        key={i}
-                                        className="w-6 h-6 rounded-full text-xs flex items-center justify-center border border-white text-black"
-                                        style={{ backgroundColor: getColor(i) }}
-                                    >
-                                        {char}
-                                    </div>
-                                ))}
+                    {selectedSprint ? (
+                        <div className="text-[13px] space-y-3 mt-6 bg-white p-5 pt-2">
+                            <div className="flex justify-center items-center">
+                                <GripHorizontal size={15} fill="#000" className="cursor-pointer" />
+                            </div>
+                            <p>
+                                <span className="text-[#62bbec] font-medium">
+                                    S-{selectedSprint.id}
+                                </span>{" "}
+                                {selectedSprint.name}
+                            </p>
+                            <div className="flex items-center gap-2 text-[#B00020]">
+                                <CalendarDays size={14} />
+                                <span className="text-black">
+                                    {selectedSprint.start_date} to {selectedSprint.end_date}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-[#D32F2F]">
+                                <User size={14} />
+                                <span className="text-black">Rahul</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-[#029464]">
+                                <Timer size={14} />
+                                <span className="text-[11px]">
+                                    {selectedSprint.duration
+                                        ? formatDuration(selectedSprint.duration)
+                                        : "00d:00h:00m:00s"}
+                                </span>
+                            </div>
+                            <div className="border-t border-gray-300 my-4"></div>
+                            <div className="flex justify-between items-center">
+                                <p className="text-[xs] mb-1">Contributors</p>
+                                <div className="flex -space-x-2">
+                                    {contributors.map((char, i) => (
+                                        <div
+                                            key={i}
+                                            className="w-6 h-6 rounded-full text-xs flex items-center justify-center border border-white text-black"
+                                            style={{ backgroundColor: getColor(i) }}
+                                        >
+                                            {char}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="text-[13px] space-y-3 mt-6 bg-white p-5 pt-2">
+                            <div className="flex justify-center items-center">
+                                <GripHorizontal size={15} fill="#000" className="cursor-pointer" />
+                            </div>
+                            <p>
+                                <span className="text-[#62bbec] font-medium">No Sprint Selected</span>
+                            </p>
+                            <div className="border-t border-gray-300 my-4"></div>
+                            <div className="flex justify-between items-center">
+                                <p className="text-[xs] mb-1">Contributors</p>
+                                <div className="flex -space-x-2">
+                                    {["S", "A", "B", "M", "K", "D", "CB"].map((char, i) => (
+                                        <div
+                                            key={i}
+                                            className="w-6 h-6 rounded-full text-xs flex items-center justify-center border border-white text-black"
+                                            style={{ backgroundColor: getColor(i) }}
+                                        >
+                                            {char}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     <div className="w-full h-full rounded-md bg-white flex items-center justify-center text-center px-8 text-gray-400 text-sm">
                         Drag from respective statuses
                         <br />
@@ -122,7 +190,6 @@ const SprintBoardSection = ({ selectedProject }) => {
                 </div>
             </div>
 
-            {/* Boards for projects */}
             {sprintTitle.map((sprint) => {
                 const filteredProjects = projects.filter((project) => {
                     const sprintStatus = sprint.title.toLowerCase().replace(" ", "_");
