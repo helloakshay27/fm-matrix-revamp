@@ -70,24 +70,13 @@ const AddSprintsModal = ({ id, deleteSprints }) => {
 };
 
 const Sprints = ({ closeModal }) => {
-  const [options, setOptions] = useState(["Option 1", "Option 2", "Option 3"]);
   const [nextId, setNextId] = useState(1);
   const [sprints, setSprints] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
 
-  const { loading, success } = useSelector((state) => state.postSprint?.postSprint || {});
-  const { loading: load,
-    success: succ, } = useSelector((state) => state.fetchSpirints?.fetchSpirints || []);
 
-
-
-  const dispatch = useDispatch();
-
-
-
-
-
+  const dispatch = useDispatch()
 
   const handleDeleteSprints = (id) => {
     setSprints(sprints.filter((sprints) => sprints.id !== id));
@@ -95,7 +84,7 @@ const Sprints = ({ closeModal }) => {
 
   const handleDuration = () => {
     if (startDate == null || endDate == null) return;
-    const ms = new Date(endDate) - new Date(startDate); // difference in milliseconds
+    const ms = new Date(endDate) - new Date(startDate); 
 
     const totalMinutes = Math.floor(ms / (1000 * 60));
     const days = Math.floor(totalMinutes / (60 * 24));

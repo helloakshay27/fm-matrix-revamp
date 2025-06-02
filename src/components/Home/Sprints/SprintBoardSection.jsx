@@ -13,19 +13,17 @@ const SprintBoardSection = ({ selectedProject }) => {
     const dispatch = useDispatch();
     const projectState = useSelector((state) => state.fetchProjects.fetchProjects);
 
-    // Fetch projects on mount
     useEffect(() => {
         dispatch(fetchProjects());
     }, [dispatch]);
 
-    // Filter projects based on selectedProject
     useDeepCompareEffect(() => {
         if (selectedProject === "Kalpataru customer app : Post sales") {
-            setProjects([]); // Show no projects
+            setProjects([]); 
         } else if (selectedProject === "Project Management Revamp") {
-            setProjects(projectState); // Show all projects
+            setProjects(projectState); 
         } else {
-            setProjects(projectState); // Default to all projects if no specific project is selected
+            setProjects(projectState); 
         }
     }, [projectState, selectedProject]);
 

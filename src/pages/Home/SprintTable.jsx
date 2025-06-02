@@ -6,30 +6,25 @@ import AddSprintModal from '../../components/Home/Sprints/AddSprintModal';
 import { fetchSpirints, putSprint } from '../../redux/slices/spirintSlice';
 import { Link } from 'react-router-dom';
 
-// Constants
-// const globalPriorityOptions = ['None', 'Low', 'Medium', 'High', 'Urgent'];
 const globalStatusOptions = ["open", "in_progress", "completed", "on_hold", "overdue", "reopen", "abort"];
-
 
 const SprintTable = () => {
     const dispatch = useDispatch();
     const newSpirints = useSelector((state) => state.fetchSpirints?.fetchSpirints || []);
 
-
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [data, setData] = useState([]);
 
     useEffect(() => {
-        dispatch(fetchSpirints())
+        dispatch(fetchSpirints());
     }, [dispatch]);
 
     useEffect(() => {
-
         if (newSpirints?.length) {
-            setData(newSpirints);
+            const sortedData = [...newSpirints].sort((a, b) => a.id - b.id);
+            setData(sortedData);
         }
     }, [newSpirints]);
-
 
     const columns = useMemo(
         () => [
@@ -60,7 +55,6 @@ const SprintTable = () => {
                     );
                 },
             },
-
             {
                 accessorKey: 'name',
                 header: 'Sprint Title',
@@ -76,15 +70,11 @@ const SprintTable = () => {
 
                     const handleStatusChange = (e) => {
                         const newStatus = e.target.value;
-
-                        // Update UI instantly
                         setData((prev) =>
                             prev.map((sprint) =>
                                 sprint.id === sprintId ? { ...sprint, status: newStatus } : sprint
                             )
                         );
-
-                        // Dispatch PUT
                         dispatch(
                             putSprint({
                                 id: sprintId,
@@ -93,7 +83,6 @@ const SprintTable = () => {
                         );
                     };
 
-                    // Custom color map
                     const statusHexColors = {
                         overdue: '#FF2733',
                         open: '#E4636A',
@@ -131,7 +120,6 @@ const SprintTable = () => {
                     );
                 },
             },
-
             {
                 accessorKey: 'Sprint Owner',
                 header: 'Sprint Owner',
@@ -156,9 +144,6 @@ const SprintTable = () => {
                 accessorKey: 'Priority',
                 header: 'Priority',
                 size: 100,
-                // cell: ({ getValue }) => (
-                //     // <StatusBadge status={getValue()} statusOptions={globalPriorityOptions} />
-                // ),
             },
             {
                 accessorKey: 'No Of Projects',
@@ -172,7 +157,6 @@ const SprintTable = () => {
     return (
         <>
             <CustomTable
-                // data={[...data].reverse()}
                 data={data}
                 columns={columns}
                 title="Active Sprints"
