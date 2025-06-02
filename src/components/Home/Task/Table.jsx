@@ -31,7 +31,6 @@ import { fetchUsers } from "../../../redux/slices/userSlice";
 import SelectBox from "../../SelectBox";
 import Loader from "../../Loader";
 import { useLocation } from "react-router-dom";
-import { use } from "react";
 
 const globalPriorityOptions = ["None", "Low", "Medium", "High", "Urgent"];
 const globalStatusOptions = ["open", "in_progress", "completed", "on_hold", "overdue", "reopen", "abort"];
