@@ -271,58 +271,26 @@ const ProjectList = () => {
                 ),
             },
             {
+
                 accessorKey: "status",
                 header: "Status",
                 size: 150,
-                cell: (info) => {
-                    const currentStatus = info.getValue().toLowerCase(); 
-                    const statusHexColors = {
-                        overdue: "#FF2733",
-                        open: "#E4636A",
-                        in_progress: "#08AEEA",
-                        on_hold: "#7BD2B5",
-                        completed: "#83D17A",
-                        active: "grey", 
-                        inactive: "orange",
-                        abort: "blue",
-                    };
-                    const bgColor = statusHexColors[currentStatus] || "#000000";
-            
-                    return (
-                        <select
-                            value={currentStatus}
-                            onChange={(e) => {
-                                console.log("Status changed to:", e.target.value);
-                                handleStatusChange({
-                                    id: info.row.original.id,
-                                    name: "status",
-                                    payload: e.target.value,
-                                });
-                            }}
-                            style={{
-                                backgroundColor: bgColor,
-                                color: "white",
-                                padding: "4px 8px",
-                                borderRadius: "4px",
-                                border: "none",
-                                fontSize: "14px",
-                                marginLeft: "12px",
-                            }}
-                        >
-                            {globalStatusOptions.map((statusOption) => (
-                                <option
-                                    key={statusOption}
-                                    value={statusOption}
-                                    style={{ color: "black" }}
-                                >
-                                    {statusOption.replace("_", " ").toUpperCase()}
-                                </option>
-                            ))}
-                        </select>
-                    );
-                },
-            }
-            ,
+                cell: (info) => (
+                    <StatusBadge
+                        statusOptions={globalStatusOptions.map(
+                            (status) => status.charAt(0).toUpperCase() + status.slice(1)
+                        )}
+                        status={info.getValue()}
+                        onStatusChange={(newStatus) => {
+                            handleStatusChange({
+                                id: info.row.original.id,
+                                name: "status",
+                                payload: newStatus,
+                            });
+                        }}
+                    />
+                ),
+            },
             {
                 accessorKey: "type",
                 header: "Project Type",
