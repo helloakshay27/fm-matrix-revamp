@@ -33,9 +33,9 @@ const createApiSlice = (name, fetchThunk) => createSlice({
     },
 });
 
-export const createProject = createAsyncThunk('createProject', async (paylode) => {
+export const createProject = createAsyncThunk('createProject', async (payload) => {
     try {
-        const response = await axios.post(`https://api-tasks.lockated.com/project_managements.json`, paylode, {
+        const response = await axios.post(`https://api-tasks.lockated.com/project_managements.json`, payload, {
             headers: {
                 Authorization: `Bearer ${access_token}`,
             }

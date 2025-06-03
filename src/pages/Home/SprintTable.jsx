@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import StatusBadge from '../../components/Home/Projects/statusBadge';
 import CustomTable from '../../components/Setup/CustomTable';
 import AddSprintModal from '../../components/Home/Sprints/AddSprintModal';
-import { fetchSpirints, putSprint } from '../../redux/slices/spirintSlice';
+import { fetchSpirints, putSprint,postSprint } from '../../redux/slices/spirintSlice';
 import { Link } from 'react-router-dom';
 
 const globalStatusOptions = ["open", "in_progress", "completed", "on_hold", "overdue", "reopen", "abort"];
@@ -27,14 +27,31 @@ const SprintTable = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [data, setData] = useState([]);
 
+    const handlefetchSpirints = () =>{ 
+        try{
+        dispatch(fetchSpirints()).unwrap();
+        }catch(error){
+           console.log(error);
+        }
+
+    }
+
+    const handleCreateSprints=async(payload)=>{
+        try{
+           dispatch(postSprint(payload)).unwrap();
+        }catch(error){
+            console.log(error);
+        }
+    }
     useEffect(() => {
-        dispatch(fetchSpirints());
+        handlefetchSpirints();
     }, [dispatch]);
 
     useEffect(() => {
         if (newSpirints?.length) {
             const sortedData = [...newSpirints].sort((a, b) => a.id - b.id);
             setData(sortedData);
+            console.log(sortedData)
         }
     }, [newSpirints]);
 
@@ -141,6 +158,8 @@ const SprintTable = () => {
                 buttonText="New Sprint"
                 layout="block"
                 onAdd={() => setIsModalOpen(true)}
+                onCreateInlineItem={handleCreateSprints}
+                onRefreshInlineData={handlefetchSpirints}
             />
             {isModalOpen && (
                 <AddSprintModal

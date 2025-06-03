@@ -13,6 +13,7 @@ import AddSprintModal from "./Sprints/AddSprintModal";
 import AddMilestoneModal from "../../Milestone/AddMilestoneModal";
 import AddProjectTemplate from "./Projects/AddProjectTempelateModal";
 import ProjectFilterModal from "./Projects/ProjectFilterModel";
+import AddIssueModal from "./Issues/AddIssueModal";
 
 const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen, setFilters, filters, context }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -202,7 +203,9 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen,
                                 : addType === "Project"
                                     ? setIsAddProjectModalOpen(true)
                                     : addType === "Milestone"
-                                        ? setIsAddMilestoneModalOpen(true)
+                                        ? setIsAddMilestoneModalOpen(true):
+                                    addType === "Issues"?
+                                        setIsAddIssueModalOpen(true)
                                         : setIsModalOpen(true);
                         }}
                         className="text-[12px] flex items-center justify-center gap-1 bg-red text-white px-3 py-2 w-40"
@@ -263,6 +266,13 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen,
                 <AddMilestoneModal
                     isModalOpen={isAddMilestoneModalOpen}
                     setIsModalOpen={setIsAddMilestoneModalOpen}
+                />
+            )}
+
+            {isAddIssueModalOpen && (
+                <AddIssueModal
+                    isModalOpen={isAddIssueModalOpen}
+                    setIsModalOpen={setIsAddIssueModalOpen}
                 />
             )}
 

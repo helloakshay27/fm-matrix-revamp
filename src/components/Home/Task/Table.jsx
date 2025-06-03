@@ -724,6 +724,51 @@ const TaskTable = () => {
           {" "}
           <tbody className="bg-white">
             {" "}
+            {actualDataRows.length === 0 &&
+              !isAddingNewTask &&
+              !showTopLevelAddTaskButton &&
+              !loadingTasks &&
+              !isCreatingTask &&
+              !isUpdatingTask && (
+                <tr style={{ height: `${ROW_HEIGHT * 2}px` }}>
+                  <td
+                    colSpan={mainTableColumns.length}
+                    className="text-center text-gray-500 p-4"
+                  >
+                    No tasks available.
+                  </td>
+                </tr>
+              )}
+            {" "}
+            {actualDataRows.map((row) => (
+              <Fragment key={row.id}>
+                {" "}
+                <tr
+                  className={`hover:bg-gray-50 ${row.getIsExpanded() ? "bg-gray-100" : "even:bg-[#D5DBDB4D]"
+                    } font-[300] relative z-1`}
+                  style={{ height: `${ROW_HEIGHT}px` }}
+                >
+                  {" "}
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      style={{ width: `${cell.column.getSize()}px` }}
+                      className={`border-r-2 text-left pl-2 align-middle p-0`}
+                    >
+                      <div className="h-full w-full flex items-center">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </div>
+                    </td>
+                  ))}
+                  {" "}
+                </tr>
+                {" "}
+              </Fragment>
+            ))}
+            {" "}
             {isAddingNewTask && (
               <tr
                 ref={newTaskFormRowRef}
@@ -825,51 +870,6 @@ const TaskTable = () => {
                 {" "}
              </tr>
             )}
-            {" "}
-            {actualDataRows.length === 0 &&
-              !isAddingNewTask &&
-              !showTopLevelAddTaskButton &&
-              !loadingTasks &&
-              !isCreatingTask &&
-              !isUpdatingTask && (
-                <tr style={{ height: `${ROW_HEIGHT * 2}px` }}>
-                  <td
-                    colSpan={mainTableColumns.length}
-                    className="text-center text-gray-500 p-4"
-                  >
-                    No tasks available.
-                  </td>
-                </tr>
-              )}
-            {" "}
-            {actualDataRows.map((row) => (
-              <Fragment key={row.id}>
-                {" "}
-                <tr
-                  className={`hover:bg-gray-50 ${row.getIsExpanded() ? "bg-gray-100" : "even:bg-[#D5DBDB4D]"
-                    } font-[300] relative z-1`}
-                  style={{ height: `${ROW_HEIGHT}px` }}
-                >
-                  {" "}
-                  {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      style={{ width: `${cell.column.getSize()}px` }}
-                      className={`border-r-2 text-left pl-2 align-middle p-0`}
-                    >
-                      <div className="h-full w-full flex items-center">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </div>
-                    </td>
-                  ))}
-                  {" "}
-                </tr>
-                {" "}
-              </Fragment>
-            ))}
             {" "}
             {showTopLevelAddTaskButton && (
               <tr style={{ height: `${ROW_HEIGHT}px` }}>

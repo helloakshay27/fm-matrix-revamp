@@ -50,7 +50,7 @@ export const fetchSpirints = createAsyncThunk('fetchSpirints', async () => {
 );
 
 
-export const postSprint = createAsyncThunk('postSprint', async (payload, { rejectWithValue }) => {
+export const postSprint = createAsyncThunk('postSprint', async (payload) => {
     try {
         const response = await axios.post(
             'https://api-tasks.lockated.com/sprints.json',
@@ -65,7 +65,6 @@ export const postSprint = createAsyncThunk('postSprint', async (payload, { rejec
         return response.data;
     } catch (error) {
         console.error(error);
-        return rejectWithValue(error.response?.data || error.message);
     }
 });
 
