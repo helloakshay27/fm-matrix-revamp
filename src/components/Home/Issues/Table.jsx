@@ -30,7 +30,7 @@ const NewIssuesTextField = ({ value, onChange, onEnterPress, inputRef, placehold
             onEnterPress();
         }
     };
-    return <input ref={inputRef} type="text" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className="w-full p-1 focus:outline-none rounded text-[12px] "/>;
+    return <input ref={inputRef} type="text" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className="w-full p-1 focus:outline-none rounded text-[12px] " style={{background:"none"}}/>;
 };
 
 const NewIssuesDateEditor = ({ value, onChange, onEnterPress, placeholder }) => {
@@ -40,7 +40,7 @@ const NewIssuesDateEditor = ({ value, onChange, onEnterPress, placeholder }) => 
             onEnterPress();
         }
     };
-    return <input type="date" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className="w-full p-1 focus:outline-none rounded text-[13px]  "/>;
+    return <input type="date" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className="   my-custom-date-editor w-full p-1 focus:outline-none rounded text-[13px] "/>;
 };
 
 
@@ -181,7 +181,6 @@ console.log(parentId);
       end_date: newIssuesEndDate || null,
       priority: newIssuesPriority,
       created_by_id:158,
-      // Assuming comments are saved as a string, adjust if backend expects an array/object
       comment: newIssuesComments, // Example: Save as array of comment objects
       issue_type: newIssuesType
     };
@@ -216,25 +215,22 @@ console.log(parentId);
 
     try {
       const payload = { [field]: newValue };
-      // Ensure field name matches backend expectation, e.g., responsible_person_id
       if (field === "responsiblePersonId") {
         delete payload.responsiblePersonId; // remove camelCase if backend expects snake_case
         payload.responsible_person_id = newValue;
       }
       
       await dispatch(updateIssue({ id: id,  payload })).unwrap();
-      // Optionally re-fetch all issues or expect the thunk to update the store correctly
       dispatch(fetchIssue());
     } catch (error) {
       console.error("Failed to update issue:", error);
       const errorMessage = error?.response?.data?.message || error?.message || "Failed to update issue.";
       setLocalError(errorMessage);
-      // Optionally revert optimistic update here by re-fetching or restoring previous data state
-      dispatch(fetchIssue()); // Re-fetch to ensure UI consistency on error
+      dispatch(fetchIssue());
     } finally {
       setIsUpdatingIssue(false);
     }
-  }, [dispatch, users]); // Added users as dependency for optimistic update of responsiblePerson name
+  }, [dispatch, users]); 
 
 
 useEffect(() => {
@@ -286,7 +282,7 @@ useEffect(() => {
   const columns = useMemo(
     () => [
       { accessorKey: 'id', header: 'Issue id', size: 80,
-        cell: ({getValue}) => <span className="text-xs text-gray-500 px-1">{getValue()?.toString().slice(-5) || 'N/A'}</span>
+        cell: ({getValue}) => <span className="text-xs text-gray-500 px-1">{`I-${getValue()?.toString().slice(-5)}`}</span>
       },
       { accessorKey: 'issueTitle', header: 'Issues Title', size: 150,
         cell: info => info.getValue()
@@ -360,13 +356,13 @@ useEffect(() => {
                 style={{ height:`${desiredTableHeight}px`,minHeight: "200px" }}
 
       >
-         <div className={` overflow-x-auto `}>
+         <div className="table-wrapper overflow-x-auto" >
           <table className="w-full border text-sm bg-white overflow-y-auto ">
             <thead >
               {table.getHeaderGroups().map(headerGroup => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map(header => (
-                    <th key={header.id} style={{width: header.getSize() ? `${header.getSize()}px` : undefined ,height: `${headerHeight}px`}} className="border p-2 text-center text-gray-700 font-semibold relative">
+                    <th key={header.id} style={{width: header.getSize() ? `${header.getSize()}px` : undefined ,height: `${headerHeight}px`}} className="border p-2 text-center text-gray-700 font-semibold sticky top-0">
                       {flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
                   ))}
@@ -377,7 +373,7 @@ useEffect(() => {
               {table.getRowModel().rows.map(row => (
                 <tr key={row.id} className="hover:bg-gray-50 even:bg-gray-100" style={{height: `${rowHeight}px` }}>
                   {row.getVisibleCells().map(cell => (
-                    <td key={cell.id} className={`border p-0 align-middle  ${cell.column.id === 'actions' ? 'text-center' : 'text-left'}`}>
+                    <td key={cell.id} className={`border p-1 align-middle ${cell.column.id === 'actions' ? 'text-center' : 'text-left'}`}>
                        <div className="p-1 h-full flex items-center">
                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
                        </div>

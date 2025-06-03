@@ -32,7 +32,7 @@ const AddIssueModal = ({ isModalOpen, setIsModalOpen }) => {
                 ref={addTaskModalRef}
                 className="bg-white py-6 rounded-lg shadow-lg w-1/3 relative h-full right-0"
             >
-                <h3 className="text-lg font-medium text-center">Add Issues</h3>
+                <h3 className="text-[14px] font-medium text-center">Add Issues</h3>
                 <X
                     className="absolute top-[26px] right-8 cursor-pointer"
                     onClick={closeModal}
