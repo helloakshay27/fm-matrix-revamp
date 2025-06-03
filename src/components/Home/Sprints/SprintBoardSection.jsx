@@ -420,7 +420,7 @@ const SprintBoardSection = ({ selectedProject }) => {
                 className="text-white py-2 px-4 rounded-md text-xs absolute top-0 left-0 z-10"
                 style={{
                   backgroundColor:
-                    selectedSprint?.status === "completed" ? "#888" : "#88D760",
+                    selectedSprint?.status === "completed" ? "green" : "#88D760",
                 }}
               >
                 {selectedSprint?.status === "completed" ? "Completed" : "Active"}
