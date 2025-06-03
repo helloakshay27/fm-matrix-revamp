@@ -49,6 +49,22 @@ export const fetchSpirints = createAsyncThunk('fetchSpirints', async () => {
 }
 );
 
+export const fetchSpirintById = createAsyncThunk('fetchSpirintById', async (id) => {
+    try {
+        const response = await axios.get(`https://api-tasks.lockated.com/sprints/${id}.json`, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            }
+        });
+
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        return error.response.data;
+    }
+}
+);
+
 
 export const postSprint = createAsyncThunk('postSprint', async (payload) => {
     try {
@@ -89,13 +105,17 @@ export const putSprint = createAsyncThunk('putSprint', async ({ id, payload }, {
 
 
 
+
+
 export const fetchSpirintsSlice = createApiSlice('fetchSpirints', fetchSpirints);
 export const postSprintSlice = createApiSlice('postSprint', postSprint);
 export const putSprintSlice = createApiSlice('putSprint', putSprint);
+export const fetchSpirintByIdSlice = createApiSlice('fetchSpirintById', fetchSpirintById);
 
 export const fetchSpirintsReducer = fetchSpirintsSlice.reducer;
 export const postSprintReducer = postSprintSlice.reducer;
 export const putSprintReducer = putSprintSlice.reducer;
+export const fetchSpirintByIdReducer = fetchSpirintByIdSlice.reducer;
 
 
 

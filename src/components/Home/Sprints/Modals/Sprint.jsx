@@ -105,7 +105,7 @@ const Sprints = ({ closeModal }) => {
     const sprintPayload = {
       name: e.target[0].value,
       description: "Sprint focused on UI enhancements and bug fixes",
-      project_id: 3,
+      project_id: 23,
       start_date: startDate,
       end_date: endDate,
       duration: handleDuration(),
