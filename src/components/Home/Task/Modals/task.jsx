@@ -72,17 +72,17 @@ const Tasks = ({ isEdit }) => {
     e.preventDefault();
 
     const payload = {
-      task_management: {
-        title: formData.taskTitle,
-        description: formData.description,
-        responsible_person_id: formData.responsiblePerson,
-        priority: formData.priority,
-        observer_ids: formData.observer.map((observer) => observer.value),
-        task_tag_ids: formData.tags.map((tag) => tag.value),
-        expected_start_date: formData.expected_start_date,
-        project_management_id: 10,
-        active: true,
-      },
+      // task_management: {
+      title: formData.taskTitle,
+      description: formData.description,
+      responsible_person_id: formData.responsiblePerson,
+      priority: formData.priority,
+      observer_ids: formData.observer.map((observer) => observer.value),
+      task_tag_ids: formData.tags.map((tag) => tag.value),
+      expected_start_date: formData.expected_start_date,
+      project_management_id: 23,
+      active: true,
+      // },
     };
 
     if (isEdit) {

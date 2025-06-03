@@ -306,9 +306,6 @@ const BoardsSection = ({ section }) => {
                                                 )
                                             );
 
-                                        console.log("Formatted Depends On:", formattedDependsOn);
-
-                                        // Only show the link icon if there are dependencies
                                         return (
                                             <div key={task.id} id={taskId} className="relative">
                                                 <TaskCard

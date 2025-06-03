@@ -2,7 +2,7 @@ import gsap from "gsap";
 import IssuesTable from "../../components/Home/Issues/Table";
 import { ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "lucide-react";
 import { useGSAP } from "@gsap/react";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { changeProjectStatus, createProject, deleteProject, editProject, fetchProjectDetails } from "../../redux/slices/projectSlice";
@@ -40,30 +40,72 @@ const Members = ({ allNames, projectOwner }) => {
     );
 };
 
-const Status = () => {
+const STATUS_COLORS = {
+    "active": "bg-[#88D760] text-white",
+    "in progress": "bg-[#88D760] text-white",
+    "on hold": "bg-[#FFC107] text-black",
+    "overdue": "bg-[#FF5B5B] text-white",
+    "completed": "bg-[#D6D6D6] text-black",
+};
+
+const formatDuration = (ms) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const parts = [];
+    if (hours) parts.push(`${hours} hr`);
+    if (minutes) parts.push(`${minutes} mins`);
+    if (seconds || parts.length === 0) parts.push(`${seconds} sec`);
+    return parts.join(" ");
+};
+
+const Status = ({ project }) => {
+    const logs = [...(project?.project_status_logs || [])].sort(
+        (a, b) => new Date(a.created_at) - new Date(b.created_at)
+    );
+
     return (
-        <div className="overflow-x-auto w-full">
-            {/* <div className="flex items-start p-5 gap-5 bg-[rgba(247, 247, 247, 0.51)] shadow rounded-lg text-[12px] my-3 min-w-[800px]">
-                <div>
-                    <button className="bg-[#88D760] py-1 px-4 text-white rounded-[30px] w-[94px] h-[30px] text-[12px]">
-                        Active
-                    </button>
-                </div>
-                <div>
-                    <h1 className="text-[12px] text-center  w-[200px]">
-                        1 hr 23 mins 10 sec
-                    </h1>
-                    <img src="/arrow.png" alt="arrow" />
-                </div>
-                <div>
-                    <button className="bg-[#D6D6D6] py-1 px-4 rounded-[30px] w-[140px] h-[30px] text-[12px] text-[#000000]">
-                        Yet to Complete
-                    </button>
-                </div>
-            </div> */}
+        <div className="overflow-x-auto w-full p-4">
+            <div className="flex items-center gap-4 min-w-[800px]">
+                {logs.map((log, index) => {
+                    const nextLog = logs[index + 1];
+                    const currentTime = new Date(log.created_at);
+                    const nextTime = nextLog ? new Date(nextLog.created_at) : null;
+                    const duration = nextTime
+                        ? formatDuration(nextTime - currentTime)
+                        : null;
+
+                    const normalizedStatus = log.status?.toLowerCase();
+                    const badgeStyle = STATUS_COLORS[normalizedStatus] || "bg-gray-400 text-white";
+
+                    return (
+                        <Fragment key={log.id}>
+                            <span
+                                className={`rounded-full px-4 py-1 text-sm font-medium capitalize ${badgeStyle}`}
+                            >
+                                {log.status}
+                            </span>
+
+                            {duration && (
+                                <>
+                                    <div className="flex flex-col items-center justify-start min-w-[100px]">
+                                        <h1 className="text-[9px] text-center">
+                                            {duration}
+                                        </h1>
+                                        <img src="/arrow.png" alt="arrow" className="mt-1" />
+                                    </div>
+                                </>
+                            )}
+                        </Fragment>
+                    );
+                })}
+            </div>
         </div>
     );
 };
+
 
 const Documents = () => {
     const { id } = useParams();
@@ -145,6 +187,7 @@ const ProjectDetails = () => {
     const dispatch = useDispatch();
 
     const { fetchProjectDetails: project } = useSelector((state) => state.fetchProjectDetails);
+    const { changeProjectStatus: statusSuccess } = useSelector((state) => state.changeProjectStatus);
     const { success } = useSelector((state) => state.deleteProject);
 
     const [openDropdown, setOpenDropdown] = useState(false);
@@ -179,6 +222,12 @@ const ProjectDetails = () => {
 
         dispatch(changeProjectStatus({ id, payload: { project_management: { status: mapDisplayToApiStatus(option) } } }));
     };
+
+    useEffect(() => {
+        if (statusSuccess) {
+            dispatch(fetchProjectDetails(id))
+        }
+    }, [statusSuccess])
 
     useGSAP(() => {
         gsap.set(firstContentRef.current, { height: "auto" });
@@ -440,7 +489,7 @@ const ProjectDetails = () => {
                     <div>
                         {tab == "Member" && <Members allNames={projectMembers} projectOwner={project.project_owner_name} />}
                         {tab == "Documents" && <Documents />}
-                        {tab == "Status" && <Status />}
+                        {tab == "Status" && <Status project={project} />}
                         {tab == "Issues" && <Issues />}
                     </div>
                 </div>

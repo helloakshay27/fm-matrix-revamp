@@ -1,13 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit'
-import { changeProjectStatusReducer, createProjectReducer, createProjectTypesReducer, deleteProjectReducer, editProjectReducer, fetchProjectDetailsReducer, fetchProjectsReducer, fetchProjectTypeReducer, fetchTemplatesReducer, filterProjects, filterProjectsReducer, updateProjectTypeReducer } from './slices/projectSlice'
+import { changeProjectStatusReducer, createProjectReducer, createProjectTypesReducer, deleteProjectReducer, editProjectReducer, fetchProjectDetailsReducer, fetchProjectsReducer, fetchProjectTypeReducer, fetchTemplatesReducer, filterProjectsReducer, updateProjectTypeReducer } from './slices/projectSlice'
 import { createExternalUserReducer, createInternalUserReducer, fetchExternalUserReducer, fetchInternalUserReducer, fetchUpdatelUserReducer, userReducer } from './slices/userSlice'
-import { createTagReducer,  deleteTagReducer, fetchTagsReducer,  updateTagReducer } from './slices/tagsSlice'
+import { createTagReducer, deleteTagReducer, fetchTagsReducer, updateTagReducer } from './slices/tagsSlice'
 import { createRoleReducer, editRoleReducer, fetchRolesReducer } from './slices/roleSlice'
-import { changeTaskStatusReducer, createTaskCommentReducer, createTaskReducer, editTaskCommentReducer, editTaskReducer, fetchTasksOfProjectReducer, fetchTasksReducer , filterTaskReducer, taskDetailsReducer } from './slices/taskSlice'
+import { changeTaskStatusReducer, createDependancyReducer, createTaskCommentReducer, createTaskReducer, editTaskCommentReducer, editTaskReducer, fetchTasksOfProjectReducer, fetchTasksReducer, filterTaskReducer, taskDetailsReducer, updateDependancyReducer } from './slices/taskSlice'
 import { fetchOrganizationsReducer } from './slices/organizationSlice'
 import { createMilestoneReducer } from './slices/milestoneSlice'
-// import {filtersReducer} from './slices/filterSlice'
-import {  fetchSpirintsReducer, postSprintReducer, putSprintReducer } from './slices/spirintSlice'
+import { fetchSpirintsReducer, postSprintReducer, putSprintReducer } from './slices/spirintSlice'
 
 export const store = configureStore({
   reducer: {
@@ -32,6 +31,8 @@ export const store = configureStore({
     taskDetails: taskDetailsReducer,
     changeTaskStatus: changeTaskStatusReducer,
     filterTask: filterTaskReducer,
+    createDependancy: createDependancyReducer,
+    updateDependancy: updateDependancyReducer,
 
     // fetchTasksComments: fetchTasksCommentsReducer,
     createTaskComment: createTaskCommentReducer,
@@ -63,10 +64,9 @@ export const store = configureStore({
     //organizations
     fetchOrganizations: fetchOrganizationsReducer,
 
-
     //Spirints
     fetchSpirints: fetchSpirintsReducer,
     postSprint: postSprintReducer,
-    putSprint: putSprintReducer, 
+    putSprint: putSprintReducer,
   },
 })

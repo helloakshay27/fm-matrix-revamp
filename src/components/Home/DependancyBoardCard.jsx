@@ -1,7 +1,19 @@
 import { Flag, GripHorizontal, Timer, User2 } from "lucide-react"
+import { useEffect, useState } from "react";
 import { useDrag } from "react-dnd";
 
+const formatCountdown = (ms) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const days = Math.floor(totalSeconds / (3600 * 24));
+    const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+};
+
 const DependancyBoardCard = ({ task }) => {
+    const [countdown, setCountdown] = useState("");
+
     const [{ isDragging }, dragRef] = useDrag(() => ({
         type: "TASK",
         item: { id: task.id, fromStatus: task.section },
@@ -9,6 +21,25 @@ const DependancyBoardCard = ({ task }) => {
             isDragging: monitor.isDragging(),
         }),
     }));
+
+    useEffect(() => {
+        if (!task?.target_date) return;
+
+        const interval = setInterval(() => {
+            const now = new Date();
+            const end = new Date(task.target_date);
+            const diff = end - now;
+
+            if (diff <= 0) {
+                setCountdown("Expired");
+                clearInterval(interval);
+            } else {
+                setCountdown(formatCountdown(diff));
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [task.target_date]);
 
     return (
         <div
@@ -28,11 +59,11 @@ const DependancyBoardCard = ({ task }) => {
             </div>
             <div className="flex items-start gap-1">
                 <User2 className="text-[#C72030] flex-shrink-0" size={14} />
-                <span className="text-[10px] truncate">{task.assignee}</span>
+                <span className="text-[10px] truncate">{task?.responsible_person?.name}</span>
             </div>
             <div className="flex items-start gap-1">
                 <Timer className="text-[#029464] flex-shrink-0" size={14} />
-                <span className="text-[10px] text-[#029464] truncate">{task.time}</span>
+                <span className="text-[10px] text-[#029464] truncate">{countdown}</span>
             </div>
 
             <hr className="border border-gray-200 my-2" />

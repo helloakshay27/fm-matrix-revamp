@@ -3,7 +3,7 @@ import { ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "lucide-react
 import { Fragment, useEffect, useRef, useState } from "react";
 import { redirect, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { changeTaskStatus, createTaskComment, editTaskComment, taskDetails,attachFiles } from "../../redux/slices/taskSlice";
+import { changeTaskStatus, createTaskComment, editTaskComment, taskDetails, attachFiles } from "../../redux/slices/taskSlice";
 import gsap from "gsap";
 import SubtaskTable from "../../components/Home/Task/Modals/subtaskTable";
 import DependancyKanban from "../../components/Home/DependancyKanban";
@@ -12,6 +12,8 @@ import toast, { Toaster } from "react-hot-toast";
 import { deleteTask } from "../../redux/slices/taskSlice";
 import { useNavigate } from "react-router-dom";
 import FolderIcon from '@mui/icons-material/Folder';
+import { fetchUsers } from "../../redux/slices/userSlice";
+import { MentionsInput, Mention } from "react-mentions";
 
 const mapStatusToDisplay = (rawStatus) => {
     const statusMap = {
@@ -21,12 +23,9 @@ const mapStatusToDisplay = (rawStatus) => {
         overdue: "Overdue",
         completed: "Completed",
     };
-    return statusMap[rawStatus?.toLowerCase()] || "Active"; // Default to "Active" if unknown
+    return statusMap[rawStatus?.toLowerCase()] || "Active";
 };
 
-
-
-// Utility function to map display status back to API format
 const mapDisplayToApiStatus = (displayStatus) => {
     const reverseStatusMap = {
         Active: "open",
@@ -96,7 +95,6 @@ const Status = ({ taskStatusLogs }) => {
         }
     };
 
-    // Sample calculateDuration function (replace with your own if available)
     const calculateDuration = (start, end) => {
         const startDate = new Date(start);
         const endDate = new Date(end);
@@ -113,10 +111,9 @@ const Status = ({ taskStatusLogs }) => {
         action: getActionFromStatus(log.status),
         item: "task",
         timestamp: formatTimestamp(log.created_at),
-        rawTimestamp: log.created_at, // Keep raw for calculateDuration
+        rawTimestamp: log.created_at,
     }));
 
-    // Sort activities by timestamp
     const sortedActivities = [...activities].sort(
         (a, b) => new Date(a.rawTimestamp) - new Date(b.rawTimestamp)
     );
@@ -163,8 +160,20 @@ const Comments = ({ comments }) => {
     const textareaRef = useRef(null);
 
     const dispatch = useDispatch();
-    const { loading, success } = useSelector(state => state.createTaskComment);
-    const { loading: editLoading, success: editSuccess } = useSelector(state => state.editTaskComment);
+    const { loading, success } = useSelector((state) => state.createTaskComment);
+    const { loading: editLoading, success: editSuccess } = useSelector((state) => state.editTaskComment);
+    const { fetchUsers: name } = useSelector((state) => state.fetchUsers);
+
+    useEffect(() => {
+        dispatch(fetchUsers());
+    }, [])
+
+    const mentionData = name
+        ? name.map((user) => ({
+            id: user.id.toString(),
+            display: user.firstname + " " + user.lastname || "Unknown User",
+        }))
+        : [];
 
     const handleAddComment = (e) => {
         e.preventDefault();
@@ -174,7 +183,7 @@ const Comments = ({ comments }) => {
                 duration: 1000,
             });
             return;
-        };
+        }
 
         if (editingCommentId) {
             const formData = new FormData();
@@ -222,13 +231,60 @@ const Comments = ({ comments }) => {
                 <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white text-center p-1.5">
                     <span className="">CB</span>
                 </div>
-                <textarea
-                    ref={textareaRef}
+                <MentionsInput
+                    inputRef={textareaRef}
                     value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    className="w-[95%] h-[70px] bg-[#F2F4F4] p-2 border-2 b-[#DFDFDF]"
-                    placeholder="Add comment here. Type @ to mentions users. Type # to mention tags"
-                />
+                    onChange={(e, newValue) => setComment(newValue)}
+                    className="mentions w-[95%] h-[70px] bg-[#F2F4F4] p-2 border-2 border-[#DFDFDF] focus:outline-none"
+                    placeholder="Add comment here. Type @ to mention users. Type # to mention tags"
+                    style={{
+                        control: {
+                            backgroundColor: "#F2F4F4",
+                            fontSize: 14,
+                            fontWeight: "normal",
+                        },
+                        highlighter: {
+                            overflow: "hidden",
+                        },
+                        input: {
+                            margin: 0,
+                            padding: "8px",
+                            outline: "none",
+                        },
+                        suggestions: {
+                            list: {
+                                backgroundColor: "white",
+                                border: "1px solid #ccc",
+                                fontSize: 14,
+                                zIndex: 100,
+                                position: "absolute",
+                                bottom: "100%",
+                                left: 0,
+                                width: "200px",
+                                maxHeight: "150px",
+                                overflowY: "auto",
+                                borderRadius: "4px",
+                                marginBottom: "4px",
+                            },
+                            item: {
+                                padding: "5px 10px",
+                                borderBottom: "1px solid #eee",
+                                cursor: "pointer",
+                            },
+                            itemFocused: {
+                                backgroundColor: "#f5f5f5",
+                            },
+                        },
+                    }}
+                >
+                    <Mention
+                        trigger="@"
+                        data={mentionData}
+                        markup="@[__display__](__id__)"
+                        displayTransform={(id, display) => `@${display}`}
+                        appendSpaceOnAdd
+                    />
+                </MentionsInput>
             </div>
             <div className="flex justify-end">
                 <button
@@ -253,13 +309,10 @@ const Comments = ({ comments }) => {
                     </div>
                     <div className="flex flex-col gap-2 w-full border-b-[2px] pb-3 border-[rgba(190, 190, 190, 1)]">
                         <h1 className="font-bold">{comment.commentor_full_name}</h1>
-                        <span>{comment.body}</span>
+                        <span>{comment.body.replace(/@\[(.*?)\]\(\d+\)/g, '@$1')}</span>
                         <div className="flex gap-2 text-[10px]">
                             <span>{formatToDDMMYYYY_AMPM(comment.created_at)}</span>
-                            <span
-                                className="cursor-pointer"
-                                onClick={() => handleEdit(comment)}
-                            >
+                            <span className="cursor-pointer" onClick={() => handleEdit(comment)}>
                                 Edit
                             </span>
                             <span>Delete</span>
@@ -270,88 +323,89 @@ const Comments = ({ comments }) => {
         </div>
     );
 };
+
 const Attachments = ({ attachments, id }) => {
-  const fileInputRef = useRef(null);
-  const dispatch = useDispatch();
-  const [files, setFiles] = useState(attachments);
+    const fileInputRef = useRef(null);
+    const dispatch = useDispatch();
+    const [files, setFiles] = useState(attachments);
 
-  const handleAttachFile = () => {
-    fileInputRef.current.click(); // Open file picker
-  };
+    const handleAttachFile = () => {
+        fileInputRef.current.click(); // Open file picker
+    };
 
-  const handleFileChange = async (event) => {
-      const selectedFiles = Array.from(event.target.files);
-      if (!selectedFiles.length) return;
-      console.log(selectedFiles);
-     const formData = new FormData();
+    const handleFileChange = async (event) => {
+        const selectedFiles = Array.from(event.target.files);
+        if (!selectedFiles.length) return;
+        console.log(selectedFiles);
+        const formData = new FormData();
 
-    selectedFiles.forEach((file) => {
-      formData.append("task_management[attachments][]", file);
-    //   formData.append("task_management[attachment_metadatas][][relation_id]", id);
-    //   formData.append("task_management[attachment_metadatas][][relation]", "TaskManagement");
-    //   formData.append("task_management[attachment_metadatas][][active]", "1");
-    //   formData.append("task_management[attachment_metadatas][][document]", "doc");
-    });
-    
+        selectedFiles.forEach((file) => {
+            formData.append("task_management[attachments][]", file);
+            //   formData.append("task_management[attachment_metadatas][][relation_id]", id);
+            //   formData.append("task_management[attachment_metadatas][][relation]", "TaskManagement");
+            //   formData.append("task_management[attachment_metadatas][][active]", "1");
+            //   formData.append("task_management[attachment_metadatas][][document]", "doc");
+        });
 
-    try {
-      const result =dispatch(attachFiles({ id, payload:formData }));
-      const updatedAttachments = result?.payload?.attachments || []; 
-      setFiles(updatedAttachments);
-    } catch (error){
-      console.error("File upload or task fetch failed:", error);
-    }
-  };
 
- 
+        try {
+            const result = dispatch(attachFiles({ id, payload: formData }));
+            const updatedAttachments = result?.payload?.attachments || [];
+            setFiles(updatedAttachments);
+        } catch (error) {
+            console.error("File upload or task fetch failed:", error);
+        }
+    };
 
-  return (
-    <div className="flex flex-col gap-3 p-5">
-      {files.length > 0 ? (
-        <>
-          {files.map((file) => (
-            <div key={index} className="flex items-center gap-3">
-              <FolderIcon className="h-5 w-5 text-gray-600" />
-              <a href={file.document_url} download={file.document_name} className="text-blue-600 underline">
-                {file.document_name}
-              </a>
-            </div>
-          ))}
-          <button
-            className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
-            onClick={handleAttachFile}
-          >
-            Attach Files
-          </button>
-        </>
-      ) : (
-        <div className="text-[14px] mt-2">
-          <span>No Documents Attached</span>
-          <div className="text-[#C2C2C2]">Drop or attach relevant documents here</div>
-          <button
-            className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
-            onClick={handleAttachFile}
-          >
-            Attach Files
-          </button>
+
+
+    return (
+        <div className="flex flex-col gap-3 p-5">
+            {files.length > 0 ? (
+                <>
+                    {files.map((file) => (
+                        <div key={index} className="flex items-center gap-3">
+                            <FolderIcon className="h-5 w-5 text-gray-600" />
+                            <a href={file.document_url} download={file.document_name} className="text-blue-600 underline">
+                                {file.document_name}
+                            </a>
+                        </div>
+                    ))}
+                    <button
+                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
+                        onClick={handleAttachFile}
+                    >
+                        Attach Files
+                    </button>
+                </>
+            ) : (
+                <div className="text-[14px] mt-2">
+                    <span>No Documents Attached</span>
+                    <div className="text-[#C2C2C2]">Drop or attach relevant documents here</div>
+                    <button
+                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
+                        onClick={handleAttachFile}
+                    >
+                        Attach Files
+                    </button>
+                </div>
+            )}
+
+            <input
+                type="file"
+                multiple
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                onChange={handleFileChange}
+            />
         </div>
-      )}
-
-      <input
-        type="file"
-        multiple
-        ref={fileInputRef}
-        style={{ display: "none" }}
-        onChange={handleFileChange}
-      />
-    </div>
-  );
+    );
 };
 
 const TaskDetails = () => {
     const { id } = useParams();
     const dispatch = useDispatch();
-    const navigate=useNavigate();
+    const navigate = useNavigate();
     const { taskDetails: task } = useSelector((state) => state.taskDetails);
 
     const [isFirstCollapsed, setIsFirstCollapsed] = useState(false);
@@ -386,11 +440,11 @@ const TaskDetails = () => {
         };
     }, []);
 
-    const handleDeleteTask=(id)=>{
-        try{
-         dispatch(deleteTask(id));
-         navigate("/tasks");
-        }catch(err){
+    const handleDeleteTask = (id) => {
+        try {
+            dispatch(deleteTask(id));
+            navigate("/tasks");
+        } catch (err) {
             console.log(err)
         }
     }
@@ -515,7 +569,7 @@ const TaskDetails = () => {
                                 <PencilIcon className="mx-1" size={15} /> Edit Task
                             </span>
                             <span className="h-6 w-[1px] border border-gray-300"></span>
-                            <span className="cursor-pointer flex items-center gap-1" onClick={() =>{handleDeleteTask(task.id)}}>
+                            <span className="cursor-pointer flex items-center gap-1" onClick={() => { handleDeleteTask(task.id) }}>
                                 <Trash2 className="mx-1" size={15} /> Delete Task
                             </span>
                         </div>

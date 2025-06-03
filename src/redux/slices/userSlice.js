@@ -111,7 +111,7 @@ export const fetchUpdateUser = createAsyncThunk(
         try {
             const response = await axios.put(
                 `https://api-tasks.lockated.com/users/${userId}.json`,
-                 updatedData,
+                updatedData,
                 {
                     headers: {
                         Authorization: `Bearer ${access_token}`,
