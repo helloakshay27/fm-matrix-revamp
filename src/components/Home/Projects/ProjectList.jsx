@@ -361,6 +361,38 @@ const ProjectList = () => {
                             ))}
                         </thead>
                         <tbody>
+                            
+                            {data.length === 0 && !isAddingNewProject ? (
+                                <tr style={{ height: `${rowHeight}px` }}>
+                                    <td colSpan={columns.length} className="no-data-message text-center py-10 text-gray-500">
+                                        No projects found. {isFiltered ? "Try adjusting filters." : ""}
+                                    </td>
+                                </tr>
+                            ) : (
+                                table.getRowModel().rows.map((row) => (
+                                    <tr key={row.id} className="hover:bg-gray-50 even:bg-[#D5DBDB4D]" style={{ height: `${rowHeight}px` }}>
+                                        {row.getVisibleCells().map((cell) => (
+                                            <td key={cell.id} style={{ width: cell.column.getSize() }}
+                                                className={`${cell.column.columnDef.meta?.cellClassName || ""} whitespace-nowrap border-r-2 p-2 align-middle`}>
+                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                ))
+                            )}
+                             {!isAddingNewProject && (
+                                <tr>
+                                    <td colSpan={columns.length} className="p-2 border-t-2">
+                                        <button 
+                                            onClick={handleShowNewProjectForm} 
+                                            className="px-3 py-1.5 text-sm text-red-600 hover:underline"
+                                            disabled={isSavingNewProject || fetchProjectsLoading || loadingUsers || anyFilterLoading || statusChangeLoading}
+                                        >
+                                            + Add Project
+                                        </button>
+                                    </td>
+                                </tr>
+                            )}
                             {isAddingNewProject && (
                                 <tr ref={newProjectFormRowRef} className="bg-blue-50" style={{ height: `${rowHeight}px` }}> {/* Attach ref here */}
                                     <td className="p-1 border-r-2 text-center text-gray-500 text-xs align-middle">NEW</td>
@@ -416,37 +448,6 @@ const ProjectList = () => {
                                     </td>
                                     {/* Last cell is for actions, now empty for the new project row as per click-outside save */}
                                     <td className="p-1 border-r-2 text-center align-middle"></td>
-                                </tr>
-                            )}
-                            {data.length === 0 && !isAddingNewProject ? (
-                                <tr style={{ height: `${rowHeight}px` }}>
-                                    <td colSpan={columns.length} className="no-data-message text-center py-10 text-gray-500">
-                                        No projects found. {isFiltered ? "Try adjusting filters." : ""}
-                                    </td>
-                                </tr>
-                            ) : (
-                                table.getRowModel().rows.map((row) => (
-                                    <tr key={row.id} className="hover:bg-gray-50 even:bg-[#D5DBDB4D]" style={{ height: `${rowHeight}px` }}>
-                                        {row.getVisibleCells().map((cell) => (
-                                            <td key={cell.id} style={{ width: cell.column.getSize() }}
-                                                className={`${cell.column.columnDef.meta?.cellClassName || ""} whitespace-nowrap border-r-2 p-2 align-middle`}>
-                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                            </td>
-                                        ))}
-                                    </tr>
-                                ))
-                            )}
-                             {!isAddingNewProject && (
-                                <tr>
-                                    <td colSpan={columns.length} className="p-2 border-t-2">
-                                        <button 
-                                            onClick={handleShowNewProjectForm} 
-                                            className="px-3 py-1.5 text-sm text-red-600 hover:underline"
-                                            disabled={isSavingNewProject || fetchProjectsLoading || loadingUsers || anyFilterLoading || statusChangeLoading}
-                                        >
-                                            + Add Project
-                                        </button>
-                                    </td>
                                 </tr>
                             )}
                         </tbody>

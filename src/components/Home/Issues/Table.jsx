@@ -352,7 +352,7 @@ useEffect(() => {
         {localError && !isAddingNewIssues && <div className="mb-4 p-2 text-red-700 bg-red-100 border border-red-400 rounded text-sm">{localError}</div>}
         {localError && isAddingNewIssues && <div className="my-2 p-2 text-red-700 bg-red-100 border border-red-400 rounded text-sm">{localError}</div>}
         {/* Removed individual isSavingIssues message as it's covered by the main loader now */}
-         <div className="project-table-container font-light"
+         <div className="project-table-container font-light p-3"
                 style={{ height:`${desiredTableHeight}px`,minHeight: "200px" }}
 
       >
@@ -445,7 +445,7 @@ useEffect(() => {
                 <tr>
                   <td colSpan={columns.length} className="border p-2 text-left text-[12px]">
                     <button onClick={handleShowNewIssuesForm} className="text-red-500 hover:underline text-sm py-1" disabled={isSavingIssues || isUpdatingIssue}>
-                      Add Issues
+                      + Add Issues
                     </button>
                   </td>
                 </tr>

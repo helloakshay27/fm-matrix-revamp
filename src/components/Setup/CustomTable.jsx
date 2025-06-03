@@ -227,53 +227,44 @@ const CustomTable = ({
                             ))}
                         </thead>
                         <tbody className="divide-y divide-gray-200">
-                            {isAddingInlineItem && (
-                                <tr ref={newInlineItemFormRowRef} className="bg-sky-100" style={{ height: `${rowHeight}px` }}>
-                                    {/* Rendering 8 cells to match image, with inputs in specific positions */}
-                                    {/* Sprint ID (Col 1) - Empty */}
-                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(0) }}>&nbsp;</td>
-                                    {/* Sprint Title (Col 2) - Input */}
-                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(1) }}>
-                                        <InlineAddTextField inputRef={newInlineItemTitleInputRef} value={newInlineItemTitle} onChange={(e) => { setNewInlineItemTitle(e.target.value); if(inlineItemLocalError) setInlineItemLocalError(null); }} onEnterPress={handleSaveInlineItem} placeholder="Title"/>
-                                    </td>
-                                    {/* Status (Col 3) - StatusBadge */}
-                                    <td className="px-1 py-0 align-middle h-full flex items-center justify-center" style={{ width: getColWidth(2) }}>
-                                        <StatusBadge statusOptions={globalStatusOptionsForInlineAdd} status={newInlineItemStatus} onStatusChange={setNewInlineItemStatus} />
-                                    </td>
-                                    {/* Sprint Owner (Col 4) - Empty */}
-                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(3) }}>&nbsp;</td>
-                                    {/* Start Date (Col 5) - Input */}
-                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(4) }}>
-                                        <InlineAddDateEditor value={newInlineItemStartDate} onChange={(e) => setNewInlineItemStartDate(e.target.value)} onEnterPress={handleSaveInlineItem} placeholder="Start Date"/>
-                                    </td>
-                                    {/* End Date (Col 6) - Input */}
-                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(5) }}>
-                                        <InlineAddDateEditor value={newInlineItemEndDate} onChange={(e) => setNewInlineItemEndDate(e.target.value)} onEnterPress={handleSaveInlineItem} placeholder="End Date"/>
-                                    </td>
-                                    {/* Duration (Col 7) - Empty */}
-                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(6) }}>&nbsp;</td>
-                                    {/* Priority (Col 8) - Empty */}
-                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(7) }}>&nbsp;</td>
-                                    
-                                    {/* Fallback for more than 8 columns - render empty cells */}
-                                    {totalTableColumns > 8 && tableColumns.slice(8).map((column, index) => (
-                                        <td key={`new-inline-extra-empty-${column.id}`} className="px-1 py-0 align-middle h-full" style={{width: column.getSize()}}>&nbsp;</td>
-                                    ))}
-                                </tr>
-                            )}
-
+                            
                             {pageRows.map(row => { /* ... existing data row mapping ... */
                                 const isDataRowEmpty = !row.original || Object.values(row.original).every(v => !v);
                                 return (
-                                    <tr key={row.id} className={`hover:bg-gray-50 even:bg-[#D5DBDB4D] ${isDataRowEmpty ? 'pointer-events-none' : ''}`} style={{ height: `${rowHeight}px` }}>
+                                    <tr key={row.id} className={`hover:bg-gray-50 even:bg-[#D5DBDB4D]  ${isDataRowEmpty ? 'pointer-events-none' : ''}`} style={{ height: `${rowHeight}px` }}>
                                         {row.getVisibleCells().map(cell => (
-                                            <td key={cell.id} style={{ width: cell.column.getSize() }} className={`${cell.column.columnDef.meta?.cellClassName || ''} whitespace-nowrap px-3 py-2 align-middle ${isDataRowEmpty ? 'text-transparent' : 'text-gray-700'}`}>
+                                            <td key={cell.id} style={{ width: cell.column.getSize() }} className={`${cell.column.columnDef.meta?.cellClassName || ''} whitespace-nowrap px-3 py-3 align-middle ${isDataRowEmpty ? 'text-transparent' : 'text-gray-700'}`}>
                                                 {!isDataRowEmpty ? flexRender(cell.column.columnDef.cell, cell.getContext()) : <span>&nbsp;</span>}
                                             </td>
                                         ))}
                                     </tr>
                                 );
                             })}
+                            {isAddingInlineItem && (
+                                <tr ref={newInlineItemFormRowRef} className="bg-sky-100" style={{ height: `${rowHeight}px` }}>
+                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(0) }}>&nbsp;</td>
+                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(1) }}>
+                                        <InlineAddTextField inputRef={newInlineItemTitleInputRef} value={newInlineItemTitle} onChange={(e) => { setNewInlineItemTitle(e.target.value); if(inlineItemLocalError) setInlineItemLocalError(null); }} onEnterPress={handleSaveInlineItem} placeholder="Title"/>
+                                    </td>
+                                    <td className="px-1 py-0 align-middle h-full flex items-center justify-center" style={{ width: getColWidth(2) }}>
+                                        <StatusBadge statusOptions={globalStatusOptionsForInlineAdd} status={newInlineItemStatus} onStatusChange={setNewInlineItemStatus} />
+                                    </td>
+                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(3) }}>&nbsp;</td>
+                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(4) }}>
+                                        <InlineAddDateEditor value={newInlineItemStartDate} onChange={(e) => setNewInlineItemStartDate(e.target.value)} onEnterPress={handleSaveInlineItem} placeholder="Start Date"/>
+                                    </td>
+                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(5) }}>
+                                        <InlineAddDateEditor value={newInlineItemEndDate} onChange={(e) => setNewInlineItemEndDate(e.target.value)} onEnterPress={handleSaveInlineItem} placeholder="End Date"/>
+                                    </td>
+                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(6) }}>&nbsp;</td>
+                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(7) }}>&nbsp;</td>
+                                    
+                                    {totalTableColumns > 8 && tableColumns.slice(8).map((column, index) => (
+                                        <td key={`new-inline-extra-empty-${column.id}`} className="px-1 py-0 align-middle h-full" style={{width: column.getSize()}}>&nbsp;</td>
+                                    ))}
+                                </tr>
+                            )}
+
                             {Array.from({ length: numEmptyRowsToAdd }).map((_, index) => ( /* ... existing empty row mapping ... */
                                 <tr key={`empty-row-${index}`} style={{ height: `${rowHeight}px` }} className="even:bg-[#D5DBDB4D] pointer-events-none">
                                     {tableColumns.map(column => ( // Use tableColumns for consistency
@@ -285,7 +276,7 @@ const CustomTable = ({
                             {/* Trigger for Inline Add - Placed at the end of tbody */}
                             {!isAddingInlineItem && onCreateInlineItem && ( // Show only if inline add is configured
                                 <tr style={{ height: `${rowHeight}px` }} className="border-t border-gray-200">
-                                    <td colSpan={totalTableColumns} className="p-0 text-left">
+                                    <td colSpan={totalTableColumns} className="p-1 text-left">
                                         <button
                                             onClick={handleShowInlineItemForm}
                                             className="w-full text-left px-3 py-2 text-red-600 hover:underline flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
