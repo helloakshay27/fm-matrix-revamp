@@ -8,7 +8,7 @@ import { fetchTasksOfProject } from "../../redux/slices/taskSlice";
 const Sprints = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState({});
-  const [searchTerm, setSearchTerm] = useState(""); 
+  const [searchTerm, setSearchTerm] = useState("");
 
   const dropdownRef = useRef(null);
   const dispatch = useDispatch();
@@ -32,28 +32,38 @@ const Sprints = () => {
   }, []);
 
   const handleSelect = (project) => {
-    if (selectedProject === project.title) {
+    if (selectedProject?.title === project.title) {
       setIsOpen(false);
       return;
     }
     setSelectedProject(project);
     dispatch(fetchTasksOfProject(project.id));
     setIsOpen(false);
-    setSearchTerm(""); 
+    setSearchTerm(project.title);
   };
 
   useEffect(() => {
-    if (fetchProject?.fetchProjects?.length && !selectedProject) {
-      setSelectedProject(fetchProject.fetchProjects[0].title);
-      dispatch(fetchTasksOfProject(fetchProject.fetchProjects[0].id));
+    if (fetchProject?.fetchProjects?.length && !selectedProject?.title) {
+      const defaultProject = fetchProject.fetchProjects.find(
+        (project) => project.title === "DEmo New One for test"
+      );
+
+      if (defaultProject) {
+        setSelectedProject(defaultProject);
+        dispatch(fetchTasksOfProject(defaultProject.id));
+        setSearchTerm(defaultProject.title);
+      } else {
+        const fallbackProject = fetchProject.fetchProjects[0];
+        setSelectedProject(fallbackProject);
+        dispatch(fetchTasksOfProject(fallbackProject.id));
+        setSearchTerm(fallbackProject.title);
+      }
     }
   }, [fetchProject, selectedProject, dispatch]);
 
   const filteredProjects = fetchProject?.fetchProjects.filter((project) =>
     project.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  console.log(filteredProjects)
 
   return (
     <div className="h-full overflow-y-auto no-scrollbar">
@@ -74,7 +84,7 @@ const Sprints = () => {
             onClick={() => setIsOpen(!isOpen)}
             className="flex justify-between select-none items-center w-full border px-4 py-2 cursor-pointer text-sm bg-white"
           >
-            <span>{selectedProject.title}</span>
+            <span>{selectedProject?.title || "Select project"}</span>
             <ChevronDown className="w-4 h-4" />
           </div>
 
@@ -86,8 +96,8 @@ const Sprints = () => {
                   type="text"
                   placeholder="Search project..."
                   className="w-full text-sm outline-none"
-                  value={searchTerm}  // <-- bind to searchTerm
-                  onChange={(e) => setSearchTerm(e.target.value)} // update on input change
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   autoFocus
                 />
               </div>
