@@ -55,12 +55,12 @@ const Issues = ({  closeModal }) => {
       end_date: endDate || null,
       priority: globalPriorityOptions.find((option) => option.value === priority)?.label || null,
       created_by_id: 158,
-      comments: comments,
+      comment: comments,
       issue_type: globalTypesOptions.find((option) => option.value === type)?.label || null,
     };
   
     try {
-      dispatch(createIssue(data)).unwrap();
+      await dispatch(createIssue(data)).unwrap();
       dispatch(fetchIssue());
       closeModal();
     } catch (error) {

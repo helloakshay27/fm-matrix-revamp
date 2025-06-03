@@ -35,7 +35,7 @@ const createApiSlice = (name, fetchThunk) => createSlice({
 
 export const createIssue=createAsyncThunk("createIssue",async(data)=>{
        try{
-      const response =await axios.post("https://api-tasks.lockated.com/issues.json",data,{
+      const response =await axios.post("https://api-tasks.lockated.com/issues.json",{issue:data},{
         headers: {
             Authorization: `Bearer ${access_token}`,
           },
