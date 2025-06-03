@@ -39,7 +39,7 @@ const Sprints = () => {
     setSelectedProject(project);
     dispatch(fetchTasksOfProject(project.id));
     setIsOpen(false);
-    setSearchTerm(project.title);
+    setSearchTerm(""); // Clear search input after selection
   };
 
   useEffect(() => {
@@ -51,12 +51,10 @@ const Sprints = () => {
       if (defaultProject) {
         setSelectedProject(defaultProject);
         dispatch(fetchTasksOfProject(defaultProject.id));
-        setSearchTerm(defaultProject.title);
       } else {
         const fallbackProject = fetchProject.fetchProjects[0];
         setSelectedProject(fallbackProject);
         dispatch(fetchTasksOfProject(fallbackProject.id));
-        setSearchTerm(fallbackProject.title);
       }
     }
   }, [fetchProject, selectedProject, dispatch]);

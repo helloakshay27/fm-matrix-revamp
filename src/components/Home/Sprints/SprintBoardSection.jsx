@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import Xarrow from "react-xarrows";
-import { CalendarDays, GripHorizontal, Play, Square, Timer, User, Circle, X } from "lucide-react";
+import { CalendarDays, GripHorizontal, Play, Square, Timer, User, Circle, X, CircleCheck } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import useDeepCompareEffect from "use-deep-compare-effect";
 import { debounce } from "lodash";
@@ -28,18 +28,12 @@ const SprintBoardSection = ({ selectedProject }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchProjects = useSelector((state) => state.fetchTasksOfProject);
-  const {fetchSpirintById : newSprint} = useSelector((state) => state.fetchSpirintById);
+  const { fetchSpirintById: newSprint } = useSelector((state) => state.fetchSpirintById);
 
-
-  useEffect(()=>{
+  useEffect(() => {
     dispatch(fetchSpirintById(id));
-  },[dispatch])
+  }, [dispatch, id]);
 
-
-
-  console.log(newSprint)
-
-  console.log(id)
 
   useEffect(() => {
     dispatch(fetchTasks());
@@ -130,7 +124,6 @@ const SprintBoardSection = ({ selectedProject }) => {
         );
       }
 
-      // Only call changeTaskStatus for non-sprint status boards
       if (newStatus !== "sprint") {
         if (type === "TASK") {
           debouncedUpdateTaskField(taskid, "status", newStatus);
@@ -142,7 +135,6 @@ const SprintBoardSection = ({ selectedProject }) => {
         }
       }
 
-      // Handle sprint-specific logic
       const sprintTaskIds = taskData
         .filter((task) => task.status === "sprint")
         .map((task) => task.id);
@@ -173,7 +165,7 @@ const SprintBoardSection = ({ selectedProject }) => {
         }
       }
     },
-    [taskData, debouncedUpdateTaskField, selectedSprint, id, dispatch]
+    [taskData, debouncedUpdateTaskField, selectedSprint, id, dispatch, selectedProject]
   );
 
   const handleLink = (sourceId, targetIds = []) => {
@@ -335,7 +327,6 @@ const SprintBoardSection = ({ selectedProject }) => {
   const handleIconClick = useCallback(
     debounce(async (newStatus) => {
       if (!id) {
-        console.warn("No sprint ID provided for status update");
         return;
       }
       const payload = { status: newStatus };
@@ -426,9 +417,11 @@ const SprintBoardSection = ({ selectedProject }) => {
                 {selectedSprint?.status === "completed" ? "Completed" : "Active"}
               </h3>
               <div className="absolute top-2 right-2 flex gap-2">
-                {selectedSprint && selectedSprint.status !== "completed" && (
+                {selectedSprint && (
                   <>
-                    {selectedSprint.status === "stopped" ? (
+                    {selectedSprint.status === "completed" ? (
+                      <CircleCheck size={15} color="green" />
+                    ) : selectedSprint.status === "stopped" ? (
                       <Play
                         size={15}
                         fill="#000"
@@ -441,9 +434,7 @@ const SprintBoardSection = ({ selectedProject }) => {
                           size={15}
                           fill="#000"
                           className="cursor-pointer"
-                          onClick={() => {
-                            handleIconClick("stopped");
-                          }}
+                          onClick={() => handleIconClick("stopped")}
                         />
                         <Circle
                           size={15}
@@ -576,15 +567,13 @@ const SprintBoardSection = ({ selectedProject }) => {
         </div>
 
         {sprintTitle.map((card) => {
-         const sprintTaskIds = newSprint?.sprint_tasks?.map((sprintTask) => sprintTask.task_id) || [];
-
-         const cardStatus = card.title.toLowerCase().replace(" ", "_");
-       
-         const filteredTasks = taskData.filter((task) => {
-           const notInSprint = !sprintTaskIds.includes(task.id); 
-           const matchesStatus = cardStatus === "active" ? task.status === "open" : task.status === cardStatus;
-           return notInSprint && matchesStatus;
-         });
+          const sprintTaskIds = newSprint?.sprint_tasks?.map((sprintTask) => sprintTask.task_id) || [];
+          const cardStatus = card.title.toLowerCase().replace(" ", "_");
+          const filteredTasks = taskData.filter((task) => {
+            const notInSprint = !sprintTaskIds.includes(task.id);
+            const matchesStatus = cardStatus === "active" ? task.status === "open" : task.status === cardStatus;
+            return notInSprint && matchesStatus;
+          });
 
           return (
             <Boards
