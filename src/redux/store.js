@@ -6,7 +6,7 @@ import { createRoleReducer, editRoleReducer, fetchRolesReducer } from './slices/
 import { changeTaskStatusReducer, createDependancyReducer, createTaskCommentReducer, createTaskReducer, editTaskCommentReducer, editTaskReducer, fetchTasksOfProjectReducer, fetchTasksReducer, filterTaskReducer, taskDetailsReducer, updateDependancyReducer } from './slices/taskSlice'
 import { fetchOrganizationsReducer } from './slices/organizationSlice'
 import { createMilestoneReducer } from './slices/milestoneSlice'
-import { fetchSpirintsReducer, postSprintReducer, putSprintReducer } from './slices/spirintSlice'
+import { fetchSpirintByIdReducer, fetchSpirintsReducer, postSprintReducer, putSprintReducer } from './slices/spirintSlice'
 import { createIssueReducer, fetchIssueReducer, updateIssueReducer } from './slices/IssueSlice'
 
 export const store = configureStore({
@@ -74,5 +74,6 @@ export const store = configureStore({
     fetchSpirints: fetchSpirintsReducer,
     postSprint: postSprintReducer,
     putSprint: putSprintReducer,
+    fetchSpirintById: fetchSpirintByIdReducer,
   },
 })
