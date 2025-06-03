@@ -49,9 +49,7 @@ const SprintTable = () => {
 
     useEffect(() => {
         if (newSpirints?.length) {
-            const sortedData = [...newSpirints].sort((a, b) => a.id - b.id);
-            setData(sortedData);
-            console.log(sortedData)
+            setData(newSpirints);
         }
     }, [newSpirints]);
 
