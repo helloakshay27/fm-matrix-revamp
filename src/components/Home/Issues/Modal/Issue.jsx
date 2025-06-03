@@ -62,7 +62,7 @@ const Issues = ({  closeModal }) => {
     try {
       dispatch(createIssue(data)).unwrap();
       dispatch(fetchIssue());
-    //   closeModal();
+      closeModal();
     } catch (error) {
       console.error("Error submitting Issue:", error);
       alert(`Issue creation failed: ${error.message || 'Unknown error'}`);

@@ -19,6 +19,7 @@ import SelectBox from '../../SelectBox';
 // Redux Thunks
 import { fetchUsers } from '../../../redux/slices/userSlice';
 import { fetchIssue ,createIssue, updateIssue } from '../../../redux/slices/IssueSlice';
+import { all } from 'axios';
 
 
 
@@ -51,6 +52,7 @@ const globalTypesOptions = ['bug', 'task', 'feature','UI','UX'];
 
 const IssuesTable = () => {
   const { id:parentId } = useParams();
+console.log(parentId);
   const dispatch = useDispatch();
 
   const {
@@ -104,8 +106,17 @@ const IssuesTable = () => {
 
 
   useEffect(() => {
-    if (allIssuesFromStore && Array.isArray(allIssuesFromStore)) {
-        const processedIssuess = allIssuesFromStore.map(issue => ({
+  let allIssues;
+  if(parentId!==null){
+   allIssues=allIssuesFromStore.filter((issue) => issue.project_management_id == parentId);
+  }
+  else{
+   allIssues=allIssuesFromStore;
+  }
+  console.log(allIssues);
+  
+    if (allIssues && Array.isArray(allIssues)) {
+        const processedIssuess = allIssues.map(issue => ({
             id: issue.id,
             issueTitle: issue.title || "Unnamed Issues",
             status: issue.status || 'open',
@@ -122,7 +133,7 @@ const IssuesTable = () => {
         setLocalError('Failed to load issues.');
         setData([]);
     }
-  }, [allIssuesFromStore, allIssuesError]);
+  }, [allIssuesFromStore, allIssuesError,parentId]);
 
 
   useEffect(() => {
@@ -268,7 +279,10 @@ useEffect(() => {
   ], [users]);
 
 
-
+    const fixedRowsPerPage=10;
+    const rowHeight = 50;
+    const headerHeight = 48;
+    const desiredTableHeight = fixedRowsPerPage * rowHeight + headerHeight;
   const columns = useMemo(
     () => [
       { accessorKey: 'id', header: 'Issue id', size: 80,
@@ -342,20 +356,17 @@ useEffect(() => {
         {localError && !isAddingNewIssues && <div className="mb-4 p-2 text-red-700 bg-red-100 border border-red-400 rounded text-sm">{localError}</div>}
         {localError && isAddingNewIssues && <div className="my-2 p-2 text-red-700 bg-red-100 border border-red-400 rounded text-sm">{localError}</div>}
         {/* Removed individual isSavingIssues message as it's covered by the main loader now */}
-         <div className="table-wrapper border-none overflow-x-auto p-5"
-        style={{
-          minHeight: `900px`,
-          maxHeight: "80vh",
-          overflowY: "auto",
-        }}
+         <div className="project-table-container font-light"
+                style={{ height:`${desiredTableHeight}px`,minHeight: "200px" }}
+
       >
-         <div className="overflow-x-auto h-[800px]">
-          <table className="w-full border-collapse border text-sm bg-white">
-            <thead className="bg-gray-100">
+         <div className={` overflow-x-auto `}>
+          <table className="w-full border text-sm bg-white overflow-y-auto ">
+            <thead >
               {table.getHeaderGroups().map(headerGroup => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map(header => (
-                    <th key={header.id} style={{width: header.getSize() ? `${header.getSize()}px` : undefined }} className="border p-2 text-center text-gray-700 font-semibold">
+                    <th key={header.id} style={{width: header.getSize() ? `${header.getSize()}px` : undefined ,height: `${headerHeight}px`}} className="border p-2 text-center text-gray-700 font-semibold relative">
                       {flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
                   ))}
@@ -364,9 +375,9 @@ useEffect(() => {
             </thead>
             <tbody>
               {table.getRowModel().rows.map(row => (
-                <tr key={row.id} className="hover:bg-gray-50">
+                <tr key={row.id} className="hover:bg-gray-50 even:bg-gray-100" style={{height: `${rowHeight}px` }}>
                   {row.getVisibleCells().map(cell => (
-                    <td key={cell.id} className={`border p-0 align-middle ${cell.column.id === 'actions' ? 'text-center' : 'text-left'}`}>
+                    <td key={cell.id} className={`border p-0 align-middle  ${cell.column.id === 'actions' ? 'text-center' : 'text-left'}`}>
                        <div className="p-1 h-full flex items-center">
                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
                        </div>
@@ -375,7 +386,7 @@ useEffect(() => {
                 </tr>
               ))}
               {isAddingNewIssues && (
-                <tr ref={newIssueFormRowRef}>
+                <tr ref={newIssueFormRowRef} style={{height: `${rowHeight}px` }}>
                   <td className="border p-1 text-xs text-gray-400 align-middle">NEW</td>
                   <td className="border p-1 align-middle">
                     <NewIssuesTextField
