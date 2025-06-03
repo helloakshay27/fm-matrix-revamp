@@ -447,7 +447,6 @@ const SprintBoardSection = ({ selectedProject }) => {
                         />
                         <Circle
                           size={15}
-                          fill="#000"
                           className="cursor-pointer"
                           onClick={() => handleIconClick("completed")}
                         />
