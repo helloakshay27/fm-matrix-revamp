@@ -8,6 +8,7 @@ import { fetchOrganizationsReducer } from './slices/organizationSlice'
 import { createMilestoneReducer } from './slices/milestoneSlice'
 // import {filtersReducer} from './slices/filterSlice'
 import {  fetchSpirintsReducer, postSprintReducer, putSprintReducer } from './slices/spirintSlice'
+import { createIssueReducer, fetchIssueReducer,updateIssueReducer } from './slices/IssueSlice'
 
 export const store = configureStore({
   reducer: {
@@ -32,6 +33,11 @@ export const store = configureStore({
     taskDetails: taskDetailsReducer,
     changeTaskStatus: changeTaskStatusReducer,
     filterTask: filterTaskReducer,
+
+    //issues
+    createIssues: createIssueReducer,
+    fetchIssues: fetchIssueReducer,
+    updateIssues: updateIssueReducer,
 
     // fetchTasksComments: fetchTasksCommentsReducer,
     createTaskComment: createTaskCommentReducer,
