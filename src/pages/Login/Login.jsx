@@ -1,13 +1,15 @@
 import React,{useState} from 'react'
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const navigate=useNavigate();
 
     const handleLogin=async()=>{
         try{
-            const response=axios.post("https://api-tasks.lockated.com/users/signin.json",{
+            const response=await axios.post("https://api-tasks.lockated.com/users/signin.json",{
                 user:{
                     email,
                     password
@@ -15,6 +17,7 @@ const Login = () => {
             });
             if(response){
                 localStorage.setItem("token",response.data.access_token);
+                navigate("/projects");
             }
         }catch(error){
             console.log(error);
