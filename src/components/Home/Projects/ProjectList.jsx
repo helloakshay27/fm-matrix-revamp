@@ -264,10 +264,9 @@ const ProjectList = () => {
                 !newProjectFormRowRef.current ||
                 newProjectFormRowRef.current.contains(event.target)
             ) {
-                return; // Exit if form not active, saving, ref not set, or click is inside form
+                return; 
             }
 
-            // If click is outside
             if (!newProjectTitle || newProjectTitle.trim() === "") {
                 handleCancelNewProject(); // Cancel if title is empty
             } else {

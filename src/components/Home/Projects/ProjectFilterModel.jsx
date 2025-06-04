@@ -8,6 +8,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchProjects, filterProjects } from "../../../redux/slices/projectSlice";
 import { fetchUsers } from "../../../redux/slices/userSlice";
 
+localStorage.removeItem("projectFilters");
+
 // Define status options with user-friendly labels and API-compatible values
 const statusOptions = [
     { label: "Active", value: "active", color: "bg-green-500" },
@@ -26,9 +28,7 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
     const dispatch = useDispatch();
     const { fetchUsers: users, error: fetchUsersError } = useSelector((state) => state.fetchUsers);
 
-    useEffect(() => {
-        dispatch(fetchUsers());
-    }, [dispatch]);
+
 
     // Extract firstname values with unique identifiers
     const firstNames = users && users.length > 0
@@ -40,17 +40,55 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
 
     const modalRef = useRef(null);
 
-    // Initialize state for filters
-    const [selectedStatuses, setSelectedStatuses] = useState([]);
-    const [selectedTypes, setSelectedTypes] = useState([]);
-    const [selectedManagers, setSelectedManagers] = useState([]);
-    const [selectedCreators, setSelectedCreators] = useState([]);
-    const [dates, setDates] = useState({
-        "Start date": "",
-        "End date": "",
-    });
 
-    // Dropdown open/close state (only one open at a time)
+
+
+
+    const getInitialFilters = () => {
+        try {
+            const saved = localStorage.getItem("projectFilters");
+            return saved
+                ? JSON.parse(saved)
+                : {
+                    selectedStatuses: [],
+                    selectedTypes: [],
+                    selectedManagers: [],
+                    selectedCreators: [],
+                    dates: { startDate: "", endDate: "" },
+                    statusSearch: "",
+                    typeSearch: "",
+                    managerSearch: "",
+                    creatorSearch: "",
+                };
+        } catch (error) {
+            console.error("Error parsing projectFilters from localStorage:", error);
+            return {
+                selectedStatuses: [],
+                selectedTypes: [],
+                selectedManagers: [],
+                selectedCreators: [],
+                dates: { startDate: "", endDate: "" },
+                statusSearch: "",
+                typeSearch: "",
+                managerSearch: "",
+                creatorSearch: "",
+            };
+        }
+    };
+
+
+    // Initialize state
+    const [selectedStatuses, setSelectedStatuses] = useState(getInitialFilters().selectedStatuses);
+    const [selectedTypes, setSelectedTypes] = useState(getInitialFilters().selectedTypes);
+    const [selectedManagers, setSelectedManagers] = useState(getInitialFilters().selectedManagers);
+    const [selectedCreators, setSelectedCreators] = useState(getInitialFilters().selectedCreators);
+    const [dates, setDates] = useState(getInitialFilters().dates);
+    const [statusSearch, setStatusSearch] = useState(getInitialFilters().statusSearch);
+    const [typeSearch, setTypeSearch] = useState(getInitialFilters().typeSearch);
+    const [managerSearch, setManagerSearch] = useState(getInitialFilters().managerSearch);
+    const [creatorSearch, setCreatorSearch] = useState(getInitialFilters().creatorSearch);
+
+    // Dropdown open/close state
     const [dropdowns, setDropdowns] = useState({
         status: false,
         projectType: false,
@@ -60,11 +98,31 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
         endDate: false,
     });
 
-    // Search inputs for dropdowns
-    const [statusSearch, setStatusSearch] = useState("");
-    const [typeSearch, setTypeSearch] = useState("");
-    const [managerSearch, setManagerSearch] = useState("");
-    const [creatorSearch, setCreatorSearch] = useState("");
+    // Save filter state to localStorage whenever it changes
+    useEffect(() => {
+        const filters = {
+            selectedStatuses,
+            selectedTypes,
+            selectedManagers,
+            selectedCreators,
+            dates,
+            statusSearch,
+            typeSearch,
+            managerSearch,
+            creatorSearch,
+        };
+        localStorage.setItem("projectFilters", JSON.stringify(filters));
+    }, [
+        selectedStatuses,
+        selectedTypes,
+        selectedManagers,
+        selectedCreators,
+        dates,
+        statusSearch,
+        typeSearch,
+        managerSearch,
+        creatorSearch,
+    ]);
 
     // Toggle dropdown (only one open at a time)
     const toggleDropdown = (key) => {
@@ -163,7 +221,8 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
         setTypeSearch("");
         setManagerSearch("");
         setCreatorSearch("");
-        setDates({ "Start date": "", "End date": "" });
+        setDates({ startDate: "", endDate: "" });
+        localStorage.removeItem("projectFilters"); // Clear filters from localStorage
         dispatch(filterProjects({})); // Dispatch filterProjects with empty params
         dispatch(fetchProjects()); // Ensure initialProjects is refreshed
         closeModal();
@@ -171,15 +230,24 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
 
     // Apply filters and dispatch API call
     const handleApplyFilters = () => {
+        // Log state to debug
+        console.log("Filter State:", {
+            selectedStatuses,
+            selectedTypes,
+            selectedManagers,
+            selectedCreators,
+            dates,
+        });
+
         const newFilters = {
-            'q[status_eq]': selectedStatuses.length > 0 ? selectedStatuses[0] : '',
-            'q[owner_id_eq]': selectedManagers.length > 0 ? selectedManagers[0] : '',
-            'q[created_by_id_eq]': selectedCreators.length > 0 ? selectedCreators[0] : '',
-            'q[project_type_id_eq]': selectedTypes.length > 0 ? selectedTypes[0] : '',
+            'q[status_in]': selectedStatuses, // Use array for multiple selections
+            'q[owner_id_in]': selectedManagers,
+            'q[created_by_id_in]': selectedCreators,
+            'q[project_type_id_in]': selectedTypes,
             'q[title_cont]': '',
             'q[is_template_eq]': '',
-            'q[start_date_eq]': dates["Start date"],
-            'q[end_date_eq]': dates["End date"],
+            'q[start_date_eq]': dates.startDate || '', // Ensure date is sent or empty string
+            'q[end_date_eq]': dates.endDate || '',
         };
         console.log("Applying filters:", newFilters);
         dispatch(filterProjects(newFilters));
@@ -326,11 +394,11 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
                                     <div className="mt-4 px-1">
                                         <input
                                             type="date"
-                                            value={dates[label]}
+                                            value={dates[key] || ""}
                                             onChange={(e) =>
                                                 setDates((prev) => ({
                                                     ...prev,
-                                                    [label]: e.target.value,
+                                                    [key]: e.target.value,
                                                 }))
                                             }
                                             className="w-full p-2 border rounded text-sm"

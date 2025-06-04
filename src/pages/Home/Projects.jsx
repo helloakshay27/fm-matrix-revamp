@@ -74,7 +74,7 @@ const Projects = ({ setIsSidebarOpen }) => {
             {activeTab === tabs[0].id && (
                 <>                 
                 {selectedType === "List" ?(
-                <ProjectList filters={filters} />
+                <ProjectList  />
             ) : (
                 <BoardsSection section={"Projects"} />
             )}
