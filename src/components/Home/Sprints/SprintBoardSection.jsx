@@ -89,8 +89,8 @@ const SprintBoardSection = ({ selectedProject }) => {
     accept: [ItemTypes.TASK, ItemTypes.SUBTASK],
     drop: selectedSprint?.status === "stopped"
       ? (item) => {
-          handleDrop(item, "sprint");
-        }
+        handleDrop(item, "sprint");
+      }
       : undefined,
     collect: (monitor) => ({
       isOver: monitor.isOver(),
@@ -113,12 +113,12 @@ const SprintBoardSection = ({ selectedProject }) => {
           prev.map((task) =>
             task.id === fromTaskId
               ? {
-                  ...task,
-                  sub_tasks_managements: task.sub_tasks_managements.map(
-                    (subtask) =>
-                      subtask.id === taskid ? { ...subtask, status: newStatus } : subtask
-                  ),
-                }
+                ...task,
+                sub_tasks_managements: task.sub_tasks_managements.map(
+                  (subtask) =>
+                    subtask.id === taskid ? { ...subtask, status: newStatus } : subtask
+                ),
+              }
               : task
           )
         );
@@ -543,19 +543,28 @@ const SprintBoardSection = ({ selectedProject }) => {
                   {taskData
                     .filter((task) => task.status === "sprint")
                     .map((task) => (
-                      <div key={`task-${task.id}`} className="w-full my-2">
+                      <div
+                        key={`task-${task.id}`}
+                        className="w-full my-2"
+                        onDragStart={(e) => e.preventDefault()} 
+                      >
                         <TaskCard
                           task={task}
                           toggleSubCard={() => toggleSubCard(task.id)}
                         />
                       </div>
                     ))}
+
                   {selectedSprint?.sprint_tasks?.length > 0 &&
                     selectedSprint.sprint_tasks.map((sprintTask) => (
-                      <div key={`sprint-task-${sprintTask.id}`} className="w-full my-2">
+                      <div
+                        key={`sprint-task-${sprintTask.id}`}
+                        className="w-full my-2"
+                        onDragStart={(e) => e.preventDefault()} 
+                      >
                         <TaskCard
                           id={sprintTask.task_id}
-                          task={sprintTask}
+                          task={sprintTask?.task_management}
                           toggleSubCard={() => toggleSubCard(sprintTask.id)}
                         />
                       </div>
@@ -563,6 +572,7 @@ const SprintBoardSection = ({ selectedProject }) => {
                 </>
               )}
             </div>
+
           </div>
         </div>
 

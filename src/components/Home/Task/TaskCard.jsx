@@ -12,7 +12,7 @@ const formatCountdown = (ms) => {
     return `${days}d ${hours}h ${minutes}m ${seconds}s`;
 };
 
-const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232", id }) => {
+const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232" }) => {
     const navigate = useNavigate();
     const [{ isDragging }, dragRef] = useDrag(() => ({
         type: "TASK",
@@ -53,7 +53,7 @@ const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232", id }
             className="w-full h-max bg-white p-2 shadow-xl text-xs flex flex-col space-y-2 mb-2"
         >
             <p className="mb-2 truncate cursor-pointer text-start" onClick={() => navigate(`/tasks/${task.id}`)}>
-                <span className="text-blue-500">{id || task.id}</span> {task.title}
+                <span className="text-blue-500">{task.id}</span> {task.title}
             </p>
             <div className="flex items-center gap-1">
                 <Flag className="text-[#C72030] flex-shrink-0" size={14} />
