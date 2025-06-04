@@ -127,6 +127,15 @@ export const fetchUpdateUser = createAsyncThunk(
     }
 );
 
+export const LoginUser=createAsyncThunk('LoginUser',async(payload)=>{
+    try{
+        const response=await axios.post('https://api-tasks.lockated.com/users/login.json',payload);
+        return response.data;
+    }catch(error){
+        console.log(error);
+    }
+})
+
 // Create slices
 export const userSlice = createApiSlice('fetchUsers', fetchUsers);
 export const createInternalUserSlice = createApiSlice('createInternalUser', createInternalUser);
