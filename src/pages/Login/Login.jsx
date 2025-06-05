@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
     const navigate=useNavigate();
 
     const handleLogin=async()=>{
@@ -15,11 +16,13 @@ const Login = () => {
                     password
                 }
             });
-            if(response){
+            if(response.data.access_token){
                 localStorage.setItem("token",response.data.access_token);
                 navigate("/projects");
             }
+            
         }catch(error){
+            setError(error.response.data.error);
             console.log(error);
         }
     }
@@ -40,6 +43,9 @@ const Login = () => {
                 <div className="flex flex-col justify-start gap-2">
                     <label className="font-[600] text-[16px]">Password</label>
                     <input type="text" className="w-[420px] h-[48px] bg-[#D9D9D957] p-2" placeholder='Enter Password'/>
+                </div>
+                <div>
+                    {error && <p className="text-red-500 align-center text-[12px]">{error}</p>}
                 </div>
                 <button className="w-[420px] h-[48px] bg-[#C72030] text-white text-[20px] font-[400]" onClick={handleLogin}>LOGIN</button>
               </div>
