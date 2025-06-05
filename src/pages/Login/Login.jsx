@@ -42,7 +42,7 @@ const Login = () => {
                 </div>
                 <div className="flex flex-col justify-start gap-2">
                     <label className="font-[600] text-[16px]">Password</label>
-                    <input type="text" className="w-[420px] h-[48px] bg-[#D9D9D957] p-2" placeholder='Enter Password'/>
+                    <input type="password" className="w-[420px] h-[48px] bg-[#D9D9D957] p-2" placeholder='Enter Password'/>
                 </div>
                 <div>
                     {error && <p className="text-red-500 align-center text-[12px]">{error}</p>}
