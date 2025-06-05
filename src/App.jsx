@@ -47,7 +47,7 @@ const App = () => {
         element={
           <Layout isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}>
             <Routes>
-              <Route path="/" element={<Navigate to="/login" />} />
+              <Route path="/" element={<Navigate to="/projects" />} />
               <Route path="/tasks" element={<Tasks setIsSidebarOpen={setIsSidebarOpen} />} />
               <Route path="/projects" element={<Projects setIsSidebarOpen={setIsSidebarOpen} />} />
               <Route path="/projects/:id" element={<ProjectDetails />} />
