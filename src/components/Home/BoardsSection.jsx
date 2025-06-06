@@ -151,29 +151,16 @@ const BoardsSection = ({ section }) => {
   );
 
   const handleDrop = useCallback(
-
     (item, newStatus) => {
-
-      console.log('Drop event:', { item, newStatus });
-
       const { type, id, fromTaskId } = item;
-
-
-
       if (type === "TASK" || type === "SUBTASK") {
-
         handleUpdateTaskFieldCell(id, "status", newStatus);
-
       } else if (type === "PROJECT") {
-
         handleProjectStatusChange({ id, status: newStatus });
-
       }
-
     },
 
     [handleUpdateTaskFieldCell, handleProjectStatusChange]
-
   );
 
   const handleLink = (sourceId, targetIds = []) => {
