@@ -6,8 +6,8 @@ import { fetchUsers } from "../../../../redux/slices/userSlice";
 import { createMilestone,fetchMilestone } from "../../../../redux/slices/milestoneSlice";
 
 
-const AddMilestoneModal = ({ id, deleteMilestone ,users}) => {
-  const [options, setOptions] = useState(["Option 1", "Option 2", "Option 3"]);
+const AddMilestoneModal = ({ id, deleteMilestone ,users,options}) => {
+  // const [options, setOptions] = useState(["Option 1", "Option 2", "Option 3"]);
 
   return (
     <div className="flex flex-col  relative justify-start gap-4 w-full bottom-0 py-3 bg-white my-10">
@@ -58,7 +58,7 @@ const AddMilestoneModal = ({ id, deleteMilestone ,users}) => {
             Depends On <span className="text-red-600">*</span>
           </label>
           <SelectBox
-            options={[]}
+            options={options}
                 style={{"border":"1px solid #b3b2b2"}}
 
           />
@@ -235,7 +235,7 @@ const Milestones = () => {
         </div>
 
         {
-          milestones.map(milestone => <AddMilestoneModal id={milestone.id} deleteMilestone={handleDeleteMilestone} users={users} />)
+          milestones.map(milestone => <AddMilestoneModal id={milestone.id} deleteMilestone={handleDeleteMilestone} users={users} options={dependencyOptions} />)
         }
 
         <div className="flex items-center justify-center gap-4  w-full bottom-0 py-3 bg-white mt-10">
