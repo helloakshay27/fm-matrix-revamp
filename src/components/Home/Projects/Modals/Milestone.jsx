@@ -99,11 +99,26 @@ const Milestones = () => {
       endDate: endDate
     })
   }, [startDate, endDate])
+useEffect(() => {
+  const fetchData = async () => {
+    await dispatch(fetchUsers());
+    await dispatch(fetchMilestone());
+  };
 
-  useEffect(async() => {
-   dispatch(fetchUsers())
-    dispatch(fetchMilestone())
-  }, [dispatch])
+  fetchData();
+}, [dispatch]);
+
+useEffect(() => {
+  if (milestone && milestone.length > 0) {
+    const options = milestone.map(item => ({
+      value: item.id,
+      label: item.title
+    }));
+    setDependencyOptions(options);
+  }
+}, [milestone]);
+
+
 
   const handleDuration = () => {
     if (startDate == null || endDate == null) return;
@@ -117,10 +132,6 @@ const Milestones = () => {
     return `${days}:${hours}:${minutes}`;
   }
 
-    useEffect(() => {
-      const options = milestone.map(item =>( {value: item.id, label: item.title}));
-      setDependencyOptions(options);
-    }, [milestone])
 
 
   const handleDeleteMilestone = (id) => {
