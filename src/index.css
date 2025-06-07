@@ -79,7 +79,17 @@
   background-color: #f3f4f6;
   font-weight: 600;
 }
+.gantt_tree_icon {
+    cursor: pointer;
+}
 
+.gantt_task_row.gantt_selected {
+    background-color: #f5f5f5;
+}
+
+.gantt_task_link .gantt_line_wrapper {
+    z-index: 1;
+}
 .sidebar-link {
   display: flex;
   align-items: center;

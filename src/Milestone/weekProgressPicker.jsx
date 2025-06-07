@@ -110,7 +110,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { addDays, format } from 'date-fns';
 
-const WeekProgressPicker = ({ onDateSelect, selectedDate }) => {
+const WeekProgressPicker = ({ onDateSelect, selectedDate ,title}) => {
   const [startDate, setStartDate] = useState(new Date());
   const [weekData, setWeekData] = useState([]);
 
@@ -158,7 +158,10 @@ const WeekProgressPicker = ({ onDateSelect, selectedDate }) => {
 
   return (
     <div className="w-full max-w-3xl mx-auto  mt-3  rounded-lg">
-      <label className="block text-sm font-medium mb-2"> End Date</label>
+      <label className="block text-sm font-medium mb-2">
+
+        {title || 'Pick a Start Date'}
+      </label>
       <div className="flex items-center  overflow-x-auto">
         <button
           type="button"
