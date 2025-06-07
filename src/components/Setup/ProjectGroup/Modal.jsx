@@ -65,8 +65,8 @@ const Modal = ({ openModal, setOpenModal, editMode = false, existingData }) => {
   if (!openModal) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 z-50">
-      <div className="w-[560px] h-[300px] bg-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-[#C0C0C0]">
+    <div className="fixed inset-0 bg-black bg-opacity-30 z-50 text-[14px]">
+      <div className="w-[560px] h-[320px] bg-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-[#C0C0C0]">
 
         {/* Close Icon */}
         <div className="flex justify-end p-4">
@@ -76,7 +76,7 @@ const Modal = ({ openModal, setOpenModal, editMode = false, existingData }) => {
         {/* Input Section */}
         <div className='flex flex-col gap-4'>
         <div className="px-6">
-          <label className="block text-[16px] text-[#1B1B1B] mb-1">
+          <label className="block  text-[#1B1B1B] mb-2">
             {editMode ? 'Edit Project Group' : 'New Project Group'}
             <span className="text-red-500 ml-1">*</span>
           </label>
@@ -92,20 +92,21 @@ const Modal = ({ openModal, setOpenModal, editMode = false, existingData }) => {
           )}
         </div>
         <div className="px-6">
-          <MultiSelectBox options={users.map((user) => ({ value: user.id, label: `${user.firstname} ${user.lastname}` }))} label={"Select Users"} value={selectedUsers} onChange={(values) => handleChange(values)} />
+          <label className="block text-[#1B1B1B] mb-2">Select Members</label>
+          <MultiSelectBox options={users.map((user) => ({ value: user.id, label: `${user.firstname} ${user.lastname}` }))} placeholder={"Select Users"} value={selectedUsers} onChange={(values) => handleChange(values)} />
         </div>
         </div>
         {/* Footer Buttons */}
         <div className="absolute bottom-0 left-0 right-0 bg-[#D5DBDB] h-[90px] flex justify-center items-center gap-4">
           <button
-            className="border border-[#C72030] text-[#1B1B1B] text-[16px] px-8 py-2"
+            className="border border-[#C72030] text-[#1B1B1B] text-[16px] px-8 py-1"
             onClick={handleSave}
             disabled={loading}
           >
             {loading ? 'Submitting...' : editMode ? 'Update' : 'Save'}
           </button>
           <button
-            className="border border-[#C72030] text-[#1B1B1B] text-[16px] px-8 py-2"
+            className="border border-[#C72030] text-[#1B1B1B] text-[16px] px-8 py-1"
             onClick={resetModal}
           >
             Cancel
