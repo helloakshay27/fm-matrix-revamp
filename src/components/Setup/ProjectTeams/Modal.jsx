@@ -7,14 +7,16 @@ import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import SelectBox from "../../SelectBox";
 import MultiSelectBox from '../../MultiSelectBox';
+import { useDispatch, useSelector } from "react-redux";
+import {fetchUsers} from "../../../redux/slices/userSlice";
 
 
 
 const TeamModal = ({ isModalOpen, setIsModalOpen }) => {
+    const dispatch = useDispatch();
     const addTaskModalRef = useRef(null);
     const [openModal,setOpenModal]=useState(false);
     const [noOfEscalations, setNoOfEscalations] = useState(0);
-
       useEffect(() => {
             if (!isModalOpen) {
             }
@@ -38,6 +40,10 @@ const TeamModal = ({ isModalOpen, setIsModalOpen }) => {
                 onComplete: () => setIsModalOpen(false),
             });
         };
+
+        useEffect(() => {
+            dispatch(fetchUsers());
+        },[dispatch]);
     
         const onSubmit = (data) => {
             const existingTasks = JSON.parse(localStorage.getItem("tasks")) || [];

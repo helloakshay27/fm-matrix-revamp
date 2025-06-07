@@ -76,7 +76,7 @@ const GroupTable = () => {
 
 
   const ActionIcons = ({ row }) => (
-    <div className="action-icons flex justify-between gap-5">
+    <div className=" flex justify-start items-start gap-5 ml-2">
               <Switch
                 color="danger"
                 checked={row.original.active}
@@ -125,9 +125,7 @@ const GroupTable = () => {
         header: 'Actions',
         size: 50,
         cell: ({ row }) => (row.original ? <ActionIcons row={row} /> : null),
-        meta: {
-          cellClassName: 'actions-cell-content',
-        },
+        
       },
     ],
     []

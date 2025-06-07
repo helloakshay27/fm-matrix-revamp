@@ -118,7 +118,7 @@ const Milestones = () => {
   }
 
     useEffect(() => {
-      const options = milestone.map(item =>( {value: item.id, label: `Milestone ${item.id}`}));
+      const options = milestone.map(item =>( {value: item.id, label: item.title}));
       setDependencyOptions(options);
     }, [milestone])
 

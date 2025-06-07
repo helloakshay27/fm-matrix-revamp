@@ -5,7 +5,7 @@ import Modal from "../../components/Setup/ProjectGroup/Modal.jsx";
 const ProjectGroup = () => {
       const [openModal, setOpenModal] = useState(false);
   return(
-   <div className="flex flex-col gap-2 p-10 text-[14px] w-[40%]">
+   <div className="flex flex-col gap-2 p-10 text-[14px] ">
             <div className="flex justify-end ">
                <button className="h-[38px] w-[170px] bg-[#C72030] text-white mr-5" onClick={()=>{setOpenModal(true)}}>+ Add Group</button>
             </div>
