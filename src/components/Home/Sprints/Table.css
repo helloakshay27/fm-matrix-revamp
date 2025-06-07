@@ -230,10 +230,10 @@
   }
 
 /* In your CSS file */
-.my-custom-date-editor::-webkit-calendar-picker-indicator {
+/* .my-custom-date-editor::-webkit-calendar-picker-indicator {
   display: none;
   -webkit-appearance: none;
-}
+} */
 
 .my-custom-date-editor {
   background:none;
