@@ -8,6 +8,8 @@ import { createMilestone,fetchMilestone } from "../../../../redux/slices/milesto
 
 const AddMilestoneModal = ({ id, deleteMilestone ,users,options}) => {
   // const [options, setOptions] = useState(["Option 1", "Option 2", "Option 3"]);
+  const [value, setValue] = useState(null);
+  const [owner, setOwner] = useState(null);
 
   return (
     <div className="flex flex-col  relative justify-start gap-4 w-full bottom-0 py-3 bg-white my-10">
@@ -28,6 +30,8 @@ const AddMilestoneModal = ({ id, deleteMilestone ,users,options}) => {
           <SelectBox
             options={users.map(user => ({ value: user.id, label: user.firstname + ' ' + user.lastname }))}
                 style={{"border":"1px solid #b3b2b2"}}
+                onChange={(selected) => setOwner(selected)}
+                value={owner}
 
           />
         </div>
@@ -60,6 +64,8 @@ const AddMilestoneModal = ({ id, deleteMilestone ,users,options}) => {
           <SelectBox
             options={options}
                 style={{"border":"1px solid #b3b2b2"}}
+              value={value}
+              onChange={(selected)=>setValue(selected)}
 
           />
         </div>
@@ -84,6 +90,7 @@ const Milestones = () => {
   
   const [startDate, setStartDate] = useState();
   const [endDate, setEndDate] = useState();
+  const [value, setValue] = useState(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -222,7 +229,7 @@ useEffect(() => {
 
           <div className="w-[100px] space-y-2">
             <label className="block ms-2">Duration</label>
-            <input type="text" value={handleDuration} className="w-full border outline-none border-gray-300  p-2 text-[12px] bg-gray-200" readOnly />
+            <input type="text" value={handleDuration()} className="w-full border outline-none border-gray-300  p-2 text-[12px] bg-gray-200" readOnly />
           </div>
 
         </div>
@@ -235,6 +242,8 @@ useEffect(() => {
             <SelectBox
               options={dependencyOptions}
                 style={{"border":"1px solid #b3b2b2"}}
+              onChange={(value)=>setValue(value)}
+              value={value}
 
             />
           </div>

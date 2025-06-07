@@ -186,7 +186,7 @@ console.log(parentId);
     };
 
     try {
-      await dispatch(createIssue({issue:IssuesPayload})).unwrap();
+      await dispatch(createIssue(IssuesPayload)).unwrap();
       dispatch(fetchIssue()); // Re-fetch issues to get the latest data including the new one
       setIsAddingNewIssues(false);
       resetNewIssuesForm();

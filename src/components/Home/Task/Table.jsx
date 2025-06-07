@@ -11,6 +11,7 @@ import {
   getCoreRowModel,
   flexRender,
   getExpandedRowModel,
+  getPaginationRowModel, // Import getPaginationRowModel
 } from "@tanstack/react-table";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -133,7 +134,7 @@ const DateEditor = ({
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       onClick={handleInputClick}
-      className={`w-full focus:outline-none rounded text-[12px] my-custom-date-editor ${className || ''} `} 
+      className={`w-full focus:outline-none rounded text-[12px] my-custom-date-editor ${className || ''} `}
       placeholder={placeholder}
     />
   );
@@ -201,7 +202,7 @@ const processTaskData = (task) => {
 
 const TaskTable = () => {
   const dispatch = useDispatch();
-  const location=useLocation();
+  const location = useLocation();
   const {
     loading: loadingTasks,
     error: tasksError,
@@ -216,11 +217,11 @@ const TaskTable = () => {
     (state) => state.fetchUsers || { users: [], loading: false, error: null }
   );
 
-  const{
+  const {
     filterTask,
     loading: loadingFilterTasks,
     error: filterTasksError,
-  }=useSelector(
+  } = useSelector(
     (state) => state.filterTask
   )
 
@@ -245,6 +246,12 @@ const TaskTable = () => {
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [isUpdatingTask, setIsUpdatingTask] = useState(false);
 
+  // Pagination states
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10, // Default page size
+  });
+
   const MIN_DISPLAY_ROWS = 10;
   const ROW_HEIGHT = 40;
   const HEADER_HEIGHT = 40;
@@ -264,11 +271,11 @@ const TaskTable = () => {
   useEffect(() => {
     if (
       !isCreatingTask &&
-      !isUpdatingTask && location.pathname=='/tasks'
+      !isUpdatingTask && location.pathname == '/tasks'
     ) {
       dispatch(fetchTasks());
     }
-  }, [dispatch, isCreatingTask, isUpdatingTask,location.pathname]);
+  }, [dispatch, isCreatingTask, isUpdatingTask, location.pathname]);
 
   useEffect(() => {
     if (
@@ -299,14 +306,14 @@ const TaskTable = () => {
   useEffect(() => {
     if (isCreatingTask || isUpdatingTask) return;
     let newProcessedData = [];
-     if(filterTask && filterTask.length>0){
-         newProcessedData = filterTask.map((task) =>
+    if (filterTask && filterTask.length > 0) {
+      newProcessedData = filterTask.map((task) =>
         processTaskData(task)
       );
-     }
-    else if(tasksFromStore && Array.isArray(tasksFromStore)) {
+    }
+    else if (tasksFromStore && Array.isArray(tasksFromStore)) {
       // Use the recursive helper to process tasks and their sub_tasks_managements
-       newProcessedData = tasksFromStore.map((task) =>
+      newProcessedData = tasksFromStore.map((task) =>
         processTaskData(task)
       );
       setData(newProcessedData);
@@ -314,7 +321,7 @@ const TaskTable = () => {
     } else if (tasksError && !tasksFromStore && filterTasksError && !filterTask) {
       setData([]);
     }
-  }, [tasksFromStore, tasksError, isCreatingTask, isUpdatingTask,filterTasksError,filterTask]);
+  }, [tasksFromStore, tasksError, isCreatingTask, isUpdatingTask, filterTasksError, filterTask]);
 
   useEffect(() => {
     if (isAddingNewTask && newTaskTitleInputRef.current) {
@@ -394,7 +401,6 @@ const TaskTable = () => {
     const handleClickOutsideNewTaskRow = (event) => {
       if (
         !isAddingNewTask ||
-        
         !newTaskFormRowRef.current ||
         newTaskFormRowRef.current.contains(event.target)
       ) {
@@ -428,39 +434,38 @@ const TaskTable = () => {
       const payload = { [fieldName]: newValue };
       setIsUpdatingTask(true);
       setLocalError(null);
-      try{
-      if(fieldName === "status"){
-      dispatch(changeTaskStatus({ id: taskId, payload })) // Using changeTaskStatus as per import
-        .unwrap()
-        .then(() => {
-          return dispatch(fetchTasks()).unwrap();
-        })}
-        else{
+      try {
+        if (fieldName === "status") {
+          dispatch(changeTaskStatus({ id: taskId, payload })) // Using changeTaskStatus as per import
+            .unwrap()
+            .then(() => {
+              return dispatch(fetchTasks()).unwrap();
+            })
+        }
+        else {
           dispatch(updateTask({ id: taskId, payload }))
-        .unwrap()
-        .then(() => {
-          return dispatch(fetchTasks()).unwrap();
-        })
+            .unwrap()
+            .then(() => {
+              return dispatch(fetchTasks()).unwrap();
+            })
         }
-      }catch(error){
-          console.error(
-            `Task field update failed for ${taskId} (${fieldName}):`,
-            error
-          );
-          setLocalError(
-            `Update failed: ${error?.response?.data?.errors || error?.message || "Server error"
-            }`
-          );
-          dispatch(fetchTasks());
-        }
-        finally{
-          setIsUpdatingTask(false);
-        } ;
+      } catch (error) {
+        console.error(
+          `Task field update failed for ${taskId} (${fieldName}):`,
+          error
+        );
+        setLocalError(
+          `Update failed: ${error?.response?.data?.errors || error?.message || "Server error"
+          }`
+        );
+        dispatch(fetchTasks());
+      }
+      finally {
+        setIsUpdatingTask(false);
+      }
     },
     [dispatch, isUpdatingTask]
   );
-
-  // Removed loadSubtasksForParent function
 
   const mainTableColumns = useMemo(
     () => [
@@ -555,22 +560,22 @@ const TaskTable = () => {
         accessorKey: "responsiblePersonId",
         header: "Responsible Person",
         size: 150,
-        cell: ({ getValue , row}) => {
-          return(
-          <SelectBox 
-            options={users.map((user) => ({ value: user.id, label: `${user.firstname} ${user.lastname}` }))}
-            value={getValue()}
-            onChange={(newValue) => handleUpdateTaskFieldCell(row.original.id, "responsible_person_id", newValue)}
-            style={
-              {
-                border:"none",
-                width:"100%",
-                height:"100%",
-                padding:"0.5rem"
+        cell: ({ getValue, row }) => {
+          return (
+            <SelectBox
+              options={users.map((user) => ({ value: user.id, label: `${user.firstname} ${user.lastname}` }))}
+              value={getValue()}
+              onChange={(newValue) => handleUpdateTaskFieldCell(row.original.id, "responsible_person_id", newValue)}
+              style={
+                {
+                  border: "none",
+                  width: "100%",
+                  height: "100%",
+                  padding: "0.5rem"
+                }
               }
-            }
-            table={true}
-          />
+              table={true}
+            />
           )
         },
       },
@@ -578,27 +583,27 @@ const TaskTable = () => {
         accessorKey: "startDate",
         header: "Start Date",
         size: 130,
-        cell: ({ getValue,row }) =>
+        cell: ({ getValue, row }) =>
         (
-         <DateEditor
-                    value={getValue()}
-                    onUpdate={(date) => handleUpdateTaskFieldCell(row.original.id, "started_at", date)}
-                    className="text-[12px]"
-                  />
+          <DateEditor
+            value={getValue()}
+            onUpdate={(date) => handleUpdateTaskFieldCell(row.original.id, "started_at", date)}
+            className="text-[12px]"
+          />
         )
-        
+
       },
       {
         accessorKey: "endDate",
         header: "End Date",
         size: 130,
-        cell: ({ getValue ,row}) =>
-          (
-         <DateEditor
-                    value={getValue()}
-                    onUpdate={(date) => handleUpdateTaskFieldCell(row.original.id, "target_date", date)}
-                    className="text-[12px]"
-                  />
+        cell: ({ getValue, row }) =>
+        (
+          <DateEditor
+            value={getValue()}
+            onUpdate={(date) => handleUpdateTaskFieldCell(row.original.id, "target_date", date)}
+            className="text-[12px]"
+          />
         ),
       },
       {
@@ -642,17 +647,22 @@ const TaskTable = () => {
         ),
       },
     ],
-    [handleUpdateTaskFieldCell,users]
-  ); // Removed loadSubtasksForParent and loadingSubtasksForRow
+    [handleUpdateTaskFieldCell, users]
+  );
 
   const table = useReactTable({
     data,
     columns: mainTableColumns,
-    state: { expanded },
+    state: {
+      expanded,
+      pagination, // Add pagination state
+    },
     onExpandedChange: setExpanded,
-    getSubRows: (row) => row.subRows, // Relies on subRows from processTaskData
+    onPaginationChange: setPagination, // Add pagination handler
+    getSubRows: (row) => row.subRows,
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(), // Enable pagination
   });
 
   const showTopLevelAddTaskButton =
@@ -686,9 +696,9 @@ const TaskTable = () => {
     let loadingMessage = "Loading tasks...";
     if (isCreatingTask) loadingMessage = "Creating task...";
     if (isUpdatingTask) loadingMessage = "Updating task...";
-   content=(
-    <Loader message={loadingMessage} error={tasksError}/>
-   )
+    content = (
+      <Loader message={loadingMessage} error={tasksError} />
+    )
   } else {
     content = (
       <div
@@ -740,7 +750,7 @@ const TaskTable = () => {
                 </tr>
               )}
             {" "}
-            {actualDataRows.map((row) => (
+            {table.getRowModel().rows.map((row) => ( // Use table.getRowModel().rows for paginated rows
               <Fragment key={row.id}>
                 {" "}
                 <tr
@@ -773,7 +783,7 @@ const TaskTable = () => {
               <tr
                 ref={newTaskFormRowRef}
                 style={{ height: `${ROW_HEIGHT}px` }}
-                className="border-b relative z-1" 
+                className="border-b relative z-1"
               >
                 {" "}
                 <td className="p-0 align-middle border-r-2 text-gray-400">
@@ -820,7 +830,7 @@ const TaskTable = () => {
                         : []),
                     ]}
                     value={newTaskResponsiblePersonId}
-                    onChange={(selectedId) =>{
+                    onChange={(selectedId) => {
                       setNewTaskResponsiblePersonId(selectedId);
                       console.log(selectedId);
                     }
@@ -864,11 +874,11 @@ const TaskTable = () => {
                   />
                 </td>
                 {" "}
-                <td className="p-0 align-middle border-r-2"></td>   
+                <td className="p-0 align-middle border-r-2"></td>
                 {""}
-                <td className="p-0 align-middle border-r-2"></td>   
-                {" "}
-             </tr>
+                <td className="p-0 align-middle border-r-2"></td>
+                {" "}
+              </tr>
             )}
             {" "}
             {showTopLevelAddTaskButton && (
@@ -923,6 +933,77 @@ const TaskTable = () => {
     <div className="p-2">
       {renderError}
       {content}
+
+      {/* Pagination Controls */}
+      {!loadingTasks && data.length > 0 && (
+        <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center gap-2">
+            <button
+              className="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+              onClick={() => table.setPageIndex(0)}
+              disabled={!table.getCanPreviousPage()}
+            >
+              {"<<"}
+            </button>
+            <button
+              className="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              {"<"}
+            </button>
+            <button
+              className="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              {">"}
+            </button>
+            <button
+              className="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+              disabled={!table.getCanNextPage()}
+            >
+              {">>"}
+            </button>
+            <span className="flex items-center gap-1 text-sm">
+              <div>Page</div>
+              <strong>
+                {table.getState().pagination.pageIndex + 1} of{" "}
+                {table.getPageCount()}
+              </strong>
+            </span>
+            <span className="flex items-center gap-1 text-sm">
+              | Go to page:
+              <input
+                type="number"
+                defaultValue={table.getState().pagination.pageIndex + 1}
+                onChange={(e) => {
+                  const page = e.target.value ? Number(e.target.value) - 1 : 0;
+                  table.setPageIndex(page);
+                }}
+                className="w-16 p-1 border rounded-md text-sm"
+              />
+            </span>
+            <select
+              value={table.getState().pagination.pageSize}
+              onChange={(e) => {
+                table.setPageSize(Number(e.target.value));
+              }}
+              className="p-1 border rounded-md text-sm"
+            >
+              {[10, 20, 30, 40, 50].map((pageSize) => (
+                <option key={pageSize} value={pageSize}>
+                  Show {pageSize}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="text-sm">
+            {table.getFilteredRowModel().rows.length} Total Tasks
+          </div>
+        </div>
+      )}
     </div>
   );
 };
