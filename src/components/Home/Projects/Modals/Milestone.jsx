@@ -9,6 +9,7 @@ import { createMilestone,fetchMilestone } from "../../../../redux/slices/milesto
 const AddMilestoneModal = ({ id, deleteMilestone ,users,options}) => {
   // const [options, setOptions] = useState(["Option 1", "Option 2", "Option 3"]);
   const [value, setValue] = useState(null);
+  const [owner, setOwner] = useState(null);
 
   return (
     <div className="flex flex-col  relative justify-start gap-4 w-full bottom-0 py-3 bg-white my-10">
@@ -29,6 +30,8 @@ const AddMilestoneModal = ({ id, deleteMilestone ,users,options}) => {
           <SelectBox
             options={users.map(user => ({ value: user.id, label: user.firstname + ' ' + user.lastname }))}
                 style={{"border":"1px solid #b3b2b2"}}
+                onChange={(selected) => setOwner(selected)}
+                value={owner}
 
           />
         </div>
