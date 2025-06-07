@@ -80,21 +80,21 @@ const GanttChart = () => {
         // Custom scales
         gantt.config.scales = [
             {
-                unit: "week",
-                step: 1,
-                format: function (date) {
-                    const start = gantt.date.week_start(new Date(date));
-                    const end = gantt.date.add(start, 7, "day");
-                    return `${weekDateFormatter(start)} - ${weekDateFormatter(end)} , ${start.getFullYear()}`;
-                },
+            unit: "week",
+            step: 1,
+            format: function (date) {
+                const start = gantt.date.week_start(new Date(date));
+                const end = gantt.date.add(start, 7, "day");
+                return `${weekDateFormatter(start)} - ${weekDateFormatter(end)} , ${start.getFullYear()}`;
+            },
             },
             {
-                unit: "day",
-                step: 1,
-                format: function (date) {
-                    const day = gantt.date.date_to_str("%j")(date);
-                    return day;
-                },
+            unit: "day",
+            step: 1,
+            format: function (date) {
+                const day = gantt.date.date_to_str("%j")(date);
+                return day;
+            },
             },
         ];
 
@@ -112,7 +112,7 @@ const GanttChart = () => {
 
         gantt.templates.task_class = function (start, end, task) {
             if (task.type === gantt.config.types.milestone) {
-                return "milestone-task";
+            return "milestone-task";
             }
             return "custom-task";
         };
@@ -122,43 +122,89 @@ const GanttChart = () => {
         // Fetch data
         const fetchMilestones = async () => {
             try {
-                const response = await axios.get(
-                    "https://api-tasks.lockated.com/milestones.json",
-                    {
-                        headers: {
-                            Authorization: "Bearer bTcVnWgQrF6QCdNbMiPXzCZNAqsN9qoEfFWdFQ1Auk4",
-                        },
-                    }
-                );
+            const response = await axios.get(
+                "https://api-tasks.lockated.com/milestones.json",
+                {
+                headers: {
+                    Authorization: "Bearer bTcVnWgQrF6QCdNbMiPXzCZNAqsN9qoEfFWdFQ1Auk4",
+                },
+                }
+            );
 
-                const rawData = response.data;
+            const rawData = response.data;
 
-                // Map milestones to Gantt format
-                const tasks = {
-                    data: rawData.map((item) => ({
-                        id: item.id,
-                        text: item.title,
-                        start_date: new Date(item.start_date).toLocaleDateString("en-GB"), // DD/MM/YYYY
-                        end_date: new Date(item.end_date).toLocaleDateString("en-GB"),
-                        duration: item.duration,
-                        progress: 0.0,
-                        status: "Open",
-                        depends: item.depends_on_id || null,
-                    })),
-                    links: rawData
-                        .filter((item) => item.depends_on_id)
-                        .map((item) => ({
-                            id: `link-${item.id}`,
-                            source: item.id,
-                            target: item.depends_on_id,
-                            type: "0",
-                        })),
-                };
+            // Map milestones and their tasks to Gantt format
+            const tasksData = [];
+            const linksData = [];
 
-                gantt.clearAll();
-                gantt.parse(tasks);
+            const taskIds = new Set();
+
+            rawData.forEach((item) => {
+                // Milestone as parent
+                const milestoneId = `milestone-${item.id}`;
+                tasksData.push({
+                    id: milestoneId,
+                    text: item.title,
+                    start_date: new Date(item.start_date).toLocaleDateString("en-GB"),
+                    end_date: new Date(item.end_date).toLocaleDateString("en-GB"),
+                    duration: Number(item.duration),
+                    progress: 0.0,
+                    status: "Open",
+                    depends: item.depends_on_id ? `milestone-${item.depends_on_id}` : null,
+                    type: "milestone",
+                    owner: item.owner_id,
+                    parent: 0,
+                });
+
+                // Add link for milestone dependency
+                if (item.depends_on_id) {
+                    linksData.push({
+                        id: `link-milestone-${item.id}`,
+                        source: `milestone-${item.depends_on_id}`,
+                        target: milestoneId,
+                        type: "0",
+                    });
+                }
+
+                // Tasks under this milestone
+                if (Array.isArray(item.task_managements)) {
+                    item.task_managements.forEach((task) => {
+                        const taskId = `task-${task.id}`;
+                        // If this task id already exists, append milestone id to make it unique
+                        let uniqueTaskId = taskId;
+                        if (taskIds.has(taskId)) {
+                            uniqueTaskId = `task-${task.id}-milestone-${item.id}`;
+                        }
+                        taskIds.add(uniqueTaskId);
+
+                        tasksData.push({
+                            id: uniqueTaskId,
+                            text: task.title,
+                            start_date: new Date(task.expected_start_date || task.target_date).toLocaleDateString("en-GB"),
+                            end_date: new Date(task.target_date).toLocaleDateString("en-GB"),
+                            duration: task.estimated_hour
+                                ? task.estimated_hour + (task.estimated_min ? task.estimated_min / 60 : 0)
+                                : 1,
+                            progress: 0.0,
+                            status: task.status || "Open",
+                            owner: task.responsible_person ? task.responsible_person.name : "",
+                            parent: milestoneId,
+                            type: "task",
+                        });
+                        // You can add task dependencies as links if needed
+                    });
+                }
+            });
+
+            const tasks = {
+                data: tasksData,
+                links: linksData,
+            };
+
+            gantt.clearAll();
+            gantt.parse(tasks);
             } catch (error) {
-                console.error("Error loading milestones:", error);
+            console.error("Error loading milestones:", error);
             }
         };
 

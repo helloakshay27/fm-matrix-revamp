@@ -23,10 +23,12 @@ const Tasks = ({ isEdit }) => {
     taskTitle: "",
     description: "",
     responsiblePerson: "",
+
     department: "",
     priority: "",
     duration: "",
     expected_start_date: null,
+    target_date: null,
     observer: [],
     tags: [],
   });
@@ -51,7 +53,9 @@ const Tasks = ({ isEdit }) => {
         department: formData.department,
         priority: task.priority || "",
         duration: formData.duration,
+
         expected_start_date: task.expected_start_date || null,
+        target_date: task.target_date || null,
         observer: task?.observers.map(observer => ({
           label: observer.user_name,
           value: observer.user_id,
@@ -66,8 +70,12 @@ const Tasks = ({ isEdit }) => {
 
   const handleDateSelect = (date) => {
     setFormData({ ...formData, expected_start_date: date });
+    console.log("Selected date:", date);
   };
-
+  const handleTargetDate = (date) => {
+    setFormData({ ...formData, target_date: date });
+    console.log("Selected date:", date);
+  };
   const handleAddTask = (e, id) => {
     e.preventDefault();
 
@@ -80,6 +88,7 @@ const Tasks = ({ isEdit }) => {
       observer_ids: formData.observer.map((observer) => observer.value),
       task_tag_ids: formData.tags.map((tag) => tag.value),
       expected_start_date: formData.expected_start_date,
+      target_date: formData.target_date,
       project_management_id: 23,
       active: true,
       // },
@@ -215,8 +224,21 @@ const Tasks = ({ isEdit }) => {
 
         <div>
           <WeekProgressPicker
+
             onDateSelect={handleDateSelect}
             selectedDate={formData.expected_start_date}
+            title="Start Date"
+          />
+
+         
+        </div>
+
+        <div>
+           <WeekProgressPicker
+
+            onDateSelect={handleTargetDate}
+            selectedDate={formData.target_date}
+            title="End Date"
           />
         </div>
 
