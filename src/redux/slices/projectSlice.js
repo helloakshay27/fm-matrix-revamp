@@ -251,6 +251,49 @@ export const filterProjects = createAsyncThunk(
       }
     }
   );
+
+  export const fetchProjectGroup = createAsyncThunk('fetchProjectGroup', async () => {
+    try {
+        const response = await axios.get(`https://api-tasks.lockated.com/project_groups.json`, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            }
+        })
+
+        return response.data
+    } catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
+export const createProjectGroup=createAsyncThunk('createProjectGroup',async(payload)=>{
+    try{
+        const response =await axios.post(`https://api-tasks.lockated.com/project_groups.json`,{project_group:payload},{
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+              },
+        })
+        return response.data;
+    }
+    catch(error){
+        console.log(error);
+    }
+})
+
+export const updateProjectGroup=createAsyncThunk('updateProjectGroup',async({id,payload})=>{
+    try{
+        const response =await axios.put(`https://api-tasks.lockated.com/project_groups/${id}.json`,{project_group:payload},{
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+              },
+        })
+        return response.data;
+    }
+    catch(error){
+        console.log(error);
+    }
+})
   
 
 export const createProjectSlice = createApiSlice('createProject', createProject);
@@ -265,6 +308,9 @@ export const deleteProjectSlice = createApiSlice('deleteProject', deleteProject)
 export const updateProjectTypeSlice = createApiSlice('updateProjectType', updateProjectType);
 export const deleteProjectTypeSlice = createApiSlice('deleteProjectType', deleteProjectType);
 export const filterProjectsSlice = createApiSlice('filterProjects', filterProjects);
+export const fetchProjectGroupSlice=createApiSlice('fetchProjectGroup',fetchProjectGroup);
+export const createProjectGroupSlice=createApiSlice('createProjectGroup',createProjectGroup);
+export const updateProjectGroupSlice=createApiSlice('updateProjectGroup',updateProjectGroup);
 
 
 export const createProjectReducer = createProjectSlice.reducer;
@@ -279,3 +325,6 @@ export const deleteProjectReducer = deleteProjectSlice.reducer;
 export const updateProjectTypeReducer = updateProjectTypeSlice.reducer;
 export const deleteProjectTypeReducer = deleteProjectTypeSlice.reducer;
 export const filterProjectsReducer = filterProjectsSlice.reducer;
+export const fetchProjectGroupReducer=fetchProjectGroupSlice.reducer;
+export const createProjectGroupReducer=createProjectGroupSlice.reducer;
+export const updateProjectGroupReducer=updateProjectGroupSlice.reducer;

@@ -34,6 +34,8 @@ import ProjectDetail from "./components/Setup/Project/ProjectDetail";
 import SprintTable from "./pages/Home/SprintTable.jsx";
 
 import Login from "./pages/Login/Login";
+import GroupTable from "./components/Setup/ProjectGroup/Table.jsx";
+import ProjectGroup from "./pages/Setup/ProjectGroup.jsx";
 
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -73,6 +75,7 @@ const App = () => {
               <Route path="/setup/types" element={<ProjectTypes />} />
               <Route path="/setup/tags" element={<ProjectTags />} />
               <Route path="/setup/status" element={<Status />} />
+              <Route path="/setup/project-group" element={<ProjectGroup />} />
             </Routes>
           </Layout>
         }
