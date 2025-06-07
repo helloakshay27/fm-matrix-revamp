@@ -33,7 +33,7 @@ const createApiSlice = (name, fetchThunk) => createSlice({
     },
 });
 
-export const createMilestone = createAsyncThunk('createMilestone', async ({ payload }) => {
+export const createMilestone = createAsyncThunk('createMilestone', async ( payload ) => {
     try {
         const response = await axios.post(`https://api-tasks.lockated.com/milestones.json`, payload, {
             headers: {
@@ -48,6 +48,23 @@ export const createMilestone = createAsyncThunk('createMilestone', async ({ payl
     }
 })
 
+export const fetchMilestone=createAsyncThunk("fetchMilestone",async()=>{
+    try{
+        const response =await axios.get(`https://api-tasks.lockated.com/milestones.json`,{
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            }
+        })
+        return response.data
+    }catch(error){
+        console.log(error)
+        return error.response.data
+    }
+})
+
+
+export const fetchMilestoneSlice = createApiSlice('fetchMilestone', fetchMilestone);
 export const createMilestoneSlice = createApiSlice('createMilestone', createMilestone);
 
 export const createMilestoneReducer = createMilestoneSlice.reducer;
+export const fetchMilestoneReducer = fetchMilestoneSlice.reducer;

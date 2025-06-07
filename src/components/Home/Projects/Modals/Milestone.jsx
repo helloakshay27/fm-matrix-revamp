@@ -3,10 +3,10 @@ import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import SelectBox from "../../../SelectBox";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers } from "../../../../redux/slices/userSlice";
-import { createMilestone } from "../../../../redux/slices/milestoneSlice";
+import { createMilestone,fetchMilestone } from "../../../../redux/slices/milestoneSlice";
 
 
-const AddMilestoneModal = ({ id, deleteMilestone }) => {
+const AddMilestoneModal = ({ id, deleteMilestone ,users}) => {
   const [options, setOptions] = useState(["Option 1", "Option 2", "Option 3"]);
 
   return (
@@ -26,7 +26,7 @@ const AddMilestoneModal = ({ id, deleteMilestone }) => {
         <div className="w-1/2">
           <label className="block mb-2 ">Milestone Owner<span className="text-red-600">*</span></label>
           <SelectBox
-            options={[]}
+            options={users.map(user => ({ value: user.id, label: user.firstname + ' ' + user.lastname }))}
                 style={{"border":"1px solid #b3b2b2"}}
 
           />
@@ -72,14 +72,16 @@ const Milestones = () => {
   const dispatch = useDispatch();
 
   const { fetchUsers: users } = useSelector(state => state.fetchUsers)
+  const {fetchMilestone:milestone} = useSelector(state => state.fetchMilestone)
   const { createProject: project } = useSelector(state => state.createProject)
   const { success } = useSelector(state => state.createMilestone)
 
   const [dependencyOptions, setDependencyOptions] = useState([]);
   const [createTeamModal, setCreateTeamModal] = useState(false);
+
+  const [milestones, setMilestones] = useState([]);
   const [nextId, setNextId] = useState(1);
-  const [milestones, setMilestones] = useState([
-  ])
+  
   const [startDate, setStartDate] = useState();
   const [endDate, setEndDate] = useState();
 
@@ -98,8 +100,9 @@ const Milestones = () => {
     })
   }, [startDate, endDate])
 
-  useEffect(() => {
-    dispatch(fetchUsers())
+  useEffect(async() => {
+   dispatch(fetchUsers())
+    dispatch(fetchMilestone())
   }, [dispatch])
 
   const handleDuration = () => {
@@ -114,10 +117,10 @@ const Milestones = () => {
     return `${days}:${hours}:${minutes}`;
   }
 
-  useEffect(() => {
-    const options = milestones.map(milestone => `Milestone ${milestone.id}`);
-    setDependencyOptions(options);
-  }, [milestones]);
+    useEffect(() => {
+      const options = milestone.map(item =>( {value: item.id, label: `Milestone ${item.id}`}));
+      setDependencyOptions(options);
+    }, [milestone])
 
 
   const handleDeleteMilestone = (id) => {
@@ -138,11 +141,14 @@ const Milestones = () => {
         owner_id: formData.ownerId,
         start_date: formData.startDate,
         end_date: formData.endDate,
-        project_management_id: project.id
+        project_management_id: 2
       }
     }
-
-    dispatch(createMilestone({ payload }));
+    try {
+      dispatch(createMilestone( payload ));
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   useEffect(() => {
@@ -216,7 +222,7 @@ const Milestones = () => {
               Depends On <span className="text-red-600">*</span>
             </label>
             <SelectBox
-              options={[]}
+              options={dependencyOptions}
                 style={{"border":"1px solid #b3b2b2"}}
 
             />
@@ -229,7 +235,7 @@ const Milestones = () => {
         </div>
 
         {
-          milestones.map(milestone => <AddMilestoneModal id={milestone.id} deleteMilestone={handleDeleteMilestone} />)
+          milestones.map(milestone => <AddMilestoneModal id={milestone.id} deleteMilestone={handleDeleteMilestone} users={users} />)
         }
 
         <div className="flex items-center justify-center gap-4  w-full bottom-0 py-3 bg-white mt-10">
