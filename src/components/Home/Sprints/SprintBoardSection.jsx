@@ -135,18 +135,18 @@ const SprintBoardSection = ({ selectedProject }) => {
         .filter((task) => task.status === "sprint")
         .map((task) => task.id);
 
-      if (type === "TASK" && newStatus === "sprint") {
+      if ((type === "TASK" || type === "SUBTASK") && newStatus === "sprint") {
         if (!sprintTaskIds.includes(taskid)) {
           sprintTaskIds.push(taskid);
         }
-      } else if (type === "TASK" && newStatus !== "sprint") {
+      } else if ((type === "TASK" || type === "SUBTASK") && newStatus !== "sprint") {
         const index = sprintTaskIds.indexOf(taskid);
         if (index > -1) {
           sprintTaskIds.splice(index, 1);
         }
       }
 
-      if (type === "TASK" && sprintTaskIds.length > 0) {
+      if ((type === "TASK" || type === "SUBTASK") && sprintTaskIds.length > 0) {
         const payload = {
           sprint: {
             project_id: selectedProject.id,
@@ -163,7 +163,6 @@ const SprintBoardSection = ({ selectedProject }) => {
     },
     [taskData, debouncedUpdateTaskField, selectedSprint, id, dispatch, selectedProject]
   );
-
   const handleLink = (sourceId, targetIds = []) => {
     if (targetIds.length === 0) return;
 
@@ -662,7 +661,7 @@ const SprintBoardSection = ({ selectedProject }) => {
               color={card.color}
               count={filteredTasks.length + filteredSubtasks.length}
               title={card.title}
-              onDrop={handleDrop}
+              onDrop={(item) => handleDrop(item, cardStatus === "active" ? "open" : cardStatus)}
             >
               {filteredTasks.length + filteredSubtasks.length > 0 ? (
                 <>
