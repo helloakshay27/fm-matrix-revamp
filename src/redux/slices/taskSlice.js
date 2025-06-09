@@ -70,9 +70,9 @@ export const createSubTask = createAsyncThunk('createSubTask', async (payload) =
 });
 
 
-export const fetchTasks = createAsyncThunk('fetchTasks', async () => {
+export const fetchTasks = createAsyncThunk('fetchTasks', async ({ id }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/task_managements.json`, {
+        const response = await axios.get(`https://api-tasks.lockated.com/task_managements.json?q[milestone_id_eq]=${id}`, {
             headers: {
                 Authorization: `Bearer ${access_token}`,
             }

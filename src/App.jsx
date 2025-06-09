@@ -52,13 +52,13 @@ const App = () => {
           <Layout isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}>
             <Routes>
               <Route path="/" element={<Navigate to="/projects" />} />
-              <Route path="/tasks" element={<Tasks setIsSidebarOpen={setIsSidebarOpen} />} />
+              <Route path="projects/:id/milestones/:mid/tasks" element={<Tasks setIsSidebarOpen={setIsSidebarOpen} />} />
               <Route path="/projects" element={<Projects setIsSidebarOpen={setIsSidebarOpen} />} />
               <Route path="/projects/:id" element={<ProjectDetails />} />
               <Route path="/sprint-list" element={<SprintTable />} />
               <Route path="/sprint/:id" element={<Sprints />} />
-              <Route path="/milestones/:id" element={<MileStoneMain />} />
-              <Route path="/task-list/:id" element={<Tasks setIsSidebarOpen={setIsSidebarOpen} />} />
+              <Route path="/projects/:id/milestones" element={<MileStoneMain />} />
+              {/* <Route path="/task-list/:id" element={<Tasks setIsSidebarOpen={setIsSidebarOpen} />} /> */}
               <Route path="/tasks-detail/:id" element={<TaskDetails />} />
               <Route path="/issues" element={<IssuesTable />} />
               <Route path="/mom" element={<MinutesOfMeeting />} />

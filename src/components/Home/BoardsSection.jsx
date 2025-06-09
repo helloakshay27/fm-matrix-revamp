@@ -296,9 +296,11 @@ const BoardsSection = ({ section }) => {
                         cardStatus === "active" ? subtask.status === "open" : subtask.status === cardStatus
                       );
 
+
                       return (
                         <div key={task.id} id={taskId} className="relative">
                           <TaskCard
+                            count={visibleSubtasks.length}
                             task={task}
                             toggleSubCard={() => toggleSubCard(task.id)}
                             {...(formattedDependsOn.length > 0 && {

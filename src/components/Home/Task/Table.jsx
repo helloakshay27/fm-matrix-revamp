@@ -21,7 +21,7 @@ import {
   ChevronRightIcon,
   ArrowPathIcon,
 } from "@heroicons/react/20/solid";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import "../../Home/Sprints/Table.css";
 
 import {
@@ -68,7 +68,7 @@ const EditableTextField = ({
       onChange={(e) => setLocalValue(e.target.value)}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
-      className={`${validator? ' border border-red-600': 'border-none'} focus:outline-none w-full h-full p-1 rounded text-sm`}
+      className={`${validator ? ' border border-red-600' : 'border-none'} focus:outline-none w-full h-full p-1 rounded text-sm`}
     />
   );
 };
@@ -136,7 +136,7 @@ const DateEditor = ({
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       onClick={handleInputClick}
-      className={`${validator?'border border-red-400':'border-none'} w-full focus:outline-none rounded text-[12px] p-1 my-custom-date-editor  `}
+      className={`${validator ? 'border border-red-400' : 'border-none'} w-full focus:outline-none rounded text-[12px] p-1 my-custom-date-editor  `}
       placeholder={placeholder}
     />
   );
@@ -203,6 +203,7 @@ const processTaskData = (task) => {
 };
 
 const TaskTable = () => {
+  const { id, mid } = useParams();
   const dispatch = useDispatch();
   const location = useLocation();
   const {
@@ -210,6 +211,7 @@ const TaskTable = () => {
     error: tasksError,
     fetchTasks: tasksFromStore,
   } = useSelector((state) => state.fetchTasks);
+
 
   const {
     fetchUsers: users, // Assuming 'users' is the array here based on your previous code structure
@@ -274,9 +276,9 @@ const TaskTable = () => {
   useEffect(() => {
     if (
       !isCreatingTask &&
-      !isUpdatingTask && location.pathname == '/tasks'
+      !isUpdatingTask
     ) {
-      dispatch(fetchTasks());
+      dispatch(fetchTasks({ id: mid }));
     }
   }, [dispatch, isCreatingTask, isUpdatingTask, location.pathname]);
 
@@ -366,11 +368,12 @@ const TaskTable = () => {
     const taskAttributes = {
       title: newTaskTitle.trim(),
       status: newTaskStatus,
-      project_management_id: 2,
+      project_management_id: id,
       responsible_person_id: newTaskResponsiblePersonId,
       started_at: newTaskStartDate || null,
       target_date: newTaskEndDate || null,
       priority: newTaskPriority,
+      milestone_id: mid
     };
     setIsCreatingTask(true);
     setIsAddingNewTask(false);
@@ -378,7 +381,7 @@ const TaskTable = () => {
       .unwrap()
       .then(() => {
         resetNewTaskForm();
-        return dispatch(fetchTasks()).unwrap();
+        return dispatch(fetchTasks({ id: mid })).unwrap();
       })
       .catch((error) => {
         console.error("Task creation failed:", error);
@@ -411,8 +414,8 @@ const TaskTable = () => {
       ) {
         return;
       }
-     
-        handleSaveNewTask();
+
+      handleSaveNewTask();
     };
     if (isAddingNewTask) {
       document.addEventListener("mousedown", handleClickOutsideNewTaskRow);
@@ -428,9 +431,9 @@ const TaskTable = () => {
     resetNewTaskForm,
   ]);
 
-    useEffect(() => {
+  useEffect(() => {
     const handleEscape = (event) => {
-      if(!isAddingNewTask)return;
+      if (!isAddingNewTask) return;
       if (event.key === "Escape") {
         console.log("Escape key pressed!");
         handleCancelNewTask();
@@ -458,14 +461,14 @@ const TaskTable = () => {
           dispatch(changeTaskStatus({ id: taskId, payload })) // Using changeTaskStatus as per import
             .unwrap()
             .then(() => {
-              return dispatch(fetchTasks()).unwrap();
+              return dispatch(fetchTasks({ id: mid })).unwrap();
             })
         }
         else {
           dispatch(updateTask({ id: taskId, payload }))
             .unwrap()
             .then(() => {
-              return dispatch(fetchTasks()).unwrap();
+              return dispatch(fetchTasks({ id: mid })).unwrap();
             })
         }
       } catch (error) {
@@ -477,7 +480,7 @@ const TaskTable = () => {
           `Update failed: ${error?.response?.data?.errors || error?.message || "Server error"
           }`
         );
-        dispatch(fetchTasks());
+        dispatch(fetchTasks({ id: mid }));
       }
       finally {
         setIsUpdatingTask(false);
@@ -721,221 +724,221 @@ const TaskTable = () => {
   } else {
     content = (
       <>
-      <div
-        className="table-wrapper border-none overflow-x-auto"
-        style={{
-          minHeight: `${desiredTableHeight}px`,
-          maxHeight: "80vh",
-          overflowY: "auto",
-        }}
-      >
-        {" "}
-        <table className="w-full table-auto text-sm table-fixed">
+        <div
+          className="table-wrapper border-none overflow-x-auto"
+          style={{
+            minHeight: `${desiredTableHeight}px`,
+            maxHeight: "80vh",
+            overflowY: "auto",
+          }}
+        >
           {" "}
-          <thead className="sticky top-0 bg-gray-50 z-30">
+          <table className="w-full table-auto text-sm table-fixed">
             {" "}
-            {table.getHeaderGroups().map((hg) => (
-              <tr key={hg.id}>
-                {hg.headers.map((h) => (
-                  <th
-                    key={h.id}
-                    style={{ width: `${h.getSize()}px` }}
-                    className="border-r-2 p-2 text-center text-gray-600 font-semibold break-words"
+            <thead className="sticky top-0 bg-gray-50 z-30">
+              {" "}
+              {table.getHeaderGroups().map((hg) => (
+                <tr key={hg.id}>
+                  {hg.headers.map((h) => (
+                    <th
+                      key={h.id}
+                      style={{ width: `${h.getSize()}px` }}
+                      className="border-r-2 p-2 text-center text-gray-600 font-semibold break-words"
+                    >
+                      {h.isPlaceholder
+                        ? null
+                        : flexRender(h.column.columnDef.header, h.getContext())}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+              {" "}
+            </thead>
+            {" "}
+            <tbody className="bg-white">
+              {" "}
+              {actualDataRows.length === 0 &&
+                !isAddingNewTask &&
+                !showTopLevelAddTaskButton &&
+                !loadingTasks &&
+                !isCreatingTask &&
+                !isUpdatingTask && (
+                  <tr style={{ height: `${ROW_HEIGHT * 2}px` }}>
+                    <td
+                      colSpan={mainTableColumns.length}
+                      className="text-center text-gray-500 p-4"
+                    >
+                      No tasks available.
+                    </td>
+                  </tr>
+                )}
+              {" "}
+              {table.getRowModel().rows.map((row) => ( // Use table.getRowModel().rows for paginated rows
+                <Fragment key={row.id}>
+                  {" "}
+                  <tr
+                    className={`hover:bg-gray-50 ${row.getIsExpanded() ? "bg-gray-100" : "even:bg-[#D5DBDB4D]"
+                      } font-[300] relative z-1`}
+                    style={{ height: `${ROW_HEIGHT}px` }}
                   >
-                    {h.isPlaceholder
-                      ? null
-                      : flexRender(h.column.columnDef.header, h.getContext())}
-                  </th>
-                ))}
-              </tr>
-            ))}
-            {" "}
-          </thead>
-          {" "}
-          <tbody className="bg-white">
-            {" "}
-            {actualDataRows.length === 0 &&
-              !isAddingNewTask &&
-              !showTopLevelAddTaskButton &&
-              !loadingTasks &&
-              !isCreatingTask &&
-              !isUpdatingTask && (
-                <tr style={{ height: `${ROW_HEIGHT * 2}px` }}>
+                    {" "}
+                    {row.getVisibleCells().map((cell) => (
+                      <td
+                        key={cell.id}
+                        style={{ width: `${cell.column.getSize()}px` }}
+                        className={`border-r-2 text-left pl-2 align-middle p-0`}
+                      >
+                        <div className="h-full w-full flex items-center">
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </div>
+                      </td>
+                    ))}
+                    {" "}
+                  </tr>
+                  {" "}
+                </Fragment>
+              ))}
+              {" "}
+              {isAddingNewTask && (
+                <tr
+                  ref={newTaskFormRowRef}
+                  style={{ height: `${ROW_HEIGHT}px` }}
+                  className="border-b relative z-1"
+                >
+                  {" "}
+                  <td className="p-0 align-middle border-r-2 text-gray-400">
+                    <div className="h-full w-full flex items-center px-1">
+                    </div>
+                  </td>
+                  {" "}
+                  <td className="p-0 align-middle border-r-2 text-gray-400">
+                    <div className="h-full w-full flex items-center px-1">
+                      ---
+                    </div>
+                  </td>
+                  {" "}
+                  <td className="pl-2 p-0 align-middle border-r-2">
+                    <EditableTextField
+                      value={newTaskTitle}
+                      onUpdate={setNewTaskTitle}
+                      inputRef={newTaskTitleInputRef}
+                      isNewRow={true}
+                      onEnterPress={handleSaveNewTask}
+                      validator={validator}
+                    />
+                  </td>
+                  {" "}
+                  <td className="pl-2 p-0 align-middle border-r-2">
+                    {" "}
+                    <StatusBadge
+                      status={newTaskStatus}
+                      statusOptions={globalStatusOptions}
+                      onStatusChange={setNewTaskStatus}
+                    />
+                  </td>
+                  {" "}
+                  <td className="p-0 align-middle border-r-2">
+                    {" "}
+                    <SelectBox
+                      options={[
+                        { value: null, label: "Unassigned" },
+                        ...(Array.isArray(users)
+                          ? users.map((u) => ({
+                            value: u.id,
+                            label: `${u.firstname || ""} ${u.lastname || ""
+                              }`.trim(),
+                          }))
+                          : []),
+                      ]}
+                      value={newTaskResponsiblePersonId}
+                      onChange={(selectedId) => {
+                        setNewTaskResponsiblePersonId(selectedId);
+                        console.log(selectedId);
+                      }
+                      }
+                      placeholder="Select Person..."
+                      table={true}
+                    />
+                    {" "}
+                  </td>
+                  {" "}
+                  <td className="p-0 align-middle border-r-2">
+                    <DateEditor
+                      value={newTaskStartDate}
+                      onUpdate={setNewTaskStartDate}
+                      isNewRow={true}
+                      onEnterPress={handleSaveNewTask}
+                      validator={validator}
+                    />
+                  </td>
+                  {" "}
+                  <td className="p-0 align-middle border-r-2">
+                    <DateEditor
+                      value={newTaskEndDate}
+                      onUpdate={setNewTaskEndDate}
+                      isNewRow={true}
+                      onEnterPress={handleSaveNewTask}
+                      className="text-[12px]"
+                      validator={validator}
+                    />
+                  </td>
+                  {" "}
+                  <td className="p-0 align-middle border-r-2 text-xs">
+                    <div className="h-full w-full flex items-center px-2">
+                      {calculateDuration(newTaskStartDate, newTaskEndDate)}
+                    </div>
+                  </td>
+                  {" "}
+                  <td className="p-0 pl-2 align-middle border-r-2">
+                    <StatusBadge
+                      status={newTaskPriority}
+                      statusOptions={globalPriorityOptions}
+                      onStatusChange={setNewTaskPriority}
+                    />
+                  </td>
+                  {" "}
+                  <td className="p-0 align-middle border-r-2"></td>
+                  {""}
+                  <td className="p-0 align-middle border-r-2"></td>
+                  {" "}
+                </tr>
+              )}
+              {" "}
+              {showTopLevelAddTaskButton && (
+                <tr style={{ height: `${ROW_HEIGHT}px` }}>
                   <td
                     colSpan={mainTableColumns.length}
-                    className="text-center text-gray-500 p-4"
+                    className="border text-left text-[12px]"
                   >
-                    No tasks available.
+                    <button
+                      onClick={handleShowNewTaskForm}
+                      className="text-red-500 hover:underline text-sm px-2 py-1"
+                    >
+                      + Click here to add a new task
+                    </button>
                   </td>
                 </tr>
               )}
-            {" "}
-            {table.getRowModel().rows.map((row) => ( // Use table.getRowModel().rows for paginated rows
-              <Fragment key={row.id}>
-                {" "}
-                <tr
-                  className={`hover:bg-gray-50 ${row.getIsExpanded() ? "bg-gray-100" : "even:bg-[#D5DBDB4D]"
-                    } font-[300] relative z-1`}
-                  style={{ height: `${ROW_HEIGHT}px` }}
-                >
-                  {" "}
-                  {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      style={{ width: `${cell.column.getSize()}px` }}
-                      className={`border-r-2 text-left pl-2 align-middle p-0`}
-                    >
-                      <div className="h-full w-full flex items-center">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </div>
-                    </td>
-                  ))}
-                  {" "}
-                </tr>
-                {" "}
-              </Fragment>
-            ))}
-            {" "}
-            {isAddingNewTask && (
-              <tr
-                ref={newTaskFormRowRef}
-                style={{ height: `${ROW_HEIGHT}px` }}
-                className="border-b relative z-1"
-              >
-                {" "}
-                <td className="p-0 align-middle border-r-2 text-gray-400">
-                  <div className="h-full w-full flex items-center px-1">
-                  </div>
-                </td>
-                {" "}
-                <td className="p-0 align-middle border-r-2 text-gray-400">
-                  <div className="h-full w-full flex items-center px-1">
-                    ---
-                  </div>
-                </td>
-                {" "}
-                <td className="pl-2 p-0 align-middle border-r-2">
-                  <EditableTextField
-                    value={newTaskTitle}
-                    onUpdate={setNewTaskTitle}
-                    inputRef={newTaskTitleInputRef}
-                    isNewRow={true}
-                    onEnterPress={handleSaveNewTask}
-                    validator={validator}
-                  />
-                </td>
-                {" "}
-                <td className="pl-2 p-0 align-middle border-r-2">
-                  {" "}
-                  <StatusBadge
-                    status={newTaskStatus}
-                    statusOptions={globalStatusOptions}
-                    onStatusChange={setNewTaskStatus}
-                  />
-                </td>
-                {" "}
-                <td className="p-0 align-middle border-r-2">
-                  {" "}
-                  <SelectBox
-                    options={[
-                      { value: null, label: "Unassigned" },
-                      ...(Array.isArray(users)
-                        ? users.map((u) => ({
-                          value: u.id,
-                          label: `${u.firstname || ""} ${u.lastname || ""
-                            }`.trim(),
-                        }))
-                        : []),
-                    ]}
-                    value={newTaskResponsiblePersonId}
-                    onChange={(selectedId) => {
-                      setNewTaskResponsiblePersonId(selectedId);
-                      console.log(selectedId);
-                    }
-                    }
-                    placeholder="Select Person..."
-                    table={true}
-                  />
-                  {" "}
-                </td>
-                {" "}
-                <td className="p-0 align-middle border-r-2">
-                  <DateEditor
-                    value={newTaskStartDate}
-                    onUpdate={setNewTaskStartDate}
-                    isNewRow={true}
-                    onEnterPress={handleSaveNewTask}
-                    validator={validator}
-                  />
-                </td>
-                {" "}
-                <td className="p-0 align-middle border-r-2">
-                  <DateEditor
-                    value={newTaskEndDate}
-                    onUpdate={setNewTaskEndDate}
-                    isNewRow={true}
-                    onEnterPress={handleSaveNewTask}
-                    className="text-[12px]"
-                    validator={validator}
-                  />
-                </td>
-                {" "}
-                <td className="p-0 align-middle border-r-2 text-xs">
-                  <div className="h-full w-full flex items-center px-2">
-                    {calculateDuration(newTaskStartDate, newTaskEndDate)}
-                  </div>
-                </td>
-                {" "}
-                <td className="p-0 pl-2 align-middle border-r-2">
-                  <StatusBadge
-                    status={newTaskPriority}
-                    statusOptions={globalPriorityOptions}
-                    onStatusChange={setNewTaskPriority}
-                  />
-                </td>
-                {" "}
-                <td className="p-0 align-middle border-r-2"></td>
-                {""}
-                <td className="p-0 align-middle border-r-2"></td>
-                {" "}
-              </tr>
-            )}
-            {" "}
-            {showTopLevelAddTaskButton && (
-              <tr style={{ height: `${ROW_HEIGHT}px` }}>
-                <td
-                  colSpan={mainTableColumns.length}
-                  className="border text-left text-[12px]"
-                >
-                  <button
-                    onClick={handleShowNewTaskForm}
-                    className="text-red-500 hover:underline text-sm px-2 py-1"
+              {" "}
+              {Array.from({ length: numEmptyRowsToFill }).map((_, i) => (
+                <tr key={`empty-${i}`} style={{ height: `${ROW_HEIGHT}px` }}>
+                  <td
+                    colSpan={mainTableColumns.length}
+                    className="border-r-2 p-2"
                   >
-                    + Click here to add a new task
-                  </button>
-                </td>
-              </tr>
-            )}
+                    &nbsp;
+                  </td>
+                </tr>
+              ))}
+              {" "}
+            </tbody>
             {" "}
-            {Array.from({ length: numEmptyRowsToFill }).map((_, i) => (
-              <tr key={`empty-${i}`} style={{ height: `${ROW_HEIGHT}px` }}>
-                <td
-                  colSpan={mainTableColumns.length}
-                  className="border-r-2 p-2"
-                >
-                  &nbsp;
-                </td>
-              </tr>
-            ))}
-            {" "}
-          </tbody>
+          </table>
           {" "}
-        </table>
-        {" "}
-      </div>
+        </div>
       </>
     );
   }
@@ -960,57 +963,57 @@ const TaskTable = () => {
 
       {/* Pagination Controls */}
       {data.length > 0 && (
-                    <div className=" flex items-center justify-start gap-4 mt-4 text-[12px]">
-                        {/* Previous Button */}
-                        <button
-                            onClick={() => table.previousPage()}
-                            disabled={!table.getCanPreviousPage()}
-                            className="text-red-600 disabled:opacity-30"
-                        >
-                            {"<"}
-                        </button>
+        <div className=" flex items-center justify-start gap-4 mt-4 text-[12px]">
+          {/* Previous Button */}
+          <button
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+            className="text-red-600 disabled:opacity-30"
+          >
+            {"<"}
+          </button>
 
-                        {/* Page Numbers (Sliding Window of 3) */}
-                        {(() => {
-                            const totalPages = table.getPageCount();
-                            const currentPage = table.getState().pagination.pageIndex;
-                            const visiblePages = 3;
+          {/* Page Numbers (Sliding Window of 3) */}
+          {(() => {
+            const totalPages = table.getPageCount();
+            const currentPage = table.getState().pagination.pageIndex;
+            const visiblePages = 3;
 
-                            let start = Math.max(0, currentPage - Math.floor(visiblePages / 2));
-                            let end = start + visiblePages;
+            let start = Math.max(0, currentPage - Math.floor(visiblePages / 2));
+            let end = start + visiblePages;
 
-                            // Ensure end does not exceed total pages
-                            if (end > totalPages) {
-                                end = totalPages;
-                                start = Math.max(0, end - visiblePages);
-                            }
+            // Ensure end does not exceed total pages
+            if (end > totalPages) {
+              end = totalPages;
+              start = Math.max(0, end - visiblePages);
+            }
 
-                            return [...Array(end - start)].map((_, i) => {
-                                const page = start + i;
-                                const isActive = page === currentPage;
+            return [...Array(end - start)].map((_, i) => {
+              const page = start + i;
+              const isActive = page === currentPage;
 
-                                return (
-                                    <button
-                                        key={page}
-                                        onClick={() => table.setPageIndex(page)}
-                                        className={` px-3 py-1 ${isActive ? "bg-gray-200 font-bold" : ""}`}
-                                    >
-                                        {page + 1}
-                                    </button>
-                                );
-                            });
-                        })()}
+              return (
+                <button
+                  key={page}
+                  onClick={() => table.setPageIndex(page)}
+                  className={` px-3 py-1 ${isActive ? "bg-gray-200 font-bold" : ""}`}
+                >
+                  {page + 1}
+                </button>
+              );
+            });
+          })()}
 
-                        {/* Next Button */}
-                        <button
-                            onClick={() => table.nextPage()}
-                            disabled={!table.getCanNextPage()}
-                            className="text-red-600 disabled:opacity-30"
-                        >
-                            {">"}
-                        </button>
-                    </div>
-                )}
+          {/* Next Button */}
+          <button
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+            className="text-red-600 disabled:opacity-30"
+          >
+            {">"}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

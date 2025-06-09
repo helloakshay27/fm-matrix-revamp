@@ -319,7 +319,7 @@ const ProjectList = () => {
         () => [
             // Column definitions remain the same
             { accessorKey: "id", header: "Project ID", size: 110, cell: ({ row, getValue }) => (<Link to={`/projects/${row.original.actualId}`} className="text-blue-600 hover:text-blue-800 hover:underline">{getValue()}</Link>), },
-            { accessorKey: "title", header: "Project Title", size: 250, cell: ({ row, getValue }) => (<Link to={`/milestones/${row.original.actualId}`} className="cursor-pointer">{getValue()}</Link>), },
+            { accessorKey: "title", header: "Project Title", size: 250, cell: ({ row, getValue }) => (<Link to={`/projects/${row.original.actualId}/milestones`} className="cursor-pointer">{getValue()}</Link>), },
             { accessorKey: "status", header: "Status", size: 150, cell: (info) => (<StatusBadge statusOptions={globalStatusOptions.map(s => s.charAt(0).toUpperCase() + s.slice(1))} status={info.getValue()} onStatusChange={(newStatus) => { handleStatusChange({ id: info.row.original.id, name: "status", payload: newStatus }); }} />), },
             { accessorKey: "type", header: "Project Type", size: 150, },
             { accessorKey: "manager", header: "Project Manager", size: 180, },

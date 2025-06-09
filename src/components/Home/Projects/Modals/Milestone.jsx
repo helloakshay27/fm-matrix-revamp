@@ -109,24 +109,21 @@ const Milestones = () => {
       endDate: endDate
     })
   }, [startDate, endDate])
-  useEffect(() => {
-    const fetchData = async () => {
-      await dispatch(fetchUsers());
-      await dispatch(fetchMilestone());
-    };
 
-    fetchData();
+  useEffect(() => {
+    dispatch(fetchUsers());
+    dispatch(fetchMilestone({ id }));
   }, [dispatch]);
 
-  useEffect(() => {
-    if (milestone && milestone.length > 0) {
-      const options = milestone.map(item => ({
-        value: item.id,
-        label: item.title
-      }));
-      setDependencyOptions(options);
-    }
-  }, [milestone]);
+  // useEffect(() => {
+  //   if (milestone && milestone.length > 0) {
+  //     const options = milestone.map(item => ({
+  //       value: item.id,
+  //       label: item.title
+  //     }));
+  //     setDependencyOptions(options);
+  //   }
+  // }, [milestone]);
 
 
 
@@ -244,11 +241,14 @@ const Milestones = () => {
               Depends On <span className="text-red-600">*</span>
             </label>
             <SelectBox
-              options={dependencyOptions}
+              options={
+                milestone.map(m => (
+                  { label: m.title, value: m.id }
+                ))
+              }
               style={{ "border": "1px solid #b3b2b2" }}
               onChange={(value) => setValue(value)}
               value={value}
-
             />
           </div>
         </div>
