@@ -177,7 +177,7 @@ const calculateDuration = (startDateStr, endDateStr) => {
 };
 
 const SubtaskTable = () => {
-  const { mid, id: parentId } = useParams();
+  const { mid, tid: parentId } = useParams();
   const dispatch = useDispatch();
 
   const {
