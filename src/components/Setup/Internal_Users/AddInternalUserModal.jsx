@@ -64,6 +64,13 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
     useEffect(() => {
         if (success || editSuccess) {
             onSuccess();
+            setFormData({
+                email: "",
+                mobile: "",
+                name: "",
+                reportTo: "",
+                role: null
+            })
         }
     }, [success, editSuccess, onSuccess]);
 

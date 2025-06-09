@@ -49,12 +49,14 @@ const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232", coun
             style={{ opacity: isDragging ? 0.5 : 1, cursor: "move" }}
             className="w-full h-max bg-white p-2 shadow-xl text-xs flex flex-col space-y-2 mb-2"
         >
-            <p className="mb-2 truncate cursor-pointer text-start" onClick={() => navigate(`/tasks/${task.id}`)}>
+            <p className="mb-2 truncate cursor-pointer text-start" onClick={() => navigate(`${task.id}`)}>
                 <span className="text-blue-500">{task.id}</span> {task.title}
             </p>
             <div className="flex items-center gap-1">
                 <Flag className="text-[#C72030] flex-shrink-0" size={14} />
-                <span className="text-[10px] truncate">{task.milestone}</span>
+                <span className="text-[10px] truncate">{typeof task.milestone === "object" && task.milestone !== null
+                    ? task.milestone.title || JSON.stringify(task.milestone)
+                    : task.milestone}</span>
             </div>
             <div className="flex items-start gap-1">
                 <User2 className="text-[#C72030] flex-shrink-0" size={14} />

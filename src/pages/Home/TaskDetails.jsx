@@ -193,7 +193,7 @@ const Comments = ({ comments }) => {
         const payload = {
             comment: {
                 body: comment,
-                commentable_id: id,
+                commentable_id: tid,
                 commentable_type: "TaskManagement",
                 commentor_id: 364,
                 active: true,

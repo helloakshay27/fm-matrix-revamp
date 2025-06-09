@@ -159,7 +159,7 @@ const Milestones = () => {
         owner_id: formData.ownerId,
         start_date: formData.startDate,
         end_date: formData.endDate,
-        project_management_id: location.pathname.startsWith('/milestones') ? id : project.id
+        project_management_id: location.pathname.includes('/milestones') ? id : project.id
       }
     }
     console.log(payload)

@@ -10,8 +10,10 @@ import { changeProjectStatus, fetchProjects } from "../../redux/slices/projectSl
 import { changeTaskStatus, fetchTasks } from "../../redux/slices/taskSlice";
 import useDeepCompareEffect from "use-deep-compare-effect";
 import { debounce } from "lodash";
+import { useParams } from "react-router-dom";
 
 const BoardsSection = ({ section }) => {
+  const { mid } = useParams()
   const [subCardVisibility, setSubCardVisibility] = useState({});
   const [arrowLinks, setArrowLinks] = useState([]);
   const dispatch = useDispatch();
@@ -27,7 +29,7 @@ const BoardsSection = ({ section }) => {
   useEffect(() => {
     batch(() => {
       if (section === "Tasks") {
-        dispatch(fetchTasks());
+        dispatch(fetchTasks({ id: mid }));
       } else {
         dispatch(fetchProjects());
       }
@@ -97,7 +99,7 @@ const BoardsSection = ({ section }) => {
         setLocalError(
           `Update failed: ${error?.response?.data?.errors || error?.message || "Server error"}`
         );
-        dispatch(fetchTasks());
+        dispatch(fetchTasks({ id: mid }));
       }
     }, 300),
     [dispatch]
