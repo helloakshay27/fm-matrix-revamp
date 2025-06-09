@@ -128,19 +128,10 @@ const TeamModal = ({
     };
 
     useEffect(() => {
-        if (success) {
-            setIsModalOpen(false);
-            dispatch(fetchProjectTeams());
-            dispatch(resetSuccess());
+        if (success || editSuccess) {
+            window.location.reload()
         }
-    }, [success]);
-    useEffect(() => {
-        if (editSuccess) {
-            setIsModalOpen(false);
-            dispatch(fetchProjectTeams());
-            dispatch(resetSuccess());
-        }
-    }, [editSuccess]);
+    }, [success, editSuccess]);
 
     return (
         <div className="fixed inset-0 flex items-center justify-end bg-black bg-opacity-50 z-10 text-[12px]">
