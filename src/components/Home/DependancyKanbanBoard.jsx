@@ -2,10 +2,10 @@ import { useDrop } from "react-dnd";
 
 const DependancyKanbanBoard = ({ children, title, onDrop }) => {
     const [, dropRef] = useDrop(() => ({
-        accept: "TASK",
+        accept: ["TASK", "SUBTASK"],
         drop: (item) => {
             if (onDrop) {
-                onDrop({ type: item.type || "TASK", id: item.id, fromTaskId: item.fromTaskId }, title);
+                onDrop(item, title); // Pass the full item
             }
         },
     }));
@@ -19,7 +19,7 @@ const DependancyKanbanBoard = ({ children, title, onDrop }) => {
                 {children}
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default DependancyKanbanBoard
+export default DependancyKanbanBoard;
