@@ -537,7 +537,7 @@ const TaskTable = () => {
           }
           return (
             <Link
-              to={`/tasks/${linkIdPart}`}
+              to={`/tasks-detail/${linkIdPart}`}
               className="text-xs text-blue-600 hover:text-blue-800 hover:underline p-1 block" // Added block for padding
               style={{ paddingLeft: `${row.depth * 1.5}rem` }} // Indentation for subtask IDs
             >
