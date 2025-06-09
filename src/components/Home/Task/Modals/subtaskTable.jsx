@@ -211,6 +211,7 @@ const SubtaskTable = () => {
   const [newSubtaskEndDate, setNewSubtaskEndDate] = useState('');
   const [newSubtaskPriority, setNewSubtaskPriority] = useState('None');
   const [newSubtaskTags, setNewSubtaskTags] = useState([]); 
+  //  const[editTitle, setEditTitle] = useState("");
 
   const [isSavingSubtask, setIsSavingSubtask] = useState(false);
   const [isUpdatingTask, setIsUpdatingTask] = useState(false);
@@ -490,7 +491,10 @@ useEffect(() => {
         cell: ({getValue}) => <span className="text-xs text-gray-500 px-1">{getValue().toString().slice(-5)}</span>
       },
       { accessorKey: 'taskTitle', header: 'Subtask Title', size: 250,
-        cell: info => info.getValue()
+        cell: ({getValue,row}) => {
+     const [editTitle, setEditTitle] = useState(getValue());
+     return (
+     <NewSubtaskTextField value={editTitle} onChange={e => setEditTitle(e.target.value)} onEnterPress={() => handleOnChange(row.original.id,"title",editTitle)} />)}
       },
       { accessorKey: 'status', header: 'Status', size: 150,
         cell: ({getValue,row}) => <StatusBadge status={getValue()} statusOptions={globalStatusOptions} onStatusChange={(newStatus) => handleOnChange(row.original.id,"status",newStatus)}/>

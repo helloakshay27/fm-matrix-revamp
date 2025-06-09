@@ -29,7 +29,8 @@ const NewProjectTextField = ({ value, onChange, onEnterPress, inputRef, placehol
     return <input ref={inputRef} type="text" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`${validator ? 'border border-red-500' : 'border-none'} w-full p-1 focus:outline-none rounded text-[13px] bg-none`} />;
 };
 
-const NewProjectDateEditor = ({ value, onChange, onEnterPress, placeholder, className, validator }) => {
+
+const NewProjectDateEditor = ({ value, onChange, onEnterPress, placeholder, className,validator }) => {
     const handleKeyDown = (event) => {
         if (event.key === 'Enter' && onEnterPress) { // Note: Enter press on date might not be standard UX for save
             event.preventDefault();
@@ -180,7 +181,7 @@ const ProjectList = () => {
             const apiCompatibleValue = typeof newValue === 'string' ? newValue.toLowerCase() : newValue;
             try {
                 await dispatch(
-                    changeProjectStatus({ id: actualProjectId, payload: { [name]: apiCompatibleValue } })
+                    changeProjectStatus({ id: actualProjectId, payload: {project_management: { [name]: apiCompatibleValue }} })
                 ).unwrap();
                 dispatch(fetchProjects());
             } catch (err) {
@@ -189,6 +190,34 @@ const ProjectList = () => {
         },
         [dispatch]
     );
+
+    const EditableTitleCell = ({ row, getValue }) => {
+  const [title, setTitle] = useState(getValue());
+  const [edit, setEdit] = useState(false);
+
+  const handleDoubleClick = (e) => {
+      e.preventDefault();
+      setEdit(true);
+  }
+  return (
+    <span onDoubleClick={handleDoubleClick} >
+      {edit ? (
+        <NewProjectTextField
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onEnterPress={handleStatusChange({ id: row.original.id, name: "title", payload: title })}
+          onBlur={() => setEdit(false)} // Optional: exit on blur
+        />
+      ) : (
+        <Link to={`/milestones/${row.original.actualId}`} className="cursor-pointer " onDoubleClick={handleDoubleClick}>
+          {title}
+        </Link>
+      )}
+    </span>
+  );
+};
+
+
 
     const resetNewProjectForm = useCallback(() => {
         setNewProjectTitle('');
@@ -319,10 +348,13 @@ const ProjectList = () => {
         () => [
             // Column definitions remain the same
             { accessorKey: "id", header: "Project ID", size: 110, cell: ({ row, getValue }) => (<Link to={`/projects/${row.original.actualId}`} className="text-blue-600 hover:text-blue-800 hover:underline">{getValue()}</Link>), },
-            { accessorKey: "title", header: "Project Title", size: 250, cell: ({ row, getValue }) => (<Link to={`/projects/${row.original.actualId}/milestones`} className="cursor-pointer">{getValue()}</Link>), },
+            { accessorKey: "title", header: "Project Title", size: 250, cell: ({ row, getValue }) => (
+              <EditableTitleCell row={row} getValue={getValue} />
+            ),
+        },
             { accessorKey: "status", header: "Status", size: 150, cell: (info) => (<StatusBadge statusOptions={globalStatusOptions.map(s => s.charAt(0).toUpperCase() + s.slice(1))} status={info.getValue()} onStatusChange={(newStatus) => { handleStatusChange({ id: info.row.original.id, name: "status", payload: newStatus }); }} />), },
             { accessorKey: "type", header: "Project Type", size: 150, },
-            { accessorKey: "manager", header: "Project Manager", size: 180, },
+            { accessorKey: "manager", header: "Project Manager", size: 180, cell:({getValue, row}) => (getValue()) },
             { accessorKey: "milestones", header: "Milestones", size: 130, cell: (info) => <ProgressBar progressString={info.getValue()} />, },
             { accessorKey: "tasks", header: "Tasks", size: 110, cell: (info) => <ProgressBar progressString={info.getValue()} />, },
             { accessorKey: "issues", header: "Issues", size: 100, },
