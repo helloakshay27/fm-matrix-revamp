@@ -1,22 +1,306 @@
-import React, { useState, useMemo } from 'react';
+// import { useState, useMemo, useEffect } from 'react';
+// import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
+// import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+// import { Link } from 'react-router-dom';
+// import {
+//   useReactTable,
+//   getCoreRowModel,
+//   flexRender,
+//   getPaginationRowModel,
+// } from '@tanstack/react-table';
+// import { useDispatch, useSelector } from 'react-redux';
+// import { fetchProjectTeams } from '../../../redux/slices/projectSlice';
+// import TeamModal from './Modal';
+
+// const ActionIcons = ({ row, open }) => (
+//   <div className="action-icons flex justify-between gap-5">
+//     <div>
+//       <button
+//         onClick={open}
+//       >
+//         <EditOutlinedIcon sx={{ fontSize: "20px" }} />
+//       </button>
+//       <button
+//         onClick={() => alert(`Deleting: ${row.original.name}`)}
+//         title="Delete"
+//       >
+//         <DeleteOutlineOutlinedIcon sx={{ fontSize: "20px" }} />
+//       </button>
+//     </div>
+//   </div>
+// );
+
+// const TeamsTable = () => {
+//   const dispatch = useDispatch();
+//   const { fetchProjectTeams: projectTeams } = useSelector(state => state.fetchProjectTeams);
+
+//   const [data, setData] = useState([]);
+//   const [isModalOpen, setIsModalOpen] = useState(false)
+//   const fixedRowsPerPage = 13;
+
+//   const [pagination, setPagination] = useState({
+//     pageIndex: 0,
+//     pageSize: fixedRowsPerPage,
+//   });
+
+//   useEffect(() => {
+//     dispatch(fetchProjectTeams());
+//   }, [dispatch]);
+
+//   useEffect(() => {
+//     if (projectTeams && Array.isArray(projectTeams)) {
+//       const transformedData = projectTeams.map(team => ({
+//         id: team.id,
+//         name: team.name,
+//         lead: team.team_lead?.name || 'N/A',
+//         associatedProjects: team.project_management?.name || 'N/A',
+//         TeamMember: team.project_team_members?.length + 1 || 0,
+//       }));
+//       setData(transformedData);
+//     } else {
+//       setData([]);
+//     }
+//   }, [projectTeams]);
+
+//   const columns = useMemo(
+//     () => [
+//       {
+//         accessorKey: 'name',
+//         header: 'Team name',
+//         size: 350,
+//         cell: ({ row, getValue }) => {
+//           return row.original ? (
+//             <Link
+//               to={`/setup/project-teams/details/${row.original.id}`}
+//               className="text-blue-600 hover:text-blue-800 hover:underline"
+//             >
+//               {getValue()}
+//             </Link>
+//           ) : null;
+//         },
+//       },
+//       {
+//         accessorKey: 'lead',
+//         header: 'Team Lead',
+//         size: 150,
+//         cell: ({ row, getValue }) => {
+//           return row.original ? getValue() : null;
+//         },
+//       },
+//       {
+//         accessorKey: 'associatedProjects',
+//         header: 'Associated Projects',
+//         size: 150,
+//         cell: ({ row, getValue }) => {
+//           return row.original ? <span className="ml-2">{getValue()}</span> : null;
+//         },
+//       },
+//       {
+//         accessorKey: 'TeamMember',
+//         header: () => { return <>Team Members(<i>TL+Memebers</i>) </> },
+//         size: 150,
+//         cell: ({ row, getValue }) => {
+//           return row.original ? <span>{getValue()}</span> : null;
+//         },
+//       },
+//       {
+//         id: 'actions',
+//         header: 'Actions',
+//         size: 60,
+//         cell: ({ row }) => (row.original ? <ActionIcons open={() => setIsModalOpen(true)} row={row} /> : null),
+//         meta: {
+//           cellClassName: 'actions-cell-content',
+//         },
+//       },
+//     ],
+//     []
+//   );
+
+//   const table = useReactTable({
+//     data,
+//     columns,
+//     state: {
+//       pagination,
+//     },
+//     onPaginationChange: setPagination,
+//     getCoreRowModel: getCoreRowModel(),
+//     getPaginationRowModel: getPaginationRowModel(),
+//     manualPagination: false,
+//   });
+
+//   const pageRows = table.getRowModel().rows;
+//   const numDataRowsOnPage = pageRows.length;
+//   const numEmptyRowsToAdd = Math.max(0, fixedRowsPerPage - numDataRowsOnPage);
+
+//   const rowHeight = 40;
+//   const headerHeight = 48;
+//   const desiredTableHeight = (fixedRowsPerPage * rowHeight) + headerHeight;
+
+//   return (
+//     <>
+//       <div className="project-table-container text-[14px] font-light">
+//         <div
+//           className="table-wrapper overflow-x-auto"
+//           style={{ height: `${desiredTableHeight}px` }}
+//         >
+//           <table className="w-full">
+//             <thead>
+//               {table.getHeaderGroups().map(headerGroup => (
+//                 <tr key={headerGroup.id}>
+//                   {headerGroup.headers.map(header => (
+//                     <th
+//                       key={header.id}
+//                       colSpan={header.colSpan}
+//                       style={{ width: header.getSize() }}
+//                       className="bg-[#D5DBDB] px-3 py-3.5 text-center font-[500] border-r-2 border-[#FFFFFF66]"
+//                     >
+//                       {header.isPlaceholder ? null : (
+//                         <div>
+//                           {flexRender(
+//                             header.column.columnDef.header,
+//                             header.getContext()
+//                           )}
+//                         </div>
+//                       )}
+//                     </th>
+//                   ))}
+//                 </tr>
+//               ))}
+//             </thead>
+//             <tbody className="divide-y" style={{ height: `${fixedRowsPerPage * rowHeight}px` }}>
+//               {pageRows.map(row => {
+//                 const isDataRowConsideredEmpty = !row.original || Object.values(row.original).every(v => v === null || v === '');
+
+//                 return (
+//                   <tr
+//                     key={row.id}
+//                     className={`hover:bg-gray-50 even:bg-[#D5DBDB4D] ${isDataRowConsideredEmpty ? 'pointer-events-none text-transparent' : ''}`}
+//                     style={{ height: `${rowHeight}px` }}
+//                   >
+//                     {row.getVisibleCells().map(cell => (
+//                       <td
+//                         key={cell.id}
+//                         style={{ width: cell.column.getSize() }}
+//                         className={`${cell.column.columnDef.meta?.cellClassName || ''} whitespace-nowrap px-3 py-2 border-r-2`}
+//                       >
+//                         {!isDataRowConsideredEmpty
+//                           ? flexRender(cell.column.columnDef.cell, cell.getContext())
+//                           : null}
+//                       </td>
+//                     ))}
+//                   </tr>
+//                 );
+//               })}
+//               {Array.from({ length: numEmptyRowsToAdd }).map((_, index) => (
+//                 <tr
+//                   key={`empty-row-${index}`}
+//                   style={{ height: `${rowHeight}px` }}
+//                   className="even:bg-[#D5DBDB4D] pointer-events-none"
+//                 >
+//                   {table.getAllLeafColumns().map(column => (
+//                     <td
+//                       key={`empty-cell-${index}-${column.id}`}
+//                       style={{ width: column.getSize() }}
+//                       className="whitespace-nowrap px-3 py-2 text-transparent border-r-2"
+//                     >
+//                       &nbsp;
+//                     </td>
+//                   ))}
+//                 </tr>
+//               ))}
+//             </tbody>
+//           </table>
+//         </div>
+
+//         {data.length > 0 && (
+//           <div className=" flex items-center justify-start gap-4 mt-4 text-[12px]">
+//             {/* Previous Button */}
+//             <button
+//               onClick={() => table.previousPage()}
+//               disabled={!table.getCanPreviousPage()}
+//               className="text-red-600 disabled:opacity-30"
+//             >
+//               {"<"}
+//             </button>
+
+//             {/* Page Numbers (Sliding Window of 3) */}
+//             {(() => {
+//               const totalPages = table.getPageCount();
+//               const currentPage = table.getState().pagination.pageIndex;
+//               const visiblePages = 3;
+
+//               let start = Math.max(0, currentPage - Math.floor(visiblePages / 2));
+//               let end = start + visiblePages;
+
+//               // Ensure end does not exceed total pages
+//               if (end > totalPages) {
+//                 end = totalPages;
+//                 start = Math.max(0, end - visiblePages);
+//               }
+
+//               return [...Array(end - start)].map((_, i) => {
+//                 const page = start + i;
+//                 const isActive = page === currentPage;
+
+//                 return (
+//                   <button
+//                     key={page}
+//                     onClick={() => table.setPageIndex(page)}
+//                     className={` px-3 py-1 ${isActive ? "bg-gray-200 font-bold" : ""}`}
+//                   >
+//                     {page + 1}
+//                   </button>
+//                 );
+//               });
+//             })()}
+
+//             {/* Next Button */}
+//             <button
+//               onClick={() => table.nextPage()}
+//               disabled={!table.getCanNextPage()}
+//               className="text-red-600 disabled:opacity-30"
+//             >
+//               {">"}
+//             </button>
+//           </div>
+//         )}
+//       </div>
+//       {
+//         isModalOpen && <TeamModal isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} isEdit={true} id={} />
+//       }
+//     </>
+//   );
+// };
+
+// export default TeamsTable;
+
+
+
+
+import { useState, useMemo, useEffect } from 'react';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import Switch from '@mui/joy/Switch';
 import { Link } from 'react-router-dom';
-
 import {
   useReactTable,
   getCoreRowModel,
   flexRender,
   getPaginationRowModel,
 } from '@tanstack/react-table';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchProjectTeams } from '../../../redux/slices/projectSlice';
+import TeamModal from './Modal';
 
-const ActionIcons = ({ row }) => (
+const ActionIcons = ({ row, open }) => (
   <div className="action-icons flex justify-between gap-5">
     <div>
-      <EditOutlinedIcon sx={{ fontSize: "20px" }} />
       <button
-        onClick={() => alert(`Deleting: ${row.original.roles}`)}
+        onClick={() => open(row.original.id)}
+      >
+        <EditOutlinedIcon sx={{ fontSize: "20px" }} />
+      </button>
+      <button
+        onClick={() => alert(`Deleting: ${row.original.name}`)}
         title="Delete"
       >
         <DeleteOutlineOutlinedIcon sx={{ fontSize: "20px" }} />
@@ -25,30 +309,38 @@ const ActionIcons = ({ row }) => (
   </div>
 );
 
-const defaultData = [
-  {
-    name: "Customer app dev",
-    lead: "Mahendra Lungare",
-    associatedProjects: 3,
-    TeamMember: 7,
-  },
-  {
-    name: "Customer app support",
-    lead: "Abdul",
-    associatedProjects: 5,
-    TeamMember: 6,
-  },
-
-];
-
 const TeamsTable = () => {
-  const [data, setData] = useState(defaultData);
+  const dispatch = useDispatch();
+  const { fetchProjectTeams: projectTeams } = useSelector(state => state.fetchProjectTeams);
+
+  const [data, setData] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTeamId, setSelectedTeamId] = useState(null);
   const fixedRowsPerPage = 13;
 
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: fixedRowsPerPage,
   });
+
+  useEffect(() => {
+    dispatch(fetchProjectTeams());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (projectTeams && Array.isArray(projectTeams)) {
+      const transformedData = projectTeams.map(team => ({
+        id: team.id,
+        name: team.name,
+        lead: team.team_lead?.name || 'N/A',
+        associatedProjects: team.project_management?.name || 'N/A',
+        TeamMember: team.project_team_members?.length + 1 || 0,
+      }));
+      setData(transformedData);
+    } else {
+      setData([]);
+    }
+  }, [projectTeams]);
 
   const columns = useMemo(
     () => [
@@ -57,10 +349,17 @@ const TeamsTable = () => {
         header: 'Team name',
         size: 350,
         cell: ({ row, getValue }) => {
-          return row.original ?<Link to="/setup/project-teams/details" className='text-blue-600 hover:text-blue-800 hover:underline'>{getValue()}</Link> : null;
+          return row.original ? (
+            <Link
+              to={`/setup/project-teams/details/${row.original.id}`}
+              className="text-blue-600 hover:text-blue-800 hover:underline"
+            >
+              {getValue()}
+            </Link>
+          ) : null;
         },
       },
-         {
+      {
         accessorKey: 'lead',
         header: 'Team Lead',
         size: 150,
@@ -68,7 +367,7 @@ const TeamsTable = () => {
           return row.original ? getValue() : null;
         },
       },
-             {
+      {
         accessorKey: 'associatedProjects',
         header: 'Associated Projects',
         size: 150,
@@ -76,19 +375,24 @@ const TeamsTable = () => {
           return row.original ? <span className="ml-2">{getValue()}</span> : null;
         },
       },
-             {
+      {
         accessorKey: 'TeamMember',
-        header: ()=>{return <>Team Members(<i>TL+Memebers</i>) </>},
+        header: () => <div>Team Members (<i>TL+Members</i>)</div>,
         size: 150,
         cell: ({ row, getValue }) => {
           return row.original ? <span>{getValue()}</span> : null;
         },
-      },    
+      },
       {
         id: 'actions',
         header: 'Actions',
         size: 60,
-        cell: ({ row }) => (row.original ? <ActionIcons row={row} /> : null),
+        cell: ({ row }) => (
+          row.original ? <ActionIcons open={(id) => {
+            setSelectedTeamId(id);
+            setIsModalOpen(true);
+          }} row={row} /> : null
+        ),
         meta: {
           cellClassName: 'actions-cell-content',
         },
@@ -113,143 +417,142 @@ const TeamsTable = () => {
   const numDataRowsOnPage = pageRows.length;
   const numEmptyRowsToAdd = Math.max(0, fixedRowsPerPage - numDataRowsOnPage);
 
-  const rowHeight = 40; 
-
-  const headerHeight = 48; 
+  const rowHeight = 40;
+  const headerHeight = 48;
   const desiredTableHeight = (fixedRowsPerPage * rowHeight) + headerHeight;
 
-
   return (
-    <div className="project-table-container text-[14px] font-light">
-      <div
-        className="table-wrapper overflow-x-auto"
-        style={{ height: `${desiredTableHeight}px` }}
-      >
-        <table className="w-full">
-          <thead>
-            {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <th
-                    key={header.id}
-                    colSpan={header.colSpan}
-                    style={{ width: header.getSize() }}
-                    className="bg-[#D5DBDB] px-3 py-3.5 text-center font-[500] border-r-2 border-[#FFFFFF66]"
-                  >
-                    {header.isPlaceholder ? null : (
-                      <div>
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                      </div>
-                    )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody className="divide-y" style={{ height: `${fixedRowsPerPage * rowHeight}px` }}>
-            {pageRows.map(row => {
-              const isDataRowConsideredEmpty = !row.original || Object.values(row.original).every(v => v === null || v === '');
-
-              return (
-                <tr
-                  key={row.id}
-                  className={`hover:bg-gray-50 even:bg-[#D5DBDB4D] ${isDataRowConsideredEmpty ? 'pointer-events-none text-transparent' : ''}`}
-                  style={{ height: `${rowHeight}px` }}
-                >
-                  {row.getVisibleCells().map(cell => (
-                    <td
-                      key={cell.id}
-                      style={{ width: cell.column.getSize() }}
-                      className={`${
-                        cell.column.columnDef.meta?.cellClassName || ''
-                      } whitespace-nowrap px-3 py-2 border-r-2
-                      }`}
+    <>
+      <div className="project-table-container text-[14px] font-light">
+        <div
+          className="table-wrapper overflow-x-auto"
+          style={{ height: `${desiredTableHeight}px` }}
+        >
+          <table className="w-full">
+            <thead>
+              {table.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map(header => (
+                    <th
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      style={{ width: header.getSize() }}
+                      className="bg-[#D5DBDB] px-3 py-3.5 text-center font-[500] border-r-2 border-[#FFFFFF66]"
                     >
-                      {!isDataRowConsideredEmpty
-                        ? flexRender(cell.column.columnDef.cell, cell.getContext())
-                        : null}
+                      {header.isPlaceholder ? null : (
+                        <div>
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                        </div>
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody className="divide-y" style={{ height: `${fixedRowsPerPage * rowHeight}px` }}>
+              {pageRows.map(row => {
+                const isDataRowConsideredEmpty = !row.original || Object.values(row.original).every(v => v === null || v === '');
+
+                return (
+                  <tr
+                    key={row.id}
+                    className={`hover:bg-gray-50 even:bg-[#D5DBDB4D] ${isDataRowConsideredEmpty ? 'pointer-events-none text-transparent' : ''}`}
+                    style={{ height: `${rowHeight}px` }}
+                  >
+                    {row.getVisibleCells().map(cell => (
+                      <td
+                        key={cell.id}
+                        style={{ width: cell.column.getSize() }}
+                        className={`${cell.column.columnDef.meta?.cellClassName || ''} whitespace-nowrap px-3 py-2 border-r-2`}
+                      >
+                        {!isDataRowConsideredEmpty
+                          ? flexRender(cell.column.columnDef.cell, cell.getContext())
+                          : null}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+              {Array.from({ length: numEmptyRowsToAdd }).map((_, index) => (
+                <tr
+                  key={`empty-row-${index}`}
+                  style={{ height: `${rowHeight}px` }}
+                  className="even:bg-[#D5DBDB4D] pointer-events-none"
+                >
+                  {table.getAllLeafColumns().map(column => (
+                    <td
+                      key={`empty-cell-${index}-${column.id}`}
+                      style={{ width: column.getSize() }}
+                      className="whitespace-nowrap px-3 py-2 text-transparent border-r-2"
+                    >
+                      &nbsp;
                     </td>
                   ))}
                 </tr>
-              );
-            })}
-            {Array.from({ length: numEmptyRowsToAdd }).map((_, index) => (
-              <tr
-                key={`empty-row-${index}`}
-                style={{ height: `${rowHeight}px` }}
-                className="even:bg-[#D5DBDB4D] pointer-events-none"
-              >
-                {table.getAllLeafColumns().map(column => (
-                  <td
-                    key={`empty-cell-${index}-${column.id}`}
-                    style={{ width: column.getSize() }}
-                    className="whitespace-nowrap px-3 py-2 text-transparent border-r-2"
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {data.length > 0 && (
+          <div className="flex items-center justify-start gap-4 mt-4 text-[12px]">
+            <button
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="text-red-600 disabled:opacity-30"
+            >
+              {"<"}
+            </button>
+            {(() => {
+              const totalPages = table.getPageCount();
+              const currentPage = table.getState().pagination.pageIndex;
+              const visiblePages = 3;
+
+              let start = Math.max(0, currentPage - Math.floor(visiblePages / 2));
+              let end = start + visiblePages;
+
+              if (end > totalPages) {
+                end = totalPages;
+                start = Math.max(0, end - visiblePages);
+              }
+
+              return [...Array(end - start)].map((_, i) => {
+                const page = start + i;
+                const isActive = page === currentPage;
+
+                return (
+                  <button
+                    key={page}
+                    onClick={() => table.setPageIndex(page)}
+                    className={`px-3 py-1 ${isActive ? "bg-gray-200 font-bold" : ""}`}
                   >
-                    &nbsp;
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    {page + 1}
+                  </button>
+                );
+              });
+            })()}
+            <button
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="text-red-600 disabled:opacity-30"
+            >
+              {">"}
+            </button>
+          </div>
+        )}
       </div>
-
-      {data.length > 0 && (
-                    <div className=" flex items-center justify-start gap-4 mt-4 text-[12px]">
-                        {/* Previous Button */}
-                        <button
-                            onClick={() => table.previousPage()}
-                            disabled={!table.getCanPreviousPage()}
-                            className="text-red-600 disabled:opacity-30"
-                        >
-                            {"<"}
-                        </button>
-
-                        {/* Page Numbers (Sliding Window of 3) */}
-                        {(() => {
-                            const totalPages = table.getPageCount();
-                            const currentPage = table.getState().pagination.pageIndex;
-                            const visiblePages = 3;
-
-                            let start = Math.max(0, currentPage - Math.floor(visiblePages / 2));
-                            let end = start + visiblePages;
-
-                            // Ensure end does not exceed total pages
-                            if (end > totalPages) {
-                                end = totalPages;
-                                start = Math.max(0, end - visiblePages);
-                            }
-
-                            return [...Array(end - start)].map((_, i) => {
-                                const page = start + i;
-                                const isActive = page === currentPage;
-
-                                return (
-                                    <button
-                                        key={page}
-                                        onClick={() => table.setPageIndex(page)}
-                                        className={` px-3 py-1 ${isActive ? "bg-gray-200 font-bold" : ""}`}
-                                    >
-                                        {page + 1}
-                                    </button>
-                                );
-                            });
-                        })()}
-
-                        {/* Next Button */}
-                        <button
-                            onClick={() => table.nextPage()}
-                            disabled={!table.getCanNextPage()}
-                            className="text-red-600 disabled:opacity-30"
-                        >
-                            {">"}
-                        </button>
-                    </div>
-                )}
-    </div>
+      {isModalOpen && (
+        <TeamModal
+          isModalOpen={isModalOpen}
+          setIsModalOpen={setIsModalOpen}
+          isEdit={true}
+          id={selectedTeamId}
+        />
+      )}
+    </>
   );
 };
 

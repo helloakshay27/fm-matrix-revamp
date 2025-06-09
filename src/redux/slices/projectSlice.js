@@ -11,7 +11,11 @@ const createApiSlice = (name, fetchThunk) => createSlice({
         error: null,
         [name]: [],
     },
-    reducers: {},
+    reducers: {
+        resetSuccess: (state) => {
+            state.success = false;
+        }
+    },
     extraReducers: (builder) => {
         builder
             .addCase(fetchThunk.pending, (state) => {
@@ -176,19 +180,19 @@ export const updateProjectType = createAsyncThunk(
 export const deleteProjectType = createAsyncThunk(
     'deleteProjectType',
     async (id, { rejectWithValue }) => {
-      try {
-        await axios.delete(`https://api-tasks.lockated.com/project_types/${id}.json`, {
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-          },
-        });
-  
-        return id; 
-      } catch (error) {
-        return rejectWithValue(error.response?.data || error.message);
-      }
+        try {
+            await axios.delete(`https://api-tasks.lockated.com/project_types/${id}.json`, {
+                headers: {
+                    Authorization: `Bearer ${access_token}`,
+                },
+            });
+
+            return id;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
     }
-  );
+);
 
 
 
@@ -233,26 +237,26 @@ export const fetchTemplates = createAsyncThunk('fetchTemplates', async () => {
 export const filterProjects = createAsyncThunk(
     'filterProjects',
     async (filters, { rejectWithValue }) => {
-      try {
-        const params = new URLSearchParams(filters).toString();
-        console.log(params);
-        const response = await axios.get(
-          `https://api-tasks.lockated.com/project_managements.json?${params}`,
-          {
-            headers: {
-              Authorization: `Bearer ${access_token}`,
-            },
-          }
-        );
-  
-        return response.data;
-      } catch (error) {
-        return rejectWithValue(error.response?.data || error.message);
-      }
-    }
-  );
+        try {
+            const params = new URLSearchParams(filters).toString();
+            console.log(params);
+            const response = await axios.get(
+                `https://api-tasks.lockated.com/project_managements.json?${params}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${access_token}`,
+                    },
+                }
+            );
 
-  export const fetchProjectGroup = createAsyncThunk('fetchProjectGroup', async () => {
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+
+export const fetchProjectGroup = createAsyncThunk('fetchProjectGroup', async () => {
     try {
         const response = await axios.get(`https://api-tasks.lockated.com/project_groups.json`, {
             headers: {
@@ -267,34 +271,95 @@ export const filterProjects = createAsyncThunk(
     }
 })
 
-export const createProjectGroup=createAsyncThunk('createProjectGroup',async(payload)=>{
-    try{
-        const response =await axios.post(`https://api-tasks.lockated.com/project_groups.json`,{project_group:payload},{
+export const createProjectGroup = createAsyncThunk('createProjectGroup', async (payload) => {
+    try {
+        const response = await axios.post(`https://api-tasks.lockated.com/project_groups.json`, { project_group: payload }, {
             headers: {
                 Authorization: `Bearer ${access_token}`,
-              },
+            },
         })
         return response.data;
     }
-    catch(error){
-        console.log(error);
+    catch (error) {
+        console.log(error)
+        return error.response.data
     }
 })
 
-export const updateProjectGroup=createAsyncThunk('updateProjectGroup',async({id,payload})=>{
-    try{
-        const response =await axios.put(`https://api-tasks.lockated.com/project_groups/${id}.json`,{project_group:payload},{
+export const updateProjectGroup = createAsyncThunk('updateProjectGroup', async ({ id, payload }) => {
+    try {
+        const response = await axios.put(`https://api-tasks.lockated.com/project_groups/${id}.json`, { project_group: payload }, {
             headers: {
                 Authorization: `Bearer ${access_token}`,
-              },
+            },
         })
         return response.data;
     }
-    catch(error){
-        console.log(error);
+    catch (error) {
+        console.log(error)
+        return error.response.data
     }
 })
-  
+
+export const createProjectTeam = createAsyncThunk('createProjectTeam', async ({ payload }) => {
+    try {
+        const response = await axios.post(`https://api-tasks.lockated.com/project_teams.json`, payload, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            },
+        })
+        return response.data;
+    }
+    catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
+export const fetchProjectTeams = createAsyncThunk('fetchProjectTeams', async () => {
+    try {
+        const response = await axios.get(`https://api-tasks.lockated.com/project_teams.json`, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            },
+        })
+        return response.data;
+    }
+    catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
+export const fetchProjectTeam = createAsyncThunk('fetchProjectTeam', async ({ id }) => {
+    try {
+        const response = await axios.get(`https://api-tasks.lockated.com/project_teams/${id}.json`, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            },
+        })
+        return response.data;
+    }
+    catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
+export const updateProjectTeam = createAsyncThunk('updateProjectTeam', async ({ payload, id }) => {
+    try {
+        const response = await axios.put(`https://api-tasks.lockated.com/project_teams/${id}.json`, payload, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            },
+        })
+        return response.data;
+    }
+    catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
 
 export const createProjectSlice = createApiSlice('createProject', createProject);
 export const fetchProjectsSlice = createApiSlice('fetchProjects', fetchProjects);
@@ -308,9 +373,13 @@ export const deleteProjectSlice = createApiSlice('deleteProject', deleteProject)
 export const updateProjectTypeSlice = createApiSlice('updateProjectType', updateProjectType);
 export const deleteProjectTypeSlice = createApiSlice('deleteProjectType', deleteProjectType);
 export const filterProjectsSlice = createApiSlice('filterProjects', filterProjects);
-export const fetchProjectGroupSlice=createApiSlice('fetchProjectGroup',fetchProjectGroup);
-export const createProjectGroupSlice=createApiSlice('createProjectGroup',createProjectGroup);
-export const updateProjectGroupSlice=createApiSlice('updateProjectGroup',updateProjectGroup);
+export const fetchProjectGroupSlice = createApiSlice('fetchProjectGroup', fetchProjectGroup);
+export const createProjectGroupSlice = createApiSlice('createProjectGroup', createProjectGroup);
+export const updateProjectGroupSlice = createApiSlice('updateProjectGroup', updateProjectGroup);
+export const createProjectTeamSlice = createApiSlice('createProjectTeam', createProjectTeam);
+export const fetchProjectTeamsSlice = createApiSlice('fetchProjectTeams', fetchProjectTeams);
+export const fetchProjectTeamSlice = createApiSlice('fetchProjectTeam', fetchProjectTeam);
+export const updateProjectTeamSlice = createApiSlice('updateProjectTeam', updateProjectTeam);
 
 
 export const createProjectReducer = createProjectSlice.reducer;
@@ -325,6 +394,12 @@ export const deleteProjectReducer = deleteProjectSlice.reducer;
 export const updateProjectTypeReducer = updateProjectTypeSlice.reducer;
 export const deleteProjectTypeReducer = deleteProjectTypeSlice.reducer;
 export const filterProjectsReducer = filterProjectsSlice.reducer;
-export const fetchProjectGroupReducer=fetchProjectGroupSlice.reducer;
-export const createProjectGroupReducer=createProjectGroupSlice.reducer;
-export const updateProjectGroupReducer=updateProjectGroupSlice.reducer;
+export const fetchProjectGroupReducer = fetchProjectGroupSlice.reducer;
+export const createProjectGroupReducer = createProjectGroupSlice.reducer;
+export const updateProjectGroupReducer = updateProjectGroupSlice.reducer;
+export const createProjectTeamReducer = createProjectTeamSlice.reducer;
+export const fetchProjectTeamsReducer = fetchProjectTeamsSlice.reducer;
+export const fetchProjectTeamReducer = fetchProjectTeamSlice.reducer;
+export const updateProjectTeamReducer = updateProjectTeamSlice.reducer;
+
+export const { resetSuccess } = createProjectTeamSlice.actions;

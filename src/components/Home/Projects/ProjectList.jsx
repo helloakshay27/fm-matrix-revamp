@@ -19,24 +19,24 @@ import "./Table.css";
 import Loader from "../../Loader";
 import SelectBox from "../../SelectBox";
 
-const NewProjectTextField = ({ value, onChange, onEnterPress, inputRef, placeholder, className ,validator}) => {
+const NewProjectTextField = ({ value, onChange, onEnterPress, inputRef, placeholder, className, validator }) => {
     const handleKeyDown = (event) => {
         if (event.key === 'Enter' && onEnterPress) {
             event.preventDefault();
             onEnterPress();
         }
     };
-    return <input ref={inputRef} type="text" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`${validator? 'border border-red-500': 'border-none'} w-full p-1 focus:outline-none rounded text-[13px] bg-none`} />;
+    return <input ref={inputRef} type="text" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`${validator ? 'border border-red-500' : 'border-none'} w-full p-1 focus:outline-none rounded text-[13px] bg-none`} />;
 };
 
-const NewProjectDateEditor = ({ value, onChange, onEnterPress, placeholder, className,validator }) => {
+const NewProjectDateEditor = ({ value, onChange, onEnterPress, placeholder, className, validator }) => {
     const handleKeyDown = (event) => {
         if (event.key === 'Enter' && onEnterPress) { // Note: Enter press on date might not be standard UX for save
             event.preventDefault();
             onEnterPress();
         }
     };
-    return <input type="date" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`${validator? 'border border-red-500': 'border-none'} w-full p-1 focus:outline-none rounded text-[13px] ${className || ''}`} />;
+    return <input type="date" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`${validator ? 'border border-red-500' : 'border-none'} w-full p-1 focus:outline-none rounded text-[13px] ${className || ''}`} />;
 };
 
 const ActionIcons = ({ row }) => (
@@ -110,7 +110,7 @@ const ProjectList = () => {
     const [newProjectPriority, setNewProjectPriority] = useState(globalPriorityOptionsForNew[0]);
     const [localError, setLocalError] = useState(null);
     const [isSavingNewProject, setIsSavingNewProject] = useState(false);
-    const[validator, setValidator] = useState(null);
+    const [validator, setValidator] = useState(null);
     const newProjectTitleInputRef = useRef(null);
     const newProjectFormRowRef = useRef(null); // Ref for the new project form row
 
@@ -215,7 +215,7 @@ const ProjectList = () => {
     const handleSaveNewProject = useCallback(async () => {
         if (!newProjectTitle || newProjectTitle.trim() === "" || !newProjectStartDate || !newProjectEndDate) {
             setLocalError("Fill all required fields.");
-             setValidator(true);
+            setValidator(true);
             return; // Important: Return here to prevent save attempt
         }
         setLocalError(null);
@@ -270,7 +270,7 @@ const ProjectList = () => {
                 return;
             }
 
-                handleSaveNewProject(); // Attempt to save if title is present
+            handleSaveNewProject(); // Attempt to save if title is present
         };
 
         if (isAddingNewProject) {
@@ -290,21 +290,21 @@ const ProjectList = () => {
 
     useEffect(() => {
         const handleEscape = (event) => {
-          if(!isAddingNewProject)return;
-          if (event.key === "Escape") {
-            console.log("Escape key pressed!");
-            handleCancelNewProject();
-          }
+            if (!isAddingNewProject) return;
+            if (event.key === "Escape") {
+                console.log("Escape key pressed!");
+                handleCancelNewProject();
+            }
         };
-    
+
         window.addEventListener("keydown", handleEscape);
-    
+
         return () => {
-          window.removeEventListener("keydown", handleEscape);
+            window.removeEventListener("keydown", handleEscape);
         };
-      }, [isAddingNewProject, handleCancelNewProject]);
-    
-    
+    }, [isAddingNewProject, handleCancelNewProject]);
+
+
 
 
     const userOptionsForSelectBox = useMemo(() => [
@@ -450,12 +450,12 @@ const ProjectList = () => {
                                     <td className="p-1 border-r-2 align-middle"></td> {/* Issues */}
                                     <td className="p-0 border-r-2 align-middle">
                                         <NewProjectDateEditor value={newProjectStartDate} onChange={(e) => setNewProjectStartDate(e.target.value)}
-                                            onEnterPress={handleSaveNewProject} 
+                                            onEnterPress={handleSaveNewProject}
                                             validator={validator} /* Optional: save on enter for dates too */ />
                                     </td>
                                     <td className="p-0 border-r-2 align-middle">
                                         <NewProjectDateEditor value={newProjectEndDate} onChange={(e) => setNewProjectEndDate(e.target.value)}
-                                            onEnterPress={handleSaveNewProject} 
+                                            onEnterPress={handleSaveNewProject}
                                             validator={validator} />
                                     </td>
                                     <td className="p-1 border-r-2 align-middle">

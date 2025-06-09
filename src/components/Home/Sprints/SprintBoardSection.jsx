@@ -1,6 +1,16 @@
 import { useEffect, useState, useCallback } from "react";
 import Xarrow from "react-xarrows";
-import { CalendarDays, GripHorizontal, Play, Square, Timer, User, Circle, X, CircleCheck } from "lucide-react";
+import {
+  CalendarDays,
+  GripHorizontal,
+  Play,
+  Square,
+  Timer,
+  User,
+  Circle,
+  X,
+  CircleCheck,
+} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import useDeepCompareEffect from "use-deep-compare-effect";
 import { debounce } from "lodash";
@@ -9,7 +19,11 @@ import Boards from "../Boards";
 import TaskCard from "../Task/TaskCard";
 import { changeTaskStatus, fetchTasks } from "../../../redux/slices/taskSlice";
 import { useDrop } from "react-dnd";
-import { fetchSpirintById, fetchSpirints, putSprint } from "../../../redux/slices/spirintSlice";
+import {
+  fetchSpirintById,
+  fetchSpirints,
+  putSprint,
+} from "../../../redux/slices/spirintSlice";
 import { useParams } from "react-router-dom";
 import TaskSubCard from "../Task/TaskSubCard";
 
@@ -20,14 +34,18 @@ const SprintBoardSection = ({ selectedProject }) => {
   const dispatch = useDispatch();
   const [taskData, setTaskData] = useState([]);
   const taskState = useSelector((state) => state.fetchTasks.fetchTasks);
-  const sprintState = useSelector((state) => state.fetchSpirints?.fetchSpirints || []);
+  const sprintState = useSelector(
+    (state) => state.fetchSpirints?.fetchSpirints || []
+  );
   const [projects, setProjects] = useState([]);
   const [selectedSprint, setSelectedSprint] = useState(null);
   const [countdown, setCountdown] = useState("00d:00h:00m:00s");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchProjects = useSelector((state) => state.fetchTasksOfProject);
-  const { fetchSpirintById: newSprint } = useSelector((state) => state.fetchSpirintById);
+  const { fetchSpirintById: newSprint } = useSelector(
+    (state) => state.fetchSpirintById
+  );
 
   useEffect(() => {
     dispatch(fetchSpirintById(id));
@@ -62,7 +80,9 @@ const SprintBoardSection = ({ selectedProject }) => {
         if (task.sub_tasks_managements) {
           const updatedSubtasks = task.sub_tasks_managements.map((subtask) => {
             if (subtask.id === taskId && subtask[fieldName] !== newValue) {
-              console.log(`Updating subtask ${taskId} with ${fieldName}: ${newValue}`);
+              console.log(
+                `Updating subtask ${taskId} with ${fieldName}: ${newValue}`
+              );
               changed = true;
               return { ...subtask, [fieldName]: newValue };
             }
@@ -82,21 +102,30 @@ const SprintBoardSection = ({ selectedProject }) => {
   }, []);
 
   const debouncedUpdateTaskField = useCallback(
-    debounce(async (taskId, fieldName, newValue, isSubtask = false, parentTaskId = null) => {
-      try {
-        await dispatch(
-          changeTaskStatus({
-            id: taskId,
-            payload: { [fieldName]: newValue },
-            isSubtask,
-            parentTaskId,
-          })
-        ).unwrap();
-      } catch (error) {
-        console.error(`Task update failed for ${taskId}:`, error);
-        dispatch(fetchTasks());
-      }
-    }, 300),
+    debounce(
+      async (
+        taskId,
+        fieldName,
+        newValue,
+        isSubtask = false,
+        parentTaskId = null
+      ) => {
+        try {
+          await dispatch(
+            changeTaskStatus({
+              id: taskId,
+              payload: { [fieldName]: newValue },
+              isSubtask,
+              parentTaskId,
+            })
+          ).unwrap();
+        } catch (error) {
+          console.error(`Task update failed for ${taskId}:`, error);
+          dispatch(fetchTasks());
+        }
+      },
+      300
+    ),
     [dispatch]
   );
 
@@ -107,11 +136,12 @@ const SprintBoardSection = ({ selectedProject }) => {
 
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: [ItemTypes.TASK, ItemTypes.SUBTASK],
-    drop: selectedSprint?.status === "stopped"
-      ? (item) => {
-        handleDrop(item, "sprint");
-      }
-      : undefined,
+    drop:
+      selectedSprint?.status === "stopped"
+        ? (item) => {
+          handleDrop(item, "sprint");
+        }
+        : undefined,
     collect: (monitor) => ({
       isOver: monitor.isOver(),
       canDrop: monitor.canDrop(),
@@ -120,11 +150,11 @@ const SprintBoardSection = ({ selectedProject }) => {
 
   const handleDrop = useCallback(
     async (item, newStatus) => {
-      console.log(item)
+      console.log(item);
       const { type, id: taskid, fromTaskId } = item;
 
       if (type === "TASK" || type === "SUBTASK") {
-        updateTaskDataField(taskid, "status", newStatus)
+        updateTaskDataField(taskid, "status", newStatus);
       }
 
       if (newStatus !== "sprint") {
@@ -139,7 +169,10 @@ const SprintBoardSection = ({ selectedProject }) => {
         if (!sprintTaskIds.includes(taskid)) {
           sprintTaskIds.push(taskid);
         }
-      } else if ((type === "TASK" || type === "SUBTASK") && newStatus !== "sprint") {
+      } else if (
+        (type === "TASK" || type === "SUBTASK") &&
+        newStatus !== "sprint"
+      ) {
         const index = sprintTaskIds.indexOf(taskid);
         if (index > -1) {
           sprintTaskIds.splice(index, 1);
@@ -161,7 +194,14 @@ const SprintBoardSection = ({ selectedProject }) => {
         }
       }
     },
-    [taskData, debouncedUpdateTaskField, selectedSprint, id, dispatch, selectedProject]
+    [
+      taskData,
+      debouncedUpdateTaskField,
+      selectedSprint,
+      id,
+      dispatch,
+      selectedProject,
+    ]
   );
   const handleLink = (sourceId, targetIds = []) => {
     if (targetIds.length === 0) return;
@@ -183,7 +223,8 @@ const SprintBoardSection = ({ selectedProject }) => {
           .filter(
             (targetId) =>
               !prevLinks.some(
-                (link) => link.sourceId === sourceId && link.targetId === targetId
+                (link) =>
+                  link.sourceId === sourceId && link.targetId === targetId
               )
           )
           .map((targetId) => ({ sourceId, targetId }));
@@ -251,7 +292,9 @@ const SprintBoardSection = ({ selectedProject }) => {
     return colors[index % colors.length];
   };
 
-  const projectState = useSelector((state) => state.fetchProjects.fetchProjects);
+  const projectState = useSelector(
+    (state) => state.fetchProjects.fetchProjects
+  );
 
   useEffect(() => {
     if (id && sprintState.length) {
@@ -266,7 +309,11 @@ const SprintBoardSection = ({ selectedProject }) => {
   }, [id, sprintState]);
 
   const calculateCountdown = useCallback(() => {
-    if (!selectedSprint?.end_date || selectedSprint?.status === "completed" || selectedSprint?.status === "stopped") {
+    if (
+      !selectedSprint?.end_date ||
+      selectedSprint?.status === "completed" ||
+      selectedSprint?.status === "stopped"
+    ) {
       setCountdown("00d:00h:00m:00s");
       return;
     }
@@ -316,8 +363,15 @@ const SprintBoardSection = ({ selectedProject }) => {
     }
   }, [projectState, selectedProject]);
 
-  const contributors =
-    selectedSprint?.contributors || ["S", "A", "B", "M", "K", "D", "CB"];
+  const contributors = selectedSprint?.contributors || [
+    "S",
+    "A",
+    "B",
+    "M",
+    "K",
+    "D",
+    "CB",
+  ];
 
   const handleIconClick = useCallback(
     debounce(async (newStatus) => {
@@ -406,10 +460,14 @@ const SprintBoardSection = ({ selectedProject }) => {
                 className="text-white py-2 px-4 rounded-md text-xs absolute top-0 left-0 z-10"
                 style={{
                   backgroundColor:
-                    selectedSprint?.status === "completed" ? "green" : "#88D760",
+                    selectedSprint?.status === "completed"
+                      ? "green"
+                      : "#88D760",
                 }}
               >
-                {selectedSprint?.status === "completed" ? "Completed" : "Active"}
+                {selectedSprint?.status === "completed"
+                  ? "Completed"
+                  : "Active"}
               </h3>
               <div className="absolute top-2 right-2 flex gap-2">
                 {selectedSprint && (
@@ -523,11 +581,16 @@ const SprintBoardSection = ({ selectedProject }) => {
             <div
               ref={selectedSprint?.status === "stopped" ? drop : null}
               className={`w-full h-max bg-white p-3 shadow-xl text-xs flex flex-col space-y-2 mb-2 rounded-md flex flex-col items-center justify-start text-center px-2 text-gray-500 text-sm overflow-y-auto no-scrollbar
-              ${isOver && canDrop && selectedSprint?.status === "stopped" ? "ring-2 ring-blue-400" : ""}`}
+              ${isOver && canDrop && selectedSprint?.status === "stopped"
+                  ? "ring-2 ring-blue-400"
+                  : ""
+                }`}
               style={{ minHeight: 120 }}
             >
-              {taskData.filter((task) => task.status === "sprint").length === 0 &&
-                (!selectedSprint?.sprint_tasks || selectedSprint.sprint_tasks.length === 0) ? (
+              {taskData.filter((task) => task.status === "sprint").length ===
+                0 &&
+                (!selectedSprint?.sprint_tasks ||
+                  selectedSprint.sprint_tasks.length === 0) ? (
                 <span className="text-gray-500 mt-3">
                   Drag from respective statuses
                   <br />
@@ -539,44 +602,62 @@ const SprintBoardSection = ({ selectedProject }) => {
                     .filter((task) => task.status === "sprint")
                     .map((task) => {
                       const taskId = `task-${task.id}`;
-                      const visibleSubtasks = (task.sub_tasks_managements || []).filter(
-                        (subtask) => subtask.status === "sprint"
-                      );
+                      const visibleSubtasks = (
+                        task.sub_tasks_managements || []
+                      ).filter((subtask) => subtask.status === "sprint");
                       return (
-                        <div key={`task-${task.id}`} id={taskId} className="w-full my-2">
+                        <div
+                          key={`task-${task.id}`}
+                          id={taskId}
+                          className="w-full my-2"
+                        >
                           <TaskCard
                             task={task}
                             toggleSubCard={() => toggleSubCard(task.id)}
                           />
-                          {visibleSubtasks.length > 0 && subCardVisibility[task.id] && (
-                            <div className="ml-5 mt-1">
-                              {visibleSubtasks.map((subtask) => (
-                                <div
-                                  key={`subtask-${subtask.id}`}
-                                  id={`subtask-${subtask.id}`}
-                                  draggable={selectedSprint?.status === "stopped"}
-                                  onDragStart={(e) => {
-                                    if (selectedSprint?.status !== "stopped") return;
-                                    console.log("Dragging subtask:", subtask.id, "from task:", task.id);
-                                    e.dataTransfer.setData(
-                                      "application/reactflow",
-                                      JSON.stringify({ type: "SUBTASK", id: subtask.id, fromTaskId: task.id })
-                                    );
-                                    e.dataTransfer.effectAllowed = "move";
-                                  }}
-                                  className="mb-2 cursor-move relative"
-                                  style={{ pointerEvents: "auto" }}
-                                >
-                                  <TaskSubCard subtask={subtask} isVisible={true} />
+                          {visibleSubtasks.length > 0 &&
+                            subCardVisibility[task.id] && (
+                              <div className="ml-5 mt-1">
+                                {visibleSubtasks.map((subtask) => (
                                   <div
-                                    className="text-[8px] font-medium text-gray-500 mb-1 me-2 pt-1 text-end italic"
+                                    key={`subtask-${subtask.id}`}
+                                    id={`subtask-${subtask.id}`}
+                                    draggable={
+                                      selectedSprint?.status === "stopped"
+                                    }
+                                    onDragStart={(e) => {
+                                      if (selectedSprint?.status !== "stopped")
+                                        return;
+                                      console.log(
+                                        "Dragging subtask:",
+                                        subtask.id,
+                                        "from task:",
+                                        task.id
+                                      );
+                                      e.dataTransfer.setData(
+                                        "application/reactflow",
+                                        JSON.stringify({
+                                          type: "SUBTASK",
+                                          id: subtask.id,
+                                          fromTaskId: task.id,
+                                        })
+                                      );
+                                      e.dataTransfer.effectAllowed = "move";
+                                    }}
+                                    className="mb-2 cursor-move relative"
+                                    style={{ pointerEvents: "auto" }}
                                   >
-                                    Subcard of Task-{task.id}
+                                    <TaskSubCard
+                                      subtask={subtask}
+                                      isVisible={true}
+                                    />
+                                    <div className="text-[8px] font-medium text-gray-500 mb-1 me-2 pt-1 text-end italic">
+                                      Subcard of Task-{task.id}
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                                ))}
+                              </div>
+                            )}
                         </div>
                       );
                     })}
@@ -584,45 +665,65 @@ const SprintBoardSection = ({ selectedProject }) => {
                     selectedSprint.sprint_tasks.map((sprintTask) => {
                       const taskId = `task-${sprintTask.task_id}`;
                       const task = sprintTask.task_management;
-                      const visibleSubtasks = (task.sub_tasks_managements || []).filter(
-                        (subtask) => subtask.status === "sprint"
-                      );
+                      const visibleSubtasks = (
+                        task.sub_tasks_managements || []
+                      ).filter((subtask) => subtask.status === "sprint");
                       return (
-                        <div key={`sprint-task-${sprintTask.id}`} id={taskId} className="w-full my-2">
+                        <div
+                          key={`sprint-task-${sprintTask.id}`}
+                          id={taskId}
+                          className="w-full my-2"
+                        >
                           <TaskCard
                             id={sprintTask.task_id}
                             task={task}
-                            toggleSubCard={() => toggleSubCard(sprintTask.task_id)}
+                            toggleSubCard={() =>
+                              toggleSubCard(sprintTask.task_id)
+                            }
                           />
-                          {visibleSubtasks.length > 0 && subCardVisibility[sprintTask.task_id] && (
-                            <div className="ml-5 mt-1">
-                              {visibleSubtasks.map((subtask) => (
-                                <div
-                                  key={`subtask-${subtask.id}`}
-                                  id={`subtask-${subtask.id}`}
-                                  draggable={selectedSprint?.status === "stopped"}
-                                  onDragStart={(e) => {
-                                    if (selectedSprint?.status !== "stopped") return;
-                                    console.log("Dragging subtask:", subtask.id, "from task:", sprintTask.task_id);
-                                    e.dataTransfer.setData(
-                                      "application/reactflow",
-                                      JSON.stringify({ type: "SUBTASK", id: subtask.id, fromTaskId: sprintTask.task_id })
-                                    );
-                                    e.dataTransfer.effectAllowed = "move";
-                                  }}
-                                  className="mb-2 cursor-move relative"
-                                  style={{ pointerEvents: "auto" }}
-                                >
-                                  <TaskSubCard subtask={subtask} isVisible={true} />
+                          {visibleSubtasks.length > 0 &&
+                            subCardVisibility[sprintTask.task_id] && (
+                              <div className="ml-5 mt-1">
+                                {visibleSubtasks.map((subtask) => (
                                   <div
-                                    className="text-[8px] font-medium text-gray-500 mb-1 me-2 pt-1 text-end italic"
+                                    key={`subtask-${subtask.id}`}
+                                    id={`subtask-${subtask.id}`}
+                                    draggable={
+                                      selectedSprint?.status === "stopped"
+                                    }
+                                    onDragStart={(e) => {
+                                      if (selectedSprint?.status !== "stopped")
+                                        return;
+                                      console.log(
+                                        "Dragging subtask:",
+                                        subtask.id,
+                                        "from task:",
+                                        sprintTask.task_id
+                                      );
+                                      e.dataTransfer.setData(
+                                        "application/reactflow",
+                                        JSON.stringify({
+                                          type: "SUBTASK",
+                                          id: subtask.id,
+                                          fromTaskId: sprintTask.task_id,
+                                        })
+                                      );
+                                      e.dataTransfer.effectAllowed = "move";
+                                    }}
+                                    className="mb-2 cursor-move relative"
+                                    style={{ pointerEvents: "auto" }}
                                   >
-                                    Subcard of Task-{sprintTask.task_id}
+                                    <TaskSubCard
+                                      subtask={subtask}
+                                      isVisible={true}
+                                    />
+                                    <div className="text-[8px] font-medium text-gray-500 mb-1 me-2 pt-1 text-end italic">
+                                      Subcard of Task-{sprintTask.task_id}
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                                ))}
+                              </div>
+                            )}
                         </div>
                       );
                     })}
@@ -633,11 +734,16 @@ const SprintBoardSection = ({ selectedProject }) => {
         </div>
 
         {sprintTitle.map((card) => {
-          const sprintTaskIds = newSprint?.sprint_tasks?.map((sprintTask) => sprintTask.task_id) || [];
+          const sprintTaskIds =
+            newSprint?.sprint_tasks?.map((sprintTask) => sprintTask.task_id) ||
+            [];
           const cardStatus = card.title.toLowerCase().replace(" ", "_");
           const filteredTasks = taskData.filter((task) => {
             const notInSprint = !sprintTaskIds.includes(task.id);
-            const matchesStatus = cardStatus === "active" ? task.status === "open" : task.status === cardStatus;
+            const matchesStatus =
+              cardStatus === "active"
+                ? task.status === "open"
+                : task.status === cardStatus;
             return notInSprint && matchesStatus;
           });
 
@@ -649,9 +755,13 @@ const SprintBoardSection = ({ selectedProject }) => {
                 parentTaskStatus: task.status,
               }))
             )
-            .filter((subtask) =>
-              (cardStatus === "active" ? subtask.status === "open" : subtask.status === cardStatus) &&
-              subtask.status !== subtask.parentTaskStatus
+            .filter(
+              (subtask) =>
+                (cardStatus === "active"
+                  ? subtask.status === "open"
+                  : subtask.status === cardStatus) &&
+                subtask.status !== subtask.parentTaskStatus &&
+                !sprintTaskIds.includes(subtask.id)
             );
 
           return (
@@ -661,7 +771,9 @@ const SprintBoardSection = ({ selectedProject }) => {
               color={card.color}
               count={filteredTasks.length + filteredSubtasks.length}
               title={card.title}
-              onDrop={(item) => handleDrop(item, cardStatus === "active" ? "open" : cardStatus)}
+              onDrop={(item) =>
+                handleDrop(item, cardStatus === "active" ? "open" : cardStatus)
+              }
             >
               {filteredTasks.length + filteredSubtasks.length > 0 ? (
                 <>
@@ -670,27 +782,45 @@ const SprintBoardSection = ({ selectedProject }) => {
                     let dependsOnArr = [];
 
                     if (Array.isArray(task.predecessor_task)) {
-                      dependsOnArr = [...dependsOnArr, ...task.predecessor_task.flat().filter(Boolean)];
+                      dependsOnArr = [
+                        ...dependsOnArr,
+                        ...task.predecessor_task.flat().filter(Boolean),
+                      ];
                     }
                     if (Array.isArray(task.successor_task)) {
-                      dependsOnArr = [...dependsOnArr, ...task.successor_task.flat().filter(Boolean)];
+                      dependsOnArr = [
+                        ...dependsOnArr,
+                        ...task.successor_task.flat().filter(Boolean),
+                      ];
                     }
 
-                    dependsOnArr = [...new Set(dependsOnArr.filter((id) => id && id !== task.id))];
-                    const formattedDependsOn = dependsOnArr.map((dep) => `task-${dep}`);
+                    dependsOnArr = [
+                      ...new Set(
+                        dependsOnArr.filter((id) => id && id !== task.id)
+                      ),
+                    ];
+                    const formattedDependsOn = dependsOnArr.map(
+                      (dep) => `task-${dep}`
+                    );
 
                     const allLinked =
                       formattedDependsOn.length > 0 &&
                       formattedDependsOn.every((depId) =>
                         arrowLinks.some(
                           (link) =>
-                            (link.sourceId === depId && link.targetId === taskId) ||
-                            (link.sourceId === taskId && link.targetId === depId)
+                            (link.sourceId === depId &&
+                              link.targetId === taskId) ||
+                            (link.sourceId === taskId &&
+                              link.targetId === depId)
                         )
                       );
 
-                    const visibleSubtasks = (task.sub_tasks_managements || []).filter((subtask) =>
-                      cardStatus === "active" ? subtask.status === "open" : subtask.status === cardStatus
+                    const visibleSubtasks = (
+                      task.sub_tasks_managements || []
+                    ).filter((subtask) =>
+                      cardStatus === "active"
+                        ? subtask.status === "open"
+                        : subtask.status === cardStatus
                     );
 
                     return (
@@ -699,38 +829,50 @@ const SprintBoardSection = ({ selectedProject }) => {
                           task={task}
                           toggleSubCard={() => toggleSubCard(task.id)}
                           {...(formattedDependsOn.length > 0 && {
-                            handleLink: () => handleLink(taskId, formattedDependsOn),
+                            handleLink: () =>
+                              handleLink(taskId, formattedDependsOn),
                             iconColor: allLinked ? "#A0A0A0" : "#DA2400",
                           })}
                         />
-                        {visibleSubtasks.length > 0 && subCardVisibility[task.id] && (
-                          <div className="ml-5 mt-1">
-                            {visibleSubtasks.map((subtask) => (
-                              <div
-                                key={`subtask-${subtask.id}`}
-                                id={`subtask-${subtask.id}`}
-                                draggable
-                                onDragStart={(e) => {
-                                  console.log('Dragging subtask:', subtask.id, 'from task:', task.id);
-                                  e.dataTransfer.setData(
-                                    "application/reactflow",
-                                    JSON.stringify({ type: "SUBTASK", id: subtask.id, fromTaskId: task.id })
-                                  );
-                                  e.dataTransfer.effectAllowed = "move";
-                                }}
-                                className="mb-2 cursor-move relative"
-                                style={{ pointerEvents: 'auto' }}
-                              >
+                        {visibleSubtasks.length > 0 &&
+                          subCardVisibility[task.id] && (
+                            <div className="ml-5 mt-1">
+                              {visibleSubtasks.map((subtask) => (
                                 <div
-                                  className="text-[8px] font-medium text-gray-500 mb-1 me-2 pt-1 text-end italic"
+                                  key={`subtask-${subtask.id}`}
+                                  id={`subtask-${subtask.id}`}
+                                  draggable
+                                  onDragStart={(e) => {
+                                    console.log(
+                                      "Dragging subtask:",
+                                      subtask.id,
+                                      "from task:",
+                                      task.id
+                                    );
+                                    e.dataTransfer.setData(
+                                      "application/reactflow",
+                                      JSON.stringify({
+                                        type: "SUBTASK",
+                                        id: subtask.id,
+                                        fromTaskId: task.id,
+                                      })
+                                    );
+                                    e.dataTransfer.effectAllowed = "move";
+                                  }}
+                                  className="mb-2 cursor-move relative"
+                                  style={{ pointerEvents: "auto" }}
                                 >
-                                  Subcard of Task-{task.id}
+                                  <div className="text-[8px] font-medium text-gray-500 mb-1 me-2 pt-1 text-end italic">
+                                    Subcard of Task-{task.id}
+                                  </div>
+                                  <TaskSubCard
+                                    subtask={subtask}
+                                    isVisible={true}
+                                  />
                                 </div>
-                                <TaskSubCard subtask={subtask} isVisible={true} />
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                              ))}
+                            </div>
+                          )}
                       </div>
                     );
                   })}
@@ -740,7 +882,12 @@ const SprintBoardSection = ({ selectedProject }) => {
                       id={`subtask-${subtask.id}`}
                       draggable
                       onDragStart={(e) => {
-                        console.log('Dragging independent subtask:', subtask.id, 'from task:', subtask.parentTaskId);
+                        console.log(
+                          "Dragging independent subtask:",
+                          subtask.id,
+                          "from task:",
+                          subtask.parentTaskId
+                        );
                         e.dataTransfer.setData(
                           "application/reactflow",
                           JSON.stringify({
@@ -752,11 +899,9 @@ const SprintBoardSection = ({ selectedProject }) => {
                         e.dataTransfer.effectAllowed = "move";
                       }}
                       className="mb-2 cursor-move relative"
-                      style={{ pointerEvents: 'auto' }}
+                      style={{ pointerEvents: "auto" }}
                     >
-                      <div
-                        className="text-[8px] font-medium text-gray-500 mb-1 me-2 pt-1 text-end italic"
-                      >
+                      <div className="text-[8px] font-medium text-gray-500 mb-1 me-2 pt-1 text-end italic">
                         Subcard of Task-{subtask.parentTaskId}
                       </div>
                       <TaskSubCard subtask={subtask} isVisible={true} />
@@ -819,4 +964,4 @@ const SprintBoardSection = ({ selectedProject }) => {
   );
 };
 
-export default SprintBoardSection
+export default SprintBoardSection;

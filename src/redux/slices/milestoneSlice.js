@@ -48,9 +48,9 @@ export const createMilestone = createAsyncThunk('createMilestone', async ( paylo
     }
 })
 
-export const fetchMilestone=createAsyncThunk("fetchMilestone",async()=>{
+export const fetchMilestone=createAsyncThunk("fetchMilestone",async(id)=>{
     try{
-        const response =await axios.get(`https://api-tasks.lockated.com/milestones.json`,{
+        const response =await axios.get(`https://api-tasks.lockated.com/milestones.json?q[project_management_id_eq]=${id}`,{
             headers: {
                 Authorization: `Bearer ${access_token}`,
             }

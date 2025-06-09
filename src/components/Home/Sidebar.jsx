@@ -81,12 +81,12 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
                                 {isSidebarOpen ? "Channels" : ""}
                             </li>
                         </NavLink>
-                        <NavLink to="/milestones">
+                        {/* <NavLink to="/milestones">
                             <li className={`sidebar-link ${!isSidebarOpen ? "justify-center" : ""}`}>
                                 <Milestone size={20} />
                                 {isSidebarOpen ? "Milestones" : ""}
                             </li>
-                        </NavLink>
+                        </NavLink> */}
                         <NavLink to="/mom">
                             <li className={`sidebar-link ${!isSidebarOpen ? "justify-center" : ""}`}>
                                 <MessageSquareText size={20} />

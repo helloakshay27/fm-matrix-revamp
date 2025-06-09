@@ -3,10 +3,11 @@ import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import SelectBox from "../../../SelectBox";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers } from "../../../../redux/slices/userSlice";
-import { createMilestone,fetchMilestone } from "../../../../redux/slices/milestoneSlice";
+import { createMilestone, fetchMilestone } from "../../../../redux/slices/milestoneSlice";
+import { useLocation, useParams } from "react-router-dom";
 
 
-const AddMilestoneModal = ({ id, deleteMilestone ,users,options}) => {
+const AddMilestoneModal = ({ id, deleteMilestone, users, options }) => {
   // const [options, setOptions] = useState(["Option 1", "Option 2", "Option 3"]);
   const [value, setValue] = useState(null);
   const [owner, setOwner] = useState(null);
@@ -29,9 +30,9 @@ const AddMilestoneModal = ({ id, deleteMilestone ,users,options}) => {
           <label className="block mb-2 ">Milestone Owner<span className="text-red-600">*</span></label>
           <SelectBox
             options={users.map(user => ({ value: user.id, label: user.firstname + ' ' + user.lastname }))}
-                style={{"border":"1px solid #b3b2b2"}}
-                onChange={(selected) => setOwner(selected)}
-                value={owner}
+            style={{ "border": "1px solid #b3b2b2" }}
+            onChange={(selected) => setOwner(selected)}
+            value={owner}
 
           />
         </div>
@@ -63,9 +64,9 @@ const AddMilestoneModal = ({ id, deleteMilestone ,users,options}) => {
           </label>
           <SelectBox
             options={options}
-                style={{"border":"1px solid #b3b2b2"}}
-              value={value}
-              onChange={(selected)=>setValue(selected)}
+            style={{ "border": "1px solid #b3b2b2" }}
+            value={value}
+            onChange={(selected) => setValue(selected)}
 
           />
         </div>
@@ -75,10 +76,12 @@ const AddMilestoneModal = ({ id, deleteMilestone ,users,options}) => {
 }
 
 const Milestones = () => {
+  const location = useLocation()
   const dispatch = useDispatch();
+  const { id } = useParams()
 
   const { fetchUsers: users } = useSelector(state => state.fetchUsers)
-  const {fetchMilestone:milestone} = useSelector(state => state.fetchMilestone)
+  const { fetchMilestone: milestone } = useSelector(state => state.fetchMilestone)
   const { createProject: project } = useSelector(state => state.createProject)
   const { success } = useSelector(state => state.createMilestone)
 
@@ -87,7 +90,7 @@ const Milestones = () => {
 
   const [milestones, setMilestones] = useState([]);
   const [nextId, setNextId] = useState(1);
-  
+
   const [startDate, setStartDate] = useState();
   const [endDate, setEndDate] = useState();
   const [value, setValue] = useState(null);
@@ -106,24 +109,24 @@ const Milestones = () => {
       endDate: endDate
     })
   }, [startDate, endDate])
-useEffect(() => {
-  const fetchData = async () => {
-    await dispatch(fetchUsers());
-    await dispatch(fetchMilestone());
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      await dispatch(fetchUsers());
+      await dispatch(fetchMilestone());
+    };
 
-  fetchData();
-}, [dispatch]);
+    fetchData();
+  }, [dispatch]);
 
-useEffect(() => {
-  if (milestone && milestone.length > 0) {
-    const options = milestone.map(item => ({
-      value: item.id,
-      label: item.title
-    }));
-    setDependencyOptions(options);
-  }
-}, [milestone]);
+  useEffect(() => {
+    if (milestone && milestone.length > 0) {
+      const options = milestone.map(item => ({
+        value: item.id,
+        label: item.title
+      }));
+      setDependencyOptions(options);
+    }
+  }, [milestone]);
 
 
 
@@ -159,11 +162,12 @@ useEffect(() => {
         owner_id: formData.ownerId,
         start_date: formData.startDate,
         end_date: formData.endDate,
-        project_management_id: 2
+        project_management_id: location.pathname.startsWith('/milestones') ? id : project.id
       }
     }
+    console.log(payload)
     try {
-      dispatch(createMilestone( payload ));
+      dispatch(createMilestone(payload));
     } catch (error) {
       console.log(error)
     }
@@ -208,7 +212,7 @@ useEffect(() => {
               }
               onChange={(value) => setFormData({ ...formData, ownerId: value })}
               value={formData.ownerId}
-                style={{"border":"1px solid #b3b2b2"}}
+              style={{ "border": "1px solid #b3b2b2" }}
 
             />
           </div>
@@ -241,8 +245,8 @@ useEffect(() => {
             </label>
             <SelectBox
               options={dependencyOptions}
-                style={{"border":"1px solid #b3b2b2"}}
-              onChange={(value)=>setValue(value)}
+              style={{ "border": "1px solid #b3b2b2" }}
+              onChange={(value) => setValue(value)}
               value={value}
 
             />

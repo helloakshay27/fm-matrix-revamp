@@ -7,16 +7,17 @@ import ProjectList from "../../components/Home/Projects/ProjectList";
 import BoardsSection from "../../components/Home/BoardsSection";
 import { useNavigate } from "react-router-dom";
 import IssuesTable from "../../components/Home/Issues/Table";
+import ProjectTemplates from "../Setup/ProjectTemplates";
 const Projects = ({ setIsSidebarOpen }) => {
     const [activeTab, setActiveTab] = useState(tabs[0].id);
     const [activeTabLabel, setActiveTabLabel] = useState(tabs[0].label);
     const [selectedType, setSelectedType] = useState(
-         "List");
+        "List");
     const [filters, setFilters] = useState({});
 
     const tabRefs = useRef({});
     const underlineRef = useRef(null);
-    const navigate=useNavigate();
+    const navigate = useNavigate();
 
     useGSAP(() => {
         if (tabRefs.current[activeTab] && underlineRef.current) {
@@ -46,7 +47,8 @@ const Projects = ({ setIsSidebarOpen }) => {
                         ref={(el) => (tabRefs.current[tab.id] = el)}
                         className={`relative cursor-pointer text-[12px] pb-3 ${activeTab === tab.id ? "text-[#C72030]" : "text-gray-600"
                             }`}
-                        onClick={() => {setActiveTab(tab.id);
+                        onClick={() => {
+                            setActiveTab(tab.id);
                             setActiveTabLabel(tab.label);
                         }}
                     >
@@ -65,35 +67,35 @@ const Projects = ({ setIsSidebarOpen }) => {
                 setIsSidebarOpen={setIsSidebarOpen}
                 selectedType={selectedType}
                 setSelectedType={setSelectedType}
-                addType={activeTabLabel==="Active Projects"?"Project":activeTabLabel}
+                addType={activeTabLabel === "Active Projects" ? "Project" : activeTabLabel}
                 setFilters={setFilters}
                 filters={filters}
                 context={"Projects"}
             />
 
             {activeTab === tabs[0].id && (
-                <>                 
-                {selectedType === "List" ?(
-                <ProjectList  />
-            ) : (
-                <BoardsSection section={"Projects"} />
-            )}
-            </>
+                <>
+                    {selectedType === "List" ? (
+                        <ProjectList />
+                    ) : (
+                        <BoardsSection section={"Projects"} />
+                    )}
+                </>
             )}
 
             {
-                activeTab===tabs[1].id && (
+                activeTab === tabs[1].id && (
+                    <ProjectTemplates />
+                )
+            }
+            {
+                activeTab === tabs[2].id && (
                     <div>Tempelate</div>
                 )
             }
             {
-                activeTab===tabs[2].id &&  (
-                    <div>Tempelate</div>
-                )
-            }
-            {
-                activeTab===tabs[3].id && selectedType==="List" && (
-                   <IssuesTable />
+                activeTab === tabs[3].id && selectedType === "List" && (
+                    <IssuesTable />
                 )
             }
         </div>

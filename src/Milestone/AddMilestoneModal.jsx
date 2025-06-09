@@ -41,7 +41,7 @@ const AddMilestoneModal = ({ isModalOpen, setIsModalOpen }) => {
                 />
 
                 <hr className="border border-[#E95420] my-4" />
-                <Milestones />
+                <Milestones closeModal={closeModal} />
             </div>
         </div>
     );

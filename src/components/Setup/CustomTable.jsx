@@ -9,24 +9,24 @@ import {
 import StatusBadge from '../Home/Projects/statusBadge';
 
 // --- Input Components for Inline Add Row ---
-const InlineAddTextField = ({ value, onChange, onEnterPress, inputRef, placeholder, className ,validator}) => {
+const InlineAddTextField = ({ value, onChange, onEnterPress, inputRef, placeholder, className, validator }) => {
     const handleKeyDown = (event) => {
         if (event.key === 'Enter' && onEnterPress) {
             event.preventDefault();
             onEnterPress();
         }
     };
-    return <input ref={inputRef} type="text" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`${validator?'border border-red-500':' border-none'} w-full p-1 h-full focus:outline-none rounded text-[13px] border border-gray-300 ${className || ''}`} />;
+    return <input ref={inputRef} type="text" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`${validator ? 'border border-red-500' : ' border-none'} w-full p-1 h-full focus:outline-none rounded text-[13px] border border-gray-300 ${className || ''}`} />;
 };
 
-const InlineAddDateEditor = ({ value, onChange, onEnterPress, placeholder, className ,validator}) => {
+const InlineAddDateEditor = ({ value, onChange, onEnterPress, placeholder, className, validator }) => {
     const handleKeyDown = (event) => {
         if (event.key === 'Enter' && onEnterPress) {
             event.preventDefault();
             onEnterPress();
         }
     };
-    return <input type="date" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`${validator?'border border-red-500':' border-none'} w-full p-1 h-full focus:outline-none rounded text-[13px] border border-gray-300 ${className || ''}`} />;
+    return <input type="date" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`${validator ? 'border border-red-500' : ' border-none'} w-full p-1 h-full focus:outline-none rounded text-[13px] border border-gray-300 ${className || ''}`} />;
 };
 // --- End Input Components ---
 
@@ -42,7 +42,7 @@ const CustomTable = ({
     title,
     buttonText,      // For the original header button
     onAdd,           // For the original header button
-    onCreateInlineItem, 
+    onCreateInlineItem,
     onRefreshInlineData,
     layout = "block",
     showDropdown = false,
@@ -78,7 +78,7 @@ const CustomTable = ({
     const pageRows = table.getRowModel().rows;
     // Empty rows calculation ensures fixed table height for data area
     // The inline add form, if active, will visually take up one of these potential slots or add to scroll height
-    const numEmptyRowsToAdd = Math.max(0, fixedRowsPerPage - pageRows.length - (isAddingInlineItem ? 1 : 0) );
+    const numEmptyRowsToAdd = Math.max(0, fixedRowsPerPage - pageRows.length - (isAddingInlineItem ? 1 : 0));
     const desiredTableHeight = (fixedRowsPerPage * rowHeight) + headerHeight;
     const isInline = layout === "inline";
 
@@ -103,7 +103,7 @@ const CustomTable = ({
     }, [resetInlineItemForm]);
 
     const handleSaveInlineItem = useCallback(async () => {
-        if (!newInlineItemTitle || newInlineItemTitle.trim() === ""|| !newInlineItemEndDate || !newInlineItemStartDate) {
+        if (!newInlineItemTitle || newInlineItemTitle.trim() === "" || !newInlineItemEndDate || !newInlineItemStartDate) {
             setInlineItemLocalError("Please fill out all required fields.");
             setValidator(true);
             if (newInlineItemTitleInputRef.current) newInlineItemTitleInputRef.current.focus();
@@ -121,7 +121,7 @@ const CustomTable = ({
             status: newInlineItemStatus,
             start_date: newInlineItemStartDate || null,
             end_date: newInlineItemEndDate || null,
-            project_id:3,
+            project_id: 3,
         };
         try {
             await onCreateInlineItem(newInlineItemData);
@@ -150,9 +150,9 @@ const CustomTable = ({
             if (!isAddingInlineItem || isSavingInlineItem || !newInlineItemFormRowRef.current || newInlineItemFormRowRef.current.contains(event.target)) {
                 return;
             }
-            
-                handleSaveInlineItem();
-            
+
+            handleSaveInlineItem();
+
         };
         if (isAddingInlineItem) {
             document.addEventListener("mousedown", handleClickOutsideInlineForm);
@@ -163,21 +163,21 @@ const CustomTable = ({
     }, [isAddingInlineItem, isSavingInlineItem, newInlineItemTitle, handleSaveInlineItem, handleCancelInlineItem]);
 
     useEffect(() => {
-            const handleEscape = (event) => {
-              if(!isAddingInlineItem)return;
-              if (event.key === "Escape") {
+        const handleEscape = (event) => {
+            if (!isAddingInlineItem) return;
+            if (event.key === "Escape") {
                 console.log("Escape key pressed!");
                 handleCancelInlineItem();
-              }
-            };
-        
-            window.addEventListener("keydown", handleEscape);
-        
-            return () => {
-              window.removeEventListener("keydown", handleEscape);
-            };
-          }, [isAddingInlineItem, handleCancelInlineItem]);
-        
+            }
+        };
+
+        window.addEventListener("keydown", handleEscape);
+
+        return () => {
+            window.removeEventListener("keydown", handleEscape);
+        };
+    }, [isAddingInlineItem, handleCancelInlineItem]);
+
 
     const tableColumns = table.getAllLeafColumns();
     const totalTableColumns = tableColumns.length;
@@ -202,7 +202,7 @@ const CustomTable = ({
                 </div>
                 {!isInline && <div className="border-b border-gray-200 mt-2"></div>}
                 {buttonText && onAdd && (
-                     <div className={`${isInline ? "" : "flex justify-end mt-4"}`}>
+                    <div className={`${isInline ? "" : "flex justify-end mt-4"}`}>
                         <button
                             className="bg-[#C62828] hover:bg-[#B71C1C] text-white text-sm font-medium px-5 py-2 rounded flex items-center gap-1"
                             onClick={onAdd}
@@ -215,7 +215,7 @@ const CustomTable = ({
                     </div>
                 )}
             </div>
-            
+
             {inlineItemLocalError && isAddingInlineItem && (
                 <div className="px-4 pl-7 mt-2 mb-2">
                     <div className="p-2 text-sm text-red-700  rounded">
@@ -235,7 +235,7 @@ const CustomTable = ({
                                             key={header.id}
                                             colSpan={header.colSpan}
                                             style={{ width: header.column.getSize(), height: `${headerHeight}px` }} // Use header.column.getSize() for consistency
-                                            className="bg-[#D5DBDB] px-3 py-2 text-left text-gray-800 sticky top-0 z-10"
+                                            className="bg-[#D5DBDB] px-3 py-3.5 text-center font-[500] border-r-2 border-[#FFFFFF66]"
                                         >
                                             {header.isPlaceholder ? null : (
                                                 <div>{flexRender(header.column.columnDef.header, header.getContext())}</div>
@@ -246,7 +246,7 @@ const CustomTable = ({
                             ))}
                         </thead>
                         <tbody className="divide-y divide-gray-200">
-                            
+
                             {pageRows.map(row => { /* ... existing data row mapping ... */
                                 const isDataRowEmpty = !row.original || Object.values(row.original).every(v => !v);
                                 return (
@@ -260,26 +260,26 @@ const CustomTable = ({
                                 );
                             })}
                             {isAddingInlineItem && (
-                                <tr ref={newInlineItemFormRowRef}  style={{ height: `${rowHeight}px` }}>
+                                <tr ref={newInlineItemFormRowRef} style={{ height: `${rowHeight}px` }}>
                                     <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(0) }}>&nbsp;</td>
                                     <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(1) }}>
-                                        <InlineAddTextField inputRef={newInlineItemTitleInputRef} value={newInlineItemTitle} onChange={(e) => { setNewInlineItemTitle(e.target.value); if(inlineItemLocalError) setInlineItemLocalError(null); }} onEnterPress={handleSaveInlineItem} placeholder="Title" validator={validator}/>
+                                        <InlineAddTextField inputRef={newInlineItemTitleInputRef} value={newInlineItemTitle} onChange={(e) => { setNewInlineItemTitle(e.target.value); if (inlineItemLocalError) setInlineItemLocalError(null); }} onEnterPress={handleSaveInlineItem} placeholder="Title" validator={validator} />
                                     </td>
                                     <td className="px-1 py-0 align-middle h-full flex items-center justify-center" style={{ width: getColWidth(2) }}>
                                         <StatusBadge statusOptions={globalStatusOptionsForInlineAdd} status={newInlineItemStatus} onStatusChange={setNewInlineItemStatus} />
                                     </td>
                                     <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(3) }}>&nbsp;</td>
                                     <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(4) }}>
-                                        <InlineAddDateEditor value={newInlineItemStartDate} onChange={(e) => setNewInlineItemStartDate(e.target.value)} onEnterPress={handleSaveInlineItem} placeholder="Start Date" validator={validator}/>
+                                        <InlineAddDateEditor value={newInlineItemStartDate} onChange={(e) => setNewInlineItemStartDate(e.target.value)} onEnterPress={handleSaveInlineItem} placeholder="Start Date" validator={validator} />
                                     </td>
                                     <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(5) }}>
-                                        <InlineAddDateEditor value={newInlineItemEndDate} onChange={(e) => setNewInlineItemEndDate(e.target.value)} onEnterPress={handleSaveInlineItem} placeholder="End Date" validator={validator}/>
+                                        <InlineAddDateEditor value={newInlineItemEndDate} onChange={(e) => setNewInlineItemEndDate(e.target.value)} onEnterPress={handleSaveInlineItem} placeholder="End Date" validator={validator} />
                                     </td>
                                     <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(6) }}>&nbsp;</td>
                                     <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(7) }}>&nbsp;</td>
-                                    
+
                                     {totalTableColumns > 8 && tableColumns.slice(8).map((column, index) => (
-                                        <td key={`new-inline-extra-empty-${column.id}`} className="px-1 py-0 align-middle h-full" style={{width: column.getSize()}}>&nbsp;</td>
+                                        <td key={`new-inline-extra-empty-${column.id}`} className="px-1 py-0 align-middle h-full" style={{ width: column.getSize() }}>&nbsp;</td>
                                     ))}
                                 </tr>
                             )}
@@ -301,7 +301,7 @@ const CustomTable = ({
                                             className="w-full text-left px-3 py-2 text-red-600 hover:underline flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                                             disabled={isSavingInlineItem}
                                         >
-                                           + Add Sprint
+                                            + Add Sprint
                                         </button>
                                     </td>
                                 </tr>
@@ -310,7 +310,7 @@ const CustomTable = ({
                     </table>
                 </div>
 
-                 {data.length > 0 && (
+                {data.length > 0 && (
                     <div className=" flex items-center justify-start gap-4 mt-4 text-[12px]">
                         {/* Previous Button */}
                         <button

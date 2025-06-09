@@ -2,8 +2,10 @@ import React, { useEffect, useRef } from "react";
 import axios from "axios";
 import "dhtmlx-gantt";
 import "dhtmlx-gantt/codebase/dhtmlxgantt.css";
+import { useParams } from "react-router-dom";
 
 const GanttChart = () => {
+    const { id } = useParams()
     const ganttContainer = useRef(null);
     const [scale, setScale] = React.useState("week");
 
@@ -155,7 +157,7 @@ const GanttChart = () => {
         const fetchMilestones = async () => {
             try {
                 const response = await axios.get(
-                    "https://api-tasks.lockated.com/milestones.json",
+                    `https://api-tasks.lockated.com/milestones.json?q[project_management_id_eq]=${id}`,
                     {
                         headers: {
                             Authorization: "Bearer bTcVnWgQrF6QCdNbMiPXzCZNAqsN9qoEfFWdFQ1Auk4",

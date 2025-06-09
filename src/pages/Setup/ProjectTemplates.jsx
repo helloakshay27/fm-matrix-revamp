@@ -1,0 +1,74 @@
+import { useDispatch, useSelector } from 'react-redux';
+import CustomTable from '../../components/Setup/CustomTable'
+import { useEffect, useMemo, useState } from 'react';
+import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import { fetchTemplates } from '../../redux/slices/projectSlice';
+
+const ActionIcons = ({ row, onEditClick }) => {
+    const dispatch = useDispatch();
+    const [isActive, setIsActive] = useState(!!row.original.active);
+
+    return (
+        <div className="action-icons flex justify-between gap-5">
+            <div>
+                <EditOutlinedIcon
+                    sx={{ fontSize: '20px', cursor: 'pointer' }}
+                    onClick={() => onEditClick(row.original)} // Pass user data on edit icon click
+                />
+                <button
+                    onClick={() => alert(`Deleting: ${row.original.name}`)}
+                    title="Delete"
+                >
+                    <DeleteOutlineOutlinedIcon sx={{ fontSize: '20px' }} />
+                </button>
+            </div>
+        </div>
+    )
+}
+
+const ProjectTemplates = () => {
+    const dispatch = useDispatch()
+    const { fetchTemplates: templates } = useSelector(state => state.fetchTemplates)
+
+    useEffect(() => {
+        dispatch(fetchTemplates())
+    }, [dispatch])
+
+    const columns = useMemo(
+        () => [
+            {
+                accessorKey: 'title', // still needed for sorting/search
+                header: 'Project Template',
+                size: 250,
+            },
+            {
+                accessorKey: 'email',
+                header: 'Tags',
+                size: 200,
+            },
+            {
+                id: 'actions',
+                header: 'Actions',
+                size: 60,
+                cell: ({ row }) => <ActionIcons row={row} />,
+                meta: {
+                    cellClassName: 'actions-cell-content',
+                },
+            },
+        ],
+        []
+    );
+    return (
+        <>
+            <CustomTable
+                data={templates}
+                columns={columns}
+                title="Templates"
+                layout="inline"
+            />
+        </>
+    )
+}
+
+export default ProjectTemplates

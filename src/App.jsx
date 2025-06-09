@@ -36,12 +36,13 @@ import SprintTable from "./pages/Home/SprintTable.jsx";
 import Login from "./pages/Login/Login";
 import GroupTable from "./components/Setup/ProjectGroup/Table.jsx";
 import ProjectGroup from "./pages/Setup/ProjectGroup.jsx";
+import ProjectTemplates from "./pages/Setup/ProjectTemplates.jsx";
 
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
-  
+
     <Routes>
       <Route path="/login" element={<Login />} />
 
@@ -56,7 +57,7 @@ const App = () => {
               <Route path="/projects/:id" element={<ProjectDetails />} />
               <Route path="/sprint-list" element={<SprintTable />} />
               <Route path="/sprint/:id" element={<Sprints />} />
-              <Route path="/milestones" element={<MileStoneMain />} />
+              <Route path="/milestones/:id" element={<MileStoneMain />} />
               <Route path="/tasks/:id" element={<TaskDetails />} />
               <Route path="/mom" element={<MinutesOfMeeting />} />
               <Route path="/new-mom" element={<MoMAdd />} />
@@ -76,11 +77,12 @@ const App = () => {
               <Route path="/setup/tags" element={<ProjectTags />} />
               <Route path="/setup/status" element={<Status />} />
               <Route path="/setup/project-group" element={<ProjectGroup />} />
+              <Route path="/setup/project-template" element={<ProjectTemplates />} />
             </Routes>
           </Layout>
         }
       />
-    </Routes>   
+    </Routes>
   )
 }
 

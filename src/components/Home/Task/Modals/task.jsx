@@ -110,7 +110,7 @@ const Tasks = ({ isEdit }) => {
       task_tag_ids: formData.tags.map((tag) => tag.value),
       expected_start_date: formData.expected_start_date,
       target_date: formData.target_date,
-      project_management_id: 23,
+      project_management_id: 35,
       active: true,
       // },
     };
@@ -250,11 +250,11 @@ const Tasks = ({ isEdit }) => {
             title="Start Date"
           />
 
-         
+
         </div>
 
         <div>
-           <WeekProgressPicker
+          <WeekProgressPicker
 
             onDateSelect={handleTargetDate}
             selectedDate={formData.target_date}

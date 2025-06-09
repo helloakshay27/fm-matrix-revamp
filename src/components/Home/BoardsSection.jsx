@@ -156,7 +156,7 @@ const BoardsSection = ({ section }) => {
       if (type === "TASK" || type === "SUBTASK") {
         handleUpdateTaskFieldCell(id, "status", newStatus);
       } else if (type === "PROJECT") {
-        handleProjectStatusChange({ id, status: newStatus });
+        handleProjectStatusChange({ id, status: newStatus == 'open' ? 'active' : newStatus });
       }
     },
 
@@ -236,7 +236,7 @@ const BoardsSection = ({ section }) => {
           const cardStatus = card.title.toLowerCase().replace(" ", "_");
 
           const filteredTasks = taskData.filter((task) =>
-            cardStatus === "active" ? task.status === "open" : task.status === cardStatus
+            task.status === cardStatus
           );
 
           const filteredSubtasks = taskData.flatMap((task) =>
@@ -249,7 +249,7 @@ const BoardsSection = ({ section }) => {
           );
 
           const filteredProjects = projects.filter(
-            (project) => project.status === card.title.replace(" ", "_").toLowerCase()
+            (project) => cardStatus === "open" ? project.status === "active" : project.status === cardStatus
           );
 
           return (

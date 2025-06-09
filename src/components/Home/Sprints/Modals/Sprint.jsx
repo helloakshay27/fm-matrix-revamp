@@ -84,7 +84,7 @@ const Sprints = ({ closeModal }) => {
 
   const handleDuration = () => {
     if (startDate == null || endDate == null) return;
-    const ms = new Date(endDate) - new Date(startDate); 
+    const ms = new Date(endDate) - new Date(startDate);
 
     const totalMinutes = Math.floor(ms / (1000 * 60));
     const days = Math.floor(totalMinutes / (60 * 24));
@@ -101,26 +101,26 @@ const Sprints = ({ closeModal }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     const sprintPayload = {
       name: e.target[0].value,
       description: "Sprint focused on UI enhancements and bug fixes",
-      project_id: 23,
+      project_id: 35,
       start_date: startDate,
       end_date: endDate,
       duration: handleDuration(),
       start_time: "09:00",
       end_time: "18:00",
     };
-  
+
     const payload = { sprint: sprintPayload };
-  
+
     try {
       const resultAction = await dispatch(postSprint(payload));
-  
+
       if (postSprint.fulfilled.match(resultAction)) {
-        dispatch(fetchSpirints()); 
-        closeModal(); 
+        dispatch(fetchSpirints());
+        closeModal();
       } else {
         console.log("Sprint creation failed.");
       }
@@ -128,8 +128,8 @@ const Sprints = ({ closeModal }) => {
       console.error("Error submitting sprint:", error);
     }
   };
-  
-  
+
+
 
 
   return (
