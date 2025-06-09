@@ -68,6 +68,27 @@ const Tasks = ({ isEdit }) => {
     }
   }, [isEdit, task]);
 
+
+  const calculateDuration = (startDateStr, endDateStr) => {
+  if (!startDateStr || !endDateStr) return "0d:0h:0m";
+  const startDate = new Date(startDateStr);
+  const endDate = new Date(endDateStr);
+  if (
+    isNaN(startDate.getTime()) ||
+    isNaN(endDate.getTime()) ||
+    endDate < startDate
+  )
+    return "0d:0h:0m";
+  let ms = endDate.getTime() - startDate.getTime();
+  const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+  ms -= days * (1000 * 60 * 60 * 24);
+  const hours = Math.floor(ms / (1000 * 60 * 60));
+  ms -= hours * (1000 * 60 * 60);
+  const minutes = Math.floor(ms / (1000 * 60));
+  return `${days}d:${hours}h:${minutes}m`;
+};
+
+
   const handleDateSelect = (date) => {
     setFormData({ ...formData, expected_start_date: date });
     console.log("Selected date:", date);
@@ -214,10 +235,9 @@ const Tasks = ({ isEdit }) => {
             <label className="block ms-2">Duration</label>
             <input
               type="text"
-              className="w-full border outline-none border-gray-300 px-2 py-[7px] text-[13px]"
+              className="w-full border outline-none border-gray-300 px-2 py-[7px] text-[13px] bg-gray-200"
               placeholder="00d:00h:00m"
-              value={formData.duration}
-              onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+              value={calculateDuration(formData.expected_start_date, formData.target_date)}
             />
           </div>
         </div>

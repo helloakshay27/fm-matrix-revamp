@@ -91,7 +91,7 @@ const Sprints = ({ closeModal }) => {
     const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
     const minutes = totalMinutes % 60;
 
-    return `${days}:${hours}:${minutes}`;
+    return `${days}d:${hours}h:${minutes}m`;
   };
 
   const handleAddSprints = () => {

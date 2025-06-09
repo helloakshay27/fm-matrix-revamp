@@ -18,13 +18,14 @@ import { ChevronDownIcon as HUIDownIcon, ArrowPathIcon } from '@heroicons/react/
 import SelectBox from '../../../SelectBox';
 
 // Redux Thunks
-import { fetchTasks, createSubTask } from '../../../../redux/slices/taskSlice';
+import { fetchTasks, createSubTask, updateTask,changeTaskStatus } from '../../../../redux/slices/taskSlice';
 import { fetchUsers } from '../../../../redux/slices/userSlice';
 import { fetchTags } from '../../../../redux/slices/tagsSlice';
+import { set } from 'react-hook-form';
 
 
 // UserCustomDropdownMultiple (remains the same)
-const UserCustomDropdownMultiple = ({ options = [], value = [], onChange, onKeyDownHandler, placeholder = "Select options...", searchPlaceholder = "Search options..." }) => {
+const UserCustomDropdownMultiple = ({ options = [], value = [], onChange, onKeyDownHandler, placeholder = "Select options...", searchPlaceholder = "Search options...",validator }) => {
   const [selectedOptions, setSelectedOptions] = useState(value);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -78,24 +79,82 @@ const UserCustomDropdownMultiple = ({ options = [], value = [], onChange, onKeyD
 };
 
 // Generic Input Components for the "Add New Subtask" Row
-const NewSubtaskTextField = ({ value, onChange, onEnterPress, inputRef, placeholder }) => {
+const NewSubtaskTextField = ({ value, onChange, onEnterPress, inputRef, placeholder,validator}) => {
     const handleKeyDown = (event) => {
         if (event.key === 'Enter') {
             event.preventDefault();
             onEnterPress();
         }
     };
-    return <input ref={inputRef} type="text" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className="w-full p-1 focus:outline-none rounded text-sm border border-gray-300"/>;
+    return <input ref={inputRef} type="text" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`w-full p-1 ${validator? 'border-red-500': 'border-gray-300'} focus:outline-none rounded text-sm border border-gray-300`}/>;  
 };
 
-const NewSubtaskDateEditor = ({ value, onChange, onEnterPress, placeholder }) => {
-    const handleKeyDown = (event) => {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            onEnterPress();
-        }
-    };
-    return <input type="date" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className="w-full p-1 focus:outline-none rounded text-sm border border-gray-300"/>;
+const DateEditor = ({
+  value: propValue,
+  onUpdate,
+  isNewRow,
+  onEnterPress,
+  className,
+  placeholder = "Select date",
+   validator
+}) => {
+  const [date, setDate] = useState(
+    propValue ? new Date(propValue).toISOString().split("T")[0] : ""
+  );
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    const initialDate = propValue ? new Date(propValue).toISOString().split("T")[0] : "";
+    setDate(initialDate);
+  }, [propValue]);
+
+  const performUpdate = (dateValue) => {
+    onUpdate(dateValue || null);
+  };
+
+  const handleInputChange = (e) => {
+    const newDate = e.target.value;
+    setDate(newDate);
+    performUpdate(newDate);
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      performUpdate(date);
+      if (onEnterPress) {
+        onEnterPress();
+      }
+    }
+  };
+
+  const handleBlur = () => {
+    performUpdate(date);
+  };
+
+  const handleInputClick = () => {
+    if (inputRef.current && typeof inputRef.current.showPicker === 'function') {
+      try {
+        inputRef.current.showPicker();
+      } catch (error) {
+        console.error("Error trying to show picker:", error);
+      }
+    }
+  };
+
+  return (
+    <input
+      ref={inputRef}
+      type="date"
+      value={date}
+      onChange={handleInputChange}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+      onClick={handleInputClick}
+      className={`${validator?'border border-red-400':'border-none'} w-full focus:outline-none rounded text-[12px] p-1 my-custom-date-editor  `}
+      placeholder={placeholder}
+    />
+  );
 };
 
 
@@ -145,7 +204,7 @@ const SubtaskTable = () => {
   const [parentTaskLookupStatus, setParentTaskLookupStatus] = useState('idle');
 
   const [isAddingNewSubtask, setIsAddingNewSubtask] = useState(false);
-  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [newSubtaskStatus, setNewSubtaskStatus] = useState('open');
   const [newSubtaskResponsiblePersonId, setNewSubtaskResponsiblePersonId] = useState(null);
   const [newSubtaskStartDate, setNewSubtaskStartDate] = useState('');
@@ -154,13 +213,52 @@ const SubtaskTable = () => {
   const [newSubtaskTags, setNewSubtaskTags] = useState([]); 
 
   const [isSavingSubtask, setIsSavingSubtask] = useState(false);
+  const [isUpdatingTask, setIsUpdatingTask] = useState(false);
   const [localError, setLocalError] = useState(null);
+const [validator, setValidator] = useState(false);
 
   const newSubtaskTitleInputRef = useRef(null);
   const newTaskFormRowRef = useRef(null); // <<< MODIFICATION: Added ref for the new subtask form row
   const userFetchInitiatedRef = useRef(false);
   const allTasksFetchInitiatedRef = useRef(false);
   const tagsFetchInitiatedRef = useRef(false);
+
+ const handleOnChange = useCallback(
+    async (taskId, fieldName, newValue) => {
+      console.log(taskId, fieldName, newValue)
+      if (isUpdatingTask) return;
+      const payload = { [fieldName]: newValue };
+      setIsUpdatingTask(true);
+      setLocalError(null);
+      try {
+        if (fieldName === "status") {
+         await dispatch(changeTaskStatus({ id: taskId, payload })) // Using changeTaskStatus as per import
+            .unwrap()
+            
+        }
+        else {
+          await dispatch(updateTask({ id: taskId, payload }))
+            .unwrap()
+            
+        }
+        await dispatch(fetchTasks()).unwrap();
+      } catch (error) {
+        console.error(
+          `Task field update failed for ${taskId} (${fieldName}):`,
+          error
+        );
+        setLocalError(
+          `Update failed: ${error?.response?.data?.errors || error?.message || "Server error"
+          }`
+        );
+        dispatch(fetchTasks());
+      }
+      finally {
+        setIsUpdatingTask(false);
+      }
+    },
+    [dispatch, isUpdatingTask]
+  );
 
   useEffect(() => {
     if (!loadingAllTasks && (!allTasksFromStore || !Array.isArray(allTasksFromStore) || allTasksFromStore.length === 0) && !allTasksError && !allTasksFetchInitiatedRef.current) {
@@ -256,22 +354,32 @@ const SubtaskTable = () => {
         return;
     }
     resetNewSubtaskForm();
+    setValidator(false); 
     setIsAddingNewSubtask(true);
   }, [parentTaskForSubtasks, resetNewSubtaskForm]);
 
   const handleCancelNewSubtask = useCallback(() => {
     setIsAddingNewSubtask(false);
+    setValidator(false);
     resetNewSubtaskForm();
   }, [resetNewSubtaskForm]);
 
   const handleSaveNewSubtask = useCallback(async () => {
-    if (!newSubtaskTitle || newSubtaskTitle.trim() === "") {
-      setLocalError("Subtask title cannot be empty.");
-      if (newSubtaskTitleInputRef.current) newSubtaskTitleInputRef.current.focus();
-      return;
-    }
+  console.log(newSubtaskTitle, newSubtaskStartDate, newSubtaskEndDate,validator);
+    if (
+  !newSubtaskTitle?.trim() ||
+  !newSubtaskStartDate ||
+  !newSubtaskEndDate
+) {
+  setLocalError("Please fill out all required fields.");
+  setValidator(true);
+  newSubtaskTitleInputRef.current?.focus();
+  return;
+}
+
     setLocalError(null);
     setIsSavingSubtask(true);
+    setValidator(false);
 
     const selectedTagIds = newSubtaskTags
         .map(tagName => {
@@ -327,12 +435,8 @@ useEffect(() => {
       }
 
       // Click is outside, form is active, and not currently saving
-      if (!newSubtaskTitle || newSubtaskTitle.trim() === "") {
-        setIsAddingNewSubtask(false);
-        resetNewSubtaskForm();
-      } else {
+     
         handleSaveNewSubtask();
-      }
     };
 
     if (isAddingNewSubtask) {
@@ -349,6 +453,24 @@ useEffect(() => {
     handleSaveNewSubtask, 
     resetNewSubtaskForm,
   ]);
+
+  
+      useEffect(() => {
+      const handleEscape = (event) => {
+        if(!isAddingNewSubtask)return;
+        if (event.key === "Escape") {
+          console.log("Escape key pressed!");
+          handleCancelNewSubtask();
+        }
+      };
+  
+      window.addEventListener("keydown", handleEscape);
+  
+      return () => {
+        window.removeEventListener("keydown", handleEscape);
+      };
+    }, [isAddingNewSubtask, handleCancelNewSubtask]);
+  
 
 
 
@@ -371,22 +493,22 @@ useEffect(() => {
         cell: info => info.getValue()
       },
       { accessorKey: 'status', header: 'Status', size: 150,
-        cell: info => <StatusBadge status={info.getValue()} statusOptions={globalStatusOptions} />
+        cell: ({getValue,row}) => <StatusBadge status={getValue()} statusOptions={globalStatusOptions} onStatusChange={(newStatus) => handleOnChange(row.original.id,"status",newStatus)}/>
       },
       { accessorKey: 'responsiblePerson', header: 'Responsible Person', size: 180,
         cell: info => info.getValue() || <span className="text-gray-400">Unassigned</span>
       },
       { accessorKey: 'startDate', header: 'Start Date', size: 160,
-        cell: info => (info.getValue() ? new Date(info.getValue()).toLocaleDateString() : <span className="text-gray-400 p-1">N/A</span>)
+        cell: ({getValue,row}) => (<DateEditor value={getValue()} onUpdate={(date) => handleOnChange(row.original.id,"started_at",date)} onEnterPress={() => handleSaveNewSubtask()}/> )
       },
       { accessorKey: 'endDate', header: 'End Date', size: 160,
-        cell: info => (info.getValue() ? new Date(info.getValue()).toLocaleDateString() : <span className="text-gray-400 p-1">N/A</span>)
+        cell: ({getValue,row}) => ( <DateEditor value={getValue()} onUpdate={(date) => handleOnChange(row.original.id,"target_date",date)} onEnterPress={() => handleSaveNewSubtask()}/>)
       },
       { accessorKey: 'duration', header: 'Duration', size: 100,
         cell: info => <span className="text-xs p-1">{info.getValue()}</span>
       },
       { accessorKey: 'priority', header: 'Priority', size: 150,
-        cell: info => <StatusBadge status={info.getValue()} statusOptions={globalPriorityOptions} />
+        cell: ({getValue,row})=> <StatusBadge status={getValue()} statusOptions={globalPriorityOptions} onStatusChange={(newStatus) => handleOnChange(row.original.id,"priority",newStatus)} />
       },
       { accessorKey: 'tags', header: 'Tags', size: 200, 
         cell: ({ getValue }) => {
@@ -412,10 +534,13 @@ useEffect(() => {
   );
 
   let pageContent;
-  if (parentTaskLookupStatus === 'loading' || (loadingAllTasks && !allTasksFetchInitiatedRef.current) || (loadingUsers && !userFetchInitiatedRef.current) || (loadingTags && !tagsFetchInitiatedRef.current) ) {
+  if(isUpdatingTask){
+    pageContent = (<div className="p-4 flex justify-center items-center min-h-[200px]"><ArrowPathIcon className="h-8 w-8 animate-spin text-gray-500 mr-2" /> Updating data...</div>);
+  }
+  else if (parentTaskLookupStatus === 'loading' || (loadingAllTasks && !allTasksFetchInitiatedRef.current) || (loadingUsers && !userFetchInitiatedRef.current) || (loadingTags && !tagsFetchInitiatedRef.current) ) {
     pageContent = (<div className="p-4 flex justify-center items-center min-h-[200px]"><ArrowPathIcon className="h-8 w-8 animate-spin text-gray-500 mr-2" /> Loading data...</div>);
   } else if (parentTaskLookupStatus === 'error' || allTasksError || usersFetchError || tagsError) {
-    pageContent = (<div className="p-4 text-red-600 bg-red-100 border border-red-400 rounded">
+    pageContent = (<div className="p-4 text-red-600 rounded">
         Error: {localError || String(allTasksError?.message || allTasksError || usersFetchError?.message || usersFetchError || tagsError?.message || tagsError || "Could not load required data.")}
       </div>);
   } else if (parentTaskLookupStatus === 'not_found') {
@@ -423,10 +548,9 @@ useEffect(() => {
   } else if (parentTaskLookupStatus === 'found') {
     pageContent = (
       <>
-        {localError && !isAddingNewSubtask && <div className="mb-4 p-2 text-red-700 bg-red-100 border border-red-400 rounded text-sm">{localError}</div>}
+        {localError && !isAddingNewSubtask && <div className="mb-4 p-2 text-red-700 text-sm">{localError}</div>}
         {/* Display localError for new subtask form if it's active */}
-        {localError && isAddingNewSubtask && <div className="my-2 p-2 text-red-700 bg-red-100 border border-red-400 rounded text-sm">{localError}</div>}
-        {isSavingSubtask && <div className="mb-4 p-2 text-blue-700 bg-blue-100 border border-blue-400 rounded text-sm">Saving subtask...</div>}
+        {localError && isAddingNewSubtask && <div className="my-2 p-2 text-red-700 text-sm">{localError}</div>}
         <div className="overflow-x-auto h-[400px]">
           <table className="w-full border-collapse border text-sm bg-white">
             <thead className="bg-gray-100">
@@ -455,13 +579,15 @@ useEffect(() => {
               {isAddingNewSubtask && (
                 <tr ref={newTaskFormRowRef}> {/* <<< MODIFICATION: Assigned ref here */}
                   <td className="border p-1 text-xs text-gray-400 align-middle">NEW</td>
-                  <td className="border p-1 align-middle">
+                  <td className={`border p-1 align-middle`}>
                     <NewSubtaskTextField
                       inputRef={newSubtaskTitleInputRef}
                       value={newSubtaskTitle}
                       onChange={(e) => { setNewSubtaskTitle(e.target.value); if (localError) setLocalError(null);}} // Clear error on typing
                       onEnterPress={handleSaveNewSubtask}
                       placeholder="Subtask title"
+validator={validator}
+
                     />
                   </td>
                   <td className="border p-1 align-middle">
@@ -477,20 +603,24 @@ useEffect(() => {
                         value={newSubtaskResponsiblePersonId}
                         onChange={setNewSubtaskResponsiblePersonId}
                         placeholder="Select Person..."
+                        table={true}
                     />
                   </td>
                   <td className="border p-1 align-middle">
-                    <NewSubtaskDateEditor
+                    <DateEditor
                         value={newSubtaskStartDate}
-                        onChange={(e) => setNewSubtaskStartDate(e.target.value)}
+                        onUpdate={(date) => setNewSubtaskStartDate(date)}
                         onEnterPress={handleSaveNewSubtask}
+validator={validator}
+
                     />
                   </td>
                   <td className="border p-1 align-middle">
-                     <NewSubtaskDateEditor
+                     <DateEditor
                         value={newSubtaskEndDate}
-                        onChange={(e) => setNewSubtaskEndDate(e.target.value)}
+                        onUpdate={(date) => setNewSubtaskEndDate(date)}
                         onEnterPress={handleSaveNewSubtask}
+                      validator={validator}
                     />
                   </td>
                   <td className="border p-1 text-xs align-middle">{newSubtaskDuration}</td>
@@ -509,14 +639,6 @@ useEffect(() => {
                         placeholder="Select Tags"
                         searchPlaceholder="Search tags..."
                     />
-                  </td>
-                  <td className="border p-1 text-center align-middle">
-                    <div className="flex items-center justify-center space-x-1">
-                        <button onClick={handleSaveNewSubtask} className="text-green-600 hover:text-green-800 p-1 text-xs" disabled={isSavingSubtask}>
-                            {isSavingSubtask ? 'Saving...' : 'Save'}
-                        </button>
-                        <button onClick={handleCancelNewSubtask} className="text-gray-600 hover:text-gray-800 p-1 text-xs">Cancel</button>
-                    </div>
                   </td>
                 </tr>
               )}

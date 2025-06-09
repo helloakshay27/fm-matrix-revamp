@@ -235,44 +235,58 @@ const GroupTable = () => {
           </table>
         </div>
 
-        <div className="pagination-controls flex items-center justify-between gap-2 mt-4 text-sm">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => table.setPageIndex(0)}
-              disabled={!table.getCanPreviousPage()}
-              className="p-1 border rounded disabled:opacity-50"
-            >
-              {'<<'}
-            </button>
-            <button
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-              className="p-1 border rounded disabled:opacity-50"
-            >
-              {'<'}
-            </button>
-            <button
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-              className="p-1 border rounded disabled:opacity-50"
-            >
-              {'>'}
-            </button>
-            <button
-              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-              disabled={!table.getCanNextPage()}
-              className="p-1 border rounded disabled:opacity-50"
-            >
-              {'>>'}
-            </button>
-          </div>
-          <span className="flex items-center gap-1">
-            <div>Page</div>
-            <strong>
-              {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-            </strong>
-          </span>
-        </div>
+        {data.length > 0 && (
+                    <div className=" flex items-center justify-start gap-4 mt-4 text-[12px]">
+                        {/* Previous Button */}
+                        <button
+                            onClick={() => table.previousPage()}
+                            disabled={!table.getCanPreviousPage()}
+                            className="text-red-600 disabled:opacity-30"
+                        >
+                            {"<"}
+                        </button>
+
+                        {/* Page Numbers (Sliding Window of 3) */}
+                        {(() => {
+                            const totalPages = table.getPageCount();
+                            const currentPage = table.getState().pagination.pageIndex;
+                            const visiblePages = 3;
+
+                            let start = Math.max(0, currentPage - Math.floor(visiblePages / 2));
+                            let end = start + visiblePages;
+
+                            // Ensure end does not exceed total pages
+                            if (end > totalPages) {
+                                end = totalPages;
+                                start = Math.max(0, end - visiblePages);
+                            }
+
+                            return [...Array(end - start)].map((_, i) => {
+                                const page = start + i;
+                                const isActive = page === currentPage;
+
+                                return (
+                                    <button
+                                        key={page}
+                                        onClick={() => table.setPageIndex(page)}
+                                        className={` px-3 py-1 ${isActive ? "bg-gray-200 font-bold" : ""}`}
+                                    >
+                                        {page + 1}
+                                    </button>
+                                );
+                            });
+                        })()}
+
+                        {/* Next Button */}
+                        <button
+                            onClick={() => table.nextPage()}
+                            disabled={!table.getCanNextPage()}
+                            className="text-red-600 disabled:opacity-30"
+                        >
+                            {">"}
+                        </button>
+                    </div>
+                )}
       </div>
 
       {openModal && (

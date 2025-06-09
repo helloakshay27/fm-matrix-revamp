@@ -7,7 +7,8 @@ import Milestones from "./Modals/Milestone.jsx";
 import CloseIcon from '@mui/icons-material/Close';
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headlessui/react';
 import { ChevronDownIcon, XMarkIcon } from '@heroicons/react/20/solid';
-
+import { set } from "react-hook-form";
+import Modal from "../../Setup/ProjectTags/Modal.jsx";
 const CreateNewTeam = ({ openModal, setOpenModal }) => {
   return (
     <div className=" w-[560px] h-[280px] bg-white absolute top-[40%] left-[45%]  translate-x-[-50%] translate-y-[-50%] border-[0.5px] border-[#C0C0C0] p-4  shadow-md z-50">
@@ -52,7 +53,8 @@ const CreateNewTeam = ({ openModal, setOpenModal }) => {
 const AddProjectModal = ({ isModalOpen, setIsModalOpen, projectname = "New Project", endText = "Next", isEdit, editData }) => {
   const addTaskModalRef = useRef(null);
   const [tab, setTab] = useState("Details");
-  const [openModal, setOpenModal] = useState(false);
+  const [openTagModal, setOpenTagModal] = useState(false);
+  const [openTeamModal, setOpenTeamModal] = useState(false);
 
   useGSAP(() => {
     if (isModalOpen) {
@@ -109,14 +111,19 @@ const AddProjectModal = ({ isModalOpen, setIsModalOpen, projectname = "New Proje
 
           <hr className="border  " />
 
-          {tab == "Details" && <Details setTab={setTab} openModal={openModal} setOpenModal={setOpenModal} isEdit={isEdit} />}
+          {tab == "Details" && <Details setTab={setTab}  setOpenTagModal={setOpenTagModal}  setOpenTeamModal={setOpenTeamModal} isEdit={isEdit} />}
           {tab == "Milestone" && <Milestones />}
         </div>
 
       </div>
-      {openModal && (
-        <CreateNewTeam openModal={openModal} setOpenModal={setOpenModal} />
+      {openTeamModal && (
+        <CreateNewTeam openModal={openTeamModal} setOpenModal={setOpenTeamModal} />
       )}
+      {
+        openTagModal && (
+          <Modal open={openTagModal} setOpenModal={setOpenTagModal} isEdit={""}/>
+        )
+      }
     </div>
   );
 };

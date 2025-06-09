@@ -19,24 +19,24 @@ import "./Table.css";
 import Loader from "../../Loader";
 import SelectBox from "../../SelectBox";
 
-const NewProjectTextField = ({ value, onChange, onEnterPress, inputRef, placeholder, className }) => {
+const NewProjectTextField = ({ value, onChange, onEnterPress, inputRef, placeholder, className ,validator}) => {
     const handleKeyDown = (event) => {
         if (event.key === 'Enter' && onEnterPress) {
             event.preventDefault();
             onEnterPress();
         }
     };
-    return <input ref={inputRef} type="text" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`w-full p-1 focus:outline-none rounded text-[13px] ${className || ''}`} />;
+    return <input ref={inputRef} type="text" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`${validator? 'border border-red-500': 'border-none'} w-full p-1 focus:outline-none rounded text-[13px] bg-none`} />;
 };
 
-const NewProjectDateEditor = ({ value, onChange, onEnterPress, placeholder, className }) => {
+const NewProjectDateEditor = ({ value, onChange, onEnterPress, placeholder, className,validator }) => {
     const handleKeyDown = (event) => {
         if (event.key === 'Enter' && onEnterPress) { // Note: Enter press on date might not be standard UX for save
             event.preventDefault();
             onEnterPress();
         }
     };
-    return <input type="date" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`w-full p-1 focus:outline-none rounded text-[13px] ${className || ''}`} />;
+    return <input type="date" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`${validator? 'border border-red-500': 'border-none'} w-full p-1 focus:outline-none rounded text-[13px] ${className || ''}`} />;
 };
 
 const ActionIcons = ({ row }) => (
@@ -99,7 +99,7 @@ const ProjectList = () => {
         loading: loadingUsers,
         error: usersFetchError,
     } = useSelector((state) => state.fetchUsers || { users: [], loading: false, error: null });
-    
+
     const [isAddingNewProject, setIsAddingNewProject] = useState(false);
     const [newProjectTitle, setNewProjectTitle] = useState('');
     const [newProjectStatus, setNewProjectStatus] = useState(globalStatusOptions[0]);
@@ -110,6 +110,7 @@ const ProjectList = () => {
     const [newProjectPriority, setNewProjectPriority] = useState(globalPriorityOptionsForNew[0]);
     const [localError, setLocalError] = useState(null);
     const [isSavingNewProject, setIsSavingNewProject] = useState(false);
+    const[validator, setValidator] = useState(null);
     const newProjectTitleInputRef = useRef(null);
     const newProjectFormRowRef = useRef(null); // Ref for the new project form row
 
@@ -137,9 +138,9 @@ const ProjectList = () => {
                     status: project.status ? project.status.charAt(0).toUpperCase() + project.status.slice(1) : "Unknown",
                     type: project.resource_type || "Unknown",
                     manager: project.project_owner_name || "Unassigned",
-                    milestones: "70%", 
-                    tasks: "90%", 
-                    issues: "8/10", 
+                    milestones: "70%",
+                    tasks: "90%",
+                    issues: "8/10",
                     startDate: project.start_date ? new Date(project.start_date).toLocaleDateString('en-CA') : "N/A",
                     endDate: project.end_date ? new Date(project.end_date).toLocaleDateString('en-CA') : "N/A",
                     priority: project.priority ? project.priority.charAt(0).toUpperCase() + project.priority.slice(1) : "Unknown",
@@ -179,16 +180,16 @@ const ProjectList = () => {
             const apiCompatibleValue = typeof newValue === 'string' ? newValue.toLowerCase() : newValue;
             try {
                 await dispatch(
-                    changeProjectStatus({ id: actualProjectId, payload: { [name]: apiCompatibleValue }})
+                    changeProjectStatus({ id: actualProjectId, payload: { [name]: apiCompatibleValue } })
                 ).unwrap();
-                dispatch(fetchProjects()); 
+                dispatch(fetchProjects());
             } catch (err) {
                 console.error(`Failed to update project ${name} for ID ${actualProjectId}:`, err);
             }
         },
         [dispatch]
     );
-    
+
     const resetNewProjectForm = useCallback(() => {
         setNewProjectTitle('');
         setNewProjectStatus(globalStatusOptions[0]);
@@ -198,6 +199,7 @@ const ProjectList = () => {
         setNewProjectEndDate('');
         setNewProjectPriority(globalPriorityOptionsForNew[0]);
         setLocalError(null);
+        setValidator(false);
     }, []);
 
     const handleShowNewProjectForm = useCallback(() => {
@@ -211,13 +213,14 @@ const ProjectList = () => {
     }, [resetNewProjectForm]);
 
     const handleSaveNewProject = useCallback(async () => {
-        if (!newProjectTitle || newProjectTitle.trim() === "") {
-            setLocalError("Project title cannot be empty.");
-            if (newProjectTitleInputRef.current) newProjectTitleInputRef.current.focus();
+        if (!newProjectTitle || newProjectTitle.trim() === "" || !newProjectStartDate || !newProjectEndDate) {
+            setLocalError("Fill all required fields.");
+             setValidator(true);
             return; // Important: Return here to prevent save attempt
         }
         setLocalError(null);
         setIsSavingNewProject(true);
+        setValidator(false);
 
         const projectPayload = {
             title: newProjectTitle.trim(),
@@ -231,7 +234,7 @@ const ProjectList = () => {
         };
 
         try {
-            await dispatch(createProject({ project_management: projectPayload })).unwrap(); 
+            await dispatch(createProject({ project_management: projectPayload })).unwrap();
             dispatch(fetchProjects());
             //setIsAddingNewProject(false); // Keep form open or close based on UX preference. Closing is common.
             //resetNewProjectForm();       // Reset for next entry or clear.
@@ -248,7 +251,7 @@ const ProjectList = () => {
         newProjectTitle, newProjectStatus, newProjectType,
         newProjectManager, newProjectStartDate, newProjectEndDate, newProjectPriority
     ]);
-    
+
     useEffect(() => {
         if (isAddingNewProject && newProjectTitleInputRef.current) {
             newProjectTitleInputRef.current.focus();
@@ -264,14 +267,10 @@ const ProjectList = () => {
                 !newProjectFormRowRef.current ||
                 newProjectFormRowRef.current.contains(event.target)
             ) {
-                return; 
+                return;
             }
 
-            if (!newProjectTitle || newProjectTitle.trim() === "") {
-                handleCancelNewProject(); // Cancel if title is empty
-            } else {
                 handleSaveNewProject(); // Attempt to save if title is present
-            }
         };
 
         if (isAddingNewProject) {
@@ -282,12 +281,30 @@ const ProjectList = () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, [
-        isAddingNewProject, 
-        isSavingNewProject, 
-        newProjectTitle, 
-        handleSaveNewProject, 
+        isAddingNewProject,
+        isSavingNewProject,
+        newProjectTitle,
+        handleSaveNewProject,
         handleCancelNewProject // Use handleCancelNewProject
     ]);
+
+    useEffect(() => {
+        const handleEscape = (event) => {
+          if(!isAddingNewProject)return;
+          if (event.key === "Escape") {
+            console.log("Escape key pressed!");
+            handleCancelNewProject();
+          }
+        };
+    
+        window.addEventListener("keydown", handleEscape);
+    
+        return () => {
+          window.removeEventListener("keydown", handleEscape);
+        };
+      }, [isAddingNewProject, handleCancelNewProject]);
+    
+    
 
 
     const userOptionsForSelectBox = useMemo(() => [
@@ -301,18 +318,18 @@ const ProjectList = () => {
     const columns = useMemo(
         () => [
             // Column definitions remain the same
-            { accessorKey: "id", header: "Project ID", size: 110, cell: ({ row, getValue }) => (<Link to={`/projects/${row.original.actualId}`} className="text-blue-600 hover:text-blue-800 hover:underline">{getValue()}</Link>),},
-            { accessorKey: "title", header: "Project Title", size: 250, cell: ({ row, getValue }) => (<Link to={`/milestones/${row.original.actualId}`} className="cursor-pointer">{getValue()}</Link>),},
-            { accessorKey: "status", header: "Status", size: 150, cell: (info) => (<StatusBadge statusOptions={globalStatusOptions.map(s => s.charAt(0).toUpperCase() + s.slice(1))} status={info.getValue()} onStatusChange={(newStatus) => { handleStatusChange({ id: info.row.original.id, name: "status", payload: newStatus }); }} />),},
+            { accessorKey: "id", header: "Project ID", size: 110, cell: ({ row, getValue }) => (<Link to={`/projects/${row.original.actualId}`} className="text-blue-600 hover:text-blue-800 hover:underline">{getValue()}</Link>), },
+            { accessorKey: "title", header: "Project Title", size: 250, cell: ({ row, getValue }) => (<Link to={`/milestones/${row.original.actualId}`} className="cursor-pointer">{getValue()}</Link>), },
+            { accessorKey: "status", header: "Status", size: 150, cell: (info) => (<StatusBadge statusOptions={globalStatusOptions.map(s => s.charAt(0).toUpperCase() + s.slice(1))} status={info.getValue()} onStatusChange={(newStatus) => { handleStatusChange({ id: info.row.original.id, name: "status", payload: newStatus }); }} />), },
             { accessorKey: "type", header: "Project Type", size: 150, },
             { accessorKey: "manager", header: "Project Manager", size: 180, },
-            { accessorKey: "milestones", header: "Milestones", size: 130, cell: (info) => <ProgressBar progressString={info.getValue()} />,},
-            { accessorKey: "tasks", header: "Tasks", size: 110, cell: (info) => <ProgressBar progressString={info.getValue()} />,},
+            { accessorKey: "milestones", header: "Milestones", size: 130, cell: (info) => <ProgressBar progressString={info.getValue()} />, },
+            { accessorKey: "tasks", header: "Tasks", size: 110, cell: (info) => <ProgressBar progressString={info.getValue()} />, },
             { accessorKey: "issues", header: "Issues", size: 100, },
             { accessorKey: "startDate", header: "Start Date", size: 120, },
             { accessorKey: "endDate", header: "End Date", size: 120, },
-            { accessorKey: "priority", header: "Priority", size: 100, cell: (info) => (<StatusBadge statusOptions={globalPriorityOptionsForNew} status={info.getValue()} onStatusChange={(newPriority) => {handleStatusChange({ id: info.row.original.id, name: "priority", payload: newPriority }); }} />),},
-            { id: "actions", header: "Actions", size: 150, cell: ({ row }) => <ActionIcons row={row} />,},
+            { accessorKey: "priority", header: "Priority", size: 100, cell: (info) => (<StatusBadge statusOptions={globalPriorityOptionsForNew} status={info.getValue()} onStatusChange={(newPriority) => { handleStatusChange({ id: info.row.original.id, name: "priority", payload: newPriority }); }} />), },
+            { id: "actions", header: "Actions", size: 150, cell: ({ row }) => <ActionIcons row={row} />, },
         ],
         [handleStatusChange]
     );
@@ -328,15 +345,15 @@ const ProjectList = () => {
 
     let content;
     // Adjusted loading logic slightly for clarity with renamed Redux loading states
-    const anyFilterLoading = filterProjectsLoadingRedux; 
+    const anyFilterLoading = filterProjectsLoadingRedux;
     const anyFilterError = filterProjectsErrorRedux;
 
     if (fetchProjectsLoading || loadingUsers || anyFilterLoading || statusChangeLoading || isSavingNewProject) {
         const loadingMessage = isSavingNewProject ? "Saving Project..."
-                             : fetchProjectsLoading ? "Loading Projects..."
-                             : loadingUsers ? "Loading Users..."
-                             : anyFilterLoading ? "Applying Filters..."
-                             : "Updating Status...";
+            : fetchProjectsLoading ? "Loading Projects..."
+                : loadingUsers ? "Loading Users..."
+                    : anyFilterLoading ? "Applying Filters..."
+                        : "Updating Status...";
         content = <Loader message={loadingMessage} />;
     } else if (fetchProjectsError || usersFetchError || anyFilterError || statusChangeError) {
         const error = fetchProjectsError || usersFetchError || anyFilterError || statusChangeError;
@@ -344,7 +361,7 @@ const ProjectList = () => {
     } else {
         content = (
             <div className="project-table-container text-[14px] font-light" style={{ minHeight: "200px" }}>
-                 {localError && isAddingNewProject && <div className="mb-2 p-2 text-sm text-red-700 bg-red-100 border border-red-400 rounded">{localError}</div>}
+                {localError && isAddingNewProject && <div className="mb-2 p-2 text-sm text-red-700">{localError}</div>}
                 <div className="table-wrapper overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
@@ -360,7 +377,7 @@ const ProjectList = () => {
                             ))}
                         </thead>
                         <tbody>
-                            
+
                             {data.length === 0 && !isAddingNewProject ? (
                                 <tr style={{ height: `${rowHeight}px` }}>
                                     <td colSpan={columns.length} className="no-data-message text-center py-10 text-gray-500">
@@ -379,11 +396,11 @@ const ProjectList = () => {
                                     </tr>
                                 ))
                             )}
-                             {!isAddingNewProject && (
+                            {!isAddingNewProject && (
                                 <tr>
                                     <td colSpan={columns.length} className="p-2 border-t-2">
-                                        <button 
-                                            onClick={handleShowNewProjectForm} 
+                                        <button
+                                            onClick={handleShowNewProjectForm}
                                             className="px-3 py-1.5 text-sm text-red-600 hover:underline"
                                             disabled={isSavingNewProject || fetchProjectsLoading || loadingUsers || anyFilterLoading || statusChangeLoading}
                                         >
@@ -402,6 +419,7 @@ const ProjectList = () => {
                                             onChange={(e) => { setNewProjectTitle(e.target.value); if (localError) setLocalError(null); }}
                                             onEnterPress={handleSaveNewProject} // Save on Enter in title field
                                             placeholder="Project Title"
+                                            validator={validator}
                                         />
                                     </td>
                                     <td className="p-1 border-r-2 align-middle">
@@ -431,12 +449,14 @@ const ProjectList = () => {
                                     <td className="p-1 border-r-2 align-middle"></td> {/* Tasks */}
                                     <td className="p-1 border-r-2 align-middle"></td> {/* Issues */}
                                     <td className="p-0 border-r-2 align-middle">
-                                        <NewProjectDateEditor value={newProjectStartDate} onChange={(e) => setNewProjectStartDate(e.target.value)} 
-                                        onEnterPress={handleSaveNewProject} /* Optional: save on enter for dates too */ />
+                                        <NewProjectDateEditor value={newProjectStartDate} onChange={(e) => setNewProjectStartDate(e.target.value)}
+                                            onEnterPress={handleSaveNewProject} 
+                                            validator={validator} /* Optional: save on enter for dates too */ />
                                     </td>
                                     <td className="p-0 border-r-2 align-middle">
-                                        <NewProjectDateEditor value={newProjectEndDate} onChange={(e) => setNewProjectEndDate(e.target.value)} 
-                                        onEnterPress={handleSaveNewProject} /* Optional: save on enter for dates too */ />
+                                        <NewProjectDateEditor value={newProjectEndDate} onChange={(e) => setNewProjectEndDate(e.target.value)}
+                                            onEnterPress={handleSaveNewProject} 
+                                            validator={validator} />
                                     </td>
                                     <td className="p-1 border-r-2 align-middle">
                                         <StatusBadge
@@ -454,31 +474,60 @@ const ProjectList = () => {
                 </div>
 
                 {data.length > 0 && (
-                   <div className="pagination-controls flex items-center justify-between gap-2 mt-4 text-sm">
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()} className="p-1 border rounded disabled:opacity-50">{"<<"}</button>
-                            <button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} className="p-1 border rounded disabled:opacity-50">{"<"}</button>
-                            <button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} className="p-1 border rounded disabled:opacity-50">{">"}</button>
-                            <button onClick={() => table.setPageIndex(table.getPageCount() - 1)} disabled={!table.getCanNextPage()} className="p-1 border rounded disabled:opacity-50">{">>"}</button>
-                        </div>
-                        <span className="flex items-center gap-1">
-                            <div>Page</div>
-                            <strong>{table.getState().pagination.pageIndex + 1} of {table.getPageCount()}</strong>
-                        </span>
-                        <select
-                            value={table.getState().pagination.pageSize}
-                            onChange={(e) => { table.setPageSize(Number(e.target.value)); }}
-                            className="p-1 border rounded"
+                    <div className=" flex items-center justify-start gap-4 mt-4 text-[12px]">
+                        {/* Previous Button */}
+                        <button
+                            onClick={() => table.previousPage()}
+                            disabled={!table.getCanPreviousPage()}
+                            className="text-red-600 disabled:opacity-30"
                         >
-                            {[10, 20, 30, 40, 50].map((pageSize) => (
-                                <option key={pageSize} value={pageSize}>Show {pageSize}</option>
-                            ))}
-                        </select>
+                            {"<"}
+                        </button>
+
+                        {/* Page Numbers (Sliding Window of 3) */}
+                        {(() => {
+                            const totalPages = table.getPageCount();
+                            const currentPage = table.getState().pagination.pageIndex;
+                            const visiblePages = 3;
+
+                            let start = Math.max(0, currentPage - Math.floor(visiblePages / 2));
+                            let end = start + visiblePages;
+
+                            // Ensure end does not exceed total pages
+                            if (end > totalPages) {
+                                end = totalPages;
+                                start = Math.max(0, end - visiblePages);
+                            }
+
+                            return [...Array(end - start)].map((_, i) => {
+                                const page = start + i;
+                                const isActive = page === currentPage;
+
+                                return (
+                                    <button
+                                        key={page}
+                                        onClick={() => table.setPageIndex(page)}
+                                        className={` px-3 py-1 ${isActive ? "bg-gray-200 font-bold" : ""}`}
+                                    >
+                                        {page + 1}
+                                    </button>
+                                );
+                            });
+                        })()}
+
+                        {/* Next Button */}
+                        <button
+                            onClick={() => table.nextPage()}
+                            disabled={!table.getCanNextPage()}
+                            className="text-red-600 disabled:opacity-30"
+                        >
+                            {">"}
+                        </button>
                     </div>
                 )}
-            </div>
-        );
+            </div>);
     }
+
 
     return (
         <div className="project-list-wrapper p-4">

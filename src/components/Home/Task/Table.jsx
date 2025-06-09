@@ -44,6 +44,7 @@ const EditableTextField = ({
   inputRef,
   isNewRow,
   onEnterPress,
+  validator
 }) => {
   const [localValue, setLocalValue] = useState(value);
   useEffect(() => {
@@ -67,7 +68,7 @@ const EditableTextField = ({
       onChange={(e) => setLocalValue(e.target.value)}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
-      className="focus:outline-none w-full h-full p-1 rounded text-sm"
+      className={`${validator? ' border border-red-600': 'border-none'} focus:outline-none w-full h-full p-1 rounded text-sm`}
     />
   );
 };
@@ -79,6 +80,7 @@ const DateEditor = ({
   onEnterPress,
   className,
   placeholder = "Select date",
+  validator
 
 }) => {
   const [date, setDate] = useState(
@@ -134,7 +136,7 @@ const DateEditor = ({
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       onClick={handleInputClick}
-      className={`w-full focus:outline-none rounded text-[12px] my-custom-date-editor ${className || ''} `}
+      className={`${validator?'border border-red-400':'border-none'} w-full focus:outline-none rounded text-[12px] p-1 my-custom-date-editor  `}
       placeholder={placeholder}
     />
   );
@@ -238,6 +240,7 @@ const TaskTable = () => {
   const [newTaskStartDate, setNewTaskStartDate] = useState("");
   const [newTaskEndDate, setNewTaskEndDate] = useState("");
   const [newTaskPriority, setNewTaskPriority] = useState("None");
+  const [validator, setValidator] = useState(false);
 
   const newTaskTitleInputRef = useRef(null);
   const newTaskFormRowRef = useRef(null);
@@ -338,6 +341,7 @@ const TaskTable = () => {
     setNewTaskEndDate(defaults.endDate);
     setNewTaskPriority(defaults.priority);
     setLocalError(null);
+    setValidator(false);
   }, [createNewTaskDefaults]);
 
   const handleShowNewTaskForm = () => {
@@ -352,12 +356,13 @@ const TaskTable = () => {
   };
 
   const handleSaveNewTask = useCallback(() => {
-    if (!newTaskTitle || newTaskTitle.trim() === "") {
-      setLocalError("Task title cannot be empty.");
-      if (newTaskTitleInputRef.current) newTaskTitleInputRef.current.focus();
+    if (!newTaskTitle || newTaskTitle.trim() === "" || !newTaskEndDate || !newTaskStartDate) {
+      setLocalError("Fill all required fields");
+      setValidator(true);
       return;
     }
     setLocalError(null);
+    setValidator(false);
     const taskAttributes = {
       title: newTaskTitle.trim(),
       status: newTaskStatus,
@@ -406,12 +411,8 @@ const TaskTable = () => {
       ) {
         return;
       }
-      if (!newTaskTitle || newTaskTitle.trim() === "") {
-        setIsAddingNewTask(false);
-        resetNewTaskForm();
-      } else {
+     
         handleSaveNewTask();
-      }
     };
     if (isAddingNewTask) {
       document.addEventListener("mousedown", handleClickOutsideNewTaskRow);
@@ -426,6 +427,24 @@ const TaskTable = () => {
     handleSaveNewTask,
     resetNewTaskForm,
   ]);
+
+    useEffect(() => {
+    const handleEscape = (event) => {
+      if(!isAddingNewTask)return;
+      if (event.key === "Escape") {
+        console.log("Escape key pressed!");
+        handleCancelNewTask();
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isAddingNewTask, handleCancelNewTask]);
+
+
 
   const handleUpdateTaskFieldCell = useCallback(
     async (taskId, fieldName, newValue) => {
@@ -701,6 +720,7 @@ const TaskTable = () => {
     )
   } else {
     content = (
+      <>
       <div
         className="table-wrapper border-none overflow-x-auto"
         style={{
@@ -804,6 +824,7 @@ const TaskTable = () => {
                     inputRef={newTaskTitleInputRef}
                     isNewRow={true}
                     onEnterPress={handleSaveNewTask}
+                    validator={validator}
                   />
                 </td>
                 {" "}
@@ -847,6 +868,7 @@ const TaskTable = () => {
                     onUpdate={setNewTaskStartDate}
                     isNewRow={true}
                     onEnterPress={handleSaveNewTask}
+                    validator={validator}
                   />
                 </td>
                 {" "}
@@ -857,6 +879,7 @@ const TaskTable = () => {
                     isNewRow={true}
                     onEnterPress={handleSaveNewTask}
                     className="text-[12px]"
+                    validator={validator}
                   />
                 </td>
                 {" "}
@@ -913,11 +936,12 @@ const TaskTable = () => {
         </table>
         {" "}
       </div>
+      </>
     );
   }
 
   const renderError = localError ? (
-    <div className="mt-2 p-2 text-red-700 bg-red-100 border border-red-400 rounded text-sm">
+    <div className="mt-2 p-2 text-red-700 b text-sm">
       {String(localError)}
     </div>
   ) : null;
@@ -935,75 +959,58 @@ const TaskTable = () => {
       {content}
 
       {/* Pagination Controls */}
-      {!loadingTasks && data.length > 0 && (
-        <div className="flex items-center justify-between mt-4">
-          <div className="flex items-center gap-2">
-            <button
-              className="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
-              onClick={() => table.setPageIndex(0)}
-              disabled={!table.getCanPreviousPage()}
-            >
-              {"<<"}
-            </button>
-            <button
-              className="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              {"<"}
-            </button>
-            <button
-              className="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              {">"}
-            </button>
-            <button
-              className="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
-              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-              disabled={!table.getCanNextPage()}
-            >
-              {">>"}
-            </button>
-            <span className="flex items-center gap-1 text-sm">
-              <div>Page</div>
-              <strong>
-                {table.getState().pagination.pageIndex + 1} of{" "}
-                {table.getPageCount()}
-              </strong>
-            </span>
-            <span className="flex items-center gap-1 text-sm">
-              | Go to page:
-              <input
-                type="number"
-                defaultValue={table.getState().pagination.pageIndex + 1}
-                onChange={(e) => {
-                  const page = e.target.value ? Number(e.target.value) - 1 : 0;
-                  table.setPageIndex(page);
-                }}
-                className="w-16 p-1 border rounded-md text-sm"
-              />
-            </span>
-            <select
-              value={table.getState().pagination.pageSize}
-              onChange={(e) => {
-                table.setPageSize(Number(e.target.value));
-              }}
-              className="p-1 border rounded-md text-sm"
-            >
-              {[10, 20, 30, 40, 50].map((pageSize) => (
-                <option key={pageSize} value={pageSize}>
-                  Show {pageSize}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="text-sm">
-            {table.getFilteredRowModel().rows.length} Total Tasks
-          </div>
-        </div>
-      )}
+      {data.length > 0 && (
+                    <div className=" flex items-center justify-start gap-4 mt-4 text-[12px]">
+                        {/* Previous Button */}
+                        <button
+                            onClick={() => table.previousPage()}
+                            disabled={!table.getCanPreviousPage()}
+                            className="text-red-600 disabled:opacity-30"
+                        >
+                            {"<"}
+                        </button>
+
+                        {/* Page Numbers (Sliding Window of 3) */}
+                        {(() => {
+                            const totalPages = table.getPageCount();
+                            const currentPage = table.getState().pagination.pageIndex;
+                            const visiblePages = 3;
+
+                            let start = Math.max(0, currentPage - Math.floor(visiblePages / 2));
+                            let end = start + visiblePages;
+
+                            // Ensure end does not exceed total pages
+                            if (end > totalPages) {
+                                end = totalPages;
+                                start = Math.max(0, end - visiblePages);
+                            }
+
+                            return [...Array(end - start)].map((_, i) => {
+                                const page = start + i;
+                                const isActive = page === currentPage;
+
+                                return (
+                                    <button
+                                        key={page}
+                                        onClick={() => table.setPageIndex(page)}
+                                        className={` px-3 py-1 ${isActive ? "bg-gray-200 font-bold" : ""}`}
+                                    >
+                                        {page + 1}
+                                    </button>
+                                );
+                            });
+                        })()}
+
+                        {/* Next Button */}
+                        <button
+                            onClick={() => table.nextPage()}
+                            disabled={!table.getCanNextPage()}
+                            className="text-red-600 disabled:opacity-30"
+                        >
+                            {">"}
+                        </button>
+                    </div>
+                )}
     </div>
   );
 };

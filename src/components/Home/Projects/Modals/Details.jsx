@@ -7,7 +7,7 @@ import { fetchUsers } from '../../../../redux/slices/userSlice'
 import { fetchTags } from '../../../../redux/slices/tagsSlice'
 import { useParams } from "react-router-dom";
 
-const Details = ({ setTab, setOpenModal, openModal, endText = "Next", isEdit = false }) => {
+const Details = ({ setTab, setOpenTagModal,setOpenTeamModal, endText = "Next", isEdit = false }) => {
   const { id } = useParams();
   const dispatch = useDispatch();
 
@@ -114,7 +114,7 @@ const Details = ({ setTab, setOpenModal, openModal, endText = "Next", isEdit = f
     const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
     const minutes = totalMinutes % 60;
 
-    return `${days} : ${hours} : ${minutes}`;
+    return `${days}d : ${hours}h: ${minutes}m`;
   };
 
   const handleSubmit = async (e, id) => {
@@ -286,7 +286,7 @@ const Details = ({ setTab, setOpenModal, openModal, endText = "Next", isEdit = f
         </div>
 
         <div className="relative">
-          <label className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer" onClick={() => { setOpenModal(true) }
+          <label className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer" onClick={() => { setOpenTeamModal("true") }
           }>
             <i>Create new team</i>
           </label>
@@ -354,6 +354,12 @@ const Details = ({ setTab, setOpenModal, openModal, endText = "Next", isEdit = f
               placeholder="Select Tags"
             />
           </div>
+
+         <div className="relative">
+          <label className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer" onClick={() => {setOpenTagModal(true) }
+          }>
+            <i>Create new tag</i>
+          </label>
         </div>
 
         <div className="flex items-center justify-center gap-4 w-full bottom-0 py-3 bg-white mt-10">
@@ -364,6 +370,7 @@ const Details = ({ setTab, setOpenModal, openModal, endText = "Next", isEdit = f
             {endText}
           </button>
         </div>
+      </div>
       </div>
     </form>
   );

@@ -9,24 +9,24 @@ import {
 import StatusBadge from '../Home/Projects/statusBadge';
 
 // --- Input Components for Inline Add Row ---
-const InlineAddTextField = ({ value, onChange, onEnterPress, inputRef, placeholder, className }) => {
+const InlineAddTextField = ({ value, onChange, onEnterPress, inputRef, placeholder, className ,validator}) => {
     const handleKeyDown = (event) => {
         if (event.key === 'Enter' && onEnterPress) {
             event.preventDefault();
             onEnterPress();
         }
     };
-    return <input ref={inputRef} type="text" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`w-full p-1 h-full focus:outline-none rounded text-[13px] border border-gray-300 ${className || ''}`} />;
+    return <input ref={inputRef} type="text" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`${validator?'border border-red-500':' border-none'} w-full p-1 h-full focus:outline-none rounded text-[13px] border border-gray-300 ${className || ''}`} />;
 };
 
-const InlineAddDateEditor = ({ value, onChange, onEnterPress, placeholder, className }) => {
+const InlineAddDateEditor = ({ value, onChange, onEnterPress, placeholder, className ,validator}) => {
     const handleKeyDown = (event) => {
         if (event.key === 'Enter' && onEnterPress) {
             event.preventDefault();
             onEnterPress();
         }
     };
-    return <input type="date" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`w-full p-1 h-full focus:outline-none rounded text-[13px] border border-gray-300 ${className || ''}`} />;
+    return <input type="date" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`${validator?'border border-red-500':' border-none'} w-full p-1 h-full focus:outline-none rounded text-[13px] border border-gray-300 ${className || ''}`} />;
 };
 // --- End Input Components ---
 
@@ -60,6 +60,7 @@ const CustomTable = ({
     const [newInlineItemEndDate, setNewInlineItemEndDate] = useState('');
     const [inlineItemLocalError, setInlineItemLocalError] = useState(null);
     const [isSavingInlineItem, setIsSavingInlineItem] = useState(false);
+    const [validator, setValidator] = useState(false);
 
     const newInlineItemTitleInputRef = useRef(null);
     const newInlineItemFormRowRef = useRef(null);
@@ -87,6 +88,7 @@ const CustomTable = ({
         setNewInlineItemStartDate('');
         setNewInlineItemEndDate('');
         setInlineItemLocalError(null);
+        setValidator(false);
     }, []);
 
     const handleShowInlineItemForm = useCallback(() => {
@@ -101,8 +103,9 @@ const CustomTable = ({
     }, [resetInlineItemForm]);
 
     const handleSaveInlineItem = useCallback(async () => {
-        if (!newInlineItemTitle || newInlineItemTitle.trim() === "") {
-            setInlineItemLocalError("Title cannot be empty for the new item.");
+        if (!newInlineItemTitle || newInlineItemTitle.trim() === ""|| !newInlineItemEndDate || !newInlineItemStartDate) {
+            setInlineItemLocalError("Please fill out all required fields.");
+            setValidator(true);
             if (newInlineItemTitleInputRef.current) newInlineItemTitleInputRef.current.focus();
             return;
         }
@@ -112,6 +115,7 @@ const CustomTable = ({
         }
         setInlineItemLocalError(null);
         setIsSavingInlineItem(true);
+        setValidator(false);
         const newInlineItemData = {
             name: newInlineItemTitle.trim(),
             status: newInlineItemStatus,
@@ -146,11 +150,9 @@ const CustomTable = ({
             if (!isAddingInlineItem || isSavingInlineItem || !newInlineItemFormRowRef.current || newInlineItemFormRowRef.current.contains(event.target)) {
                 return;
             }
-            if (!newInlineItemTitle || newInlineItemTitle.trim() === "") {
-                handleCancelInlineItem();
-            } else {
+            
                 handleSaveInlineItem();
-            }
+            
         };
         if (isAddingInlineItem) {
             document.addEventListener("mousedown", handleClickOutsideInlineForm);
@@ -159,6 +161,23 @@ const CustomTable = ({
             document.removeEventListener("mousedown", handleClickOutsideInlineForm);
         };
     }, [isAddingInlineItem, isSavingInlineItem, newInlineItemTitle, handleSaveInlineItem, handleCancelInlineItem]);
+
+    useEffect(() => {
+            const handleEscape = (event) => {
+              if(!isAddingInlineItem)return;
+              if (event.key === "Escape") {
+                console.log("Escape key pressed!");
+                handleCancelInlineItem();
+              }
+            };
+        
+            window.addEventListener("keydown", handleEscape);
+        
+            return () => {
+              window.removeEventListener("keydown", handleEscape);
+            };
+          }, [isAddingInlineItem, handleCancelInlineItem]);
+        
 
     const tableColumns = table.getAllLeafColumns();
     const totalTableColumns = tableColumns.length;
@@ -199,7 +218,7 @@ const CustomTable = ({
             
             {inlineItemLocalError && isAddingInlineItem && (
                 <div className="px-4 pl-7 mt-2 mb-2">
-                    <div className="p-2 text-sm text-red-700 bg-red-100 border border-red-400 rounded">
+                    <div className="p-2 text-sm text-red-700  rounded">
                         {inlineItemLocalError}
                     </div>
                 </div>
@@ -241,20 +260,20 @@ const CustomTable = ({
                                 );
                             })}
                             {isAddingInlineItem && (
-                                <tr ref={newInlineItemFormRowRef} className="bg-sky-100" style={{ height: `${rowHeight}px` }}>
+                                <tr ref={newInlineItemFormRowRef}  style={{ height: `${rowHeight}px` }}>
                                     <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(0) }}>&nbsp;</td>
                                     <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(1) }}>
-                                        <InlineAddTextField inputRef={newInlineItemTitleInputRef} value={newInlineItemTitle} onChange={(e) => { setNewInlineItemTitle(e.target.value); if(inlineItemLocalError) setInlineItemLocalError(null); }} onEnterPress={handleSaveInlineItem} placeholder="Title"/>
+                                        <InlineAddTextField inputRef={newInlineItemTitleInputRef} value={newInlineItemTitle} onChange={(e) => { setNewInlineItemTitle(e.target.value); if(inlineItemLocalError) setInlineItemLocalError(null); }} onEnterPress={handleSaveInlineItem} placeholder="Title" validator={validator}/>
                                     </td>
                                     <td className="px-1 py-0 align-middle h-full flex items-center justify-center" style={{ width: getColWidth(2) }}>
                                         <StatusBadge statusOptions={globalStatusOptionsForInlineAdd} status={newInlineItemStatus} onStatusChange={setNewInlineItemStatus} />
                                     </td>
                                     <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(3) }}>&nbsp;</td>
                                     <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(4) }}>
-                                        <InlineAddDateEditor value={newInlineItemStartDate} onChange={(e) => setNewInlineItemStartDate(e.target.value)} onEnterPress={handleSaveInlineItem} placeholder="Start Date"/>
+                                        <InlineAddDateEditor value={newInlineItemStartDate} onChange={(e) => setNewInlineItemStartDate(e.target.value)} onEnterPress={handleSaveInlineItem} placeholder="Start Date" validator={validator}/>
                                     </td>
                                     <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(5) }}>
-                                        <InlineAddDateEditor value={newInlineItemEndDate} onChange={(e) => setNewInlineItemEndDate(e.target.value)} onEnterPress={handleSaveInlineItem} placeholder="End Date"/>
+                                        <InlineAddDateEditor value={newInlineItemEndDate} onChange={(e) => setNewInlineItemEndDate(e.target.value)} onEnterPress={handleSaveInlineItem} placeholder="End Date" validator={validator}/>
                                     </td>
                                     <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(6) }}>&nbsp;</td>
                                     <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(7) }}>&nbsp;</td>
@@ -291,19 +310,58 @@ const CustomTable = ({
                     </table>
                 </div>
 
-                <div className="pagination-controls flex items-center justify-between gap-2 mt-4 text-sm py-2">
-                    {/* ... pagination controls ... */}
-                    <div className="flex items-center gap-2">
-                        <button onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()} className="p-1 border rounded disabled:opacity-50">{'<<'}</button>
-                        <button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} className="p-1 border rounded disabled:opacity-50">{'<'}</button>
-                        <button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} className="p-1 border rounded disabled:opacity-50">{'>'}</button>
-                        <button onClick={() => table.setPageIndex(table.getPageCount() - 1)} disabled={!table.getCanNextPage()} className="p-1 border rounded disabled:opacity-50">{'>>'}</button>
+                 {data.length > 0 && (
+                    <div className=" flex items-center justify-start gap-4 mt-4 text-[12px]">
+                        {/* Previous Button */}
+                        <button
+                            onClick={() => table.previousPage()}
+                            disabled={!table.getCanPreviousPage()}
+                            className="text-red-600 disabled:opacity-30"
+                        >
+                            {"<"}
+                        </button>
+
+                        {/* Page Numbers (Sliding Window of 3) */}
+                        {(() => {
+                            const totalPages = table.getPageCount();
+                            const currentPage = table.getState().pagination.pageIndex;
+                            const visiblePages = 3;
+
+                            let start = Math.max(0, currentPage - Math.floor(visiblePages / 2));
+                            let end = start + visiblePages;
+
+                            // Ensure end does not exceed total pages
+                            if (end > totalPages) {
+                                end = totalPages;
+                                start = Math.max(0, end - visiblePages);
+                            }
+
+                            return [...Array(end - start)].map((_, i) => {
+                                const page = start + i;
+                                const isActive = page === currentPage;
+
+                                return (
+                                    <button
+                                        key={page}
+                                        onClick={() => table.setPageIndex(page)}
+                                        className={` px-3 py-1 ${isActive ? "bg-gray-200 font-bold" : ""}`}
+                                    >
+                                        {page + 1}
+                                    </button>
+                                );
+                            });
+                        })()}
+
+                        {/* Next Button */}
+                        <button
+                            onClick={() => table.nextPage()}
+                            disabled={!table.getCanNextPage()}
+                            className="text-red-600 disabled:opacity-30"
+                        >
+                            {">"}
+                        </button>
                     </div>
-                    <span className="flex items-center gap-1">
-                        <div>Page</div>
-                        <strong>{table.getState().pagination.pageIndex + 1} of {table.getPageCount()}</strong>
-                    </span>
-                </div>
+                )}
             </div>
         </>
     );

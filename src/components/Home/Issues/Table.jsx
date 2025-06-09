@@ -5,6 +5,7 @@ import {
   useReactTable,
   getCoreRowModel,
   flexRender,
+    getPaginationRowModel,
 } from '@tanstack/react-table';
 
 // Your Custom Components
@@ -23,24 +24,24 @@ import { all } from 'axios';
 
 
 
-const NewIssuesTextField = ({ value, onChange, onEnterPress, inputRef, placeholder }) => {
+const NewIssuesTextField = ({ value, onChange, onEnterPress, inputRef, placeholder ,validator}) => {
     const handleKeyDown = (event) => {
         if (event.key === 'Enter') {
             event.preventDefault();
             onEnterPress();
         }
     };
-    return <input ref={inputRef} type="text" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className="w-full p-1 focus:outline-none rounded text-[12px] " style={{background:"none"}}/>;
+    return <input ref={inputRef} type="text" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`${validator? 'border border-red-500': 'border-none'} w-full p-1 focus:outline-none rounded text-[12px] `} style={{background:"none"}}/>;
 };
 
-const NewIssuesDateEditor = ({ value, onChange, onEnterPress, placeholder }) => {
+const NewIssuesDateEditor = ({ value, onChange, onEnterPress, placeholder ,validator}) => {
     const handleKeyDown = (event) => {
         if (event.key === 'Enter') {
             event.preventDefault();
             onEnterPress();
         }
     };
-    return <input type="date" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className="   my-custom-date-editor w-full p-1 focus:outline-none rounded text-[13px] "/>;
+    return <input type="date" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={` ${validator? 'border border-red-500': 'border-none'} my-custom-date-editor w-full p-1 focus:outline-none rounded text-[13px] `}/>;
 };
 
 
@@ -80,6 +81,7 @@ console.log(parentId);
   const [isSavingIssues, setIsSavingIssues] = useState(false);
   const [isUpdatingIssue, setIsUpdatingIssue] = useState(false); // Added state for tracking updates
   const [localError, setLocalError] = useState(null);
+  const [validator, setValidator] = useState(false);
 
   const newIssuesTitleInputRef = useRef(null);
   const newIssueFormRowRef = useRef(null);
@@ -151,6 +153,7 @@ console.log(parentId);
     setNewIssuesPriority('None');
     setNewIssuesComments('');
     setLocalError(null);
+    setValidator(false);
   }, []);
 
   const handleShowNewIssuesForm = useCallback(() => {
@@ -164,13 +167,14 @@ console.log(parentId);
   }, [resetNewIssuesForm]);
 
   const handleSaveNewIssues = useCallback(async () => {
-    if (!newIssuesTitle || newIssuesTitle.trim() === "") {
-      setLocalError("Issues title cannot be empty.");
-      if (newIssuesTitleInputRef.current) newIssuesTitleInputRef.current.focus();
+    if (!newIssuesTitle || newIssuesTitle.trim() === "" || !newIssuesEndDate ) {
+      setLocalError("Please fill in all required fields.");
+       setValidator(true);
       return;
     }
     setLocalError(null);
     setIsSavingIssues(true);
+    setValidator(false);
 
     const IssuesPayload = {
       title: newIssuesTitle.trim(),
@@ -244,12 +248,7 @@ useEffect(() => {
         return;
       }
 
-      if (!newIssuesTitle || newIssuesTitle.trim() === "") {
-        setIsAddingNewIssues(false);
-        resetNewIssuesForm();
-      } else {
         handleSaveNewIssues();
-      }
     };
 
     if (isAddingNewIssues) {
@@ -267,6 +266,23 @@ useEffect(() => {
     resetNewIssuesForm,
   ]);
 
+    useEffect(() => {
+    const handleEscape = (event) => {
+      if(!isAddingNewIssues)return;
+      if (event.key === "Escape") {
+        console.log("Escape key pressed!");
+        handleCancelNewIssues();
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isAddingNewIssues, handleCancelNewIssues]);
+
+
 
 
   const userOptionsForSelectBox = useMemo(() => [
@@ -275,9 +291,16 @@ useEffect(() => {
   ], [users]);
 
 
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10, // Default page size
+  });
+
+
+
     const fixedRowsPerPage=10;
-    const rowHeight = 50;
-    const headerHeight = 48;
+    const rowHeight = 45;
+    const headerHeight = 42;
     const desiredTableHeight = fixedRowsPerPage * rowHeight + headerHeight;
   const columns = useMemo(
     () => [
@@ -335,7 +358,11 @@ useEffect(() => {
   const table = useReactTable({
     data,
     columns,
-    getCoreRowModel: getCoreRowModel(),
+state: { pagination },
+onPaginationChange: setPagination,
+getCoreRowModel: getCoreRowModel(),
+getPaginationRowModel: getPaginationRowModel(),
+manualPagination: false,
   });
 
 
@@ -348,11 +375,10 @@ useEffect(() => {
       </div>);
   } else {
     pageContent = (
-      <>
-        {localError && !isAddingNewIssues && <div className="mb-4 p-2 text-red-700 bg-red-100 border border-red-400 rounded text-sm">{localError}</div>}
-        {localError && isAddingNewIssues && <div className="my-2 p-2 text-red-700 bg-red-100 border border-red-400 rounded text-sm">{localError}</div>}
+      <div className="p-3">
+        {localError && <div className="mb-4 px-3 text-red-700  text-sm">{localError}</div>}
         {/* Removed individual isSavingIssues message as it's covered by the main loader now */}
-         <div className="project-table-container font-light p-3"
+         <div className="project-table-container font-light mt-2"
                 style={{ height:`${desiredTableHeight}px`,minHeight: "200px" }}
 
       >
@@ -391,6 +417,7 @@ useEffect(() => {
                       onChange={(e) => { setNewIssuesTitle(e.target.value); if (localError) setLocalError(null);}}
                       onEnterPress={handleSaveNewIssues}
                       placeholder="Issues title"
+                      validator={validator}
                     />
                   </td>
                   <td className="border p-1 align-middle">
@@ -421,6 +448,7 @@ useEffect(() => {
                         value={newIssuesEndDate}
                         onChange={(e) => setNewIssuesEndDate(e.target.value)}
                         onEnterPress={handleSaveNewIssues}
+                        validator={validator}
                     />
                   </td>
                   <td className="border p-1 align-middle">
@@ -436,6 +464,7 @@ useEffect(() => {
                             onChange={(e) => { setNewIssuesComments(e.target.value); if (localError) setLocalError(null);}}
                             onEnterPress={handleSaveNewIssues}
                             placeholder="Comments"
+     
                         />
                   </td>
                 </tr>
@@ -455,7 +484,59 @@ useEffect(() => {
           </table>
         </div>
 </div>
-      </>
+{data.length > 0 && (
+                    <div className=" flex items-center justify-start gap-4 w-full ml-3 text-[12px]">
+                        {/* Previous Button */}
+                        <button
+                            onClick={() => table.previousPage()}
+                            disabled={!table.getCanPreviousPage()}
+                            className="text-red-600 disabled:opacity-30"
+                        >
+                            {"<"}
+                        </button>
+
+                        {/* Page Numbers (Sliding Window of 3) */}
+                        {(() => {
+                            const totalPages = table.getPageCount();
+                            const currentPage = table.getState().pagination.pageIndex;
+                            const visiblePages = 3;
+
+                            let start = Math.max(0, currentPage - Math.floor(visiblePages / 2));
+                            let end = start + visiblePages;
+
+                            // Ensure end does not exceed total pages
+                            if (end > totalPages) {
+                                end = totalPages;
+                                start = Math.max(0, end - visiblePages);
+                            }
+
+                            return [...Array(end - start)].map((_, i) => {
+                                const page = start + i;
+                                const isActive = page === currentPage;
+
+                                return (
+                                    <button
+                                        key={page}
+                                        onClick={() => table.setPageIndex(page)}
+                                        className={` px-3 py-1 ${isActive ? "bg-gray-200 font-bold" : ""}`}
+                                    >
+                                        {page + 1}
+                                    </button>
+                                );
+                            });
+                        })()}
+
+                        {/* Next Button */}
+                        <button
+                            onClick={() => table.nextPage()}
+                            disabled={!table.getCanNextPage()}
+                            className="text-red-600 disabled:opacity-30"
+                        >
+                            {">"}
+                        </button>
+                    </div>
+                )}
+      </div>
     );
   }
 
