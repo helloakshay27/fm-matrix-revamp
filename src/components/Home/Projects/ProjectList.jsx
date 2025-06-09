@@ -209,7 +209,7 @@ const ProjectList = () => {
           onBlur={() => setEdit(false)} // Optional: exit on blur
         />
       ) : (
-        <Link to={`/milestones/${row.original.actualId}`} className="cursor-pointer " onDoubleClick={handleDoubleClick}>
+        <Link to={`/projects/${row.original.actualId}/milestones`} className="cursor-pointer " onDoubleClick={handleDoubleClick}>
           {title}
         </Link>
       )}
