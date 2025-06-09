@@ -154,7 +154,7 @@ const Status = ({ taskStatusLogs }) => {
 };
 
 const Comments = ({ comments }) => {
-    const { id } = useParams();
+    const { tid } = useParams();
     const [comment, setComment] = useState("");
     const [editingCommentId, setEditingCommentId] = useState(null);
     const textareaRef = useRef(null);
@@ -221,9 +221,9 @@ const Comments = ({ comments }) => {
         if (success || editSuccess) {
             setComment("");
             setEditingCommentId(null);
-            dispatch(taskDetails(id));
+            dispatch(taskDetails(tid));
         }
-    }, [success, editSuccess, dispatch, id]);
+    }, [success, editSuccess, dispatch, tid]);
 
     return (
         <div className="text-[14px] flex flex-col gap-2">
@@ -403,7 +403,7 @@ const Attachments = ({ attachments, id }) => {
 };
 
 const TaskDetails = () => {
-    const { id } = useParams();
+    const { tid } = useParams();
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { taskDetails: task } = useSelector((state) => state.taskDetails);
@@ -425,8 +425,8 @@ const TaskDetails = () => {
     }, [task?.status]);
 
     useEffect(() => {
-        dispatch(taskDetails(id));
-    }, [dispatch, id]);
+        dispatch(taskDetails(tid));
+    }, [dispatch, tid]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -457,7 +457,7 @@ const TaskDetails = () => {
         // Dispatch status change with API-compatible status
         dispatch(
             changeTaskStatus({
-                id,
+                id: tid,
                 payload: { status: mapDisplayToApiStatus(option) },
             })
         );

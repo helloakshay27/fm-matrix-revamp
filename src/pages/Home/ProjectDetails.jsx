@@ -225,7 +225,7 @@ const ProjectDetails = () => {
 
     useEffect(() => {
         if (statusSuccess) {
-            dispatch(fetchProjectDetails(id))
+            dispatch(fetchProjectDetails({ id }))
         }
     }, [statusSuccess])
 
@@ -254,7 +254,7 @@ const ProjectDetails = () => {
     };
 
     useEffect(() => {
-        dispatch(fetchProjectDetails(id))
+        dispatch(fetchProjectDetails({ id }))
     }, [])
 
     useEffect(() => {
