@@ -5,6 +5,8 @@ import "dhtmlx-gantt/codebase/dhtmlxgantt.css";
 
 const GanttChart = () => {
     const ganttContainer = useRef(null);
+    const [scale, setScale] = React.useState("week");
+
 
     useEffect(() => {
         // Columns
@@ -77,26 +79,56 @@ const GanttChart = () => {
         // Formatter to display "23 Jan - 29 Jan"
         const weekDateFormatter = gantt.date.date_to_str("%d %M");
 
-        // Custom scales
-        gantt.config.scales = [
-            {
-            unit: "week",
-            step: 1,
-            format: function (date) {
-                const start = gantt.date.week_start(new Date(date));
-                const end = gantt.date.add(start, 7, "day");
-                return `${weekDateFormatter(start)} - ${weekDateFormatter(end)} , ${start.getFullYear()}`;
-            },
-            },
-            {
-            unit: "day",
-            step: 1,
-            format: function (date) {
-                const day = gantt.date.date_to_str("%j")(date);
-                return day;
-            },
-            },
-        ];
+        if (scale === "week") {
+            gantt.config.scales = [
+                {
+                    unit: "week",
+                    step: 1,
+                    format: function (date) {
+                        const start = gantt.date.week_start(new Date(date));
+                        const end = gantt.date.add(start, 7, "day");
+                        return `${weekDateFormatter(start)} - ${weekDateFormatter(end)} , ${start.getFullYear()}`;
+                    },
+                },
+                {
+                    unit: "day",
+                    step: 1,
+                    format: function (date) {
+                        return gantt.date.date_to_str("%j")(date);
+                    },
+                },
+            ];
+        } else if (scale === "month") {
+            gantt.config.scales = [
+                {
+                    unit: "month",
+                    step: 1,
+                    format: "%F, %Y",
+                },
+                {
+                    unit: "week",
+                    step: 1,
+                    format: function (date) {
+                        const start = gantt.date.week_start(new Date(date));
+                        const end = gantt.date.add(start, 7, "day");
+                        return `${weekDateFormatter(start)} - ${weekDateFormatter(end)}`;
+                    },
+                },
+            ];
+        } else if (scale === "year") {
+            gantt.config.scales = [
+                {
+                    unit: "year",
+                    step: 1,
+                    format: "%Y",
+                },
+                {
+                    unit: "month",
+                    step: 1,
+                    format: "%M",
+                },
+            ];
+        }
 
         gantt.config.row_height = 40;
         gantt.config.scale_height = 60;
@@ -106,13 +138,13 @@ const GanttChart = () => {
         gantt.config.grid_resize = true;
         gantt.config.autofit_columns = true;
 
-        gantt.templates.task_text = function (start, end, task) {
-            return `${task.text} | ${gantt.templates.date_grid(start)} [${task.owner || "N/A"}]`;
-        };
+        // gantt.templates.task_text = function (start, end, task) {
+        //     return `| ${}]`;
+        // };
 
         gantt.templates.task_class = function (start, end, task) {
             if (task.type === gantt.config.types.milestone) {
-            return "milestone-task";
+                return "milestone-task";
             }
             return "custom-task";
         };
@@ -122,89 +154,160 @@ const GanttChart = () => {
         // Fetch data
         const fetchMilestones = async () => {
             try {
-            const response = await axios.get(
-                "https://api-tasks.lockated.com/milestones.json",
-                {
-                headers: {
-                    Authorization: "Bearer bTcVnWgQrF6QCdNbMiPXzCZNAqsN9qoEfFWdFQ1Auk4",
-                },
+                const response = await axios.get(
+                    "https://api-tasks.lockated.com/milestones.json",
+                    {
+                        headers: {
+                            Authorization: "Bearer bTcVnWgQrF6QCdNbMiPXzCZNAqsN9qoEfFWdFQ1Auk4",
+                        },
+                    }
+                );
+
+                const rawData = response.data;
+
+                console.log("Fetched milestones:", rawData);
+                // Map milestones and their tasks to Gantt format
+                const tasksData = [];
+                const linksData = [];
+
+                const taskIds = new Set();
+
+                function formatDateDMYFromISO(dateStr) {
+                    if (!dateStr) return "";
+                    const date = new Date(dateStr);
+                    const day = String(date.getDate()).padStart(2, "0");
+                    const month = String(date.getMonth() + 1).padStart(2, "0");
+                    const year = date.getFullYear();
+                    return `${day}-${month}-${year}`;
                 }
-            );
 
-            const rawData = response.data;
+                function calculateDuration(startStr, endStr) {
+                    const startParts = startStr.split("-");
+                    const endParts = endStr.split("-");
+                    const start = new Date(`${startParts[2]}-${startParts[1]}-${startParts[0]}`);
+                    const end = new Date(`${endParts[2]}-${endParts[1]}-${endParts[0]}`);
+                    if (!start || !end) return 1;
+                    const diffTime = end.getTime() - start.getTime();
+                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                    return diffDays > 0 ? diffDays : 1;
+                }
 
-            // Map milestones and their tasks to Gantt format
-            const tasksData = [];
-            const linksData = [];
+                rawData.forEach((item) => {
+                    const milestoneId = `milestone-${item.id}`;
+                    const formattedStart = item.start_date ? formatDateDMYFromISO(item.start_date) : "";
+                    const formattedEnd = item.end_date ? formatDateDMYFromISO(item.end_date) : "";
 
-            const taskIds = new Set();
+                    tasksData.push({
+                        id: milestoneId,
+                        text: item.title,
+                        start_date: formattedStart,
+                        end_date: formattedEnd,
+                        duration: (formattedStart && formattedEnd)
+                            ? calculateDuration(formattedStart, formattedEnd)
+                            : 1,
+                        progress: 0.0,
+                        status: "Open",
+                        depends: item.depends_on_id ? `milestone-${item.depends_on_id}` : null,
+                        type: "milestone",
+                        owner: item.owner_id,
+                        parent: 0,
+                    });
 
-            rawData.forEach((item) => {
-                // Milestone as parent
-                const milestoneId = `milestone-${item.id}`;
-                tasksData.push({
-                    id: milestoneId,
-                    text: item.title,
-                    start_date: new Date(item.start_date).toLocaleDateString("en-GB"),
-                    end_date: new Date(item.end_date).toLocaleDateString("en-GB"),
-                    duration: Number(item.duration),
-                    progress: 0.0,
-                    status: "Open",
-                    depends: item.depends_on_id ? `milestone-${item.depends_on_id}` : null,
-                    type: "milestone",
-                    owner: item.owner_id,
-                    parent: 0,
+                    if (item.depends_on_id) {
+                        linksData.push({
+                            id: `link-milestone-${item.id}`,
+                            source: `milestone-${item.depends_on_id}`,
+                            target: milestoneId,
+                            type: "0",
+                        });
+                    }
+
+                    if (Array.isArray(item.task_managements)) {
+                        item.task_managements.forEach((task) => {
+                            const taskId = `task-${task.id}`;
+                            let uniqueTaskId = taskId;
+
+                            if (taskIds.has(taskId)) {
+                                uniqueTaskId = `task-${task.id}-milestone-${item.id}`;
+                            }
+                            taskIds.add(uniqueTaskId);
+
+                            const formattedStartTask = task.started_at
+                                ? formatDateDMYFromISO(task.started_at)
+                                : "";
+
+                            const formattedEndTask = task.target_date
+                                ? formatDateDMYFromISO(task.target_date)
+                                : "";
+
+                            const taskDuration = (formattedStartTask && formattedEndTask)
+                                ? calculateDuration(formattedStartTask, formattedEndTask)
+                                : (task.estimated_hour
+                                    ? task.estimated_hour + (task.estimated_min ? task.estimated_min / 60 : 0)
+                                    : 1);
+
+                            tasksData.push({
+                                id: uniqueTaskId,
+                                text: task.title,
+                                start_date: formattedStartTask,
+                                end_date: formattedEndTask,
+                                duration: taskDuration,
+                                progress: 0.0,
+                                status: task.status || "Open",
+                                owner: task.responsible_person ? task.responsible_person.name : "",
+                                parent: milestoneId,
+                                type: "task",
+                            });
+
+                            // ✅ Handle sub_tasks_managements
+                            if (Array.isArray(task.sub_tasks_managements)) {
+                                task.sub_tasks_managements.forEach((subTask) => {
+                                    const subTaskId = `subtask-${subTask.id}`;
+                                    const formattedStartSubTask = subTask.started_at
+                                        ? formatDateDMYFromISO(subTask.started_at)
+                                        : "";
+
+                                    const formattedEndSubTask = subTask.target_date
+                                        ? formatDateDMYFromISO(subTask.target_date)
+                                        : "";
+
+                                    const subTaskDuration = (formattedStartSubTask && formattedEndSubTask)
+                                        ? calculateDuration(formattedStartSubTask, formattedEndSubTask)
+                                        : (subTask.estimated_hour
+                                            ? subTask.estimated_hour + (subTask.estimated_min ? subTask.estimated_min / 60 : 0)
+                                            : 1);
+
+                                    tasksData.push({
+                                        id: subTaskId,
+                                        text: subTask.title,
+                                        start_date: formattedStartSubTask,
+                                        end_date: formattedEndSubTask,
+                                        duration: subTaskDuration,
+                                        progress: 0.0,
+                                        status: subTask.status || "Open",
+                                        owner: subTask.responsible_person ? subTask.responsible_person.name : "",
+                                        parent: uniqueTaskId, // 📌 parent is the task
+                                        type: "sub_task",
+                                    });
+                                });
+                            }
+                        });
+                    }
+
                 });
 
-                // Add link for milestone dependency
-                if (item.depends_on_id) {
-                    linksData.push({
-                        id: `link-milestone-${item.id}`,
-                        source: `milestone-${item.depends_on_id}`,
-                        target: milestoneId,
-                        type: "0",
-                    });
-                }
 
-                // Tasks under this milestone
-                if (Array.isArray(item.task_managements)) {
-                    item.task_managements.forEach((task) => {
-                        const taskId = `task-${task.id}`;
-                        // If this task id already exists, append milestone id to make it unique
-                        let uniqueTaskId = taskId;
-                        if (taskIds.has(taskId)) {
-                            uniqueTaskId = `task-${task.id}-milestone-${item.id}`;
-                        }
-                        taskIds.add(uniqueTaskId);
 
-                        tasksData.push({
-                            id: uniqueTaskId,
-                            text: task.title,
-                            start_date: new Date(task.expected_start_date || task.target_date).toLocaleDateString("en-GB"),
-                            end_date: new Date(task.target_date).toLocaleDateString("en-GB"),
-                            duration: task.estimated_hour
-                                ? task.estimated_hour + (task.estimated_min ? task.estimated_min / 60 : 0)
-                                : 1,
-                            progress: 0.0,
-                            status: task.status || "Open",
-                            owner: task.responsible_person ? task.responsible_person.name : "",
-                            parent: milestoneId,
-                            type: "task",
-                        });
-                        // You can add task dependencies as links if needed
-                    });
-                }
-            });
+                console.log("Parsed tasks data:", tasksData);
+                const tasks = {
+                    data: tasksData,
+                    links: linksData,
+                };
 
-            const tasks = {
-                data: tasksData,
-                links: linksData,
-            };
-
-            gantt.clearAll();
-            gantt.parse(tasks);
+                gantt.clearAll();
+                gantt.parse(tasks);
             } catch (error) {
-            console.error("Error loading milestones:", error);
+                console.error("Error loading milestones:", error);
             }
         };
 
@@ -251,10 +354,21 @@ const GanttChart = () => {
         return () => {
             gantt.clearAll();
         };
-    }, []);
+    }, [scale]);
 
     return (
         <div style={{ overflowX: "auto", width: "100%" }}>
+            <div className="flex justify-end mb-2 me-4">
+                <select
+                    value={scale}
+                    onChange={(e) => setScale(e.target.value)}
+                    className="border rounded p-1"
+                >
+                    <option value="week">Week View</option>
+                    <option value="month">Month View</option>
+                    <option value="year">Year View</option>
+                </select>
+            </div>
             <div
                 ref={ganttContainer}
                 style={{ minWidth: "1200px", height: "600px" }}

@@ -80,15 +80,69 @@
   font-weight: 600;
 }
 .gantt_tree_icon {
-    cursor: pointer;
+  cursor: pointer;
+}
+/* Brown/tan fill */
+.gantt_task_content {
+  background-color: #bc977c !important; /* Adjust hex as needed */
 }
 
+/* Make Gantt task link lines reddish-brown */
+.gantt_line_wrapper div {
+  background-color: #C72030 !important; /* Reddish-brown color from the image */
+}
+
+/* Corners */
+.gantt_task_link .gantt_link_corner {
+  border-color: #C72030 !important; /* Match corner color to line */
+  
+}
+
+.gantt_task_link div.gantt_link_arrow{
+   color: #C72030 !important; /* Reddish-brown color from the image */
+
+}
+
+/* Optional: Arrow color */
+.gantt_task_link .gantt_link_arrow {
+}
+
+gantt_task_link div.gantt_link_arrow:before {
+
+   color: #C72030 !important; /* Reddish-brown color from the image */
+
+   
+
+}
+
+.gantt_save_btn_set {
+  background-color: #c72030 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.gantt_cancel_btn_set{
+
+    border: 1px solid #c72030 !important;
+    color: #c72030 !important;
+
+}
+.gantt_duration .gantt_duration_dec, .gantt_duration .gantt_duration_inc {
+    color: #c72030 !important;
+}
+.gantt_link_arrow {
+    --dhx-gantt-base-colors-icons:#C72030 !important;
+}
+
+/* Optional: border styling for better visibility */
+
+
 .gantt_task_row.gantt_selected {
-    background-color: #f5f5f5;
+  background-color: #f5f5f5;
 }
 
 .gantt_task_link .gantt_line_wrapper {
-    z-index: 1;
+  z-index: 1;
 }
 .sidebar-link {
   display: flex;
