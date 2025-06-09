@@ -115,6 +115,10 @@ gantt_task_link div.gantt_link_arrow:before {
 
 }
 
+.gantt_cal_ltitle{
+  border-bottom: 1px solid #c72030 !important;
+}
+
 .gantt_save_btn_set {
   background-color: #c72030 !important;
   color: white !important;
