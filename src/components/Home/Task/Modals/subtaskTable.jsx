@@ -177,7 +177,7 @@ const calculateDuration = (startDateStr, endDateStr) => {
 };
 
 const SubtaskTable = () => {
-  const { mid, tid: parentId } = useParams();
+  const { mid, id: parentId } = useParams();
   const dispatch = useDispatch();
 
   const {
@@ -211,6 +211,7 @@ const SubtaskTable = () => {
   const [newSubtaskEndDate, setNewSubtaskEndDate] = useState('');
   const [newSubtaskPriority, setNewSubtaskPriority] = useState('None');
   const [newSubtaskTags, setNewSubtaskTags] = useState([]);
+  //  const[editTitle, setEditTitle] = useState("");
 
   const [isSavingSubtask, setIsSavingSubtask] = useState(false);
   const [isUpdatingTask, setIsUpdatingTask] = useState(false);
@@ -492,7 +493,11 @@ const SubtaskTable = () => {
       },
       {
         accessorKey: 'taskTitle', header: 'Subtask Title', size: 250,
-        cell: info => info.getValue()
+        cell: ({ getValue, row }) => {
+          const [editTitle, setEditTitle] = useState(getValue());
+          return (
+            <NewSubtaskTextField value={editTitle} onChange={e => setEditTitle(e.target.value)} onEnterPress={() => handleOnChange(row.original.id, "title", editTitle)} />)
+        }
       },
       {
         accessorKey: 'status', header: 'Status', size: 150,
