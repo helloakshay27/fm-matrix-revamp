@@ -121,7 +121,7 @@ const TagsTable = () => {
         size: 100,
         cell: ({ getValue }) => {
           const rawDate = getValue();
-          return rawDate ? formatToDDMMYYYY(rawDate) : null;
+          return rawDate ? <span className="px-2">{formatToDDMMYYYY(rawDate)}</span> : null;
         },
       },
       {

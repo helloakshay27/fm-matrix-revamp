@@ -252,7 +252,7 @@ const CustomTable = ({
                                 return (
                                     <tr key={row.id} className={`hover:bg-gray-50 even:bg-[#D5DBDB4D]  ${isDataRowEmpty ? 'pointer-events-none' : ''}`} style={{ height: `${rowHeight}px` }}>
                                         {row.getVisibleCells().map(cell => (
-                                            <td key={cell.id} style={{ width: cell.column.getSize() }} className={`${cell.column.columnDef.meta?.cellClassName || ''} whitespace-nowrap px-3 py-3 align-middle ${isDataRowEmpty ? 'text-transparent' : 'text-gray-700'}`}>
+                                            <td key={cell.id} style={{ width: cell.column.getSize() }} className={`${cell.column.columnDef.meta?.cellClassName || ''} whitespace-nowrap px-3 py-3  ${isDataRowEmpty ? 'text-transparent' : 'text-gray-700'}`}>
                                                 {!isDataRowEmpty ? flexRender(cell.column.columnDef.cell, cell.getContext()) : <span>&nbsp;</span>}
                                             </td>
                                         ))}

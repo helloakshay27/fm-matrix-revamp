@@ -101,6 +101,7 @@ const ExternalTable = () => {
       accessorKey: 'email',
       header: 'Email Id',
       size: 250,
+      cell: ({ getValue }) => <span className="px-2">{getValue()}</span>,
     },
     {
       accessorKey: 'lock_role.name',

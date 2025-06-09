@@ -35,7 +35,7 @@ const ActionIcons = ({ row, onEditClick }) => {
   };
 
   return (
-    <div className="action-icons flex justify-between gap-5">
+    <div className="action-icons flex justify-start gap-5">
       <Switch color="danger" checked={isActive}
         onChange={handleToggle} />
       <div>
@@ -109,6 +109,7 @@ const InternalTable = () => {
         accessorKey: 'lock_role.name',
         header: 'Role',
         size: 150,
+        cell: ({ row, getValue }) =>( <span className="px-2">{getValue()}</span>),
       },
       {
         accessorKey: 'reportingManager',
