@@ -3,15 +3,22 @@ import axios from "axios";
 import "dhtmlx-gantt";
 import "dhtmlx-gantt/codebase/dhtmlxgantt.css";
 import { useParams } from "react-router-dom";
+import { set } from "react-hook-form";
 
 const GanttChart = () => {
     const { id } = useParams()
     const ganttContainer = useRef(null);
     const [scale, setScale] = React.useState("week");
+    const [tasks, setTasks] = React.useState([]);
 
 
     useEffect(() => {
+
+
+
         // Columns
+
+        tasks.forEach((taskid) => {
         gantt.config.columns = [
             {
                 name: "text",
@@ -48,7 +55,7 @@ const GanttChart = () => {
                     // Use Tailwind classes for flex and gap
                     return `
                 <span class="flex items-center justify-center gap-3 mt-2 text-gray-500">
-                    <a href="/tasks" title="Open in new tab">
+                    <a href="/task-list/${taskid.id}" >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M8 14.875H11.5417C12.4257 14.875 13.2736 14.5238 13.8987 13.8987C14.5238 13.2736 14.875 12.4257 14.875 11.5417V9.45833M8 14.875H4.45833C3.57428 14.875 2.72643 14.5238 2.10131 13.8987C1.47619 13.2736 1.125 12.4257 1.125 11.5417V8M8 14.875V10.5C8 9.83696 7.73661 9.20107 7.26777 8.73223C6.79893 8.26339 6.16304 8 5.5 8H1.125M1.125 8V4.45833C1.125 3.57428 1.47619 2.72643 2.10131 2.10131C2.72643 1.47619 3.57428 1.125 4.45833 1.125H6.54167M9.45833 1.125H14.0417C14.2717 1.125 14.48 1.21833 14.6308 1.36917M14.6308 1.36917C14.7871 1.52541 14.875 1.73734 14.875 1.95833V6.54167M14.6308 1.36917L14.0417 1.95833L9.45833 6.54167" stroke="black" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -69,6 +76,7 @@ const GanttChart = () => {
                 },
             },
         ];
+        });
 
         // Limit to 3 months from current date
         const today = new Date();
@@ -166,6 +174,8 @@ const GanttChart = () => {
                 );
 
                 const rawData = response.data;
+
+                setTasks(rawData);
 
                 console.log("Fetched milestones:", rawData);
                 // Map milestones and their tasks to Gantt format

@@ -58,7 +58,9 @@ const App = () => {
               <Route path="/sprint-list" element={<SprintTable />} />
               <Route path="/sprint/:id" element={<Sprints />} />
               <Route path="/milestones/:id" element={<MileStoneMain />} />
-              <Route path="/tasks/:id" element={<TaskDetails />} />
+              <Route path="/task-list/:id" element={<Tasks setIsSidebarOpen={setIsSidebarOpen} />} />
+              <Route path="/tasks-detail/:id" element={<TaskDetails />} />
+              <Route path="/issues" element={<IssuesTable />} />
               <Route path="/mom" element={<MinutesOfMeeting />} />
               <Route path="/new-mom" element={<MoMAdd />} />
               <Route path="/channels" element={<Channel />} />
