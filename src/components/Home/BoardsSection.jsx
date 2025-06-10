@@ -168,7 +168,7 @@ const BoardsSection = ({ section }) => {
 
       } else if (type === "PROJECT") {
 
-        handleProjectStatusChange({ id, status: newStatus });
+        handleProjectStatusChange({ id, status: newStatus == "open" ? 'active' : newStatus });
 
       }
 
