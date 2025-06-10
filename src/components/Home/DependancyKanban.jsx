@@ -2,22 +2,22 @@ import { useCallback, useEffect, useState } from "react";
 import DependancyBoardCard from "../Home/DependancyBoardCard";
 import DependancyKanbanBoard from "../Home/DependancyKanbanBoard";
 import { useDispatch, useSelector } from 'react-redux';
-import { createDependancy, fetchTasksOfProject, updateDependancy } from "../../redux/slices/taskSlice";
+import { createDependancy, fetchTasks, fetchTasksOfProject, updateDependancy } from "../../redux/slices/taskSlice";
 import DependancyBoardSubCard from "./DependancyBoardSubCard";
 
-const DependancyKanban = () => {
+const DependancyKanban = ( id) => {
     const dispatch = useDispatch();
 
-    const { fetchTasksOfProject: tasks = [] } = useSelector(state => state.fetchTasksOfProject);
+    const { fetchTasks: tasks = [] } = useSelector(state => state.fetchTasks);
     const { taskDetails: task } = useSelector(state => state.taskDetails);
 
     const [taskData, setTaskData] = useState([]);
     const [subCardVisibility, setSubCardVisibility] = useState({});
 
     useEffect(() => {
-        if (task?.project_management_id) {
-            dispatch(fetchTasksOfProject(task.project_management_id));
-        }
+        // if (task?.project_management_id) {
+            dispatch(fetchTasks(id));
+        // }
     }, [dispatch, task?.project_management_id]);
 
     useEffect(() => {
