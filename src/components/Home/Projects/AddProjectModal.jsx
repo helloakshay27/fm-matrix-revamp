@@ -5,41 +5,123 @@ import gsap from "gsap";
 import Details from "./Modals/Details.jsx";
 import Milestones from "./Modals/Milestone.jsx";
 import CloseIcon from '@mui/icons-material/Close';
-import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headlessui/react';
-import { ChevronDownIcon, XMarkIcon } from '@heroicons/react/20/solid';
-import { set } from "react-hook-form";
 import Modal from "../../Setup/ProjectTags/Modal.jsx";
-const CreateNewTeam = ({ openModal, setOpenModal }) => {
-  return (
-    <div className=" w-[560px] h-[280px] bg-white absolute top-[40%] left-[45%]  translate-x-[-50%] translate-y-[-50%] border-[0.5px] border-[#C0C0C0] p-4  shadow-md z-50">
-      <span className="bg-[#C72030] text-white px-3 py-1  absolute top-[-12px] left-[20%] text-sm">
-        New Team
-      </span>
+import SelectBox from "../../SelectBox.jsx";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchUsers } from "../../../redux/slices/userSlice.js";
+import MultiSelectBox from "../../MultiSelectBox.jsx";
+import { createProjectTeam, fetchProjectTeams, resetSuccess } from "../../../redux/slices/projectSlice.js";
 
-      <div className="h-full flex flex-col gap-5 justify-between">
-        <div className="flex justify-end">
-          <CloseIcon
-            className="cursor-pointer"
-            onClick={() => setOpenModal(false)}
-          />
+const CreateNewTeam = ({ setOpenModal }) => {
+  const dispatch = useDispatch();
+
+  const { fetchUsers: users = [] } = useSelector((state) => state.fetchUsers);
+  const { success } = useSelector((state) => state.createProjectTeam);
+
+  const [formData, setFormData] = useState({
+    teamName: "",
+    teamLead: "",
+    teamMembers: [],
+  });
+
+  useEffect(() => {
+    dispatch(fetchUsers());
+  }, [dispatch]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = () => {
+    const payload = {
+      project_team: {
+        name: formData.teamName,
+        team_lead_id: formData.teamLead,
+        user_ids: formData.teamMembers.map((member) => member.value),
+      },
+    };
+
+
+    dispatch(createProjectTeam({ payload }));
+  };
+
+  useEffect(() => {
+    if (success) {
+      dispatch(fetchProjectTeams())
+      setOpenModal(false);
+      dispatch(resetSuccess());
+    }
+  }, [success]);
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-30 z-50">
+      <div className="w-[560px] h-[420px] bg-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-[#C0C0C0]">
+        {/* Close Icon */}
+        <div className="flex justify-end p-4">
+          <CloseIcon className="cursor-pointer" onClick={() => setOpenModal(false)} />
         </div>
 
-        <input
-          placeholder="Enter Team Title"
-          className="border-[0.5px] border-[#C0C0C0] p-2  text-sm"
-        />
-        <input
-          placeholder="Select Team Members"
-          className="border-[0.5px] border-[#C0C0C0] p-2  text-sm"
-        />
+        {/* Input Section */}
+        <div className="space-y-4">
+          <div className="px-6">
+            <label className="block text-[16px] text-[#1B1B1B] mb-1">
+              New Team
+              <span className="text-red-500 ml-1">*</span>
+            </label>
+            <input
+              name="teamName"
+              type="text"
+              placeholder="Team Name"
+              className="border border-[#C0C0C0] w-full px-3 py-2 text-[#1B1B1B] text-[13px]"
+              value={formData.teamName}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="px-6">
+            <label className="block text-[16px] text-[#1B1B1B] mb-1">
+              Team Lead<span>*</span>
+            </label>
+            <SelectBox
+              placeholder="Select team Lead"
+              value={formData.teamLead}
+              onChange={(value) => handleSelectChange("teamLead", value)}
+              options={users.map((user) => ({
+                label: `${user.firstname} ${user.lastname}`,
+                value: user.id,
+              }))}
+            />
+          </div>
+          <div className="px-6">
+            <label className="block text-[16px] text-[#1B1B1B] mb-1">
+              Team Members<span>*</span>
+            </label>
+            <MultiSelectBox
+              placeholder="Select Team Members"
+              value={formData.teamMembers}
+              onChange={(value) => handleSelectChange("teamMembers", value)}
+              options={users.map((user) => ({
+                label: `${user.firstname} ${user.lastname}`,
+                value: user.id,
+              }))}
+            />
+          </div>
+        </div>
 
-
-        <div className="flex justify-center gap-3 mt-2 bg-[]">
-          <button className="bg-[#C72030] h-[28px] cursor-pointer text-white px-4  ">
-            Save
+        {/* Footer Buttons */}
+        <div className="absolute bottom-0 left-0 right-0 bg-[#D5DBDB] h-[90px] flex justify-center items-center gap-4">
+          <button
+            className="border border-[#C72030] text-[#1B1B1B] text-[16px] px-8 py-2"
+            onClick={handleSubmit}
+          >
+            Create
           </button>
           <button
-            className="border-2 border-[#C72030] h-[28px] cursor-pointer text-[#C72030] px-4  "
+            className="border border-[#C72030] text-[#1B1B1B] text-[16px] px-8 py-2"
             onClick={() => setOpenModal(false)}
           >
             Cancel
@@ -111,7 +193,7 @@ const AddProjectModal = ({ isModalOpen, setIsModalOpen, projectname = "New Proje
 
           <hr className="border  " />
 
-          {tab == "Details" && <Details setTab={setTab}  setOpenTagModal={setOpenTagModal}  setOpenTeamModal={setOpenTeamModal} isEdit={isEdit} />}
+          {tab == "Details" && <Details setTab={setTab} setOpenTagModal={setOpenTagModal} setOpenTeamModal={setOpenTeamModal} isEdit={isEdit} />}
           {tab == "Milestone" && <Milestones />}
         </div>
 
@@ -121,7 +203,7 @@ const AddProjectModal = ({ isModalOpen, setIsModalOpen, projectname = "New Proje
       )}
       {
         openTagModal && (
-          <Modal open={openTagModal} setOpenModal={setOpenTagModal} isEdit={""}/>
+          <Modal open={openTagModal} setOpenModal={setOpenTagModal} isEdit={false} />
         )
       }
     </div>

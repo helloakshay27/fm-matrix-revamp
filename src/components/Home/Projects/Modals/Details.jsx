@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import SelectBox from "../../../SelectBox";
 import MultiSelectBox from "../../../MultiSelectBox";
 import { useDispatch, useSelector } from 'react-redux';
-import { createProject, editProject, fetchProjectTypes, fetchTemplates } from '../../../../redux/slices/projectSlice'
+import { createProject, editProject, fetchProjectTeams, fetchProjectTypes, fetchTemplates } from '../../../../redux/slices/projectSlice'
 import { fetchUsers } from '../../../../redux/slices/userSlice'
 import { fetchTags } from '../../../../redux/slices/tagsSlice'
 import { useParams } from "react-router-dom";
 
-const Details = ({ setTab, setOpenTagModal,setOpenTeamModal, endText = "Next", isEdit = false }) => {
+const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", isEdit = false }) => {
   const { id } = useParams();
   const dispatch = useDispatch();
 
@@ -17,6 +17,7 @@ const Details = ({ setTab, setOpenTagModal,setOpenTeamModal, endText = "Next", i
   const { success: editsuccess } = useSelector((state) => state.editProject)
   const { fetchProjectTypes: projectTypes } = useSelector((state) => state.fetchProjectTypes)
   const { fetchTemplates: templates } = useSelector((state) => state.fetchTemplates)
+  const { fetchProjectTeams: teams } = useSelector(state => state.fetchProjectTeams)
 
   const getUserName = (id) => {
     const user = users.find(u => u.id === id);
@@ -34,6 +35,7 @@ const Details = ({ setTab, setOpenTagModal,setOpenTeamModal, endText = "Next", i
     dispatch(fetchTags());
     dispatch(fetchProjectTypes());
     dispatch(fetchTemplates());
+    dispatch(fetchProjectTeams());
   }, []);
 
 
@@ -71,7 +73,7 @@ const Details = ({ setTab, setOpenTagModal,setOpenTeamModal, endText = "Next", i
     template: "",
     startDate: "",
     endDate: "",
-    team: [],
+    team: "",
     projectType: "",
     priority: "",
     tags: [],
@@ -131,8 +133,9 @@ const Details = ({ setTab, setOpenTagModal,setOpenTeamModal, endText = "Next", i
         priority: formData.priority,
         active: true,
         is_template: formData.createTemplate,
+        project_team_id: formData.team
       },
-      member_ids: formData.team.map((member) => member.value),
+      // member_ids: formData.team.map((member) => member.value),
       task_tag_ids: formData.tags.map((tag) => tag.value),
     };
 
@@ -227,7 +230,7 @@ const Details = ({ setTab, setOpenTagModal,setOpenTeamModal, endText = "Next", i
                 handleSelectChange("projectOwner", value)
               }}
               placeholder="Select Owner"
-                style={{"border":"1px solid #b3b2b2"}}
+              style={{ "border": "1px solid #b3b2b2" }}
 
             />
           </div>
@@ -244,7 +247,7 @@ const Details = ({ setTab, setOpenTagModal,setOpenTeamModal, endText = "Next", i
               value={formData.template}
               onChange={(value) => handleSelectChange("template", value)}
               placeholder="Select Template"
-                style={{"border":"1px solid #b3b2b2"}}
+              style={{ "border": "1px solid #b3b2b2" }}
 
             />
           </div>
@@ -295,15 +298,15 @@ const Details = ({ setTab, setOpenTagModal,setOpenTeamModal, endText = "Next", i
         <div className="flex flex-col relative justify-start gap-4 w-full bottom-0 py-3 bg-white my-10">
           <div>
             <label className="block mb-2">Project Team</label>
-            <MultiSelectBox
+            <SelectBox
               options={
-                users.map((user) => ({
-                  value: user.id,
-                  label: user.firstname + " " + user.lastname,
+                teams.map((team) => ({
+                  value: team.id,
+                  label: team.name,
                 }))
               }
               value={formData.team}
-              onChange={(values) => handleMultiSelectChange("team", values)}
+              onChange={(value) => handleSelectChange("team", value)}
               placeholder="Select Team"
             />
           </div>
@@ -320,7 +323,7 @@ const Details = ({ setTab, setOpenTagModal,setOpenTeamModal, endText = "Next", i
                 value={formData.projectType}
                 onChange={(value) => handleSelectChange("projectType", value)}
                 placeholder="Select Type"
-                style={{"border":"1px solid #b3b2b2"}}
+                style={{ "border": "1px solid #b3b2b2" }}
 
               />
             </div>
@@ -335,7 +338,7 @@ const Details = ({ setTab, setOpenTagModal,setOpenTeamModal, endText = "Next", i
                 value={formData.priority}
                 onChange={(value) => handleSelectChange("priority", value)}
                 placeholder="Select Priority"
-                style={{"border":"1px solid #b3b2b2"}}
+                style={{ "border": "1px solid #b3b2b2" }}
 
               />
             </div>
@@ -355,22 +358,22 @@ const Details = ({ setTab, setOpenTagModal,setOpenTeamModal, endText = "Next", i
             />
           </div>
 
-         <div className="relative">
-          <label className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer" onClick={() => {setOpenTagModal(true) }
-          }>
-            <i>Create new tag</i>
-          </label>
-        </div>
+          <div className="relative">
+            <label className="absolute text-[12px] text-[red] right-2 cursor-pointer" onClick={() => { setOpenTagModal(true) }
+            }>
+              <i>Create new tag</i>
+            </label>
+          </div>
 
-        <div className="flex items-center justify-center gap-4 w-full bottom-0 py-3 bg-white mt-10">
-          <button
-            type="submit"
-            className="flex items-center justify-center border-2 border-[red] px-4 py-2 text-[black] w-[100px]"
-          >
-            {endText}
-          </button>
+          <div className="flex items-center justify-center gap-4 w-full bottom-0 py-3 bg-white mt-10">
+            <button
+              type="submit"
+              className="flex items-center justify-center border-2 border-[red] px-4 py-2 text-[black] w-[100px]"
+            >
+              {endText}
+            </button>
+          </div>
         </div>
-      </div>
       </div>
     </form>
   );

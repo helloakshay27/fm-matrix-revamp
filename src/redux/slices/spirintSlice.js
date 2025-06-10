@@ -49,7 +49,7 @@ export const fetchSpirints = createAsyncThunk('fetchSpirints', async () => {
 }
 );
 
-export const fetchSpirintById = createAsyncThunk('fetchSpirintById', async (id) => {
+export const fetchSpirintById = createAsyncThunk('fetchSpirintById', async ({ id }) => {
     try {
         const response = await axios.get(`https://api-tasks.lockated.com/sprints/${id}.json`, {
             headers: {

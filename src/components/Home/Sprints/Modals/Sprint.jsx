@@ -2,9 +2,20 @@ import { useEffect, useState } from "react";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import SelectBox from "../../../SelectBox";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchSpirints, postSprint } from "../../../../redux/slices/spirintSlice";
+import {
+  fetchSpirints,
+  postSprint,
+} from "../../../../redux/slices/spirintSlice";
+import { fetchUsers } from "../../../../redux/slices/userSlice";
 
 const AddSprintsModal = ({ id, deleteSprints }) => {
+  const dispatch = useDispatch();
+  const { fetchUsers: users } = useSelector((state) => state.fetchUsers);
+
+  useEffect(() => {
+    dispatch(fetchUsers());
+  }, [dispatch]);
+
   return (
     <div className="flex flex-col  relative justify-start gap-4 w-full bottom-0 py-3 bg-white my-10 ">
       <DeleteOutlinedIcon
@@ -26,7 +37,18 @@ const AddSprintsModal = ({ id, deleteSprints }) => {
           <label className="block mb-2">
             Sprint Owner <span className="text-red-600">*</span>
           </label>
-          <SelectBox options={[]} />
+          <SelectBox
+            options={users?.map((user) => ({
+              value: user.id,
+              label: user?.firstname + " " + user?.lastname,
+            }))}
+            // value={formData.projectOwner}
+            // onChange={(value) => {
+            //   handleSelectChange("projectOwner", value)
+            // }}
+            placeholder="Select Owner"
+            style={{ border: "1px solid #b3b2b2" }}
+          />
         </div>
       </div>
 
@@ -74,9 +96,15 @@ const Sprints = ({ closeModal }) => {
   const [sprints, setSprints] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const [selectedOwner, setSelectedOwner] = useState();
+  const [priority, setPriority] = useState("");
 
+  const dispatch = useDispatch();
+  const { fetchUsers: users } = useSelector((state) => state.fetchUsers);
 
-  const dispatch = useDispatch()
+  useEffect(() => {
+    dispatch(fetchUsers());
+  }, [dispatch]);
 
   const handleDeleteSprints = (id) => {
     setSprints(sprints.filter((sprints) => sprints.id !== id));
@@ -111,12 +139,14 @@ const Sprints = ({ closeModal }) => {
       duration: handleDuration(),
       start_time: "09:00",
       end_time: "18:00",
+      owner_id: selectedOwner,
+      priority: priority,
     };
 
     const payload = { sprint: sprintPayload };
 
     try {
-      const resultAction = await dispatch(postSprint(payload));
+      const resultAction = dispatch(postSprint(payload));
 
       if (postSprint.fulfilled.match(resultAction)) {
         dispatch(fetchSpirints());
@@ -128,9 +158,6 @@ const Sprints = ({ closeModal }) => {
       console.error("Error submitting sprint:", error);
     }
   };
-
-
-
 
   return (
     <form className="pt-2 pb-12 h-full overflow-y-auto" onSubmit={handleSubmit}>
@@ -153,7 +180,18 @@ const Sprints = ({ closeModal }) => {
             <label className="block mb-2">
               Sprint Owner <span className="text-red-600">*</span>
             </label>
-            <SelectBox options={[]} />
+            <SelectBox
+              options={users?.map((user) => ({
+                value: user.id,
+                label: user?.firstname + " " + user?.lastname,
+              }))}
+              value={selectedOwner}
+              onChange={(value) => {
+                setSelectedOwner(value);
+              }}
+              placeholder="Select Owner"
+              style={{ border: "1px solid #b3b2b2" }}
+            />
           </div>
         </div>
 
@@ -194,7 +232,15 @@ const Sprints = ({ closeModal }) => {
             <label className="block mb-2">
               Priority<span className="text-red-600">*</span>
             </label>
-            <SelectBox options={[]} />
+            <SelectBox
+              options={[
+                { label: "High", value: "high" },
+                { label: "Medium", value: "medium" },
+                { label: "Low", value: "low" },
+              ]}
+              value={priority}
+              onChange={(value) => setPriority(value)}
+            />
           </div>
         </div>
         <div className="relative">
@@ -217,7 +263,6 @@ const Sprints = ({ closeModal }) => {
           <button
             type="submit"
             className="flex items-center justify-center border-2 text-[black] border-[red] px-4 py-2 w-[100px]"
-
           >
             Submit
           </button>

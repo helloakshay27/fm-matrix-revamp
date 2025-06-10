@@ -13,7 +13,7 @@ import { debounce } from "lodash";
 import { useParams } from "react-router-dom";
 
 const BoardsSection = ({ section }) => {
-  const { mid } = useParams()
+  const { mid } = useParams();
   const [subCardVisibility, setSubCardVisibility] = useState({});
   const [arrowLinks, setArrowLinks] = useState([]);
   const dispatch = useDispatch();
@@ -153,16 +153,29 @@ const BoardsSection = ({ section }) => {
   );
 
   const handleDrop = useCallback(
+
     (item, newStatus) => {
+
+      console.log('Drop event:', { item, newStatus });
+
       const { type, id, fromTaskId } = item;
+
+
+
       if (type === "TASK" || type === "SUBTASK") {
+
         handleUpdateTaskFieldCell(id, "status", newStatus);
+
       } else if (type === "PROJECT") {
-        handleProjectStatusChange({ id, status: newStatus == 'open' ? 'active' : newStatus });
+
+        handleProjectStatusChange({ id, status: newStatus == "open" ? 'active' : newStatus });
+
       }
+
     },
 
     [handleUpdateTaskFieldCell, handleProjectStatusChange]
+
   );
 
   const handleLink = (sourceId, targetIds = []) => {
@@ -238,17 +251,20 @@ const BoardsSection = ({ section }) => {
           const cardStatus = card.title.toLowerCase().replace(" ", "_");
 
           const filteredTasks = taskData.filter((task) =>
-            task.status === cardStatus
+            cardStatus === "active" ? task.status === "open" : task.status === cardStatus
           );
 
           const filteredSubtasks = taskData.flatMap((task) =>
-            (task.sub_tasks_managements || []).map((subtask) => ({
-              ...subtask,
-              parentTaskId: task.id,
-            }))
+            (task.sub_tasks_managements || [])
+              .filter((subtask) => subtask.status !== task.status) // Filter where subtask status ≠ task status
+              .map((subtask) => ({
+                ...subtask,
+                parentTaskId: task.id,
+              }))
           ).filter((subtask) =>
-            cardStatus === "active" ? subtask.status === "open" : subtask.status === cardStatus
+            subtask.status === cardStatus
           );
+
 
           const filteredProjects = projects.filter(
             (project) => cardStatus === "open" ? project.status === "active" : project.status === cardStatus
@@ -298,17 +314,16 @@ const BoardsSection = ({ section }) => {
                         cardStatus === "active" ? subtask.status === "open" : subtask.status === cardStatus
                       );
 
-
                       return (
                         <div key={task.id} id={taskId} className="relative">
                           <TaskCard
-                            count={visibleSubtasks.length}
                             task={task}
                             toggleSubCard={() => toggleSubCard(task.id)}
                             {...(formattedDependsOn.length > 0 && {
                               handleLink: () => handleLink(taskId, formattedDependsOn),
                               iconColor: allLinked ? "#A0A0A0" : "#DA2400",
                             })}
+                            count={visibleSubtasks.length}
                           />
                           {visibleSubtasks.length > 0 && subCardVisibility[task.id] && (
                             <div className="ml-5 mt-1">
@@ -342,14 +357,12 @@ const BoardsSection = ({ section }) => {
                         </div>
                       );
                     })}
-                    {filteredSubtasks.map((subtask) => (
+                    {filteredSubtasks && filteredSubtasks.map((subtask) => (
                       <div
                         key={`subtask-${subtask.id}`}
                         id={`subtask-${subtask.id}`}
                         draggable
                         onDragStart={(e) => {
-                          // e.stopPropagation();
-                          console.log('Dragging independent subtask:', subtask.id, 'from task:', subtask.parentTaskId);
                           e.dataTransfer.setData(
                             "application/reactflow",
                             JSON.stringify({
