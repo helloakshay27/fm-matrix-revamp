@@ -81,7 +81,12 @@ const RoleTable = () => {
       accessorKey: 'display_name',
       header: 'Roles',
       size: 650,
-      cell: ({ row, getValue }) => (row.original ? getValue() : null),
+      cell: ({ row, getValue }) => {
+        const value = row.original ? getValue() : null;
+        if (!value) return null;
+        const formattedValue = value.replace(/_/g, ' ');
+        return formattedValue.charAt(0).toUpperCase() + formattedValue.slice(1);
+      },
     },
     {
       accessorKey: 'created_at',
