@@ -43,9 +43,21 @@ const ProjectTemplates = () => {
                 size: 250,
             },
             {
-                accessorKey: 'email',
-                header: 'Tags',
+                accessorKey: 'project_owner_name',
+                header: 'Owner Name',
                 size: 200,
+            },
+              {
+                accessorKey: 'priority',
+                header: 'Priority',
+                size: 200,
+                cell: ({ row, getValue }) => row.original ? <span className='pl-2'>{getValue()}</span> : 0,
+            },
+                 {
+                accessorKey: 'project_members',
+                header: 'Project Members',
+                size: 200,
+                cell: ({ row, getValue }) => row.original ? <span>{getValue().length}</span> : 0,
             },
             {
                 id: 'actions',

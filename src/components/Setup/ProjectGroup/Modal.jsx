@@ -11,8 +11,9 @@ import { fetchUsers } from '../../../redux/slices/userSlice';
 import MultiSelectBox from '../../MultiSelectBox';
 import { set } from 'react-hook-form';
 import { useDeepCompareEffectNoCheck } from 'use-deep-compare-effect';
+import {toast} from "react-hot-toast";
 
-const Modal = ({ openModal, setOpenModal, editMode = false, existingData }) => {
+const Modal = ({ openModal, setOpenModal, editMode, existingData }) => {
     console.log(existingData);
   const alreadySelectedUsers = existingData?.project_group_members.map((user)=>({value:user.user_id,label:user.user_name})); 
   const [groupName, setGroupName] = useState(editMode ? existingData?.name || '' : '');
@@ -38,6 +39,9 @@ const Modal = ({ openModal, setOpenModal, editMode = false, existingData }) => {
   }, [dispatch]);
 
   const handleSave = useCallback(async() => {
+    console.log(editMode);
+    setWarningOpen(false);
+    setError('');
     const trimmedName = groupName.trim();
 
     if (!trimmedName){ setWarningOpen(true);
@@ -50,7 +54,7 @@ const Modal = ({ openModal, setOpenModal, editMode = false, existingData }) => {
       name: trimmedName.toLowerCase(),
       created_by_id: 158,
       user_ids: selectedUsers.map((user) => user.value),
-      active:true
+      active:existingData?.active||true,
     };
    let response;
    try{
@@ -65,6 +69,12 @@ const Modal = ({ openModal, setOpenModal, editMode = false, existingData }) => {
         setWarningOpen(true);
         setError("Group name already exists");
       }else{
+        toast.success(`Group ${editMode ? 'updated' : 'created'} successfully`,{
+          iconTheme: {
+            primary: 'red', // This might directly change the color of the success icon
+            secondary: 'white', // The circle background
+          },
+        });
         resetModal();
       }
    }

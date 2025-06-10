@@ -3,6 +3,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
 import { updateStatus, createStatus,fetchStatus } from '../../../redux/slices/statusSlice';
 import { useDispatch } from 'react-redux';
+import toast from 'react-hot-toast';
 
 const Modal = ({ setOpenModal, openModal,isEdit, existingData={} }) => {
   console.log(existingData,isEdit);
@@ -43,7 +44,12 @@ const Modal = ({ setOpenModal, openModal,isEdit, existingData={} }) => {
         await dispatch(createStatus(payload)).unwrap();
       }
 
-      
+      toast.success(`Status ${isEdit ? 'updated' : 'created'} successfully`,{
+        iconTheme: {
+          primary: 'red', // This might directly change the color of the success icon
+          secondary: 'white', // The circle background
+        },
+      })
       handleSuccess();
     }catch(error){
       console.log(error);
@@ -70,24 +76,29 @@ const Modal = ({ setOpenModal, openModal,isEdit, existingData={} }) => {
     }
     
   return (
-    <div className="w-[560px] h-[250px] bg-white absolute top-[40%] left-[45%] translate-x-[-50%] translate-y-[-50%] border-[0.5px] border-[#C0C0C0] flex flex-col shadow-md z-50">
-      <div className="h-full flex flex-col gap-5 p-4 pb-1">
+    <div className="w-[560px] h-[300px] bg-white absolute top-[40%] left-[45%] translate-x-[-50%] translate-y-[-50%] border-[0.5px] border-[#C0C0C0] flex flex-col shadow-md z-50">
+      <div className="h-full flex flex-col gap-3 p-4 pb-1">
         <div className="flex justify-end">
           <CloseIcon className="cursor-pointer" onClick={()=>handleClose()} />
         </div>
-
+        <div className="flex flex-col gap-2">
+        <label className="text-sm">Status Name</label>
         <input
           value={formData.title}
           onChange={(e) => {
             setFormData({ ...formData, title: e.target.value });
           }}
           placeholder="Enter Status Name"
-          className={`border-[0.5px]  'border-[#C72030]' : 'border-[#C0C0C0]'
-            } p-2 text-sm`}
+          className={`border-[1px] border-[#C0C0C0] p-2 text-sm`}
         />
-
-
-        <div className="border-[0.5px] border-[#C0C0C0] p-2">
+        </div>
+         
+         
+         <div className='flex flex-col gap-2'>
+         <label className="text-sm">Pick Color</label>
+        <div className="border-[1px] border-[#C0C0C0] p-2">
+         
+           
           <input
             type="color"
             value={formData.color}
@@ -97,13 +108,14 @@ const Modal = ({ setOpenModal, openModal,isEdit, existingData={} }) => {
             className="w-1/3 text-sm"
           />
         </div>
+         </div>
       </div>
 
-      <div className="flex justify-end  mr-4">
+      <div className="flex justify-end mt-1 mr-4">
         <span className="text-red-600">{error}</span>
       </div>
 
-      <div className="flex justify-center gap-3 mt-2 bg-[#D5DBDB] items-center h-full">
+      <div className="flex justify-center gap-3  bg-[#D5DBDB] items-center h-full">
         <button
           className="bg-[#C72030] h-[28px] w-[100px] cursor-pointer text-white px-4"
           onClick={()=>handleSave()}

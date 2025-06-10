@@ -26,7 +26,12 @@ const ActionIcons = ({ row, onEdit }) => {
     };
 
     dispatch(editRole({ id: row.original.id, payload }));
-    toast.success('User active status updated.');
+    toast.success(`Status ${updatedValue?"activated":"deactivated"} successfully`,{
+      iconTheme: {
+        primary: 'red', // This might directly change the color of the success icon
+        secondary: 'white', // The circle background
+      },
+    });
   };
 
   return (

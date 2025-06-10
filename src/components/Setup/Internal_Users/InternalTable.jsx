@@ -26,10 +26,20 @@ const ActionIcons = ({ row, onEditClick }) => {
   try {
     await dispatch(fetchUpdateUser({ userId: userData.id, updatedData: payload })).unwrap();
     setIsActive(updatedValue); 
-    toast.success('User active status updated.');
+    toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`,{
+      iconTheme: {
+        primary: 'red', // This might directly change the color of the success icon
+        secondary: 'white', // The circle background
+      },
+    });
   } catch (error) {
     console.log(error);
-    toast.error('Failed to update status');
+    toast.error('Failed to update status',{
+      iconTheme: {
+        primary: 'red', // This might directly change the color of the error icon
+        secondary: 'white', // The circle background
+      },
+    });
   }
 };
 
@@ -62,6 +72,7 @@ const InternalTable = () => {
 
   const dispatch = useDispatch();
   const { fetchInternalUser: internalUser } = useSelector(state => state.fetchInternalUser);
+  const { fetchUsers: users } = useSelector(state => state.fetchUsers);
 
 
   useEffect(() => {
@@ -108,15 +119,25 @@ const InternalTable = () => {
         size: 200,
       },
       {
-        accessorKey: 'lock_role.name',
+        accessorKey: 'lock_role.display_name',
         header: 'Role',
         size: 150,
-        cell: ({ row, getValue }) =>( <span className="px-2">{getValue()}</span>),
+       cell: ({ row, getValue }) => {
+        const value = row.original ? getValue() : null;
+        if (!value) return null;
+        const formattedValue = value.replace(/_/g, ' ');
+        return <span className="pl-2">{formattedValue.charAt(0).toUpperCase() + formattedValue.slice(1)}</span>;
+      },
       },
       {
-        accessorKey: 'report_to.name',
+        accessorKey: 'report_to_id',
         header: 'Reports to',
         size: 150,
+        cell: ({ row, getValue }) => {
+          let value=  users.find((user) => user.id === getValue()) ;
+          console.log(value);
+          return <span className="pl-2">{value?.firstname} {value?.lastname}</span>;
+        }
       },
       {
         accessorKey: 'associatedProjects',

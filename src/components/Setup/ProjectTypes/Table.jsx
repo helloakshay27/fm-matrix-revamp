@@ -52,9 +52,21 @@ const TypesTable = () => {
   const handleDeleteClick = async (id) => {
     try {
       await dispatch(deleteProjectType(id)).unwrap(); // unwrap to handle async correctly
+      toast.success('Project Type deleted successfully',{
+        iconTheme: {
+          primary: 'red', // This might directly change the color of the success icon
+          secondary: 'white', // The circle background
+        },
+      });
       dispatch(fetchProjectTypes()); // refetch data after successful delete
     } catch (error) {
       console.error('Failed to delete:', error);
+      toast.error('Failed to delete Project Type.',{
+        iconTheme: {
+          primary: 'red', // This might directly change the color of the error icon
+          secondary: 'white', // The circle background
+        },
+      })
     }
   };
 
@@ -67,10 +79,20 @@ const TypesTable = () => {
 
     try {
       await dispatch(updateProjectType({ id: row.original.id, data: payload })).unwrap();
-      toast.success('status updated successfully');
+      toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`,{
+        iconTheme: {
+          primary: 'red', // This might directly change the color of the success icon
+          secondary: 'white', // The circle background
+        },
+      });
       dispatch(fetchProjectTypes());
     } catch (error) {
-      console.error('Failed to update toggle:', error);
+      console.error('Failed to update toggle:', error,{
+        iconTheme: {
+          primary: 'red', // This might directly change the color of the error icon
+          secondary: 'white', // The circle background
+        },
+      });
     }
   };
 
@@ -143,7 +165,7 @@ const TypesTable = () => {
         size: 150,
         cell: ({ getValue }) => {
           const rawDate = getValue();
-          return rawDate ? formatToDDMMYYYY(rawDate) : null;
+          return rawDate ? <span className="pl-2">{formatToDDMMYYYY(rawDate)} </span>: null;
         },
       },
       {

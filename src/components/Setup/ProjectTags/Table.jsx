@@ -12,31 +12,26 @@ const ActionIcons = ({ row, onEdit }) => {
   const [isActive, setIsActive] = useState(row.original.active);
   const dispatch = useDispatch();
 
-  const handleToggle = async () => {
-    const updatedValue = !isActive;
-    setIsActive(updatedValue);
 
-    const payload = {
-      tag: {
-        name: row.original.name,
-        active: updatedValue ? 1 : 0,
-      },
-    };
-
-    try {
-      await dispatch(updateTag({ id: row.original.id, data: payload })).unwrap();
-      dispatch(fetchTags());
-    } catch (error) {
-      console.error('Failed to update toggle:', error);
-    }
-  };
 
   const handleDeleteClick = async () => {
     try {
       await dispatch(deleteTag(row.original.id)).unwrap();
+      toast.success('Tag deleted successfully',{
+        iconTheme: {
+          primary: 'red', // This might directly change the color of the success icon
+          secondary: 'white', // The circle background
+        },
+      });
       dispatch(fetchTags());
     } catch (error) {
       console.error('Failed to delete:', error);
+      toast.error('Failed to delete tag.',{
+        iconTheme: {
+          primary: 'red', // This might directly change the color of the error icon
+          secondary: 'white', // The circle background
+        },
+      })
     }
 
   };
@@ -94,10 +89,20 @@ const TagsTable = () => {
 
     try {
       await dispatch(updateTag({ id: row.original.id, data: payload })).unwrap();
-      toast.success("status updated successfully");
+      toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`,{
+        iconTheme: {
+          primary: 'red', // This might directly change the color of the success icon
+          secondary: 'white', // The circle background
+        },
+      });
       dispatch(fetchTags());
     } catch (error) {
-      console.error('Failed to update toggle:', error);
+      console.error('Failed to update toggle:', error,{
+        iconTheme: {
+          primary: 'red', // This might directly change the color of the error icon
+          secondary: 'white', // The circle background
+        },
+      });
     }
   };
 

@@ -3,6 +3,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { createRole, editRole } from '../../../redux/slices/roleSlice';
+import {toast} from  'react-hot-toast';
 
 const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
   const [roleInput, setRoleInput] = useState(role ? role.display_name : '');
@@ -35,12 +36,21 @@ const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
      response=await  dispatch(createRole(payload)).unwrap();
     }
     console.log(response);
-     if(response.name!="has already been taken")
+     if(response.name[0]!="has already been taken"){
+      toast.success(`Role ${mode === 'edit' ? 'updated' : 'created'} successfully`,{
+        iconTheme: {
+          primary: 'red', // This might directly change the color of the success icon
+          secondary: 'white', // The circle background
+        },
+      });
       handleSuccess();
+     }
+    else{
+      setError("Role name already exists");
+    }
   }
   catch(error){
     console.log(error);
-    setError("Name already exists");
   }
   };
 
@@ -74,7 +84,7 @@ const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
 
         {/* Input Section */}
         <div className="px-6">
-          <label className="block text-[16px] text-[#1B1B1B] mb-1">
+          <label className="block text-[14px] text-[#1B1B1B] mb-1">
             {mode === 'edit' ? 'Edit Role' : 'New Role'}
             <span className="text-red-500 ml-1">*</span>
           </label>
@@ -94,13 +104,13 @@ const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
         {/* Footer Buttons */}
         <div className="absolute bottom-0 left-0 right-0 bg-[#D5DBDB] h-[90px] flex justify-center items-center gap-4">
           <button
-            className="border border-[#C72030] text-[#1B1B1B] text-[16px] px-8 py-2"
+            className="border border-[#C72030] text-[#1B1B1B] text-[14px] px-8 py-2"
             onClick={handleSubmit}
           >
             {loading || editLoading ? 'Submitting...' : mode === 'edit' ? 'Update' : 'Save'}
           </button>
           <button
-            className="border border-[#C72030] text-[#1B1B1B] text-[16px] px-8 py-2"
+            className="border border-[#C72030] text-[#1B1B1B] text-[14px] px-8 py-2"
             onClick={handleClose}
           >
             Cancel

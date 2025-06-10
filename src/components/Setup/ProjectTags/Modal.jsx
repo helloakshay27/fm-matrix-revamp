@@ -2,18 +2,36 @@ import React, { useEffect, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import { useDispatch, useSelector } from 'react-redux';
 import { createTag, fetchTags, updateTag } from '../../../redux/slices/tagsSlice';
+import { set } from 'react-hook-form';
+import { toast } from 'react-hot-toast';
 
-const Modal = ({ open, setOpenModal }) => {
-
-  const [name, setName] = useState('');
-  const [type, setType] = useState('');
+const Modal = ({ open, setOpenModal,editData }) => {
+  console.log(editData);
+  const [name, setName] = useState(editData?.name || '');
+  const [type, setType] = useState(editData?.tag_type || '');
+  const [active, setActive] = useState(editData?.active || true);
   const [warningOpen, setWarningOpen] = useState(false);
-
+  
   const dispatch = useDispatch();
   const { loading: createLoading, success: createSuccess, error: createError } = useSelector(state => state.createTag);
   const { loading: updateLoading, success: updateSuccess, error: updateError } = useSelector(state => state.updateTag);
 
-  const handleSaveOrUpdate = (e) => {
+
+   useEffect(() => {
+    if (editData) { 
+      setName(editData.name || '');
+      setType(editData.tag_type || '');
+      setActive(editData.active || true);
+
+    } else { 
+      setName('');
+      setType('');
+
+    }
+    
+    setWarningOpen(false);
+  }, [editData, open]);
+  const handleSaveOrUpdate = async(e) => {
     e.preventDefault();
     if (!name || !type) {
       setWarningOpen(true);
@@ -24,13 +42,34 @@ const Modal = ({ open, setOpenModal }) => {
       company_tag: {
         name: name.trim().toLowerCase(),
         tag_type: type,
+        active:active
       }
     };
 
-    // if (isEditMode) {
-    //   dispatch(updateTag({ id: editData.id, data: payload }));
-    // } else {
-    dispatch(createTag(payload));
+  try{
+    let response;
+    if (editData?.id) {
+      response=await dispatch(updateTag({ id: editData.id, data: payload })).unwrap();
+    }else
+    response=await dispatch(createTag(payload)).unwrap();
+
+    if(response.name[0]!="has already been taken"){
+    toast.success(`Tag ${editData?.id ? 'updated' : 'created'} successfully`,{
+      iconTheme: {
+        primary: 'red', // This might directly change the color of the success icon
+        secondary: 'white', // The circle background
+      },
+    })
+      handleSuccess();
+  }
+    else{
+      setError("Tag name already exists");
+    }
+
+  }catch(error){
+    console.log(error);
+    setError(error?.errors);
+  }
 
   };
 
@@ -59,7 +98,7 @@ const Modal = ({ open, setOpenModal }) => {
           </div>
           <div className="space-y-4">
             <div className="px-6">
-              <label className="block text-[16px] text-[#1B1B1B] mb-1">
+              <label className="block text-[14px] text-[#1B1B1B] mb-1">
                 Tag Name
                 <span className="text-red-500 ml-1">*</span>
               </label>
@@ -72,7 +111,7 @@ const Modal = ({ open, setOpenModal }) => {
               />
             </div>
             <div className="px-6">
-              <label className="block text-[16px] text-[#1B1B1B] mb-1">
+              <label className="block text-[14px] text-[#1B1B1B] mb-1">
                 Tag Type
                 <span className="text-red-500 ml-1">*</span>
               </label>
@@ -86,16 +125,24 @@ const Modal = ({ open, setOpenModal }) => {
             </div>
           </div>
         </div>
-
+          {
+            warningOpen && (
+              <div className="flex justify-end text-red-500 pr-7">
+                Please fill all the required fields.
+              </div>
+            )
+          }
         <div className="absolute bottom-0 left-0 right-0 bg-[#D5DBDB] h-[90px] flex justify-center items-center gap-4">
           <button
-            className="border border-[#C72030] text-[#1B1B1B] text-[16px] px-8 py-2"
+            className="border border-[#C72030] text-[#1B1B1B] text-[14px] px-8 py-2"
             onClick={handleSaveOrUpdate}
           >
-            Create
+            {editData?"Update":
+            "Create"
+            }
           </button>
           <button
-            className="border border-[#C72030] text-[#1B1B1B] text-[16px] px-8 py-2"
+            className="border border-[#C72030] text-[#1B1B1B] text-[14px] px-8 py-2"
             onClick={() => setOpenModal(false)}
           >
             Cancel

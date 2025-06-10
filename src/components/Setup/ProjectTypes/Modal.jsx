@@ -6,6 +6,8 @@ import {
   fetchProjectTypes,
   updateProjectType
 } from '../../../redux/slices/projectSlice';
+import { set } from 'react-hook-form';
+import { toast } from 'react-hot-toast';
 
 const Modal = ({ openModal, setOpenModal, editMode = false, existingData = {} }) => {
   const [type, setType] = useState(editMode ? existingData?.name || '' : '');
@@ -20,24 +22,43 @@ const Modal = ({ openModal, setOpenModal, editMode = false, existingData = {} })
     setOpenModal(false);
   }, [setOpenModal]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async() => {
     const trimmedType = type.trim();
 
-    if (!trimmedType || warningOpen) return;
+    if (!trimmedType) return;
 
     const payload = {
       name: trimmedType.toLowerCase(),
       created_by_id: 158,
     };
 
-    const action = editMode
-      ? updateProjectType({ id: existingData.id, data: payload })
-      : createProjectType(payload);
+   try{
+    let response;
+    if(editMode && existingData?.id){
+      response=await dispatch(updateProjectType({ id: existingData.id, data: payload })).unwrap();
+    }
+      else
+       response=await dispatch(createProjectType(payload)).unwrap(); 
+     if(response.name[0]!="has already been taken")
+      {
+        toast.success(`Type ${editMode ? 'Updated' : 'Created'} successfully`,{
+          iconTheme: {
+            primary: 'red', // This might directly change the color of the success icon
+            secondary: 'white', // The circle background
+          },
+        })
+        resetModal();
+        dispatch(fetchProjectTypes());
+      }
+      else{
+        setWarningOpen(true);
+      }
+    }
 
-    dispatch(action).then(() => {
-      dispatch(fetchProjectTypes());
-      resetModal();
-    });
+    catch(error){
+      console.log(error);
+      setWarningOpen(true);
+    }
   }, [type, warningOpen, dispatch, editMode, existingData, resetModal]);
 
   
@@ -55,7 +76,7 @@ const Modal = ({ openModal, setOpenModal, editMode = false, existingData = {} })
 
         {/* Input Section */}
         <div className="px-6">
-          <label className="block text-[16px] text-[#1B1B1B] mb-1">
+          <label className="block text-[14px] text-[#1B1B1B] mb-1">
             {editMode ? 'Edit Project Type' : 'New Project Type'}
             <span className="text-red-500 ml-1">*</span>
           </label>
@@ -67,21 +88,21 @@ const Modal = ({ openModal, setOpenModal, editMode = false, existingData = {} })
             onChange={(e) => setType(e.target.value)}
           />
           {warningOpen && (
-            <p className="text-red-600 text-sm mt-1">Project Type already exists</p>
+            <p className="text-red-600 flex justify-end text-[12px] mt-2">Project Type already exists</p>
           )}
         </div>
 
         {/* Footer Buttons */}
         <div className="absolute bottom-0 left-0 right-0 bg-[#D5DBDB] h-[90px] flex justify-center items-center gap-4">
           <button
-            className="border border-[#C72030] text-[#1B1B1B] text-[16px] px-8 py-2"
+            className="border border-[#C72030] text-[#1B1B1B] text-[14px] px-8 py-2"
             onClick={handleSave}
             disabled={loading}
           >
             {loading ? 'Submitting...' : editMode ? 'Update' : 'Save'}
           </button>
           <button
-            className="border border-[#C72030] text-[#1B1B1B] text-[16px] px-8 py-2"
+            className="border border-[#C72030] text-[#1B1B1B] text-[14px] px-8 py-2"
             onClick={resetModal}
           >
             Cancel

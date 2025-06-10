@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import Switch from '@mui/joy/Switch';
-import axios from 'axios';
+// import axios from 'axios'; // Not used, can remove
 import { fetchStatus, updateStatus, createStatus } from '../../../redux/slices/statusSlice.js';
 import { useDispatch } from 'react-redux';
 
@@ -12,28 +12,29 @@ import {
   flexRender,
   getPaginationRowModel,
 } from '@tanstack/react-table';
-import Modal from '../Status/Modal.jsx';
+// import Modal from '../Status/Modal.jsx'; // Not used in StatusTable directly, remove
 import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 
-const ActionIcons = ({row,setOpenModal,setIsEdit,setExistingData}) => {
-
-   const handleEditClick=()=>{
-     setIsEdit(true);
-     setExistingData(row.original);
+const ActionIcons = ({ row, setOpenModal, setIsEdit, setExistingData }) => {
+  const handleEditClick = () => {
+    setIsEdit(true);
+    setExistingData(row.original);
     setOpenModal(true);
     console.log(row.original);
-   } 
+  };
+
   return (
     <div className="action-icons flex justify-between gap-5">
       <div>
         <EditOutlinedIcon
           onClick={handleEditClick}
-          
           sx={{ fontSize: '20px', cursor: 'pointer' }}
         />
         <button
-          onClick={() => alert(`Deleting: ${data.title}`)}
+          // You had 'data.title' here, which is undefined in this component's scope
+          // Use row.original.status or row.original.name for deletion
+          onClick={() => alert(`Deleting: ${row.original.status || 'item'}`)}
           title="Delete"
           className="ml-2"
         >
@@ -44,41 +45,57 @@ const ActionIcons = ({row,setOpenModal,setIsEdit,setExistingData}) => {
   );
 };
 
-const StatusTable = ({setOpenModal, setIsEdit, setExistingData}) => {
-  const dispatch=useDispatch();
-  const [data, setData] = useState([]);
-  const {fetchStatus:statusList}=useSelector(state=>state.fetchStatus);
+const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
+  const dispatch = useDispatch();
+  // Correctly get data from Redux state
+  // Assuming your status slice has a 'list' property, and 'fetchStatus' is the slice name
+  const statusList = useSelector(state => state.fetchStatus.fetchStatus || []); // <-- Assuming state.status.list is your array of statuses
+                                                                  // Add || [] to ensure it's always an array
   const fixedRowsPerPage = 13;
 
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: fixedRowsPerPage,
   });
-  
-  useEffect(()=>{
-    dispatch(fetchStatus());
-  },[dispatch,setOpenModal,setIsEdit,setExistingData]);
-  
-  // Handler to toggle status in data state (for demo only)
-  const toggleStatus = async(row) => {
-    try{
-      const payload={
-        active:!row.original.active
-      }
-      await dispatch(updateStatus({id:row.original.id,payload})).unwrap();
-      toast.success('Status updated successfully');
-      await dispatch(fetchStatus()).unwrap();
-    }catch(error){
-      console.log(error)
+
+  useEffect(() => {
+    // Only dispatch fetchStatus when the component mounts
+    // and if the statusList is empty or needs refreshing
+    if (statusList.length === 0) { // Optional: only fetch if data is not already there
+        dispatch(fetchStatus());
+    }
+  }, [dispatch]); 
+
+
+  // Handler to toggle status
+  const toggleStatus = async (row) => {
+    try {
+      const payload = {
+        active: !row.original.active
+      };
+      await dispatch(updateStatus({ id: row.original.id,  payload })).unwrap(); // Use 'data' as key for payload if your thunk expects it
+      toast.success(`Status ${payload.active ? 'activated' : 'deactivated'} successfully`,{
+        iconTheme: {
+          primary: 'red', // This might directly change the color of the success icon
+          secondary: 'white', // The circle background
+        },
+      });
+      dispatch(fetchStatus()); // Re-fetch all statuses to update the table
+    } catch (error) {
+      console.error("Failed to toggle status:", error); // Use console.error for errors
+      toast.error("Failed to update status.",{
+        iconTheme: {
+          primary: 'red', // This might directly change the color of the error icon
+          secondary: 'white', // The circle background
+        },
+      }); // Provide user feedback
     }
   };
-
-  
 
   const columns = useMemo(
     () => [
       {
-        accessorKey: 'status',
+        accessorKey: 'status', // Assuming 'status' is the property in your status object
         header: 'Project Status Title',
         size: 250,
         cell: ({ getValue }) => getValue(),
@@ -129,17 +146,25 @@ const StatusTable = ({setOpenModal, setIsEdit, setExistingData}) => {
         header: 'Actions',
         size: 60,
         cell: ({ row }) =>
-          row.original ? <ActionIcons row={row} setOpenModal={setOpenModal} setIsEdit={setIsEdit} setExistingData={setExistingData} /> : null,
+          // Pass the necessary props to ActionIcons
+          row.original ? (
+            <ActionIcons
+              row={row}
+              setOpenModal={setOpenModal}
+              setIsEdit={setIsEdit}
+              setExistingData={setExistingData}
+            />
+          ) : null,
         meta: {
           cellClassName: 'actions-cell-content',
         },
       },
     ],
-    []
+    [setOpenModal, setIsEdit, setExistingData, toggleStatus] // Add toggleStatus to dependencies
   );
 
   const table = useReactTable({
-    data:statusList,
+    data: statusList, // Use the statusList from Redux directly here
     columns,
     state: { pagination },
     onPaginationChange: setPagination,
@@ -239,7 +264,8 @@ const StatusTable = ({setOpenModal, setIsEdit, setExistingData}) => {
         </table>
       </div>
 
-      {data.length > 0 && (
+      {/* Changed condition to statusList.length > 0 */}
+      {statusList.length > 0 && (
         <div className="flex items-center justify-start gap-4 mt-4 text-[12px]">
           {/* Previous Button */}
           <button

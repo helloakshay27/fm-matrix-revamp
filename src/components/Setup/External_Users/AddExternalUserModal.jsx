@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchRoles } from '../../../redux/slices/roleSlice';
 import { fetchOrganizations } from '../../../redux/slices/organizationSlice';
 import { createExternalUser, fetchUpdateUser } from '../../../redux/slices/userSlice';
+import toast from 'react-hot-toast';
 
 
 const AddExternalUserModal = ({
@@ -65,6 +66,19 @@ const AddExternalUserModal = ({
 
   const handleSubmit = async(e) => {
     e.preventDefault();
+      if(formData.username===""){
+            setError("Please enter name");
+            return;
+        }else if(formData.mobile==""){
+            setError("Please enter mobile number");
+            return;
+
+        }else if(formData.email==""){
+            setError("Please enter email");
+            return;
+
+        }
+     
 
     const payload = {
       user: {
@@ -90,10 +104,17 @@ const AddExternalUserModal = ({
     }else if(response.payload.user_exists){
       setError(response.payload.message)
     }else{
+      toast.success(`User ${isEditMode ? 'updated' : 'created'} successfully`,{
+        iconTheme: {
+          primary: 'red', // This might directly change the color of the success icon
+          secondary: 'white', // The circle background
+        },
+      })
       handleSuccess();
     }
   }catch(error){
     console.log(error);
+    setError(error.message);
   };
 };
 

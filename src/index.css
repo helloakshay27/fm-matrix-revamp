@@ -206,3 +206,23 @@ gantt_task_link div.gantt_link_arrow:before {
 svg {
   z-index: 1;
 }
+
+/* In your CSS file (e.g., global.css or App.css) */
+
+/* Target the success icon specifically */
+.react-hot-toast-success-icon path {
+  stroke: red !important; /* Change to your desired color, e.g., #FF0000 */
+}
+
+/* Optional: To change the checkmark inside the circle */
+.react-hot-toast-success-icon polyline {
+  stroke: red !important; /* Or whatever color you want for the checkmark itself */
+}
+
+/* Alternatively, if you want to apply this globally to all success toasts */
+.Toastify__toast--success .Toastify__toast-icon svg path {
+  stroke: red !important;
+}
+.Toastify__toast--success .Toastify__toast-icon svg polyline {
+  stroke: red !important;
+}

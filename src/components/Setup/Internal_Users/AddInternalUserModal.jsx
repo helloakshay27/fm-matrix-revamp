@@ -9,6 +9,7 @@ import {
     fetchUpdateUser,
     fetchUsers,
 } from '../../../redux/slices/userSlice';
+import { toast } from 'react-hot-toast';
 
 const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = false, selectedUser = null }) => {
     const [formData, setFormData] = useState({
@@ -26,14 +27,13 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
     const {fetchUsers:users}=useSelector(state=>state.fetchUsers)
     const [error, setError] = useState('');
 
-    useEffect(async() => {
-        await dispatch(fetchRoles()).unwrap()
+    useEffect(() => {
+         dispatch(fetchRoles());
         dispatch(fetchUsers());
     }, [dispatch])
 
     useEffect(() => {
         if (isEditMode && selectedUser) {
-            console.log("Selected User", selectedUser)
             setFormData({
                 name: `${selectedUser.firstname || ''} ${selectedUser.lastname || ''}`,
                 mobile: selectedUser.mobile || '',
@@ -47,6 +47,26 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
 
     const handleSubmit = async(e) => {
         e.preventDefault();
+        if(formData.name===""){
+            setError("Please enter name");
+            return;
+        }else if(formData.mobile==""){
+            setError("Please enter mobile number");
+            return;
+
+        }else if(formData.email==""){
+            setError("Please enter email");
+            return;
+
+        }else if(formData.role==null){
+            setError("Please select role");
+            return;
+
+        }else if(formData.reportTo==null){
+            setError("Please select report to");
+            return;
+
+        }
 
         const payload = {
             user: {
@@ -67,14 +87,21 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
             response=await dispatch(createInternalUser(payload)).unwrap();
         }
         console.log(response);
-        if(!response.user_exists){
+        if(!response.user_exists && !response.error ){
+            toast.success(`User ${isEditMode ? 'updated' : 'created'} successfully`,{
+                iconTheme: {
+                  primary: 'red', // This might directly change the color of the success icon
+                  secondary: 'white', // The circle background
+                },
+            })
             handleSuccess();  
         }else
-        setError(response.message)
+        setError(response.message||response.error );
 
     }
     catch(error){
         console.log(error);
+        setError(error.errors);
     }};
 
     const handleClose=()=>{
@@ -124,6 +151,7 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                             className="border border-[#C0C0C0] w-full py-2 px-3 text-[#1B1B1B] text-[13px] focus:outline-none"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            required
                         />
                     </div>
                     <div className="px-6">
@@ -136,6 +164,7 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                             className="border border-[#C0C0C0] w-full py-2 px-3 text-[#1B1B1B] text-[13px] focus:outline-none"
                             value={formData.mobile}
                             onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+                            required
                         />
                     </div>
                     <div className="px-6">
@@ -152,6 +181,7 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                             className="w-full"
                             value={formData.role}
                             onChange={(value) => setFormData({ ...formData, role: value })}
+                            
                         />
                     </div>
                     <div className="px-6">
@@ -164,6 +194,7 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                             className="border border-[#C0C0C0] w-full py-2 px-3 text-[#1B1B1B] text-[13px] focus:outline-none"
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            required
                         />
                     </div>
 

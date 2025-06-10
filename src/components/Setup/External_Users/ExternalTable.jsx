@@ -30,10 +30,20 @@ const ActionIcons = ({ row, onEdit }) => {
 
     dispatch(fetchUpdateUser({ userId: userData.id, updatedData: payload }))
       .then(() => {
-        toast.success('User active status updated.');
+        toast.success(`Status ${updatedValue ? 'activated' : 'deactivated'} successfully`,{
+           iconTheme: {
+    primary: 'red', // This might directly change the color of the success icon
+    secondary: 'white', // The circle background
+  },
+        });
       })
       .catch((error) => {
-        toast.error('Failed to update status:', error);
+        toast.error('Failed to update status:', error,{
+          iconTheme: {
+            primary: 'red', // This might directly change the color of the error icon
+            secondary: 'white', // The circle background
+          },
+        });
       });
   };
 
@@ -105,9 +115,15 @@ const ExternalTable = () => {
       cell: ({ getValue }) => <span className="px-2">{getValue()}</span>,
     },
     {
-      accessorKey: 'lock_role.name',
+      accessorKey: 'lock_role.display_name',
       header: 'Role',
       size: 180,
+         cell: ({ row, getValue }) => {
+        const value = row.original ? getValue() : null;
+        if (!value) return null;
+        const formattedValue = value.replace(/_/g, ' ');
+        return formattedValue.charAt(0).toUpperCase() + formattedValue.slice(1);
+      },
     },
     {
       accessorKey: 'status',

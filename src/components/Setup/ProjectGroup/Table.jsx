@@ -76,10 +76,20 @@ const GroupTable = () => {
 
     try {
       await dispatch(updateProjectGroup({ id: row.original.id, payload })).unwrap();
-      toast.success("status updated successfully");
+      toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`,{
+        iconTheme: {
+          primary: 'red', // This might directly change the color of the success icon
+          secondary: 'white', // The circle background
+        },
+      });
       dispatch(fetchProjectGroup());
     } catch (error) {
-      console.error('Failed to update toggle:', error);
+      console.error('Failed to update toggle:', error,{
+        iconTheme: {
+          primary: 'red', // This might directly change the color of the error icon
+          secondary: 'white', // The circle background
+        },
+      });
     }
   };
     return (
