@@ -262,12 +262,12 @@ const BoardsSection = ({ section }) => {
                 parentTaskId: task.id,
               }))
           ).filter((subtask) =>
-            cardStatus === "active" ? subtask.status === "open" : subtask.status === cardStatus
+            subtask.status === cardStatus
           );
 
 
           const filteredProjects = projects.filter(
-            (project) => project.status === card.title.replace(" ", "_").toLowerCase()
+            (project) => cardStatus === "open" ? project.status === "active" : project.status === cardStatus
           );
 
           return (
