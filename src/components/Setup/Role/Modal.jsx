@@ -20,6 +20,7 @@ const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
   const handleSubmit = async(e) => {
     e.preventDefault();
     setError('');
+    if(roleInput===""){setError("Please enter role name");return;}
 
     const payload = {
       lock_role: {
