@@ -37,12 +37,13 @@ import Login from "./pages/Login/Login";
 import GroupTable from "./components/Setup/ProjectGroup/Table.jsx";
 import ProjectGroup from "./pages/Setup/ProjectGroup.jsx";
 import ProjectTemplates from "./pages/Setup/ProjectTemplates.jsx";
+import {Toaster} from "react-hot-toast";
 
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
-
+    <><Toaster /> 
     <Routes>
       <Route path="/login" element={<Login />} />
 
@@ -85,6 +86,7 @@ const App = () => {
         }
       />
     </Routes>
+    </>
   )
 }
 
