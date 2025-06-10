@@ -42,13 +42,14 @@ const SprintBoardSection = ({ selectedProject }) => {
   const [countdown, setCountdown] = useState("00d:00h:00m:00s");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const { success } = useSelector((state) => state.putSprint);
   const fetchProjects = useSelector((state) => state.fetchTasksOfProject);
   const { fetchSpirintById: newSprint } = useSelector(
     (state) => state.fetchSpirintById
   );
 
   useEffect(() => {
-    dispatch(fetchSpirintById(id));
+    dispatch(fetchSpirintById({ id }));
   }, [dispatch, id]);
 
   useEffect(() => {
@@ -203,6 +204,13 @@ const SprintBoardSection = ({ selectedProject }) => {
       selectedProject,
     ]
   );
+
+  useEffect(() => {
+    if (success) {
+      dispatch(fetchSpirintById({ id }))
+    }
+  }, [success])
+
   const handleLink = (sourceId, targetIds = []) => {
     if (targetIds.length === 0) return;
 
@@ -297,16 +305,14 @@ const SprintBoardSection = ({ selectedProject }) => {
   );
 
   useEffect(() => {
-    if (id && sprintState.length) {
-      const sprint = sprintState.find((s) => {
-        const sprintId = s.id != null ? String(s.id) : "";
-        return sprintId === id;
-      });
-      setSelectedSprint(sprint || null);
-    } else {
-      setSelectedSprint(null);
+    dispatch(fetchSpirintById({ id }))
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (newSprint) {
+      setSelectedSprint(newSprint)
     }
-  }, [id, sprintState]);
+  }, [newSprint])
 
   const calculateCountdown = useCallback(() => {
     if (
@@ -524,7 +530,7 @@ const SprintBoardSection = ({ selectedProject }) => {
                 </div>
                 <div className="flex items-center gap-2 text-[#D32F2F]">
                   <User size={14} />
-                  <span className="text-black">Rahul</span>
+                  <span className="text-black">{newSprint?.sprint_owner_name}</span>
                 </div>
                 <div className="flex items-center gap-2 text-[#029464]">
                   <Timer size={14} />
