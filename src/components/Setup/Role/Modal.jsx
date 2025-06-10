@@ -6,16 +6,20 @@ import { createRole, editRole } from '../../../redux/slices/roleSlice';
 
 const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
   const [roleInput, setRoleInput] = useState(role ? role.display_name : '');
+  const [error,setError]=useState('');
 
   const dispatch = useDispatch();
   const { loading, success } = useSelector((state) => state.createRole);
   const {
     loading: editLoading,
     success: editSuccess,
+   
   } = useSelector((state) => state.editRole);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
+    setError('');
+
     const payload = {
       lock_role: {
         name: roleInput.toLowerCase().replace(' ', '_').trim(),
@@ -23,20 +27,33 @@ const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
         active: 1,
       },
     };
-
+    let response;
+      try{
     if (mode === 'edit' && role?.id) {
-      dispatch(editRole({ id: role.id, payload }));
+     response=await dispatch(editRole({ id: role.id, payload })).unwrap();
     } else {
-      dispatch(createRole(payload));
+     response=await  dispatch(createRole(payload)).unwrap();
     }
+    console.log(response);
+     if(response.name!="has already been taken")
+      handleSuccess();
+  }
+  catch(error){
+    console.log(error);
+    setError("Name already exists");
+  }
   };
 
-  useEffect(() => {
-    if (success || editSuccess) {
-      onSuccess();
-    }
-  }, [success, editSuccess, onSuccess]);
 
+  const handleSuccess = () => {
+      setError("");
+      onSuccess();
+  }
+
+  const handleClose=()=>{
+    setError("");
+    onClose();
+  }
   useEffect(() => {
     if (role && mode === 'edit') {
       setRoleInput(role.display_name);
@@ -70,6 +87,10 @@ const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
           />
         </div>
 
+        <div className="flex justify-end items-center text-[12px] mt-2 mr-5">
+          {error && <p className="text-red-500">{error}</p>}
+        </div>
+
         {/* Footer Buttons */}
         <div className="absolute bottom-0 left-0 right-0 bg-[#D5DBDB] h-[90px] flex justify-center items-center gap-4">
           <button
@@ -80,7 +101,7 @@ const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
           </button>
           <button
             className="border border-[#C72030] text-[#1B1B1B] text-[16px] px-8 py-2"
-            onClick={onClose}
+            onClick={handleClose}
           >
             Cancel
           </button>

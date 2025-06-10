@@ -6,7 +6,8 @@ import { useEffect, useState } from 'react';
 import { fetchRoles } from '../../../redux/slices/roleSlice';
 import {
     createInternalUser,
-    fetchUpdateUser
+    fetchUpdateUser,
+    fetchUsers,
 } from '../../../redux/slices/userSlice';
 
 const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = false, selectedUser = null }) => {
@@ -22,9 +23,12 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
     const { fetchRoles: roles } = useSelector(state => state.fetchRoles)
     const { loading: editLoading,
         success: editSuccess, } = useSelector(state => state.fetchUpdateUser)
+    const {fetchUsers:users}=useSelector(state=>state.fetchUsers)
+    const [error, setError] = useState('');
 
-    useEffect(() => {
-        dispatch(fetchRoles())
+    useEffect(async() => {
+        await dispatch(fetchRoles()).unwrap()
+        dispatch(fetchUsers());
     }, [dispatch])
 
     useEffect(() => {
@@ -35,11 +39,13 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                 mobile: selectedUser.mobile || '',
                 email: selectedUser.email || '',
                 role: selectedUser.lock_role?.id || null,
+                reportTo:selectedUser.report_to_id
             });
         }
     }, [isEditMode, selectedUser]);
 
-    const handleSubmit = (e) => {
+
+    const handleSubmit = async(e) => {
         e.preventDefault();
 
         const payload = {
@@ -49,30 +55,51 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                 mobile: formData.mobile,
                 email: formData.email,
                 role_id: formData.role,
-                user_type: "internal"
+                user_type: "internal",
+                report_to_id:formData.reportTo
             }
         }
-
+        let response;
+        try{
         if (isEditMode) {
-            dispatch(fetchUpdateUser({ userId: selectedUser.id, updatedData: payload }));
+            response=await dispatch(fetchUpdateUser({ userId: selectedUser.id, updatedData: payload })).unwrap();
         } else {
-            dispatch(createInternalUser(payload));
+            response=await dispatch(createInternalUser(payload)).unwrap();
         }
+        console.log(response);
+        if(!response.user_exists){
+            handleSuccess();  
+        }else
+        setError(response.message)
+
+    }
+    catch(error){
+        console.log(error);
+    }};
+
+    const handleClose=()=>{
+        setFormData({
+            email: "",
+            mobile: "",
+            name: "",
+            reportTo: "",
+            role: null
+        })
+        setError("");
+        onClose();
     }
 
-
-    useEffect(() => {
-        if (success || editSuccess) {
-            onSuccess();
-            setFormData({
-                email: "",
-                mobile: "",
-                name: "",
-                reportTo: "",
-                role: null
-            })
-        }
-    }, [success, editSuccess, onSuccess]);
+    const handleSuccess=()=>{
+        setFormData({
+            email: "",
+            mobile: "",
+            name: "",
+            reportTo: "",
+            role: null
+        })
+        setError("");
+        onSuccess();
+    }
 
     if (!open) return null;
 
@@ -117,7 +144,7 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                         </label>
                         <SelectBox
                             options={
-                                roles.map(role => ({
+                                roles.map((role) => ({
                                     value: role.id,
                                     label: role.display_name
                                 }))
@@ -145,17 +172,19 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                             Reports To<span className="text-red-500 ml-1">*</span>
                         </label>
                         <SelectBox
-                            options={[
-                                { value: 'Product Manager', label: 'Product Manager' },
-                                { value: 'Project SPOC', label: 'Project SPOC' },
-                                { value: 'Front End Dev', label: 'Front End Dev' },
-                                { value: 'QA', label: 'QA' },
-                            ]}
+                            options={users.map((user) => ({
+                                value: user.id,
+                                label: user.firstname + " " + user.lastname
+                            }))}
                             className="w-full"
                             value={formData.reportTo}
                             onChange={(value) => setFormData({ ...formData, reportTo: value })}
                         />
                     </div>
+                </div>
+
+                <div className="flex justify-end align-center text-[12px] mt-1 mr-4">
+                  {error && <p className="text-red-500">{error}</p>}
                 </div>
 
                 {/* Footer Buttons */}
@@ -169,7 +198,7 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                     </button>
                     <button
                         className="border border-[#C72030] text-[#1B1B1B] text-[13px] px-8 py-2"
-                        onClick={onClose}
+                        onClick={handleClose}
                     >
                         Cancel
                     </button>

@@ -7,6 +7,7 @@ import CustomTable from '../CustomTable';
 import RoleModal from './Modal';
 import { useDispatch, useSelector } from 'react-redux';
 import { editRole, fetchRoles } from '../../../redux/slices/roleSlice';
+import toast from 'react-hot-toast';
 
 const ActionIcons = ({ row, onEdit }) => {
   const [isActive, setIsActive] = useState(row.original.active);
@@ -25,6 +26,7 @@ const ActionIcons = ({ row, onEdit }) => {
     };
 
     dispatch(editRole({ id: row.original.id, payload }));
+    toast.success('User active status updated.');
   };
 
   return (

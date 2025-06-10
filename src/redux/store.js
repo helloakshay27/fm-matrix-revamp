@@ -8,6 +8,7 @@ import { fetchOrganizationsReducer } from './slices/organizationSlice'
 import { createMilestoneReducer, fetchMilestoneReducer } from './slices/milestoneSlice'
 import { fetchSpirintByIdReducer, fetchSpirintsReducer, postSprintReducer, putSprintReducer } from './slices/spirintSlice'
 import { createIssueReducer, fetchIssueReducer, updateIssueReducer } from './slices/IssueSlice'
+import { fetchStatusReducer, createStatusReducer, updateStatusReducer } from './slices/statusSlice'
 
 export const store = configureStore({
   reducer: {
@@ -60,6 +61,11 @@ export const store = configureStore({
     createRole: createRoleReducer,
     fetchRoles: fetchRolesReducer,
     editRole: editRoleReducer,
+
+    //status
+    fetchStatus: fetchStatusReducer,
+    createStatus: createStatusReducer,
+    updateStatus: updateStatusReducer,
 
     //users
     fetchUsers: userReducer,

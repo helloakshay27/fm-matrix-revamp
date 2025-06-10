@@ -6,33 +6,33 @@ import Switch from '@mui/joy/Switch';
 import CustomTable from '../CustomTable';
 import AddInternalUser from './AddInternalUserModal';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchInternalUser, fetchUpdateUser } from '../../../redux/slices/userSlice';
+import { fetchInternalUser, fetchUpdateUser ,fetchUsers} from '../../../redux/slices/userSlice';
+import toast from 'react-hot-toast';
 
 const ActionIcons = ({ row, onEditClick }) => {
   const dispatch = useDispatch();
   const [isActive, setIsActive] = useState(!!row.original.active);
 
-  const handleToggle = () => {
-    const updatedValue = !isActive;
-    setIsActive(updatedValue);
+  const handleToggle = async () => {
+  const updatedValue = !isActive;
+  const userData = row.original;
 
-    const userData = row.original;
-
-
-    const payload = {
-      user: {
-        active: updatedValue ? 1 : 0,
-      },
-    };
-
-    dispatch(fetchUpdateUser({ userId: userData.id, updatedData: payload }))
-      .then(() => {
-        console.log('User active status updated.');
-      })
-      .catch((error) => {
-        console.error('Failed to update status:', error);
-      });
+  const payload = {
+    user: {
+      active: updatedValue ? 1 : 0,
+    },
   };
+
+  try {
+    await dispatch(fetchUpdateUser({ userId: userData.id, updatedData: payload })).unwrap();
+    setIsActive(updatedValue); 
+    toast.success('User active status updated.');
+  } catch (error) {
+    console.log(error);
+    toast.error('Failed to update status');
+  }
+};
+
 
   return (
     <div className="action-icons flex justify-start gap-5">
@@ -63,8 +63,10 @@ const InternalTable = () => {
   const dispatch = useDispatch();
   const { fetchInternalUser: internalUser } = useSelector(state => state.fetchInternalUser);
 
+
   useEffect(() => {
     dispatch(fetchInternalUser());
+    dispatch(fetchUsers());
   }, [dispatch]);
 
   const handleAddClick = () => {
@@ -112,7 +114,7 @@ const InternalTable = () => {
         cell: ({ row, getValue }) =>( <span className="px-2">{getValue()}</span>),
       },
       {
-        accessorKey: 'reportingManager',
+        accessorKey: 'report_to.name',
         header: 'Reports to',
         size: 150,
       },

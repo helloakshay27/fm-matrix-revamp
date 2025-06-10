@@ -18,43 +18,61 @@ const Modal = ({ openModal, setOpenModal, editMode = false, existingData }) => {
   const [groupName, setGroupName] = useState(editMode ? existingData?.name || '' : '');
   const [selectedUsers, setSelectedUsers] = useState(editMode ? alreadySelectedUsers || [] : []);
   const [warningOpen, setWarningOpen] = useState(false);
+  const [error, setError] = useState('');
 
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.createProjectGroup);
   const {fetchUsers: users}=useSelector((state) => state.fetchUsers);
 
   const resetModal = useCallback(() => {
+        dispatch(fetchProjectGroup());
     setGroupName('');
     setSelectedUsers([]);
     setWarningOpen(false);
     setOpenModal(false);
+    setError('');
   }, [setOpenModal]);
 
   useEffect(() => {
     dispatch(fetchUsers());
   }, [dispatch]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async() => {
     const trimmedName = groupName.trim();
 
-    if (!trimmedName || warningOpen) return;
-
+    if (!trimmedName){ setWarningOpen(true);
+      setError('Group name cannot be empty');
+      return;}
+     if(selectedUsers.length===0){ setWarningOpen(true);
+      setError('Please select at least one user');
+      return;}
     const payload = {
       name: trimmedName.toLowerCase(),
       created_by_id: 158,
       user_ids: selectedUsers.map((user) => user.value),
       active:true
     };
-
-    const action = editMode
-      ? updateProjectGroup({ id: existingData.id, payload })
-      : createProjectGroup(payload);
-
-    dispatch(action).then(() => {
-      dispatch(fetchProjectGroup());
-      resetModal();
-    });
-  }, [groupName,selectedUsers, warningOpen, dispatch, editMode, existingData, resetModal]);
+   let response;
+   try{
+    if(editMode){
+       response=await dispatch(updateProjectGroup({ id: existingData.id, payload })).unwrap();
+      }
+      else{
+       response= await dispatch(createProjectGroup(payload)).unwrap();
+      }
+        console.log(response);
+      if(response.name[0]==="has already been taken"){
+        setWarningOpen(true);
+        setError("Group name already exists");
+      }else{
+        resetModal();
+      }
+   }
+   catch(error){
+    console.log(error);
+   }
+       
+  }, [groupName, selectedUsers, editMode, existingData, resetModal, dispatch]);
 
   const handleChange=(values)=>{
      setSelectedUsers(values);
@@ -83,21 +101,25 @@ const Modal = ({ openModal, setOpenModal, editMode = false, existingData }) => {
           <input
             type="text"
             placeholder="Enter project group name here..."
-            className={`border w-full px-4 py-3 text-[#1B1B1B] text-[13px] ${warningOpen ? 'border-red-600' : 'border-[#C0C0C0]'}`}
+            className={`border w-full px-4 py-3 text-[#1B1B1B] text-[13px] `}
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
           />
-          {warningOpen && (
-            <p className="text-red-600 text-sm mt-1">Project Type already exists</p>
-          )}
+          
         </div>
         <div className="px-6">
           <label className="block text-[#1B1B1B] mb-2">Select Members</label>
           <MultiSelectBox options={users.map((user) => ({ value: user.id, label: `${user.firstname} ${user.lastname}` }))} placeholder={"Select Users"} value={selectedUsers} onChange={(values) => handleChange(values)} />
         </div>
         </div>
+
+        <div className="flex justify-end mr-5 mt-1">
+          {warningOpen && (
+            <p className="text-red-600 text-[12px] mt-1">{error}</p>
+          )}
+        </div>
         {/* Footer Buttons */}
-        <div className="absolute bottom-0 left-0 right-0 bg-[#D5DBDB] h-[90px] flex justify-center items-center gap-4">
+        <div className="absolute bottom-0 left-0 right-0 bg-[#D5DBDB] h-[60px] flex justify-center items-center gap-4">
           <button
             className="border border-[#C72030] text-[#1B1B1B] text-[16px] px-8 py-1"
             onClick={handleSave}

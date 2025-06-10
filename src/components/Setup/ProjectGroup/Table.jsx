@@ -12,6 +12,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProjectGroup, createProjectGroup, updateProjectGroup } from '../../../redux/slices/projectSlice';
 import Modal from './Modal';
+import toast from 'react-hot-toast';
 
 const GroupTable = () => {
   const [openModal, setOpenModal] = useState(false);
@@ -22,20 +23,20 @@ const GroupTable = () => {
   const [data, setData] = useState([]);
 
   const dispatch = useDispatch();
-  const { fetchProjectGroup: ProjectGroups } = useSelector((state) => state.fetchProjectGroup);
+  const { fetchProjectGroup: projectGroup } = useSelector((state) => state.fetchProjectGroup);
 
 
   // Initial fetch of project Group
   useEffect(() => {
-    dispatch(fetchProjectGroup());
+     dispatch(fetchProjectGroup()).unwrap();
   }, [dispatch]);
 
   // Update table data when ProjectTypes changes
   useEffect(() => {
-    if (ProjectGroups && ProjectGroups.length > 0) {
-      setData(ProjectGroups);
+    if (projectGroup && projectGroup.length > 0) {
+      setData(projectGroup);
     }
-  }, [ProjectGroups]);
+  },[projectGroup]);
 
   // Fetch data when modal closes to ensure table is refreshed
   useEffect(() => {
@@ -44,8 +45,15 @@ const GroupTable = () => {
     }
   }, [openModal, dispatch]);
 
-  const handleEditClick = (row) => {
-    setSelectedData(ProjectGroups.find((item)=>item.name==row.original.name));
+  
+
+
+  const ActionIcons = ({ row }) => {
+    
+    const handleEditClick = (row) => {
+    console.log("hi");
+    console.log(row.original);
+    setSelectedData(row.original);
     setEditMode(true);
     setOpenModal(true);
   };
@@ -68,14 +76,13 @@ const GroupTable = () => {
 
     try {
       await dispatch(updateProjectGroup({ id: row.original.id, payload })).unwrap();
+      toast.success("status updated successfully");
       dispatch(fetchProjectGroup());
     } catch (error) {
       console.error('Failed to update toggle:', error);
     }
   };
-
-
-  const ActionIcons = ({ row }) => (
+    return (
     <div className=" flex justify-start items-start gap-5 ml-2">
               <Switch
                 color="danger"
@@ -93,7 +100,8 @@ const GroupTable = () => {
           <DeleteOutlineOutlinedIcon sx={{ fontSize: '20px' }} onClick={() => handleDeleteClick(row.original.id)} />
         </button>
     </div>
-  );
+  )
+};
 
 
 

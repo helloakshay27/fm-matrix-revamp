@@ -57,7 +57,7 @@ export const createInternalUser = createAsyncThunk('createInternalUser', async (
             },
         });
 
-        return response.data.users;
+        return response.data;
     } catch (error) {
         console.log(error);
     }

@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import Modal from './Modal';
 import CustomTable from '../CustomTable';
 import { fetchTags, updateTag, deleteTag } from '../../../redux/slices/tagsSlice';
+import toast from 'react-hot-toast';  
 
 const ActionIcons = ({ row, onEdit }) => {
   const [isActive, setIsActive] = useState(row.original.active);
@@ -93,6 +94,7 @@ const TagsTable = () => {
 
     try {
       await dispatch(updateTag({ id: row.original.id, data: payload })).unwrap();
+      toast.success("status updated successfully");
       dispatch(fetchTags());
     } catch (error) {
       console.error('Failed to update toggle:', error);

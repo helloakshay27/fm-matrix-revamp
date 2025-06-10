@@ -22,11 +22,12 @@ const AddExternalUserModal = ({
   const { fetchOrganizations: organizations } = useSelector(
     (state) => state.fetchOrganizations
   );
-  const { loading, success, error } = useSelector(
+  const { loading, success } = useSelector(
     (state) => state.createExternalUser
   );
   const { loading: editLoading,
     success: editSuccess, } = useSelector(state => state.fetchUpdateUser)
+    const[error,setError]=useState('');
 
 
   const [formData, setFormData] = useState({
@@ -62,7 +63,7 @@ const AddExternalUserModal = ({
     }
   }, [isEditMode, initialData, open]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
 
     const payload = {
@@ -76,36 +77,58 @@ const AddExternalUserModal = ({
         user_type: 'external',
       },
     };
-
+    try{
+      let response;
     if (isEditMode && initialData?.id) {
-      dispatch(fetchUpdateUser({ userId: initialData.id, updatedData: payload }));
+      response=await dispatch(fetchUpdateUser({ userId: initialData.id, updatedData: payload }));
     } else {
-      dispatch(createExternalUser(payload));
+      response=await dispatch(createExternalUser(payload));
     }
+    console.log(response);
+    if(response.payload?.errors){
+      setError(response.payload.errors);
+    }else if(response.payload.user_exists){
+      setError(response.payload.message)
+    }else{
+      handleSuccess();
+    }
+  }catch(error){
+    console.log(error);
   };
-
-  // useEffect(() => {
-  //   if (success || succ) {
-  //     window.location.reload();
-  //   }
-  // }, [success, succ]);
+};
 
 
-  useEffect(() => {
-    if (success || editSuccess) {
-      onSuccess();
-    }
-  }, [success, editSuccess, onSuccess]);
+ const handleSuccess=()=>{
+    setFormData({
+        username: '',
+        organisation: null,
+        email: '',
+        mobile: '',
+        role: null,
+    })
+    setError('');
+    onSuccess();
+ }
 
-  if (!open) return null;
+ const handleClose=()=>{
+   setFormData({
+        username: '',
+        organisation: null,
+        email: '',
+        mobile: '',
+        role: null,
+    })  
+  setError('');
+    onClose();
 
+ }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
       <div className="w-[560px] h-max bg-white transform border border-[#C0C0C0]">
         {/* Close Icon */}
         <div className="flex justify-end p-4">
-          <CloseIcon className="cursor-pointer" onClick={onClose} />
+          <CloseIcon className="cursor-pointer" onClick={handleClose} />
         </div>
 
         {/* Input Section */}
@@ -184,6 +207,14 @@ const AddExternalUserModal = ({
           </div>
         </div>
 
+        <div>
+          {error && (
+            <div className="flex justify-end mt-1 mr-5 align-center">
+              <p className="text-red-500 text-[12px]">{error}</p>
+            </div>
+          )}
+        </div>
+
         {/* Footer Buttons */}
         <div className="bottom-0 left-0 right-0 bg-[#D5DBDB] h-[70px] flex justify-center items-center gap-4">
           <button
@@ -195,7 +226,7 @@ const AddExternalUserModal = ({
           </button>
           <button
             className="border border-[#C72030] text-[#1B1B1B] text-[13px] px-8 py-2"
-            onClick={onClose}
+            onClick={handleClose}
           >
             Cancel
           </button>

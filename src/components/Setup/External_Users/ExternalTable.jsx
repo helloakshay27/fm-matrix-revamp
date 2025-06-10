@@ -8,6 +8,7 @@ import AddExternalUserModal from './AddExternalUserModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchExternalUser, fetchUpdateUser } from '../../../redux/slices/userSlice';
 import { editRole } from '../../../redux/slices/roleSlice';
+import toast from 'react-hot-toast';
 
 
 const ActionIcons = ({ row, onEdit }) => {
@@ -29,10 +30,10 @@ const ActionIcons = ({ row, onEdit }) => {
 
     dispatch(fetchUpdateUser({ userId: userData.id, updatedData: payload }))
       .then(() => {
-        console.log('User active status updated.');
+        toast.success('User active status updated.');
       })
       .catch((error) => {
-        console.error('Failed to update status:', error);
+        toast.error('Failed to update status:', error);
       });
   };
 
@@ -146,7 +147,8 @@ const ExternalTable = () => {
         showDropdown
         onAdd={handleAddUser}
       />
-
+      {
+        isModalOpen &&(
       <AddExternalUserModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -154,6 +156,8 @@ const ExternalTable = () => {
         initialData={selectedUser}
         onSuccess={handleSuccess}
       />
+        )
+      }
 
     </div>
   );

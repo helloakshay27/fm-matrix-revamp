@@ -12,7 +12,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { deleteProjectType, fetchProjectTypes, updateProjectType } from '../../../redux/slices/projectSlice';
 import Modal from './Modal';
-
+import toast from 'react-hot-toast';
 const TypesTable = () => {
   const [openModal, setOpenModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -67,6 +67,7 @@ const TypesTable = () => {
 
     try {
       await dispatch(updateProjectType({ id: row.original.id, data: payload })).unwrap();
+      toast.success('status updated successfully');
       dispatch(fetchProjectTypes());
     } catch (error) {
       console.error('Failed to update toggle:', error);

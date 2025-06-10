@@ -3,6 +3,8 @@ import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import Switch from '@mui/joy/Switch';
 import axios from 'axios';
+import { fetchStatus, updateStatus, createStatus } from '../../../redux/slices/statusSlice.js';
+import { useDispatch } from 'react-redux';
 
 import {
   useReactTable,
@@ -11,20 +13,25 @@ import {
   getPaginationRowModel,
 } from '@tanstack/react-table';
 import Modal from '../Status/Modal.jsx';
+import { useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
 
-const ActionIcons = ({ data }) => {
-  const [openModal, setOpenModal] = useState(false);
+const ActionIcons = ({row,setOpenModal,setIsEdit,setExistingData}) => {
 
+   const handleEditClick=()=>{
+     setIsEdit(true);
+     setExistingData(row.original);
+    setOpenModal(true);
+    console.log(row.original);
+   } 
   return (
     <div className="action-icons flex justify-between gap-5">
       <div>
         <EditOutlinedIcon
-          onClick={() => setOpenModal(true)}
+          onClick={handleEditClick}
+          
           sx={{ fontSize: '20px', cursor: 'pointer' }}
         />
-
-        {openModal && <Modal id={data.id} setOpenModal={setOpenModal} openModal={openModal} />}
-
         <button
           onClick={() => alert(`Deleting: ${data.title}`)}
           title="Delete"
@@ -37,78 +44,36 @@ const ActionIcons = ({ data }) => {
   );
 };
 
-const defaultData = [
-  {
-    status: "Not Started",
-    color_code: "#B0BEC5", // grey
-    status: false,
-    created_at: "2025-01-01T00:00:00Z",
-  },
-  {
-    status: "Initiated",
-    color_code: "#00BCD4", // cyan
-    status: false,
-    created_at: "2025-01-01T00:00:00Z",
-  },
-  {
-    status: "In Progress",
-    color_code: "#42A5F5", // light blue
-    status: false,
-    created_at: "2025-01-01T00:00:00Z",
-  },
-  {
-    status: "On Hold",
-    color_code: "#FFB300", // amber/orange
-    status: false,
-    created_at: "2025-01-01T00:00:00Z",
-  },
-  {
-    status: "Delayed",
-    color_code: "#EF5350", // red
-    status: false,
-    created_at: "2025-01-01T00:00:00Z",
-  },
-  {
-    status: "Completed",
-    color_code: "#66BB6A", // green
-    status: false,
-    created_at: "2025-01-01T00:00:00Z",
-  },
-];
-
-const StatusTable = () => {
-  const [data, setData] = useState(defaultData);
+const StatusTable = ({setOpenModal, setIsEdit, setExistingData}) => {
+  const dispatch=useDispatch();
+  const [data, setData] = useState([]);
+  const {fetchStatus:statusList}=useSelector(state=>state.fetchStatus);
   const fixedRowsPerPage = 13;
 
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: fixedRowsPerPage,
   });
-
-  // Fetch data from API once
-  useEffect(() => {
-    axios
-      .get('https://api-tasks.lockated.com/project_statuses.json', {
-        headers: {
-          Authorization: 'Bearer bTcVnWgQrF6QCdNbMiPXzCZNAqsN9qoEfFWdFQ1Auk4',
-        },
-      })
-      .then((response) => {
-        setData(response.data);
-      })
-      .catch((error) => {
-        console.error('API fetch error:', error);
-      });
-  }, []);
-
+  
+  useEffect(()=>{
+    dispatch(fetchStatus());
+  },[dispatch,setOpenModal,setIsEdit,setExistingData]);
+  
   // Handler to toggle status in data state (for demo only)
-  const toggleStatus = (rowIndex) => {
-    setData((old) =>
-      old.map((item, index) =>
-        index === rowIndex ? { ...item, status: !item.status } : item
-      )
-    );
+  const toggleStatus = async(row) => {
+    try{
+      const payload={
+        active:!row.original.active
+      }
+      await dispatch(updateStatus({id:row.original.id,payload})).unwrap();
+      toast.success('Status updated successfully');
+      await dispatch(fetchStatus()).unwrap();
+    }catch(error){
+      console.log(error)
+    }
   };
+
+  
 
   const columns = useMemo(
     () => [
@@ -144,7 +109,7 @@ const StatusTable = () => {
             <Switch
               color="danger"
               checked={getValue()}
-              onChange={() => toggleStatus(row.index)}
+              onChange={() => toggleStatus(row)}
             />
             <span>Active</span>
           </div>
@@ -164,7 +129,7 @@ const StatusTable = () => {
         header: 'Actions',
         size: 60,
         cell: ({ row }) =>
-          row.original ? <ActionIcons data={row.original} /> : null,
+          row.original ? <ActionIcons row={row} setOpenModal={setOpenModal} setIsEdit={setIsEdit} setExistingData={setExistingData} /> : null,
         meta: {
           cellClassName: 'actions-cell-content',
         },
@@ -174,7 +139,7 @@ const StatusTable = () => {
   );
 
   const table = useReactTable({
-    data,
+    data:statusList,
     columns,
     state: { pagination },
     onPaginationChange: setPagination,
