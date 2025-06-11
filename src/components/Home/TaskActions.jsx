@@ -226,7 +226,7 @@ const TaskActions = ({
         <>
             <div className="flex items-center justify-end mx-4 my-3 text-sm">
                 <div className="flex items-center gap-3 divide-x divide-gray-400">
-                    {addType !== "Issues" && addType !== "Sprint-Gantt"&& addType !== "Sprint-Gantt"&& !["Milestone", "Project", "Task","templates","archived"].includes(addType)  && renderTypeDropdown()}
+                    {addType !== "Issues" && addType !== "Sprint-Gantt"&& addType !== "Sprint-Gantt"&& !["Milestone", "Project","templates","archived"].includes(addType)  && renderTypeDropdown()}
                     {addType !== "Issues" && !["Milestone", "Project", "Task", "active_projects","templates","archived"].includes(addType) && renderSprintTypeDropdown()}
                     {addType !== "Milestone" && (
                         <div
