@@ -29,7 +29,7 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen,
 
     const typeDropdownRef = useRef(null);
     const statusDropdownRef = useRef(null);
-    const filter=localStorage.getItem("ProjectFilters")||localStorage.getItem("taskFilters");
+    const filter=localStorage.getItem("projectFilters")||localStorage.getItem("taskFilters");
 
     useEffect(() => {
         const handleClickOutside = (event) => {

@@ -126,7 +126,10 @@ tasksFromStore.forEach((task) => {
             ResponsiblePersonSearch,
             creatorSearch,
         };
-        localStorage.setItem("taskFilters", JSON.stringify(filters));
+        if(selectedStatuses.length>0 || selectedResponsible.length>0 || selectedCreators.length>0 || dates["Start Date"] || dates["End Date"] || statusSearch || ResponsiblePersonSearch || creatorSearch){
+            
+            localStorage.setItem("taskFilters", JSON.stringify(filters));
+        }
     }, [
         selectedStatuses,
         selectedResponsible,

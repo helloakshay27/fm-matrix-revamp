@@ -650,7 +650,7 @@ const TaskDetails = () => {
                                 <div className="w-1/2 flex items-center justify-center gap-3">
                                     <div className="text-right text-[12px] font-[500]">Duration:</div>
                                     <div className="text-left text-[#029464] text-[12px]">
-                                        {calculateDuration(task.expected_start_date, task.target_date)}
+                                        {calculateDuration(task.started_at?.split("T")[0], task.target_date)}
                                     </div>
                                 </div>
                                 <div className="w-1/2 flex items-center justify-center gap-3">

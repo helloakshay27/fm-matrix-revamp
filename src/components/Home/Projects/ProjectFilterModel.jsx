@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchProjects, filterProjects } from "../../../redux/slices/projectSlice";
 import { fetchUsers } from "../../../redux/slices/userSlice";
 
-localStorage.removeItem("projectFilters");
+// localStorage.removeItem("projectFilters");
 
 // Define status options with user-friendly labels and API-compatible values
 const statusOptions = [
@@ -111,7 +111,9 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
             managerSearch,
             creatorSearch,
         };
+        if(selectedStatuses.length>0 || selectedTypes.length>0 || selectedManagers.length>0 || selectedCreators.length>0 || statusSearch || typeSearch || managerSearch || creatorSearch || dates.startDate || dates.endDate){
         localStorage.setItem("projectFilters", JSON.stringify(filters));
+        }
     }, [
         selectedStatuses,
         selectedTypes,
