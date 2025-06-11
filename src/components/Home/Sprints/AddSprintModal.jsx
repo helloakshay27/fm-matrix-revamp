@@ -4,18 +4,18 @@ import { X } from "lucide-react";
 import { useRef } from "react";
 import Sprints from "./Modals/Sprint";
 
-const AddSprintModal = ({ isModalOpen, setIsModalOpen }) => {
+const AddSprintModal = ({ isSprintModalOpen, setIsSprintModalOpen }) => {
     const addTaskModalRef = useRef(null);
 
     useGSAP(() => {
-        if (isModalOpen) {
+        if (isSprintModalOpen) {
             gsap.fromTo(
                 addTaskModalRef.current,
                 { x: "100%" },
                 { x: "0%", duration: 0.5, ease: "power3.out" }
             );
         }
-    }, [isModalOpen]);
+    }, [isSprintModalOpen]);
 
     const closeModal = () => {
         gsap.to(addTaskModalRef.current, {
