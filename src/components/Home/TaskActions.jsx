@@ -226,8 +226,8 @@ const TaskActions = ({
         <>
             <div className="flex items-center justify-end mx-4 my-3 text-sm">
                 <div className="flex items-center gap-3 divide-x divide-gray-400">
-                    {addType !== "Issues" && addType !== "Sprint-Gantt" && renderTypeDropdown()}
-                    {addType !== "Issues" && !["Milestone", "Project", "Task"].includes(addType) && renderSprintTypeDropdown()}
+                    {addType !== "Issues" && addType !== "Sprint-Gantt"&& addType !== "Sprint-Gantt"&& !["Milestone", "Project", "Task","templates","archived"].includes(addType)  && renderTypeDropdown()}
+                    {addType !== "Issues" && !["Milestone", "Project", "Task", "active_projects","templates","archived"].includes(addType) && renderSprintTypeDropdown()}
                     {addType !== "Milestone" && (
                         <div
                             className="flex items-center gap-1 cursor-pointer pl-4"
@@ -235,7 +235,7 @@ const TaskActions = ({
                                 addType === "Project"
                                     ? setIsProjectFilter(true)
                                     : setIsFilterModalOpen(true)
-                                    
+
                             }
                         >
                             <Filter size={18} className={`${filter ? 'fill-[#C72030] text-[#C72030]' : 'text-gray-600'}`} />

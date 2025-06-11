@@ -49,7 +49,7 @@ const Projects = ({ setIsSidebarOpen }) => {
                             }`}
                         onClick={() => {
                             setActiveTab(tab.id);
-                            setActiveTabLabel(tab.label);
+                            setActiveTabLabel(tab.id);
                         }}
                     >
                         {tab.label}

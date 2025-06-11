@@ -12,7 +12,7 @@ export const tabs = [
     label: "Archived",
   },
   {
-    id: "issues",
+    id: "Issues",
     label: "Issues",
   },
 ];
