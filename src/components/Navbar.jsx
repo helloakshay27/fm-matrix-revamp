@@ -140,9 +140,9 @@ const Navbar = () => {
                             <span
                                 className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center cursor-pointer"
                                 onClick={() => setShowLogoutModal(true)}
-                                title={`${user.firstName} ${user.lastName}`}
+                                title={`${user.firstName || ""} ${user.lastName || ""}`}
                             >
-                                {user.firstName[0]}
+                                {(user.firstName && user.firstName[0]) ? user.firstName[0] : "U"}
                             </span>
                             {/* Enhanced Logout Modal */}
                             {showLogoutModal && (
@@ -158,7 +158,7 @@ const Navbar = () => {
                                         </button>
                                         <div className="flex items-center gap-4 mb-4">
                                             <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold text-gray-600 border">
-                                                {user.firstName[0]}
+                                                {(user.firstName && user.firstName[0]) ? user.firstName[0] : "U"}
                                             </div>
                                             <div>
                                                 <div className="text-lg font-semibold">{user.firstName} {user.lastName}</div>
