@@ -29,7 +29,7 @@ const TeamDetails = () => {
           <div className='flex flex-col gap-3'>
             <span>{projectTeam?.name}</span>
             <div className="flex justify-between gap-10">
-              <span>{`Total Team Memebers : ${projectTeam?.project_team_members?.length}`}</span>
+              <span>{`Total Team Members : ${projectTeam?.project_team_members?.length}`}</span>
               <span>{`Associated Projects : 1`}</span>
             </div>
           </div>

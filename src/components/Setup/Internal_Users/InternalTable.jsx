@@ -8,6 +8,7 @@ import AddInternalUser from './AddInternalUserModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchInternalUser, fetchUpdateUser ,fetchUsers} from '../../../redux/slices/userSlice';
 import toast from 'react-hot-toast';
+import { Link } from 'react-router-dom';
 
 const ActionIcons = ({ row, onEditClick }) => {
   const dispatch = useDispatch();
@@ -107,9 +108,10 @@ const InternalTable = () => {
         cell: ({ row }) => {
           const { firstname, lastname } = row.original;
           return (
-            <span className="cursor-pointer">
+           <Link to={`/setup/internal-users/details`}> <span className="cursor-pointer">
               {firstname} {lastname}
             </span>
+            </Link>
           );
         },
       },
