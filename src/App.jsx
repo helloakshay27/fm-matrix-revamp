@@ -71,7 +71,7 @@ const App = () => {
               <Route path="/setup" element={<Navigate to="/setup/roles" />} />
               <Route path="/setup/roles" element={<Role />} />
               <Route path="/setup/internal-users" element={<InternalUser />} />
-              <Route path="/setup/internal-users/details" element={<Details />} />
+              <Route path="/setup/internal-users/details/:id" element={<Details />} />
               <Route path="/setup/external-users" element={<ExternalTable />} />
               <Route path="/setup/project-teams" element={<ProjectTeams />} />
               <Route path="/setup/project-teams/project-details" element={<ProjectDetail />} />

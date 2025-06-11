@@ -1,24 +1,68 @@
-import React, { useState } from 'react'
+import React, { useState ,useEffect} from 'react'
 import KeyboardArrowLeftOutlinedIcon from '@mui/icons-material/KeyboardArrowLeftOutlined';
 import Modal from './Modal';
-import { Link } from 'react-router-dom';
-
-
+import { Link ,useParams} from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchInternalUserDetails, fetchUsers } from '../../../redux/slices/userSlice';
+import { fetchRoles } from '../../../redux/slices/roleSlice';
 
 const Details = () => {
+
+  const{
+    users:details
+  }=useSelector((state)=>state.fetchInternalUserDetails.fetchInternalUserDetails);
+
+  const{
+    fetchUsers:users
+  }=useSelector((state)=>state.fetchUsers);
+  
+  const{
+    fetchRoles:roles
+  }=useSelector((state)=>state.fetchRoles);
+
+
+   const dispatch = useDispatch();
+   const {id}=useParams();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [role,setRole]= useState("");
+    const [reportsTo,setReportsTo]= useState("");
     const [name, setName] = useState("");
+
+    useEffect(()=>{
+        dispatch(fetchInternalUserDetails(id));
+        dispatch(fetchUsers());
+        dispatch(fetchRoles());
+    },[dispatch])
+
+   useEffect(()=>{
+    if(roles){
+        const value=roles.find((role) => role.id === details.role_id).display_name;
+        console.log(value);
+        const formattedValue = value?.replace(/_/g, ' ');
+        console.log(formattedValue);
+       setRole(formattedValue?.charAt(0).toUpperCase() + formattedValue?.slice(1));
+    }
+    if(users){
+        const user=users.find((user) => user.id == details.report_to_id);
+        console.log(user);
+        setReportsTo(user.firstname + " " + user.lastname);
+    }
+   },[users,roles])
+
+
     return (
         <div className="flex flex-col gap-5 p-10 m-10 text-[14px] bg-[#D9D9D933] h-full">
             <div className="flex justify-between gap-10">
                 <div className="flex justify-start gap-4 w-2/3">
-                    <span className="rounded-full bg-[#D5DBDB] w-[65px] h-[65px] flex justify-center items-center text-[25px]">AT</span>
+                    <span className="rounded-full bg-[#D5DBDB] w-[65px] h-[65px] flex justify-center items-center text-[25px]">{details?.firstname.charAt(0).toUpperCase()}{details?.lastname.charAt(0).toUpperCase()}</span>
                     <div className='flex flex-col gap-3'>
-                        <span>Abhindya A</span>
-                        <div className="flex justify-between gap-10">
-                            <span>Email Id :abhindya.t@lockated</span>
-                            <span>Role : Designer</span>
-                            <span>Reports To: kshitij R</span>
+                        <span>
+  {`${details?.firstname.charAt(0).toUpperCase()}${details?.firstname.slice(1)} ${details?.lastname.charAt(0).toUpperCase()}${details?.lastname.slice(1)}`}
+</span>
+                        <div className="flex justify-between gap-10 text-[12px]">
+                            <span>{`Email Id :${details?.email}`}</span>
+                            <span>{`Role : ${role}`}</span>
+                            <span>{`Reports To: ${reportsTo}`}</span>
                             <span className='text-green-500'>Active</span>
                         </div>
                     </div>

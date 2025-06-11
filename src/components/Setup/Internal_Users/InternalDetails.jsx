@@ -1,7 +1,8 @@
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { fetchInternalUserDetails } from '../../../redux/slices/userSlice';
+import { useDispatch, useSelector } from 'react-redux';
 
 const InternalDetails = () => {
-
 
   const { state } = useLocation();
   const location = useLocation();

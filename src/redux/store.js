@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { changeProjectStatusReducer, createProject, createProjectReducer, createProjectTypesReducer, deleteProjectReducer, editProjectReducer, fetchProjectDetailsReducer, fetchProjectsReducer, fetchProjectTypeReducer, fetchTemplatesReducer, filterProjectsReducer, updateProjectTypeReducer, fetchProjectGroupReducer, createProjectGroupReducer, updateProjectGroupReducer, createProjectTeamReducer, fetchProjectTeamsReducer, fetchProjectTeamReducer, updateProjectTeamReducer } from './slices/projectSlice'
-import { createExternalUserReducer, createInternalUserReducer, fetchExternalUserReducer, fetchInternalUserReducer, fetchUpdatelUserReducer, userReducer } from './slices/userSlice'
+import { createExternalUserReducer, fetchInternalUserDetailsReducer,createInternalUserReducer, fetchExternalUserReducer, fetchInternalUserReducer, fetchUpdatelUserReducer, userReducer } from './slices/userSlice'
 import { createTagReducer, deleteTagReducer, fetchTagsReducer, updateTagReducer } from './slices/tagsSlice'
 import { createRoleReducer, editRoleReducer, fetchRolesReducer } from './slices/roleSlice'
 import { changeTaskStatusReducer, createDependancyReducer, createTaskCommentReducer, createTaskReducer, editTaskCommentReducer, editTaskReducer, fetchTasksOfProjectReducer, fetchTasksReducer, filterTaskReducer, taskDetailsReducer, updateDependancyReducer } from './slices/taskSlice'
@@ -75,6 +75,7 @@ export const store = configureStore({
     createExternalUser: createExternalUserReducer,
     fetchExternalUser: fetchExternalUserReducer,
     fetchUpdateUser: fetchUpdatelUserReducer,
+    fetchInternalUserDetails: fetchInternalUserDetailsReducer,
 
     //tags
     fetchTags: fetchTagsReducer,
