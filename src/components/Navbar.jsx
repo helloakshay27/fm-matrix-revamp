@@ -31,9 +31,9 @@ const Navbar = () => {
 
     // Dummy user data (replace with real user data as needed)
     const user = JSON.parse(localStorage.getItem("user")) || {
-        email: "",
-        firstName: "",
-        lastName: ""
+        firstName: "John",
+        lastName: "Doe",
+        email: "john.doe@example.com"
     };
 
     const [showLogoutModal, setShowLogoutModal] = useState(false);
