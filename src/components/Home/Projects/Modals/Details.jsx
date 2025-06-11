@@ -6,6 +6,7 @@ import { createProject, editProject, fetchProjectTeams, fetchProjectTypes, fetch
 import { fetchUsers } from '../../../../redux/slices/userSlice'
 import { fetchTags } from '../../../../redux/slices/tagsSlice'
 import { useParams } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", isEdit = false }) => {
   const { id } = useParams();
@@ -103,6 +104,28 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
     }));
   };
 
+  const validateForm = () => {
+    const errors = {}
+
+    if (!formData.projectTitle) {
+      errors.projectTitle = "Project title is required."
+    } else if (!formData.projectOwner) {
+      errors.projectOwner = "Project owner is required."
+    } else if (!formData.startDate) {
+      errors.startDate = "Start date is required."
+    } else if (!formData.endDate) {
+      errors.endDate = "End date is required."
+    } else if (!formData.team) {
+      errors.priority = "Team is required."
+    }
+
+    if (Object.keys(errors).length > 0) {
+      toast.error(Object.values(errors)[0])
+      return false
+    }
+    return true
+  }
+
   const handleDuration = () => {
     if (!formData.startDate || !formData.endDate) return "";
     const start = new Date(formData.startDate);
@@ -121,6 +144,8 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
 
   const handleSubmit = async (e, id) => {
     e.preventDefault();
+
+    if (!validateForm()) return;
 
     const payload = {
       project_management: {
@@ -172,7 +197,6 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
             onChange={handleInputChange}
             placeholder="Enter Project Title"
             className="w-full border h-[40px] outline-none border-gray-300 p-2 text-[12px]"
-            required
           />
         </div>
 
@@ -255,7 +279,7 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
 
         <div className="flex items-start justify-between gap-2 mt-4 text-[12px]">
           <div className="w-full space-y-2">
-            <label className="block ms-2">Start Date</label>
+            <label className="block ms-2">Start Date<span className="text-red-600">*</span></label>
             <input
               type="date"
               name="startDate"
@@ -266,7 +290,7 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
           </div>
 
           <div className="w-full space-y-2">
-            <label className="block ms-2">End Date</label>
+            <label className="block ms-2">End Date<span className="text-red-600">*</span></label>
             <input
               type="date"
               name="endDate"
@@ -297,7 +321,7 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
 
         <div className="flex flex-col relative justify-start gap-4 w-full bottom-0 py-3 bg-white my-10">
           <div>
-            <label className="block mb-2">Project Team</label>
+            <label className="block mb-2">Project Team<span className="text-red-600">*</span></label>
             <SelectBox
               options={
                 teams.map((team) => ({

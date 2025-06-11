@@ -84,7 +84,7 @@ const CreateNewTeam = ({ setOpenModal }) => {
           </div>
           <div className="px-6">
             <label className="block text-[16px] text-[#1B1B1B] mb-1">
-              Team Lead<span>*</span>
+              Team Lead<span className="text-red-500 ml-1">*</span>
             </label>
             <SelectBox
               placeholder="Select team Lead"
@@ -98,7 +98,7 @@ const CreateNewTeam = ({ setOpenModal }) => {
           </div>
           <div className="px-6">
             <label className="block text-[16px] text-[#1B1B1B] mb-1">
-              Team Members<span>*</span>
+              Team Members<span className="text-red-500 ml-1">*</span>
             </label>
             <MultiSelectBox
               placeholder="Select Team Members"

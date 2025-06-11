@@ -407,6 +407,7 @@ const TaskDetails = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { taskDetails: task } = useSelector((state) => state.taskDetails);
+    const { success } = useSelector((state) => state.changeTaskStatus);
 
     const [isFirstCollapsed, setIsFirstCollapsed] = useState(false);
     const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
@@ -443,7 +444,7 @@ const TaskDetails = () => {
     const handleDeleteTask = (id) => {
         try {
             dispatch(deleteTask(id));
-            navigate("/tasks");
+            navigate(-1);
         } catch (err) {
             console.log(err)
         }
@@ -462,6 +463,12 @@ const TaskDetails = () => {
             })
         );
     };
+
+    useEffect(() => {
+        if (success) {
+            dispatch(taskDetails(tid))
+        }
+    }, [success])
 
     useGSAP(() => {
         gsap.set(firstContentRef.current, { height: "auto" });
@@ -614,7 +621,7 @@ const TaskDetails = () => {
                             <div className="flex items-center">
                                 <div className="w-1/2 flex items-center justify-center gap-3">
                                     <div className="text-right text-[12px] font-[500]">Start Date:</div>
-                                    <div className="text-left text-[12px]">{task.started_at.split("T")[0]}</div>
+                                    <div className="text-left text-[12px]">{task?.started_at?.split("T")[0]}</div>
                                 </div>
                                 <div className="w-1/2 flex items-center justify-center gap-3">
                                     <div className="text-right text-[12px] font-[500]">MileStones:</div>

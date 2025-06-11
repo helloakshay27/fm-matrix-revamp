@@ -69,7 +69,7 @@ const EditableTextField = ({
       onChange={(e) => setLocalValue(e.target.value)}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
-      className={`${validator? ' border border-red-600': 'border-none'} focus:outline-none w-full h-full p-1 rounded text-[12px] bg-transparent`}
+      className={`${validator ? ' border border-red-600' : 'border-none'} focus:outline-none w-full h-full p-1 rounded text-[12px] bg-transparent`}
     />
   );
 };
@@ -553,13 +553,13 @@ const TaskTable = () => {
         accessorKey: "taskTitle",
         header: "Task Title",
         size: 200,
-        cell:({getValue,row})=>{
-        
-        const [editTitle, setEditTitle] = useState(getValue());
-             return (
-             < EditableTextField value={editTitle} onUpdate={(title) => setEditTitle(title)} onEnterPress={() => handleUpdateTaskFieldCell(row.original.id,"title",editTitle)} />)
-      }
-    },
+        cell: ({ getValue, row }) => {
+
+          const [editTitle, setEditTitle] = useState(getValue());
+          return (
+            < EditableTextField value={editTitle} onUpdate={(title) => setEditTitle(title)} onEnterPress={() => handleUpdateTaskFieldCell(row.original.id, "title", editTitle)} />)
+        }
+      },
       {
         accessorKey: "status",
         header: "Status",
@@ -605,7 +605,7 @@ const TaskTable = () => {
         (
           <DateEditor
             value={getValue()}
-            onUpdate={(date) => handleUpdateTaskFieldCell(row.original.id, "started_at", date)}
+            onUpdate={(date) => handleUpdateTaskFieldCell(row.original.id, "expected_start_date", date)}
             className="text-[12px]"
           />
         )
@@ -729,7 +729,7 @@ const TaskTable = () => {
           }}
         >
           {" "}
-          <table className="w-full table-auto text-sm table-fixed">
+          <table className="w-full text-sm table-fixed">
             {" "}
             <thead className="sticky top-0 bg-gray-50 z-30">
               {" "}

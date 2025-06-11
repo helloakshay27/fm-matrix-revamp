@@ -124,7 +124,7 @@ export const taskDetails = createAsyncThunk('taskDetails', async (id) => {
 export const editTask = createAsyncThunk('editTask', async ({ id, payload }) => {
     try {
         const response = await axios.put(`https://api-tasks.lockated.com/task_managements/${id}.json`,
-            payload,
+            { task_management: payload },
             {
                 headers: {
                     Authorization: `Bearer ${access_token}`,

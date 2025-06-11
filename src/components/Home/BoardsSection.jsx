@@ -153,29 +153,21 @@ const BoardsSection = ({ section }) => {
   );
 
   const handleDrop = useCallback(
-
     (item, newStatus) => {
-
-      console.log('Drop event:', { item, newStatus });
-
-      const { type, id, fromTaskId } = item;
-
-
-
-      if (type === "TASK" || type === "SUBTASK") {
-
-        handleUpdateTaskFieldCell(id, "status", newStatus);
-
-      } else if (type === "PROJECT") {
-
-        handleProjectStatusChange({ id, status: newStatus == "open" ? 'active' : newStatus });
-
+      // Prevent dropping on the "Overdue" board
+      if (newStatus.toLowerCase() === "overdue") {
+        console.log("Dropping on Overdue board is disabled");
+        return;
       }
 
+      const { type, id, fromTaskId } = item;
+      if (type === "TASK" || type === "SUBTASK") {
+        handleUpdateTaskFieldCell(id, "status", newStatus);
+      } else if (type === "PROJECT") {
+        handleProjectStatusChange({ id, status: newStatus === "open" ? "active" : newStatus });
+      }
     },
-
     [handleUpdateTaskFieldCell, handleProjectStatusChange]
-
   );
 
   const handleLink = (sourceId, targetIds = []) => {
@@ -256,15 +248,12 @@ const BoardsSection = ({ section }) => {
 
           const filteredSubtasks = taskData.flatMap((task) =>
             (task.sub_tasks_managements || [])
-              .filter((subtask) => subtask.status !== task.status) // Filter where subtask status ≠ task status
+              .filter((subtask) => subtask.status !== task.status)
               .map((subtask) => ({
                 ...subtask,
                 parentTaskId: task.id,
               }))
-          ).filter((subtask) =>
-            subtask.status === cardStatus
-          );
-
+          ).filter((subtask) => subtask.status === cardStatus);
 
           const filteredProjects = projects.filter(
             (project) => cardStatus === "open" ? project.status === "active" : project.status === cardStatus
@@ -282,6 +271,7 @@ const BoardsSection = ({ section }) => {
               }
               title={card.title}
               onDrop={handleDrop}
+              isDropDisabled={card.title.toLowerCase() === "overdue"} // Pass flag to disable drop
             >
               {section === "Tasks" ? (
                 filteredTasks.length + filteredSubtasks.length > 0 ? (
@@ -333,7 +323,6 @@ const BoardsSection = ({ section }) => {
                                   id={`subtask-${subtask.id}`}
                                   draggable
                                   onDragStart={(e) => {
-                                    // e.stopPropagation();
                                     console.log('Dragging subtask:', subtask.id, 'from task:', task.id);
                                     e.dataTransfer.setData(
                                       "application/reactflow",
@@ -357,33 +346,34 @@ const BoardsSection = ({ section }) => {
                         </div>
                       );
                     })}
-                    {filteredSubtasks && filteredSubtasks.map((subtask) => (
-                      <div
-                        key={`subtask-${subtask.id}`}
-                        id={`subtask-${subtask.id}`}
-                        draggable
-                        onDragStart={(e) => {
-                          e.dataTransfer.setData(
-                            "application/reactflow",
-                            JSON.stringify({
-                              type: "SUBTASK",
-                              id: subtask.id,
-                              fromTaskId: subtask.parentTaskId,
-                            })
-                          );
-                          e.dataTransfer.effectAllowed = "move";
-                        }}
-                        className="mb-2 cursor-move relative"
-                        style={{ pointerEvents: 'auto' }}
-                      >
-                        <TaskSubCard subtask={subtask} isVisible={true} />
+                    {filteredSubtasks &&
+                      filteredSubtasks.map((subtask) => (
                         <div
-                          className="text-[8px] font-medium text-gray-500 mb-1 me-2 pt-1 text-end italic"
+                          key={`subtask-${subtask.id}`}
+                          id={`subtask-${subtask.id}`}
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData(
+                              "application/reactflow",
+                              JSON.stringify({
+                                type: "SUBTASK",
+                                id: subtask.id,
+                                fromTaskId: subtask.parentTaskId,
+                              })
+                            );
+                            e.dataTransfer.effectAllowed = "move";
+                          }}
+                          className="mb-2 cursor-move relative"
+                          style={{ pointerEvents: 'auto' }}
                         >
-                          Subcard of Task-{subtask.parentTaskId}
+                          <TaskSubCard subtask={subtask} isVisible={true} />
+                          <div
+                            className="text-[8px] font-medium text-gray-500 mb-1 me-2 pt-1 text-end italic"
+                          >
+                            Subcard of Task-{subtask.parentTaskId}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </>
                 ) : (
                   <img src="/draganddrop.svg" alt="svg" className="w-full" />

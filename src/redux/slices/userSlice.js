@@ -37,13 +37,13 @@ const createApiSlice = (name, fetchThunk) => createSlice({
 // Fetch users thunk
 export const fetchUsers = createAsyncThunk('fetchUsers', async () => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/users/get_users`, {
+        const response = await axios.get(`https://api-tasks.lockated.com/users.json`, {
             headers: {
                 Authorization: `Bearer ${access_token}`,
             },
         });
 
-        return response.data.users;
+        return response.data;
     } catch (error) {
         console.log(error)
     }
@@ -127,11 +127,11 @@ export const fetchUpdateUser = createAsyncThunk(
     }
 );
 
-export const LoginUser=createAsyncThunk('LoginUser',async(payload)=>{
-    try{
-        const response=await axios.post('https://api-tasks.lockated.com/users/login.json',payload);
+export const LoginUser = createAsyncThunk('LoginUser', async (payload) => {
+    try {
+        const response = await axios.post('https://api-tasks.lockated.com/users/login.json', payload);
         return response.data;
-    }catch(error){
+    } catch (error) {
         console.log(error);
     }
 })

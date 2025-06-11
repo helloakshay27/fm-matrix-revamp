@@ -5,7 +5,7 @@ import { createTagReducer, deleteTagReducer, fetchTagsReducer, updateTagReducer 
 import { createRoleReducer, editRoleReducer, fetchRolesReducer } from './slices/roleSlice'
 import { changeTaskStatusReducer, createDependancyReducer, createTaskCommentReducer, createTaskReducer, editTaskCommentReducer, editTaskReducer, fetchTasksOfProjectReducer, fetchTasksReducer, filterTaskReducer, taskDetailsReducer, updateDependancyReducer } from './slices/taskSlice'
 import { fetchOrganizationsReducer } from './slices/organizationSlice'
-import { createMilestoneReducer, fetchMilestoneReducer } from './slices/milestoneSlice'
+import { createMilestoneReducer, fetchMilestoneByIdReducer, fetchMilestoneReducer } from './slices/milestoneSlice'
 import { fetchSpirintByIdReducer, fetchSpirintsReducer, postSprintReducer, putSprintReducer } from './slices/spirintSlice'
 import { createIssueReducer, fetchIssueReducer, updateIssueReducer } from './slices/IssueSlice'
 import { fetchStatusReducer, createStatusReducer, updateStatusReducer } from './slices/statusSlice'
@@ -56,6 +56,7 @@ export const store = configureStore({
     //Milestone
     createMilestone: createMilestoneReducer,
     fetchMilestone: fetchMilestoneReducer,
+    fetchMilestoneById: fetchMilestoneByIdReducer,
 
     //roles
     createRole: createRoleReducer,
