@@ -6,7 +6,7 @@ import clsx from "clsx";
 import { get, set } from "react-hook-form";
 import {fetchUsers} from "../../../redux/slices/userSlice"
 import { useSelector , useDispatch} from "react-redux";
-import { filterTask } from "../../../redux/slices/taskSlice";
+import { filterTask,fetchTasks } from "../../../redux/slices/taskSlice";
 import { useParams } from "react-router-dom";
 
 const colorOptions = [
@@ -14,8 +14,8 @@ const colorOptions = [
     { label: "In Progress", color: "bg-yellow-500",value:"in_progress" },
     { label: "Completed", color: "bg-green-400",value:"completed" },
     { label: "Overdue", color: "bg-red-500" ,value:"overdue"},
-    { label: "On Hold", color: "bg-cyan-400" ,value:"on_hold"},
-    { label: "Abort", color: "bg-gray-500" ,value:"abort"},
+    { label: "On Hold", color: "bg-grey-500" ,value:"on_hold"},
+    { label: "Abort", color: "bg-red-800" ,value:"abort"},
 ];
 
 

@@ -29,6 +29,7 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen,
 
     const typeDropdownRef = useRef(null);
     const statusDropdownRef = useRef(null);
+    const filter=localStorage.getItem("ProjectFilters")||localStorage.getItem("taskFilters");
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -147,7 +148,7 @@ const TaskActions = ({ selectedType, setSelectedType, addType, setIsSidebarOpen,
                                     : setIsFilterModalOpan(true)
                             }
                         >
-                            <Filter size={18} className="text-gray-600" />
+                            <Filter size={18} className={`${filter?'fill-[#C72030] text-[#C72030]':'text-gray-600'}`} />
                         </div>
                     )}
 
