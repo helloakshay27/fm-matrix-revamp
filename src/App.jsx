@@ -75,7 +75,7 @@ const App = () => {
               <Route path="/setup/external-users" element={<ExternalTable />} />
               <Route path="/setup/project-teams" element={<ProjectTeams />} />
               <Route path="/setup/project-teams/project-details" element={<ProjectDetail />} />
-              <Route path="/setup/project-teams/details" element={<TeamDetails />} />
+              <Route path="/setup/project-teams/details/:id" element={<TeamDetails />} />
               <Route path="/setup/matrix" element={<EscalationMatrix />} />
               <Route path="/setup/types" element={<ProjectTypes />} />
               <Route path="/setup/tags" element={<ProjectTags />} />
