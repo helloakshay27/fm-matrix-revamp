@@ -3,17 +3,19 @@ import gsap from "gsap";
 import { X, Search, ChevronRight, ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
-import { set } from "react-hook-form";
+import { get, set } from "react-hook-form";
 import {fetchUsers} from "../../../redux/slices/userSlice"
 import { useSelector , useDispatch} from "react-redux";
 import { filterTask } from "../../../redux/slices/taskSlice";
+import { useParams } from "react-router-dom";
 
-const statusOptions = [
-    { label: "Active", color: "bg-green-500",value:"active" },
-    { label: "Inactive", color: "bg-pink-600",value:"inactive" },
-    { label: "On track", color: "bg-yellow-500",value:"on_track" },
-    { label: "Delayed", color: "bg-black" ,value:"delayed"},
+const colorOptions = [
+    { label: "Open", color: "bg-[#c85e68]",value:"open" },
+    { label: "In Progress", color: "bg-yellow-500",value:"in_progress" },
+    { label: "Completed", color: "bg-green-400",value:"completed" },
+    { label: "Overdue", color: "bg-red-500" ,value:"overdue"},
     { label: "On Hold", color: "bg-cyan-400" ,value:"on_hold"},
+    { label: "Abort", color: "bg-gray-500" ,value:"abort"},
 ];
 
 
@@ -22,16 +24,50 @@ const projectManagerOptions = ["Anuj", "Anagha", "Tara"];
 const createdByOptions = ["Admin", "User", "System"];
 
 const TaskFilter = ({ isModalOpen, setIsModalOpen }) => {
+    const {id,mid}=useParams();
     const modalRef = useRef(null);
 
+    const getInitialFilters = () => {
+        try {
+            const saved = localStorage.getItem("taskFilters");
+            return saved
+                ? JSON.parse(saved)
+                : {
+                    selectedStatuses: [],
+                    selectedResponsible: [],
+                    selectedCreators: [],
+                    dates: { startDate: "", endDate: "" },
+                    statusSearch: "",
+                    ResponsiblePersonSearch: "",
+                    creatorSearch: "",
+                };
+        } catch (error) {
+            console.error("Error parsing projectFilters from localStorage:", error);
+            return {
+                selectedStatuses: [],
+                selectedResponsible: [],
+                selectedCreators: [],
+                dates: { startDate: "", endDate: "" },
+                statusSearch: "",
+                ResponsiblePersonSearch: "",
+                creatorSearch: "",
+            };
+        }
+    };
+    
     // Selected options
-    const [selectedStatuses, setSelectedStatuses] = useState([]);
-    const [selectedResponsible, setSelectedResponsible] = useState([]);
+    const [selectedStatuses, setSelectedStatuses] = useState(getInitialFilters().selectedStatuses);
+    const [selectedResponsible, setSelectedResponsible] = useState(getInitialFilters().selectedResponsible);
     // const [selectedManagers, setSelectedManagers] = useState([]);
-    const [selectedCreators, setSelectedCreators] = useState([]);
-    const [dates, setDates] = useState({ "Start date": "", "End date": "" });
+    const [selectedCreators, setSelectedCreators] = useState(getInitialFilters().selectedCreators);
+    const [dates, setDates] = useState({ "Start Date": "", "End Date": "" });
     const [responsiblePersonOptions,setResponsiblePersonOptions]=useState([]);
-
+    const [statusOptions,setStatusOptions]=useState([]);    
+    
+    // Search inputs inside dropdowns
+    const [statusSearch, setStatusSearch] = useState("");
+    const [ResponsiblePersonSearch, setResponsiblePersonSearch] = useState("");
+    const [creatorSearch, setCreatorSearch] = useState("");
     // Dropdown open/close state (only one open at a time)
     const [dropdowns, setDropdowns] = useState({
         status: false,
@@ -41,11 +77,16 @@ const TaskFilter = ({ isModalOpen, setIsModalOpen }) => {
         creator: false,
     });
     const dispatch=useDispatch();
-
     
-const {
-    fetchUsers:users,
-    loading,
+    const {
+      loading: loadingTasks,
+      error: tasksError,
+      fetchTasks: tasksFromStore,
+    } = useSelector((state) => state.fetchTasks);
+    
+    const {
+        fetchUsers:users,
+        loading,
     error,
 }=useSelector(state=>state.fetchUsers)
 
@@ -53,19 +94,64 @@ const {
 //     loading:filterLoading,
 //     error:filterError,
 // }=useSelector(state=>state.filterTask)
-    
 
-const  handleApplyFilter=()=>{
+useEffect(()=>{
+    if(tasksFromStore.length>0){
+        const uniqueMap = new Map();
+
+tasksFromStore.forEach((task) => {
+    const color = colorOptions.find((option) => option.value === task.status);
+    if (color && !uniqueMap.has(color.value)) {
+        uniqueMap.set(color.value, {
+            label: color.label,
+            color: color.color,
+            value: color.value
+        });
+    }
+});
+
+     setStatusOptions(Array.from(uniqueMap.values()));
+        setResponsiblePersonOptions(tasksFromStore.map((user) => ({label:user.responsible_person.name ,value:user.responsible_person.id})));
+    }
+},[tasksFromStore])
+    
+ // Save filter state to localStorage whenever it changes
+    useEffect(() => {
+        const filters = {
+            selectedStatuses,
+            selectedResponsible,
+            selectedCreators,
+            dates,
+            statusSearch,
+            ResponsiblePersonSearch,
+            creatorSearch,
+        };
+        localStorage.setItem("taskFilters", JSON.stringify(filters));
+    }, [
+        selectedStatuses,
+        selectedResponsible,
+        selectedCreators,
+        dates,
+        statusSearch,
+        ResponsiblePersonSearch,
+        creatorSearch,
+    ]);
+
+
+const  handleApplyFilter=(overideFilters)=>{
+     console.log(dates);
     try{
-            const newFilter={
-                "q[status_eq]": selectedStatuses.length > 0 ? selectedStatuses[0] : '',
-                "q[created_by_id_eq]": selectedCreators.length > 0 ? selectedCreators[0] : '',
-                "q[start_date_eq]": dates["Start date"],
-                "q[end_date_eq]": dates["End date"],
-                "q[responsible_person_id_eq]": selectedResponsible.length > 0 ? selectedResponsible[0] : '',
+            const newFilter= {
+                "q[status_eq]": selectedStatuses.length>0?selectedStatuses:[],
+                "q[created_by_id_eq]": selectedCreators.length>0?selectedCreators:[],
+                "q[start_date_eq]": dates["Start Date"],
+                "q[end_date_eq]": dates["End Date"],
+                "q[responsible_person_id_eq]": selectedResponsible.length>0?selectedResponsible:[],
+                "q[milestone_id_eq]":mid
             }
             if(newFilter){
-                dispatch(filterTask(newFilter));
+                dispatch(filterTask(overideFilters?overideFilters:newFilter));
+                setIsModalOpen(false);
             }
             console.log(newFilter);
     }catch(e){
@@ -73,10 +159,6 @@ const  handleApplyFilter=()=>{
     }
 }
 
-    // Search inputs inside dropdowns
-    const [statusSearch, setStatusSearch] = useState("");
-    const [ResponsiblePersonSearch, setResponsiblePersonSearch] = useState("");
-    const [creatorSearch, setCreatorSearch] = useState("");
 
 
     useEffect(() => {
@@ -87,7 +169,7 @@ const  handleApplyFilter=()=>{
         }catch(error){
             console.log(error);
         }finally{
-            setResponsiblePersonOptions(users.map((user) => ({label:user.firstname+ " " +user.lastname ,value:user.id})));
+            setResponsiblePersonOptions(tasksFromStore.map((user) => ({label:user.responsible_person.name ,value:user.responsible_person.id})));
         }
     },[dispatch,users])
 
@@ -178,9 +260,15 @@ const  handleApplyFilter=()=>{
         setSelectedStatuses([]);
         setSelectedResponsible([]);
         setSelectedCreators([]);
+        setDates({ "Start date": "", "End date": "" });
         setStatusSearch("");
         setResponsiblePersonSearch("");
         setCreatorSearch("");
+        localStorage.removeItem("taskFilters");
+         handleApplyFilter({
+        "q[milestone_id_eq]": mid
+    });
+     dispatch(fetchTasks());        
     };
 
 
@@ -298,7 +386,7 @@ const  handleApplyFilter=()=>{
                     </div> */}
 
                     {["startDate", "endDate"].map((key) => {
-                        const label = key === "startDate" ? "Start Date" : "End Date";
+                        const label = (key === "startDate") ? "Start Date" : "End Date";
                         return (
                             <div key={key} className="p-6 py-3">
                                 <div
@@ -370,7 +458,7 @@ const  handleApplyFilter=()=>{
                 <div className="flex justify-center items-center gap-4 px-6 py-3 border-t">
                     <button
                         className="bg-[#C62828] text-white rounded px-10 py-2 text-sm font-semibold hover:bg-[#b71c1c]"
-                        onClick={handleApplyFilter}
+                        onClick={()=>handleApplyFilter(null)}
                     >
                         Apply
                     </button>

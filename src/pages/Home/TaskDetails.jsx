@@ -614,7 +614,7 @@ const TaskDetails = () => {
                             <div className="flex items-center">
                                 <div className="w-1/2 flex items-center justify-center gap-3">
                                     <div className="text-right text-[12px] font-[500]">Start Date:</div>
-                                    <div className="text-left text-[12px]">{task.expected_start_date}</div>
+                                    <div className="text-left text-[12px]">{task.started_at.split("T")[0]}</div>
                                 </div>
                                 <div className="w-1/2 flex items-center justify-center gap-3">
                                     <div className="text-right text-[12px] font-[500]">MileStones:</div>

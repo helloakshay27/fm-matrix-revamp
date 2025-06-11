@@ -315,7 +315,9 @@ const TaskTable = () => {
     if (filterTask && filterTask.length > 0) {
       newProcessedData = filterTask.map((task) =>
         processTaskData(task)
-      );
+    );
+     setData(newProcessedData);
+      setLocalError(null);
     }
     else if (tasksFromStore && Array.isArray(tasksFromStore)) {
       // Use the recursive helper to process tasks and their sub_tasks_managements
@@ -333,7 +335,7 @@ const TaskTable = () => {
     if (isAddingNewTask && newTaskTitleInputRef.current) {
       newTaskTitleInputRef.current.focus();
     }
-  }, [isAddingNewTask]);
+  }, [isAddingNewTask,filterTask, tasksFromStore]);
 
   const resetNewTaskForm = useCallback(() => {
     const defaults = createNewTaskDefaults();

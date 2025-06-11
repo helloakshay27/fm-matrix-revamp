@@ -6,7 +6,17 @@ import { createRole, editRole } from '../../../redux/slices/roleSlice';
 import {toast} from  'react-hot-toast';
 
 const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
-  const [roleInput, setRoleInput] = useState(role ? role.display_name : '');
+
+    const [roleInput, setRoleInput] = useState();
+
+    useEffect(() => {
+    if (role?.display_name) {
+        const formattedValue = role.display_name.replace(/_/g, ' ');
+        const capitalized =
+            formattedValue.charAt(0).toUpperCase() + formattedValue.slice(1);
+        setRoleInput(capitalized);
+    }
+}, [role]);
   const [error,setError]=useState('');
 
   const dispatch = useDispatch();
@@ -65,13 +75,14 @@ const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
     setError("");
     onClose();
   }
-  useEffect(() => {
-    if (role && mode === 'edit') {
-      setRoleInput(role.display_name);
-    } else {
-      setRoleInput('');
-    }
-  }, [role, mode]);
+  // }
+  // useEffect(() => {
+  //   if (role && mode === 'edit') {
+  //     setRoleInput(role.display_name);
+  //   } else {
+  //     setRoleInput('');
+  //   }
+  // }, [role, mode]);
 
   if (!open) return null;
 

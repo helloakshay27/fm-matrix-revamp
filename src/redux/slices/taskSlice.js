@@ -235,25 +235,26 @@ export const fetchTasksOfProject = createAsyncThunk('fetchTasksOfProject', async
     }
 });
 
-export const filterTask = createAsyncThunk('filterTask', async (filter) => {
-    try {
-        const params = Object.keys(filter).map((key) => `${key}=${filter[key]}`).join('&');
-        //  const params = filter.map((f) => `${f.key}=${f.value}`).join('&');
-        console.log(params);
-        const response = await axios.get(`https://api-tasks.lockated.com/task_managements.json?${params}`, {
-            headers: {
-                Authorization: `Bearer ${access_token}`,
-            }
-        });
+export const filterTask = createAsyncThunk('filterTask',
+        async (filter, { rejectWithValue }) => {
+        try {
+            const params = new URLSearchParams(filter).toString();
+            console.log(params);
+            const response = await axios.get(
+                `https://api-tasks.lockated.com/task_managements.json?${params}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${access_token}`,
+                    },
+                }
+            );
 
-
-        return response.data;
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
     }
-    catch (error) {
-        console.log(error);
-        return error.response.data;
-    }
-});
+);
 
 export const createDependancy = createAsyncThunk('createDependancy', async ({ payload }) => {
     try {
