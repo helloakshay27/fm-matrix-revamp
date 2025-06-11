@@ -27,6 +27,27 @@ const Navbar = () => {
         setOpenDropdown(false);
     };
 
+
+
+    // Dummy user data (replace with real user data as needed)
+    const user = JSON.parse(localStorage.getItem("user")) || {
+        email: "",
+        firstName: "",
+        lastName: ""
+    };
+
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+    const handleLogout = () => {
+        // Add logout logic here (e.g., clear tokens, redirect, etc.)
+        setShowLogoutModal(false);
+
+        // Example: window.location.href = "/login";
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+
+    };
+
     return (
         <div className="w-screen shadow-md h-[58px]">
             <div className="flex items-center justify-between py-3 px-5">
@@ -82,7 +103,7 @@ const Navbar = () => {
                                     e.key === "Enter" && setOpenDropdown(!openDropdown)
                                 }
                             >
-                                <span className="text-[13px]">{selectedOption}</span> {/* Display selected option */}
+                                <span className="text-[13px]">{selectedOption}</span>
                                 <ChevronDown
                                     size={15}
                                     className={`${openDropdown ? "rotate-180" : ""
@@ -114,9 +135,55 @@ const Navbar = () => {
                                 ))}
                             </ul>
                         </div>
-                        <span className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center cursor-pointer">
-                            A
-                        </span>
+                        {/* User Profile Dropdown */}
+                        <div className="relative">
+                            <span
+                                className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center cursor-pointer"
+                                onClick={() => setShowLogoutModal(true)}
+                                title={`${user.firstName} ${user.lastName}`}
+                            >
+                                {user.firstName[0]}
+                            </span>
+                            {/* Enhanced Logout Modal */}
+                            {showLogoutModal && (
+                                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 transition-all duration-300">
+                                    <div className="bg-white rounded-xl shadow-2xl p-8 min-w-[340px] max-w-[90vw] animate-fadeIn relative">
+                                        {/* Close button */}
+                                        <button
+                                            className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-xl"
+                                            onClick={() => setShowLogoutModal(false)}
+                                            aria-label="Close"
+                                        >
+                                            &times;
+                                        </button>
+                                        <div className="flex items-center gap-4 mb-4">
+                                            <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold text-gray-600 border">
+                                                {user.firstName[0]}
+                                            </div>
+                                            <div>
+                                                <div className="text-lg font-semibold">{user.firstName} {user.lastName}</div>
+                                                <div className="text-xs text-gray-500">{user.email}</div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-end gap-2">
+                                            <button
+                                                className="px-4 py-2 text-sm bg-gray-100 rounded hover:bg-gray-200 border border-gray-200 transition"
+                                                onClick={() => setShowLogoutModal(false)}
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                className="px-4 py-2 text-sm bg-red-500 text-white rounded hover:bg-red-600 shadow transition"
+                                                onClick={handleLogout}
+                                            >
+                                                Logout
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
