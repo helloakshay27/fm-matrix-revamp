@@ -36,7 +36,7 @@ const Details = () => {
 
    useEffect(()=>{
     if(roles){
-        const value=roles.find((role) => role.id === details.role_id).display_name;
+        const value=roles.find((role) => role.id === details.role_id)?.display_name;
         console.log(value);
         const formattedValue = value?.replace(/_/g, ' ');
         console.log(formattedValue);
