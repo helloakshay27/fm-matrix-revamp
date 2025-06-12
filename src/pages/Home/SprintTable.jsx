@@ -1,16 +1,28 @@
-import { useState, useMemo, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import StatusBadge from '../../components/Home/Projects/statusBadge';
-import CustomTable from '../../components/Setup/CustomTable';
-import AddSprintModal from '../../components/Home/Sprints/AddSprintModal';
-import { fetchSpirints, putSprint, postSprint } from '../../redux/slices/spirintSlice';
-import { Link } from 'react-router-dom';
-import TaskActions from '../../components/Home/TaskActions';
-import BoardsSection from '../../components/Home/BoardsSection';
-import { Milestone } from 'lucide-react';
-import SprintGantt from '../../components/Sprints/SprintGantt';
+import { useState, useMemo, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import StatusBadge from "../../components/Home/Projects/statusBadge";
+import CustomTable from "../../components/Setup/CustomTable";
+import AddSprintModal from "../../components/Home/Sprints/AddSprintModal";
+import {
+    fetchSpirints,
+    putSprint,
+    postSprint,
+} from "../../redux/slices/spirintSlice";
+import { Link } from "react-router-dom";
+import TaskActions from "../../components/Home/TaskActions";
+import BoardsSection from "../../components/Home/BoardsSection";
+import { Milestone } from "lucide-react";
+import SprintGantt from "../../components/Sprints/SprintGantt";
 
-const globalStatusOptions = ["open", "in_progress", "completed", "on_hold", "overdue", "reopen", "abort"];
+const globalStatusOptions = [
+    "open",
+    "in_progress",
+    "completed",
+    "on_hold",
+    "overdue",
+    "reopen",
+    "abort",
+];
 
 const formatDuration = (days) => {
     if (!days || isNaN(days)) return "00d:00h:00m:00s";
@@ -21,12 +33,20 @@ const formatDuration = (days) => {
     const minutesPart = Math.floor((totalSeconds % (60 * 60)) / 60);
     const secondsPart = totalSeconds % 60;
 
-    return `${String(daysPart).padStart(2, '0')}d:${String(hoursPart).padStart(2, '0')}h:${String(minutesPart).padStart(2, '0')}m:${String(secondsPart).padStart(2, '0')}s`;
+    return `${String(daysPart).padStart(2, "0")}d:${String(hoursPart).padStart(
+        2,
+        "0"
+    )}h:${String(minutesPart).padStart(2, "0")}m:${String(secondsPart).padStart(
+        2,
+        "0"
+    )}s`;
 };
 
 const SprintTable = (setIsSidebarOpen) => {
     const dispatch = useDispatch();
-    const newSpirints = useSelector((state) => state.fetchSpirints?.fetchSpirints || []);
+    const newSpirints = useSelector(
+        (state) => state.fetchSpirints?.fetchSpirints || []
+    );
 
     const [data, setData] = useState([]);
 
@@ -36,8 +56,7 @@ const SprintTable = (setIsSidebarOpen) => {
         } catch (error) {
             console.log(error);
         }
-
-    }
+    };
 
     const handleCreateSprints = async (payload) => {
         try {
@@ -45,7 +64,7 @@ const SprintTable = (setIsSidebarOpen) => {
         } catch (error) {
             console.log(error);
         }
-    }
+    };
     useEffect(() => {
         handlefetchSpirints();
     }, [dispatch]);
@@ -89,8 +108,8 @@ const SprintTable = (setIsSidebarOpen) => {
                 },
             },
             {
-                accessorKey: 'name',
-                header: 'Sprint Title',
+                accessorKey: "name",
+                header: "Sprint Title",
                 size: 250,
             },
             {
@@ -113,40 +132,43 @@ const SprintTable = (setIsSidebarOpen) => {
                         }}
                     />
                 ),
-            }
-            ,
+            },
             {
-                accessorKey: 'Sprint Owner',
-                header: 'Sprint Owner',
+                accessorKey: "Sprint Owner",
+                header: "Sprint Owner",
                 size: 150,
             },
             {
-                accessorKey: 'start_date',
-                header: 'Start Date',
+                accessorKey: "start_date",
+                header: "Start Date",
                 size: 180,
             },
             {
-                accessorKey: 'end_date',
-                header: 'End Date',
+                accessorKey: "end_date",
+                header: "End Date",
                 size: 130,
             },
             {
-                accessorKey: 'duration',
-                header: 'Duration',
+                accessorKey: "duration",
+                header: "Duration",
                 size: 110,
                 cell: ({ getValue }) => {
                     const durationInDays = getValue();
-                    return <span style={{ color: "green" }}>{formatDuration(durationInDays)}</span>;
+                    return (
+                        <span style={{ color: "green" }}>
+                            {formatDuration(durationInDays)}
+                        </span>
+                    );
                 },
             },
             {
-                accessorKey: 'Priority',
-                header: 'Priority',
+                accessorKey: "Priority",
+                header: "Priority",
                 size: 100,
             },
             {
-                accessorKey: 'No Of Projects',
-                header: 'No Of Projects',
+                accessorKey: "No Of Projects",
+                header: "No Of Projects",
                 size: 120,
             },
         ],
@@ -163,42 +185,28 @@ const SprintTable = (setIsSidebarOpen) => {
 
     return (
         <>
-
-            <div className={`px-4 pl-7 pt-4 ${isInline ? "flex justify-between items-center" : ""}`}>
-                <div className={isInline ? "" : "bg-[#F5F7F7] px-3 py-1 rounded inline-block"}>
-                    <h1 className="text-sm text-gray-800 flex items-center gap-1">
-                        Active Sprints
-
-                    </h1>
-                </div>
-
-            </div>
-
-            <TaskActions setIsSidebarOpen={setIsSidebarOpen}
+            <TaskActions
+                setIsSidebarOpen={setIsSidebarOpen}
                 selectedType={selectedType}
                 setSelectedType={setSelectedType}
                 addType={"Sprint-Gantt"}
-                context="Tasks" />
+                context="Tasks"
+            />
 
-
-
-            {
-                selectedType === "Sprint-Gantt" ? (
-                    <SprintGantt />
-                ) : selectedType === "List" ? (
-                    <CustomTable
-                        data={data}
-                        columns={columns}
-                        title="Active Sprints"
-                        buttonText="New Sprint"
-                        layout="block"
-                        onAdd={() => setIsModalOpen(true)}
-                        onCreateInlineItem={handleCreateSprints}
-                        onRefreshInlineData={handlefetchSpirints}
-                    />) : <></>
-            }
-
-
+            {selectedType === "Sprint-Gantt" ? (
+                <SprintGantt />
+            ) : selectedType === "List" ? (
+                <CustomTable
+                    data={data}
+                    columns={columns}
+                    layout="inline"
+                    onAdd={() => setIsModalOpen(true)}
+                    onCreateInlineItem={handleCreateSprints}
+                    onRefreshInlineData={handlefetchSpirints}
+                />
+            ) : (
+                <></>
+            )}
         </>
     );
 };

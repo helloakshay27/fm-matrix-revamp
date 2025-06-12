@@ -305,7 +305,6 @@ const Tasks = ({ isEdit }) => {
     dispatch(fetchUsers());
     dispatch(fetchTags());
     dispatch(fetchProjectDetails({ id }));
-    dispatch(fetchMilestoneById({ id: mid }));
   }, [dispatch, id, mid]);
 
   const getTagName = useCallback(

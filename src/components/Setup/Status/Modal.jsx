@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
-import { updateStatus, createStatus,fetchStatus } from '../../../redux/slices/statusSlice';
+import { updateStatus, createStatus, fetchStatus } from '../../../redux/slices/statusSlice';
 import { useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 
-const Modal = ({ setOpenModal, openModal,isEdit, existingData={} }) => {
-  console.log(existingData,isEdit);
+const Modal = ({ setOpenModal, openModal, isEdit, existingData = {} }) => {
+  console.log(existingData, isEdit);
   const dispatch = useDispatch();
   const [type, setType] = useState('');
   const [color, setColor] = useState('#c72030');
@@ -14,101 +14,97 @@ const Modal = ({ setOpenModal, openModal,isEdit, existingData={} }) => {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState(() => { // Using a function for initial state for safety
-  if (isEdit && existingData) {
-    return {
-      title: existingData.status || '', // Fallback to empty string
-      color: existingData.color_code || '#c72030', // Fallback to default color
-      active: existingData.active !== undefined ? existingData.active : true // Safely get active, default to true
-    };
-  } else {
-    return {
-      title: '',
-      color: '#c72030',
-      active: true
-    };
-  }
-});  
+    if (isEdit && existingData) {
+      return {
+        title: existingData.status || '', // Fallback to empty string
+        color: existingData.color_code || '#c72030', // Fallback to default color
+        active: existingData.active !== undefined ? existingData.active : true // Safely get active, default to true
+      };
+    } else {
+      return {
+        title: '',
+        color: '#c72030',
+        active: true
+      };
+    }
+  });
 
-  const handleSave = async() => {
+  const handleSave = async () => {
     setError('');
-    if(formData.title.trim() === ''){setError('Status cannot be empty');return;}
+    if (formData.title.trim() === '') { setError('Status cannot be empty'); return; }
     const payload = {
       status: formData.title,
       color_code: formData.color,
       active: formData.active
     };
-    try{
+    try {
       if (isEdit) {
         await dispatch(updateStatus({ id: existingData.id, payload })).unwrap();
       } else {
         await dispatch(createStatus(payload)).unwrap();
       }
 
-      toast.success(`Status ${isEdit ? 'updated' : 'created'} successfully`,{
-        iconTheme: {
-          primary: 'red', // This might directly change the color of the success icon
-          secondary: 'white', // The circle background
-        },
-      })
+      toast.success(`Status ${isEdit ? 'updated' : 'created'} successfully`)
       handleSuccess();
-    }catch(error){
+    } catch (error) {
       console.log(error);
-    }};
-    
-    const handleClose=()=>{
-      setFormData({
-        title: '',
-        color: '#c72030',
-        active: true
-      })
-      setError("");
-      setOpenModal(false);
+    }
+  };
 
-    }
-    const handleSuccess=()=>{
-      setFormData({
-        title: '',
-        color: '#c72030',
-        active: true
-      })
-      setError("");
-      setOpenModal(false);
-    }
-    
+  const handleClose = () => {
+    setFormData({
+      title: '',
+      color: '#c72030',
+      active: true
+    })
+    setError("");
+    setOpenModal(false);
+
+  }
+  const handleSuccess = () => {
+    setFormData({
+      title: '',
+      color: '#c72030',
+      active: true
+    })
+    setError("");
+    setOpenModal(false);
+  }
+
   return (
     <div className="w-[560px] h-[300px] bg-white absolute top-[40%] left-[45%] translate-x-[-50%] translate-y-[-50%] border-[0.5px] border-[#C0C0C0] flex flex-col shadow-md z-50">
       <div className="h-full flex flex-col gap-3 p-4 pb-1">
         <div className="flex justify-end">
-          <CloseIcon className="cursor-pointer" onClick={()=>handleClose()} />
+          <CloseIcon className="cursor-pointer" onClick={() => handleClose()} />
         </div>
         <div className="flex flex-col gap-2">
-        <label className="text-sm">Status Name</label>
-        <input
-          value={formData.title}
-          onChange={(e) => {
-            setFormData({ ...formData, title: e.target.value });
-          }}
-          placeholder="Enter Status Name"
-          className={`border-[1px] border-[#C0C0C0] p-2 text-sm`}
-        />
-        </div>
-         
-         
-         <div className='flex flex-col gap-2'>
-         <label className="text-sm">Pick Color</label>
-        <div className="border-[1px] border-[#C0C0C0] p-2">
-         
-           
+          <label className="text-sm">Status Name</label>
           <input
-            type="color"
-            value={formData.color}
+            value={formData.title}
             onChange={(e) => {
-            setFormData({ ...formData, color: e.target.value });
-          }}
-            className="w-1/3 text-sm"
+              setFormData({ ...formData, title: e.target.value });
+            }}
+            placeholder="Enter Status Name"
+            className={`border-[1px] border-[#C0C0C0] p-2 text-sm`}
           />
         </div>
-         </div>
+
+
+        <div className='flex flex-col gap-2'>
+          <label className="text-sm">Pick Color</label>
+          <div className="border-[1px] border-[#C0C0C0] p-2">
+
+
+            <input
+              type="color"
+              value={formData.color}
+              onChange={(e) => {
+                setFormData({ ...formData, color: e.target.value });
+              }}
+              className="w-1/3 text-sm"
+            />
+          </div>
+        </div>
       </div>
 
       <div className="flex justify-end mt-1 mr-4">
@@ -118,13 +114,13 @@ const Modal = ({ setOpenModal, openModal,isEdit, existingData={} }) => {
       <div className="flex justify-center gap-3  bg-[#D5DBDB] items-center h-full">
         <button
           className="bg-[#C72030] h-[28px] w-[100px] cursor-pointer text-white px-4"
-          onClick={()=>handleSave()}
+          onClick={() => handleSave()}
         >
           Save
         </button>
         <button
           className="border-2 border-[#C72030] h-[28px] w-[100px] cursor-pointer text-[#C72030] px-4"
-          onClick={()=>handleClose()}
+          onClick={() => handleClose()}
         >
           Cancel
         </button>
