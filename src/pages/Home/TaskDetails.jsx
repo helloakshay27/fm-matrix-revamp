@@ -739,9 +739,9 @@ const TaskDetails = () => {
                                     </div>
                                     <div className="w-1/2 flex items-center justify-start gap-3">
                                         <div className="text-right text-[12px] font-semibold">Tags:</div>
-                                        <div className="text-left text-[12px] flex items-start">
+                                        <div className="text-left text-[12px] flex items-start flex-wrap">
                                             {task.task_tags?.map((tag) => (
-                                                <div key={tag.company_tag?.id} className="border-2 border-[#c72030] rounded-full py-1 px-2 text-[12px] mx-[2px]">
+                                                <div key={tag.company_tag?.id} className="border-2 border-[#c72030] rounded-full py-1 px-2 text-[12px] mx-[2px] mt-1">
                                                     {tag.company_tag?.name}
                                                 </div>
                                             ))}
@@ -758,9 +758,9 @@ const TaskDetails = () => {
                                     </div>
                                     <div className="w-1/2 flex items-center justify-start gap-3">
                                         <div className="text-right text-[12px] font-semibold">Observer:</div>
-                                        <div className="text-left text-[12px] flex items-start">
+                                        <div className="text-left text-[12px] flex items-start flex-wrap">
                                             {task.observers?.map((observer) => (
-                                                <div key={observer.id} className="border-2 border-[#c72030] rounded-full px-2 py-1 text-[12px] mx-[2px]">
+                                                <div key={observer.id} className="border-2 border-[#c72030] rounded-full px-2 py-1 text-[12px] mx-[2px] mt-1">
                                                     {observer.user_name}
                                                 </div>
                                             ))}
