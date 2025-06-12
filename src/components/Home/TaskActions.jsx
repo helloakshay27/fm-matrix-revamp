@@ -18,7 +18,7 @@ import AddIssueModal from "./Issues/AddIssueModal";
 const TYPE_OPTIONS = [
     { key: "Kanban", icon: <ChartNoAxesColumn size={18} className="rotate-180 text-[#C72030]" />, label: "Kanban" },
     { key: "List", icon: <List size={20} className="text-[#C72030]" />, label: "List" },
-    { key: "Gantt", icon: <ChartNoAxesGantt size={20} className="text-[#C72030]" />, label: "Gantt" },
+    // { key: "Gantt", icon: <ChartNoAxesGantt size={20} className="text-[#C72030]" />, label: "Gantt" },
 ];
 
 const SPRINT_TYPE_OPTIONS = [
@@ -126,9 +126,7 @@ const TaskActions = ({
                         <ChartNoAxesColumn size={20} className="rotate-180 text-[#C72030]" />
                     ) : selectedType === "List" ? (
                         <List size={20} className="text-[#C72030]" />
-                    ) : selectedType === "Gantt" ? (
-                        <ChartNoAxesGantt size={20} className="rotate-180 text-[#C72030]" />
-                    ) : (
+                    )  : (
                         <ChartNoAxesGantt size={20} className="text-[#C72030]" />
                     )}
                     <span className="text-[#C72030]">{selectedType}</span>
