@@ -119,10 +119,8 @@ const TaskActions = ({
                 <button
                     className="text-sm flex items-center justify-between gap-2"
                     onClick={() => {
-                        if (selectedType !== "Gantt") setIsTypeOpen((v) => !v);
+                        if (selectedType) setIsTypeOpen((v) => !v);
                     }}
-                    disabled={selectedType === "Gantt"}
-                    style={selectedType === "Gantt" ? { cursor: "not-allowed", marginRight: "12px" } : {}}
                 >
                     {selectedType === "Kanban" ? (
                         <ChartNoAxesColumn size={20} className="rotate-180 text-[#C72030]" />
@@ -134,9 +132,9 @@ const TaskActions = ({
                         <ChartNoAxesGantt size={20} className="text-[#C72030]" />
                     )}
                     <span className="text-[#C72030]">{selectedType}</span>
-                    {selectedType !== "Gantt" && <span>▾</span>}
+                    <span>▾</span>
                 </button>
-                {isTypeOpen && selectedType !== "Gantt" && addType !== "Sprint-Gantt" && (
+                {isTypeOpen && (
                     <ul className="absolute left-0 mt-2 w-[150px] bg-white border border-gray-300 shadow-xl rounded-md z-10">
                         {TYPE_OPTIONS.map(({ key, icon, label }) => (
                             <li key={key}>
@@ -226,7 +224,7 @@ const TaskActions = ({
         <>
             <div className="flex items-center justify-end mx-6 mt-4 mb-3 text-sm">
                 <div className="flex items-center gap-3 divide-x divide-gray-400">
-                    {addType !== "Issues" && addType !== "Sprint-Gantt" && addType !== "Sprint-Gantt" && !["Milestone", "Project", "templates", "archived"].includes(addType) && renderTypeDropdown()}
+                    {addType !== "Issues" && addType !== "Sprint-Gantt" && addType !== "Sprint-Gantt" && !["Milestone", "templates", "archived"].includes(addType) && renderTypeDropdown()}
                     {addType !== "Issues" && !["Milestone", "Project", "Task", "active_projects", "templates", "archived"].includes(addType) && renderSprintTypeDropdown()}
                     {addType !== "Milestone" && (
                         <div
