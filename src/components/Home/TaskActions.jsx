@@ -234,7 +234,7 @@ const TaskActions = ({
 
                             }
                         >
-                            <Filter size={18} className={`${filter ? 'fill-[#C72030] text-[#C72030]' : 'text-gray-600'}`} />
+                            <Filter size={18} className={`${filter ? ' text-[#C72030]' : 'text-gray-600'}`} />
                         </div>
                     )}
                     {addType !== "Milestone" && addType !== "Sprint-Gantt" && renderStatusDropdown()}
