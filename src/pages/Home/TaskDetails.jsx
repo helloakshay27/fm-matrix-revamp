@@ -496,7 +496,7 @@ const TaskDetails = () => {
     const [openDropdown, setOpenDropdown] = useState(false);
     const [openWorkflowDropdown, setOpenWorkflowDropdown] = useState(false);
     const [selectedOption, setSelectedOption] = useState("Active");
-    const [selectedWorkflowOption, setSelectedWorkflowOption] = useState("");
+    const [selectedWorkflowOption, setSelectedWorkflowOption] = useState("Open");
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
     const [bgBTN, setBgBTN] = useState()
 
@@ -520,8 +520,9 @@ const TaskDetails = () => {
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+            if ((dropdownRef.current || workflowDropdownRef.current) && (!dropdownRef.current.contains(event.target) || !workflowDropdownRef.current.contains(event.target))) {
                 setOpenDropdown(false);
+                setOpenWorkflowDropdown(false);
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
@@ -770,7 +771,7 @@ const TaskDetails = () => {
                                 <div className="flex items-center ml-36">
                                     <div className="w-1/2 flex items-center justify-start gap-3">
                                         <div className="text-right text-[12px] font-[500]">Workflow Status:</div>
-                                        <span className={`flex relative items-center gap-2 cursor-pointer px-2 py-1 w-[150px] rounded-md text-sm text-white`} style={{ backgroundColor: bgBTN }}>
+                                        <span className={`flex relative items-center gap-2 cursor-pointer px-2 py-1 w-[150px] rounded-md text-sm text-white`} style={{ backgroundColor: bgBTN || "#c72030" }}>
                                             <div className="relative w-full" ref={workflowDropdownRef}>
                                                 <div
                                                     className="flex items-center justify-between gap-1 cursor-pointer px-2 py-1"
