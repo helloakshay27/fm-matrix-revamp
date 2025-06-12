@@ -489,6 +489,7 @@ const TaskDetails = () => {
     const { taskDetails: task } = useSelector((state) => state.taskDetails);
     const { fetchStatus: statuses } = useSelector((state) => state.fetchStatus);
     const { success } = useSelector((state) => state.changeTaskStatus);
+    const { success: editSuccess } = useSelector((state) => state.editTask);
 
     const [isFirstCollapsed, setIsFirstCollapsed] = useState(false);
     const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
@@ -566,10 +567,10 @@ const TaskDetails = () => {
     };
 
     useEffect(() => {
-        if (success) {
+        if (success || editSuccess) {
             dispatch(taskDetails(tid))
         }
-    }, [success])
+    }, [success, editSuccess])
 
     useGSAP(() => {
         gsap.set(firstContentRef.current, { height: "auto" });
