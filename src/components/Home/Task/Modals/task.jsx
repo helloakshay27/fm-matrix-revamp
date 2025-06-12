@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUsers } from "../../../../redux/slices/userSlice";
+import { fetchUsers, removeUserFromProject } from "../../../../redux/slices/userSlice";
 import { fetchTags } from "../../../../redux/slices/tagsSlice";
 import WeekProgressPicker from "../../../../Milestone/weekProgressPicker";
 import MultiSelectBox from "../../../MultiSelectBox";
 import SelectBox from "../../../SelectBox";
 import { createTask, editTask } from "../../../../redux/slices/taskSlice";
 import { useParams } from "react-router-dom";
-import { fetchProjectDetails } from "../../../../redux/slices/projectSlice";
+import { fetchProjectDetails, removeTagFromProject } from "../../../../redux/slices/projectSlice";
 import { fetchMilestoneById } from "../../../../redux/slices/milestoneSlice";
 import toast from "react-hot-toast";
 
@@ -19,6 +19,12 @@ const TaskForm = ({
   milestone,
   users,
   tags,
+  prevTags,
+  setPrevTags,
+  prevObservers,
+  setPrevObservers,
+  isEdit,
+  dispatch
 }) => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -31,6 +37,34 @@ const TaskForm = ({
 
   const handleTargetDate = (date) => {
     setFormData({ ...formData, target_date: date });
+  };
+
+  const handleMultiSelectChange = (name, selectedOptions) => {
+    if (name === "tags") {
+      const removed = prevTags.find(
+        (prev) => !selectedOptions.some((curr) => curr.value === prev.value)
+      );
+
+      if (removed && isEdit) {
+        dispatch(removeTagFromProject({ id: removed.id }));
+      }
+
+      setPrevTags(selectedOptions);
+    }
+
+    if (name === "observer") {
+      const removed = prevObservers.find(
+        (prev) => !selectedOptions.some((curr) => curr.value === prev.value)
+      );
+
+      if (removed && isEdit) {
+        dispatch(removeUserFromProject({ id: removed.id }));
+      }
+
+      setPrevObservers(selectedOptions);
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: selectedOptions }));
   };
 
   const calculateDuration = (startDateStr, endDateStr) => {
@@ -104,7 +138,6 @@ const TaskForm = ({
           placeholder="Enter Description"
           className="w-full border outline-none border-gray-300 p-2 text-[13px] h-[70%]"
           value={formData.description}
-          オンライン
           onChange={handleInputChange}
           disabled={isReadOnly}
         />
@@ -205,9 +238,7 @@ const TaskForm = ({
             }))}
             value={formData.observer}
             placeholder="Select Observer"
-            onChange={(values) =>
-              setFormData({ ...formData, observer: values })
-            }
+            onChange={(values) => handleMultiSelectChange("observer", values)}
             disabled={isReadOnly}
           />
         </div>
@@ -219,13 +250,10 @@ const TaskForm = ({
             Tags <span className="text-red-600">*</span>
           </label>
           <MultiSelectBox
-            options={tags.map((tag) => ({
-              label: tag.name,
-              value: tag.id,
-            }))}
+            options={tags.map(tag => ({ value: tag.id, label: tag.name }))}
             value={formData.tags}
+            onChange={values => handleMultiSelectChange("tags", values)}
             placeholder="Select Tags"
-            onChange={(values) => setFormData({ ...formData, tags: values })}
             disabled={isReadOnly}
           />
         </div>
@@ -270,6 +298,9 @@ const Tasks = ({ isEdit }) => {
     tags: [],
   });
 
+  const [prevTags, setPrevTags] = useState([]);
+  const [prevObservers, setPrevObservers] = useState([]);
+
   useEffect(() => {
     dispatch(fetchUsers());
     dispatch(fetchTags());
@@ -277,8 +308,25 @@ const Tasks = ({ isEdit }) => {
     dispatch(fetchMilestoneById({ id: mid }));
   }, [dispatch, id, mid]);
 
+  const getTagName = useCallback(
+    (id) => tags.find((t) => t.id === id)?.name || "",
+    [tags]
+  );
+
   useEffect(() => {
     if (isEdit && task) {
+      const mappedTags = task.task_tags?.map((tag) => ({
+        value: tag?.company_tag?.id,
+        label: getTagName(tag?.company_tag?.id),
+        id: tag.id
+      })) || [];
+
+      const mappedObservers = task.observers?.map((observer) => ({
+        value: observer?.user_id,
+        label: observer?.user_name,
+        id: observer.id
+      })) || [];
+
       setFormData({
         project: id,
         milestone: mid,
@@ -290,17 +338,12 @@ const Tasks = ({ isEdit }) => {
         duration: "",
         expected_start_date: task.expected_start_date || null,
         target_date: task.target_date || null,
-        observer:
-          task?.observers?.map((observer) => ({
-            label: observer.user_name,
-            value: observer.user_id,
-          })) || [],
-        tags:
-          task?.task_tags?.map((tag) => ({
-            label: tag.company_tag.name,
-            value: tag.company_tag.id,
-          })) || [],
+        observer: mappedObservers,
+        tags: mappedTags,
       });
+
+      setPrevTags(mappedTags);
+      setPrevObservers(mappedObservers);
     }
   }, [isEdit, task, id, mid]);
 
@@ -392,7 +435,7 @@ const Tasks = ({ isEdit }) => {
         toast.success(
           isEdit ? "Task updated successfully." : "Task created successfully."
         );
-        //window.location.reload();
+        window.location.reload();
       } else {
         toast.error(isEdit ? "Task update failed." : "Task creation failed.");
       }
@@ -421,6 +464,12 @@ const Tasks = ({ isEdit }) => {
             milestone={milestone}
             users={users}
             tags={tags}
+            prevTags={prevTags}
+            setPrevTags={setPrevTags}
+            prevObservers={prevObservers}
+            setPrevObservers={setPrevObservers}
+            isEdit={isEdit}
+            dispatch={dispatch}
           />
         ))}
         <TaskForm
@@ -431,6 +480,12 @@ const Tasks = ({ isEdit }) => {
           milestone={milestone}
           users={users}
           tags={tags}
+          prevTags={prevTags}
+          setPrevTags={setPrevTags}
+          prevObservers={prevObservers}
+          setPrevObservers={setPrevObservers}
+          isEdit={isEdit}
+          dispatch={dispatch}
         />
         {!isEdit && (
           <div className="relative">

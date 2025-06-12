@@ -636,9 +636,9 @@ const TaskDetails = () => {
                                 </div>
                                 <div className="w-1/2 flex items-center justify-center gap-3">
                                     <div className="text-right text-[12px] font-semibold">Tags:</div>
-                                    <div className="text-left text-[12px] flex items-start gap-1">
+                                    <div className="text-left text-[12px] flex items-start">
                                         {task.task_tags?.map((tag) => (
-                                            <div key={tag.company_tag?.id} className="border-2 border-[#c72030] rounded-full py-1 px-2 text-[12px] mx-1">
+                                            <div key={tag.company_tag?.id} className="border-2 border-[#c72030] rounded-full py-1 px-2 text-[12px] mx-[2px]">
                                                 {tag.company_tag?.name}
                                             </div>
                                         ))}
@@ -655,9 +655,9 @@ const TaskDetails = () => {
                                 </div>
                                 <div className="w-1/2 flex items-center justify-center gap-3">
                                     <div className="text-right text-[12px] font-semibold">Observer:</div>
-                                    <div className="text-left text-[12px] flex items-start gap-1">
+                                    <div className="text-left text-[12px] flex items-start">
                                         {task.observers?.map((observer) => (
-                                            <div key={observer.id} className="border-2 border-[#c72030] rounded-full px-2 py-1 text-[12px] mx-2">
+                                            <div key={observer.id} className="border-2 border-[#c72030] rounded-full px-2 py-1 text-[12px] mx-[2px]">
                                                 {observer.user_name}
                                             </div>
                                         ))}

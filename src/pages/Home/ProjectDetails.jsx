@@ -258,8 +258,8 @@ const ProjectDetails = () => {
     }, [])
 
     useEffect(() => {
-        if (project && project.project_members) {
-            const members = project.project_members.map((member) => member?.user?.firstname + " " + member?.user?.lastname);
+        if (project && project.project_team) {
+            const members = project.project_team?.project_team_members.map((member) => member?.user?.name);
             setProjectMembers(members);
         }
     }, [project]);
@@ -423,7 +423,7 @@ const ProjectDetails = () => {
                                 <div className="text-right text-[12px] font-[500]">
                                     Project Type:
                                 </div>
-                                <div className="text-left text-[12px]">{project.project_type}</div>
+                                <div className="text-left text-[12px]">{project.project_type_name}</div>
                             </div>
                             <div className="w-1/2 flex items-center justify-center gap-3">
                                 <div className="text-right text-[12px] font-[500]">

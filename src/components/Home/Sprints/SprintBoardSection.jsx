@@ -667,7 +667,7 @@ const SprintBoardSection = ({ selectedProject }) => {
 
             <div
               ref={selectedSprint?.status === "stopped" ? drop : null}
-              className={`w-full h-max bg-white p-3 shadow-xl text-xs flex flex-col space-y-2 mb-2 rounded-md flex flex-col items-center justify-start text-center px-2 text-gray-500 text-sm overflow-y-auto no-scrollbar
+              className={`w-full h-max bg-white p-3 shadow-xl space-y-2 mb-2 rounded-md flex flex-col items-center justify-start text-center px-2 text-gray-500 text-sm overflow-y-auto no-scrollbar
               ${isOver && canDrop && selectedSprint?.status === "stopped"
                   ? "ring-2 ring-blue-400"
                   : ""
@@ -1048,4 +1048,4 @@ const SprintBoardSection = ({ selectedProject }) => {
   );
 };
 
-export default SprintBoardSection;
+export default SprintBoardSection

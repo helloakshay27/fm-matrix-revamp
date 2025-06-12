@@ -1,10 +1,355 @@
-import { useEffect, useState } from "react";
+// import { useEffect, useState, useCallback } from "react";
+// import SelectBox from "../../../SelectBox";
+// import MultiSelectBox from "../../../MultiSelectBox";
+// import { useDispatch, useSelector } from 'react-redux';
+// import { createProject, editProject, fetchProjectTeams, fetchProjectTypes, fetchTemplates } from '../../../../redux/slices/projectSlice';
+// import { fetchUsers } from '../../../../redux/slices/userSlice';
+// import { fetchTags } from '../../../../redux/slices/tagsSlice';
+// import { useParams } from "react-router-dom";
+// import toast from "react-hot-toast";
+
+// const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", isEdit = false }) => {
+//   const { id } = useParams();
+//   const dispatch = useDispatch();
+
+//   const {
+//     fetchUsers: users = [],
+//     fetchTags: tags = [],
+//     fetchProjectDetails: editData = {},
+//     editProject: { success: editsuccess },
+//     fetchProjectTypes: projectTypes = [],
+//     fetchTemplates: templates = [],
+//     fetchProjectTeams: teams = []
+//   } = useSelector((state) => ({
+//     fetchUsers: state.fetchUsers.fetchUsers,
+//     fetchTags: state.fetchTags.fetchTags,
+//     fetchProjectDetails: state.fetchProjectDetails.fetchProjectDetails,
+//     editProject: state.editProject,
+//     fetchProjectTypes: state.fetchProjectTypes.fetchProjectTypes,
+//     fetchTemplates: state.fetchTemplates.fetchTemplates,
+//     fetchProjectTeams: state.fetchProjectTeams.fetchProjectTeams
+//   }));
+
+//   const [formData, setFormData] = useState({
+//     projectTitle: "",
+//     description: "",
+//     projectOwner: "",
+//     template: "",
+//     startDate: "",
+//     endDate: "",
+//     projectType: "",
+//     projectTeam: "",
+//     priority: "",
+//     tags: [],
+//     createChannel: false,
+//     createTemplate: false,
+//   });
+
+//   const getTagName = useCallback((id) => tags.find(t => t.id === id)?.name || "", [tags]);
+
+//   useEffect(() => {
+//     dispatch(fetchUsers());
+//     dispatch(fetchTags());
+//     dispatch(fetchProjectTypes());
+//     dispatch(fetchTemplates());
+//     dispatch(fetchProjectTeams());
+//   }, [dispatch]);
+
+//   useEffect(() => {
+//     if (isEdit && editData?.id) {
+//       setFormData({
+//         projectTitle: editData.title || "",
+//         description: editData.description || "",
+//         projectOwner: editData.owner_id || "",
+//         template: editData.template || "",
+//         startDate: editData.start_date || "",
+//         endDate: editData.end_date || "",
+//         projectType: editData.project_type_id || "",
+//         priority: editData.priority || "",
+//         tags: editData.project_tags?.map(tag => ({
+//           value: tag?.company_tag?.id,
+//           label: getTagName(tag?.company_tag?.id),
+//         })) || [],
+//         projectTeam: editData.project_team_id || "",
+//         createChannel: editData.createChannel || false,
+//         createTemplate: editData.createTemplate || false,
+//       });
+//     }
+//   }, [isEdit, editData, getTagName]);
+
+//   const handleInputChange = (e) => {
+//     const { name, value, type, checked } = e.target;
+//     setFormData(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+//   };
+
+//   const handleSelectChange = (name, value) => {
+//     setFormData(prev => ({ ...prev, [name]: value }));
+//   };
+
+//   const handleMultiSelectChange = (name, selectedOptions) => {
+//     setFormData(prev => ({ ...prev, [name]: selectedOptions }));
+//   };
+
+//   const validateForm = () => {
+//     const errors = {};
+//     if (!formData.projectTitle) errors.projectTitle = "Project title is required.";
+//     else if (!formData.projectOwner) errors.projectOwner = "Project owner is required.";
+//     else if (!formData.startDate) errors.startDate = "Start date is required.";
+//     else if (!formData.endDate) errors.endDate = "End date is required.";
+//     else if (!formData.projectTeam) errors.projectTeam = "Project team is required.";
+
+//     if (Object.keys(errors).length) {
+//       toast.error(Object.values(errors)[0]);
+//       return false;
+//     }
+//     return true;
+//   };
+
+//   const handleDuration = () => {
+//     if (!formData.startDate || !formData.endDate) return "";
+//     const start = new Date(formData.startDate);
+//     const end = new Date(formData.endDate);
+//     if (end < start) return "Invalid: End date before start date";
+
+//     const ms = end - start;
+//     const mins = Math.floor(ms / (1000 * 60));
+//     const days = Math.floor(mins / (60 * 24));
+//     const hours = Math.floor((mins % (60 * 24)) / 60);
+//     const minutes = mins % 60;
+//     return `${days}d : ${hours}h : ${minutes}m`;
+//   };
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+//     if (!validateForm()) return;
+
+//     const payload = {
+//       project_management: {
+//         title: formData.projectTitle,
+//         description: formData.description,
+//         start_date: formData.startDate,
+//         end_date: formData.endDate,
+//         status: "active",
+//         owner_id: formData.projectOwner,
+//         priority: formData.priority,
+//         active: true,
+//         is_template: formData.createTemplate,
+//         project_team_id: formData.projectTeam,
+//         project_type_id: formData.projectType,
+//       },
+//       task_tag_ids: formData.tags.map(tag => tag.value),
+//     };
+
+//     if (isEdit) {
+//       dispatch(editProject({ id, payload }));
+//     } else {
+//       const result = await dispatch(createProject(payload));
+//       if (result.meta.requestStatus === "fulfilled") {
+//         setTab("Milestone");
+//       }
+//     }
+//   };
+
+//   useEffect(() => {
+//     if (editsuccess) {
+//       window.location.reload()
+//     }
+//   }, [editsuccess])
+
+//   return (
+//     <form className="pt-2 pb-12 h-full" onSubmit={handleSubmit}>
+//       <div className="max-w-[90%] mx-auto h-[calc(100%-4rem)] overflow-y-auto pr-3">
+//         {/* Project Title */}
+//         <div className="mt-4 space-y-2">
+//           <label className="block ms-2">Project Title <span className="text-red-600">*</span></label>
+//           <input
+//             type="text"
+//             name="projectTitle"
+//             value={formData.projectTitle}
+//             onChange={handleInputChange}
+//             placeholder="Enter Project Title"
+//             className="w-full border h-[40px] outline-none border-gray-300 p-2 text-[12px]"
+//           />
+//         </div>
+
+//         {/* Checkboxes */}
+//         <div className="flex justify-between my-4">
+//           {["createChannel", "createTemplate"].map((name) => (
+//             <div key={name}>
+//               <input
+//                 type="checkbox"
+//                 id={name}
+//                 name={name}
+//                 checked={formData[name]}
+//                 onChange={handleInputChange}
+//                 className="mx-2 my-0.5"
+//               />
+//               <label htmlFor={name}>Create a {name === "createChannel" ? "Channel" : "Template"}</label>
+//             </div>
+//           ))}
+//         </div>
+
+//         {/* Description */}
+//         <div className="mt-4 space-y-2 h-[100px]">
+//           <label className="block ms-2">Description</label>
+//           <textarea
+//             name="description"
+//             value={formData.description}
+//             onChange={handleInputChange}
+//             rows={5}
+//             placeholder="Enter Description"
+//             className="w-full border outline-none border-gray-300 p-2 text-sm h-[70%]"
+//           />
+//         </div>
+
+//         {/* Owner & Template */}
+//         <div className="flex items-start gap-4 mt-3">
+//           <div className="w-1/2">
+//             <label className="block mb-2">Project Owner <span className="text-red-600">*</span></label>
+//             <SelectBox
+//               options={users.map(user => ({
+//                 value: user.id,
+//                 label: `${user.firstname} ${user.lastname}`,
+//               }))}
+//               value={formData.projectOwner}
+//               onChange={value => handleSelectChange("projectOwner", value)}
+//               placeholder="Select Owner"
+//               style={{ border: "1px solid #b3b2b2" }}
+//             />
+//           </div>
+
+//           <div className="w-1/2">
+//             <label className="block mb-2">Template</label>
+//             <SelectBox
+//               options={templates.map(template => ({
+//                 value: template.id,
+//                 label: template.title,
+//               }))}
+//               value={formData.template}
+//               onChange={value => handleSelectChange("template", value)}
+//               placeholder="Select Template"
+//               style={{ border: "1px solid #b3b2b2" }}
+//             />
+//           </div>
+//         </div>
+
+//         {/* Dates & Duration */}
+//         <div className="flex gap-2 mt-4 text-[12px]">
+//           {["startDate", "endDate"].map((field, i) => (
+//             <div key={field} className="w-full space-y-2">
+//               <label className="block ms-2">{field === "startDate" ? "Start Date" : "End Date"}<span className="text-red-600">*</span></label>
+//               <input
+//                 type="date"
+//                 name={field}
+//                 value={formData[field]}
+//                 onChange={handleInputChange}
+//                 className="w-full border outline-none border-gray-300 p-2"
+//               />
+//             </div>
+//           ))}
+//           <div className="w-[300px] space-y-2">
+//             <label className="block ms-2">Duration</label>
+//             <input
+//               value={handleDuration()}
+//               readOnly
+//               type="text"
+//               className="w-full border outline-none border-gray-300 p-2 bg-gray-200"
+//             />
+//           </div>
+//         </div>
+
+//         {/* Team + Create New */}
+//         <div className="relative">
+//           <label className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer" onClick={() => setOpenTeamModal(true)}>
+//             <i>Create new team</i>
+//           </label>
+//         </div>
+
+//         <div className="flex flex-col gap-4 my-10">
+//           {/* Team */}
+//           <div>
+//             <label className="block mb-2">Project Team <span className="text-red-600">*</span></label>
+//             <SelectBox
+//               options={teams.map(team => ({ value: team.id, label: team.name }))}
+//               value={formData.projectTeam}
+//               onChange={value => handleSelectChange("projectTeam", value)}
+//               placeholder="Select Team"
+//             />
+//           </div>
+
+//           {/* Type & Priority */}
+//           <div className="flex gap-4">
+//             <div className="w-1/2">
+//               <label className="block mb-2">Project Type</label>
+//               <SelectBox
+//                 options={projectTypes.map(type => ({ value: type.id, label: type.name }))}
+//                 value={formData.projectType}
+//                 onChange={value => handleSelectChange("projectType", value)}
+//                 placeholder="Select Type"
+//                 style={{ border: "1px solid #b3b2b2" }}
+//               />
+//             </div>
+//             <div className="w-1/2">
+//               <label className="block mb-2">Priority</label>
+//               <SelectBox
+//                 options={[
+//                   { value: "high", label: "High" },
+//                   { value: "medium", label: "Medium" },
+//                   { value: "low", label: "Low" },
+//                 ]}
+//                 value={formData.priority}
+//                 onChange={value => handleSelectChange("priority", value)}
+//                 placeholder="Select Priority"
+//                 style={{ border: "1px solid #b3b2b2" }}
+//               />
+//             </div>
+//           </div>
+
+//           {/* Tags */}
+//           <div>
+//             <label className="block mb-2">Tags</label>
+//             <MultiSelectBox
+//               options={tags.map(tag => ({ value: tag.id, label: tag.name }))}
+//               value={formData.tags}
+//               onChange={values => handleMultiSelectChange("tags", values)}
+//               placeholder="Select Tags"
+//             />
+//             <div className="text-[12px] text-[red] text-right cursor-pointer" onClick={() => setOpenTagModal(true)}>
+//               <i>Create new tag</i>
+//             </div>
+//           </div>
+
+//           {/* Submit */}
+//           <div className="flex items-center justify-center">
+//             <button type="submit" className="border-2 border-red-500 px-4 py-2 text-black w-[100px]">
+//               {endText}
+//             </button>
+//           </div>
+//         </div>
+//       </div>
+//     </form>
+//   );
+// };
+
+// export default Details;
+
+
+
+
+import { useEffect, useState, useCallback } from "react";
 import SelectBox from "../../../SelectBox";
 import MultiSelectBox from "../../../MultiSelectBox";
 import { useDispatch, useSelector } from 'react-redux';
-import { createProject, editProject, fetchProjectTeams, fetchProjectTypes, fetchTemplates } from '../../../../redux/slices/projectSlice'
-import { fetchUsers } from '../../../../redux/slices/userSlice'
-import { fetchTags } from '../../../../redux/slices/tagsSlice'
+import {
+  createProject,
+  editProject,
+  fetchProjectTeams,
+  fetchProjectTypes,
+  fetchTemplates,
+  removeTagFromProject,
+} from '../../../../redux/slices/projectSlice';
+import { fetchUsers } from '../../../../redux/slices/userSlice';
+import { fetchTags } from '../../../../redux/slices/tagsSlice';
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -12,60 +357,23 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
   const { id } = useParams();
   const dispatch = useDispatch();
 
-  const { fetchUsers: users } = useSelector((state) => state.fetchUsers);
-  const { fetchTags: tags } = useSelector((state) => state.fetchTags);
-  const { fetchProjectDetails: editData } = useSelector((state) => state.fetchProjectDetails)
-  const { success: editsuccess } = useSelector((state) => state.editProject)
-  const { fetchProjectTypes: projectTypes } = useSelector((state) => state.fetchProjectTypes)
-  const { fetchTemplates: templates } = useSelector((state) => state.fetchTemplates)
-  const { fetchProjectTeams: teams } = useSelector(state => state.fetchProjectTeams)
-
-  const getUserName = (id) => {
-    const user = users.find(u => u.id === id);
-    return user ? `${user.firstname} ${user.lastname}` : "";
-  };
-
-  const getTagName = (id) => {
-    const tag = tags.find(t => t.id === id);
-    return tag ? tag.name : "";
-  };
-
-
-  useEffect(() => {
-    dispatch(fetchUsers());
-    dispatch(fetchTags());
-    dispatch(fetchProjectTypes());
-    dispatch(fetchTemplates());
-    dispatch(fetchProjectTeams());
-  }, []);
-
-
-  useEffect(() => {
-    if (isEdit && editData) {
-      setFormData({
-        projectTitle: editData.title || "",
-        description: editData.description || "",
-        projectOwner: editData.owner_id || "",
-        template: editData.template || "",
-        startDate: editData.start_date || "",
-        endDate: editData.end_date || "",
-        team: editData.member_ids?.map(id => ({
-          value: id,
-          label: getUserName(id)
-        })) || [],
-        projectType: editData.projectType || "",
-        priority: editData.priority || "",
-        tags: editData.task_tag_ids?.map(id => ({
-          value: id,
-          label: getTagName(id)
-        })) || [],
-
-        createChannel: editData.createChannel || false,
-        createTemplate: editData.createTemplate || false,
-      });
-    }
-  }, [isEdit, editData]);
-
+  const {
+    fetchUsers: users = [],
+    fetchTags: tags = [],
+    fetchProjectDetails: editData = {},
+    editProject: { success: editsuccess },
+    fetchProjectTypes: projectTypes = [],
+    fetchTemplates: templates = [],
+    fetchProjectTeams: teams = []
+  } = useSelector((state) => ({
+    fetchUsers: state.fetchUsers.fetchUsers,
+    fetchTags: state.fetchTags.fetchTags,
+    fetchProjectDetails: state.fetchProjectDetails.fetchProjectDetails,
+    editProject: state.editProject,
+    fetchProjectTypes: state.fetchProjectTypes.fetchProjectTypes,
+    fetchTemplates: state.fetchTemplates.fetchTemplates,
+    fetchProjectTeams: state.fetchProjectTeams.fetchProjectTeams
+  }));
 
   const [formData, setFormData] = useState({
     projectTitle: "",
@@ -74,13 +382,55 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
     template: "",
     startDate: "",
     endDate: "",
-    team: "",
     projectType: "",
+    projectTeam: "",
     priority: "",
     tags: [],
     createChannel: false,
     createTemplate: false,
   });
+
+  const [prevTags, setPrevTags] = useState([]);
+
+  const getTagName = useCallback(
+    (id) => tags.find((t) => t.id === id)?.name || "",
+    [tags]
+  );
+
+  useEffect(() => {
+    dispatch(fetchUsers());
+    dispatch(fetchTags());
+    dispatch(fetchProjectTypes());
+    dispatch(fetchTemplates());
+    dispatch(fetchProjectTeams());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (isEdit && editData?.id) {
+      const mappedTags = editData.project_tags?.map((tag) => ({
+        value: tag?.company_tag?.id, // used for MultiSelectBox
+        label: getTagName(tag?.company_tag?.id),
+        id: tag.id // project_tag.id used for deletion
+      })) || [];
+
+      setFormData({
+        projectTitle: editData.title || "",
+        description: editData.description || "",
+        projectOwner: editData.owner_id || "",
+        template: editData.template || "",
+        startDate: editData.start_date || "",
+        endDate: editData.end_date || "",
+        projectType: editData.project_type_id || "",
+        priority: editData.priority || "",
+        tags: mappedTags,
+        projectTeam: editData.project_team_id || "",
+        createChannel: editData.createChannel || false,
+        createTemplate: editData.createTemplate || false,
+      });
+
+      setPrevTags(mappedTags);
+    }
+  }, [isEdit, editData, getTagName]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -91,60 +441,56 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
   };
 
   const handleSelectChange = (name, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleMultiSelectChange = (name, selectedOptions) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: selectedOptions,
-    }));
+    if (name === "tags") {
+      const removed = prevTags.find(
+        (prev) => !selectedOptions.some((curr) => curr.value === prev.value)
+      );
+
+      if (removed && isEdit) {
+        dispatch(removeTagFromProject({ id: removed.id }));
+      }
+
+      setPrevTags(selectedOptions);
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: selectedOptions }));
   };
 
   const validateForm = () => {
-    const errors = {}
+    const errors = {};
+    if (!formData.projectTitle) errors.projectTitle = "Project title is required.";
+    else if (!formData.projectOwner) errors.projectOwner = "Project owner is required.";
+    else if (!formData.startDate) errors.startDate = "Start date is required.";
+    else if (!formData.endDate) errors.endDate = "End date is required.";
+    else if (!formData.projectTeam) errors.projectTeam = "Project team is required.";
 
-    if (!formData.projectTitle) {
-      errors.projectTitle = "Project title is required."
-    } else if (!formData.projectOwner) {
-      errors.projectOwner = "Project owner is required."
-    } else if (!formData.startDate) {
-      errors.startDate = "Start date is required."
-    } else if (!formData.endDate) {
-      errors.endDate = "End date is required."
-    } else if (!formData.team) {
-      errors.priority = "Team is required."
+    if (Object.keys(errors).length) {
+      toast.error(Object.values(errors)[0]);
+      return false;
     }
-
-    if (Object.keys(errors).length > 0) {
-      toast.error(Object.values(errors)[0])
-      return false
-    }
-    return true
-  }
+    return true;
+  };
 
   const handleDuration = () => {
     if (!formData.startDate || !formData.endDate) return "";
     const start = new Date(formData.startDate);
     const end = new Date(formData.endDate);
-
     if (end < start) return "Invalid: End date before start date";
 
     const ms = end - start;
-    const totalMinutes = Math.floor(ms / (1000 * 60));
-    const days = Math.floor(totalMinutes / (60 * 24));
-    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-    const minutes = totalMinutes % 60;
-
-    return `${days}d : ${hours}h: ${minutes}m`;
+    const mins = Math.floor(ms / (1000 * 60));
+    const days = Math.floor(mins / (60 * 24));
+    const hours = Math.floor((mins % (60 * 24)) / 60);
+    const minutes = mins % 60;
+    return `${days}d : ${hours}h : ${minutes}m`;
   };
 
-  const handleSubmit = async (e, id) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
     const payload = {
@@ -153,22 +499,22 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
         description: formData.description,
         start_date: formData.startDate,
         end_date: formData.endDate,
-        status: 'active',
+        status: "active",
         owner_id: formData.projectOwner,
         priority: formData.priority,
         active: true,
         is_template: formData.createTemplate,
-        project_team_id: formData.team
+        project_team_id: formData.projectTeam,
+        project_type_id: formData.projectType,
       },
-      // member_ids: formData.team.map((member) => member.value),
       task_tag_ids: formData.tags.map((tag) => tag.value),
     };
 
     if (isEdit) {
-      dispatch(editProject({ id: id, payload: payload }));
+      dispatch(editProject({ id, payload }));
     } else {
-      const resultAction = await dispatch(createProject(payload));
-      if (resultAction.meta.requestStatus === 'fulfilled') {
+      const result = await dispatch(createProject(payload));
+      if (result.meta.requestStatus === "fulfilled") {
         setTab("Milestone");
       }
     }
@@ -176,20 +522,15 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
 
   useEffect(() => {
     if (editsuccess) {
-      window.location.reload()
+      window.location.reload();
     }
-  }, [editsuccess])
+  }, [editsuccess]);
 
   return (
-    <form className="pt-2 pb-12 h-full" onSubmit={(e) => handleSubmit(e, id)}>
-      <div
-        id="addTask"
-        className="max-w-[90%] mx-auto h-[calc(100%-4rem)] overflow-y-auto pr-3"
-      >
+    <form className="pt-2 pb-12 h-full" onSubmit={handleSubmit}>
+      <div className="max-w-[90%] mx-auto h-[calc(100%-4rem)] overflow-y-auto pr-3">
         <div className="mt-4 space-y-2">
-          <label className="block ms-2">
-            Project Title <span className="text-red-600">*</span>
-          </label>
+          <label className="block ms-2">Project Title <span className="text-red-600">*</span></label>
           <input
             type="text"
             name="projectTitle"
@@ -201,28 +542,19 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
         </div>
 
         <div className="flex justify-between my-4">
-          <div>
-            <input
-              type="checkbox"
-              id="channel"
-              name="createChannel"
-              checked={formData.createChannel}
-              onChange={handleInputChange}
-              className="mx-2 my-0.5"
-            />
-            <label htmlFor="channel">Create a Channel</label>
-          </div>
-          <div>
-            <input
-              type="checkbox"
-              id="template"
-              name="createTemplate"
-              checked={formData.createTemplate}
-              onChange={handleInputChange}
-              className="mx-2 my-0.5"
-            />
-            <label htmlFor="template">Create a Template</label>
-          </div>
+          {["createChannel", "createTemplate"].map((name) => (
+            <div key={name}>
+              <input
+                type="checkbox"
+                id={name}
+                name={name}
+                checked={formData[name]}
+                onChange={handleInputChange}
+                className="mx-2 my-0.5"
+              />
+              <label htmlFor={name}>Create a {name === "createChannel" ? "Channel" : "Template"}</label>
+            </div>
+          ))}
         </div>
 
         <div className="mt-4 space-y-2 h-[100px]">
@@ -238,117 +570,85 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
         </div>
 
         <div className="flex items-start gap-4 mt-3">
-          <div className="w-1/2 flex flex-col justify-between">
-            <label className="block mb-2">
-              Project Owner <span className="text-red-600">*</span>
-            </label>
+          <div className="w-1/2">
+            <label className="block mb-2">Project Owner <span className="text-red-600">*</span></label>
             <SelectBox
-              options={
-                users?.map((user) => ({
-                  value: user.id,
-                  label: user?.firstname + " " + user?.lastname,
-                }))
-              }
+              options={users.map(user => ({
+                value: user.id,
+                label: `${user.firstname} ${user.lastname}`,
+              }))}
               value={formData.projectOwner}
-              onChange={(value) => {
-                handleSelectChange("projectOwner", value)
-              }}
+              onChange={value => handleSelectChange("projectOwner", value)}
               placeholder="Select Owner"
-              style={{ "border": "1px solid #b3b2b2" }}
-
+              style={{ border: "1px solid #b3b2b2" }}
             />
           </div>
 
-          <div className="w-1/2 flex flex-col justify-between">
+          <div className="w-1/2">
             <label className="block mb-2">Template</label>
             <SelectBox
-              options={
-                templates?.map((template) => ({
-                  value: template.id,
-                  label: template?.title,
-                }))
-              }
+              options={templates.map(template => ({
+                value: template.id,
+                label: template.title,
+              }))}
               value={formData.template}
-              onChange={(value) => handleSelectChange("template", value)}
+              onChange={value => handleSelectChange("template", value)}
               placeholder="Select Template"
-              style={{ "border": "1px solid #b3b2b2" }}
-
+              style={{ border: "1px solid #b3b2b2" }}
             />
           </div>
         </div>
 
-        <div className="flex items-start justify-between gap-2 mt-4 text-[12px]">
-          <div className="w-full space-y-2">
-            <label className="block ms-2">Start Date<span className="text-red-600">*</span></label>
-            <input
-              type="date"
-              name="startDate"
-              value={formData.startDate}
-              onChange={handleInputChange}
-              className="w-full border outline-none border-gray-300 p-2 text-[12px]"
-            />
-          </div>
-
-          <div className="w-full space-y-2">
-            <label className="block ms-2">End Date<span className="text-red-600">*</span></label>
-            <input
-              type="date"
-              name="endDate"
-              value={formData.endDate}
-              onChange={handleInputChange}
-              className="w-full border outline-none border-gray-300 p-2 text-[12px]"
-            />
-          </div>
-
+        <div className="flex gap-2 mt-4 text-[12px]">
+          {["startDate", "endDate"].map((field) => (
+            <div key={field} className="w-full space-y-2">
+              <label className="block ms-2">{field === "startDate" ? "Start Date" : "End Date"}<span className="text-red-600">*</span></label>
+              <input
+                type="date"
+                name={field}
+                value={formData[field]}
+                onChange={handleInputChange}
+                className="w-full border outline-none border-gray-300 p-2"
+              />
+            </div>
+          ))}
           <div className="w-[300px] space-y-2">
             <label className="block ms-2">Duration</label>
             <input
               value={handleDuration()}
-              type="text"
-              placeholder="00d:00h:00m"
-              className="w-full border outline-none border-gray-300 p-2 text-sm bg-gray-200"
               readOnly
+              type="text"
+              className="w-full border outline-none border-gray-300 p-2 bg-gray-200"
             />
           </div>
         </div>
 
         <div className="relative">
-          <label className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer" onClick={() => { setOpenTeamModal("true") }
-          }>
+          <label className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer" onClick={() => setOpenTeamModal(true)}>
             <i>Create new team</i>
           </label>
         </div>
 
-        <div className="flex flex-col relative justify-start gap-4 w-full bottom-0 py-3 bg-white my-10">
+        <div className="flex flex-col gap-4 my-10">
           <div>
-            <label className="block mb-2">Project Team<span className="text-red-600">*</span></label>
+            <label className="block mb-2">Project Team <span className="text-red-600">*</span></label>
             <SelectBox
-              options={
-                teams.map((team) => ({
-                  value: team.id,
-                  label: team.name,
-                }))
-              }
-              value={formData.team}
-              onChange={(value) => handleSelectChange("team", value)}
+              options={teams.map(team => ({ value: team.id, label: team.name }))}
+              value={formData.projectTeam}
+              onChange={value => handleSelectChange("projectTeam", value)}
               placeholder="Select Team"
             />
           </div>
-          <div className="flex items-center gap-4">
+
+          <div className="flex gap-4">
             <div className="w-1/2">
               <label className="block mb-2">Project Type</label>
               <SelectBox
-                options={
-                  projectTypes.map((type) => ({
-                    value: type.id,
-                    label: type.name,
-                  }))
-                }
+                options={projectTypes.map(type => ({ value: type.id, label: type.name }))}
                 value={formData.projectType}
-                onChange={(value) => handleSelectChange("projectType", value)}
+                onChange={value => handleSelectChange("projectType", value)}
                 placeholder="Select Type"
-                style={{ "border": "1px solid #b3b2b2" }}
-
+                style={{ border: "1px solid #b3b2b2" }}
               />
             </div>
             <div className="w-1/2">
@@ -360,40 +660,28 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
                   { value: "low", label: "Low" },
                 ]}
                 value={formData.priority}
-                onChange={(value) => handleSelectChange("priority", value)}
+                onChange={value => handleSelectChange("priority", value)}
                 placeholder="Select Priority"
-                style={{ "border": "1px solid #b3b2b2" }}
-
+                style={{ border: "1px solid #b3b2b2" }}
               />
             </div>
           </div>
+
           <div>
             <label className="block mb-2">Tags</label>
             <MultiSelectBox
-              options={
-                tags.map((tag) => ({
-                  value: tag.id,
-                  label: tag.name,
-                }))
-              }
+              options={tags.map(tag => ({ value: tag.id, label: tag.name }))}
               value={formData.tags}
-              onChange={(values) => handleMultiSelectChange("tags", values)}
+              onChange={values => handleMultiSelectChange("tags", values)}
               placeholder="Select Tags"
             />
-          </div>
-
-          <div className="relative">
-            <label className="absolute text-[12px] text-[red] right-2 cursor-pointer" onClick={() => { setOpenTagModal(true) }
-            }>
+            <div className="text-[12px] text-[red] text-right cursor-pointer" onClick={() => setOpenTagModal(true)}>
               <i>Create new tag</i>
-            </label>
+            </div>
           </div>
 
-          <div className="flex items-center justify-center gap-4 w-full bottom-0 py-3 bg-white mt-10">
-            <button
-              type="submit"
-              className="flex items-center justify-center border-2 border-[red] px-4 py-2 text-[black] w-[100px]"
-            >
+          <div className="flex items-center justify-center">
+            <button type="submit" className="border-2 border-red-500 px-4 py-2 text-black w-[100px]">
               {endText}
             </button>
           </div>

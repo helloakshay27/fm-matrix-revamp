@@ -11,6 +11,7 @@ import {
     fetchProjects,
     fetchProjectTeam,
     fetchProjectTeams,
+    removeMembersFromTeam,
     resetSuccess,
     updateProjectTeam,
 } from "../../../redux/slices/projectSlice";
@@ -36,8 +37,7 @@ const TeamModal = ({
         (state) => state.updateProjectTeam
     );
 
-    console.log(projectTeam);
-
+    const [prevMembers, setPrevMembers] = useState([]);
     const [projectTeamId, setProjectTeamId] = useState();
     const [formData, setFormData] = useState({
         teamName: "",
@@ -83,6 +83,7 @@ const TeamModal = ({
                     return {
                         label: user ? `${user.firstname} ${user.lastname}` : '',
                         value: member.user_id,
+                        id: member.id
                     };
                 }
             ) || [];
@@ -94,10 +95,10 @@ const TeamModal = ({
                 teamMembers: selectedTeamMembers,
             });
             setProjectTeamId(projectTeam.id);
+            setPrevMembers(selectedTeamMembers);
         }
     }, [projectTeam, users]);
 
-    console.log(formData);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -106,6 +107,22 @@ const TeamModal = ({
 
     const handleSelectChange = (field, value) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
+    };
+
+    const handleMultiSelectChange = (name, selectedOptions) => {
+        if (name === "teamMembers") {
+            const removed = prevMembers.find(
+                (prev) => !selectedOptions.some((curr) => curr.value === prev.value)
+            );
+
+            if (removed && isEdit) {
+                dispatch(removeMembersFromTeam({ id: removed.id }));
+            }
+
+            setPrevMembers(selectedOptions);
+        }
+
+        setFormData((prev) => ({ ...prev, [name]: selectedOptions }));
     };
 
     const handleSubmit = () => {
@@ -197,7 +214,8 @@ const TeamModal = ({
                         <MultiSelectBox
                             placeholder="Select Team Members"
                             value={formData.teamMembers}
-                            onChange={(value) => handleSelectChange("teamMembers", value)}
+                            // onChange={(value) => handleSelectChange("teamMembers", value)}
+                            onChange={values => handleMultiSelectChange("teamMembers", values)}
                             options={users.map((user) => ({
                                 label: `${user.firstname} ${user.lastname}`,
                                 value: user.id,
