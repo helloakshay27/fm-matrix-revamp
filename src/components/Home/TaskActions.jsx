@@ -18,7 +18,7 @@ import AddIssueModal from "./Issues/AddIssueModal";
 const TYPE_OPTIONS = [
     { key: "Kanban", icon: <ChartNoAxesColumn size={18} className="rotate-180 text-[#C72030]" />, label: "Kanban" },
     { key: "List", icon: <List size={20} className="text-[#C72030]" />, label: "List" },
-    { key: "Gantt", icon: <ChartNoAxesGantt size={20} className="text-[#C72030]" />, label: "Gantt" },
+    // { key: "Gantt", icon: <ChartNoAxesGantt size={20} className="text-[#C72030]" />, label: "Gantt" },
 ];
 
 const SPRINT_TYPE_OPTIONS = [
@@ -119,24 +119,20 @@ const TaskActions = ({
                 <button
                     className="text-sm flex items-center justify-between gap-2"
                     onClick={() => {
-                        if (selectedType !== "Gantt") setIsTypeOpen((v) => !v);
+                        if (selectedType) setIsTypeOpen((v) => !v);
                     }}
-                    disabled={selectedType === "Gantt"}
-                    style={selectedType === "Gantt" ? { cursor: "not-allowed", marginRight: "12px" } : {}}
                 >
                     {selectedType === "Kanban" ? (
                         <ChartNoAxesColumn size={20} className="rotate-180 text-[#C72030]" />
                     ) : selectedType === "List" ? (
                         <List size={20} className="text-[#C72030]" />
-                    ) : selectedType === "Gantt" ? (
-                        <ChartNoAxesGantt size={20} className="rotate-180 text-[#C72030]" />
                     ) : (
                         <ChartNoAxesGantt size={20} className="text-[#C72030]" />
                     )}
                     <span className="text-[#C72030]">{selectedType}</span>
-                    {selectedType !== "Gantt" && <span>▾</span>}
+                    <span>▾</span>
                 </button>
-                {isTypeOpen && selectedType !== "Gantt" && addType !== "Sprint-Gantt" && (
+                {isTypeOpen && (
                     <ul className="absolute left-0 mt-2 w-[150px] bg-white border border-gray-300 shadow-xl rounded-md z-10">
                         {TYPE_OPTIONS.map(({ key, icon, label }) => (
                             <li key={key}>
@@ -224,11 +220,11 @@ const TaskActions = ({
 
     return (
         <>
-            <div className="flex items-center justify-end mx-4 my-3 text-sm">
+            <div className="flex items-center justify-end mx-6 mt-4 mb-3 text-sm">
                 <div className="flex items-center gap-3 divide-x divide-gray-400">
-                    {addType !== "Issues" && addType !== "Sprint-Gantt"&& addType !== "Sprint-Gantt"&& !["Milestone", "Project","templates","archived"].includes(addType)  && renderTypeDropdown()}
-                    {addType !== "Issues" && !["Milestone", "Project", "Task", "active_projects","templates","archived"].includes(addType) && renderSprintTypeDropdown()}
-                    {addType !== "Milestone" && (
+                    {addType !== "Issues" && addType !== "Sprint-Gantt" && addType !== "Sprint-Gantt" && !["Milestone", "templates", "archived"].includes(addType) && renderTypeDropdown()}
+                    {addType !== "Issues" && !["Milestone", "Project", "Task", "active_projects", "templates", "archived"].includes(addType) && renderSprintTypeDropdown()}
+                    {addType !== "Milestone" && addType !== "templates"  && addType !== "archived" &&  (
                         <div
                             className="flex items-center gap-1 cursor-pointer pl-4"
                             onClick={() =>
@@ -238,25 +234,28 @@ const TaskActions = ({
 
                             }
                         >
-                            <Filter size={18} className={`${filter ? 'fill-[#C72030] text-[#C72030]' : 'text-gray-600'}`} />
+                            <Filter size={18} className={`${filter ? ' text-[#C72030]' : 'text-gray-600'}`} />
                         </div>
                     )}
-                    {addType !== "Milestone" && addType !== "Sprint-Gantt" && renderStatusDropdown()}
-                    <button
-                        onClick={handleAddClick}
-                        className="text-[12px] flex items-center justify-center gap-1 bg-red text-white px-3 py-2 w-40"
-                    >
-                        <Plus size={18} />{" "}
-                        {addType === "Sprint-Gantt"
-                            ? "Add Sprint"
-                            : addType === "Project"
-                                ? "Add Project"
-                                : addType === "Milestone"
-                                    ? "Add Milestone"
-                                    : addType === "Issues"
-                                        ? "Add Issue"
-                                        : "Add Task"}
-                    </button>
+                    {addType !== "Milestone" && addType !== "Sprint-Gantt" && addType !== "templates"&& addType !== "archived" && renderStatusDropdown()}
+
+                    {addType !== "templates" && addType !== "archived" &&  (
+                        <button
+                            onClick={handleAddClick}
+                            className="text-[12px] flex items-center justify-center gap-1 bg-red text-white px-3 py-2 w-40"
+                        >
+                            <Plus size={18} />{" "}
+                            {addType === "Sprint-Gantt"
+                                ? "Add Sprint"
+                                : addType === "Project"
+                                    ? "Add Project"
+                                    : addType === "Milestone"
+                                        ? "Add Milestone"
+                                        : addType === "Issues"
+                                            ? "Add Issue"
+                                            : "Add Task"}
+                        </button>
+                    )}
                 </div>
             </div>
 

@@ -400,70 +400,72 @@ const ProjectDetails = () => {
                     </div>
 
                     <div className="mt-3 overflow-hidden " ref={secondContentRef}>
-                        <div className="flex items-center">
-                            <div className="w-1/2 flex items-center justify-center gap-3">
-                                <div className="text-right text-[12px] font-[500]">
-                                    Project Manager :
+                        <div className="flex flex-col">
+                            <div className="flex items-center ml-36">
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">
+                                        Project Manager :
+                                    </div>
+                                    <div className="text-left text-[12px]">{project.project_owner_name}</div>
                                 </div>
-                                <div className="text-left text-[12px]">{project.project_owner_name}</div>
-                            </div>
-                            <div className="w-1/2 flex items-center justify-center gap-3">
-                                <div className="text-right text-[12px] font-[500]]">
-                                    Priority :
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]]">
+                                        Priority :
+                                    </div>
+                                    <div className="text-left text-[12px]">{project.priority?.charAt(0).toUpperCase() +
+                                        project.priority?.slice(1).toLowerCase() || ""}</div>
                                 </div>
-                                <div className="text-left text-[12px]">{project.priority?.charAt(0).toUpperCase() +
-                                    project.priority?.slice(1).toLowerCase() || ""}</div>
                             </div>
-                        </div>
 
-                        <span className="border h-[1px] inline-block w-full my-4"></span>
+                            <span className="border h-[1px] inline-block w-full my-4"></span>
 
-                        <div className="flex items-center">
-                            <div className="w-1/2 flex items-center justify-center gap-3">
-                                <div className="text-right text-[12px] font-[500]">
-                                    Project Type:
+                            <div className="flex items-center ml-36">
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">
+                                        Project Type:
+                                    </div>
+                                    <div className="text-left text-[12px]">{project.project_type_name}</div>
                                 </div>
-                                <div className="text-left text-[12px]">{project.project_type_name}</div>
-                            </div>
-                            <div className="w-1/2 flex items-center justify-center gap-3">
-                                <div className="text-right text-[12px] font-[500]">
-                                    MileStones :
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">
+                                        MileStones :
+                                    </div>
+                                    <div className="text-left text-[12px]"></div>
                                 </div>
-                                <div className="text-left text-[12px]"></div>
                             </div>
-                        </div>
 
-                        <span className="border h-[1px] inline-block w-full my-4"></span>
+                            <span className="border h-[1px] inline-block w-full my-4"></span>
 
-                        <div className="flex items-center">
-                            <div className="w-1/2 flex items-center justify-center gap-3">
-                                <div className="text-right text-[12px] font-[500]">
-                                    Start Date :
+                            <div className="flex items-center ml-36">
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">
+                                        Start Date :
+                                    </div>
+                                    <div className="text-left text-[12px]">{project.start_date}</div>
                                 </div>
-                                <div className="text-left text-[12px]">{project.start_date}</div>
-                            </div>
-                            <div className="w-1/2 flex items-center justify-center gap-3">
-                                <div className="text-right text-[12px] font-semibold">
-                                    Tasks :
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-semibold">
+                                        Tasks :
+                                    </div>
+                                    <div className="text-left text-[12px]"></div>
                                 </div>
-                                <div className="text-left text-[12px]"></div>
                             </div>
-                        </div>
 
-                        <span className="border h-[1px] inline-block w-full my-4"></span>
+                            <span className="border h-[1px] inline-block w-full my-4"></span>
 
-                        <div className="flex items-center">
-                            <div className="w-1/2 flex items-center justify-center gap-3">
-                                <div className="text-right text-[12px] font-[500]">
-                                    End Date :
+                            <div className="flex items-center ml-36">
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">
+                                        End Date :
+                                    </div>
+                                    <div className="text-left text-[12px]">{project.end_date}</div>
                                 </div>
-                                <div className="text-left text-[12px]">{project.end_date}</div>
-                            </div>
-                            <div className="w-1/2 flex items-center justify-center gap-3">
-                                <div className="text-right text-[12px] font-[500]">
-                                    Issues :
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">
+                                        Issues :
+                                    </div>
+                                    <div className="text-left text-[12px]"></div>
                                 </div>
-                                <div className="text-left text-[12px]"></div>
                             </div>
                         </div>
                     </div>

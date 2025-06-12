@@ -19,6 +19,8 @@ const AddMilestoneModal = ({
   isReadOnly = false,
   milestoneOptions,
   hasSavedMilestones,
+  projectStartDate,
+  projectEndDate,
 }) => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -93,6 +95,8 @@ const AddMilestoneModal = ({
             value={formData.startDate || ""}
             onChange={handleInputChange}
             type="date"
+            min={projectStartDate}
+            max={projectEndDate}
             className="w-full border outline-none border-gray-300 p-2 text-[12px] placeholder-shown:text-transparent"
             disabled={isReadOnly}
           />
@@ -107,6 +111,8 @@ const AddMilestoneModal = ({
             type="date"
             value={formData.endDate || ""}
             onChange={handleInputChange}
+            min={projectStartDate}
+            max={projectEndDate}
             className="w-full border outline-none border-gray-300 p-2 text-[12px]"
             disabled={isReadOnly}
           />
@@ -149,6 +155,7 @@ const Milestones = () => {
   const { fetchMilestone: milestone = [] } = useSelector((state) => state.fetchMilestone);
   const { createProject: project } = useSelector((state) => state.createProject);
   const { loading, success, error } = useSelector((state) => state.createMilestone);
+  const { fetchProjectDetails: projectDetail } = useSelector(state => state.fetchProjectDetails);
 
   const [nextId, setNextId] = useState(1);
   const [savedMilestones, setSavedMilestones] = useState([]);
@@ -194,6 +201,14 @@ const Milestones = () => {
     }
     if (!data.endDate) {
       toast.error("Milestone end date is required.");
+      return false;
+    }
+    if (data.startDate < projectDetail.startDate || data.startDate > projectDetail.endDate) {
+      toast.error("Start date must be within project duration.");
+      return false;
+    }
+    if (data.endDate < projectDetail.startDate || data.endDate > projectDetail.endDate) {
+      toast.error("End date must be within project duration.");
       return false;
     }
     return true;
@@ -281,21 +296,25 @@ const Milestones = () => {
             deleteMilestone={handleDeleteMilestone}
             users={users}
             formData={milestone.formData}
-            setFormData={() => { }} // No-op for read-only forms
+            setFormData={() => { }}
             isReadOnly={true}
             milestoneOptions={milestone}
             hasSavedMilestones={savedMilestones.length > 0}
+            projectStartDate={projectDetail.startDate}
+            projectEndDate={projectDetail.endDate}
           />
         ))}
         <AddMilestoneModal
           id={nextId}
-          deleteMilestone={() => { }} // No-op for current form
+          deleteMilestone={() => { }}
           users={users}
           formData={formData}
           setFormData={setFormData}
           isReadOnly={false}
           milestoneOptions={milestone}
           hasSavedMilestones={savedMilestones.length > 0}
+          projectStartDate={projectDetail.start_date}
+          projectEndDate={projectDetail.end_date}
         />
         <div className="relative">
           <button

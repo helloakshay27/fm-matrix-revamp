@@ -7,6 +7,7 @@ import {
     getPaginationRowModel,
 } from '@tanstack/react-table';
 import StatusBadge from '../Home/Projects/statusBadge';
+import { useLocation } from 'react-router-dom';
 
 // --- Input Components for Inline Add Row ---
 const InlineAddTextField = ({ value, onChange, onEnterPress, inputRef, placeholder, className, validator }) => {
@@ -48,6 +49,7 @@ const CustomTable = ({
     showDropdown = false,
     inlineAddButtonText = "+ Add Item Inline" // Text for the button at the bottom of the table
 }) => {
+    const location = useLocation();
     const [pagination, setPagination] = useState({
         pageIndex: 0,
         pageSize: fixedRowsPerPage,
@@ -189,7 +191,7 @@ const CustomTable = ({
 
     return (
         <>
-            <div className={`px-4 pl-7 pt-4 ${isInline ? "flex justify-between items-center" : ""}`}>
+            <div className={`px-4 pl-7 ${!location.pathname.startsWith('/sprint-list') && "pt-4"} ${isInline ? "flex justify-between items-center" : ""}`}>
                 <div className={isInline ? "" : "bg-[#F5F7F7] px-3 py-1 rounded inline-block"}>
                     <h1 className="text-sm text-gray-800 flex items-center gap-1">
                         {title}
