@@ -386,6 +386,21 @@ export const removeMembersFromTeam = createAsyncThunk('removeMembersFromTeam', a
     }
 })
 
+export const removeMembersFromGroup = createAsyncThunk('removeMembersFromGroup', async ({ id }) => {
+    try {
+        const response = await axios.delete(`https://api-tasks.lockated.com/project_group_members/${id}.json`, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            },
+        })
+        return response.data;
+    }
+    catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
 export const createProjectSlice = createApiSlice('createProject', createProject);
 export const fetchProjectsSlice = createApiSlice('fetchProjects', fetchProjects);
 export const fetchProjectDetailsSlice = createApiSlice('fetchProjectDetails', fetchProjectDetails);
@@ -407,6 +422,7 @@ export const fetchProjectTeamSlice = createApiSlice('fetchProjectTeam', fetchPro
 export const updateProjectTeamSlice = createApiSlice('updateProjectTeam', updateProjectTeam);
 export const removeTagFromProjectSlice = createApiSlice('removeTagFromProject', removeTagFromProject);
 export const removeMembersFromTeamSlice = createApiSlice('removeMembersFromTeam', removeMembersFromTeam);
+export const removeMembersFromGroupSlice = createApiSlice('removeMembersFromGroup', removeMembersFromGroup);
 
 
 export const createProjectReducer = createProjectSlice.reducer;
@@ -430,5 +446,6 @@ export const fetchProjectTeamReducer = fetchProjectTeamSlice.reducer;
 export const updateProjectTeamReducer = updateProjectTeamSlice.reducer;
 export const removeTagFromProjectReducer = removeTagFromProjectSlice.reducer;
 export const removeMembersFromTeamReducer = removeMembersFromTeamSlice.reducer;
+export const removeMembersFromGroupReducer = removeMembersFromGroupSlice.reducer;
 
 export const { resetSuccess } = createProjectTeamSlice.actions;

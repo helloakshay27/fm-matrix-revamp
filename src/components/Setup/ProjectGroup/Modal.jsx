@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
     createProjectGroup,
     fetchProjectGroup,
+    removeMembersFromGroup,
+    removeMembersFromTeam,
     updateProjectGroup
 } from '../../../redux/slices/projectSlice';
 
@@ -15,11 +17,12 @@ import {toast} from "react-hot-toast";
 
 const Modal = ({ openModal, setOpenModal, editMode, existingData }) => {
     console.log(existingData);
-  const alreadySelectedUsers = existingData?.project_group_members.map((user)=>({value:user.user_id,label:user.user_name})); 
+  const alreadySelectedUsers = existingData?.project_group_members.map((user)=>({value:user.user_id,label:user.user_name,id:user.id})); 
   const [groupName, setGroupName] = useState(editMode ? existingData?.name || '' : '');
   const [selectedUsers, setSelectedUsers] = useState(editMode ? alreadySelectedUsers || [] : []);
   const [warningOpen, setWarningOpen] = useState(false);
   const [error, setError] = useState('');
+  const [prevMembers, setPrevMembers] = useState(editMode ? alreadySelectedUsers || [] : []);
 
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.createProjectGroup);
@@ -38,7 +41,7 @@ const Modal = ({ openModal, setOpenModal, editMode, existingData }) => {
     dispatch(fetchUsers());
   }, [dispatch]);
 
-  const handleSave = useCallback(async() => {
+  const handleSave =async() => {
     console.log(editMode);
     setWarningOpen(false);
     setError('');
@@ -50,6 +53,9 @@ const Modal = ({ openModal, setOpenModal, editMode, existingData }) => {
      if(selectedUsers.length===0){ setWarningOpen(true);
       setError('Please select at least one user');
       return;}
+
+    console.log(selectedUsers);
+    
     const payload = {
       name: trimmedName.toLowerCase(),
       created_by_id: 158,
@@ -82,10 +88,20 @@ const Modal = ({ openModal, setOpenModal, editMode, existingData }) => {
     console.log(error);
    }
        
-  }, [groupName, selectedUsers, editMode, existingData, resetModal, dispatch]);
+  }
 
   const handleChange=(values)=>{
-     setSelectedUsers(values);
+    
+    console.log(values);
+    const removed = prevMembers.find(
+  (prev) => !values.some((curr) => curr.value === prev.value)
+);
+    console.log(removed);
+    if(removed && editMode ){
+      dispatch(removeMembersFromGroup({id:removed.id}));
+    }
+    setPrevMembers(values);
+    setSelectedUsers(values);
   }
 
   

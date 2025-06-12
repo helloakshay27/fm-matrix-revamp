@@ -43,9 +43,9 @@ const Details = () => {
        setRole(formattedValue?.charAt(0).toUpperCase() + formattedValue?.slice(1));
     }
     if(users){
-        const user=users.find((user) => user.id == details.report_to_id);
+        const user=users.find((user) => user.id == details?.report_to_id);
         console.log(user);
-        setReportsTo(user.firstname + " " + user.lastname);
+        setReportsTo(user?.firstname + " " + user?.lastname);
     }
    },[users,roles])
 
@@ -63,7 +63,7 @@ const Details = () => {
                             <span>{`Email Id :${details?.email}`}</span>
                             <span>{`Role : ${role}`}</span>
                             <span>{`Reports To: ${reportsTo}`}</span>
-                            <span className='text-green-500'>Active</span>
+                            <span className={`${details?.active ? "text-green-500" : "text-yellow-500"}`}>{details?.active ? "Active" : "Inactive"}</span>
                         </div>
                     </div>
                 </div>

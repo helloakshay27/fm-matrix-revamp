@@ -34,6 +34,7 @@ export const store = configureStore({
     updateProjectTeam: updateProjectTeamReducer,
     removeTagFromProject: removeTagFromProjectReducer,
     removeMembersFromTeam: removeMembersFromTeamReducer,
+    removeMembersFromGroup: removeTagFromProjectReducer,
 
     //tasks
     createTask: createTaskReducer,
