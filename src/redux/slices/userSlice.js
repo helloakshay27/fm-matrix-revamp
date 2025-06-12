@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const access_token = 'bTcVnWgQrF6QCdNbMiPXzCZNAqsN9qoEfFWdFQ1Auk4';
+const access_token = localStorage.getItem("token");
 
 // Generic slice factory
 const createApiSlice = (name, fetchThunk) => createSlice({
@@ -91,7 +91,7 @@ export const createExternalUser = createAsyncThunk('createExternalUser', async (
     }
 });
 
-export const fetchInternalUserDetails = createAsyncThunk('fetchInternalUserDetails', async ( id ) => {
+export const fetchInternalUserDetails = createAsyncThunk('fetchInternalUserDetails', async (id) => {
     try {
         const response = await axios.get(`https://api-tasks.lockated.com/user_details/${id}.json`, {
             headers: {
@@ -150,6 +150,21 @@ export const LoginUser = createAsyncThunk('LoginUser', async (payload) => {
     }
 })
 
+export const removeUserFromProject = createAsyncThunk('removeUserFromProject', async ({ id }) => {
+    try {
+        const response = await axios.delete(`https://api-tasks.lockated.com/task_users/${id}.json`, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            },
+        })
+        return response.data;
+    }
+    catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
 // Create slices
 export const userSlice = createApiSlice('fetchUsers', fetchUsers);
 export const createInternalUserSlice = createApiSlice('createInternalUser', createInternalUser);
@@ -158,6 +173,7 @@ export const createExternalUserSlice = createApiSlice('createExternalUser', crea
 export const fetchExternalUserSlice = createApiSlice('fetchExternalUser', fetchExternalUser);
 export const fetchUpdateUserSlice = createApiSlice('fetchUpdateUser', fetchUpdateUser);
 export const fetchInternalUserDetailsSlice = createApiSlice('fetchInternalUserDetails', fetchInternalUserDetails);
+export const removeUserFromProjectSlice = createApiSlice('removeUserFromProject', removeUserFromProject);
 
 
 // Export reducers
@@ -168,3 +184,4 @@ export const createExternalUserReducer = createExternalUserSlice.reducer;
 export const fetchExternalUserReducer = fetchExternalUserSlice.reducer;
 export const fetchUpdatelUserReducer = fetchUpdateUserSlice.reducer;
 export const fetchInternalUserDetailsReducer = fetchInternalUserDetailsSlice.reducer;
+export const removeUserFromProjectReducer = removeUserFromProjectSlice.reducer;

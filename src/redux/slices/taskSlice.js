@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const access_token = 'bTcVnWgQrF6QCdNbMiPXzCZNAqsN9qoEfFWdFQ1Auk4'
+const access_token = localStorage.getItem("token");
 
 const createApiSlice = (name, fetchThunk) => createSlice({
     name,
@@ -236,7 +236,7 @@ export const fetchTasksOfProject = createAsyncThunk('fetchTasksOfProject', async
 });
 
 export const filterTask = createAsyncThunk('filterTask',
-        async (filter, { rejectWithValue }) => {
+    async (filter, { rejectWithValue }) => {
         try {
             const params = new URLSearchParams(filter).toString();
             console.log(params);

@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const access_token = 'bTcVnWgQrF6QCdNbMiPXzCZNAqsN9qoEfFWdFQ1Auk4'
+const access_token = localStorage.getItem("token");
 
 const createApiSlice = (name, fetchThunk) => createSlice({
     name,
@@ -33,52 +33,53 @@ const createApiSlice = (name, fetchThunk) => createSlice({
     },
 });
 
-export const createIssue=createAsyncThunk("createIssue",async(data)=>{
-       try{
-      const response =await axios.post("https://api-tasks.lockated.com/issues.json",{issue:data},{
-        headers: {
-            Authorization: `Bearer ${access_token}`,
-          },
-         
-      });
-    
-    return response.data;
-} 
-    catch(error){
-         console.log(error);
+export const createIssue = createAsyncThunk("createIssue", async (data) => {
+    try {
+        const response = await axios.post("https://api-tasks.lockated.com/issues.json", { issue: data }, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            },
+
+        });
+
+        return response.data;
+    }
+    catch (error) {
+        console.log(error);
     }
 })
 
-export const fetchIssue=createAsyncThunk("fetchIssue",async()=>{
-       try{
-      const response =await axios.get("https://api-tasks.lockated.com/issues.json",{
-        headers: {
-            Authorization: `Bearer ${access_token}`,
-          },
-         
-      });
-    
-    return response.data;
-} 
-    catch(error){
-         console.log(error);
+export const fetchIssue = createAsyncThunk("fetchIssue", async () => {
+    try {
+        const response = await axios.get("https://api-tasks.lockated.com/issues.json", {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            },
+
+        });
+
+        return response.data;
+    }
+    catch (error) {
+        console.log(error);
     }
 })
 
-export const updateIssue=createAsyncThunk("updateIssue",async({id,payload})=>{
-       try{
-      const response =await axios.put(`https://api-tasks.lockated.com/issues/${id}.json`,{
-        issue:payload},{
-        headers: {
-            Authorization: `Bearer ${access_token}`,
-          },
-         
-      });
-    
-    return response.data;
-} 
-    catch(error){
-         console.log(error);
+export const updateIssue = createAsyncThunk("updateIssue", async ({ id, payload }) => {
+    try {
+        const response = await axios.put(`https://api-tasks.lockated.com/issues/${id}.json`, {
+            issue: payload
+        }, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            },
+
+        });
+
+        return response.data;
+    }
+    catch (error) {
+        console.log(error);
     }
 })
 

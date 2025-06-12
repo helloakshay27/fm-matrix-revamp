@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const access_token = 'bTcVnWgQrF6QCdNbMiPXzCZNAqsN9qoEfFWdFQ1Auk4';
+const access_token = localStorage.getItem("token");
 
 const createApiSlice = (name, fetchThunk) => createSlice({
     name,

@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit'
-import { changeProjectStatusReducer, createProject, createProjectReducer, createProjectTypesReducer, deleteProjectReducer, editProjectReducer, fetchProjectDetailsReducer, fetchProjectsReducer, fetchProjectTypeReducer, fetchTemplatesReducer, filterProjectsReducer, updateProjectTypeReducer, fetchProjectGroupReducer, createProjectGroupReducer, updateProjectGroupReducer, createProjectTeamReducer, fetchProjectTeamsReducer, fetchProjectTeamReducer, updateProjectTeamReducer } from './slices/projectSlice'
-import { createExternalUserReducer, fetchInternalUserDetailsReducer,createInternalUserReducer, fetchExternalUserReducer, fetchInternalUserReducer, fetchUpdatelUserReducer, userReducer } from './slices/userSlice'
+import { changeProjectStatusReducer, createProject, createProjectReducer, createProjectTypesReducer, deleteProjectReducer, editProjectReducer, fetchProjectDetailsReducer, fetchProjectsReducer, fetchProjectTypeReducer, fetchTemplatesReducer, filterProjectsReducer, updateProjectTypeReducer, fetchProjectGroupReducer, createProjectGroupReducer, updateProjectGroupReducer, createProjectTeamReducer, fetchProjectTeamsReducer, fetchProjectTeamReducer, updateProjectTeamReducer, removeTagFromProjectReducer } from './slices/projectSlice'
+import { createExternalUserReducer, createInternalUserReducer, fetchExternalUserReducer, fetchInternalUserDetailsReducer, fetchInternalUserReducer, fetchUpdatelUserReducer, removeUserFromProjectReducer, userReducer } from './slices/userSlice'
 import { createTagReducer, deleteTagReducer, fetchTagsReducer, updateTagReducer } from './slices/tagsSlice'
 import { createRoleReducer, editRoleReducer, fetchRolesReducer } from './slices/roleSlice'
 import { changeTaskStatusReducer, createDependancyReducer, createTaskCommentReducer, createTaskReducer, editTaskCommentReducer, editTaskReducer, fetchTasksOfProjectReducer, fetchTasksReducer, filterTaskReducer, taskDetailsReducer, updateDependancyReducer } from './slices/taskSlice'
@@ -32,6 +32,7 @@ export const store = configureStore({
     fetchProjectTeams: fetchProjectTeamsReducer,
     fetchProjectTeam: fetchProjectTeamReducer,
     updateProjectTeam: updateProjectTeamReducer,
+    removeTagFromProject: removeTagFromProjectReducer,
 
     //tasks
     createTask: createTaskReducer,
@@ -76,6 +77,7 @@ export const store = configureStore({
     fetchExternalUser: fetchExternalUserReducer,
     fetchUpdateUser: fetchUpdatelUserReducer,
     fetchInternalUserDetails: fetchInternalUserDetailsReducer,
+    removeUserFromProject: removeUserFromProjectReducer,
 
     //tags
     fetchTags: fetchTagsReducer,

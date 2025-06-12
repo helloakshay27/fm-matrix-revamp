@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const access_token = 'bTcVnWgQrF6QCdNbMiPXzCZNAqsN9qoEfFWdFQ1Auk4'
+const access_token = localStorage.getItem("token");
 
 const createApiSlice = (name, fetchThunk) => createSlice({
     name,
@@ -361,6 +361,21 @@ export const updateProjectTeam = createAsyncThunk('updateProjectTeam', async ({ 
     }
 })
 
+export const removeTagFromProject = createAsyncThunk('removeTagFromProject', async ({ id }) => {
+    try {
+        const response = await axios.delete(`https://api-tasks.lockated.com/task_tags/${id}.json`, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            },
+        })
+        return response.data;
+    }
+    catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
 export const createProjectSlice = createApiSlice('createProject', createProject);
 export const fetchProjectsSlice = createApiSlice('fetchProjects', fetchProjects);
 export const fetchProjectDetailsSlice = createApiSlice('fetchProjectDetails', fetchProjectDetails);
@@ -380,6 +395,7 @@ export const createProjectTeamSlice = createApiSlice('createProjectTeam', create
 export const fetchProjectTeamsSlice = createApiSlice('fetchProjectTeams', fetchProjectTeams);
 export const fetchProjectTeamSlice = createApiSlice('fetchProjectTeam', fetchProjectTeam);
 export const updateProjectTeamSlice = createApiSlice('updateProjectTeam', updateProjectTeam);
+export const removeTagFromProjectSlice = createApiSlice('removeTagFromProject', removeTagFromProject);
 
 
 export const createProjectReducer = createProjectSlice.reducer;
@@ -401,5 +417,6 @@ export const createProjectTeamReducer = createProjectTeamSlice.reducer;
 export const fetchProjectTeamsReducer = fetchProjectTeamsSlice.reducer;
 export const fetchProjectTeamReducer = fetchProjectTeamSlice.reducer;
 export const updateProjectTeamReducer = updateProjectTeamSlice.reducer;
+export const removeTagFromProjectReducer = removeTagFromProjectSlice.reducer;
 
 export const { resetSuccess } = createProjectTeamSlice.actions;
