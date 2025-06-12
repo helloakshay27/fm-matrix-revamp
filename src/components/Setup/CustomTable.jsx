@@ -189,7 +189,32 @@ const CustomTable = ({
 
     return (
         <>
-           
+            <div className={`px-4 pl-7 pt-4 ${isInline ? "flex justify-between items-center" : ""}`}>
+                <div className={isInline ? "" : "bg-[#F5F7F7] px-3 py-1 rounded inline-block"}>
+                    <h1 className="text-sm text-gray-800 flex items-center gap-1">
+                        {title}
+                        {/* {showDropdown && (
+                            <svg className="w-4 h-4 ml-1 text-gray-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        )}Add commentMore actions */}
+                    </h1>
+                </div>
+                {!isInline && <div className="border-b border-gray-200 mt-2"></div>}
+                {buttonText && onAdd && (
+                    <div className={`${isInline ? "" : "flex justify-end mt-4 mr-3"}`}>
+                        <button
+                            className="bg-[#C62828] hover:bg-[#B71C1C] text-white text-sm font-medium px-5 py-2 rounded flex items-center gap-1"
+                            onClick={onAdd}
+                            disabled={isAddingInlineItem || isSavingInlineItem}
+                        >
+                            <span className="text-base font-bold">+</span>
+                            {buttonText}
+                            <span className="ml-1 text-xs">▾</span>
+                        </button>
+                    </div>
+                )}
+            </div>
 
             {inlineItemLocalError && isAddingInlineItem && (
                 <div className="px-4 pl-7 mt-2 mb-2">
