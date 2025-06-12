@@ -24,7 +24,9 @@ const TaskForm = ({
   prevObservers,
   setPrevObservers,
   isEdit,
-  dispatch
+  dispatch,
+  milestoneStartDate,
+  milestoneEndDate
 }) => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -214,6 +216,8 @@ const TaskForm = ({
           selectedDate={formData.expected_start_date}
           title="Start Date"
           disabled={isReadOnly}
+          minDate={milestoneStartDate}
+          maxDate={milestoneEndDate}
         />
       </div>
 
@@ -223,6 +227,8 @@ const TaskForm = ({
           selectedDate={formData.target_date}
           title="End Date"
           disabled={isReadOnly}
+          minDate={milestoneStartDate}
+          maxDate={milestoneEndDate}
         />
       </div>
 
@@ -269,12 +275,8 @@ const Tasks = ({ isEdit }) => {
   const { fetchUsers: users = [] } = useSelector((state) => state.fetchUsers);
   const { fetchTags: tags = [] } = useSelector((state) => state.fetchTags);
   const { taskDetails: task } = useSelector((state) => state.taskDetails);
-  const { fetchProjectDetails: project } = useSelector(
-    (state) => state.fetchProjectDetails
-  );
-  const { fetchMilestoneById: milestone } = useSelector(
-    (state) => state.fetchMilestoneById
-  );
+  const { fetchProjectDetails: project } = useSelector((state) => state.fetchProjectDetails);
+  const { fetchMilestoneById: milestone } = useSelector((state) => state.fetchMilestoneById);
   const {
     loading: editLoading,
     success: editSuccess,
@@ -469,6 +471,8 @@ const Tasks = ({ isEdit }) => {
             setPrevObservers={setPrevObservers}
             isEdit={isEdit}
             dispatch={dispatch}
+            milestoneStartDate={milestone?.start_date}
+            milestoneEndDate={milestone?.end_date}
           />
         ))}
         <TaskForm
@@ -485,6 +489,8 @@ const Tasks = ({ isEdit }) => {
           setPrevObservers={setPrevObservers}
           isEdit={isEdit}
           dispatch={dispatch}
+          milestoneStartDate={milestone?.start_date}
+          milestoneEndDate={milestone?.end_date}
         />
         {!isEdit && (
           <div className="relative">
