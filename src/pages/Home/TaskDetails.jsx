@@ -520,9 +520,8 @@ const TaskDetails = () => {
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if ((dropdownRef.current || workflowDropdownRef.current) && (!dropdownRef.current.contains(event.target) || !workflowDropdownRef.current.contains(event.target))) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setOpenDropdown(false);
-                setOpenWorkflowDropdown(false);
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
