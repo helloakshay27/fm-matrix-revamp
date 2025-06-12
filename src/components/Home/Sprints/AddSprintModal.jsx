@@ -22,10 +22,10 @@ const AddSprintModal = ({ isSprintModalOpen, setIsSprintModalOpen }) => {
             x: "100%",
             duration: 0.5,
             ease: "power3.in",
-            onComplete: () => setIsModalOpen(false),
+            onComplete: () => setIsSprintModalOpen(false),
         });
 
-        
+
     };
 
     return (
