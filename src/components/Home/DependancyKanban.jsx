@@ -80,13 +80,17 @@ const DependancyKanban = () => {
             {
                 ["List of Tasks", "Predecessor", "Main Task", "Successor"].map(card => {
                     const filteredTasks = taskData.filter(task => task.section === card);
+
+                    const isDropDisabled = card === "Main Task" || card === "List of Tasks";
+                    const dropHandler = isDropDisabled ? () => { } : handleDrop;
+
                     return (
-                        <DependancyKanbanBoard title={card} onDrop={handleDrop} key={card}>
+                        <DependancyKanbanBoard title={card} onDrop={dropHandler} key={card}>
                             {
                                 filteredTasks.length > 0 ? (
                                     filteredTasks.map((task) => (
                                         <div key={task.id} className="w-full">
-                                            <DependancyBoardCard task={task} />
+                                            <DependancyBoardCard task={task} draggable={card !== "Main Task"} />
                                         </div>
                                     ))
                                 ) : <img src="/draganddrop.svg" alt="svg" className="w-full" />
@@ -97,6 +101,7 @@ const DependancyKanban = () => {
             }
         </div>
     );
+
 };
 
 export default DependancyKanban;
