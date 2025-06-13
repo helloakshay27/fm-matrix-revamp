@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -41,6 +42,7 @@ import { ProjectsDashboard } from "./pages/ProjectsDashboard";
 import { ProjectDashboard } from "./pages/ProjectDashboard";
 import { AddProjectDashboard } from "./pages/AddProjectDashboard";
 import { FitoutSetupDashboard } from "./pages/FitoutSetupDashboard";
+import { OutstationDashboard } from "./pages/OutstationDashboard";
 
 const queryClient = new QueryClient();
 
@@ -71,8 +73,8 @@ const App = () => (
                   <Route path="/surveys/response" element={<SurveyResponseDashboard />} />
                   <Route path="/assets/inactive" element={<InActiveAssetsDashboard />} />
                   <Route path="/projects" element={<ProjectDashboard />} />
-                  <Route path="/projects/add" element={<AddProjectDashboard />} />
                   <Route path="/projects/fitout-setup" element={<FitoutSetupDashboard />} />
+                  <Route path="/projects/add" element={<AddProjectDashboard />} />
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
                   <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
                   <Route path="/visitors/r-vehicles" element={<RVehiclesDashboard />} />
@@ -86,6 +88,7 @@ const App = () => (
                   <Route path="/visitors/goods/inwards" element={<InwardsDashboard />} />
                   <Route path="/visitors/goods/outwards" element={<OutwardsDashboard />} />
                   <Route path="/visitors/vehicle-parkings" element={<VehicleParkingDashboard />} />
+                  <Route path="/visitors/outstation" element={<OutstationDashboard />} />
                   <Route path="/experience/events" element={<EventsDashboard />} />
                   <Route path="/experience/broadcast" element={<BroadcastDashboard />} />
                   <Route path="/experience/business" element={<BusinessDirectoryDashboard />} />
