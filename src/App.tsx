@@ -15,6 +15,7 @@ import { AttendanceDashboard } from "./pages/AttendanceDashboard";
 import { SurveyListDashboard } from "./pages/SurveyListDashboard";
 import { SurveyMappingDashboard } from "./pages/SurveyMappingDashboard";
 import { SurveyResponseDashboard } from "./pages/SurveyResponseDashboard";
+import { TaskDashboard } from "./pages/TaskDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/schedule" element={<ScheduleDashboard />} />
               <Route path="/amc" element={<AMCDashboard />} />
               <Route path="/attendance" element={<AttendanceDashboard />} />
+              <Route path="/tasks" element={<TaskDashboard />} />
               <Route path="/surveys/list" element={<SurveyListDashboard />} />
               <Route path="/surveys/mapping" element={<SurveyMappingDashboard />} />
               <Route path="/surveys/response" element={<SurveyResponseDashboard />} />
