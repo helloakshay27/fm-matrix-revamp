@@ -38,6 +38,7 @@ import { DocumentsCommonDashboard } from "./pages/DocumentsCommonDashboard";
 import { BusinessDirectoryDashboard } from "./pages/BusinessDirectoryDashboard";
 import { BusinessSetupDashboard } from "./pages/BusinessSetupDashboard";
 import { ProjectsDashboard } from "./pages/ProjectsDashboard";
+import { ProjectDashboard } from "./pages/ProjectDashboard";
 import { AddProjectDashboard } from "./pages/AddProjectDashboard";
 import { FitoutSetupDashboard } from "./pages/FitoutSetupDashboard";
 
@@ -69,8 +70,9 @@ const App = () => (
                   <Route path="/surveys/mapping" element={<SurveyMappingDashboard />} />
                   <Route path="/surveys/response" element={<SurveyResponseDashboard />} />
                   <Route path="/assets/inactive" element={<InActiveAssetsDashboard />} />
-                  <Route path="/projects" element={<ProjectsDashboard />} />
+                  <Route path="/projects" element={<ProjectDashboard />} />
                   <Route path="/projects/add" element={<AddProjectDashboard />} />
+                  <Route path="/projects/fitout-setup" element={<FitoutSetupDashboard />} />
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
                   <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
                   <Route path="/visitors/r-vehicles" element={<RVehiclesDashboard />} />
