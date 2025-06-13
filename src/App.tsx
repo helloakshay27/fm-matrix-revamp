@@ -80,6 +80,8 @@ const App = () => (
                   <Route path="/visitors/vehicle-parkings" element={<VehicleParkingDashboard />} />
                   <Route path="/experience/events" element={<EventsDashboard />} />
                   <Route path="/experience/broadcast" element={<BroadcastDashboard />} />
+                  <Route path="/experience/business" element={<BusinessDirectoryDashboard />} />
+                  <Route path="/experience/business/setup" element={<BusinessSetupDashboard />} />
                   <Route path="/experience/documents/unit" element={<DocumentsUnitDashboard />} />
                   <Route path="/experience/documents/common" element={<DocumentsCommonDashboard />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
