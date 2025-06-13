@@ -21,6 +21,14 @@ import { SetupDashboard } from "./pages/SetupDashboard";
 import NotFound from "./pages/NotFound";
 import { VehicleParkingDashboard } from "./pages/VehicleParkingDashboard";
 import { VisitorsDashboard } from "./pages/VisitorsDashboard";
+import { VisitorsHistoryDashboard } from "./pages/VisitorsHistoryDashboard";
+import { RVehiclesDashboard } from "./pages/RVehiclesDashboard";
+import { GVehiclesDashboard } from "./pages/GVehiclesDashboard";
+import { StaffsDashboard } from "./pages/StaffsDashboard";
+import { MaterialsDashboard } from "./pages/MaterialsDashboard";
+import { PatrollingDashboard } from "./pages/PatrollingDashboard";
+import { PatrollingPendingDashboard } from "./pages/PatrollingPendingDashboard";
+import { GoodsInOutDashboard } from "./pages/GoodsInOutDashboard";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +59,14 @@ const App = () => (
                   <Route path="/surveys/response" element={<SurveyResponseDashboard />} />
                   <Route path="/assets/inactive" element={<InActiveAssetsDashboard />} />
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
+                  <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
+                  <Route path="/visitors/r-vehicles" element={<RVehiclesDashboard />} />
+                  <Route path="/visitors/g-vehicles" element={<GVehiclesDashboard />} />
+                  <Route path="/visitors/staffs" element={<StaffsDashboard />} />
+                  <Route path="/visitors/materials" element={<MaterialsDashboard />} />
+                  <Route path="/visitors/patrolling" element={<PatrollingDashboard />} />
+                  <Route path="/visitors/patrolling-pending" element={<PatrollingPendingDashboard />} />
+                  <Route path="/visitors/goods" element={<GoodsInOutDashboard />} />
                   <Route path="/visitors/vehicle-parkings" element={<VehicleParkingDashboard />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />

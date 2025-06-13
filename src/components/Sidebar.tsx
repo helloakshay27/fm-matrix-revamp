@@ -29,7 +29,11 @@ import {
   DollarSign,
   Receipt,
   CreditCard,
-  Banknote
+  Banknote,
+  History,
+  UserX,
+  Boxes,
+  Shield
 } from 'lucide-react';
 import { useLayout } from '../contexts/LayoutContext';
 
@@ -72,9 +76,15 @@ const wasteGenerationItems = [
 ];
 
 const visitorsItems = [
-  { name: 'Visitors', href: '/visitors/visitors' },
-  { name: 'Visitors History', href: '/visitors/history' },
-  { name: 'Materials', href: '/visitors/materials' },
+  { name: 'Visitors', href: '/visitors/visitors', icon: Eye },
+  { name: 'Visitors History', href: '/visitors/history', icon: History },
+  { name: 'R Vehicles', href: '/visitors/r-vehicles', icon: Car },
+  { name: 'G Vehicles', href: '/visitors/g-vehicles', icon: Car },
+  { name: 'Staffs', href: '/visitors/staffs', icon: Users },
+  { name: 'Materials', href: '/visitors/materials', icon: Boxes },
+  { name: 'Patrolling', href: '/visitors/patrolling', icon: Shield },
+  { name: 'Patrolling Pending Approvals', href: '/visitors/patrolling-pending', icon: UserX },
+  { name: 'Goods In/Out', href: '/visitors/goods', icon: Package },
 ];
 
 const experienceItems = [
@@ -343,16 +353,23 @@ export const Sidebar = () => {
       case 'Visitors':
         return (
           <nav className="space-y-2">
-            {visitorsItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <Eye className="w-5 h-5" />
-                {item.name}
-              </a>
-            ))}
+            {visitorsItems.map((item) => {
+              const isActive = currentPath === item.href;
+              return (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-[#C72030] text-white'
+                      : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
+                  }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  {item.name}
+                </a>
+              );
+            })}
           </nav>
         );
 
