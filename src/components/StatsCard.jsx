@@ -1,14 +1,7 @@
 
 import React from 'react';
 
-interface StatsCardProps {
-  title: string;
-  value: string | number;
-  color: 'orange' | 'green' | 'red';
-  icon: React.ReactNode;
-}
-
-export const StatsCard: React.FC<StatsCardProps> = ({ title, value, color, icon }) => {
+export const StatsCard = ({ title, value, color, icon }) => {
   return (
     <div className="bg-[#f6f4ee] p-6 rounded-xl shadow-sm">
       <div className="flex items-center justify-between">
