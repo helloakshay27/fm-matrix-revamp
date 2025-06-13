@@ -15,7 +15,7 @@ export const AssetDashboard = () => {
       <main className="ml-64 pt-16 p-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-[#1a1a1a] mb-2">Asset Management</h1>
-          <p className="text-[#1a1a1a] opacity-70">Assets > Asset List</p>
+          <p className="text-[#1a1a1a] opacity-70">Assets &gt; Asset List</p>
         </div>
         
         {/* Stats Cards */}
