@@ -23,6 +23,7 @@ import { VehicleParkingDashboard } from "./pages/VehicleParkingDashboard";
 import { VisitorsDashboard } from "./pages/VisitorsDashboard";
 import { VisitorsHistoryDashboard } from "./pages/VisitorsHistoryDashboard";
 import { RVehiclesDashboard } from "./pages/RVehiclesDashboard";
+import { RVehiclesHistoryDashboard } from "./pages/RVehiclesHistoryDashboard";
 import { GVehiclesDashboard } from "./pages/GVehiclesDashboard";
 import { StaffsDashboard } from "./pages/StaffsDashboard";
 import { MaterialsDashboard } from "./pages/MaterialsDashboard";
@@ -61,6 +62,7 @@ const App = () => (
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
                   <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
                   <Route path="/visitors/r-vehicles" element={<RVehiclesDashboard />} />
+                  <Route path="/visitors/r-vehicles/history" element={<RVehiclesHistoryDashboard />} />
                   <Route path="/visitors/g-vehicles" element={<GVehiclesDashboard />} />
                   <Route path="/visitors/staffs" element={<StaffsDashboard />} />
                   <Route path="/visitors/materials" element={<MaterialsDashboard />} />
