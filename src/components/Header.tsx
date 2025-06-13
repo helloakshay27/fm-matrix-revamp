@@ -17,16 +17,16 @@ export const Header = () => {
       <div className="flex items-center justify-between h-full px-6">
         <div className="flex items-center gap-6">
           {/* Home Dashboard */}
-          <button className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
+          <a href="/" className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
             <Home className="w-4 h-4" />
-            <span className="text-sm font-medium">Home </span>
-          </button>
+            <span className="text-sm font-medium">Home</span>
+          </a>
 
-          {/* Setup Dropdown */}
-          <button className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
-            <Home className="w-4 h-4" />
+          {/* Setup Navigation */}
+          <a href="/setup" className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
+            <Settings className="w-4 h-4" />
             <span className="text-sm font-medium">Setup</span>
-          </button>
+          </a>
 
           {/* Project Change Dropdown */}
           <DropdownMenu>
