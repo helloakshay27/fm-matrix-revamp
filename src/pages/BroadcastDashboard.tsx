@@ -1,10 +1,11 @@
-
 import React, { useState } from 'react';
 import { Plus, Filter, Search, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AddBroadcastModal } from '@/components/AddBroadcastModal';
+import { BroadcastFilterModal } from '@/components/BroadcastFilterModal';
 
 const broadcastData = [
   {
@@ -66,6 +67,8 @@ const broadcastData = [
 
 export const BroadcastDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
 
   return (
     <div className="p-6 space-y-6">
@@ -80,11 +83,18 @@ export const BroadcastDashboard = () => {
       {/* Action Bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button className="bg-purple-700 hover:bg-purple-800 text-white">
+          <Button 
+            className="bg-purple-700 hover:bg-purple-800 text-white"
+            onClick={() => setShowAddModal(true)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
-          <Button variant="outline" className="border-gray-300">
+          <Button 
+            variant="outline" 
+            className="border-gray-300"
+            onClick={() => setShowFilterModal(true)}
+          >
             <Filter className="w-4 h-4 mr-2" />
             Filter
           </Button>
@@ -168,6 +178,10 @@ export const BroadcastDashboard = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Modals */}
+      <AddBroadcastModal open={showAddModal} onOpenChange={setShowAddModal} />
+      <BroadcastFilterModal open={showFilterModal} onOpenChange={setShowFilterModal} />
     </div>
   );
 };
