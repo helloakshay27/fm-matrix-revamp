@@ -29,6 +29,7 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (path.startsWith('/attendance')) return 'Maintenance';
     if (path.startsWith('/schedule')) return 'Maintenance';
     if (path.startsWith('/supplier')) return 'Maintenance';
+    if (path.startsWith('/assets')) return 'Maintenance';
     if (path === '/') return 'Maintenance'; // Asset dashboard is under Maintenance
     return 'Maintenance';
   };

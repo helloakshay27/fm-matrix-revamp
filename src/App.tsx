@@ -16,6 +16,7 @@ import { SurveyListDashboard } from "./pages/SurveyListDashboard";
 import { SurveyMappingDashboard } from "./pages/SurveyMappingDashboard";
 import { SurveyResponseDashboard } from "./pages/SurveyResponseDashboard";
 import { TaskDashboard } from "./pages/TaskDashboard";
+import { InActiveAssetsDashboard } from "./pages/InActiveAssetsDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
               <Route path="/surveys/list" element={<SurveyListDashboard />} />
               <Route path="/surveys/mapping" element={<SurveyMappingDashboard />} />
               <Route path="/surveys/response" element={<SurveyResponseDashboard />} />
+              <Route path="/assets/inactive" element={<InActiveAssetsDashboard />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

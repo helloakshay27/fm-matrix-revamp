@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, Filter, Download, Printer, Plus, Import, RefreshCw, QrCode } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { BulkUploadModal } from './BulkUploadModal';
 
 const assets = [
@@ -93,6 +94,7 @@ export const AssetTable = ({ onAddAsset }: AssetTableProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAssets, setSelectedAssets] = useState<number[]>([]);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const navigate = useNavigate();
 
   const filteredAssets = assets.filter(asset =>
     asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -188,7 +190,10 @@ export const AssetTable = ({ onAddAsset }: AssetTableProps) => {
         </div>
         
         <div className="flex items-center gap-3">
-          <button className="px-4 py-2 bg-[#C72030] text-white rounded-lg text-sm">
+          <button 
+            onClick={() => navigate('/assets/inactive')}
+            className="px-4 py-2 bg-[#C72030] text-white rounded-lg text-sm hover:bg-[#C72030]/90 transition-colors"
+          >
             In-Active Assets
           </button>
           <button className="flex items-center gap-2 px-4 py-2 border border-[#D5DbDB] text-[#1a1a1a] rounded-lg hover:bg-[#f6f4ee] transition-colors text-sm">
