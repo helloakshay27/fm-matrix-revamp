@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Home, 
@@ -144,9 +143,6 @@ const financeItems = [
   { name: 'Service PR', href: '/finance/service-pr' },
   { name: 'PO', href: '/finance/po' },
   { name: 'WO', href: '/finance/wo' },
-];
-
-const grnItems = [
   { name: 'GRN', href: '/finance/grn' },
   { name: 'Invoices/SES', href: '/finance/invoices-ses' },
   { name: 'Pending Approvals', href: '/finance/pending-approvals' },
@@ -518,7 +514,7 @@ export const Sidebar = () => {
       case 'Finance':
         return (
           <nav className="space-y-2">
-            {/* Basic Finance Items */}
+            {/* Basic Finance Items including GRN, Invoices/SES, Pending Approvals */}
             {financeItems.map((item) => (
               <a
                 key={item.name}
@@ -529,33 +525,6 @@ export const Sidebar = () => {
                 {item.name}
               </a>
             ))}
-
-            {/* GRN Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsGrnOpen(!isGrnOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <Receipt className="w-5 h-5" />
-                  GRN
-                </div>
-                {isGrnOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isGrnOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {grnItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
 
             {/* GDN Dropdown */}
             <div>
