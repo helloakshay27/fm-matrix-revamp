@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { SlidersHorizontal } from 'lucide-react';
+import { RVehiclesHistoryFilterModal } from '@/components/RVehiclesHistoryFilterModal';
 
 const vehicleHistoryData = [
   {
@@ -98,6 +98,7 @@ const vehicleHistoryData = [
 
 export const RVehiclesHistoryDashboard = () => {
   const [activeTab, setActiveTab] = useState('All Vehicles');
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
   return (
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
@@ -115,6 +116,7 @@ export const RVehiclesHistoryDashboard = () => {
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <div className="flex gap-3">
               <Button 
+                onClick={() => setIsFilterModalOpen(true)}
                 variant="outline"
                 className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded flex items-center gap-2"
               >
@@ -160,6 +162,11 @@ export const RVehiclesHistoryDashboard = () => {
           </div>
         </div>
       </div>
+
+      <RVehiclesHistoryFilterModal 
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+      />
     </div>
   );
 };
