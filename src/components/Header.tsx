@@ -22,11 +22,11 @@ export const Header = () => {
             <span className="text-sm font-medium">Home </span>
           </button>
 
-          {/* Setup Dropdown */}
-          <button className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
-            <Home className="w-4 h-4" />
+          {/* Setup Link */}
+          <a href="/setup" className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
+            <Settings className="w-4 h-4" />
             <span className="text-sm font-medium">Setup</span>
-          </button>
+          </a>
 
           {/* Project Change Dropdown */}
           <DropdownMenu>

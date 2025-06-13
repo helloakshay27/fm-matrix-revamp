@@ -17,6 +17,7 @@ import { SurveyMappingDashboard } from "./pages/SurveyMappingDashboard";
 import { SurveyResponseDashboard } from "./pages/SurveyResponseDashboard";
 import { TaskDashboard } from "./pages/TaskDashboard";
 import { InActiveAssetsDashboard } from "./pages/InActiveAssetsDashboard";
+import { SetupDashboard } from "./pages/SetupDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,23 +29,31 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <LayoutProvider>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/services" element={<ServiceDashboard />} />
-              <Route path="/supplier" element={<SupplierDashboard />} />
-              <Route path="/schedule" element={<ScheduleDashboard />} />
-              <Route path="/amc" element={<AMCDashboard />} />
-              <Route path="/attendance" element={<AttendanceDashboard />} />
-              <Route path="/tasks" element={<TaskDashboard />} />
-              <Route path="/surveys/list" element={<SurveyListDashboard />} />
-              <Route path="/surveys/mapping" element={<SurveyMappingDashboard />} />
-              <Route path="/surveys/response" element={<SurveyResponseDashboard />} />
-              <Route path="/assets/inactive" element={<InActiveAssetsDashboard />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
+          <Routes>
+            {/* Setup route - standalone layout without dynamic header */}
+            <Route path="/setup" element={<SetupDashboard />} />
+            
+            {/* Main app routes with Layout wrapper */}
+            <Route path="/*" element={
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/services" element={<ServiceDashboard />} />
+                  <Route path="/supplier" element={<SupplierDashboard />} />
+                  <Route path="/schedule" element={<ScheduleDashboard />} />
+                  <Route path="/amc" element={<AMCDashboard />} />
+                  <Route path="/attendance" element={<AttendanceDashboard />} />
+                  <Route path="/tasks" element={<TaskDashboard />} />
+                  <Route path="/surveys/list" element={<SurveyListDashboard />} />
+                  <Route path="/surveys/mapping" element={<SurveyMappingDashboard />} />
+                  <Route path="/surveys/response" element={<SurveyResponseDashboard />} />
+                  <Route path="/assets/inactive" element={<InActiveAssetsDashboard />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Layout>
+            } />
+          </Routes>
         </LayoutProvider>
       </BrowserRouter>
     </TooltipProvider>
