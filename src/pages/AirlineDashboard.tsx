@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Filter } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AirlineFilterModal } from "@/components/AirlineFilterModal";
 
 export const AirlineDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -72,6 +73,12 @@ export const AirlineDashboard = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Filter Modal */}
+      <AirlineFilterModal 
+        isOpen={isFilterOpen} 
+        onClose={() => setIsFilterOpen(false)} 
+      />
     </div>
   );
 };
