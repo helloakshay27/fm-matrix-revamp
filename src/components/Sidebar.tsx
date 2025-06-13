@@ -25,7 +25,11 @@ import {
   MessageSquare,
   Target,
   Space,
-  Mail
+  Mail,
+  DollarSign,
+  Receipt,
+  CreditCard,
+  Banknote
 } from 'lucide-react';
 import { useLayout } from '../contexts/LayoutContext';
 
@@ -132,6 +136,25 @@ const propertyParkingSetupItems = [
   { name: 'Parking Categories', href: '/property/parking/categories' },
   { name: 'Parking Configurations', href: '/property/parking/configurations' },
   { name: 'Parking Slots', href: '/property/parking/slots' },
+];
+
+const financeItems = [
+  { name: 'Material PR', href: '/finance/material-pr' },
+  { name: 'Service PR', href: '/finance/service-pr' },
+  { name: 'PO', href: '/finance/po' },
+  { name: 'WO', href: '/finance/wo' },
+  { name: 'GRN', href: '/finance/grn' },
+  { name: 'Invoices/SES', href: '/finance/invoices-ses' },
+  { name: 'Pending Approvals', href: '/finance/pending-approvals' },
+  { name: 'GDN', href: '/finance/gdn' },
+  { name: 'GDN', href: '/finance/gdn-2' },
+  { name: 'Pending Approvals', href: '/finance/pending-approvals-2' },
+  { name: 'Auto Saved PR', href: '/finance/auto-saved-pr' },
+  { name: 'WBS Element', href: '/finance/wbs-element' },
+  { name: 'Other Bills', href: '/finance/other-bills' },
+  { name: 'Accounting', href: '/finance/accounting' },
+  { name: 'Customer Bills', href: '/finance/customer-bills' },
+  { name: 'My Bills', href: '/finance/my-bills' },
 ];
 
 export const Sidebar = () => {
@@ -478,6 +501,22 @@ export const Sidebar = () => {
               <Settings className="w-5 h-5" />
               Setup
             </a>
+          </nav>
+        );
+
+      case 'Finance':
+        return (
+          <nav className="space-y-2">
+            {financeItems.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <DollarSign className="w-5 h-5" />
+                {item.name}
+              </a>
+            ))}
           </nav>
         );
 
