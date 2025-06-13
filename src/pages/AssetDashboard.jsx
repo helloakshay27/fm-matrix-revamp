@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Sidebar } from '../components/Sidebar';
 import { Header } from '../components/Header';
@@ -10,12 +9,40 @@ import { Package, CheckCircle, AlertTriangle } from 'lucide-react';
 export const AssetDashboard = () => {
   const [isAddAssetOpen, setIsAddAssetOpen] = useState(false);
 
+  const navItems = [
+    { name: 'Project', active: false },
+    { name: 'Maintenance', active: true },
+    { name: 'CRM', active: false },
+    { name: 'Utility', active: false },
+    { name: 'Visitors', active: false },
+    { name: 'Experience', active: false },
+    { name: 'Property', active: false },
+  ];
+
   return (
     <div className="min-h-screen bg-[#fafafa]">
       <Sidebar />
       <Header />
       
       <main className="ml-64 pt-16 p-6">
+        {/* Subheader Navigation */}
+        <div className="mb-6 border-b border-[#D5DbDB]">
+          <nav className="flex space-x-8">
+            {navItems.map((item) => (
+              <button
+                key={item.name}
+                className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  item.active
+                    ? 'border-[#C72030] text-[#C72030]'
+                    : 'border-transparent text-[#1a1a1a] opacity-70 hover:opacity-100'
+                }`}
+              >
+                {item.name}
+              </button>
+            ))}
+          </nav>
+        </div>
+
         <div className="mb-6">
           <div>
             <h1 className="text-2xl font-bold text-[#1a1a1a] mb-2">Asset Management</h1>
