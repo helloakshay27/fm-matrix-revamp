@@ -11,9 +11,10 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-[#fafafa]">
+        <Header />
       <Sidebar />
       <DynamicHeader />
-      <Header />
+    
       
       <main className="ml-64 pt-28">
         {children}
