@@ -74,6 +74,7 @@ const wasteGenerationItems = [
 const visitorsItems = [
   { name: 'Visitors', href: '/visitors/visitors' },
   { name: 'Visitors History', href: '/visitors/history' },
+  { name: 'Vehicle Parkings', href: '/visitors/vehicle-parkings' },
   { name: 'Materials', href: '/visitors/materials' },
 ];
 

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +18,7 @@ import { TaskDashboard } from "./pages/TaskDashboard";
 import { InActiveAssetsDashboard } from "./pages/InActiveAssetsDashboard";
 import { SetupDashboard } from "./pages/SetupDashboard";
 import NotFound from "./pages/NotFound";
+import { VehicleParkingDashboard } from "./pages/VehicleParkingDashboard";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +48,7 @@ const App = () => (
                   <Route path="/surveys/mapping" element={<SurveyMappingDashboard />} />
                   <Route path="/surveys/response" element={<SurveyResponseDashboard />} />
                   <Route path="/assets/inactive" element={<InActiveAssetsDashboard />} />
+                  <Route path="/visitors/vehicle-parkings" element={<VehicleParkingDashboard />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
