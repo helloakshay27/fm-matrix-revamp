@@ -13,7 +13,7 @@ export const Header = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   return (
-    <header className="h-16 bg-white border-b border-[#D5DbDB] ">
+    <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-10 w-100">
       <div className="flex items-center justify-between h-full px-6">
         <div className="flex items-center gap-6">
           {/* Home Dashboard */}
