@@ -34,7 +34,7 @@ const TaskForm = ({
   };
 
   const handleDateSelect = (date) => {
-    setFormData({ ...formData, started_at: date });
+    setFormData({ ...formData, expected_start_date: date });
   };
 
   const handleTargetDate = (date) => {
@@ -202,7 +202,7 @@ const TaskForm = ({
             className="w-full border outline-none border-gray-300 px-2 py-[7px] text-[13px] bg-gray-200"
             placeholder="00d:00h:00m"
             value={calculateDuration(
-              formData.started_at,
+              formData.expected_start_date,
               formData.target_date
             )}
             readOnly
@@ -213,7 +213,7 @@ const TaskForm = ({
       <div>
         <WeekProgressPicker
           onDateSelect={handleDateSelect}
-          selectedDate={formData.started_at}
+          selectedDate={formData.expected_start_date}
           title="Start Date"
           disabled={isReadOnly}
           minDate={milestoneStartDate}
@@ -294,7 +294,7 @@ const Tasks = ({ isEdit }) => {
     department: "",
     priority: "",
     duration: "",
-    started_at: null,
+    expected_start_date: null,
     target_date: null,
     observer: [],
     tags: [],
@@ -327,7 +327,7 @@ const Tasks = ({ isEdit }) => {
         label: observer?.user_name,
         id: observer.id
       })) || [];
-      console.log(task.started_at.split("T")[0]);
+      console.log(task.expected_start_date.split("T")[0]);
 
       setFormData({
         project: id,
@@ -338,7 +338,7 @@ const Tasks = ({ isEdit }) => {
         department: "",
         priority: task.priority || "",
         duration: "",
-        started_at: task.started_at?.split("T")[0] || null,
+        expected_start_date: task.expected_start_date?.split("T")[0] || null,
         target_date: task.target_date || null,
         observer: mappedObservers,
         tags: mappedTags,
@@ -356,7 +356,7 @@ const Tasks = ({ isEdit }) => {
     priority: data.priority,
     observer_ids: data.observer.map((observer) => observer.value),
     task_tag_ids: data.tags.map((tag) => tag.value),
-    started_at: data.started_at,
+    expected_start_date: data.expected_start_date,
     target_date: data.target_date,
     project_management_id: id,
     milestone_id: mid,
@@ -369,7 +369,7 @@ const Tasks = ({ isEdit }) => {
       !formData.taskTitle ||
       !formData.responsiblePerson ||
       !formData.priority ||
-      !formData.started_at ||
+      !formData.expected_start_date ||
       !formData.target_date ||
       !formData.observer.length ||
       !formData.tags.length
@@ -394,7 +394,7 @@ const Tasks = ({ isEdit }) => {
           department: "",
           priority: "",
           duration: "",
-          started_at: null,
+          expected_start_date: null,
           target_date: null,
           observer: [],
           tags: [],
@@ -415,7 +415,7 @@ const Tasks = ({ isEdit }) => {
       !formData.taskTitle ||
       !formData.responsiblePerson ||
       !formData.priority ||
-      !formData.started_at ||
+      !formData.expected_start_date ||
       !formData.target_date ||
       !formData.observer.length ||
       !formData.tags.length

@@ -724,7 +724,7 @@ const TaskDetails = () => {
                                 <div className="flex items-center ml-36">
                                     <div className="w-1/2 flex items-center justify-start gap-3">
                                         <div className="text-right text-[12px] font-[500]">Start Date:</div>
-                                        <div className="text-left text-[12px]">{task?.expected_start_date}</div>
+                                        <div className="text-left text-[12px]">{task?.expected_start_date?.split("T")[0]}</div>
                                     </div>
                                     <div className="w-1/2 flex items-center justify-start gap-3">
                                         <div className="text-right text-[12px] font-[500]">MileStones:</div>
@@ -753,7 +753,7 @@ const TaskDetails = () => {
                                     <div className="w-1/2 flex items-center justify-start gap-3">
                                         <div className="text-right text-[12px] font-[500]">Duration:</div>
                                         <div className="text-left text-[#029464] text-[12px]">
-                                            {calculateDuration(task.started_at?.split("T")[0], task.target_date)}
+                                            {calculateDuration(task.expected_start_date?.split("T")[0], task.target_date)}
                                         </div>
                                     </div>
                                     <div className="w-1/2 flex items-center justify-start gap-3">
