@@ -166,7 +166,7 @@ export const AddPatrollingModal = ({ isOpen, onClose }: AddPatrollingModalProps)
               <Checkbox 
                 id="dateValidity" 
                 checked={dateValidity}
-                onCheckedChange={setDateValidity}
+                onCheckedChange={(checked) => setDateValidity(checked === true)}
               />
               <Label htmlFor="dateValidity" className="text-sm">Date Validity</Label>
             </div>
