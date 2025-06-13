@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Sidebar } from '../components/Sidebar';
 import { Header } from '../components/Header';
@@ -45,28 +46,28 @@ export const AssetDashboard = () => {
 
         <div className="mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-[#1a1a1a] mb-2">Asset Management</h1>
-            <p className="text-[#1a1a1a] opacity-70">Assets &gt; Asset List</p>
+            <p className="text-[#1a1a1a] opacity-70 mb-2">Assets &gt; Asset List</p>
+            <h1 className="text-2xl font-bold text-[#1a1a1a]">ASSET LIST</h1>
           </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <StatsCard
             title="Total Asset"
-            value="295"
-            color="orange"
+            value="2959"
+            color="#8B5FBF"
             icon={<Package className="w-8 h-8" />}
           />
           <StatsCard
             title="In Use"
-            value="271"
-            color="green"
+            value="2959"
+            color="#10B981"
             icon={<CheckCircle className="w-8 h-8" />}
           />
           <StatsCard
             title="Breakdown"
-            value="24"
-            color="red"
+            value="0"
+            color="#EF4444"
             icon={<AlertTriangle className="w-8 h-8" />}
           />
         </div>
