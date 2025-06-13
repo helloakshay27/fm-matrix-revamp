@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Home, 
@@ -143,12 +144,20 @@ const financeItems = [
   { name: 'Service PR', href: '/finance/service-pr' },
   { name: 'PO', href: '/finance/po' },
   { name: 'WO', href: '/finance/wo' },
+];
+
+const grnItems = [
   { name: 'GRN', href: '/finance/grn' },
   { name: 'Invoices/SES', href: '/finance/invoices-ses' },
   { name: 'Pending Approvals', href: '/finance/pending-approvals' },
+];
+
+const gdnItems = [
   { name: 'GDN', href: '/finance/gdn' },
-  { name: 'GDN', href: '/finance/gdn-2' },
   { name: 'Pending Approvals', href: '/finance/pending-approvals-2' },
+];
+
+const remainingFinanceItems = [
   { name: 'Auto Saved PR', href: '/finance/auto-saved-pr' },
   { name: 'WBS Element', href: '/finance/wbs-element' },
   { name: 'Other Bills', href: '/finance/other-bills' },
@@ -171,6 +180,8 @@ export const Sidebar = () => {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isMailroomOpen, setIsMailroomOpen] = useState(false);
   const [isParkingSetupOpen, setIsParkingSetupOpen] = useState(false);
+  const [isGrnOpen, setIsGrnOpen] = useState(false);
+  const [isGdnOpen, setIsGdnOpen] = useState(false);
 
   const currentPath = window.location.pathname;
 
@@ -507,7 +518,74 @@ export const Sidebar = () => {
       case 'Finance':
         return (
           <nav className="space-y-2">
+            {/* Basic Finance Items */}
             {financeItems.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <DollarSign className="w-5 h-5" />
+                {item.name}
+              </a>
+            ))}
+
+            {/* GRN Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsGrnOpen(!isGrnOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Receipt className="w-5 h-5" />
+                  GRN
+                </div>
+                {isGrnOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isGrnOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {grnItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* GDN Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsGdnOpen(!isGdnOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <FileText className="w-5 h-5" />
+                  GDN
+                </div>
+                {isGdnOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isGdnOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {gdnItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Remaining Finance Items */}
+            {remainingFinanceItems.map((item) => (
               <a
                 key={item.name}
                 href={item.href}
