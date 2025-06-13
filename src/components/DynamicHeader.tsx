@@ -7,7 +7,7 @@ const mainSections = [
   'Maintenance',
   'CRM',
   'Utility',
-  'Fiance',
+  'Finance',
   'Visitors',
   'Experience',
   'Property'
