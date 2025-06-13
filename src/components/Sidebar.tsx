@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -77,7 +76,8 @@ const Sidebar = () => {
   ];
 
   const experienceItems = [
-    { name: 'Events', path: '/experience/events', icon: CalendarDays }
+    { name: 'Events', path: '/experience/events', icon: CalendarDays },
+    { name: 'Broadcast', path: '/experience/broadcast', icon: Users }
   ];
 
   const isActiveSection = (sectionName: string): boolean => {
