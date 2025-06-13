@@ -92,6 +92,11 @@ const rVehiclesSubItems = [
   { name: 'History', href: '/visitors/r-vehicles/history' },
 ];
 
+const goodsInOutSubItems = [
+  { name: 'Inwards', href: '/visitors/goods/inwards' },
+  { name: 'Outwards', href: '/visitors/goods/outwards' },
+];
+
 const experienceItems = [
   { name: 'Events', href: '/experience/events' },
   { name: 'Broadcast', href: '/experience/broadcast' },
@@ -194,6 +199,7 @@ export const Sidebar = () => {
   const [isGrnOpen, setIsGrnOpen] = useState(false);
   const [isGdnOpen, setIsGdnOpen] = useState(false);
   const [isRVehiclesOpen, setIsRVehiclesOpen] = useState(false);
+  const [isGoodsInOutOpen, setIsGoodsInOutOpen] = useState(false);
 
   const currentPath = window.location.pathname;
 
@@ -383,6 +389,48 @@ export const Sidebar = () => {
                     {isRVehiclesOpen && (
                       <div className="ml-8 mt-1 space-y-1">
                         {rVehiclesSubItems.map((subItem) => {
+                          const isSubActive = currentPath === subItem.href;
+                          return (
+                            <a
+                              key={subItem.name}
+                              href={subItem.href}
+                              className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
+                                isSubActive
+                                  ? 'bg-[#C72030] text-white'
+                                  : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
+                              }`}
+                            >
+                              {subItem.name}
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              // Special handling for Goods In/Out with dropdown
+              if (item.name === 'Goods In/Out') {
+                return (
+                  <div key={item.name}>
+                    <button
+                      onClick={() => setIsGoodsInOutOpen(!isGoodsInOutOpen)}
+                      className={`flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        isActive || currentPath.startsWith('/visitors/goods')
+                          ? 'bg-[#C72030] text-white'
+                          : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <item.icon className="w-5 h-5" />
+                        {item.name}
+                      </div>
+                      {isGoodsInOutOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    </button>
+                    {isGoodsInOutOpen && (
+                      <div className="ml-8 mt-1 space-y-1">
+                        {goodsInOutSubItems.map((subItem) => {
                           const isSubActive = currentPath === subItem.href;
                           return (
                             <a
