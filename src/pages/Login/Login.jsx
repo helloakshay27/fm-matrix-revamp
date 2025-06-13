@@ -2,16 +2,19 @@ import React, { useState } from 'react'
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import toast from "react-hot-toast";
+import { Eye, EyeOff } from 'lucide-react';
 
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
     const handleLogin = async () => {
         if (!email || !password) {
+            toast.dismiss();
             toast.error("Email and password are required");
             return;
         }
@@ -25,12 +28,14 @@ const Login = () => {
             if (response.data.access_token) {
                 localStorage.setItem("token", response.data.access_token);
                 localStorage.setItem("user", JSON.stringify(response.data.user));
+                toast.dismiss();
                 toast.success("Login successful!");
                 setTimeout(() => navigate("/projects"), 500);
             }
         } catch (error) {
             const errMsg = error.response?.data?.error || "Login failed";
             setError(errMsg);
+            toast.dismiss();
             toast.error(errMsg);
         }
     }
@@ -54,15 +59,22 @@ const Login = () => {
                             onChange={e => setEmail(e.target.value)}
                         />
                     </div>
-                    <div className="flex flex-col justify-start gap-2">
+                    <div className="flex flex-col justify-start gap-2 relative">
                         <label className="font-[600] text-[16px]">Password</label>
                         <input
-                            type="password"
+                            type={`${showPassword ? "" : "password"}`}
                             className="w-[420px] h-[48px] bg-[#D9D9D957] p-2"
                             placeholder='Enter Password'
                             value={password}
                             onChange={e => setPassword(e.target.value)}
                         />
+                        {
+                            showPassword ? (
+                                <EyeOff size={20} className='absolute right-4 top-14 transform -translate-y-1/2 cursor-pointer' onClick={() => setShowPassword(false)} />
+                            ) : (
+                                <Eye size={20} className='absolute right-4 top-14 transform -translate-y-1/2 cursor-pointer' onClick={() => setShowPassword(true)} />
+                            )
+                        }
                     </div>
                     <div>
                         {error && <p className="text-red-500 align-center text-[12px]">{error}</p>}
