@@ -30,13 +30,13 @@ const navigation = [
 
 export const Sidebar = () => {
   return (
-    <div className="w-64 h-screen bg-gradient-to-b from-purple-900 via-purple-800 to-purple-900 border-r border-purple-700 fixed left-0 top-0">
+    <div className="w-64 h-screen bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0">
       <div className="p-6">
         <div className="flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-[#C72030] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">FM</span>
           </div>
-          <span className="text-white font-semibold text-lg">FacilityPro</span>
+          <span className="text-[#1a1a1a] font-semibold text-lg">FacilityPro</span>
         </div>
         
         <nav className="space-y-2">
@@ -46,8 +46,8 @@ export const Sidebar = () => {
               href={item.href}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 item.current
-                  ? 'bg-orange-500 text-white'
-                  : 'text-purple-100 hover:bg-purple-700 hover:text-white'
+                  ? 'bg-[#C72030] text-white'
+                  : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
               }`}
             >
               <item.icon className="w-5 h-5" />
