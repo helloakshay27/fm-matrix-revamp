@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, Filter, Download, Printer, Plus, Import, RefreshCw, QrCode } from 'lucide-react';
+import { BulkUploadModal } from './BulkUploadModal';
 
 const assets = [
   {
@@ -91,6 +92,7 @@ interface AssetTableProps {
 export const AssetTable = ({ onAddAsset }: AssetTableProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAssets, setSelectedAssets] = useState<number[]>([]);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
 
   const filteredAssets = assets.filter(asset =>
     asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -150,7 +152,10 @@ export const AssetTable = ({ onAddAsset }: AssetTableProps) => {
               <Plus className="w-4 h-4" />
               Add
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 border border-[#D5DbDB] text-[#1a1a1a] rounded-lg hover:bg-[#f6f4ee] transition-colors">
+            <button 
+              onClick={() => setIsBulkUploadOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 border border-[#D5DbDB] text-[#1a1a1a] rounded-lg hover:bg-[#f6f4ee] transition-colors"
+            >
               <Import className="w-4 h-4" />
               Import
             </button>
@@ -314,6 +319,12 @@ export const AssetTable = ({ onAddAsset }: AssetTableProps) => {
           </tbody>
         </table>
       </div>
+
+      {/* Bulk Upload Modal */}
+      <BulkUploadModal 
+        isOpen={isBulkUploadOpen}
+        onClose={() => setIsBulkUploadOpen(false)}
+      />
     </div>
   );
 };
