@@ -19,12 +19,13 @@ export const AddCategoryModal = ({ isOpen, onClose }: AddCategoryModalProps) => 
 
   const handleSubmit = () => {
     console.log("Adding category:", formData);
+    setFormData({ category: "", amount: "" });
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-sm">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-semibold">Add Category</DialogTitle>
@@ -41,24 +42,26 @@ export const AddCategoryModal = ({ isOpen, onClose }: AddCategoryModalProps) => 
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>
+            <Label htmlFor="category">
               Category <span className="text-red-500">*</span>
             </Label>
             <Input
-              placeholder="Enter category"
+              id="category"
+              placeholder=""
               value={formData.category}
               onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+              className="w-full"
             />
           </div>
 
           <div className="space-y-2">
-            <Label>
-              Amount <span className="text-red-500">*</span>
-            </Label>
+            <Label htmlFor="amount">Amount</Label>
             <Input
-              placeholder="Enter amount"
+              id="amount"
+              placeholder=""
               value={formData.amount}
               onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+              className="w-full"
             />
           </div>
         </div>
