@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import { X } from 'lucide-react';
 
 interface EventsFilterModalProps {
   isOpen: boolean;
@@ -14,17 +14,12 @@ interface EventsFilterModalProps {
 
 export const EventsFilterModal: React.FC<EventsFilterModalProps> = ({ isOpen, onClose }) => {
   const [filters, setFilters] = useState({
-    title: '',
-    eventType: '',
-    status: '',
-    createdBy: '',
-    startDate: '',
-    endDate: '',
-    showExpired: false,
-    hasAttachments: false
+    unit: '',
+    dateRange: '',
+    status: ''
   });
 
-  const handleFilterChange = (field: string, value: string | boolean) => {
+  const handleFilterChange = (field: string, value: string) => {
     setFilters(prev => ({
       ...prev,
       [field]: value
@@ -36,133 +31,92 @@ export const EventsFilterModal: React.FC<EventsFilterModalProps> = ({ isOpen, on
     onClose();
   };
 
-  const handleClearFilters = () => {
+  const handleResetFilters = () => {
     setFilters({
-      title: '',
-      eventType: '',
-      status: '',
-      createdBy: '',
-      startDate: '',
-      endDate: '',
-      showExpired: false,
-      hasAttachments: false
+      unit: '',
+      dateRange: '',
+      status: ''
     });
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Filter Events</DialogTitle>
+      <DialogContent className="max-w-2xl bg-white">
+        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
+          <DialogTitle className="text-lg font-semibold">FILTER</DialogTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-6 w-6 p-0"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </DialogHeader>
         
-        <div className="space-y-4">
-          {/* Title Filter */}
-          <div className="space-y-2">
-            <Label htmlFor="titleFilter">Event Title</Label>
-            <Input
-              id="titleFilter"
-              value={filters.title}
-              onChange={(e) => handleFilterChange('title', e.target.value)}
-              placeholder="Search by title"
-            />
-          </div>
-
-          {/* Event Type Filter */}
-          <div className="space-y-2">
-            <Label>Event Type</Label>
-            <Select onValueChange={(value) => handleFilterChange('eventType', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select event type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
-                <SelectItem value="General">General</SelectItem>
-                <SelectItem value="Personal">Personal</SelectItem>
-                <SelectItem value="Corporate">Corporate</SelectItem>
-                <SelectItem value="Training">Training</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Status Filter */}
-          <div className="space-y-2">
-            <Label>Status</Label>
-            <Select onValueChange={(value) => handleFilterChange('status', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
-                <SelectItem value="Published">Published</SelectItem>
-                <SelectItem value="Draft">Draft</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Created By Filter */}
-          <div className="space-y-2">
-            <Label htmlFor="createdByFilter">Created By</Label>
-            <Input
-              id="createdByFilter"
-              value={filters.createdBy}
-              onChange={(e) => handleFilterChange('createdBy', e.target.value)}
-              placeholder="Search by creator"
-            />
-          </div>
-
-          {/* Date Range */}
-          <div className="grid grid-cols-2 gap-4">
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Unit */}
             <div className="space-y-2">
-              <Label htmlFor="startDateFilter">Start Date</Label>
+              <Label htmlFor="unit" className="text-sm font-medium">Unit</Label>
               <Input
-                id="startDateFilter"
-                type="date"
-                value={filters.startDate}
-                onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                id="unit"
+                value={filters.unit}
+                onChange={(e) => handleFilterChange('unit', e.target.value)}
+                placeholder="-"
+                className="border-gray-300"
               />
             </div>
+
+            {/* Date */}
             <div className="space-y-2">
-              <Label htmlFor="endDateFilter">End Date</Label>
-              <Input
-                id="endDateFilter"
-                type="date"
-                value={filters.endDate}
-                onChange={(e) => handleFilterChange('endDate', e.target.value)}
-              />
+              <Label htmlFor="dateRange" className="text-sm font-medium">Date</Label>
+              <Select value={filters.dateRange} onValueChange={(value) => handleFilterChange('dateRange', value)}>
+                <SelectTrigger className="border-gray-300">
+                  <SelectValue placeholder="Select Date Range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="yesterday">Yesterday</SelectItem>
+                  <SelectItem value="lastWeek">Last Week</SelectItem>
+                  <SelectItem value="lastMonth">Last Month</SelectItem>
+                  <SelectItem value="custom">Custom Range</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Status */}
+            <div className="space-y-2">
+              <Label htmlFor="status" className="text-sm font-medium">Status</Label>
+              <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
+                <SelectTrigger className="border-gray-300">
+                  <SelectValue placeholder="Select Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="expired">Expired</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          {/* Checkbox Filters */}
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="showExpired"
-                checked={filters.showExpired}
-                onCheckedChange={(checked) => handleFilterChange('showExpired', checked as boolean)}
-              />
-              <Label htmlFor="showExpired">Show expired events only</Label>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="hasAttachments"
-                checked={filters.hasAttachments}
-                onCheckedChange={(checked) => handleFilterChange('hasAttachments', checked as boolean)}
-              />
-              <Label htmlFor="hasAttachments">Has attachments</Label>
-            </div>
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              onClick={handleResetFilters}
+              variant="outline"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2"
+            >
+              Reset
+            </Button>
+            <Button
+              onClick={handleApplyFilters}
+              className="bg-purple-800 hover:bg-purple-900 text-white px-6 py-2"
+            >
+              Apply
+            </Button>
           </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-3 mt-6">
-          <Button variant="outline" onClick={handleClearFilters}>
-            Clear All
-          </Button>
-          <Button onClick={handleApplyFilters} className="bg-purple-600 hover:bg-purple-700">
-            Apply Filters
-          </Button>
         </div>
       </DialogContent>
     </Dialog>
