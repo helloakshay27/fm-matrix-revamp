@@ -1,8 +1,8 @@
-import "./index.css"
-import { Navigate, Route, Routes } from "react-router-dom"
+import "./index.css";
+import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./pages/Login/ProtectedRoute.jsx";
-import { useState } from "react"
-import Layout from "./Layout"
+import { useState } from "react";
+import Layout from "./Layout";
 import Tasks from "./pages/Home/Tasks";
 import TaskDetails from "./pages/Home/TaskDetails";
 import Projects from "./pages/Home/Projects";
@@ -44,7 +44,8 @@ const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
-    <><Toaster />
+    <>
+      <Toaster />
       <Routes>
         <Route path="/login" element={<Login />} />
 
@@ -52,45 +53,86 @@ const App = () => {
           path="*"
           element={
             <ProtectedRoute>
-              <Layout isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}>
+              <Layout
+                isSidebarOpen={isSidebarOpen}
+                setIsSidebarOpen={setIsSidebarOpen}
+              >
                 <Routes>
                   <Route path="/" element={<Navigate to="/projects" />} />
-                  <Route path="projects/:id/milestones/:mid/tasks" element={<Tasks setIsSidebarOpen={setIsSidebarOpen} />} />
-                  <Route path="/projects" element={<Projects setIsSidebarOpen={setIsSidebarOpen} />} />
+                  <Route
+                    path="projects/:id/milestones/:mid/tasks"
+                    element={<Tasks setIsSidebarOpen={setIsSidebarOpen} />}
+                  />
+                  <Route
+                    path="/projects"
+                    element={<Projects setIsSidebarOpen={setIsSidebarOpen} />}
+                  />
                   <Route path="/projects/:id" element={<ProjectDetails />} />
                   <Route path="/sprint-list" element={<SprintTable />} />
                   <Route path="/sprint/:id" element={<Sprints />} />
-                  <Route path="/projects/:id/milestones" element={<MileStoneMain />} />
-                  <Route path="/projects/:id/milestones/:mid/tasks/:tid" element={<TaskDetails />} />
+                  <Route
+                    path="/projects/:id/milestones"
+                    element={<MileStoneMain />}
+                  />
+                  <Route
+                    path="/projects/:id/milestones/:mid/tasks/:tid"
+                    element={<TaskDetails />}
+                  />
                   <Route path="/issues" element={<IssuesTable />} />
                   <Route path="/mom" element={<MinutesOfMeeting />} />
                   <Route path="/new-mom" element={<MoMAdd />} />
                   <Route path="/channels" element={<Channel />} />
 
                   {/* Setup Routes */}
-                  <Route path="/setup" element={<Navigate to="/setup/roles" />} />
+                  <Route
+                    path="/setup"
+                    element={<Navigate to="/setup/roles" />}
+                  />
                   <Route path="/setup/roles" element={<Role />} />
-                  <Route path="/setup/internal-users" element={<InternalUser />} />
-                  <Route path="/setup/internal-users/details/:id" element={<Details />} />
-                  <Route path="/setup/external-users" element={<ExternalTable />} />
-                  <Route path="/setup/project-teams" element={<ProjectTeams />} />
-                  <Route path="/setup/project-teams/project-details" element={<ProjectDetail />} />
-                  <Route path="/setup/project-teams/details/:id" element={<TeamDetails />} />
+                  <Route
+                    path="/setup/internal-users"
+                    element={<InternalUser />}
+                  />
+                  <Route
+                    path="/setup/internal-users/details/:id"
+                    element={<Details />}
+                  />
+                  <Route
+                    path="/setup/external-users"
+                    element={<ExternalTable />}
+                  />
+                  <Route
+                    path="/setup/project-teams"
+                    element={<ProjectTeams />}
+                  />
+                  <Route
+                    path="/setup/project-teams/project-details"
+                    element={<ProjectDetail />}
+                  />
+                  <Route
+                    path="/setup/project-teams/details/:id"
+                    element={<TeamDetails />}
+                  />
                   <Route path="/setup/matrix" element={<EscalationMatrix />} />
                   <Route path="/setup/types" element={<ProjectTypes />} />
                   <Route path="/setup/tags" element={<ProjectTags />} />
                   <Route path="/setup/status" element={<Status />} />
-                  <Route path="/setup/project-group" element={<ProjectGroup />} />
-                  <Route path="/setup/project-template" element={<ProjectTemplates />} />
+                  <Route
+                    path="/setup/project-group"
+                    element={<ProjectGroup />}
+                  />
+                  <Route
+                    path="/setup/project-template"
+                    element={<ProjectTemplates />}
+                  />
                 </Routes>
               </Layout>
             </ProtectedRoute>
           }
         />
-
       </Routes>
     </>
-  )
-}
+  );
+};
 
-export default App
+export default App;

@@ -26,6 +26,7 @@
     "dhtmlx-gantt": "^9.0.10",
     "gsap": "^3.12.7",
     "lucide-react": "^0.475.0",
+    "qs": "^6.14.0",
     "react": "^18.3.1",
     "react-archer": "^4.4.0",
     "react-datepicker": "^8.3.0",

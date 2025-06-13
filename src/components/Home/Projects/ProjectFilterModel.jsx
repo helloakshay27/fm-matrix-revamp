@@ -5,44 +5,52 @@ import { X, Search, ChevronRight, ChevronDown } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import clsx from "clsx";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchProjects, filterProjects } from "../../../redux/slices/projectSlice";
+import {
+    fetchProjects,
+    filterProjects,
+    fetchProjectTypes,
+} from "../../../redux/slices/projectSlice";
 import { fetchUsers } from "../../../redux/slices/userSlice";
+import qs from 'qs';
 
-// localStorage.removeItem("projectFilters");
-
-// Define status options with user-friendly labels and API-compatible values
 const statusOptions = [
     { label: "Active", value: "active", color: "bg-green-500" },
-    { label: "Inactive", value: "inactive", color: "bg-pink-600" },
     { label: "In Progress", value: "in_progress", color: "bg-cyan-400" },
-    { label: "Overdue", value: "overdue", color: "bg-red-500" },
     { label: "Completed", value: "completed", color: "bg-black" },
     { label: "On Hold", value: "on_hold", color: "bg-yellow-500" },
-    { label: "Abort", value: "abort", color: "bg-gray-500" },
+    { label: "Overdue", value: "overdue", color: "bg-red-500" },
 ];
 
-const projectTypeOptions = ["Design", "Development", "Marketing"];
 const createdByOptions = ["Admin", "User", "System"];
 
 const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
     const dispatch = useDispatch();
-    const { fetchUsers: users, error: fetchUsersError } = useSelector((state) => state.fetchUsers);
+    const { fetchUsers: users, error: fetchUsersError } = useSelector(
+        (state) => state.fetchUsers
+    );
+    const { fetchProjectTypes: projectTypes } = useSelector(state => state.fetchProjectTypes)
 
+    useEffect(() => {
+        dispatch(fetchProjectTypes())
+    }, [dispatch])
 
+    const firstNames =
+        users && users.length > 0
+            ? users.map((user, index) => ({
+                label: user.firstname + " " + user.lastname,
+                value: user.id || `${user.firstname}-${index}`,
+            }))
+            : [];
 
-    // Extract firstname values with unique identifiers
-    const firstNames = users && users.length > 0
-        ? users.map((user, index) => ({
-            label: user.firstname,
-            value: user.id || `${user.firstname}-${index}`,
-        }))
-        : [];
+    const projectTypeOptions =
+        projectTypes && projectTypes.length > 0
+            ? projectTypes.map((type, index) => ({
+                label: type.name,
+                value: type.id
+            }))
+            : [];
 
     const modalRef = useRef(null);
-
-
-
-
 
     const getInitialFilters = () => {
         try {
@@ -76,29 +84,31 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
         }
     };
 
-
     // Initialize state
-    const [selectedStatuses, setSelectedStatuses] = useState(getInitialFilters().selectedStatuses);
-    const [selectedTypes, setSelectedTypes] = useState(getInitialFilters().selectedTypes);
-    const [selectedManagers, setSelectedManagers] = useState(getInitialFilters().selectedManagers);
-    const [selectedCreators, setSelectedCreators] = useState(getInitialFilters().selectedCreators);
+    const [selectedStatuses, setSelectedStatuses] = useState(
+        getInitialFilters().selectedStatuses
+    );
+    const [selectedTypes, setSelectedTypes] = useState(
+        getInitialFilters().selectedTypes
+    );
+    const [selectedManagers, setSelectedManagers] = useState(
+        getInitialFilters().selectedManagers
+    );
+    const [selectedCreators, setSelectedCreators] = useState(
+        getInitialFilters().selectedCreators
+    );
     const [dates, setDates] = useState(getInitialFilters().dates);
-    const [statusSearch, setStatusSearch] = useState(getInitialFilters().statusSearch);
+    const [statusSearch, setStatusSearch] = useState(
+        getInitialFilters().statusSearch
+    );
     const [typeSearch, setTypeSearch] = useState(getInitialFilters().typeSearch);
-    const [managerSearch, setManagerSearch] = useState(getInitialFilters().managerSearch);
-    const [creatorSearch, setCreatorSearch] = useState(getInitialFilters().creatorSearch);
+    const [managerSearch, setManagerSearch] = useState(
+        getInitialFilters().managerSearch
+    );
+    const [creatorSearch, setCreatorSearch] = useState(
+        getInitialFilters().creatorSearch
+    );
 
-    // Dropdown open/close state
-    const [dropdowns, setDropdowns] = useState({
-        status: false,
-        projectType: false,
-        projectManager: false,
-        createdBy: false,
-        startDate: false,
-        endDate: false,
-    });
-
-    // Save filter state to localStorage whenever it changes
     useEffect(() => {
         const filters = {
             selectedStatuses,
@@ -111,8 +121,8 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
             managerSearch,
             creatorSearch,
         };
-        if(selectedStatuses.length>0 || selectedTypes.length>0 || selectedManagers.length>0 || selectedCreators.length>0 || statusSearch || typeSearch || managerSearch || creatorSearch || dates.startDate || dates.endDate){
-        localStorage.setItem("projectFilters", JSON.stringify(filters));
+        if (selectedStatuses.length > 0 || selectedTypes.length > 0 || selectedManagers.length > 0 || selectedCreators.length > 0 || statusSearch || typeSearch || managerSearch || creatorSearch || dates.startDate || dates.endDate) {
+            localStorage.setItem("projectFilters", JSON.stringify(filters));
         }
     }, [
         selectedStatuses,
@@ -126,7 +136,28 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
         creatorSearch,
     ]);
 
-    // Toggle dropdown (only one open at a time)
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            localStorage.removeItem("projectFilters");
+        };
+
+        window.addEventListener("beforeunload", handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener("beforeunload", handleBeforeUnload);
+        };
+    }, []);
+
+    // Dropdown open/close state
+    const [dropdowns, setDropdowns] = useState({
+        status: false,
+        projectType: false,
+        projectManager: false,
+        createdBy: false,
+        startDate: false,
+        endDate: false,
+    });
+
     const toggleDropdown = (key) => {
         setDropdowns((prev) => {
             const isAlreadyOpen = prev[key];
@@ -174,7 +205,13 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
     }, [isModalOpen]);
 
     // Render checkbox list with search filtering
-    const renderCheckboxList = (options, selected, setSelected, searchTerm = "") => {
+    const renderCheckboxList = (
+        options,
+        selected,
+        setSelected,
+        searchTerm = ""
+    ) => {
+        console.log(options)
         const filtered = options.filter((opt) =>
             typeof opt === "string"
                 ? opt.toLowerCase().includes(searchTerm.toLowerCase())
@@ -187,7 +224,6 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
                     const label = typeof option === "string" ? option : option.label;
                     const value = typeof option === "string" ? option : option.value;
                     const color = typeof option === "string" ? null : option.color;
-
                     return (
                         <label
                             key={value}
@@ -201,12 +237,16 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
                                 />
                                 <span>{label}</span>
                             </div>
-                            {color && <span className={clsx("w-2 h-2 rounded-full", color)}></span>}
+                            {color && (
+                                <span className={clsx("w-2 h-2 rounded-full", color)}></span>
+                            )}
                         </label>
                     );
                 })}
                 {filtered.length === 0 && (
-                    <div className="text-center text-gray-400 text-sm py-2">No results found</div>
+                    <div className="text-center text-gray-400 text-sm py-2">
+                        No results found
+                    </div>
                 )}
             </div>
         );
@@ -242,17 +282,17 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
         });
 
         const newFilters = {
-            'q[status_in]': selectedStatuses, // Use array for multiple selections
-            'q[owner_id_in]': selectedManagers,
-            'q[created_by_id_in]': selectedCreators,
-            'q[project_type_id_in]': selectedTypes,
-            'q[title_cont]': '',
-            'q[is_template_eq]': '',
-            'q[start_date_eq]': dates.startDate || '', // Ensure date is sent or empty string
-            'q[end_date_eq]': dates.endDate || '',
+            "q[status_in]": selectedStatuses, // Use array for multiple selections
+            "q[owner_id_in][]": selectedManagers,
+            "q[created_by_id_in]": selectedCreators,
+            "q[project_type_id_eq]": selectedTypes,
+            "q[title_cont]": "",
+            "q[is_template_eq]": "",
+            "q[start_date_eq]": dates.startDate || "", // Ensure date is sent or empty string
+            "q[end_date_eq]": dates.endDate || "",
         };
-        console.log("Applying filters:", newFilters);
-        dispatch(filterProjects(newFilters));
+        const queryString = qs.stringify(newFilters, { arrayFormat: 'repeat' });
+        dispatch(filterProjects(queryString));
         closeModal();
     };
 
@@ -270,7 +310,10 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
 
                 <div className="px-6 py-4 border-b">
                     <div className="relative">
-                        <Search className="absolute left-3 top-2.5 text-red-400" size={18} />
+                        <Search
+                            className="absolute left-3 top-2.5 text-red-400"
+                            size={18}
+                        />
                         <input
                             type="text"
                             placeholder="Filter search..."
@@ -296,7 +339,10 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
                         {dropdowns.status && (
                             <div className="mt-4 border">
                                 <div className="relative border-b">
-                                    <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                    <Search
+                                        className="absolute left-3 top-2.5 text-red-400"
+                                        size={16}
+                                    />
                                     <input
                                         type="text"
                                         placeholder="Filter status..."
@@ -305,7 +351,12 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
                                         onChange={(e) => setStatusSearch(e.target.value)}
                                     />
                                 </div>
-                                {renderCheckboxList(statusOptions, selectedStatuses, setSelectedStatuses, statusSearch)}
+                                {renderCheckboxList(
+                                    statusOptions,
+                                    selectedStatuses,
+                                    setSelectedStatuses,
+                                    statusSearch
+                                )}
                             </div>
                         )}
                     </div>
@@ -316,7 +367,9 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
                             className="flex items-center justify-between cursor-pointer"
                             onClick={() => toggleDropdown("projectType")}
                         >
-                            <span className="font-medium text-sm select-none">Project Type</span>
+                            <span className="font-medium text-sm select-none">
+                                Project Type
+                            </span>
                             {dropdowns.projectType ? (
                                 <ChevronDown className="text-gray-400" />
                             ) : (
@@ -326,7 +379,10 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
                         {dropdowns.projectType && (
                             <div className="mt-4 border">
                                 <div className="relative border-b">
-                                    <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                    <Search
+                                        className="absolute left-3 top-2.5 text-red-400"
+                                        size={16}
+                                    />
                                     <input
                                         type="text"
                                         placeholder="Filter project type..."
@@ -335,7 +391,12 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
                                         onChange={(e) => setTypeSearch(e.target.value)}
                                     />
                                 </div>
-                                {renderCheckboxList(projectTypeOptions, selectedTypes, setSelectedTypes, typeSearch)}
+                                {renderCheckboxList(
+                                    projectTypeOptions,
+                                    selectedTypes,
+                                    setSelectedTypes,
+                                    typeSearch
+                                )}
                             </div>
                         )}
                     </div>
@@ -346,7 +407,9 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
                             className="flex items-center justify-between cursor-pointer"
                             onClick={() => toggleDropdown("projectManager")}
                         >
-                            <span className="font-medium text-sm select-none">Project Manager</span>
+                            <span className="font-medium text-sm select-none">
+                                Project Manager
+                            </span>
                             {dropdowns.projectManager ? (
                                 <ChevronDown className="text-gray-400" />
                             ) : (
@@ -356,7 +419,10 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
                         {dropdowns.projectManager && (
                             <div className="mt-4 border">
                                 <div className="relative border-b">
-                                    <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                    <Search
+                                        className="absolute left-3 top-2.5 text-red-400"
+                                        size={16}
+                                    />
                                     <input
                                         type="text"
                                         placeholder="Filter project manager..."
@@ -370,7 +436,12 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
                                         Failed to load managers: {fetchUsersError}
                                     </div>
                                 ) : (
-                                    renderCheckboxList(firstNames, selectedManagers, setSelectedManagers, managerSearch)
+                                    renderCheckboxList(
+                                        firstNames,
+                                        selectedManagers,
+                                        setSelectedManagers,
+                                        managerSearch
+                                    )
                                 )}
                             </div>
                         )}
@@ -385,7 +456,9 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
                                     className="flex items-center justify-between cursor-pointer"
                                     onClick={() => toggleDropdown(key)}
                                 >
-                                    <span className="font-medium text-sm select-none">{label}</span>
+                                    <span className="font-medium text-sm select-none">
+                                        {label}
+                                    </span>
                                     {dropdowns[key] ? (
                                         <ChevronDown className="text-gray-400" />
                                     ) : (
@@ -418,7 +491,9 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
                             className="flex items-center justify-between cursor-pointer"
                             onClick={() => toggleDropdown("createdBy")}
                         >
-                            <span className="font-medium text-sm select-none">Created By</span>
+                            <span className="font-medium text-sm select-none">
+                                Created By
+                            </span>
                             {dropdowns.createdBy ? (
                                 <ChevronDown className="text-gray-400" />
                             ) : (
@@ -428,7 +503,10 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
                         {dropdowns.createdBy && (
                             <div className="mt-4 border">
                                 <div className="relative border-b">
-                                    <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                    <Search
+                                        className="absolute left-3 top-2.5 text-red-400"
+                                        size={16}
+                                    />
                                     <input
                                         type="text"
                                         placeholder="Filter created by..."
@@ -437,7 +515,12 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
                                         onChange={(e) => setCreatorSearch(e.target.value)}
                                     />
                                 </div>
-                                {renderCheckboxList(createdByOptions, selectedCreators, setSelectedCreators, creatorSearch)}
+                                {renderCheckboxList(
+                                    firstNames,
+                                    selectedCreators,
+                                    setSelectedCreators,
+                                    creatorSearch
+                                )}
                             </div>
                         )}
                     </div>

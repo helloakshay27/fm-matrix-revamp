@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Briefcase, CalendarDays, Timer, User2 } from "lucide-react";
 import { useDrag } from "react-dnd";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { changeProjectStatus } from "../../../redux/slices/projectSlice";
 
 const getRandomColor = () => {
     const r = Math.floor(Math.random() * 76) + 180;
@@ -20,6 +22,8 @@ const formatCountdown = (ms) => {
 };
 
 const ProjectCard = ({ project }) => {
+    const dispatch = useDispatch();
+
     const navigate = useNavigate();
     const [{ isDragging }, dragRef] = useDrag(() => ({
         type: "PROJECT",
@@ -32,15 +36,19 @@ const ProjectCard = ({ project }) => {
     const [countdown, setCountdown] = useState("");
 
     useEffect(() => {
-        if (!project?.end_date) return;
+        if (!project?.end_date || project.status === "completed") {
+            setCountdown("Completed");
+            return;
+        }
 
         const interval = setInterval(() => {
             const now = new Date();
             const end = new Date(project.end_date);
             const diff = end - now;
 
-            if (diff <= 0) {
-                setCountdown("Expired");
+            if (diff <= 0 && project.status !== "completed") {
+                setCountdown("Overdued");
+                dispatch(changeProjectStatus({ id: project.id, payload: { status: "overdue" } }));
                 clearInterval(interval);
             } else {
                 setCountdown(formatCountdown(diff));

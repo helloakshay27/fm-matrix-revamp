@@ -1,53 +1,53 @@
-import React, { useState ,useEffect} from 'react'
+import React, { useState, useEffect } from 'react'
 import KeyboardArrowLeftOutlinedIcon from '@mui/icons-material/KeyboardArrowLeftOutlined';
 import Modal from './Modal';
-import { Link ,useParams} from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchInternalUserDetails, fetchUsers } from '../../../redux/slices/userSlice';
 import { fetchRoles } from '../../../redux/slices/roleSlice';
 
 const Details = () => {
 
-  const{
-    users:details
-  }=useSelector((state)=>state.fetchInternalUserDetails.fetchInternalUserDetails);
+    const {
+        users: details
+    } = useSelector((state) => state.fetchInternalUserDetails.fetchInternalUserDetails);
 
-  const{
-    fetchUsers:users
-  }=useSelector((state)=>state.fetchUsers);
-  
-  const{
-    fetchRoles:roles
-  }=useSelector((state)=>state.fetchRoles);
+    const {
+        fetchUsers: users
+    } = useSelector((state) => state.fetchUsers);
+
+    const {
+        fetchRoles: roles
+    } = useSelector((state) => state.fetchRoles);
 
 
-   const dispatch = useDispatch();
-   const {id}=useParams();
+    const dispatch = useDispatch();
+    const { id } = useParams();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [role,setRole]= useState("");
-    const [reportsTo,setReportsTo]= useState("");
+    const [role, setRole] = useState("");
+    const [reportsTo, setReportsTo] = useState("");
     const [name, setName] = useState("");
 
-    useEffect(()=>{
+    useEffect(() => {
         dispatch(fetchInternalUserDetails(id));
         dispatch(fetchUsers());
         dispatch(fetchRoles());
-    },[dispatch])
+    }, [dispatch])
 
-   useEffect(()=>{
-    if(roles){
-        const value=roles.find((role) => role.id === details.role_id)?.display_name;
-        console.log(value);
-        const formattedValue = value?.replace(/_/g, ' ');
-        console.log(formattedValue);
-       setRole(formattedValue?.charAt(0).toUpperCase() + formattedValue?.slice(1));
-    }
-    if(users){
-        const user=users.find((user) => user.id == details?.report_to_id);
-        console.log(user);
-        setReportsTo(user?.firstname + " " + user?.lastname);
-    }
-   },[users,roles])
+    useEffect(() => {
+        if (roles) {
+            const value = roles.find((role) => role.id === details?.role_id)?.display_name;
+            console.log(value);
+            const formattedValue = value?.replace(/_/g, ' ');
+            console.log(formattedValue);
+            setRole(formattedValue?.charAt(0).toUpperCase() + formattedValue?.slice(1));
+        }
+        if (users) {
+            const user = users.find((user) => user.id == details?.report_to_id);
+            console.log(user);
+            setReportsTo(user?.firstname + " " + user?.lastname);
+        }
+    }, [users, roles])
 
 
     return (
@@ -57,8 +57,8 @@ const Details = () => {
                     <span className="rounded-full bg-[#D5DBDB] w-[65px] h-[65px] flex justify-center items-center text-[25px]">{details?.firstname.charAt(0).toUpperCase()}{details?.lastname.charAt(0).toUpperCase()}</span>
                     <div className='flex flex-col gap-3'>
                         <span>
-  {`${details?.firstname.charAt(0).toUpperCase()}${details?.firstname.slice(1)} ${details?.lastname.charAt(0).toUpperCase()}${details?.lastname.slice(1)}`}
-</span>
+                            {`${details?.firstname.charAt(0).toUpperCase()}${details?.firstname.slice(1)} ${details?.lastname.charAt(0).toUpperCase()}${details?.lastname.slice(1)}`}
+                        </span>
                         <div className="flex justify-between gap-10 text-[12px]">
                             <span>{`Email Id :${details?.email}`}</span>
                             <span>{`Role : ${role}`}</span>
@@ -68,7 +68,7 @@ const Details = () => {
                     </div>
                 </div>
                 <div>
-                    <Link to="/setup/internal-users"><span className="cursor-pointer"><KeyboardArrowLeftOutlinedIcon style={{ fontSize: "medium" }} />Back</span></Link> 
+                    <Link to="/setup/internal-users"><span className="cursor-pointer"><KeyboardArrowLeftOutlinedIcon style={{ fontSize: "medium" }} />Back</span></Link>
                 </div>
             </div>
             <div className="flex justify-between gap-3">
