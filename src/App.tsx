@@ -6,6 +6,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import { ServiceDashboard } from "./pages/ServiceDashboard";
+import { SupplierDashboard } from "./pages/SupplierDashboard";
+import { ScheduleDashboard } from "./pages/ScheduleDashboard";
+import { AMCDashboard } from "./pages/AMCDashboard";
+import { AttendanceDashboard } from "./pages/AttendanceDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
