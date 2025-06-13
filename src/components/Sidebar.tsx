@@ -16,16 +16,17 @@ import {
 const navigation = [
   { name: 'Dashboard', icon: Home, href: '/' },
   { name: 'Assets', icon: Package, href: '/assets' },
-  { name: 'AMC', icon: Wrench, href: '/amc' },
+  { name: 'AMC', icon: Wrench, href: '/amc', current: window.location.pathname === '/amc' },
   { name: 'Services', icon: Settings, href: '/services', current: window.location.pathname === '/services' },
-  { name: 'Attendance', icon: Users, href: '/attendance' },
+  { name: 'Attendance', icon: Users, href: '/attendance', current: window.location.pathname === '/attendance' },
   { name: 'Inventory', icon: Package, href: '/inventory' },
   { name: 'Tickets', icon: FileText, href: '/tickets' },
   { name: 'Tasks', icon: ClipboardList, href: '/tasks' },
-  { name: 'Schedule', icon: Calendar, href: '/schedule' },
+  { name: 'Schedule', icon: Calendar, href: '/schedule', current: window.location.pathname === '/schedule' },
   { name: 'Safety', icon: AlertTriangle, href: '/safety' },
   { name: 'Incident', icon: AlertTriangle, href: '/incident' },
   { name: 'Audit', icon: BarChart3, href: '/audit' },
+  { name: 'Supplier', icon: Package, href: '/supplier', current: window.location.pathname === '/supplier' },
 ];
 
 export const Sidebar = () => {
