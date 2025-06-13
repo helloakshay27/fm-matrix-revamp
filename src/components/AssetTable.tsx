@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Eye, Filter, Download, Printer, Plus, Import, RefreshCw, QrCode } from 'lucide-react';
 
@@ -118,19 +119,19 @@ export const AssetTable = ({ onAddAsset }: AssetTableProps) => {
     switch (status) {
       case 'In Use':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#A4F4E7] text-[#1a1a1a]">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500 text-white">
             In Use
           </span>
         );
       case 'Breakdown':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#E4626F] text-white">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white">
             Breakdown
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#C4b89D] text-[#1a1a1a]">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-500 text-white">
             {status}
           </span>
         );
@@ -138,31 +139,31 @@ export const AssetTable = ({ onAddAsset }: AssetTableProps) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-[#D5DbDB]">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
       {/* Table Header Actions */}
-      <div className="p-6 border-b border-[#D5DbDB]">
+      <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <button 
               onClick={onAddAsset}
-              className="flex items-center gap-2 px-4 py-2 bg-[#C72030] text-white rounded-lg hover:bg-[#C72030]/90 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-800 transition-colors"
             >
               <Plus className="w-4 h-4" />
               Add
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 border border-[#D5DbDB] text-[#1a1a1a] rounded-lg hover:bg-[#f6f4ee] transition-colors">
+            <button className="flex items-center gap-2 px-4 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-800 transition-colors">
               <Import className="w-4 h-4" />
               Import
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 border border-[#D5DbDB] text-[#1a1a1a] rounded-lg hover:bg-[#f6f4ee] transition-colors">
+            <button className="flex items-center gap-2 px-4 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-800 transition-colors">
               <RefreshCw className="w-4 h-4" />
               Update
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 border border-[#D5DbDB] text-[#1a1a1a] rounded-lg hover:bg-[#f6f4ee] transition-colors">
+            <button className="flex items-center gap-2 px-4 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-800 transition-colors">
               <Download className="w-4 h-4" />
               Export All
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 border border-[#D5DbDB] text-[#1a1a1a] rounded-lg hover:bg-[#f6f4ee] transition-colors">
+            <button className="flex items-center gap-2 px-4 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-800 transition-colors">
               <QrCode className="w-4 h-4" />
               Print QR
             </button>
@@ -174,23 +175,23 @@ export const AssetTable = ({ onAddAsset }: AssetTableProps) => {
               placeholder="Search assets..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="px-4 py-2 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
-            <button className="flex items-center gap-2 px-4 py-2 bg-[#C72030] text-white rounded-lg hover:bg-[#C72030]/90 transition-colors">
+            <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
               Go!
             </button>
           </div>
         </div>
         
         <div className="flex items-center gap-3">
-          <button className="px-4 py-2 bg-[#C72030] text-white rounded-lg text-sm">
+          <button className="px-4 py-2 bg-purple-700 text-white rounded-lg text-sm hover:bg-purple-800 transition-colors">
             In-Active Assets
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 border border-[#D5DbDB] text-[#1a1a1a] rounded-lg hover:bg-[#f6f4ee] transition-colors text-sm">
+          <button className="flex items-center gap-2 px-4 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-800 transition-colors text-sm">
             <QrCode className="w-4 h-4" />
             Print All QR
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 border border-[#D5DbDB] text-[#1a1a1a] rounded-lg hover:bg-[#f6f4ee] transition-colors text-sm">
+          <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm">
             <Filter className="w-4 h-4" />
             Filters
           </button>
@@ -200,113 +201,113 @@ export const AssetTable = ({ onAddAsset }: AssetTableProps) => {
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-[#f6f4ee]">
+          <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left">
                 <input
                   type="checkbox"
                   checked={selectedAssets.length === filteredAssets.length}
                   onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="rounded border-[#D5DbDB] text-[#C72030] focus:ring-[#C72030]"
+                  className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                 />
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Asset Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Asset ID
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Asset Code
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Asset No.
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Asset Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Equipment Id
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Site
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Building
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Wing
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Floor
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Area
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Room
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Met Type
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-[#D5DbDB]">
+          <tbody className="bg-white divide-y divide-gray-200">
             {filteredAssets.map((asset) => (
-              <tr key={asset.id} className="hover:bg-[#fafafa] transition-colors">
+              <tr key={asset.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <input
                     type="checkbox"
                     checked={selectedAssets.includes(asset.id)}
                     onChange={(e) => handleSelectAsset(asset.id, e.target.checked)}
-                    className="rounded border-[#D5DbDB] text-[#C72030] focus:ring-[#C72030]"
+                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                   />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <button className="text-[#1a1a1a] hover:text-[#C72030] transition-colors">
+                  <button className="text-gray-600 hover:text-purple-600 transition-colors">
                     <Eye className="w-4 h-4" />
                   </button>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#1a1a1a]">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {asset.name}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {asset.assetId}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a] font-mono">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">
                   {asset.assetCode}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {asset.assetNo}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {getStatusBadge(asset.status)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {asset.equipmentId}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {asset.site}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {asset.building}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {asset.wing}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {asset.floor}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {asset.area}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {asset.room}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[#1a1a1a]">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {asset.metType}
                 </td>
               </tr>

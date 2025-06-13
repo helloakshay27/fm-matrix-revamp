@@ -8,17 +8,28 @@ interface StatsCardProps {
   icon: React.ReactNode;
 }
 
+const getCardColors = (color: string) => {
+  switch (color) {
+    case 'orange':
+      return 'bg-gradient-to-r from-orange-500 to-red-500';
+    case 'green':
+      return 'bg-gradient-to-r from-green-500 to-emerald-500';
+    case 'red':
+      return 'bg-gradient-to-r from-red-500 to-pink-500';
+    default:
+      return 'bg-gradient-to-r from-gray-500 to-gray-600';
+  }
+};
+
 export const StatsCard: React.FC<StatsCardProps> = ({ title, value, color, icon }) => {
   return (
-    <div className="bg-[#f6f4ee] p-6 rounded-xl shadow-sm">
+    <div className={`${getCardColors(color)} p-6 rounded-xl shadow-sm text-white`}>
       <div className="flex items-center justify-between">
         <div>
-          <div className="bg-[#f6f4ee] px-3 py-1 rounded-md inline-block mb-2">
-            <p className="text-sm font-medium text-[#1a1a1a]">{title}</p>
-          </div>
-          <p className="text-3xl font-bold text-[#1a1a1a] mt-1">{value}</p>
+          <p className="text-sm font-medium text-white/90 mb-2">{title}</p>
+          <p className="text-3xl font-bold text-white">{value}</p>
         </div>
-        <div className="text-[#1a1a1a] opacity-70">
+        <div className="text-white/80">
           {icon}
         </div>
       </div>
