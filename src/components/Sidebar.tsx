@@ -1,851 +1,244 @@
+
 import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { 
-  Home, 
-  Wrench, 
-  Package, 
-  Users, 
   Calendar, 
+  Users, 
   ClipboardList, 
-  AlertTriangle,
-  FileText,
-  BarChart3,
+  Package, 
+  Building, 
+  FileText, 
+  BarChart3, 
+  UserCheck, 
   Settings,
   ChevronDown,
   ChevronRight,
-  Building,
-  UserCheck,
   Car,
-  MapPin,
-  Zap,
-  Recycle,
-  Eye,
-  Coffee,
-  BookOpen,
+  UserPlus,
+  PackageOpen,
+  Shield,
   Truck,
-  MessageSquare,
-  Target,
-  Space,
-  Mail,
-  DollarSign,
-  Receipt,
-  CreditCard,
-  Banknote,
-  History,
-  UserX,
-  Boxes,
-  Shield
+  ShoppingCart,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  CalendarDays
 } from 'lucide-react';
-import { useLayout } from '../contexts/LayoutContext';
+import { cn } from '@/lib/utils';
+import { useLayout } from '@/contexts/LayoutContext';
 
-const maintenanceItems = [
-  { name: 'Asset', icon: Package, href: '/', current: window.location.pathname === '/' },
-  { name: 'AMC', icon: Wrench, href: '/amc', current: window.location.pathname === '/amc' },
-  { name: 'Services', icon: Settings, href: '/services', current: window.location.pathname === '/services' },
-];
-
-const surveyItems = [
-  { name: 'Survey List', href: '/surveys/list' },
-  { name: 'Mapping', href: '/surveys/mapping' },
-  { name: 'Response', href: '/surveys/response' },
-];
-
-const projectItems = [
-  { name: 'Fitout Setup', href: '/project/fitout-setup' },
-  { name: 'Fitout Request', href: '/project/fitout-request' },
-  { name: 'Fitout Checklist', href: '/project/fitout-checklist' },
-  { name: 'Fitout Violation', href: '/project/fitout-violation' },
-];
-
-const crmItems = [
-  { name: 'Customers', href: '/crm/customers' },
-  { name: 'FM Users', href: '/crm/fm-users' },
-  { name: 'Occupant Users', href: '/crm/occupant-users' },
-];
-
-const utilityItems = [
-  { name: 'Dashboard', href: '/utility/dashboard' },
-  { name: 'Energy Meters', href: '/utility/energy-meters' },
-  { name: 'Daily Readings', href: '/utility/daily-readings' },
-  { name: 'Utility Consumption', href: '/utility/consumption' },
-  { name: 'Utility Request', href: '/utility/request' },
-];
-
-const wasteGenerationItems = [
-  { name: 'Waste Generation', href: '/utility/waste-generation' },
-  { name: 'Setup', href: '/utility/waste-setup' },
-];
-
-const visitorsItems = [
-  { name: 'Visitors', href: '/visitors/visitors', icon: Eye },
-  { name: 'Visitors History', href: '/visitors/history', icon: History },
-  { name: 'R Vehicles', href: '/visitors/r-vehicles', icon: Car },
-  { name: 'G Vehicles', href: '/visitors/g-vehicles', icon: Car },
-  { name: 'Staffs', href: '/visitors/staffs', icon: Users },
-  { name: 'Materials', href: '/visitors/materials', icon: Boxes },
-  { name: 'Patrolling', href: '/visitors/patrolling', icon: Shield },
-  { name: 'Patrolling Pending Approvals', href: '/visitors/patrolling-pending', icon: UserX },
-  { name: 'Goods In/Out', href: '/visitors/goods', icon: Package },
-];
-
-const rVehiclesSubItems = [
-  { name: 'All', href: '/visitors/r-vehicles' },
-  { name: 'History', href: '/visitors/r-vehicles/history' },
-];
-
-const experienceItems = [
-  { name: 'Events', href: '/experience/events' },
-  { name: 'Broadcast', href: '/experience/broadcast' },
-];
-
-const documentsItems = [
-  { name: 'Unit Related', href: '/experience/documents/unit' },
-  { name: 'Common', href: '/experience/documents/common' },
-];
-
-const transportItems = [
-  { name: 'Outstation', href: '/experience/transport/outstation' },
-  { name: 'Airline', href: '/experience/transport/airline' },
-  { name: 'Rail', href: '/experience/transport/rail' },
-  { name: 'Hotel', href: '/experience/transport/hotel' },
-];
-
-const selfTravelItems = [
-  { name: 'Self Travel Option 1', href: '/experience/transport/self-1' },
-  { name: 'Self Travel Option 2', href: '/experience/transport/self-2' },
-];
-
-const communityModulesItems = [
-  { name: 'Testimonials Setup', href: '/experience/community/testimonials' },
-  { name: 'Company Partners Setup', href: '/experience/community/partners' },
-  { name: 'Banners Setup', href: '/experience/community/banners' },
-  { name: 'Groups and Channel Config', href: '/experience/community/groups' },
-  { name: 'Amenities Setup', href: '/experience/community/amenities' },
-];
-
-const centreSetupItems = [
-  { name: 'Centre Setup Option 1', href: '/experience/community/centre-1' },
-  { name: 'Centre Setup Option 2', href: '/experience/community/centre-2' },
-];
-
-const propertySpaceItems = [
-  { name: 'Bookings', href: '/property/space/bookings' },
-  { name: 'Seat Requests', href: '/property/space/seat-requests' },
-];
-
-const propertySpaceSetupItems = [
-  { name: 'Space Setup Option 1', href: '/property/space/setup-1' },
-  { name: 'Space Setup Option 2', href: '/property/space/setup-2' },
-];
-
-const propertyBookingItems = [
-  { name: 'Setup', href: '/property/booking/setup' },
-];
-
-const propertyMailroomItems = [
-  { name: 'Inbound', href: '/property/mailroom/inbound' },
-  { name: 'Outbound', href: '/property/mailroom/outbound' },
-];
-
-const propertyParkingSetupItems = [
-  { name: 'Tag', href: '/property/parking/tag' },
-  { name: 'Parking Categories', href: '/property/parking/categories' },
-  { name: 'Parking Configurations', href: '/property/parking/configurations' },
-  { name: 'Parking Slots', href: '/property/parking/slots' },
-];
-
-const financeItems = [
-  { name: 'Material PR', href: '/finance/material-pr' },
-  { name: 'Service PR', href: '/finance/service-pr' },
-  { name: 'PO', href: '/finance/po' },
-  { name: 'WO', href: '/finance/wo' },
-  { name: 'GRN', href: '/finance/grn' },
-  { name: 'Invoices/SES', href: '/finance/invoices-ses' },
-  { name: 'Pending Approvals', href: '/finance/pending-approvals' },
-];
-
-const gdnItems = [
-  { name: 'GDN', href: '/finance/gdn' },
-  { name: 'Pending Approvals', href: '/finance/pending-approvals-2' },
-];
-
-const remainingFinanceItems = [
-  { name: 'Auto Saved PR', href: '/finance/auto-saved-pr' },
-  { name: 'WBS Element', href: '/finance/wbs-element' },
-  { name: 'Other Bills', href: '/finance/other-bills' },
-  { name: 'Accounting', href: '/finance/accounting' },
-  { name: 'Customer Bills', href: '/finance/customer-bills' },
-  { name: 'My Bills', href: '/finance/my-bills' },
-];
-
-const goodsInOutSubItems = [
-  { name: 'Inwards', href: '/visitors/goods/inwards' },
-  { name: 'Outwards', href: '/visitors/goods/outwards' },
-];
-
-export const Sidebar = () => {
+const Sidebar = () => {
+  const location = useLocation();
   const { currentSection } = useLayout();
-  const [isSurveyOpen, setIsSurveyOpen] = useState(false);
-  const [isWasteGenerationOpen, setIsWasteGenerationOpen] = useState(false);
-  const [isDocumentsOpen, setIsDocumentsOpen] = useState(false);
-  const [isTransportOpen, setIsTransportOpen] = useState(false);
-  const [isSelfTravelOpen, setIsSelfTravelOpen] = useState(false);
-  const [isCommunityModulesOpen, setIsCommunityModulesOpen] = useState(false);
-  const [isCentreSetupOpen, setIsCentreSetupOpen] = useState(false);
-  const [isSpaceOpen, setIsSpaceOpen] = useState(false);
-  const [isSpaceSetupOpen, setIsSpaceSetupOpen] = useState(false);
-  const [isBookingOpen, setIsBookingOpen] = useState(false);
-  const [isMailroomOpen, setIsMailroomOpen] = useState(false);
-  const [isParkingSetupOpen, setIsParkingSetupOpen] = useState(false);
-  const [isGrnOpen, setIsGrnOpen] = useState(false);
-  const [isGdnOpen, setIsGdnOpen] = useState(false);
-  const [isRVehiclesOpen, setIsRVehiclesOpen] = useState(false);
-  const [isGoodsInOutOpen, setIsGoodsInOutOpen] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<{ [key: string]: boolean }>({
+    maintenance: true,
+    visitors: false,
+    experience: false,
+    goodsInOut: false
+  });
 
-  const currentPath = window.location.pathname;
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
-  const renderNavigationItems = () => {
-    switch (currentSection) {
-      case 'Maintenance':
-        return (
-          <nav className="space-y-2">
-            {/* Maintenance Items */}
-            {maintenanceItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  item.current
-                    ? 'bg-[#C72030] text-white'
-                    : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
-                }`}
-              >
-                <item.icon className="w-5 h-5" />
-                {item.name}
-              </a>
-            ))}
-            
-            {/* Survey Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsSurveyOpen(!isSurveyOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <BarChart3 className="w-5 h-5" />
-                  Surveys
-                </div>
-                {isSurveyOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isSurveyOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {surveyItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
+  const maintenanceItems = [
+    { name: 'Assets', path: '/', icon: Package },
+    { name: 'Services', path: '/services', icon: Settings },
+    { name: 'Supplier', path: '/supplier', icon: Building },
+    { name: 'Schedule', path: '/schedule', icon: Calendar },
+    { name: 'AMC', path: '/amc', icon: FileText },
+    { name: 'Attendance', path: '/attendance', icon: UserCheck },
+    { name: 'Tasks', path: '/tasks', icon: ClipboardList },
+    { name: 'Survey List', path: '/surveys/list', icon: BarChart3 },
+    { name: 'Survey Mapping', path: '/surveys/mapping', icon: BarChart3 },
+    { name: 'Survey Response', path: '/surveys/response', icon: BarChart3 },
+    { name: 'InActive Assets', path: '/assets/inactive', icon: Package }
+  ];
 
-            {/* Other Maintenance Items */}
-            <a href="/attendance" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <Users className="w-5 h-5" />
-              Attendance
-            </a>
-            <a href="/inventory" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <Package className="w-5 h-5" />
-              Inventory
-            </a>
-            <a href="/inventory-consumption" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <Package className="w-5 h-5" />
-              Inventory Consumption
-            </a>
-            <a href="/eco-friendly" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <Recycle className="w-5 h-5" />
-              Eco-Friendly
-            </a>
-            <a href="/vendor" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <Building className="w-5 h-5" />
-              Vendor
-            </a>
-            <a href="/schedule" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <Calendar className="w-5 h-5" />
-              Schedule
-            </a>
-            <a href="/tasks" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <ClipboardList className="w-5 h-5" />
-              Tasks
-            </a>
-            <a href="/tickets" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <FileText className="w-5 h-5" />
-              Tickets
-            </a>
-          </nav>
-        );
+  const visitorsItems = [
+    { name: 'Visitors', path: '/visitors/visitors', icon: Users },
+    { name: 'Visitors History', path: '/visitors/history', icon: Users },
+    { name: 'R-Vehicles', path: '/visitors/r-vehicles', icon: Car },
+    { name: 'R-Vehicles History', path: '/visitors/r-vehicles/history', icon: Car },
+    { name: 'G-Vehicles', path: '/visitors/g-vehicles', icon: Truck },
+    { name: 'Staffs', path: '/visitors/staffs', icon: UserPlus },
+    { name: 'Materials', path: '/visitors/materials', icon: PackageOpen },
+    { name: 'Patrolling', path: '/visitors/patrolling', icon: Shield },
+    { name: 'Patrolling Pending', path: '/visitors/patrolling-pending', icon: Shield },
+    { name: 'Vehicle Parkings', path: '/visitors/vehicle-parkings', icon: Car }
+  ];
 
-      case 'Project':
-        return (
-          <nav className="space-y-2">
-            {projectItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <Building className="w-5 h-5" />
-                {item.name}
-              </a>
-            ))}
-          </nav>
-        );
+  const goodsInOutItems = [
+    { name: 'Inwards', path: '/visitors/goods/inwards', icon: ArrowDown },
+    { name: 'Outwards', path: '/visitors/goods/outwards', icon: ArrowUp }
+  ];
 
-      case 'CRM':
-        return (
-          <nav className="space-y-2">
-            {crmItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <Users className="w-5 h-5" />
-                {item.name}
-              </a>
-            ))}
-          </nav>
-        );
+  const experienceItems = [
+    { name: 'Events', path: '/experience/events', icon: CalendarDays }
+  ];
 
-      case 'Utility':
-        return (
-          <nav className="space-y-2">
-            {utilityItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <Zap className="w-5 h-5" />
-                {item.name}
-              </a>
-            ))}
-            
-            {/* Waste Generation Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsWasteGenerationOpen(!isWasteGenerationOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <Recycle className="w-5 h-5" />
-                  Waste Generation
-                </div>
-                {isWasteGenerationOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isWasteGenerationOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {wasteGenerationItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-          </nav>
-        );
+  const isActiveSection = (sectionName: string): boolean => {
+    return currentSection === sectionName;
+  };
 
-      case 'Visitors':
-        return (
-          <nav className="space-y-2">
-            {visitorsItems.map((item) => {
-              const isActive = currentPath === item.href;
-              
-              // Special handling for R Vehicles with dropdown
-              if (item.name === 'R Vehicles') {
-                return (
-                  <div key={item.name}>
-                    <button
-                      onClick={() => setIsRVehiclesOpen(!isRVehiclesOpen)}
-                      className={`flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        isActive || currentPath.startsWith('/visitors/r-vehicles')
-                          ? 'bg-[#C72030] text-white'
-                          : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <item.icon className="w-5 h-5" />
-                        {item.name}
-                      </div>
-                      {isRVehiclesOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                    </button>
-                    {isRVehiclesOpen && (
-                      <div className="ml-8 mt-1 space-y-1">
-                        {rVehiclesSubItems.map((subItem) => {
-                          const isSubActive = currentPath === subItem.href;
-                          return (
-                            <a
-                              key={subItem.name}
-                              href={subItem.href}
-                              className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
-                                isSubActive
-                                  ? 'bg-[#C72030] text-white'
-                                  : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
-                              }`}
-                            >
-                              {subItem.name}
-                            </a>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-              
-              // Special handling for Goods In/Out with dropdown
-              if (item.name === 'Goods In/Out') {
-                return (
-                  <div key={item.name}>
-                    <button
-                      onClick={() => setIsGoodsInOutOpen(!isGoodsInOutOpen)}
-                      className={`flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        isActive || currentPath.startsWith('/visitors/goods')
-                          ? 'bg-[#C72030] text-white'
-                          : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <item.icon className="w-5 h-5" />
-                        {item.name}
-                      </div>
-                      {isGoodsInOutOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                    </button>
-                    {isGoodsInOutOpen && (
-                      <div className="ml-8 mt-1 space-y-1">
-                        {goodsInOutSubItems.map((subItem) => {
-                          const isSubActive = currentPath === subItem.href;
-                          return (
-                            <a
-                              key={subItem.name}
-                              href={subItem.href}
-                              className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
-                                isSubActive
-                                  ? 'bg-[#C72030] text-white'
-                                  : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
-                              }`}
-                            >
-                              {subItem.name}
-                            </a>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-              
-              return (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-[#C72030] text-white'
-                      : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
-                  }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  {item.name}
-                </a>
-              );
-            })}
-          </nav>
-        );
-
-      case 'Experience':
-        return (
-          <nav className="space-y-2">
-            {experienceItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <Coffee className="w-5 h-5" />
-                {item.name}
-              </a>
-            ))}
-            
-            {/* Documents Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsDocumentsOpen(!isDocumentsOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <BookOpen className="w-5 h-5" />
-                  Documents
-                </div>
-                {isDocumentsOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isDocumentsOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {documentsItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <a href="/experience/business" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <Building className="w-5 h-5" />
-              Business
-            </a>
-
-            {/* Transport Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsTransportOpen(!isTransportOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <Truck className="w-5 h-5" />
-                  Transport
-                </div>
-                {isTransportOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isTransportOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {transportItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                  
-                  {/* Self Travel Dropdown */}
-                  <div>
-                    <button
-                      onClick={() => setIsSelfTravelOpen(!isSelfTravelOpen)}
-                      className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      <span>Self Travel</span>
-                      {isSelfTravelOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                    </button>
-                    {isSelfTravelOpen && (
-                      <div className="ml-4 mt-1 space-y-1">
-                        {selfTravelItems.map((item) => (
-                          <a
-                            key={item.name}
-                            href={item.href}
-                            className="block px-3 py-2 rounded-lg text-xs transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                          >
-                            {item.name}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Community Modules Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsCommunityModulesOpen(!isCommunityModulesOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <MessageSquare className="w-5 h-5" />
-                  Community Modules
-                </div>
-                {isCommunityModulesOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isCommunityModulesOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {communityModulesItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                  
-                  {/* Centre Setup Dropdown */}
-                  <div>
-                    <button
-                      onClick={() => setIsCentreSetupOpen(!isCentreSetupOpen)}
-                      className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      <span>Centre Setup</span>
-                      {isCentreSetupOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                    </button>
-                    {isCentreSetupOpen && (
-                      <div className="ml-4 mt-1 space-y-1">
-                        {centreSetupItems.map((item) => (
-                          <a
-                            key={item.name}
-                            href={item.href}
-                            className="block px-3 py-2 rounded-lg text-xs transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                          >
-                            {item.name}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <a href="/experience/setup" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <Settings className="w-5 h-5" />
-              Setup
-            </a>
-          </nav>
-        );
-
-      case 'Finance':
-        return (
-          <nav className="space-y-2">
-            {/* Basic Finance Items including GRN, Invoices/SES, Pending Approvals */}
-            {financeItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <DollarSign className="w-5 h-5" />
-                {item.name}
-              </a>
-            ))}
-
-            {/* GDN Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsGdnOpen(!isGdnOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5" />
-                  GDN
-                </div>
-                {isGdnOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isGdnOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {gdnItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Remaining Finance Items */}
-            {remainingFinanceItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <DollarSign className="w-5 h-5" />
-                {item.name}
-              </a>
-            ))}
-          </nav>
-        );
-
-      case 'Property':
-        return (
-          <nav className="space-y-2">
-            {/* Space Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsSpaceOpen(!isSpaceOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <Space className="w-5 h-5" />
-                  Space
-                </div>
-                {isSpaceOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isSpaceOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {propertySpaceItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                  
-                  {/* Setup Dropdown */}
-                  <div>
-                    <button
-                      onClick={() => setIsSpaceSetupOpen(!isSpaceSetupOpen)}
-                      className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      <span>Setup</span>
-                      {isSpaceSetupOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                    </button>
-                    {isSpaceSetupOpen && (
-                      <div className="ml-4 mt-1 space-y-1">
-                        {propertySpaceSetupItems.map((item) => (
-                          <a
-                            key={item.name}
-                            href={item.href}
-                            className="block px-3 py-2 rounded-lg text-xs transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                          >
-                            {item.name}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Booking Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsBookingOpen(!isBookingOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5" />
-                  Booking
-                </div>
-                {isBookingOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isBookingOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {propertyBookingItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Mailroom Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsMailroomOpen(!isMailroomOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <Mail className="w-5 h-5" />
-                  Mailroom
-                </div>
-                {isMailroomOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isMailroomOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {propertyMailroomItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <a href="/property/parking" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <Car className="w-5 h-5" />
-              Parking
-            </a>
-
-            {/* Setup Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsParkingSetupOpen(!isParkingSetupOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <Settings className="w-5 h-5" />
-                  Setup
-                </div>
-                {isParkingSetupOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isParkingSetupOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {propertyParkingSetupItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-          </nav>
-        );
-
-      default:
-        return (
-          <nav className="space-y-2">
-            <div className="px-3 py-4 text-center text-sm text-gray-500">
-              Select a section from the header to view navigation options
-            </div>
-          </nav>
-        );
-    }
+  const isActivePath = (path: string): boolean => {
+    return location.pathname === path;
   };
 
   return (
-    <div className="w-64 h-screen bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto">
-      <div className="p-6">
-        <div className="flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 bg-[#C72030] rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">FM</span>
+    <div className="w-64 bg-white h-screen border-r border-gray-200 overflow-y-auto">
+      <div className="p-4">
+        <div className="space-y-2">
+          {/* Maintenance Section */}
+          <div>
+            <button
+              onClick={() => toggleSection('maintenance')}
+              className={cn(
+                "flex items-center justify-between w-full px-3 py-2 text-left rounded-lg transition-colors",
+                isActiveSection('Maintenance') 
+                  ? "bg-blue-100 text-blue-700 font-medium" 
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              <span>Maintenance</span>
+              {expandedSections.maintenance ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </button>
+            {expandedSections.maintenance && (
+              <div className="ml-4 mt-2 space-y-1">
+                {maintenanceItems.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.path}
+                    className={cn(
+                      "flex items-center px-3 py-2 text-sm rounded-lg transition-colors",
+                      isActivePath(item.path)
+                        ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700"
+                        : "text-gray-600 hover:bg-gray-50"
+                    )}
+                  >
+                    <item.icon className="h-4 w-4 mr-3" />
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
-          <span className="text-[#1a1a1a] font-semibold text-lg">FacilityPro</span>
+
+          {/* Visitors Section */}
+          <div>
+            <button
+              onClick={() => toggleSection('visitors')}
+              className="flex items-center justify-between w-full px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-100"
+            >
+              <span>Visitors</span>
+              {expandedSections.visitors ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </button>
+            {expandedSections.visitors && (
+              <div className="ml-4 mt-2 space-y-1">
+                {visitorsItems.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.path}
+                    className={cn(
+                      "flex items-center px-3 py-2 text-sm rounded-lg transition-colors",
+                      isActivePath(item.path)
+                        ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700"
+                        : "text-gray-600 hover:bg-gray-50"
+                    )}
+                  >
+                    <item.icon className="h-4 w-4 mr-3" />
+                    {item.name}
+                  </Link>
+                ))}
+                
+                {/* Goods In/Out Sub Section */}
+                <div>
+                  <button
+                    onClick={() => toggleSection('goodsInOut')}
+                    className="flex items-center justify-between w-full px-3 py-2 text-left rounded-lg transition-colors text-gray-600 hover:bg-gray-50"
+                  >
+                    <div className="flex items-center">
+                      <ShoppingCart className="h-4 w-4 mr-3" />
+                      <span className="text-sm">Goods In/Out</span>
+                    </div>
+                    {expandedSections.goodsInOut ? (
+                      <ChevronDown className="h-3 w-3" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3" />
+                    )}
+                  </button>
+                  {expandedSections.goodsInOut && (
+                    <div className="ml-6 mt-1 space-y-1">
+                      {goodsInOutItems.map((item) => (
+                        <Link
+                          key={item.name}
+                          to={item.path}
+                          className={cn(
+                            "flex items-center px-3 py-2 text-sm rounded-lg transition-colors",
+                            isActivePath(item.path)
+                              ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700"
+                              : "text-gray-600 hover:bg-gray-50"
+                          )}
+                        >
+                          <item.icon className="h-3 w-3 mr-3" />
+                          {item.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Experience Section */}
+          <div>
+            <button
+              onClick={() => toggleSection('experience')}
+              className="flex items-center justify-between w-full px-3 py-2 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-100"
+            >
+              <span>Experience</span>
+              {expandedSections.experience ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </button>
+            {expandedSections.experience && (
+              <div className="ml-4 mt-2 space-y-1">
+                {experienceItems.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.path}
+                    className={cn(
+                      "flex items-center px-3 py-2 text-sm rounded-lg transition-colors",
+                      isActivePath(item.path)
+                        ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700"
+                        : "text-gray-600 hover:bg-gray-50"
+                    )}
+                  >
+                    <item.icon className="h-4 w-4 mr-3" />
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-        
-        {renderNavigationItems()}
       </div>
     </div>
   );
 };
+
+export default Sidebar;
