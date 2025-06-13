@@ -46,6 +46,7 @@ import { AirlineDashboard } from "./pages/AirlineDashboard";
 import { RailDashboard } from "./pages/RailDashboard";
 import { HotelDashboard } from "./pages/HotelDashboard";
 import { SelfTravelDashboard } from "./pages/SelfTravelDashboard";
+import { TestimonialsSetupDashboard } from "./pages/TestimonialsSetupDashboard";
 
 const queryClient = new QueryClient();
 
@@ -102,6 +103,7 @@ const App = () => (
                   <Route path="/experience/transport/rail" element={<RailDashboard />} />
                   <Route path="/experience/transport/hotel" element={<HotelDashboard />} />
                   <Route path="/experience/transport/self-travel" element={<SelfTravelDashboard />} />
+                  <Route path="/experience/testimonials" element={<TestimonialsSetupDashboard />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
