@@ -19,22 +19,14 @@ export const Header = () => {
           {/* Home Dashboard */}
           <button className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
             <Home className="w-4 h-4" />
-            <span className="text-sm font-medium">Home Dashboard</span>
+            <span className="text-sm font-medium">Home </span>
           </button>
 
           {/* Setup Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
-              <Settings className="w-4 h-4" />
-              <span className="text-sm font-medium">Setup</span>
-              <ChevronDown className="w-3 h-3" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg">
-              <DropdownMenuItem>General Setup</DropdownMenuItem>
-              <DropdownMenuItem>User Management</DropdownMenuItem>
-              <DropdownMenuItem>System Configuration</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <button className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
+            <Home className="w-4 h-4" />
+            <span className="text-sm font-medium">Setup</span>
+          </button>
 
           {/* Project Change Dropdown */}
           <DropdownMenu>
