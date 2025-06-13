@@ -9,7 +9,24 @@ export const SelfTravelDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const selfTravelData = [
-    // Sample data structure - can be populated with real data later
+    {
+      id: 8,
+      employeeName: "Chetan Safina",
+      vehicleType: "Prime SUV",
+      dateTime: "Wed Jul 12, 8:48 AM",
+      sourceLocation: "MIDC Industrial Estate, K/E Ward, Zone 3, Mumbai, Maharashtra, 400096, India",
+      destinationLocation: "Kamalakar Pant Walawalkar Marg, Dadabhai Naoroji Nagar, K/W Ward, Zone 3, Mumbai, Maharashtra, 400058, India",
+      status: "Requested"
+    },
+    {
+      id: 4,
+      employeeName: "sanket Patil",
+      vehicleType: "Prime SUV",
+      dateTime: "Thu Mar 30, 3:00 PM",
+      sourceLocation: "MIDC Industrial Estate, K/E Ward, Zone 3, Mumbai, Maharashtra, 400096, India",
+      destinationLocation: "Kamalakar Pant Walawalkar Marg, Dadabhai Naoroji Nagar, K/W Ward, Zone 3, Mumbai, Maharashtra, 400058, India",
+      status: "Requested"
+    }
   ];
 
   return (
@@ -57,7 +74,7 @@ export const SelfTravelDashboard = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              selfTravelData.map((item: any) => (
+              selfTravelData.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell>{item.id}</TableCell>
                   <TableCell className="text-blue-600">{item.employeeName}</TableCell>
