@@ -1,21 +1,33 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Sidebar } from '../components/Sidebar';
 import { Header } from '../components/Header';
 import { StatsCard } from '../components/StatsCard';
 import { AssetTable } from '../components/AssetTable';
-import { Package, CheckCircle, AlertTriangle } from 'lucide-react';
+import { AddAssetForm } from '../components/AddAssetForm';
+import { Package, CheckCircle, AlertTriangle, Plus } from 'lucide-react';
 
 export const AssetDashboard = () => {
+  const [isAddAssetOpen, setIsAddAssetOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-[#fafafa]">
       <Sidebar />
       <Header />
       
       <main className="ml-64 pt-16 p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-[#1a1a1a] mb-2">Asset Management</h1>
-          <p className="text-[#1a1a1a] opacity-70">Assets &gt; Asset List</p>
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-[#1a1a1a] mb-2">Asset Management</h1>
+            <p className="text-[#1a1a1a] opacity-70">Assets &gt; Asset List</p>
+          </div>
+          <button
+            onClick={() => setIsAddAssetOpen(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-[#C72030] text-white rounded-lg hover:bg-[#a61b28] transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            Add Asset
+          </button>
         </div>
         
         {/* Stats Cards */}
@@ -43,6 +55,12 @@ export const AssetDashboard = () => {
         {/* Asset Table */}
         <AssetTable />
       </main>
+
+      {/* Add Asset Form Modal */}
+      <AddAssetForm 
+        isOpen={isAddAssetOpen} 
+        onClose={() => setIsAddAssetOpen(false)} 
+      />
     </div>
   );
 };
