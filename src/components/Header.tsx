@@ -4,7 +4,7 @@ import { Bell, Search, User, MapPin } from 'lucide-react';
 
 export const Header = () => {
   return (
-    <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-64 z-10">
+    <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-12 right-0 left-64 z-10">
       <div className="flex items-center justify-between h-full px-6">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-sm text-[#1a1a1a]">
