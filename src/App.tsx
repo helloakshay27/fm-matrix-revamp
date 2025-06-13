@@ -31,6 +31,7 @@ import { PatrollingPendingDashboard } from "./pages/PatrollingPendingDashboard";
 import { GoodsInOutDashboard } from "./pages/GoodsInOutDashboard";
 import { InwardsDashboard } from "./pages/InwardsDashboard";
 import { OutwardsDashboard } from "./pages/OutwardsDashboard";
+import EventsDashboard from "./pages/EventsDashboard";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,7 @@ const App = () => (
                   <Route path="/visitors/goods/inwards" element={<InwardsDashboard />} />
                   <Route path="/visitors/goods/outwards" element={<OutwardsDashboard />} />
                   <Route path="/visitors/vehicle-parkings" element={<VehicleParkingDashboard />} />
+                  <Route path="/experience/events" element={<EventsDashboard />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
