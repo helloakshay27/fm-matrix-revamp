@@ -1,11 +1,8 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { LayoutProvider } from "./contexts/LayoutContext";
-import { DynamicLayout } from "./components/DynamicLayout";
 import Index from "./pages/Index";
 import { ServiceDashboard } from "./pages/ServiceDashboard";
 import { SupplierDashboard } from "./pages/SupplierDashboard";
@@ -25,23 +22,19 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <LayoutProvider>
-          <DynamicLayout>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/services" element={<ServiceDashboard />} />
-              <Route path="/supplier" element={<SupplierDashboard />} />
-              <Route path="/schedule" element={<ScheduleDashboard />} />
-              <Route path="/amc" element={<AMCDashboard />} />
-              <Route path="/attendance" element={<AttendanceDashboard />} />
-              <Route path="/surveys/list" element={<SurveyListDashboard />} />
-              <Route path="/surveys/mapping" element={<SurveyMappingDashboard />} />
-              <Route path="/surveys/response" element={<SurveyResponseDashboard />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </DynamicLayout>
-        </LayoutProvider>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/services" element={<ServiceDashboard />} />
+          <Route path="/supplier" element={<SupplierDashboard />} />
+          <Route path="/schedule" element={<ScheduleDashboard />} />
+          <Route path="/amc" element={<AMCDashboard />} />
+          <Route path="/attendance" element={<AttendanceDashboard />} />
+          <Route path="/surveys/list" element={<SurveyListDashboard />} />
+          <Route path="/surveys/mapping" element={<SurveyMappingDashboard />} />
+          <Route path="/surveys/response" element={<SurveyResponseDashboard />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
