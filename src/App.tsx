@@ -39,6 +39,7 @@ import { BusinessDirectoryDashboard } from "./pages/BusinessDirectoryDashboard";
 import { BusinessSetupDashboard } from "./pages/BusinessSetupDashboard";
 import { ProjectsDashboard } from "./pages/ProjectsDashboard";
 import { AddProjectDashboard } from "./pages/AddProjectDashboard";
+import { FitoutSetupDashboard } from "./pages/FitoutSetupDashboard";
 
 const queryClient = new QueryClient();
 
