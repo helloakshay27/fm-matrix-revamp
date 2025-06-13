@@ -155,7 +155,7 @@ const InternalTable = () => {
         cell: ({ row }) => <ActionIcons row={row} onEditClick={handleEditClick} />,
       },
     ],
-    []
+    [users]
   );
 
   return (
