@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Eye, Filter, Download, Printer, Plus, Import, RefreshCw, QrCode } from 'lucide-react';
 
@@ -85,7 +84,11 @@ const assets = [
   }
 ];
 
-export const AssetTable = () => {
+interface AssetTableProps {
+  onAddAsset: () => void;
+}
+
+export const AssetTable = ({ onAddAsset }: AssetTableProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAssets, setSelectedAssets] = useState<number[]>([]);
 
@@ -140,7 +143,10 @@ export const AssetTable = () => {
       <div className="p-6 border-b border-[#D5DbDB]">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-[#C72030] text-white rounded-lg hover:bg-[#C72030]/90 transition-colors">
+            <button 
+              onClick={onAddAsset}
+              className="flex items-center gap-2 px-4 py-2 bg-[#C72030] text-white rounded-lg hover:bg-[#C72030]/90 transition-colors"
+            >
               <Plus className="w-4 h-4" />
               Add
             </button>
