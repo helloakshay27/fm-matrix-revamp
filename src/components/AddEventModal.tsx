@@ -122,7 +122,7 @@ export const AddEventModal = ({ open, onOpenChange }: AddEventModalProps) => {
                 <Checkbox 
                   id="markImportant"
                   checked={markAsImportant}
-                  onCheckedChange={setMarkAsImportant}
+                  onCheckedChange={(checked) => setMarkAsImportant(checked === true)}
                 />
                 <Label htmlFor="markImportant">Mark as Important</Label>
               </div>
@@ -130,7 +130,7 @@ export const AddEventModal = ({ open, onOpenChange }: AddEventModalProps) => {
                 <Checkbox 
                   id="sendEmail"
                   checked={sendEmail}
-                  onCheckedChange={setSendEmail}
+                  onCheckedChange={(checked) => setSendEmail(checked === true)}
                 />
                 <Label htmlFor="sendEmail">Send Email</Label>
               </div>
