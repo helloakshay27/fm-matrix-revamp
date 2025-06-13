@@ -15,9 +15,9 @@ import {
 
 const navigation = [
   { name: 'Dashboard', icon: Home, href: '/' },
-  { name: 'Assets', icon: Package, href: '/assets', current: true },
+  { name: 'Assets', icon: Package, href: '/assets' },
   { name: 'AMC', icon: Wrench, href: '/amc' },
-  { name: 'Services', icon: Settings, href: '/services' },
+  { name: 'Services', icon: Settings, href: '/services', current: window.location.pathname === '/services' },
   { name: 'Attendance', icon: Users, href: '/attendance' },
   { name: 'Inventory', icon: Package, href: '/inventory' },
   { name: 'Tickets', icon: FileText, href: '/tickets' },
