@@ -1,10 +1,11 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Filter, Search, Eye } from 'lucide-react';
+import { AddBroadcastForm } from '@/components/AddBroadcastForm';
+import { BroadcastFilterModal } from '@/components/BroadcastFilterModal';
 
 interface BroadcastItem {
   id: number;
@@ -35,6 +36,8 @@ const mockBroadcastData: BroadcastItem[] = [
 export const BroadcastDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredData, setFilteredData] = useState(mockBroadcastData);
+  const [isAddFormOpen, setIsAddFormOpen] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
   const handleSearch = () => {
     if (searchTerm.trim() === '') {
@@ -69,11 +72,18 @@ export const BroadcastDashboard = () => {
       {/* Action Bar */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex gap-3">
-          <Button className="bg-purple-800 hover:bg-purple-900 text-white">
+          <Button 
+            onClick={() => setIsAddFormOpen(true)}
+            className="bg-purple-800 hover:bg-purple-900 text-white"
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
-          <Button variant="outline" className="border-gray-300">
+          <Button 
+            onClick={() => setIsFilterModalOpen(true)}
+            variant="outline" 
+            className="border-gray-300"
+          >
             <Filter className="w-4 h-4 mr-2" />
             Filter
           </Button>
@@ -150,6 +160,16 @@ export const BroadcastDashboard = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Modals */}
+      <AddBroadcastForm 
+        isOpen={isAddFormOpen} 
+        onClose={() => setIsAddFormOpen(false)} 
+      />
+      <BroadcastFilterModal 
+        isOpen={isFilterModalOpen} 
+        onClose={() => setIsFilterModalOpen(false)} 
+      />
     </div>
   );
 };
