@@ -34,6 +34,8 @@ import { InwardsDashboard } from "./pages/InwardsDashboard";
 import { OutwardsDashboard } from "./pages/OutwardsDashboard";
 import EventsDashboard from "./pages/EventsDashboard";
 import { BroadcastDashboard } from "./pages/BroadcastDashboard";
+import { DocumentsUnitDashboard } from "./pages/DocumentsUnitDashboard";
+import { DocumentsCommonDashboard } from "./pages/DocumentsCommonDashboard";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +80,8 @@ const App = () => (
                   <Route path="/visitors/vehicle-parkings" element={<VehicleParkingDashboard />} />
                   <Route path="/experience/events" element={<EventsDashboard />} />
                   <Route path="/experience/broadcast" element={<BroadcastDashboard />} />
+                  <Route path="/experience/documents/unit" element={<DocumentsUnitDashboard />} />
+                  <Route path="/experience/documents/common" element={<DocumentsCommonDashboard />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
