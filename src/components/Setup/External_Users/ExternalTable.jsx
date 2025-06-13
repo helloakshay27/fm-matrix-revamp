@@ -30,6 +30,7 @@ const ActionIcons = ({ row, onEdit }) => {
 
     dispatch(fetchUpdateUser({ userId: userData.id, updatedData: payload }))
       .then(() => {
+        toast.dismiss();
         toast.success(`Status ${updatedValue ? 'activated' : 'deactivated'} successfully`,{
            iconTheme: {
     primary: 'red', // This might directly change the color of the success icon
@@ -38,6 +39,7 @@ const ActionIcons = ({ row, onEdit }) => {
         });
       })
       .catch((error) => {
+        toast.dismiss();
         toast.error('Failed to update status:', error,{
           iconTheme: {
             primary: 'red', // This might directly change the color of the error icon
@@ -50,7 +52,7 @@ const ActionIcons = ({ row, onEdit }) => {
   return (
     <div className="flex gap-3 items-center">
       <Switch
-        color="danger"
+        color={`${isActive ? 'success' : 'danger'}`}
         checked={isActive}
         onChange={handleToggle}
       />

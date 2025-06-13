@@ -27,6 +27,7 @@ const ActionIcons = ({ row, onEditClick }) => {
   try {
     await dispatch(fetchUpdateUser({ userId: userData.id, updatedData: payload })).unwrap();
     setIsActive(updatedValue); 
+    toast.dismiss();
     toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`,{
       iconTheme: {
         primary: 'red', // This might directly change the color of the success icon
@@ -47,7 +48,8 @@ const ActionIcons = ({ row, onEditClick }) => {
 
   return (
     <div className="action-icons flex justify-start gap-5">
-      <Switch color="danger" checked={isActive}
+      <Switch         color={`${isActive ? 'success' : 'danger'}`}
+ checked={isActive}
         onChange={handleToggle} />
       <div>
         <EditOutlinedIcon

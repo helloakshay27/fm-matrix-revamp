@@ -114,7 +114,7 @@ const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
         </div>
 
         {/* Footer Buttons */}
-        <div className="absolute bottom-0 left-0 right-0 bg-[#D5DBDB] h-[90px] flex justify-center items-center gap-4">
+        <div className="absolute bg-[#D5DBDB] bottom-0 left-0 right-0 h-[90px] flex justify-center items-center gap-4">
           <button
             className="border border-[#C72030] text-[#1B1B1B] text-[14px] px-8 py-2"
             onClick={handleSubmit}

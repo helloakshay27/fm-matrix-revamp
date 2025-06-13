@@ -52,6 +52,7 @@ const TypesTable = () => {
   const handleDeleteClick = async (id) => {
     try {
       await dispatch(deleteProjectType(id)).unwrap(); // unwrap to handle async correctly
+      toast.dismiss();
       toast.success('Project Type deleted successfully',{
         iconTheme: {
           primary: 'red', // This might directly change the color of the success icon
@@ -79,6 +80,7 @@ const TypesTable = () => {
 
     try {
       await dispatch(updateProjectType({ id: row.original.id, data: payload })).unwrap();
+      toast.dismiss();
       toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`,{
         iconTheme: {
           primary: 'red', // This might directly change the color of the success icon
@@ -149,7 +151,8 @@ const TypesTable = () => {
             <div className="flex gap-4">
               <span>Inactive</span>
               <Switch
-                color="danger"
+                color={`${isActive ? 'success' : 'danger'}`}
+
                 checked={isActive}
                 onChange={() => handleToggle(row)} // toggle the row state
               />

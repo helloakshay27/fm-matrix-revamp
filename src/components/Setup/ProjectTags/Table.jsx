@@ -17,6 +17,7 @@ const ActionIcons = ({ row, onEdit }) => {
   const handleDeleteClick = async () => {
     try {
       await dispatch(deleteTag(row.original.id)).unwrap();
+      toast.dismiss();
       toast.success('Tag deleted successfully',{
         iconTheme: {
           primary: 'red', // This might directly change the color of the success icon
@@ -89,6 +90,7 @@ const TagsTable = () => {
 
     try {
       await dispatch(updateTag({ id: row.original.id, data: payload })).unwrap();
+      toast.dismiss();
       toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`,{
         iconTheme: {
           primary: 'red', // This might directly change the color of the success icon
@@ -141,7 +143,7 @@ const TagsTable = () => {
             <div className="flex gap-2 items-center">
               <span>Inactive</span>
               <Switch
-                color="danger"
+                color={`${isActive ? 'success' : 'danger'}`}
                 checked={isActive}
                 onChange={() => handleToggle(row)}
               />

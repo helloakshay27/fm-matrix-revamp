@@ -26,6 +26,7 @@ const ActionIcons = ({ row, onEdit }) => {
     };
 
     dispatch(editRole({ id: row.original.id, payload }));
+    toast.dismiss();
     toast.success(`Status ${updatedValue?"activated":"deactivated"} successfully`,{
       iconTheme: {
         primary: 'red', // This might directly change the color of the success icon
@@ -37,7 +38,7 @@ const ActionIcons = ({ row, onEdit }) => {
   return (
     <div className="action-icons flex justify-between gap-5">
       <Switch
-        color="danger"
+        color={isActive ? 'success' : 'danger'}
         checked={isActive}
         onChange={handleToggle}
       />

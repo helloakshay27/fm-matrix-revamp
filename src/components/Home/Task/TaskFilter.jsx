@@ -21,7 +21,7 @@ const colorOptions = [
 
 const projectTypeOptions = ["Design", "Development", "Marketing"];
 const projectManagerOptions = ["Anuj", "Anagha", "Tara"];
-const createdByOptions = ["Admin", "User", "System"];
+// const createdByOptions = ["Admin", "User", "System"];
 
 const TaskFilter = ({ isModalOpen, setIsModalOpen }) => {
     const {id,mid}=useParams();
@@ -62,6 +62,7 @@ const TaskFilter = ({ isModalOpen, setIsModalOpen }) => {
     const [selectedCreators, setSelectedCreators] = useState(getInitialFilters().selectedCreators);
     const [dates, setDates] = useState({ "Start Date": "", "End Date": "" });
     const [responsiblePersonOptions,setResponsiblePersonOptions]=useState([]);
+    const [createdByOptions,setCreatedByOptions]=useState([]);
     const [statusOptions,setStatusOptions]=useState([]);    
     
     // Search inputs inside dropdowns
@@ -111,9 +112,27 @@ tasksFromStore.forEach((task) => {
 });
 
      setStatusOptions(Array.from(uniqueMap.values()));
-        setResponsiblePersonOptions(tasksFromStore.map((user) => ({label:user.responsible_person.name ,value:user.responsible_person.id})));
+}
+      
+       if(tasksFromStore.length>0){
+           const uniqueMap = new Map();
+
+           tasksFromStore.forEach((task) => {
+               if (task.responsible_person && !uniqueMap.has(task.responsible_person.id)) {
+                   uniqueMap.set(task.responsible_person.id, {
+                       label: task.responsible_person.name,
+                       value: task.responsible_person.id
+                   });
+               }
+           });
+       
+       setResponsiblePersonOptions(Array.from(uniqueMap.values()));
     }
-},[tasksFromStore])
+
+    if(users.length>0){
+        setCreatedByOptions(users.map(user=>({label:user.firstname+" "+user.lastname,value:user.id})));
+    }
+},[tasksFromStore,users])
     
  // Save filter state to localStorage whenever it changes
     useEffect(() => {
@@ -164,17 +183,6 @@ const  handleApplyFilter=(overideFilters)=>{
 
 
 
-    useEffect(() => {
-        try{
-            if(users.length===0)
-            dispatch(fetchUsers());
-          
-        }catch(error){
-            console.log(error);
-        }finally{
-            setResponsiblePersonOptions(tasksFromStore.map((user) => ({label:user.responsible_person.name ,value:user.responsible_person.id})));
-        }
-    },[dispatch,users])
 
     const toggleDropdown = (key) => {
         setDropdowns((prev) => {

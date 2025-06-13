@@ -206,13 +206,13 @@ const CustomTable = ({
                 {buttonText && onAdd && (
                     <div className={`${isInline ? "" : "flex justify-end mt-4 mr-3"}`}>
                         <button
-                            className="bg-[#C62828] hover:bg-[#B71C1C] text-white text-sm font-medium px-5 py-2 rounded flex items-center gap-1"
+                            className=" h-[38px] w-[170px] bg-[#C72030] text-white mr-5"
                             onClick={onAdd}
                             disabled={isAddingInlineItem || isSavingInlineItem}
                         >
-                            <span className="text-base font-bold">+</span>
-                            {buttonText}
-                            <span className="ml-1 text-xs">▾</span>
+                            <span className="mr-2">+</span>
+                            <span className="text-[15px]">{buttonText}</span>
+                            {/* <span className="ml-1 text-xs">▾</span> */}
                         </button>
                     </div>
                 )}

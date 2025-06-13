@@ -74,6 +74,7 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
         active: !row.original.active
       };
       await dispatch(updateStatus({ id: row.original.id,  payload })).unwrap(); // Use 'data' as key for payload if your thunk expects it
+      toast.dismiss();
       toast.success(`Status ${payload.active ? 'activated' : 'deactivated'} successfully`,{
         iconTheme: {
           primary: 'red', // This might directly change the color of the success icon
@@ -124,7 +125,7 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
           <div className="flex gap-4 items-center justify-center">
             <span>Inactive</span>
             <Switch
-              color="danger"
+                color={`${getValue() ? 'success' : 'danger'}`}
               checked={getValue()}
               onChange={() => toggleStatus(row)}
             />

@@ -76,6 +76,7 @@ const GroupTable = () => {
 
     try {
       await dispatch(updateProjectGroup({ id: row.original.id, payload })).unwrap();
+      toast.dismiss();
       toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`,{
         iconTheme: {
           primary: 'red', // This might directly change the color of the success icon
@@ -95,7 +96,8 @@ const GroupTable = () => {
     return (
     <div className=" flex justify-start items-start gap-5 ml-2">
               <Switch
-                color="danger"
+        color={`${row.original.active ? 'success' : 'danger'}`}
+
                 checked={row.original.active}
                 onChange={() => handleToggle(row)} // toggle the row state
               />
