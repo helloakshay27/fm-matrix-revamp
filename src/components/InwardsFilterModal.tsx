@@ -2,9 +2,8 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
 
 interface InwardsFilterModalProps {
@@ -13,42 +12,22 @@ interface InwardsFilterModalProps {
 }
 
 export const InwardsFilterModal = ({ isOpen, onClose }: InwardsFilterModalProps) => {
-  const [filters, setFilters] = useState({
-    type: '',
-    category: '',
-    modeOfTransport: '',
-    dateFrom: '',
-    dateTo: '',
-    personName: '',
-    tripId: ''
-  });
+  const [searchValue, setSearchValue] = useState('');
 
-  const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
-
-  const handleApplyFilters = () => {
-    console.log('Applied filters:', filters);
+  const handleApply = () => {
+    console.log('Applied filter with search:', searchValue);
     onClose();
   };
 
-  const handleClearFilters = () => {
-    setFilters({
-      type: '',
-      category: '',
-      modeOfTransport: '',
-      dateFrom: '',
-      dateTo: '',
-      personName: '',
-      tripId: ''
-    });
+  const handleReset = () => {
+    setSearchValue('');
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md bg-white">
         <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
-          <DialogTitle className="text-lg font-semibold">Filters</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">FILTER</DialogTitle>
           <Button
             variant="ghost"
             size="icon"
@@ -61,105 +40,29 @@ export const InwardsFilterModal = ({ isOpen, onClose }: InwardsFilterModalProps)
         
         <div className="p-6 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="type" className="text-sm font-medium">Type</Label>
-            <Select value={filters.type} onValueChange={(value) => handleFilterChange('type', value)}>
-              <SelectTrigger className="border-gray-300">
-                <SelectValue placeholder="Select Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="faulty">Faulty</SelectItem>
-                <SelectItem value="fresh">Fresh</SelectItem>
-                <SelectItem value="rsr">RS&R</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="category" className="text-sm font-medium">Category</Label>
-            <Select value={filters.category} onValueChange={(value) => handleFilterChange('category', value)}>
-              <SelectTrigger className="border-gray-300">
-                <SelectValue placeholder="Select Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="staff">Staff</SelectItem>
-                <SelectItem value="vendor">Vendor</SelectItem>
-                <SelectItem value="visitor">Visitor</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="modeOfTransport" className="text-sm font-medium">Mode of Transport</Label>
-            <Select value={filters.modeOfTransport} onValueChange={(value) => handleFilterChange('modeOfTransport', value)}>
-              <SelectTrigger className="border-gray-300">
-                <SelectValue placeholder="Select Mode" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="by-courier">By Courier</SelectItem>
-                <SelectItem value="by-vehicle">By Vehicle</SelectItem>
-                <SelectItem value="by-hand">By Hand</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="dateFrom" className="text-sm font-medium">Date From</Label>
-              <Input
-                id="dateFrom"
-                type="date"
-                value={filters.dateFrom}
-                onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                className="border-gray-300"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="dateTo" className="text-sm font-medium">Date To</Label>
-              <Input
-                id="dateTo"
-                type="date"
-                value={filters.dateTo}
-                onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                className="border-gray-300"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="personName" className="text-sm font-medium">Person Name</Label>
+            <Label htmlFor="searchInput" className="text-sm font-medium">Search by Name or Id</Label>
             <Input
-              id="personName"
-              value={filters.personName}
-              onChange={(e) => handleFilterChange('personName', e.target.value)}
+              id="searchInput"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
               className="border-gray-300"
-              placeholder="Enter person name"
+              placeholder="Search by Name or Id"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="tripId" className="text-sm font-medium">Trip ID</Label>
-            <Input
-              id="tripId"
-              value={filters.tripId}
-              onChange={(e) => handleFilterChange('tripId', e.target.value)}
-              className="border-gray-300"
-              placeholder="Enter trip ID"
-            />
-          </div>
-
-          <div className="flex justify-between gap-4 pt-4">
+          <div className="flex justify-end gap-4 pt-4">
             <Button
-              variant="outline"
-              onClick={handleClearFilters}
-              className="flex-1"
-            >
-              Clear
-            </Button>
-            <Button
-              onClick={handleApplyFilters}
-              className="flex-1 bg-[#8B4B8C] hover:bg-[#7A4077] text-white"
+              onClick={handleApply}
+              className="px-8 bg-[#8B4B8C] hover:bg-[#7A4077] text-white"
             >
               Apply
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleReset}
+              className="px-8"
+            >
+              Reset
             </Button>
           </div>
         </div>
