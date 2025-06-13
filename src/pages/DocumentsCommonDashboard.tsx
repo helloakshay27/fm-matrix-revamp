@@ -2,44 +2,49 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Plus, File, Folder, FileText, Image } from "lucide-react";
+import { Search, Plus, File, Folder, FileText, Image, ChevronRight, ChevronDown } from "lucide-react";
 
 const commonDocumentsData = [
   {
-    id: "policies",
+    id: "common-files",
     type: "folder",
-    name: "Company Policies",
+    name: "Common Files",
     children: [
-      { name: "Employee_Handbook.pdf", type: "pdf" },
-      { name: "Safety_Guidelines.docx", type: "document" },
-      { name: "Code_of_Conduct.pdf", type: "pdf" }
+      {
+        id: "leave-policy",
+        type: "folder",
+        name: "Leave Policy & Holiday List",
+        children: [
+          { name: "ATTENDANCE___LEAVE_POLICY.docx", type: "document" },
+          { name: "Public_Holiday_List_2022_LOCKATED.pdf", type: "pdf" }
+        ]
+      },
+      {
+        id: "reimbursement",
+        type: "folder", 
+        name: "Reimbursement Policy",
+        children: [
+          { name: "Reimbursement.png", type: "image" },
+          { name: "Expense_and_Travel_Reimbursement.pdf", type: "pdf" }
+        ]
+      }
     ]
   },
   {
-    id: "templates",
-    type: "folder", 
-    name: "Templates",
-    children: [
-      { name: "Request_Form_Template.docx", type: "document" },
-      { name: "Report_Template.xlsx", type: "excel" },
-      { name: "Meeting_Minutes_Template.docx", type: "document" }
-    ]
-  },
-  {
-    id: "procedures", 
+    id: "my-documents",
     type: "folder",
-    name: "Standard Procedures",
+    name: "My Documents",
     children: [
-      { name: "Emergency_Procedures.pdf", type: "pdf" },
-      { name: "Maintenance_SOP.docx", type: "document" }
+      { name: "48CN2.docx.pdf", type: "pdf" },
+      { name: "FM_category_incident.xlsx", type: "excel" },
+      { name: "sample_ptd.pdf", type: "pdf" }
     ]
   }
 ];
 
 export const DocumentsCommonDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
+  const [expandedFolders, setExpandedFolders] = useState<string[]>(["common-files"]);
 
   const toggleFolder = (folderId: string) => {
     setExpandedFolders(prev => 
@@ -65,10 +70,49 @@ export const DocumentsCommonDashboard = () => {
     }
   };
 
+  const renderTreeItem = (item: any, depth = 0) => {
+    const isExpanded = expandedFolders.includes(item.id);
+    const hasChildren = item.children && item.children.length > 0;
+
+    return (
+      <div key={item.id || item.name}>
+        <div 
+          className={`flex items-center gap-2 py-1 px-2 hover:bg-gray-50 cursor-pointer`}
+          style={{ paddingLeft: `${depth * 20 + 8}px` }}
+          onClick={() => item.id && toggleFolder(item.id)}
+        >
+          {hasChildren && (
+            <div className="w-4 h-4 flex items-center justify-center">
+              {isExpanded ? (
+                <ChevronDown className="w-3 h-3 text-gray-600" />
+              ) : (
+                <ChevronRight className="w-3 h-3 text-gray-600" />
+              )}
+            </div>
+          )}
+          {!hasChildren && <div className="w-4 h-4" />}
+          {getFileIcon(item.type)}
+          <span className="text-sm text-gray-700">{item.name}</span>
+        </div>
+        
+        {hasChildren && isExpanded && (
+          <div>
+            {item.children.map((child: any, index: number) => 
+              renderTreeItem(child, depth + 1)
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const filteredDocuments = commonDocumentsData.filter(doc =>
     doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     doc.children?.some(child => 
-      child.name.toLowerCase().includes(searchTerm.toLowerCase())
+      child.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (child.children && child.children.some((subChild: any) => 
+        subChild.name.toLowerCase().includes(searchTerm.toLowerCase())
+      ))
     )
   );
 
@@ -83,7 +127,7 @@ export const DocumentsCommonDashboard = () => {
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">COMMON DOCUMENTS</h1>
+        <h1 className="text-2xl font-bold text-gray-900">COMMON</h1>
         <Button className="bg-purple-700 hover:bg-purple-800 text-white">
           <Plus className="w-4 h-4 mr-2" />
           Add
@@ -101,59 +145,11 @@ export const DocumentsCommonDashboard = () => {
         />
       </div>
 
-      {/* Documents Table/Tree */}
-      <div className="bg-white rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12">#</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Size</TableHead>
-              <TableHead>Modified</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredDocuments.map((doc, index) => (
-              <>
-                <TableRow 
-                  key={doc.id}
-                  className="cursor-pointer hover:bg-gray-50"
-                  onClick={() => toggleFolder(doc.id)}
-                >
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {getFileIcon(doc.type)}
-                      <span className="font-medium">{doc.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm text-gray-500 capitalize">{doc.type}</span>
-                  </TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                </TableRow>
-                {expandedFolders.includes(doc.id) && doc.children?.map((child, childIndex) => (
-                  <TableRow key={`${doc.id}-${childIndex}`} className="bg-gray-50">
-                    <TableCell></TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2 ml-4">
-                        {getFileIcon(child.type)}
-                        <span>{child.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-gray-500 capitalize">{child.type}</span>
-                    </TableCell>
-                    <TableCell>-</TableCell>
-                    <TableCell>-</TableCell>
-                  </TableRow>
-                ))}
-              </>
-            ))}
-          </TableBody>
-        </Table>
+      {/* Documents Tree */}
+      <div className="bg-white rounded-lg border border-gray-200">
+        <div className="p-4">
+          {filteredDocuments.map((doc) => renderTreeItem(doc))}
+        </div>
       </div>
     </div>
   );
