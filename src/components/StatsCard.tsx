@@ -9,14 +9,8 @@ interface StatsCardProps {
 }
 
 export const StatsCard: React.FC<StatsCardProps> = ({ title, value, color, icon }) => {
-  const colorClasses = {
-    orange: 'from-[#F4C790] to-[#DBC2A9]',
-    green: 'from-[#A4F4E7] to-[#AAB9C5]',
-    red: 'from-[#E4626F] to-[#C72030]'
-  };
-
   return (
-    <div className={`bg-gradient-to-r ${colorClasses[color]} p-6 rounded-xl shadow-sm`}>
+    <div className="bg-[#f6f4ee] p-6 rounded-xl shadow-sm">
       <div className="flex items-center justify-between">
         <div>
           <div className="bg-[#f6f4ee] px-3 py-1 rounded-md inline-block mb-2">
