@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -36,6 +35,8 @@ import EventsDashboard from "./pages/EventsDashboard";
 import { BroadcastDashboard } from "./pages/BroadcastDashboard";
 import { DocumentsUnitDashboard } from "./pages/DocumentsUnitDashboard";
 import { DocumentsCommonDashboard } from "./pages/DocumentsCommonDashboard";
+import { BusinessDirectoryDashboard } from "./pages/BusinessDirectoryDashboard";
+import { BusinessSetupDashboard } from "./pages/BusinessSetupDashboard";
 
 const queryClient = new QueryClient();
 
