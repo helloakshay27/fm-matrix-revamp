@@ -1,4 +1,5 @@
 
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -88,13 +89,13 @@ const App = () => (
                   <Route path="/visitors/goods/inwards" element={<InwardsDashboard />} />
                   <Route path="/visitors/goods/outwards" element={<OutwardsDashboard />} />
                   <Route path="/visitors/vehicle-parkings" element={<VehicleParkingDashboard />} />
-                  <Route path="/visitors/outstation" element={<OutstationDashboard />} />
                   <Route path="/experience/events" element={<EventsDashboard />} />
                   <Route path="/experience/broadcast" element={<BroadcastDashboard />} />
                   <Route path="/experience/business" element={<BusinessDirectoryDashboard />} />
                   <Route path="/experience/business/setup" element={<BusinessSetupDashboard />} />
                   <Route path="/experience/documents/unit" element={<DocumentsUnitDashboard />} />
                   <Route path="/experience/documents/common" element={<DocumentsCommonDashboard />} />
+                  <Route path="/experience/transport/outstation" element={<OutstationDashboard />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
@@ -108,3 +109,4 @@ const App = () => (
 );
 
 export default App;
+
