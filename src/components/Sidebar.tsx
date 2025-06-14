@@ -74,6 +74,7 @@ const utilityItems = [
   { name: 'Dashboard', href: '/utility/dashboard' },
   { name: 'Energy Meters', href: '/utility/energy-meters' },
   { name: 'Water', href: '/utility/water' },
+  { name: 'STP', href: '/utility/stp' },
   { name: 'Daily Readings', href: '/utility/daily-readings' },
   { name: 'Utility Consumption', href: '/utility/consumption' },
   { name: 'Utility Request', href: '/utility/request' },
