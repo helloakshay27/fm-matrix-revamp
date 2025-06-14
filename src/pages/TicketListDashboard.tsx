@@ -1,11 +1,12 @@
-
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Eye, Plus, Filter, Upload, Users, AlertTriangle, CheckCircle, MessageSquare, FileText } from 'lucide-react';
+import { TicketsFilterDialog } from '../components/TicketsFilterDialog';
 
 const statusCards = [
   { title: 'Closed Tickets', count: 301, color: 'bg-[#8B4513]', icon: CheckCircle },
@@ -68,6 +69,16 @@ const mockTicketData = [
 
 export const TicketListDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleFilterApply = (filters: any) => {
+    console.log('Applied filters:', filters);
+  };
+
+  const handleAddTicket = () => {
+    navigate('/tickets/add');
+  };
 
   return (
     <div className="p-6">
@@ -99,11 +110,18 @@ export const TicketListDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex gap-3 mb-6">
-        <Button className="bg-[#8B4513] hover:bg-[#7A3F12] text-white">
+        <Button 
+          onClick={handleAddTicket}
+          className="bg-[#8B4513] hover:bg-[#7A3F12] text-white"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
-        <Button variant="outline" className="border-[#8B4513] text-[#8B4513]">
+        <Button 
+          variant="outline" 
+          className="border-[#8B4513] text-[#8B4513]"
+          onClick={() => setIsFilterOpen(true)}
+        >
           <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
@@ -182,6 +200,12 @@ export const TicketListDashboard = () => {
           </TableBody>
         </Table>
       </div>
+
+      <TicketsFilterDialog 
+        open={isFilterOpen}
+        onOpenChange={setIsFilterOpen}
+        onApply={handleFilterApply}
+      />
     </div>
   );
 };
