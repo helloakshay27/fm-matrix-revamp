@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, Plus, Import, Update, FileDown, Printer, Filters } from 'lucide-react';
+import { Search, Plus, Import, RefreshCw, FileDown, Printer, Filter } from 'lucide-react';
 
 export const UtilityWaterDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -63,7 +63,7 @@ export const UtilityWaterDashboard = () => {
           Import
         </Button>
         <Button variant="outline">
-          <Update className="w-4 h-4 mr-2" />
+          <RefreshCw className="w-4 h-4 mr-2" />
           Update
         </Button>
         <Button variant="outline">
@@ -82,7 +82,7 @@ export const UtilityWaterDashboard = () => {
       {/* Search and Filter */}
       <div className="flex justify-between items-center">
         <Button variant="outline">
-          <Filters className="w-4 h-4 mr-2" />
+          <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
         <div className="flex items-center space-x-2">
