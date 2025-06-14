@@ -41,6 +41,9 @@ import { ProjectsDashboard } from "./pages/ProjectsDashboard";
 import { ProjectDashboard } from "./pages/ProjectDashboard";
 import { AddProjectDashboard } from "./pages/AddProjectDashboard";
 import { FitoutSetupDashboard } from "./pages/FitoutSetupDashboard";
+import { FitoutRequestListDashboard } from "./pages/FitoutRequestListDashboard";
+import { FitoutChecklistDashboard } from "./pages/FitoutChecklistDashboard";
+import { FitoutViolationDashboard } from "./pages/FitoutViolationDashboard";
 import { OutstationDashboard } from "./pages/OutstationDashboard";
 import { AirlineDashboard } from "./pages/AirlineDashboard";
 import { RailDashboard } from "./pages/RailDashboard";
@@ -183,6 +186,9 @@ const App = () => (
                   <Route path="/projects" element={<ProjectDashboard />} />
                   <Route path="/projects/fitout-setup" element={<FitoutSetupDashboard />} />
                   <Route path="/projects/add" element={<AddProjectDashboard />} />
+                  <Route path="/fitout/request-list" element={<FitoutRequestListDashboard />} />
+                  <Route path="/fitout/checklist" element={<FitoutChecklistDashboard />} />
+                  <Route path="/fitout/violation" element={<FitoutViolationDashboard />} />
                   <Route path="/finance/material-pr" element={<MaterialPRDashboard />} />
                   <Route path="/finance/material-pr/add" element={<AddMaterialPRDashboard />} />
                   <Route path="/finance/service-pr" element={<ServicePRDashboard />} />

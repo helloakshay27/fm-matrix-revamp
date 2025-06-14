@@ -36,7 +36,8 @@ import {
   Shield,
   Search,
   ClipboardCheck,
-  Lightbulb
+  Lightbulb,
+  Hammer
 } from 'lucide-react';
 import { useLayout } from '../contexts/LayoutContext';
 
@@ -215,6 +216,13 @@ const designInsightsItems = [
   { name: 'Setup', href: '/maintenance/design-insights/setup' },
 ];
 
+const fitoutItems = [
+  { name: 'Fitout Setup', href: '/projects/fitout-setup' },
+  { name: 'Fitout Request', href: '/fitout/request-list' },
+  { name: 'Fitout Checklist', href: '/fitout/checklist' },
+  { name: 'Fitout Violation', href: '/fitout/violation' },
+];
+
 export const Sidebar = () => {
   const { currentSection } = useLayout();
   const [isSurveyOpen, setIsSurveyOpen] = useState(false);
@@ -239,6 +247,7 @@ export const Sidebar = () => {
   const [isRVehiclesOpen, setIsRVehiclesOpen] = useState(false);
   const [isGoodsInOutOpen, setIsGoodsInOutOpen] = useState(false);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+  const [isFitoutOpen, setIsFitoutOpen] = useState(false);
 
   const currentPath = window.location.pathname;
 
@@ -484,16 +493,59 @@ export const Sidebar = () => {
       case 'Project':
         return (
           <nav className="space-y-2">
-            {projectItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+            {/* Main Project Items */}
+            <a
+              href="/projects"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+            >
+              <Building className="w-5 h-5" />
+              Projects
+            </a>
+            <a
+              href="/projects/add"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+            >
+              <Building className="w-5 h-5" />
+              Add Project
+            </a>
+
+            {/* Fitout Setup Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsFitoutOpen(!isFitoutOpen)}
+                className={`flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  currentPath.startsWith('/projects/fitout-setup') || currentPath.startsWith('/fitout')
+                    ? 'bg-[#C72030] text-white'
+                    : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
+                }`}
               >
-                <Building className="w-5 h-5" />
-                {item.name}
-              </a>
-            ))}
+                <div className="flex items-center gap-3">
+                  <Hammer className="w-5 h-5" />
+                  Fitout Setup
+                </div>
+                {isFitoutOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isFitoutOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {fitoutItems.map((item) => {
+                    const isActive = currentPath === item.href;
+                    return (
+                      <a
+                        key={item.name}
+                        href={item.href}
+                        className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
+                          isActive
+                            ? 'bg-[#C72030] text-white'
+                            : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
+                        }`}
+                      >
+                        {item.name}
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </nav>
         );
 
