@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -6,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Upload, Download, Filter, Eye } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { SetupLayout } from '@/components/SetupLayout';
+import { useNavigate } from 'react-router-dom';
 
 // Sample data for the occupant users table
 const occupantUsersData = [
@@ -92,6 +92,7 @@ const occupantUsersData = [
 ];
 
 export const OccupantUsersDashboard = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredUsers = occupantUsersData.filter(user =>
@@ -99,6 +100,10 @@ export const OccupantUsersDashboard = () => {
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.company.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleAddUser = () => {
+    navigate('/setup/occupant-users/add');
+  };
 
   return (
     <SetupLayout>
@@ -179,7 +184,10 @@ export const OccupantUsersDashboard = () => {
             {/* Action Buttons */}
             <div className="p-4 border-b border-gray-200">
               <div className="flex flex-wrap gap-3 items-center">
-                <Button className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white">
+                <Button 
+                  onClick={handleAddUser}
+                  className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white"
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Add
                 </Button>
