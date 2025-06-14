@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -26,14 +25,14 @@ import {
   TrendingUp,
   Zap,
 } from 'lucide-react';
-import { useLayout } from '@/contexts/LayoutContext';
+import { useLayoutContext } from '@/contexts/LayoutContext';
 
 export const Sidebar = () => {
   const location = useLocation();
-  const { getCurrentSectionFromPath } = useLayout();
+  const { isSidebarOpen } = useLayoutContext();
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={isSidebarOpen}>
       <UISidebar className="bg-[#1E1E1E] text-white border-r border-gray-800">
         <SidebarContent>
           {/* Dashboard Section */}
