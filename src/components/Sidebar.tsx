@@ -1,301 +1,1045 @@
 import React, { useState } from 'react';
-import {
-  Home,
-  Wrench,
-  Building2,
-  Settings,
-  Users,
-  DollarSign,
-  FileText,
-  CheckSquare,
+import { 
+  Home, 
+  Wrench, 
+  Package, 
+  Users, 
+  Calendar, 
+  ClipboardList, 
   AlertTriangle,
-  ClipboardList,
-  Shield,
-  Eye,
-  Mail,
-  Target,
-  BookOpen,
-  Receipt,
-  MapPin,
+  FileText,
+  BarChart3,
+  Settings,
   ChevronDown,
   ChevronRight,
-  LayoutDashboard,
-  Calendar,
-  Bell,
-  Package,
-  Truck,
-  BarChart,
-  ListChecks,
-  DoorOpen,
-  Key,
-  ParkingSquare,
-  Car,
-  User,
-  HardDrive,
-  Navigation,
-  Flag,
-  Newspaper,
-  Briefcase,
   Building,
+  UserCheck,
+  Car,
+  MapPin,
+  Zap,
+  Recycle,
+  Eye,
+  Coffee,
+  BookOpen,
+  Truck,
+  MessageSquare,
+  Target,
+  Space,
+  Mail,
+  DollarSign,
+  Receipt,
+  CreditCard,
+  Banknote,
+  History,
+  UserX,
+  Boxes,
+  Shield,
+  Search,
+  ClipboardCheck,
+  Lightbulb
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useLayout } from '../contexts/LayoutContext';
 
-interface SidebarProps {
-  isCollapsed?: boolean;
-}
+const maintenanceItems = [
+  { name: 'Asset', icon: Package, href: '/', current: window.location.pathname === '/' },
+  { name: 'AMC', icon: Wrench, href: '/amc', current: window.location.pathname === '/amc' },
+  { name: 'Services', icon: Settings, href: '/services', current: window.location.pathname === '/services' },
+];
 
-interface SidebarItem {
-  label: string;
-  href?: string;
-  icon: React.ComponentType<any>;
-  children?: SidebarItem[];
-}
+const surveyItems = [
+  { name: 'Survey List', href: '/surveys/list' },
+  { name: 'Mapping', href: '/surveys/mapping' },
+  { name: 'Response', href: '/surveys/response' },
+];
 
-export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false }) => {
-  const [openSections, setOpenSections] = useState<{ [key: string]: boolean }>({});
+const operationalAuditItems = [
+  { name: 'Scheduled', href: '/operational-audit/scheduled' },
+  { name: 'Conducted', href: '/operational-audit/conducted' },
+  { name: 'Master Checklists', href: '/operational-audit/master-checklists' },
+];
 
-  const toggleSection = (section: string) => {
-    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+const projectItems = [
+  { name: 'Projects', href: '/projects' },
+  { name: 'Add Project', href: '/projects/add' },
+];
+
+const crmItems = [
+  { name: 'Customers', href: '/crm/customers' },
+  { name: 'FM Users', href: '/crm/fm-users' },
+  { name: 'Occupant Users', href: '/crm/occupant-users' },
+];
+
+const utilityItems = [
+  { name: 'Dashboard', href: '/utility/dashboard' },
+  { name: 'Energy Meters', href: '/utility/energy-meters' },
+  { name: 'Daily Readings', href: '/utility/daily-readings' },
+  { name: 'Utility Consumption', href: '/utility/consumption' },
+  { name: 'Utility Request', href: '/utility/request' },
+];
+
+const wasteGenerationItems = [
+  { name: 'Waste Generation', href: '/utility/waste-generation' },
+  { name: 'Setup', href: '/utility/waste-setup' },
+];
+
+const inventoryItems = [
+  { name: 'Inventory', href: '/inventory' },
+  { name: 'Inventory Consumption', href: '/inventory-consumption' },
+];
+
+const visitorsItems = [
+  { name: 'Visitors', href: '/visitors/visitors', icon: Eye },
+  { name: 'Visitors History', href: '/visitors/history', icon: History },
+  { name: 'R Vehicles', href: '/visitors/r-vehicles', icon: Car },
+  { name: 'G Vehicles', href: '/visitors/g-vehicles', icon: Car },
+  { name: 'Staffs', href: '/visitors/staffs', icon: Users },
+  { name: 'Materials', href: '/visitors/materials', icon: Boxes },
+  { name: 'Patrolling', href: '/visitors/patrolling', icon: Shield },
+  { name: 'Patrolling Pending Approvals', href: '/visitors/patrolling-pending', icon: UserX },
+  { name: 'Goods In/Out', href: '/visitors/goods', icon: Package },
+];
+
+const rVehiclesSubItems = [
+  { name: 'All', href: '/visitors/r-vehicles' },
+  { name: 'History', href: '/visitors/r-vehicles/history' },
+];
+
+const goodsInOutSubItems = [
+  { name: 'Inwards', href: '/visitors/goods/inwards' },
+  { name: 'Outwards', href: '/visitors/goods/outwards' },
+];
+
+const experienceItems = [
+  { name: 'Events', href: '/experience/events' },
+  { name: 'Broadcast', href: '/experience/broadcast' },
+];
+
+const documentsItems = [
+  { name: 'Unit Related', href: '/experience/documents/unit' },
+  { name: 'Common', href: '/experience/documents/common' },
+];
+
+const transportItems = [
+  { name: 'Outstation', href: '/experience/transport/outstation' },
+  { name: 'Airline', href: '/experience/transport/airline' },
+  { name: 'Rail', href: '/experience/transport/rail' },
+  { name: 'Hotel', href: '/experience/transport/hotel' },
+];
+
+const selfTravelItems = [
+  { name: 'Self Travel Option 1', href: '/experience/transport/self-1' },
+  { name: 'Self Travel Option 2', href: '/experience/transport/self-2' },
+];
+
+const communityModulesItems = [
+  { name: 'Testimonials Setup', href: '/experience/community/testimonials' },
+  { name: 'Company Partners Setup', href: '/experience/community/partners' },
+  { name: 'Banners Setup', href: '/experience/community/banners' },
+  { name: 'Groups and Channel Config', href: '/experience/community/groups' },
+  { name: 'Amenities Setup', href: '/experience/community/amenities' },
+];
+
+const centreSetupItems = [
+  { name: 'Centre Setup Option 1', href: '/experience/community/centre-1' },
+  { name: 'Centre Setup Option 2', href: '/experience/community/centre-2' },
+];
+
+const propertySpaceItems = [
+  { name: 'Bookings', href: '/property/space/bookings' },
+  { name: 'Seat Requests', href: '/property/space/seat-requests' },
+];
+
+const propertySpaceSetupItems = [
+  { name: 'Space Setup Option 1', href: '/property/space/setup-1' },
+  { name: 'Space Setup Option 2', href: '/property/space/setup-2' },
+];
+
+const propertyBookingItems = [
+  { name: 'Setup', href: '/property/booking/setup' },
+];
+
+const propertyMailroomItems = [
+  { name: 'Inbound', href: '/property/mailroom/inbound' },
+  { name: 'Outbound', href: '/property/mailroom/outbound' },
+];
+
+const propertyParkingSetupItems = [
+  { name: 'Tag', href: '/property/parking/tag' },
+  { name: 'Parking Categories', href: '/property/parking/categories' },
+  { name: 'Parking Configurations', href: '/property/parking/configurations' },
+  { name: 'Parking Slots', href: '/property/parking/slots' },
+];
+
+const financeItems = [
+  { name: 'Material PR', href: '/finance/material-pr' },
+  { name: 'Service PR', href: '/finance/service-pr' },
+  { name: 'PO', href: '/finance/po' },
+  { name: 'WO', href: '/finance/wo' },
+  { name: 'GRN', href: '/finance/grn' },
+  { name: 'Invoices/SES', href: '/finance/invoices-ses' },
+  { name: 'Pending Approvals', href: '/finance/pending-approvals' },
+];
+
+const gdnItems = [
+  { name: 'GDN', href: '/finance/gdn' },
+  { name: 'Pending Approvals', href: '/finance/pending-approvals-2' },
+];
+
+const remainingFinanceItems = [
+  { name: 'Auto Saved PR', href: '/finance/auto-saved-pr' },
+  { name: 'WBS Element', href: '/finance/wbs-element' },
+  { name: 'Other Bills', href: '/finance/other-bills' },
+  { name: 'Accounting', href: '/finance/accounting' },
+  { name: 'Customer Bills', href: '/finance/customer-bills' },
+  { name: 'My Bills', href: '/finance/my-bills' },
+];
+
+const vendorAuditItems = [
+  { name: 'Scheduled', href: '/maintenance/vendor-audit/scheduled' },
+  { name: 'Conducted', href: '/maintenance/vendor-audit/conducted' },
+];
+
+const incidentItems = [
+  { name: 'Incident Setup', href: '/maintenance/incident/setup' },
+  { name: 'Incident', href: '/maintenance/incident/list' },
+];
+
+const permitItems = [
+  { name: 'Permit Setup', href: '/maintenance/permit/setup' },
+  { name: 'Permit', href: '/maintenance/permit/list' },
+  { name: 'Pending Approvals', href: '/maintenance/permit/pending-approvals' },
+];
+
+const designInsightsItems = [
+  { name: 'Design Insights', href: '/maintenance/design-insights/list' },
+  { name: 'Setup', href: '/maintenance/design-insights/setup' },
+];
+
+export const Sidebar = () => {
+  const { currentSection } = useLayout();
+  const [isSurveyOpen, setIsSurveyOpen] = useState(false);
+  const [isOperationalAuditOpen, setIsOperationalAuditOpen] = useState(false);
+  const [isVendorAuditOpen, setIsVendorAuditOpen] = useState(false);
+  const [isIncidentOpen, setIsIncidentOpen] = useState(false);
+  const [isPermitOpen, setIsPermitOpen] = useState(false);
+  const [isDesignInsightsOpen, setIsDesignInsightsOpen] = useState(false);
+  const [isWasteGenerationOpen, setIsWasteGenerationOpen] = useState(false);
+  const [isDocumentsOpen, setIsDocumentsOpen] = useState(false);
+  const [isTransportOpen, setIsTransportOpen] = useState(false);
+  const [isSelfTravelOpen, setIsSelfTravelOpen] = useState(false);
+  const [isCommunityModulesOpen, setIsCommunityModulesOpen] = useState(false);
+  const [isCentreSetupOpen, setIsCentreSetupOpen] = useState(false);
+  const [isSpaceOpen, setIsSpaceOpen] = useState(false);
+  const [isSpaceSetupOpen, setIsSpaceSetupOpen] = useState(false);
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [isMailroomOpen, setIsMailroomOpen] = useState(false);
+  const [isParkingSetupOpen, setIsParkingSetupOpen] = useState(false);
+  const [isGrnOpen, setIsGrnOpen] = useState(false);
+  const [isGdnOpen, setIsGdnOpen] = useState(false);
+  const [isRVehiclesOpen, setIsRVehiclesOpen] = useState(false);
+  const [isGoodsInOutOpen, setIsGoodsInOutOpen] = useState(false);
+  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+
+  const currentPath = window.location.pathname;
+
+  const renderNavigationItems = () => {
+    switch (currentSection) {
+      case 'Maintenance':
+        return (
+          <nav className="space-y-2">
+            {/* Maintenance Items */}
+            {maintenanceItems.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  item.current
+                    ? 'bg-[#C72030] text-white'
+                    : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
+                }`}
+              >
+                <item.icon className="w-5 h-5" />
+                {item.name}
+              </a>
+            ))}
+            
+            {/* Operational Audit Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsOperationalAuditOpen(!isOperationalAuditOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Search className="w-5 h-5" />
+                  Operational Audit
+                </div>
+                {isOperationalAuditOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isOperationalAuditOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {operationalAuditItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Vendor Audit Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsVendorAuditOpen(!isVendorAuditOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Building className="w-5 h-5" />
+                  Vendor Audit
+                </div>
+                {isVendorAuditOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isVendorAuditOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {vendorAuditItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Incident Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsIncidentOpen(!isIncidentOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="w-5 h-5" />
+                  Incident
+                </div>
+                {isIncidentOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isIncidentOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {incidentItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Permit Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsPermitOpen(!isPermitOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <ClipboardCheck className="w-5 h-5" />
+                  Permit
+                </div>
+                {isPermitOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isPermitOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {permitItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Design Insights Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsDesignInsightsOpen(!isDesignInsightsOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Lightbulb className="w-5 h-5" />
+                  Design Insights
+                </div>
+                {isDesignInsightsOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isDesignInsightsOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {designInsightsItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Survey Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsSurveyOpen(!isSurveyOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <BarChart3 className="w-5 h-5" />
+                  Surveys
+                </div>
+                {isSurveyOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isSurveyOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {surveyItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Other Maintenance Items */}
+            <a href="/attendance" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+              <Users className="w-5 h-5" />
+              Attendance
+            </a>
+
+            {/* Inventory Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsInventoryOpen(!isInventoryOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Package className="w-5 h-5" />
+                  Inventory
+                </div>
+                {isInventoryOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isInventoryOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {inventoryItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <a href="/eco-friendly" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+              <Recycle className="w-5 h-5" />
+              Eco-Friendly
+            </a>
+            <a href="/vendor" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+              <Building className="w-5 h-5" />
+              Vendor
+            </a>
+            <a href="/schedule" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+              <Calendar className="w-5 h-5" />
+              Schedule
+            </a>
+            <a href="/tasks" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+              <ClipboardList className="w-5 h-5" />
+              Tasks
+            </a>
+            <a href="/tickets" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+              <FileText className="w-5 h-5" />
+              Tickets
+            </a>
+          </nav>
+        );
+
+      case 'Project':
+        return (
+          <nav className="space-y-2">
+            {projectItems.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <Building className="w-5 h-5" />
+                {item.name}
+              </a>
+            ))}
+          </nav>
+        );
+
+      case 'CRM':
+        return (
+          <nav className="space-y-2">
+            {crmItems.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <Users className="w-5 h-5" />
+                {item.name}
+              </a>
+            ))}
+          </nav>
+        );
+
+      case 'Utility':
+        return (
+          <nav className="space-y-2">
+            {utilityItems.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <Zap className="w-5 h-5" />
+                {item.name}
+              </a>
+            ))}
+            
+            {/* Waste Generation Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsWasteGenerationOpen(!isWasteGenerationOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Recycle className="w-5 h-5" />
+                  Waste Generation
+                </div>
+                {isWasteGenerationOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isWasteGenerationOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {wasteGenerationItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </nav>
+        );
+
+      case 'Visitors':
+        return (
+          <nav className="space-y-2">
+            {visitorsItems.map((item) => {
+              const isActive = currentPath === item.href;
+              
+              // Special handling for R Vehicles with dropdown
+              if (item.name === 'R Vehicles') {
+                return (
+                  <div key={item.name}>
+                    <button
+                      onClick={() => setIsRVehiclesOpen(!isRVehiclesOpen)}
+                      className={`flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        isActive || currentPath.startsWith('/visitors/r-vehicles')
+                          ? 'bg-[#C72030] text-white'
+                          : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <item.icon className="w-5 h-5" />
+                        {item.name}
+                      </div>
+                      {isRVehiclesOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    </button>
+                    {isRVehiclesOpen && (
+                      <div className="ml-8 mt-1 space-y-1">
+                        {rVehiclesSubItems.map((subItem) => {
+                          const isSubActive = currentPath === subItem.href;
+                          return (
+                            <a
+                              key={subItem.name}
+                              href={subItem.href}
+                              className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
+                                isSubActive
+                                  ? 'bg-[#C72030] text-white'
+                                  : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
+                              }`}
+                            >
+                              {subItem.name}
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              // Special handling for Goods In/Out with dropdown
+              if (item.name === 'Goods In/Out') {
+                return (
+                  <div key={item.name}>
+                    <button
+                      onClick={() => setIsGoodsInOutOpen(!isGoodsInOutOpen)}
+                      className={`flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        isActive || currentPath.startsWith('/visitors/goods')
+                          ? 'bg-[#C72030] text-white'
+                          : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <item.icon className="w-5 h-5" />
+                        {item.name}
+                      </div>
+                      {isGoodsInOutOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    </button>
+                    {isGoodsInOutOpen && (
+                      <div className="ml-8 mt-1 space-y-1">
+                        {goodsInOutSubItems.map((subItem) => {
+                          const isSubActive = currentPath === subItem.href;
+                          return (
+                            <a
+                              key={subItem.name}
+                              href={subItem.href}
+                              className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
+                                isSubActive
+                                  ? 'bg-[#C72030] text-white'
+                                  : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
+                              }`}
+                            >
+                              {subItem.name}
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              
+              return (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-[#C72030] text-white'
+                      : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
+                  }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  {item.name}
+                </a>
+              );
+            })}
+          </nav>
+        );
+
+      case 'Experience':
+        return (
+          <nav className="space-y-2">
+            {experienceItems.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <Coffee className="w-5 h-5" />
+                {item.name}
+              </a>
+            ))}
+            
+            {/* Documents Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsDocumentsOpen(!isDocumentsOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <BookOpen className="w-5 h-5" />
+                  Documents
+                </div>
+                {isDocumentsOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isDocumentsOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {documentsItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <a href="/experience/business" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+              <Building className="w-5 h-5" />
+              Business
+            </a>
+
+            {/* Transport Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsTransportOpen(!isTransportOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Truck className="w-5 h-5" />
+                  Transport
+                </div>
+                {isTransportOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isTransportOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {transportItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                  
+                  {/* Self Travel Dropdown */}
+                  <div>
+                    <button
+                      onClick={() => setIsSelfTravelOpen(!isSelfTravelOpen)}
+                      className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      <span>Self Travel</span>
+                      {isSelfTravelOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                    </button>
+                    {isSelfTravelOpen && (
+                      <div className="ml-4 mt-1 space-y-1">
+                        {selfTravelItems.map((item) => (
+                          <a
+                            key={item.name}
+                            href={item.href}
+                            className="block px-3 py-2 rounded-lg text-xs transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                          >
+                            {item.name}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Community Modules Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsCommunityModulesOpen(!isCommunityModulesOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="w-5 h-5" />
+                  Community Modules
+                </div>
+                {isCommunityModulesOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isCommunityModulesOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {communityModulesItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                  
+                  {/* Centre Setup Dropdown */}
+                  <div>
+                    <button
+                      onClick={() => setIsCentreSetupOpen(!isCentreSetupOpen)}
+                      className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      <span>Centre Setup</span>
+                      {isCentreSetupOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                    </button>
+                    {isCentreSetupOpen && (
+                      <div className="ml-4 mt-1 space-y-1">
+                        {centreSetupItems.map((item) => (
+                          <a
+                            key={item.name}
+                            href={item.href}
+                            className="block px-3 py-2 rounded-lg text-xs transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                          >
+                            {item.name}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <a href="/experience/setup" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+              <Settings className="w-5 h-5" />
+              Setup
+            </a>
+          </nav>
+        );
+
+      case 'Finance':
+        return (
+          <nav className="space-y-2">
+            {/* Basic Finance Items including GRN, Invoices/SES, Pending Approvals */}
+            {financeItems.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <DollarSign className="w-5 h-5" />
+                {item.name}
+              </a>
+            ))}
+
+            {/* GDN Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsGdnOpen(!isGdnOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <FileText className="w-5 h-5" />
+                  GDN
+                </div>
+                {isGdnOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isGdnOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {gdnItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Remaining Finance Items */}
+            {remainingFinanceItems.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <DollarSign className="w-5 h-5" />
+                {item.name}
+              </a>
+            ))}
+          </nav>
+        );
+
+      case 'Property':
+        return (
+          <nav className="space-y-2">
+            {/* Space Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsSpaceOpen(!isSpaceOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Space className="w-5 h-5" />
+                  Space
+                </div>
+                {isSpaceOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isSpaceOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {propertySpaceItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                  
+                  {/* Setup Dropdown */}
+                  <div>
+                    <button
+                      onClick={() => setIsSpaceSetupOpen(!isSpaceSetupOpen)}
+                      className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      <span>Setup</span>
+                      {isSpaceSetupOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                    </button>
+                    {isSpaceSetupOpen && (
+                      <div className="ml-4 mt-1 space-y-1">
+                        {propertySpaceSetupItems.map((item) => (
+                          <a
+                            key={item.name}
+                            href={item.href}
+                            className="block px-3 py-2 rounded-lg text-xs transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                          >
+                            {item.name}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Booking Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsBookingOpen(!isBookingOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5" />
+                  Booking
+                </div>
+                {isBookingOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isBookingOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {propertyBookingItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Mailroom Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsMailroomOpen(!isMailroomOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Mail className="w-5 h-5" />
+                  Mailroom
+                </div>
+                {isMailroomOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isMailroomOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {propertyMailroomItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <a href="/property/parking" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+              <Car className="w-5 h-5" />
+              Parking
+            </a>
+
+            {/* Setup Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsParkingSetupOpen(!isParkingSetupOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Settings className="w-5 h-5" />
+                  Setup
+                </div>
+                {isParkingSetupOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isParkingSetupOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {propertyParkingSetupItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </nav>
+        );
+
+      default:
+        return (
+          <nav className="space-y-2">
+            <div className="px-3 py-4 text-center text-sm text-gray-500">
+              Select a section from the header to view navigation options
+            </div>
+          </nav>
+        );
+    }
   };
 
-  const sidebarItems = [
-    {
-      label: 'Home',
-      href: '/',
-      icon: Home,
-    },
-    {
-      label: 'Services',
-      href: '/services',
-      icon: Wrench,
-    },
-    {
-      label: 'Supplier',
-      href: '/supplier',
-      icon: Building2,
-    },
-    {
-      label: 'Maintenance',
-      icon: Settings,
-      children: [
-        { label: 'Vendor', href: '/vendor' },
-        { label: 'Schedule', href: '/schedule-list' },
-        { label: 'Tasks', href: '/task-list' },
-        { label: 'Tickets', href: '/tickets' },
-        { label: 'Operational Audit', children: [
-          { label: 'Scheduled', href: '/operational-audit/scheduled' },
-          { label: 'Conducted', href: '/operational-audit/conducted' },
-          { label: 'Master Checklists', href: '/operational-audit/master-checklists' },
-        ]},
-        { label: 'Vendor Audit', children: [
-          { label: 'Scheduled', href: '/maintenance/vendor-audit/scheduled' },
-          { label: 'Conducted', href: '/maintenance/vendor-audit/conducted' },
-        ]},
-        { label: 'Incident', children: [
-          { label: 'Setup', href: '/maintenance/incident/setup' },
-          { label: 'List', href: '/maintenance/incident/list' },
-        ]},
-        { label: 'Permit', children: [
-          { label: 'Setup', href: '/maintenance/permit/setup' },
-          { label: 'List', href: '/maintenance/permit/list' },
-          { label: 'Pending Approvals', href: '/maintenance/permit/pending-approvals' },
-        ]},
-        { label: 'Design Insights', children: [
-          { label: 'List', href: '/maintenance/design-insights/list' },
-          { label: 'Setup', href: '/maintenance/design-insights/setup' },
-        ]},
-      ]
-    },
-    {
-      label: 'CRM',
-      icon: Users,
-      children: [
-        { label: 'Customer', href: '/crm/customer' },
-        { label: 'FM Users', href: '/crm/fm-users' },
-        { label: 'Occupant Users', href: '/crm/occupant-users' },
-      ]
-    },
-    {
-      label: 'Finance',
-      icon: DollarSign,
-      children: [
-        { label: 'Material PR', href: '/finance/material-pr' },
-        { label: 'Service PR', href: '/finance/service-pr' },
-        { label: 'PO', href: '/finance/po' },
-        { label: 'WO', href: '/finance/wo' },
-        { label: 'GRN', href: '/finance/grn' },
-        { label: 'Invoices SES', href: '/finance/invoices-ses' },
-        { label: 'Pending Approvals', href: '/finance/pending-approvals' },
-        { label: 'GDN', href: '/finance/gdn' },
-        { label: 'Auto Saved PR', href: '/finance/auto-saved-pr' },
-        { label: 'WBS Element', href: '/finance/wbs-element' },
-        { label: 'Other Bills', href: '/finance/other-bills' },
-        { label: 'Accounting', href: '/finance/accounting' },
-        { label: 'Customer Bills', href: '/finance/customer-bills' },
-        { label: 'My Bills', href: '/finance/my-bills' },
-      ]
-    },
-    {
-      label: 'Property',
-      icon: Building,
-      children: [
-        {
-          label: 'Space',
-          children: [
-            { label: 'Bookings', href: '/property/space/bookings' },
-            { label: 'Seat Type', href: '/property/space/seat-type' },
-          ],
-        },
-        {
-          label: 'Booking',
-          children: [
-            { label: 'Setup', href: '/property/booking/setup' },
-          ],
-        },
-      ],
-    },
-    {
-      label: 'Visitors',
-      icon: User,
-      children: [
-        { label: 'Visitors', href: '/visitors/visitors' },
-        { label: 'History', href: '/visitors/history' },
-        { label: 'R Vehicles', href: '/visitors/r-vehicles' },
-        { label: 'R Vehicles History', href: '/visitors/r-vehicles/history' },
-        { label: 'G Vehicles', href: '/visitors/g-vehicles' },
-        { label: 'Staffs', href: '/visitors/staffs' },
-        { label: 'Materials', href: '/visitors/materials' },
-        { label: 'Patrolling', href: '/visitors/patrolling' },
-        { label: 'Patrolling Pending', href: '/visitors/patrolling-pending' },
-        { label: 'Goods', href: '/visitors/goods' },
-        {
-          label: 'Goods Inwards',
-          href: '/visitors/goods/inwards',
-        },
-        {
-          label: 'Goods Outwards',
-          href: '/visitors/goods/outwards',
-        },
-        { label: 'Vehicle Parkings', href: '/visitors/vehicle-parkings' },
-      ],
-    },
-    {
-      label: 'Experience',
-      icon: Eye,
-      children: [
-        { label: 'Events', href: '/experience/events' },
-        { label: 'Broadcast', href: '/experience/broadcast' },
-        { label: 'Business Directory', href: '/experience/business' },
-        { label: 'Documents Unit', href: '/experience/documents/unit' },
-        { label: 'Documents Common', href: '/experience/documents/common' },
-        {
-          label: 'Transport',
-          children: [
-            { label: 'Outstation', href: '/experience/transport/outstation' },
-            { label: 'Airline', href: '/experience/transport/airline' },
-            { label: 'Rail', href: '/experience/transport/rail' },
-            { label: 'Hotel', href: '/experience/transport/hotel' },
-            { label: 'Self Travel', href: '/experience/transport/self-travel' },
-          ],
-        },
-        { label: 'Testimonials', href: '/experience/testimonials' },
-        { label: 'Company Partners', href: '/experience/company-partners' },
-      ],
-    },
-    {
-      label: 'Setup',
-      href: '/setup',
-      icon: Settings,
-    },
-  ];
-
   return (
-    <aside className={`w-64 bg-[#f6f4ee] border-r border-[#D5DbDB] h-screen fixed top-0 left-0 overflow-y-auto ${isCollapsed ? 'hidden' : ''}`}>
+    <div className="w-64 h-screen bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto">
       <div className="p-6">
         <div className="flex items-center gap-2 mb-8">
           <div className="w-8 h-8 bg-[#C72030] rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">S</span>
+            <span className="text-white font-bold text-sm">FM</span>
           </div>
-          <span className="text-[#1a1a1a] font-semibold text-lg">Lockated</span>
+          <span className="text-[#1a1a1a] font-semibold text-lg">FacilityPro</span>
         </div>
-
-        <nav className="space-y-2">
-          {sidebarItems.map((item, index) => (
-            item.href ? (
-              <Link
-                to={item.href}
-                key={index}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <item.icon className="w-5 h-5" />
-                {item.label}
-              </Link>
-            ) : (
-              <div key={index}>
-                <button
-                  onClick={() => toggleSection(item.label)}
-                  className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                >
-                  <div className="flex items-center gap-3">
-                    <item.icon className="w-5 h-5" />
-                    {item.label}
-                  </div>
-                  {openSections[item.label] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                </button>
-                {item.children && openSections[item.label] && (
-                  <div className="ml-6 space-y-1">
-                    {item.children.map((child, childIndex) => (
-                      child.href ? (
-                        <Link
-                          to={child.href}
-                          key={childIndex}
-                          className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                        >
-                          {child.label}
-                        </Link>
-                      ) : (
-                        <div key={childIndex}>
-                          {/* Nested Submenu */}
-                          {child.children && child.children.length > 0 ? (
-                            <>
-                              <button
-                                onClick={() => toggleSection(child.label)}
-                                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                              >
-                                <div className="flex items-center gap-3">
-                                  {child.label}
-                                </div>
-                                {openSections[child.label] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                              </button>
-                              {openSections[child.label] && (
-                                <div className="ml-6 space-y-1">
-                                  {child.children.map((grandchild, grandchildIndex) => (
-                                    <Link
-                                      to={grandchild.href || ""}
-                                      key={grandchildIndex}
-                                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                                    >
-                                      {grandchild.label}
-                                    </Link>
-                                  ))}
-                                </div>
-                              )}
-                            </>
-                          ) : (
-                            <span className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a]">
-                              {child.label}
-                            </span>
-                          )}
-                        </div>
-                      )
-                    ))}
-                  </div>
-                )}
-              </div>
-            )
-          ))}
-        </nav>
+        
+        {renderNavigationItems()}
       </div>
-    </aside>
+    </div>
   );
 };
