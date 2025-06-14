@@ -25,6 +25,7 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const getCurrentSectionFromPath = (path: string): string => {
     if (path.startsWith('/projects')) return 'Project';
     if (path.startsWith('/surveys')) return 'Maintenance';
+    if (path.startsWith('/operational-audit')) return 'Maintenance';
     if (path.startsWith('/amc')) return 'Maintenance';
     if (path.startsWith('/services')) return 'Maintenance';
     if (path.startsWith('/attendance')) return 'Maintenance';
@@ -34,6 +35,7 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (path.startsWith('/visitors')) return 'Visitors';
     if (path.startsWith('/experience')) return 'Experience';
     if (path.startsWith('/finance')) return 'Finance';
+    if (path.startsWith('/property')) return 'Property';
     if (path === '/') return 'Maintenance'; // Asset dashboard is under Maintenance
     return 'Maintenance';
   };

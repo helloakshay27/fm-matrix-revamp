@@ -70,6 +70,9 @@ import { CustomerBillsDashboard } from "./pages/CustomerBillsDashboard";
 import { MyBillsDashboard } from "./pages/MyBillsDashboard";
 import { BookingsDashboard } from "./pages/BookingsDashboard";
 import { SeatTypeDashboard } from "./pages/SeatTypeDashboard";
+import { OperationalAuditScheduledDashboard } from "./pages/OperationalAuditScheduledDashboard";
+import { OperationalAuditConductedDashboard } from "./pages/OperationalAuditConductedDashboard";
+import { OperationalAuditMasterChecklistsDashboard } from "./pages/OperationalAuditMasterChecklistsDashboard";
 
 const queryClient = new QueryClient();
 
@@ -95,6 +98,9 @@ const App = () => (
                   <Route path="/amc" element={<AMCDashboard />} />
                   <Route path="/attendance" element={<AttendanceDashboard />} />
                   <Route path="/tasks" element={<TaskDashboard />} />
+                  <Route path="/operational-audit/scheduled" element={<OperationalAuditScheduledDashboard />} />
+                  <Route path="/operational-audit/conducted" element={<OperationalAuditConductedDashboard />} />
+                  <Route path="/operational-audit/master-checklists" element={<OperationalAuditMasterChecklistsDashboard />} />
                   <Route path="/surveys/list" element={<SurveyListDashboard />} />
                   <Route path="/surveys/mapping" element={<SurveyMappingDashboard />} />
                   <Route path="/surveys/response" element={<SurveyResponseDashboard />} />

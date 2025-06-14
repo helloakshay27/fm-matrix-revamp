@@ -33,7 +33,8 @@ import {
   History,
   UserX,
   Boxes,
-  Shield
+  Shield,
+  Search
 } from 'lucide-react';
 import { useLayout } from '../contexts/LayoutContext';
 
@@ -49,11 +50,10 @@ const surveyItems = [
   { name: 'Response', href: '/surveys/response' },
 ];
 
-const projectItems = [
-  { name: 'Fitout Setup', href: '/project/fitout-setup' },
-  { name: 'Fitout Request', href: '/project/fitout-request' },
-  { name: 'Fitout Checklist', href: '/project/fitout-checklist' },
-  { name: 'Fitout Violation', href: '/project/fitout-violation' },
+const operationalAuditItems = [
+  { name: 'Scheduled', href: '/operational-audit/scheduled' },
+  { name: 'Conducted', href: '/operational-audit/conducted' },
+  { name: 'Master Checklists', href: '/operational-audit/master-checklists' },
 ];
 
 const crmItems = [
@@ -185,6 +185,7 @@ const remainingFinanceItems = [
 export const Sidebar = () => {
   const { currentSection } = useLayout();
   const [isSurveyOpen, setIsSurveyOpen] = useState(false);
+  const [isOperationalAuditOpen, setIsOperationalAuditOpen] = useState(false);
   const [isWasteGenerationOpen, setIsWasteGenerationOpen] = useState(false);
   const [isDocumentsOpen, setIsDocumentsOpen] = useState(false);
   const [isTransportOpen, setIsTransportOpen] = useState(false);
@@ -223,6 +224,33 @@ export const Sidebar = () => {
                 {item.name}
               </a>
             ))}
+            
+            {/* Operational Audit Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsOperationalAuditOpen(!isOperationalAuditOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Search className="w-5 h-5" />
+                  Operational Audit
+                </div>
+                {isOperationalAuditOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isOperationalAuditOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {operationalAuditItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
             
             {/* Survey Dropdown */}
             <div>
