@@ -1,4 +1,5 @@
 
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -92,6 +93,7 @@ import { TicketListDashboard } from "./pages/TicketListDashboard";
 import ParkingDashboard from "./pages/ParkingDashboard";
 import ParkingBookingsDashboard from "./pages/ParkingBookingsDashboard";
 import MailroomInboundDashboard from "./pages/MailroomInboundDashboard";
+import CRMCustomersDashboard from "./pages/CRMCustomersDashboard";
 import { FMUserDashboard } from "./pages/setup/FMUserDashboard";
 import { MeterTypeDashboard } from "./pages/setup/MeterTypeDashboard";
 import { OccupantUsersDashboard } from "./pages/setup/OccupantUsersDashboard";
