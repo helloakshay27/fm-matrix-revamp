@@ -1,10 +1,12 @@
-
 import React, { useState } from 'react';
 import { SetupLayout } from '@/components/SetupLayout';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Upload } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { AddGroupDialog } from '@/components/AddGroupDialog';
+import { AddSubGroupDialog } from '@/components/AddSubGroupDialog';
+import { BulkUploadModal } from '@/components/BulkUploadModal';
 
 const groupsData = [
   { id: 1, srNo: 1, groupName: 'Electronic Devices', status: true },
@@ -59,6 +61,9 @@ const subGroupsData = [
 export const AssetGroupsDashboard = () => {
   const [groups, setGroups] = useState(groupsData);
   const [subGroups, setSubGroups] = useState(subGroupsData);
+  const [addGroupDialogOpen, setAddGroupDialogOpen] = useState(false);
+  const [addSubGroupDialogOpen, setAddSubGroupDialogOpen] = useState(false);
+  const [bulkUploadModalOpen, setBulkUploadModalOpen] = useState(false);
 
   const toggleGroupStatus = (id: number) => {
     setGroups(prev => prev.map(group => 
@@ -83,15 +88,25 @@ export const AssetGroupsDashboard = () => {
         </div>
 
         <div className="flex items-center gap-3 mb-6">
-          <Button className="bg-purple-700 hover:bg-purple-800 text-white">
+          <Button 
+            className="bg-purple-700 hover:bg-purple-800 text-white"
+            onClick={() => setAddGroupDialogOpen(true)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add Group
           </Button>
-          <Button className="bg-purple-700 hover:bg-purple-800 text-white">
+          <Button 
+            className="bg-purple-700 hover:bg-purple-800 text-white"
+            onClick={() => setAddSubGroupDialogOpen(true)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add Subgroup
           </Button>
-          <Button variant="outline" className="border-purple-700 text-purple-700 hover:bg-purple-50">
+          <Button 
+            variant="outline" 
+            className="border-purple-700 text-purple-700 hover:bg-purple-50"
+            onClick={() => setBulkUploadModalOpen(true)}
+          >
             <Upload className="w-4 h-4 mr-2" />
             Bulk Upload
           </Button>
@@ -165,6 +180,21 @@ export const AssetGroupsDashboard = () => {
           </div>
         </div>
       </div>
+
+      <AddGroupDialog 
+        open={addGroupDialogOpen} 
+        onOpenChange={setAddGroupDialogOpen} 
+      />
+      
+      <AddSubGroupDialog 
+        open={addSubGroupDialogOpen} 
+        onOpenChange={setAddSubGroupDialogOpen} 
+      />
+      
+      <BulkUploadModal 
+        isOpen={bulkUploadModalOpen} 
+        onClose={() => setBulkUploadModalOpen(false)} 
+      />
     </SetupLayout>
   );
 };
