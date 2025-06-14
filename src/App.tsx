@@ -65,6 +65,8 @@ import { AutoSavedPRDashboard } from "./pages/AutoSavedPRDashboard";
 import { WBSElementDashboard } from "./pages/WBSElementDashboard";
 import { OtherBillsDashboard } from "./pages/OtherBillsDashboard";
 import { AddNewBillDashboard } from "./pages/AddNewBillDashboard";
+import { AccountingDashboard } from "./pages/AccountingDashboard";
+import { CustomerBillsDashboard } from "./pages/CustomerBillsDashboard";
 
 const queryClient = new QueryClient();
 
@@ -114,6 +116,8 @@ const App = () => (
                   <Route path="/finance/wbs-element" element={<WBSElementDashboard />} />
                   <Route path="/finance/other-bills" element={<OtherBillsDashboard />} />
                   <Route path="/finance/other-bills/add" element={<AddNewBillDashboard />} />
+                  <Route path="/finance/accounting" element={<AccountingDashboard />} />
+                  <Route path="/finance/customer-bills" element={<CustomerBillsDashboard />} />
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
                   <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
                   <Route path="/visitors/r-vehicles" element={<RVehiclesDashboard />} />
