@@ -151,7 +151,7 @@ const Issues = ({ closeModal }) => {
         </div>
         <div className="flex items-start gap-4 mt-4 text-[12px]">
           <div className="w-1/2 space-y-2">
-            <label className="block">End Date</label>
+            <label className="block">End Date <span className="text-red-600">*</span></label>
             <input
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
@@ -161,7 +161,7 @@ const Issues = ({ closeModal }) => {
           </div>
           <div className="w-1/2 flex flex-col justify-between">
             <label className="block mb-2">
-              Priority<span className="text-red-600">*</span>
+              Priority <span className="text-red-600">*</span>
             </label>
             <SelectBox
               options={globalPriorityOptions}
@@ -172,7 +172,7 @@ const Issues = ({ closeModal }) => {
         </div>
         <div className="mt-4 space-y-2">
           <label className="block">
-            Comment
+            Comment <span className="text-red-600">*</span>
           </label>
           <input
             type="text"
