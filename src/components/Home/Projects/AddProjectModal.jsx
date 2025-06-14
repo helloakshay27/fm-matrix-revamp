@@ -16,7 +16,7 @@ const CreateNewTeam = ({ setOpenModal }) => {
   const dispatch = useDispatch();
 
   const { fetchUsers: users = [] } = useSelector((state) => state.fetchUsers);
-  const { success } = useSelector((state) => state.createProjectTeam);
+  const { loading, success } = useSelector((state) => state.createProjectTeam);
 
   const [formData, setFormData] = useState({
     teamName: "",
@@ -117,6 +117,7 @@ const CreateNewTeam = ({ setOpenModal }) => {
           <button
             className="border border-[#C72030] text-[#1B1B1B] text-[16px] px-8 py-2"
             onClick={handleSubmit}
+            disabled={loading}
           >
             Create
           </button>
@@ -172,28 +173,35 @@ const AddProjectModal = ({ isModalOpen, setIsModalOpen, projectname = "New Proje
 
           <hr className="border border-[#E95420] my-4" />
 
-          <div className="flex items-center justify-center gap-40">
-            {tab == "Details" ?
-              <div onClick={() => setTab("Details")} className="cursor-pointer border-b-2 border-[#E95420] p-2" >
-                Details
-              </div> :
-              <div onClick={() => setTab("Details")} className="cursor-pointer p-2" >
-                Details
-              </div>
-            }
-            {tab == "Milestone" ?
-              <div onClick={() => setTab("Milestone")} className="cursor-pointer border-b-2 border-[#E95420] p-2">
-                Milestone
-              </div> :
-              <div onClick={() => setTab("Milestone")} className="cursor-pointer p-2">
-                Milestone
-              </div>
-            }
-          </div>
+          {
+            !isEdit && (
+              <>
+                <div className="flex items-center justify-center gap-40">
+                  {tab == "Details" ?
+                    <div onClick={() => setTab("Details")} className="cursor-pointer border-b-2 border-[#E95420] p-2" >
+                      Details
+                    </div> :
+                    <div onClick={() => setTab("Details")} className="cursor-pointer p-2" >
+                      Details
+                    </div>
+                  }
 
-          <hr className="border  " />
+                  {tab == "Milestone" ?
+                    <div onClick={() => setTab("Milestone")} className="cursor-pointer border-b-2 border-[#E95420] p-2">
+                      Milestone
+                    </div> :
+                    <div onClick={() => setTab("Milestone")} className="cursor-pointer p-2">
+                      Milestone
+                    </div>
+                  }
+                </div>
+                <hr className="border  " />
+              </>
+            )
+          }
 
-          {tab == "Details" && <Details setTab={setTab} setOpenTagModal={setOpenTagModal} setOpenTeamModal={setOpenTeamModal} isEdit={isEdit} />}
+
+          {tab == "Details" && <Details setTab={setTab} setOpenTagModal={setOpenTagModal} setOpenTeamModal={setOpenTeamModal} isEdit={isEdit} endText={isEdit ? "Save" : "Next"} />}
           {tab == "Milestone" && <Milestones />}
         </div>
 
