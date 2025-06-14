@@ -77,7 +77,9 @@ const utilityItems = [
   { name: 'STP', href: '/utility/stp' },
   { name: 'Daily Readings', href: '/utility/daily-readings' },
   { name: 'Utility Consumption', href: '/utility/consumption' },
-  { name: 'Utility Request', href: '/utility/request' },
+  { name: 'EV Consumption', href: '/utility/ev-consumption' },
+  { name: 'Solar Generator', href: '/utility/solar-generator' },
+  { name: 'Utility Request', href: '/utility/utility-request' },
 ];
 
 const wasteGenerationItems = [
