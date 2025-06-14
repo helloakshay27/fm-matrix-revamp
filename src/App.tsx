@@ -49,6 +49,7 @@ import { SelfTravelDashboard } from "./pages/SelfTravelDashboard";
 import { TestimonialsSetupDashboard } from "./pages/TestimonialsSetupDashboard";
 import { CompanyPartnersSetupDashboard } from "./pages/CompanyPartnersSetupDashboard";
 import { MaterialPRDashboard } from "./pages/MaterialPRDashboard";
+import { AddMaterialPRDashboard } from "./pages/AddMaterialPRDashboard";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +83,7 @@ const App = () => (
                   <Route path="/projects/fitout-setup" element={<FitoutSetupDashboard />} />
                   <Route path="/projects/add" element={<AddProjectDashboard />} />
                   <Route path="/finance/material-pr" element={<MaterialPRDashboard />} />
+                  <Route path="/finance/material-pr/add" element={<AddMaterialPRDashboard />} />
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
                   <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
                   <Route path="/visitors/r-vehicles" element={<RVehiclesDashboard />} />

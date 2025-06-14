@@ -1,11 +1,14 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus, Eye, Edit, Search, RotateCcw } from "lucide-react";
+import { Plus, Eye, Edit, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { MaterialPRFilterDialog } from "@/components/MaterialPRFilterDialog";
+import { useNavigate } from 'react-router-dom';
 
 export const MaterialPRDashboard = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
 
   const materialPRData = [
     {
@@ -162,11 +165,17 @@ export const MaterialPRDashboard = () => {
       {/* Action Buttons */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex gap-3">
-          <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+          <Button 
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+            onClick={() => navigate('/finance/material-pr/add')}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
-          <Button variant="outline">
+          <Button 
+            variant="outline"
+            onClick={() => setIsFilterDialogOpen(true)}
+          >
             Filters
           </Button>
         </div>
@@ -257,6 +266,11 @@ export const MaterialPRDashboard = () => {
           </TableBody>
         </Table>
       </div>
+
+      <MaterialPRFilterDialog 
+        open={isFilterDialogOpen}
+        onOpenChange={setIsFilterDialogOpen}
+      />
     </div>
   );
 };
