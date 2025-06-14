@@ -119,7 +119,7 @@ const TagSetupDashboard = () => {
               <Checkbox 
                 id="mom" 
                 checked={isMOM}
-                onCheckedChange={setIsMOM}
+                onCheckedChange={(checked) => setIsMOM(checked === true)}
               />
               <label htmlFor="mom" className="text-sm font-medium">MOM</label>
             </div>
@@ -127,7 +127,7 @@ const TagSetupDashboard = () => {
               <Checkbox 
                 id="task" 
                 checked={isTask}
-                onCheckedChange={setIsTask}
+                onCheckedChange={(checked) => setIsTask(checked === true)}
               />
               <label htmlFor="task" className="text-sm font-medium">Task</label>
             </div>

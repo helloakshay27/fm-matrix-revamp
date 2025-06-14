@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -92,6 +91,7 @@ import ParkingDashboard from "./pages/ParkingDashboard";
 import ParkingBookingsDashboard from "./pages/ParkingBookingsDashboard";
 import MailroomInboundDashboard from "./pages/MailroomInboundDashboard";
 import TagSetupDashboard from "./pages/TagSetupDashboard";
+import ParkingCategoriesDashboard from "./pages/ParkingCategoriesDashboard";
 
 const queryClient = new QueryClient();
 
@@ -106,6 +106,7 @@ const App = () => (
             {/* Setup route - standalone layout without dynamic header */}
             <Route path="/setup" element={<SetupDashboard />} />
             <Route path="/setup/tag" element={<TagSetupDashboard />} />
+            <Route path="/setup/parking-categories" element={<ParkingCategoriesDashboard />} />
             
             {/* Main app routes with Layout wrapper */}
             <Route path="/*" element={
