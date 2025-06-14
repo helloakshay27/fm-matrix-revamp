@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -60,6 +59,7 @@ import { GRNDashboard } from "./pages/GRNDashboard";
 import { AddGRNDashboard } from "./pages/AddGRNDashboard";
 import { InvoicesSESDashboard } from "./pages/InvoicesSESDashboard";
 import { PendingApprovalsDashboard } from "./pages/PendingApprovalsDashboard";
+import { GDNDashboard } from "./pages/GDNDashboard";
 
 const queryClient = new QueryClient();
 
@@ -103,6 +103,7 @@ const App = () => (
                   <Route path="/finance/grn/add" element={<AddGRNDashboard />} />
                   <Route path="/finance/invoices-ses" element={<InvoicesSESDashboard />} />
                   <Route path="/finance/pending-approvals" element={<PendingApprovalsDashboard />} />
+                  <Route path="/finance/gdn" element={<GDNDashboard />} />
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
                   <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
                   <Route path="/visitors/r-vehicles" element={<RVehiclesDashboard />} />
