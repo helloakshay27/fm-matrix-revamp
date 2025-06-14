@@ -99,6 +99,7 @@ import { ChecklistGroupDashboard } from "./pages/setup/ChecklistGroupDashboard";
 import { TaskEscalationDashboard } from "./pages/setup/TaskEscalationDashboard";
 import { ApprovalMatrixDashboard } from "./pages/setup/ApprovalMatrixDashboard";
 import { AddApprovalMatrixDashboard } from "./pages/setup/AddApprovalMatrixDashboard";
+import { PatrollingApprovalDashboard } from "./pages/setup/PatrollingApprovalDashboard";
 
 const queryClient = new QueryClient();
 
@@ -121,6 +122,7 @@ const App = () => (
             <Route path="/setup/task-escalation" element={<TaskEscalationDashboard />} />
             <Route path="/setup/approval-matrix" element={<ApprovalMatrixDashboard />} />
             <Route path="/setup/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
+            <Route path="/setup/patrolling-approval" element={<PatrollingApprovalDashboard />} />
             
             {/* Main app routes with Layout wrapper */}
             <Route path="/*" element={
