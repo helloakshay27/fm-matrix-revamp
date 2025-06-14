@@ -61,6 +61,10 @@ import { InvoicesSESDashboard } from "./pages/InvoicesSESDashboard";
 import { PendingApprovalsDashboard } from "./pages/PendingApprovalsDashboard";
 import { GDNDashboard } from "./pages/GDNDashboard";
 import { GDNPendingApprovalsDashboard } from "./pages/GDNPendingApprovalsDashboard";
+import { AutoSavedPRDashboard } from "./pages/AutoSavedPRDashboard";
+import { WBSElementDashboard } from "./pages/WBSElementDashboard";
+import { OtherBillsDashboard } from "./pages/OtherBillsDashboard";
+import { AddNewBillDashboard } from "./pages/AddNewBillDashboard";
 
 const queryClient = new QueryClient();
 
@@ -106,6 +110,10 @@ const App = () => (
                   <Route path="/finance/pending-approvals" element={<PendingApprovalsDashboard />} />
                   <Route path="/finance/gdn" element={<GDNDashboard />} />
                   <Route path="/finance/gdn/pending-approvals" element={<GDNPendingApprovalsDashboard />} />
+                  <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
+                  <Route path="/finance/wbs-element" element={<WBSElementDashboard />} />
+                  <Route path="/finance/other-bills" element={<OtherBillsDashboard />} />
+                  <Route path="/finance/other-bills/add" element={<AddNewBillDashboard />} />
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
                   <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
                   <Route path="/visitors/r-vehicles" element={<RVehiclesDashboard />} />
