@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   MapPin,
@@ -17,7 +16,8 @@ import {
   Receipt,
   Home,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Car
 } from 'lucide-react';
 
 const locationItems = [
@@ -41,10 +41,16 @@ const ticketItems = [
   { name: 'Cost Approval', href: '/setup/ticket/cost-approval' },
 ];
 
+const propertyItems = [
+  { name: 'Tag', href: '/setup/property/tag' },
+  { name: 'Parking Categories', href: '/setup/property/parking-categories' },
+];
+
 export const SetupSidebar = () => {
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [isUserRoleOpen, setIsUserRoleOpen] = useState(false);
   const [isTicketOpen, setIsTicketOpen] = useState(false);
+  const [isPropertyOpen, setIsPropertyOpen] = useState(false);
 
   return (
     <div className="w-64 h-screen bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto">
@@ -72,6 +78,33 @@ export const SetupSidebar = () => {
             {isLocationOpen && (
               <div className="ml-8 mt-1 space-y-1">
                 {locationItems.map((item) => (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                  >
+                    {item.name}
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Property Dropdown */}
+          <div>
+            <button
+              onClick={() => setIsPropertyOpen(!isPropertyOpen)}
+              className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+            >
+              <div className="flex items-center gap-3">
+                <Car className="w-5 h-5" />
+                Property
+              </div>
+              {isPropertyOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </button>
+            {isPropertyOpen && (
+              <div className="ml-8 mt-1 space-y-1">
+                {propertyItems.map((item) => (
                   <a
                     key={item.name}
                     href={item.href}

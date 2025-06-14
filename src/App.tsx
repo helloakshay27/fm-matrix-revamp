@@ -89,6 +89,8 @@ import { TaskListDashboard } from "./pages/TaskListDashboard";
 import { TicketListDashboard } from "./pages/TicketListDashboard";
 import { ParkingCreateDashboard } from "./pages/ParkingCreateDashboard";
 import { ParkingBookingDashboard } from "./pages/ParkingBookingDashboard";
+import { TagDashboard } from "./pages/TagDashboard";
+import { ParkingCategoriesDashboard } from "./pages/ParkingCategoriesDashboard";
 
 const queryClient = new QueryClient();
 
@@ -102,6 +104,8 @@ const App = () => (
           <Routes>
             {/* Setup route - standalone layout without dynamic header */}
             <Route path="/setup" element={<SetupDashboard />} />
+            <Route path="/setup/property/tag" element={<TagDashboard />} />
+            <Route path="/setup/property/parking-categories" element={<ParkingCategoriesDashboard />} />
             
             {/* Main app routes with Layout wrapper */}
             <Route path="/*" element={
