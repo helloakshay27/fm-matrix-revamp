@@ -84,6 +84,9 @@ import { PermitPendingApprovalsDashboard } from "./pages/PermitPendingApprovalsD
 import { DesignInsightsDashboard } from "./pages/DesignInsightsDashboard";
 import { DesignInsightsSetupDashboard } from "./pages/DesignInsightsSetupDashboard";
 import { InventoryDashboard } from "./pages/InventoryDashboard";
+import { ParkingBookingDashboard } from "./pages/ParkingBookingDashboard";
+import { ParkingCreateDashboard } from "./pages/ParkingCreateDashboard";
+import { ParkingViewBookingsDashboard } from "./pages/ParkingViewBookingsDashboard";
 
 const queryClient = new QueryClient();
 
@@ -153,6 +156,9 @@ const App = () => (
                   <Route path="/property/space/bookings" element={<BookingsDashboard />} />
                   <Route path="/property/booking/setup" element={<BookingSetupDashboard />} />
                   <Route path="/property/space/seat-type" element={<SeatTypeDashboard />} />
+                  <Route path="/property/parking" element={<ParkingBookingDashboard />} />
+                  <Route path="/property/parking/add" element={<ParkingCreateDashboard />} />
+                  <Route path="/property/parking/view" element={<ParkingViewBookingsDashboard />} />
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
                   <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
                   <Route path="/visitors/r-vehicles" element={<RVehiclesDashboard />} />
