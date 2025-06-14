@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -61,7 +60,7 @@ import { AddGRNDashboard } from "./pages/AddGRNDashboard";
 import { InvoicesSESDashboard } from "./pages/InvoicesSESDashboard";
 import { PendingApprovalsDashboard } from "./pages/PendingApprovalsDashboard";
 import { GDNDashboard } from "./pages/GDNDashboard";
-import { GDNPendingApprovalsDashboard } from "./pages/GDNPendingApprovalsDashboard";
+import { GDNPendingApprovalsDashboard } from "./pages/GDN";
 import { AutoSavedPRDashboard } from "./pages/AutoSavedPRDashboard";
 import { WBSElementDashboard } from "./pages/WBSElementDashboard";
 import { OtherBillsDashboard } from "./pages/OtherBillsDashboard";
@@ -111,6 +110,7 @@ import { ExportDashboard } from "./pages/setup/ExportDashboard";
 import { DepartmentDashboard } from "./pages/setup/DepartmentDashboard";
 import { RoleDashboard } from "./pages/setup/RoleDashboard";
 import { AddRoleDashboard } from "./pages/setup/AddRoleDashboard";
+import { TagDashboard } from "./pages/setup/TagDashboard";
 import { AddTicketDashboard } from "./pages/AddTicketDashboard";
 
 const queryClient = new QueryClient();
@@ -140,6 +140,7 @@ const App = () => (
             <Route path="/setup/address/add" element={<AddAddressDashboard />} />
             <Route path="/setup/master-checklist" element={<MasterChecklistDashboard />} />
             <Route path="/setup/master-checklist/add" element={<AddMasterChecklistDashboard />} />
+            <Route path="/setup/tag" element={<TagDashboard />} />
             <Route path="/setup/export" element={<ExportDashboard />} />
             <Route path="/setup/user-role/department" element={<DepartmentDashboard />} />
             <Route path="/setup/user-role/role" element={<RoleDashboard />} />
