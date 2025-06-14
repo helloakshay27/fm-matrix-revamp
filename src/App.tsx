@@ -68,6 +68,7 @@ import { OtherBillsDashboard } from "./pages/OtherBillsDashboard";
 import { AddNewBillDashboard } from "./pages/AddNewBillDashboard";
 import { AccountingDashboard } from "./pages/AccountingDashboard";
 import { CustomerBillsDashboard } from "./pages/CustomerBillsDashboard";
+import { MyBillsDashboard } from "./pages/MyBillsDashboard";
 
 const queryClient = new QueryClient();
 
@@ -119,6 +120,7 @@ const App = () => (
                   <Route path="/finance/other-bills/add" element={<AddNewBillDashboard />} />
                   <Route path="/finance/accounting" element={<AccountingDashboard />} />
                   <Route path="/finance/customer-bills" element={<CustomerBillsDashboard />} />
+                  <Route path="/finance/my-bills" element={<MyBillsDashboard />} />
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
                   <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
                   <Route path="/visitors/r-vehicles" element={<RVehiclesDashboard />} />
