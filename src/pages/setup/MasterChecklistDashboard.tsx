@@ -4,6 +4,7 @@ import { SetupLayout } from '@/components/SetupLayout';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Eye, Upload, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const masterChecklistData = [
   {
@@ -30,6 +31,7 @@ const masterChecklistData = [
 ];
 
 export const MasterChecklistDashboard = () => {
+  const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,13 +61,20 @@ export const MasterChecklistDashboard = () => {
     console.log('Importing questions...');
   };
 
+  const handleAddClick = () => {
+    navigate('/setup/master-checklist/add');
+  };
+
   return (
     <SetupLayout>
       <div className="space-y-6">
         <h1 className="text-2xl font-bold text-[#1a1a1a]">MASTER CHECKLIST</h1>
 
         <div className="flex items-center gap-3 mb-6">
-          <Button className="bg-purple-700 hover:bg-purple-800 text-white">
+          <Button 
+            onClick={handleAddClick}
+            className="bg-purple-700 hover:bg-purple-800 text-white"
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
