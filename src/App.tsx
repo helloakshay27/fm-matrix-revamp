@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -90,9 +89,7 @@ import { TaskListDashboard } from "./pages/TaskListDashboard";
 import { TicketListDashboard } from "./pages/TicketListDashboard";
 import ParkingDashboard from "./pages/ParkingDashboard";
 import ParkingBookingsDashboard from "./pages/ParkingBookingsDashboard";
-import ParkingCategoriesDashboard from "./pages/ParkingCategoriesDashboard";
 import MailroomInboundDashboard from "./pages/MailroomInboundDashboard";
-import TagDashboard from "./pages/TagDashboard";
 
 const queryClient = new QueryClient();
 
@@ -106,11 +103,6 @@ const App = () => (
           <Routes>
             {/* Setup route - standalone layout without dynamic header */}
             <Route path="/setup" element={<SetupDashboard />} />
-            <Route path="/setup/location/account" element={
-              <React.Suspense fallback={<div>Loading...</div>}>
-                {React.createElement(React.lazy(() => import('./pages/setup/location/AccountSetup')))}
-              </React.Suspense>
-            } />
             
             {/* Main app routes with Layout wrapper */}
             <Route path="/*" element={
@@ -198,7 +190,6 @@ const App = () => (
                   <Route path="/experience/transport/self-travel" element={<SelfTravelDashboard />} />
                   <Route path="/experience/testimonials" element={<TestimonialsSetupDashboard />} />
                   <Route path="/experience/company-partners" element={<CompanyPartnersSetupDashboard />} />
-                  <Route path="/property/setup/tag" element={<TagDashboard />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
