@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -60,7 +61,7 @@ import { AddGRNDashboard } from "./pages/AddGRNDashboard";
 import { InvoicesSESDashboard } from "./pages/InvoicesSESDashboard";
 import { PendingApprovalsDashboard } from "./pages/PendingApprovalsDashboard";
 import { GDNDashboard } from "./pages/GDNDashboard";
-import { GDNPendingApprovalsDashboard } from "./pages/GDN";
+import { GDNPendingApprovalsDashboard } from "./pages/GDNPendingApprovalsDashboard";
 import { AutoSavedPRDashboard } from "./pages/AutoSavedPRDashboard";
 import { WBSElementDashboard } from "./pages/WBSElementDashboard";
 import { OtherBillsDashboard } from "./pages/OtherBillsDashboard";
@@ -112,6 +113,10 @@ import { RoleDashboard } from "./pages/setup/RoleDashboard";
 import { AddRoleDashboard } from "./pages/setup/AddRoleDashboard";
 import { TagDashboard } from "./pages/setup/TagDashboard";
 import { AddTicketDashboard } from "./pages/AddTicketDashboard";
+import { ProjectLayout } from "./components/ProjectLayout";
+import { FitoutRequestListDashboard } from "./pages/FitoutRequestListDashboard";
+import { FitoutChecklistDashboard } from "./pages/FitoutChecklistDashboard";
+import { FitoutViolationDashboard } from "./pages/FitoutViolationDashboard";
 
 const queryClient = new QueryClient();
 
@@ -146,6 +151,20 @@ const App = () => (
             <Route path="/setup/user-role/role" element={<RoleDashboard />} />
             <Route path="/setup/user-role/role/add" element={<AddRoleDashboard />} />
             
+            {/* Project routes with ProjectLayout */}
+            <Route path="/projects/*" element={
+              <ProjectLayout>
+                <Routes>
+                  <Route path="/" element={<ProjectDashboard />} />
+                  <Route path="/add" element={<AddProjectDashboard />} />
+                  <Route path="/fitout-setup" element={<FitoutSetupDashboard />} />
+                  <Route path="/fitout-request" element={<FitoutRequestListDashboard />} />
+                  <Route path="/fitout-checklist" element={<FitoutChecklistDashboard />} />
+                  <Route path="/fitout-violation" element={<FitoutViolationDashboard />} />
+                </Routes>
+              </ProjectLayout>
+            } />
+            
             {/* Main app routes with Layout wrapper */}
             <Route path="/*" element={
               <Layout>
@@ -177,9 +196,6 @@ const App = () => (
                   <Route path="/surveys/mapping" element={<SurveyMappingDashboard />} />
                   <Route path="/surveys/response" element={<SurveyResponseDashboard />} />
                   <Route path="/assets/inactive" element={<InActiveAssetsDashboard />} />
-                  <Route path="/projects" element={<ProjectDashboard />} />
-                  <Route path="/projects/fitout-setup" element={<FitoutSetupDashboard />} />
-                  <Route path="/projects/add" element={<AddProjectDashboard />} />
                   <Route path="/finance/material-pr" element={<MaterialPRDashboard />} />
                   <Route path="/finance/material-pr/add" element={<AddMaterialPRDashboard />} />
                   <Route path="/finance/service-pr" element={<ServicePRDashboard />} />
@@ -234,7 +250,6 @@ const App = () => (
                   <Route path="/experience/testimonials" element={<TestimonialsSetupDashboard />} />
                   <Route path="/experience/company-partners" element={<CompanyPartnersSetupDashboard />} />
                   <Route path="/tickets/add" element={<AddTicketDashboard />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Layout>
