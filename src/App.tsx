@@ -103,6 +103,7 @@ import { PatrollingApprovalDashboard } from "./pages/setup/PatrollingApprovalDas
 import { FMGroupDashboard } from "./pages/setup/FMGroupDashboard";
 import { AddressDashboard } from "./pages/setup/AddressDashboard";
 import { AddAddressDashboard } from "./pages/setup/AddAddressDashboard";
+import { MasterChecklistDashboard } from "./pages/setup/MasterChecklistDashboard";
 
 const queryClient = new QueryClient();
 
@@ -129,6 +130,7 @@ const App = () => (
             <Route path="/setup/fm-group" element={<FMGroupDashboard />} />
             <Route path="/setup/address" element={<AddressDashboard />} />
             <Route path="/setup/address/add" element={<AddAddressDashboard />} />
+            <Route path="/setup/master-checklist" element={<MasterChecklistDashboard />} />
             
             {/* Main app routes with Layout wrapper */}
             <Route path="/*" element={
