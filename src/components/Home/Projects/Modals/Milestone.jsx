@@ -34,10 +34,12 @@ const AddMilestoneModal = ({
 
   const calculateDuration = (startDate, endDate) => {
     if (!startDate || !endDate) return "";
-    const ms = new Date(endDate) - new Date(startDate);
-    if (ms < 0) return "";
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (end < start) return "";
+    const ms = end - start;
     const totalMinutes = Math.floor(ms / (1000 * 60));
-    const days = Math.floor(totalMinutes / (60 * 24));
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24)) + 1;
     const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
     const minutes = totalMinutes % 60;
     return `${days}d:${hours}h:${minutes}m`;
@@ -96,7 +98,7 @@ const AddMilestoneModal = ({
             value={formData.startDate || ""}
             onChange={handleInputChange}
             type="date"
-            min={projectStartDate}
+            min={ new Date().toISOString().split("T")[0] || projectStartDate}
             max={projectEndDate}
             className="w-full border outline-none border-gray-300 p-2 text-[12px] placeholder-shown:text-transparent"
             disabled={isReadOnly}
@@ -112,7 +114,7 @@ const AddMilestoneModal = ({
             type="date"
             value={formData.endDate || ""}
             onChange={handleInputChange}
-            min={projectStartDate}
+            min={formData.startDate || projectStartDate}
             max={projectEndDate}
             className="w-full border outline-none border-gray-300 p-2 text-[12px]"
             disabled={isReadOnly}

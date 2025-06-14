@@ -146,12 +146,13 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
     if (end < start) return "Invalid: End date before start date";
 
     const ms = end - start;
-    const mins = Math.floor(ms / (1000 * 60));
-    const days = Math.floor(mins / (60 * 24));
-    const hours = Math.floor((mins % (60 * 24)) / 60);
-    const minutes = mins % 60;
+    const totalMinutes = Math.floor(ms / (1000 * 60));
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24)) + 1;
+    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+    const minutes = totalMinutes % 60;
     return `${days}d : ${hours}h : ${minutes}m`;
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -269,13 +270,18 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
               <label className="block ms-2">
                 {field === "startDate" ? "Start Date" : "End Date"} <span className="text-red-600">*</span>
               </label>
+
               <input
                 type="date"
                 name={field}
                 value={formData[field]}
                 onChange={handleInputChange}
                 className="w-full border outline-none border-gray-300 p-2"
-                min={field === "endDate" ? formData.startDate || "" : undefined}
+                min={
+                  field === "startDate"
+                    ? new Date().toISOString().split("T")[0]
+                    : formData.startDate || new Date().toISOString().split("T")[0]
+                }
               />
             </div>
           ))}

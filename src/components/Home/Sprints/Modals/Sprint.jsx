@@ -307,14 +307,17 @@ const AddSprintsModal = ({ id, deleteSprint, formData, setFormData, isReadOnly =
 
   const calculateDuration = () => {
     if (!formData.startDate || !formData.endDate) return "";
-    const ms = new Date(formData.endDate) - new Date(formData.startDate);
-    if (ms < 0) return "";
+    const start = new Date(formData.startDate);
+    const end = new Date(formData.endDate);
+    if (end < start) return "";
+    const ms = end - start;
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24)) + 1;
     const totalMinutes = Math.floor(ms / (1000 * 60));
-    const days = Math.floor(totalMinutes / (60 * 24));
     const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
     const minutes = totalMinutes % 60;
     return `${days}d:${hours}h:${minutes}m`;
   };
+
 
   return (
     <div className="flex flex-col relative justify-start gap-4 w-full bottom-0 py-3 bg-white my-10">
@@ -365,6 +368,7 @@ const AddSprintsModal = ({ id, deleteSprint, formData, setFormData, isReadOnly =
             name="startDate"
             value={formData.startDate || ""}
             onChange={handleInputChange}
+            min={new Date().toISOString().split("T")[0]} 
             className="w-full border outline-none border-gray-300 p-2 text-[12px]"
             disabled={isReadOnly}
           />
@@ -377,6 +381,7 @@ const AddSprintsModal = ({ id, deleteSprint, formData, setFormData, isReadOnly =
             name="endDate"
             value={formData.endDate || ""}
             onChange={handleInputChange}
+            min={formData.startDate || ""} 
             className="w-full border outline-none border-gray-300 p-2 text-[12px]"
             disabled={isReadOnly}
           />
@@ -392,6 +397,7 @@ const AddSprintsModal = ({ id, deleteSprint, formData, setFormData, isReadOnly =
           />
         </div>
       </div>
+
 
       <div className="flex items-start gap-4 mt-1">
         <div className="w-1/2 flex flex-col justify-between">
@@ -455,17 +461,16 @@ const Sprints = ({ closeModal }) => {
 
   const calculateDuration = (startDate, endDate) => {
     if (!startDate || !endDate) return "";
-    const ms = new Date(endDate) - new Date(startDate);
-    if (ms < 0) return "";
-    const totalMinutes = Math.floor(ms / (1000 * 60));
-    const days = Math.floor(totalMinutes / (60 * 24));
-    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-    const minutes = totalMinutes % 60;
-    return `${days}d:${hours}h:${minutes}m`;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (end < start) return "";
+    const ms = end - start;
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24)) + 1; // Inclusive counting
+    return `${days}d`;
   };
 
   const handleAddSprints = async (e) => {
-    e.preventDefault(); // Prevent form submission
+    e.preventDefault();
     if (!formData.title || !formData.ownerId || !formData.startDate || !formData.endDate || !formData.priority) {
       toast.error("Please fill all required fields.");
       return;
@@ -533,7 +538,7 @@ const Sprints = ({ closeModal }) => {
             id={sprint.id}
             deleteSprint={handleDeleteSprint}
             formData={sprint.formData}
-            setFormData={() => { }} // No-op to prevent changes
+            setFormData={() => { }}
             isReadOnly={true}
             hasSavedSprints={savedSprints.length > 0}
           />
@@ -548,9 +553,10 @@ const Sprints = ({ closeModal }) => {
         />
         <div className="relative">
           <button
-            type="button" // Prevent form submission
+            type="button"
             onClick={handleAddSprints}
-            className="absolute text-[12px] text-[red] right-2 -top-[30px] cursor-pointer mt-1">
+            className="absolute text-[12px] text-[red] right-2 -top-[30px] cursor-pointer mt-1"
+          >
             Add Sprints
           </button>
         </div>
@@ -568,3 +574,4 @@ const Sprints = ({ closeModal }) => {
 };
 
 export default Sprints;
+
