@@ -103,7 +103,7 @@ const TagDashboard = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center gap-4 text-sm text-gray-600 mb-6">
         <span>Company Tag List</span>
-        <span>></span>
+        <span>&gt;</span>
         <span>Create Company Tag</span>
       </div>
 

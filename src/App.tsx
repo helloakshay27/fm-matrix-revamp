@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -89,6 +90,7 @@ import { TaskListDashboard } from "./pages/TaskListDashboard";
 import { TicketListDashboard } from "./pages/TicketListDashboard";
 import ParkingDashboard from "./pages/ParkingDashboard";
 import ParkingBookingsDashboard from "./pages/ParkingBookingsDashboard";
+import ParkingCategoriesDashboard from "./pages/ParkingCategoriesDashboard";
 import MailroomInboundDashboard from "./pages/MailroomInboundDashboard";
 import TagDashboard from "./pages/TagDashboard";
 
