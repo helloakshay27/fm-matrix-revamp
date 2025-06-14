@@ -1,9 +1,10 @@
-
 import React, { useState } from 'react';
 import { SetupLayout } from '@/components/SetupLayout';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye, Plus } from 'lucide-react';
+import { Eye, Plus, Filter } from 'lucide-react';
+import { AddFMUserModal } from '@/components/AddFMUserModal';
+import { FMUserFiltersModal } from '@/components/FMUserFiltersModal';
 
 const fmUsers = [
   {
@@ -80,6 +81,8 @@ const fmUsers = [
 
 export const FMUserDashboard = () => {
   const [users, setUsers] = useState(fmUsers);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
 
   return (
     <SetupLayout>
@@ -92,7 +95,10 @@ export const FMUserDashboard = () => {
         </div>
 
         <div className="flex items-center gap-3 mb-6">
-          <Button className="bg-purple-700 hover:bg-purple-800 text-white">
+          <Button 
+            className="bg-purple-700 hover:bg-purple-800 text-white"
+            onClick={() => setIsAddModalOpen(true)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add FM User
           </Button>
@@ -102,7 +108,12 @@ export const FMUserDashboard = () => {
           <Button variant="outline" className="border-purple-700 text-purple-700 hover:bg-purple-50">
             Export
           </Button>
-          <Button variant="outline" className="border-purple-700 text-purple-700 hover:bg-purple-50">
+          <Button 
+            variant="outline" 
+            className="border-purple-700 text-purple-700 hover:bg-purple-50"
+            onClick={() => setIsFiltersModalOpen(true)}
+          >
+            <Filter className="w-4 h-4 mr-2" />
             Filters
           </Button>
           <Button variant="outline" className="border-purple-700 text-purple-700 hover:bg-purple-50">
@@ -158,6 +169,16 @@ export const FMUserDashboard = () => {
             </TableBody>
           </Table>
         </div>
+
+        <AddFMUserModal 
+          isOpen={isAddModalOpen} 
+          onClose={() => setIsAddModalOpen(false)} 
+        />
+        
+        <FMUserFiltersModal 
+          isOpen={isFiltersModalOpen} 
+          onClose={() => setIsFiltersModalOpen(false)} 
+        />
       </div>
     </SetupLayout>
   );
