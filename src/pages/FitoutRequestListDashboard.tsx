@@ -11,9 +11,9 @@ export const FitoutRequestListDashboard = () => {
         {/* Breadcrumb */}
         <div className="text-sm text-gray-600">
           <span>Project</span>
-          <span className="mx-2">></span>
+          <span className="mx-2">&gt;</span>
           <span>Fitout Requests</span>
-          <span className="mx-2">></span>
+          <span className="mx-2">&gt;</span>
           <span className="text-gray-900">Fitout Request List</span>
         </div>
 
