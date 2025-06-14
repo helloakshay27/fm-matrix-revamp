@@ -983,7 +983,7 @@ export const Sidebar = () => {
               )}
             </div>
 
-            <a href="/property/parking" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+            <a href="/visitors/vehicle-parkings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
               <Car className="w-5 h-5" />
               Parking
             </a>
