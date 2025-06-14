@@ -6,6 +6,7 @@ import { Plus, Upload, Download, Filter, Eye } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { SetupLayout } from '@/components/SetupLayout';
 import { useNavigate } from 'react-router-dom';
+import { OccupantUsersFilterDialog } from '@/components/OccupantUsersFilterDialog';
 
 // Sample data for the occupant users table
 const occupantUsersData = [
@@ -94,6 +95,7 @@ const occupantUsersData = [
 export const OccupantUsersDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
 
   const filteredUsers = occupantUsersData.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -103,6 +105,10 @@ export const OccupantUsersDashboard = () => {
 
   const handleAddUser = () => {
     navigate('/setup/occupant-users/add');
+  };
+
+  const handleFiltersClick = () => {
+    setFilterDialogOpen(true);
   };
 
   return (
@@ -199,7 +205,11 @@ export const OccupantUsersDashboard = () => {
                   <Download className="w-4 h-4 mr-2" />
                   Export
                 </Button>
-                <Button variant="outline" className="border-gray-300">
+                <Button 
+                  variant="outline" 
+                  className="border-gray-300"
+                  onClick={handleFiltersClick}
+                >
                   <Filter className="w-4 h-4 mr-2" />
                   Filters
                 </Button>
@@ -261,6 +271,11 @@ export const OccupantUsersDashboard = () => {
           </div>
         </div>
       </div>
+
+      <OccupantUsersFilterDialog 
+        open={filterDialogOpen} 
+        onOpenChange={setFilterDialogOpen} 
+      />
     </SetupLayout>
   );
 };
