@@ -89,7 +89,6 @@ import { TaskListDashboard } from "./pages/TaskListDashboard";
 import { TicketListDashboard } from "./pages/TicketListDashboard";
 import ParkingDashboard from "./pages/ParkingDashboard";
 import ParkingBookingsDashboard from "./pages/ParkingBookingsDashboard";
-import TagSetupDashboard from "./pages/TagSetupDashboard";
 
 const queryClient = new QueryClient();
 
@@ -163,7 +162,6 @@ const App = () => (
                   <Route path="/property/space/seat-type" element={<SeatTypeDashboard />} />
                   <Route path="/property/parking" element={<ParkingDashboard />} />
                   <Route path="/property/parking/bookings" element={<ParkingBookingsDashboard />} />
-                  <Route path="/property/setup/tag" element={<TagSetupDashboard />} />
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
                   <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
                   <Route path="/visitors/r-vehicles" element={<RVehiclesDashboard />} />
