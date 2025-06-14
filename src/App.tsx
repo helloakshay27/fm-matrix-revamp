@@ -93,6 +93,7 @@ import MailroomInboundDashboard from "./pages/MailroomInboundDashboard";
 import { FMUserDashboard } from "./pages/setup/FMUserDashboard";
 import { MeterTypeDashboard } from "./pages/setup/MeterTypeDashboard";
 import { OccupantUsersDashboard } from "./pages/setup/OccupantUsersDashboard";
+import { AssetGroupsDashboard } from "./pages/setup/AssetGroupsDashboard";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +110,7 @@ const App = () => (
             <Route path="/setup/fm-user" element={<FMUserDashboard />} />
             <Route path="/setup/meter-type" element={<MeterTypeDashboard />} />
             <Route path="/setup/occupant-users" element={<OccupantUsersDashboard />} />
+            <Route path="/setup/asset-groups" element={<AssetGroupsDashboard />} />
             
             {/* Main app routes with Layout wrapper */}
             <Route path="/*" element={
