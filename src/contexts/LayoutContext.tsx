@@ -25,6 +25,7 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const getCurrentSectionFromPath = (path: string): string => {
     if (path.startsWith('/projects') || path.startsWith('/fitout')) return 'Project';
     if (path.startsWith('/crm')) return 'CRM';
+    if (path.startsWith('/utility')) return 'Utility';
     if (path.startsWith('/surveys')) return 'Maintenance';
     if (path.startsWith('/operational-audit')) return 'Maintenance';
     if (path.startsWith('/amc')) return 'Maintenance';

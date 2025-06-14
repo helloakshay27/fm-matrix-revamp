@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -189,6 +190,18 @@ const App = () => (
                   <Route path="/fitout/request-list" element={<FitoutRequestListDashboard />} />
                   <Route path="/fitout/checklist" element={<FitoutChecklistDashboard />} />
                   <Route path="/fitout/violation" element={<FitoutViolationDashboard />} />
+                  
+                  {/* Utility routes */}
+                  <Route path="/utility/energy-meters" element={<Index />} />
+                  <Route path="/utility/water" element={<Index />} />
+                  <Route path="/utility/stp" element={<Index />} />
+                  <Route path="/utility/daily-readings" element={<Index />} />
+                  <Route path="/utility/consumption" element={<Index />} />
+                  <Route path="/utility/ev-consumption" element={<Index />} />
+                  <Route path="/utility/solar-generator" element={<Index />} />
+                  <Route path="/utility/utility-request" element={<Index />} />
+                  <Route path="/utility/waste-generation" element={<Index />} />
+                  
                   <Route path="/finance/material-pr" element={<MaterialPRDashboard />} />
                   <Route path="/finance/material-pr/add" element={<AddMaterialPRDashboard />} />
                   <Route path="/finance/service-pr" element={<ServicePRDashboard />} />
