@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -107,6 +108,8 @@ import { MasterChecklistDashboard } from "./pages/setup/MasterChecklistDashboard
 import { AddMasterChecklistDashboard } from "./pages/setup/AddMasterChecklistDashboard";
 import { ExportDashboard } from "./pages/setup/ExportDashboard";
 import { DepartmentDashboard } from "./pages/setup/DepartmentDashboard";
+import { RoleDashboard } from "./pages/setup/RoleDashboard";
+import { AddRoleDashboard } from "./pages/setup/AddRoleDashboard";
 
 const queryClient = new QueryClient();
 
@@ -137,6 +140,8 @@ const App = () => (
             <Route path="/setup/master-checklist/add" element={<AddMasterChecklistDashboard />} />
             <Route path="/setup/export" element={<ExportDashboard />} />
             <Route path="/setup/user-role/department" element={<DepartmentDashboard />} />
+            <Route path="/setup/user-role/role" element={<RoleDashboard />} />
+            <Route path="/setup/user-role/role/add" element={<AddRoleDashboard />} />
             
             {/* Main app routes with Layout wrapper */}
             <Route path="/*" element={
