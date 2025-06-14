@@ -47,7 +47,7 @@ const propertyItems = [
   { name: 'Parking Categories', href: '/setup/property/parking-categories' },
 ];
 
-export const SetupSidebar = () => {
+export const Sidebar = () => {
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [isUserRoleOpen, setIsUserRoleOpen] = useState(false);
   const [isTicketOpen, setIsTicketOpen] = useState(false);

@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -74,7 +75,6 @@ import { SeatTypeDashboard } from "./pages/SeatTypeDashboard";
 import { OperationalAuditScheduledDashboard } from "./pages/OperationalAuditScheduledDashboard";
 import { OperationalAuditConductedDashboard } from "./pages/OperationalAuditConductedDashboard";
 import { OperationalAuditMasterChecklistsDashboard } from "./pages/OperationalAuditMasterChecklistsDashboard";
-import { VendorAuditScheduledDashboard } from "./pages/VendorAuditConductedDashboard";
 import { VendorAuditConductedDashboard } from "./pages/VendorAuditConductedDashboard";
 import { IncidentSetupDashboard } from "./pages/IncidentSetupDashboard";
 import { IncidentListDashboard } from "./pages/IncidentListDashboard";
@@ -126,7 +126,7 @@ const App = () => (
                   <Route path="/operational-audit/scheduled" element={<OperationalAuditScheduledDashboard />} />
                   <Route path="/operational-audit/conducted" element={<OperationalAuditConductedDashboard />} />
                   <Route path="/operational-audit/master-checklists" element={<OperationalAuditMasterChecklistsDashboard />} />
-                  <Route path="/maintenance/vendor-audit/scheduled" element={<VendorAuditScheduledDashboard />} />
+                  <Route path="/maintenance/vendor-audit/scheduled" element={<VendorAuditConductedDashboard />} />
                   <Route path="/maintenance/vendor-audit/conducted" element={<VendorAuditConductedDashboard />} />
                   <Route path="/maintenance/incident/setup" element={<IncidentSetupDashboard />} />
                   <Route path="/maintenance/incident/list" element={<IncidentListDashboard />} />
@@ -167,6 +167,7 @@ const App = () => (
                   <Route path="/property/space/seat-type" element={<SeatTypeDashboard />} />
                   <Route path="/property/parking/create" element={<ParkingCreateDashboard />} />
                   <Route path="/property/parking/booking" element={<ParkingBookingDashboard />} />
+                  <Route path="/property/parking" element={<VehicleParkingDashboard />} />
                   <Route path="/property/mailroom/inbound" element={<MailroomInboundDashboard />} />
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
                   <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
