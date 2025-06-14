@@ -123,7 +123,7 @@ import UtilitySTPDashboard from "./pages/UtilitySTPDashboard";
 import UtilityDailyReadingsDashboard from "./pages/UtilityDailyReadingsDashboard";
 import UtilityConsumptionDashboard from "./pages/UtilityConsumptionDashboard";
 import UtilityEVConsumptionDashboard from "./pages/UtilityEVConsumptionDashboard";
-import { UtilitySolarGeneratorDashboard } from "./pages/UtilitySolarGeneratorDashboard";
+import UtilitySolarGeneratorDashboard from "./pages/UtilitySolarGeneratorDashboard";
 
 const queryClient = new QueryClient();
 
