@@ -60,6 +60,7 @@ import { AddGRNDashboard } from "./pages/AddGRNDashboard";
 import { InvoicesSESDashboard } from "./pages/InvoicesSESDashboard";
 import { PendingApprovalsDashboard } from "./pages/PendingApprovalsDashboard";
 import { GDNDashboard } from "./pages/GDNDashboard";
+import { GDNPendingApprovalsDashboard } from "./pages/GDNPendingApprovalsDashboard";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +105,7 @@ const App = () => (
                   <Route path="/finance/invoices-ses" element={<InvoicesSESDashboard />} />
                   <Route path="/finance/pending-approvals" element={<PendingApprovalsDashboard />} />
                   <Route path="/finance/gdn" element={<GDNDashboard />} />
+                  <Route path="/finance/gdn/pending-approvals" element={<GDNPendingApprovalsDashboard />} />
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
                   <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
                   <Route path="/visitors/r-vehicles" element={<RVehiclesDashboard />} />
