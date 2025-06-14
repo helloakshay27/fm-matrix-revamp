@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -88,11 +89,6 @@ import { ScheduleListDashboard } from "./pages/ScheduleListDashboard";
 import { TaskListDashboard } from "./pages/TaskListDashboard";
 import { TicketListDashboard } from "./pages/TicketListDashboard";
 
-// CRM Dashboard imports
-import CustomerDashboard from "./pages/CustomerDashboard";
-import FMUsersDashboard from "./pages/FMUsersDashboard";
-import OccupantUsersDashboard from "./pages/OccupantUsersDashboard";
-
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -111,13 +107,6 @@ const App = () => (
               <Layout>
                 <Routes>
                   <Route path="/" element={<Index />} />
-                  
-                  {/* CRM Routes */}
-                  <Route path="/crm/customer" element={<CustomerDashboard />} />
-                  <Route path="/crm/fm-users" element={<FMUsersDashboard />} />
-                  <Route path="/crm/occupant-users" element={<OccupantUsersDashboard />} />
-                  
-                  {/* Maintenance Routes */}
                   <Route path="/services" element={<ServiceDashboard />} />
                   <Route path="/supplier" element={<SupplierDashboard />} />
                   <Route path="/schedule" element={<ScheduleDashboard />} />
