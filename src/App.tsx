@@ -90,6 +90,7 @@ import { TicketListDashboard } from "./pages/TicketListDashboard";
 import ParkingDashboard from "./pages/ParkingDashboard";
 import ParkingBookingsDashboard from "./pages/ParkingBookingsDashboard";
 import MailroomInboundDashboard from "./pages/MailroomInboundDashboard";
+import TagDashboard from "./pages/TagDashboard";
 
 const queryClient = new QueryClient();
 
@@ -190,6 +191,7 @@ const App = () => (
                   <Route path="/experience/transport/self-travel" element={<SelfTravelDashboard />} />
                   <Route path="/experience/testimonials" element={<TestimonialsSetupDashboard />} />
                   <Route path="/experience/company-partners" element={<CompanyPartnersSetupDashboard />} />
+                  <Route path="/property/setup/tag" element={<TagDashboard />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
