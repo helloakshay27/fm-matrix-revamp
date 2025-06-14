@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -118,7 +119,6 @@ import { TagDashboard } from "./pages/setup/TagDashboard";
 import { AddTicketDashboard } from "./pages/AddTicketDashboard";
 import CRMFMUserDashboard from "./pages/CRMFMUserDashboard";
 import CRMOccupantUsersDashboard from "./pages/CRMOccupantUsersDashboard";
-import { UtilityWaterDashboard } from "./pages/UtilityWaterDashboard";
 
 const queryClient = new QueryClient();
 
@@ -193,7 +193,7 @@ const App = () => (
                   
                   {/* Utility routes */}
                   <Route path="/utility/energy-meters" element={<Index />} />
-                  <Route path="/utility/water" element={<UtilityWaterDashboard />} />
+                  <Route path="/utility/water" element={<Index />} />
                   <Route path="/utility/stp" element={<Index />} />
                   <Route path="/utility/daily-readings" element={<Index />} />
                   <Route path="/utility/consumption" element={<Index />} />
