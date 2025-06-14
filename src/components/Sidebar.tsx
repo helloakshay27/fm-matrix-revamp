@@ -63,6 +63,13 @@ const projectItems = [
   { name: 'Add Project', href: '/projects/add' },
 ];
 
+const fitoutItems = [
+  { name: 'Fitout Setup', href: '/projects/fitout-setup' },
+  { name: 'Fitout Request', href: '/projects/fitout-request' },
+  { name: 'Fitout Checklist', href: '/projects/fitout-checklist' },
+  { name: 'Fitout Violation', href: '/projects/fitout-violation' },
+];
+
 const crmItems = [
   { name: 'Customers', href: '/crm/customers' },
   { name: 'FM Users', href: '/crm/fm-users' },
@@ -239,6 +246,7 @@ export const Sidebar = () => {
   const [isRVehiclesOpen, setIsRVehiclesOpen] = useState(false);
   const [isGoodsInOutOpen, setIsGoodsInOutOpen] = useState(false);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+  const [isFitoutOpen, setIsFitoutOpen] = useState(false);
 
   const currentPath = window.location.pathname;
 
@@ -494,6 +502,33 @@ export const Sidebar = () => {
                 {item.name}
               </a>
             ))}
+            
+            {/* Fitout Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsFitoutOpen(!isFitoutOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Settings className="w-5 h-5" />
+                  Fitout
+                </div>
+                {isFitoutOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isFitoutOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {fitoutItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
           </nav>
         );
 
