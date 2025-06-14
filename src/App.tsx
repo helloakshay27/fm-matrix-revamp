@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -98,6 +97,8 @@ import { AddOccupantUserDashboard } from "./pages/setup/AddOccupantUserDashboard
 import { AssetGroupsDashboard } from "./pages/setup/AssetGroupsDashboard";
 import { ChecklistGroupDashboard } from "./pages/setup/ChecklistGroupDashboard";
 import { TaskEscalationDashboard } from "./pages/setup/TaskEscalationDashboard";
+import { ApprovalMatrixDashboard } from "./pages/setup/ApprovalMatrixDashboard";
+import { AddApprovalMatrixDashboard } from "./pages/setup/AddApprovalMatrixDashboard";
 
 const queryClient = new QueryClient();
 
@@ -118,6 +119,8 @@ const App = () => (
             <Route path="/setup/asset-groups" element={<AssetGroupsDashboard />} />
             <Route path="/setup/checklist-group" element={<ChecklistGroupDashboard />} />
             <Route path="/setup/task-escalation" element={<TaskEscalationDashboard />} />
+            <Route path="/setup/approval-matrix" element={<ApprovalMatrixDashboard />} />
+            <Route path="/setup/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
             
             {/* Main app routes with Layout wrapper */}
             <Route path="/*" element={
