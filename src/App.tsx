@@ -108,7 +108,6 @@ const App = () => (
             <Route path="/setup" element={<SetupDashboard />} />
             <Route path="/setup/fm-user" element={<FMUserDashboard />} />
             <Route path="/setup/meter-type" element={<MeterTypeDashboard />} />
-            <Route path="/setup/asset-groups" element={<AssetGroupsDashboard />} />
             
             {/* Main app routes with Layout wrapper */}
             <Route path="/*" element={
