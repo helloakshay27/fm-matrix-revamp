@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -93,6 +92,7 @@ import ParkingBookingsDashboard from "./pages/ParkingBookingsDashboard";
 import MailroomInboundDashboard from "./pages/MailroomInboundDashboard";
 import { FMUserDashboard } from "./pages/setup/FMUserDashboard";
 import { MeterTypeDashboard } from "./pages/setup/MeterTypeDashboard";
+import { OccupantUsersDashboard } from "./pages/setup/OccupantUsersDashboard";
 
 const queryClient = new QueryClient();
 
@@ -108,6 +108,7 @@ const App = () => (
             <Route path="/setup" element={<SetupDashboard />} />
             <Route path="/setup/fm-user" element={<FMUserDashboard />} />
             <Route path="/setup/meter-type" element={<MeterTypeDashboard />} />
+            <Route path="/setup/occupant-users" element={<OccupantUsersDashboard />} />
             
             {/* Main app routes with Layout wrapper */}
             <Route path="/*" element={
