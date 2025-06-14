@@ -5,18 +5,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus } from "lucide-react";
 
 export const OperationalAuditConductedDashboard = () => {
+  // Sample data - you can replace with actual data
   const conductedData = [
-    { id: "9182", activityName: "Short check list", noOfAssociation: 0, task: "Yes", taskAssignedTo: "", createdOn: "08/04/2023, 12:20 AM" },
-    { id: "9145", activityName: "Engineering Audit Checklist 2", noOfAssociation: 0, task: "Yes", taskAssignedTo: "sanket Patil", createdOn: "27/03/2023, 11:31 AM" },
-    { id: "8935", activityName: "Engineer audit", noOfAssociation: 0, task: "Yes", taskAssignedTo: "", createdOn: "13/02/2023, 05:14 PM" },
+    { id: "OA001", auditName: "Fire Safety Audit", location: "Building A", conductedDate: "15/01/2025", auditor: "John Doe", result: "Passed", score: "95%" },
+    { id: "OA002", auditName: "HVAC Inspection", location: "Building B", conductedDate: "12/01/2025", auditor: "Jane Smith", result: "Failed", score: "65%" },
   ];
 
   return (
     <div className="p-6">
       <div className="mb-6">
         <div>
-          <p className="text-[#1a1a1a] opacity-70 mb-2">Operational Audit > Conducted</p>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">CONDUCTED</h1>
+          <p className="text-[#1a1a1a] opacity-70 mb-2">Operational Audit &gt; Conducted</p>
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">CONDUCTED AUDITS</h1>
         </div>
       </div>
       
@@ -32,22 +32,30 @@ export const OperationalAuditConductedDashboard = () => {
           <TableHeader>
             <TableRow className="bg-gray-50">
               <TableHead className="font-semibold text-gray-700">ID</TableHead>
-              <TableHead className="font-semibold text-gray-700">Activity Name</TableHead>
-              <TableHead className="font-semibold text-gray-700">No. Of Association</TableHead>
-              <TableHead className="font-semibold text-gray-700">Task</TableHead>
-              <TableHead className="font-semibold text-gray-700">Task Assigned To</TableHead>
-              <TableHead className="font-semibold text-gray-700">Created on</TableHead>
+              <TableHead className="font-semibold text-gray-700">Audit Name</TableHead>
+              <TableHead className="font-semibold text-gray-700">Location</TableHead>
+              <TableHead className="font-semibold text-gray-700">Conducted Date</TableHead>
+              <TableHead className="font-semibold text-gray-700">Auditor</TableHead>
+              <TableHead className="font-semibold text-gray-700">Result</TableHead>
+              <TableHead className="font-semibold text-gray-700">Score</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {conductedData.map((item, index) => (
               <TableRow key={index}>
                 <TableCell className="text-blue-600 font-medium">{item.id}</TableCell>
-                <TableCell>{item.activityName}</TableCell>
-                <TableCell>{item.noOfAssociation}</TableCell>
-                <TableCell>{item.task}</TableCell>
-                <TableCell>{item.taskAssignedTo}</TableCell>
-                <TableCell>{item.createdOn}</TableCell>
+                <TableCell>{item.auditName}</TableCell>
+                <TableCell>{item.location}</TableCell>
+                <TableCell>{item.conductedDate}</TableCell>
+                <TableCell>{item.auditor}</TableCell>
+                <TableCell>
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    item.result === 'Passed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {item.result}
+                  </span>
+                </TableCell>
+                <TableCell>{item.score}</TableCell>
               </TableRow>
             ))}
           </TableBody>

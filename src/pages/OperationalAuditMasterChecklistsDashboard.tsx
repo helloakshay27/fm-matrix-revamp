@@ -16,7 +16,7 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
     <div className="p-6">
       <div className="mb-6">
         <div>
-          <p className="text-[#1a1a1a] opacity-70 mb-2">Operational Audit > Master Checklists</p>
+          <p className="text-[#1a1a1a] opacity-70 mb-2">Operational Audit &gt; Master Checklists</p>
           <h1 className="text-2xl font-bold text-[#1a1a1a]">MASTER CHECKLISTS</h1>
         </div>
       </div>
