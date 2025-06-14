@@ -82,6 +82,11 @@ const wasteGenerationItems = [
   { name: 'Setup', href: '/utility/waste-setup' },
 ];
 
+const inventoryItems = [
+  { name: 'Inventory', href: '/inventory' },
+  { name: 'Inventory Consumption', href: '/inventory-consumption' },
+];
+
 const visitorsItems = [
   { name: 'Visitors', href: '/visitors/visitors', icon: Eye },
   { name: 'Visitors History', href: '/visitors/history', icon: History },
@@ -233,6 +238,7 @@ export const Sidebar = () => {
   const [isGdnOpen, setIsGdnOpen] = useState(false);
   const [isRVehiclesOpen, setIsRVehiclesOpen] = useState(false);
   const [isGoodsInOutOpen, setIsGoodsInOutOpen] = useState(false);
+  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
 
   const currentPath = window.location.pathname;
 
@@ -424,14 +430,34 @@ export const Sidebar = () => {
               <Users className="w-5 h-5" />
               Attendance
             </a>
-            <a href="/inventory" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <Package className="w-5 h-5" />
-              Inventory
-            </a>
-            <a href="/inventory-consumption" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <Package className="w-5 h-5" />
-              Inventory Consumption
-            </a>
+
+            {/* Inventory Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsInventoryOpen(!isInventoryOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Package className="w-5 h-5" />
+                  Inventory
+                </div>
+                {isInventoryOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isInventoryOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {inventoryItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <a href="/eco-friendly" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
               <Recycle className="w-5 h-5" />
               Eco-Friendly
