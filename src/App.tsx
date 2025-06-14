@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -88,6 +87,8 @@ import { VendorDashboard } from "./pages/VendorDashboard";
 import { ScheduleListDashboard } from "./pages/ScheduleListDashboard";
 import { TaskListDashboard } from "./pages/TaskListDashboard";
 import { TicketListDashboard } from "./pages/TicketListDashboard";
+import { ParkingCreateDashboard } from "./pages/ParkingCreateDashboard";
+import { ParkingBookingDashboard } from "./pages/ParkingBookingDashboard";
 
 const queryClient = new QueryClient();
 
@@ -159,6 +160,8 @@ const App = () => (
                   <Route path="/property/space/bookings" element={<BookingsDashboard />} />
                   <Route path="/property/booking/setup" element={<BookingSetupDashboard />} />
                   <Route path="/property/space/seat-type" element={<SeatTypeDashboard />} />
+                  <Route path="/property/parking/create" element={<ParkingCreateDashboard />} />
+                  <Route path="/property/parking/booking" element={<ParkingBookingDashboard />} />
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
                   <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
                   <Route path="/visitors/r-vehicles" element={<RVehiclesDashboard />} />

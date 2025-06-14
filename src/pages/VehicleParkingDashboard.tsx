@@ -1,11 +1,21 @@
 
 import React, { useState } from 'react';
-import { Plus, Download, Filter } from 'lucide-react';
+import { Plus, Download, Filter, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AddVehicleParkingModal } from '../components/AddVehicleParkingModal';
+import { useNavigate } from 'react-router-dom';
 
 export const VehicleParkingDashboard = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleAddClick = () => {
+    navigate('/property/parking/create');
+  };
+
+  const handleViewBookingsClick = () => {
+    navigate('/property/parking/booking');
+  };
 
   return (
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
@@ -21,7 +31,7 @@ export const VehicleParkingDashboard = () => {
         {/* Action Buttons */}
         <div className="flex gap-3 mb-6">
           <Button 
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={handleAddClick}
             className="bg-[#8B4A9C] hover:bg-[#7A4089] text-white px-4 py-2 rounded flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
@@ -33,6 +43,13 @@ export const VehicleParkingDashboard = () => {
           >
             <Download className="w-4 h-4" />
             Import
+          </Button>
+          <Button 
+            onClick={handleViewBookingsClick}
+            className="bg-[#8B4A9C] hover:bg-[#7A4089] text-white px-4 py-2 rounded flex items-center gap-2"
+          >
+            <Eye className="w-4 h-4" />
+            View Bookings
           </Button>
           <Button 
             variant="outline" 
