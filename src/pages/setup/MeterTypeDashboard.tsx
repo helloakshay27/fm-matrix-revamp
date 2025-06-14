@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { SetupLayout } from '@/components/SetupLayout';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Edit } from 'lucide-react';
+import { AddMeterTypeModal } from '@/components/AddMeterTypeModal';
 
 const meterTypes = [
   {
@@ -115,6 +115,7 @@ const meterTypes = [
 
 export const MeterTypeDashboard = () => {
   const [meters, setMeters] = useState(meterTypes);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const toggleStatus = (id: number) => {
     setMeters(prev => prev.map(meter => 
@@ -133,7 +134,10 @@ export const MeterTypeDashboard = () => {
         </div>
 
         <div className="flex items-center gap-3 mb-6">
-          <Button className="bg-purple-700 hover:bg-purple-800 text-white">
+          <Button 
+            className="bg-purple-700 hover:bg-purple-800 text-white"
+            onClick={() => setIsAddModalOpen(true)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
@@ -174,6 +178,11 @@ export const MeterTypeDashboard = () => {
             </TableBody>
           </Table>
         </div>
+
+        <AddMeterTypeModal 
+          open={isAddModalOpen} 
+          onOpenChange={setIsAddModalOpen} 
+        />
       </div>
     </SetupLayout>
   );
