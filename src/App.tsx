@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -96,6 +95,7 @@ import { MeterTypeDashboard } from "./pages/setup/MeterTypeDashboard";
 import { OccupantUsersDashboard } from "./pages/setup/OccupantUsersDashboard";
 import { AddOccupantUserDashboard } from "./pages/setup/AddOccupantUserDashboard";
 import { AssetGroupsDashboard } from "./pages/setup/AssetGroupsDashboard";
+import { ChecklistGroupDashboard } from "./pages/setup/ChecklistGroupDashboard";
 
 const queryClient = new QueryClient();
 
@@ -114,6 +114,7 @@ const App = () => (
             <Route path="/setup/occupant-users" element={<OccupantUsersDashboard />} />
             <Route path="/setup/occupant-users/add" element={<AddOccupantUserDashboard />} />
             <Route path="/setup/asset-groups" element={<AssetGroupsDashboard />} />
+            <Route path="/setup/checklist-group" element={<ChecklistGroupDashboard />} />
             
             {/* Main app routes with Layout wrapper */}
             <Route path="/*" element={
