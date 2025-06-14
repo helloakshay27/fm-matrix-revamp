@@ -35,7 +35,8 @@ import {
   Boxes,
   Shield,
   Search,
-  ClipboardCheck
+  ClipboardCheck,
+  Lightbulb
 } from 'lucide-react';
 import { useLayout } from '../contexts/LayoutContext';
 
@@ -204,6 +205,11 @@ const permitItems = [
   { name: 'Pending Approvals', href: '/maintenance/permit/pending-approvals' },
 ];
 
+const designInsightsItems = [
+  { name: 'Design Insights', href: '/maintenance/design-insights/list' },
+  { name: 'Setup', href: '/maintenance/design-insights/setup' },
+];
+
 export const Sidebar = () => {
   const { currentSection } = useLayout();
   const [isSurveyOpen, setIsSurveyOpen] = useState(false);
@@ -211,6 +217,7 @@ export const Sidebar = () => {
   const [isVendorAuditOpen, setIsVendorAuditOpen] = useState(false);
   const [isIncidentOpen, setIsIncidentOpen] = useState(false);
   const [isPermitOpen, setIsPermitOpen] = useState(false);
+  const [isDesignInsightsOpen, setIsDesignInsightsOpen] = useState(false);
   const [isWasteGenerationOpen, setIsWasteGenerationOpen] = useState(false);
   const [isDocumentsOpen, setIsDocumentsOpen] = useState(false);
   const [isTransportOpen, setIsTransportOpen] = useState(false);
@@ -346,6 +353,33 @@ export const Sidebar = () => {
               {isPermitOpen && (
                 <div className="ml-8 mt-1 space-y-1">
                   {permitItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Design Insights Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsDesignInsightsOpen(!isDesignInsightsOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Lightbulb className="w-5 h-5" />
+                  Design Insights
+                </div>
+                {isDesignInsightsOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isDesignInsightsOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {designInsightsItems.map((item) => (
                     <a
                       key={item.name}
                       href={item.href}

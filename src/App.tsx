@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -81,6 +82,8 @@ import { IncidentListDashboard } from "./pages/IncidentListDashboard";
 import { PermitSetupDashboard } from "./pages/PermitSetupDashboard";
 import { PermitListDashboard } from "./pages/PermitListDashboard";
 import { PermitPendingApprovalsDashboard } from "./pages/PermitPendingApprovalsDashboard";
+import { DesignInsightsDashboard } from "./pages/DesignInsightsDashboard";
+import { DesignInsightsSetupDashboard } from "./pages/DesignInsightsSetupDashboard";
 
 const queryClient = new QueryClient();
 
@@ -116,6 +119,8 @@ const App = () => (
                   <Route path="/maintenance/permit/setup" element={<PermitSetupDashboard />} />
                   <Route path="/maintenance/permit/list" element={<PermitListDashboard />} />
                   <Route path="/maintenance/permit/pending-approvals" element={<PermitPendingApprovalsDashboard />} />
+                  <Route path="/maintenance/design-insights/list" element={<DesignInsightsDashboard />} />
+                  <Route path="/maintenance/design-insights/setup" element={<DesignInsightsSetupDashboard />} />
                   <Route path="/surveys/list" element={<SurveyListDashboard />} />
                   <Route path="/surveys/mapping" element={<SurveyMappingDashboard />} />
                   <Route path="/surveys/response" element={<SurveyResponseDashboard />} />
