@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -60,7 +61,7 @@ import { AddGRNDashboard } from "./pages/AddGRNDashboard";
 import { InvoicesSESDashboard } from "./pages/InvoicesSESDashboard";
 import { PendingApprovalsDashboard } from "./pages/PendingApprovalsDashboard";
 import { GDNDashboard } from "./pages/GDNDashboard";
-import { GDNPendingApprovalsDashboard } from "./pages/GDN";
+import { GDNPendingApprovalsDashboard } from "./pages/GDNPendingApprovalsDashboard";
 import { AutoSavedPRDashboard } from "./pages/AutoSavedPRDashboard";
 import { WBSElementDashboard } from "./pages/WBSElementDashboard";
 import { OtherBillsDashboard } from "./pages/OtherBillsDashboard";
