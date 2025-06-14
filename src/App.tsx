@@ -54,6 +54,7 @@ import { ServicePRDashboard } from "./pages/ServicePRDashboard";
 import { AddServicePRDashboard } from "./pages/AddServicePRDashboard";
 import { PODashboard } from "./pages/PODashboard";
 import { AddPODashboard } from "./pages/AddPODashboard";
+import { WODashboard } from "./pages/WODashboard";
 
 const queryClient = new QueryClient();
 
@@ -92,6 +93,7 @@ const App = () => (
                   <Route path="/finance/service-pr/add" element={<AddServicePRDashboard />} />
                   <Route path="/finance/po" element={<PODashboard />} />
                   <Route path="/finance/po/add" element={<AddPODashboard />} />
+                  <Route path="/finance/wo" element={<WODashboard />} />
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
                   <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
                   <Route path="/visitors/r-vehicles" element={<RVehiclesDashboard />} />
