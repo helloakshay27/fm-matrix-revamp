@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import {
     useState,
     useMemo,
@@ -69,7 +68,6 @@ const NewProjectDateEditor = ({
 }) => {
     const handleKeyDown = (event) => {
         if (event.key === "Enter" && onEnterPress) {
-            // Note: Enter press on date might not be standard UX for save
             event.preventDefault();
             onEnterPress();
         }
@@ -165,8 +163,8 @@ const ProjectList = () => {
 
     const {
         filterProjects: filteredProjects,
-        loading: filterProjectsLoadingRedux, // Renamed to avoid conflict if state structure is flat
-        error: filterProjectsErrorRedux, // Renamed to avoid conflict
+        loading: filterProjectsLoadingRedux,
+        error: filterProjectsErrorRedux,
     } = useSelector((state) => state.filterProjects);
 
     const { loading: statusChangeLoading, error: statusChangeError } =
@@ -198,7 +196,7 @@ const ProjectList = () => {
     const [isSavingNewProject, setIsSavingNewProject] = useState(false);
     const [validator, setValidator] = useState(null);
     const newProjectTitleInputRef = useRef(null);
-    const newProjectFormRowRef = useRef(null); // Ref for the new project form row
+    const newProjectFormRowRef = useRef(null);
 
     const [isFiltered, setIsFiltered] = useState(false);
     const [data, setData] = useState([]);
@@ -210,6 +208,8 @@ const ProjectList = () => {
                 filteredProjects.length > 0
                 ? filteredProjects
                 : initialProjects;
+
+
         if (!projectsSource) return [];
         if (!Array.isArray(projectsSource)) {
             if (projectsSource?.data && Array.isArray(projectsSource.data)) {
@@ -217,9 +217,11 @@ const ProjectList = () => {
                     transformProject(project, index)
                 );
             }
+            console.warn("Projects source is not an array:", projectsSource);
             return [];
         }
         if (projectsSource.length === 0) return [];
+
         return projectsSource.map((project, index) =>
             transformProject(project, index)
         );
@@ -229,15 +231,15 @@ const ProjectList = () => {
                 return {
                     id: `P-${project.id?.toString() || `unknown-${index}`}`,
                     actualId: project.id?.toString() || `unknown-${index}`,
-                    title: project.title || "Untitled",
+                    title: project.title || project.name || project.project_title || "Untitled",
                     status: project.status
                         ? project.status.charAt(0).toUpperCase() + project.status.slice(1)
                         : "Unknown",
-                    type: project.project_type_name || "",
-                    manager: project.project_owner_name || "Unassigned",
-                    milestones: "70%",
-                    tasks: "90%",
-                    issues: "8/10",
+                    type: project.project_type_name || project.type || "",
+                    manager: project.project_owner_name || project.manager || "Unassigned",
+                    milestones: project.milestones || "70%",
+                    tasks: project.tasks || "90%",
+                    issues: project.issues || "8/10",
                     startDate: project.start_date
                         ? new Date(project.start_date).toLocaleDateString("en-CA")
                         : "N/A",
@@ -245,8 +247,7 @@ const ProjectList = () => {
                         ? new Date(project.end_date).toLocaleDateString("en-CA")
                         : "N/A",
                     priority: project.priority
-                        ? project.priority.charAt(0).toUpperCase() +
-                        project.priority.slice(1)
+                        ? project.priority.charAt(0).toUpperCase() + project.priority.slice(1)
                         : "Unknown",
                 };
             } catch (error) {
@@ -314,27 +315,40 @@ const ProjectList = () => {
         const [title, setTitle] = useState(getValue());
         const [edit, setEdit] = useState(false);
 
+        // Sync title with getValue() when row data changes
+        useEffect(() => {
+            setTitle(getValue());
+        }, [getValue]);
+
         const handleDoubleClick = (e) => {
             e.preventDefault();
             setEdit(true);
         };
+
+        const handleSave = () => {
+            setEdit(false);
+            if (title !== getValue()) {
+                handleStatusChange({
+                    id: row.original.id,
+                    name: "title",
+                    payload: title,
+                });
+            }
+        };
+
         return (
             <span onDoubleClick={handleDoubleClick}>
                 {edit ? (
                     <NewProjectTextField
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        onEnterPress={handleStatusChange({
-                            id: row.original.id,
-                            name: "title",
-                            payload: title,
-                        })}
-                        onBlur={() => setEdit(false)} // Optional: exit on blur
+                        onEnterPress={handleSave}
+                        onBlur={handleSave}
                     />
                 ) : (
                     <Link
                         to={`/projects/${row.original.actualId}/milestones`}
-                        className="cursor-pointer "
+                        className="cursor-pointer"
                         onDoubleClick={handleDoubleClick}
                     >
                         {title}
@@ -362,7 +376,6 @@ const ProjectList = () => {
     }, [resetNewProjectForm]);
 
     const handleCancelNewProject = useCallback(() => {
-        // Renamed for clarity from previous internal use
         setIsAddingNewProject(false);
         resetNewProjectForm();
     }, [resetNewProjectForm]);
@@ -376,7 +389,7 @@ const ProjectList = () => {
         ) {
             setLocalError("Fill all required fields.");
             setValidator(true);
-            return; // Important: Return here to prevent save attempt
+            return;
         }
         setLocalError(null);
         setIsSavingNewProject(true);
@@ -398,9 +411,7 @@ const ProjectList = () => {
                 createProject({ project_management: projectPayload })
             ).unwrap();
             dispatch(fetchProjects());
-            //setIsAddingNewProject(false); // Keep form open or close based on UX preference. Closing is common.
-            //resetNewProjectForm();       // Reset for next entry or clear.
-            handleCancelNewProject(); // This will hide and reset
+            handleCancelNewProject();
         } catch (error) {
             console.error("Failed to create project:", error);
             const errorMessage =
@@ -413,7 +424,7 @@ const ProjectList = () => {
         }
     }, [
         dispatch,
-        handleCancelNewProject, // Using handleCancelNewProject for reset & hide
+        handleCancelNewProject,
         newProjectTitle,
         newProjectStatus,
         newProjectType,
@@ -429,7 +440,6 @@ const ProjectList = () => {
         }
     }, [isAddingNewProject]);
 
-    // Effect for Click Outside to Save/Cancel
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (
@@ -440,8 +450,7 @@ const ProjectList = () => {
             ) {
                 return;
             }
-
-            handleSaveNewProject(); // Attempt to save if title is present
+            handleSaveNewProject();
         };
 
         if (isAddingNewProject) {
@@ -456,14 +465,13 @@ const ProjectList = () => {
         isSavingNewProject,
         newProjectTitle,
         handleSaveNewProject,
-        handleCancelNewProject, // Use handleCancelNewProject
+        handleCancelNewProject,
     ]);
 
     useEffect(() => {
         const handleEscape = (event) => {
             if (!isAddingNewProject) return;
             if (event.key === "Escape") {
-                console.log("Escape key pressed!");
                 handleCancelNewProject();
             }
         };
@@ -493,7 +501,6 @@ const ProjectList = () => {
 
     const columns = useMemo(
         () => [
-            // Column definitions remain the same
             {
                 accessorKey: "id",
                 header: "Project ID",
@@ -539,13 +546,13 @@ const ProjectList = () => {
                 accessorKey: "type",
                 header: "Project Type",
                 size: 150,
-                cell: ({ getValue, row }) => getValue()
+                cell: ({ getValue }) => getValue(),
             },
             {
                 accessorKey: "manager",
                 header: "Project Manager",
                 size: 180,
-                cell: ({ getValue, row }) => getValue(),
+                cell: ({ getValue }) => getValue(),
             },
             {
                 accessorKey: "milestones",
@@ -600,7 +607,6 @@ const ProjectList = () => {
     });
 
     let content;
-    // Adjusted loading logic slightly for clarity with renamed Redux loading states
     const anyFilterLoading = filterProjectsLoadingRedux;
     const anyFilterError = filterProjectsErrorRedux;
 
@@ -733,8 +739,6 @@ const ProjectList = () => {
                                     className="bg-blue-50"
                                     style={{ height: `${rowHeight}px` }}
                                 >
-                                    {" "}
-                                    {/* Attach ref here */}
                                     <td className="p-1 border-r-2 text-center text-gray-500 text-xs align-middle">
                                         NEW
                                     </td>
@@ -746,7 +750,7 @@ const ProjectList = () => {
                                                 setNewProjectTitle(e.target.value);
                                                 if (localError) setLocalError(null);
                                             }}
-                                            onEnterPress={handleSaveNewProject} // Save on Enter in title field
+                                            onEnterPress={handleSaveNewProject}
                                             placeholder="Project Title"
                                             validator={validator}
                                         />
@@ -783,20 +787,15 @@ const ProjectList = () => {
                                             placeholder="Select Manager..."
                                         />
                                     </td>
-                                    <td className="p-1 border-r-2 align-middle"></td>{" "}
-                                    {/* Milestones */}
-                                    <td className="p-1 border-r-2 align-middle"></td>{" "}
-                                    {/* Tasks */}
-                                    <td className="p-1 border-r-2 align-middle"></td>{" "}
-                                    {/* Issues */}
+                                    <td className="p-1 border-r-2 align-middle"></td>
+                                    <td className="p-1 border-r-2 align-middle"></td>
+                                    <td className="p-1 border-r-2 align-middle"></td>
                                     <td className="p-0 border-r-2 align-middle">
                                         <NewProjectDateEditor
                                             value={newProjectStartDate}
                                             onChange={(e) => setNewProjectStartDate(e.target.value)}
                                             onEnterPress={handleSaveNewProject}
-                                            validator={
-                                                validator
-                                            } /* Optional: save on enter for dates too */
+                                            validator={validator}
                                         />
                                     </td>
                                     <td className="p-0 border-r-2 align-middle">
@@ -814,7 +813,6 @@ const ProjectList = () => {
                                             onStatusChange={(val) => setNewProjectPriority(val)}
                                         />
                                     </td>
-                                    {/* Last cell is for actions, now empty for the new project row as per click-outside save */}
                                     <td className="p-1 border-r-2 text-center align-middle"></td>
                                 </tr>
                             )}
@@ -824,7 +822,6 @@ const ProjectList = () => {
 
                 {data.length > 0 && (
                     <div className=" flex items-center justify-start gap-4 mt-4 text-[12px]">
-                        {/* Previous Button */}
                         <button
                             onClick={() => table.previousPage()}
                             disabled={!table.getCanPreviousPage()}
@@ -833,7 +830,6 @@ const ProjectList = () => {
                             {"<"}
                         </button>
 
-                        {/* Page Numbers (Sliding Window of 3) */}
                         {(() => {
                             const totalPages = table.getPageCount();
                             const currentPage = table.getState().pagination.pageIndex;
@@ -845,7 +841,6 @@ const ProjectList = () => {
                             );
                             let end = start + visiblePages;
 
-                            // Ensure end does not exceed total pages
                             if (end > totalPages) {
                                 end = totalPages;
                                 start = Math.max(0, end - visiblePages);
@@ -868,7 +863,6 @@ const ProjectList = () => {
                             });
                         })()}
 
-                        {/* Next Button */}
                         <button
                             onClick={() => table.nextPage()}
                             disabled={!table.getCanNextPage()}

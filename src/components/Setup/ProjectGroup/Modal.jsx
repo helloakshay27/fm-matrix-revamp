@@ -2,22 +2,22 @@ import { useState, useCallback, useEffect } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-    createProjectGroup,
-    fetchProjectGroup,
-    removeMembersFromGroup,
-    removeMembersFromTeam,
-    updateProjectGroup
+  createProjectGroup,
+  fetchProjectGroup,
+  removeMembersFromGroup,
+  removeMembersFromTeam,
+  updateProjectGroup
 } from '../../../redux/slices/projectSlice';
 
 import { fetchUsers } from '../../../redux/slices/userSlice';
 import MultiSelectBox from '../../MultiSelectBox';
 import { set } from 'react-hook-form';
 import { useDeepCompareEffectNoCheck } from 'use-deep-compare-effect';
-import {toast} from "react-hot-toast";
+import { toast } from "react-hot-toast";
 
 const Modal = ({ openModal, setOpenModal, editMode, existingData }) => {
-    console.log(existingData);
-  const alreadySelectedUsers = existingData?.project_group_members.map((user)=>({value:user.user_id,label:user.user_name,id:user.id})); 
+  console.log(existingData);
+  const alreadySelectedUsers = existingData?.project_group_members.map((user) => ({ value: user.user_id, label: user.user_name, id: user.id }));
   const [groupName, setGroupName] = useState(editMode ? existingData?.name || '' : '');
   const [selectedUsers, setSelectedUsers] = useState(editMode ? alreadySelectedUsers || [] : []);
   const [warningOpen, setWarningOpen] = useState(false);
@@ -26,10 +26,10 @@ const Modal = ({ openModal, setOpenModal, editMode, existingData }) => {
 
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.createProjectGroup);
-  const {fetchUsers: users}=useSelector((state) => state.fetchUsers);
+  const { fetchUsers: users } = useSelector((state) => state.fetchUsers);
 
   const resetModal = useCallback(() => {
-        dispatch(fetchProjectGroup());
+    dispatch(fetchProjectGroup());
     setGroupName('');
     setSelectedUsers([]);
     setWarningOpen(false);
@@ -41,41 +41,45 @@ const Modal = ({ openModal, setOpenModal, editMode, existingData }) => {
     dispatch(fetchUsers());
   }, [dispatch]);
 
-  const handleSave =async() => {
+  const handleSave = async () => {
     console.log(editMode);
     setWarningOpen(false);
     setError('');
     const trimmedName = groupName.trim();
 
-    if (!trimmedName){ setWarningOpen(true);
+    if (!trimmedName) {
+      setWarningOpen(true);
       setError('Group name cannot be empty');
-      return;}
-     if(selectedUsers.length===0){ setWarningOpen(true);
+      return;
+    }
+    if (selectedUsers.length === 0) {
+      setWarningOpen(true);
       setError('Please select at least one user');
-      return;}
+      return;
+    }
 
     console.log(selectedUsers);
-    
+
     const payload = {
       name: trimmedName.toLowerCase(),
       created_by_id: 158,
       user_ids: selectedUsers.map((user) => user.value),
-      active:existingData?.active||true,
+      active: existingData?.active || true,
     };
-   let response;
-   try{
-    if(editMode){
-       response=await dispatch(updateProjectGroup({ id: existingData.id, payload })).unwrap();
+    let response;
+    try {
+      if (editMode) {
+        response = await dispatch(updateProjectGroup({ id: existingData.id, payload })).unwrap();
       }
-      else{
-       response= await dispatch(createProjectGroup(payload)).unwrap();
+      else {
+        response = await dispatch(createProjectGroup(payload)).unwrap();
       }
-        console.log(response);
-      if(response.name[0]==="has already been taken"){
+      console.log(response);
+      if (response.name[0] === "has already been taken") {
         setWarningOpen(true);
         setError("Group name already exists");
-      }else{
-        toast.success(`Group ${editMode ? 'updated' : 'created'} successfully`,{
+      } else {
+        toast.success(`Group ${editMode ? 'updated' : 'created'} successfully`, {
           iconTheme: {
             primary: 'red', // This might directly change the color of the success icon
             secondary: 'white', // The circle background
@@ -83,28 +87,28 @@ const Modal = ({ openModal, setOpenModal, editMode, existingData }) => {
         });
         resetModal();
       }
-   }
-   catch(error){
-    console.log(error);
-   }
-       
+    }
+    catch (error) {
+      console.log(error);
+    }
+
   }
 
-  const handleChange=(values)=>{
-    
+  const handleChange = (values) => {
+
     console.log(values);
     const removed = prevMembers.find(
-  (prev) => !values.some((curr) => curr.value === prev.value)
-);
+      (prev) => !values.some((curr) => curr.value === prev.value)
+    );
     console.log(removed);
-    if(removed && editMode ){
-      dispatch(removeMembersFromGroup({id:removed.id}));
+    if (removed && editMode) {
+      dispatch(removeMembersFromGroup({ id: removed.id }));
     }
     setPrevMembers(values);
     setSelectedUsers(values);
   }
 
-  
+
 
   if (!openModal) return null;
 
@@ -119,24 +123,24 @@ const Modal = ({ openModal, setOpenModal, editMode, existingData }) => {
 
         {/* Input Section */}
         <div className='flex flex-col gap-4'>
-        <div className="px-6">
-          <label className="block  text-[#1B1B1B] mb-2">
-            {editMode ? 'Edit Project Group' : 'New Project Group'}
-            <span className="text-red-500 ml-1">*</span>
-          </label>
-          <input
-            type="text"
-            placeholder="Enter project group name here..."
-            className={`border w-full px-4 py-3 text-[#1B1B1B] text-[13px] `}
-            value={groupName}
-            onChange={(e) => setGroupName(e.target.value)}
-          />
-          
-        </div>
-        <div className="px-6">
-          <label className="block text-[#1B1B1B] mb-2">Select Members</label>
-          <MultiSelectBox options={users.map((user) => ({ value: user.id, label: `${user.firstname} ${user.lastname}` }))} placeholder={"Select Users"} value={selectedUsers} onChange={(values) => handleChange(values)} />
-        </div>
+          <div className="px-6">
+            <label className="block  text-[#1B1B1B] mb-2">
+              {editMode ? 'Edit Project Group' : 'New Project Group'}
+              <span className="text-red-500 ml-1">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="Enter project group name here..."
+              className={`border w-full px-4 py-3 text-[#1B1B1B] text-[13px] `}
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+            />
+
+          </div>
+          <div className="px-6">
+            <label className="block text-[#1B1B1B] mb-2">Select Members<span className="text-red-500 ml-1">*</span></label>
+            <MultiSelectBox options={users.map((user) => ({ value: user.id, label: `${user.firstname} ${user.lastname}` }))} placeholder={"Select Users"} value={selectedUsers} onChange={(values) => handleChange(values)} />
+          </div>
         </div>
 
         <div className="flex justify-end mr-5 mt-1">

@@ -31,16 +31,16 @@ const ActionIcons = ({ row, onEdit }) => {
     dispatch(fetchUpdateUser({ userId: userData.id, updatedData: payload }))
       .then(() => {
         toast.dismiss();
-        toast.success(`Status ${updatedValue ? 'activated' : 'deactivated'} successfully`,{
-           iconTheme: {
-    primary: 'red', // This might directly change the color of the success icon
-    secondary: 'white', // The circle background
-  },
+        toast.success(`Status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
+          iconTheme: {
+            primary: 'red', // This might directly change the color of the success icon
+            secondary: 'white', // The circle background
+          },
         });
       })
       .catch((error) => {
         toast.dismiss();
-        toast.error('Failed to update status:', error,{
+        toast.error('Failed to update status:', error, {
           iconTheme: {
             primary: 'red', // This might directly change the color of the error icon
             secondary: 'white', // The circle background
@@ -104,6 +104,10 @@ const ExternalTable = () => {
       accessorKey: 'firstname',
       header: 'User Name',
       size: 150,
+      cell: ({ row }) => {
+        const { firstname, lastname } = row.original;
+        return `${firstname} ${lastname}`;
+      },
     },
     {
       accessorKey: 'organization_id',
@@ -127,7 +131,7 @@ const ExternalTable = () => {
       accessorKey: 'lock_role.display_name',
       header: 'Role',
       size: 180,
-         cell: ({ row, getValue }) => {
+      cell: ({ row, getValue }) => {
         const value = row.original ? getValue() : null;
         if (!value) return null;
         const formattedValue = value.replace(/_/g, ' ');
@@ -173,14 +177,14 @@ const ExternalTable = () => {
         onAdd={handleAddUser}
       />
       {
-        isModalOpen &&(
-      <AddExternalUserModal
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        isEditMode={isEditMode}
-        initialData={selectedUser}
-        onSuccess={handleSuccess}
-      />
+        isModalOpen && (
+          <AddExternalUserModal
+            open={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            isEditMode={isEditMode}
+            initialData={selectedUser}
+            onSuccess={handleSuccess}
+          />
         )
       }
 

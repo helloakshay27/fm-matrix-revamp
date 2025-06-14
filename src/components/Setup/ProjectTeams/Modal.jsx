@@ -15,6 +15,7 @@ import {
     resetSuccess,
     updateProjectTeam,
 } from "../../../redux/slices/projectSlice";
+import toast from "react-hot-toast";
 
 const TeamModal = ({
     isModalOpen,
@@ -125,7 +126,29 @@ const TeamModal = ({
         setFormData((prev) => ({ ...prev, [name]: selectedOptions }));
     };
 
+    const validateForm = () => {
+        const errors = {}
+        if (!formData.teamName) {
+            errors.teamName = "Team name is required"
+        } else if (!formData.teamLead) {
+            errors.teamLead = "Team lead is required"
+        } else if (!formData.project) {
+            errors.project = "Project is required"
+        } else if (!formData.teamMembers.length) {
+            errors.teamMembers = "Team members is required"
+        }
+
+        if (Object.keys(errors).length) {
+            toast.dismiss()
+            toast.error(Object.values(errors)[0])
+            return false
+        }
+        return true
+    }
+
     const handleSubmit = () => {
+        if (!validateForm()) return;
+
         const payload = {
             project_team: {
                 name: formData.teamName,

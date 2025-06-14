@@ -22,6 +22,7 @@ const AddMilestoneModal = ({
   projectStartDate,
   projectEndDate,
 }) => {
+  console.log(projectStartDate, projectEndDate)
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -153,7 +154,7 @@ const Milestones = () => {
 
   const { fetchUsers: users = [] } = useSelector((state) => state.fetchUsers);
   const { fetchMilestone: milestone = [] } = useSelector((state) => state.fetchMilestone);
-  const { createProject: project } = useSelector((state) => state.createProject);
+  const { createProject: project = {} } = useSelector((state) => state.createProject);
   const { loading, success, error } = useSelector((state) => state.createMilestone);
   const { fetchProjectDetails: projectDetail } = useSelector(state => state.fetchProjectDetails);
 
@@ -300,8 +301,9 @@ const Milestones = () => {
             isReadOnly={true}
             milestoneOptions={milestone}
             hasSavedMilestones={savedMilestones.length > 0}
-            projectStartDate={projectDetail.startDate}
-            projectEndDate={projectDetail.endDate}
+            projectStartDate={project?.length > 0 ? project[0].start_date : projectDetail?.start_date}
+            projectEndDate={project?.length > 0 ? project[0].end_date : projectDetail?.end_date
+            }
           />
         ))}
         <AddMilestoneModal
@@ -313,8 +315,8 @@ const Milestones = () => {
           isReadOnly={false}
           milestoneOptions={milestone}
           hasSavedMilestones={savedMilestones.length > 0}
-          projectStartDate={projectDetail.start_date}
-          projectEndDate={projectDetail.end_date}
+          projectStartDate={project && !Array.isArray(project) ? project.start_date : projectDetail.start_date}
+          projectEndDate={project && !Array.isArray(project) ? project.end_date : projectDetail.end_date}
         />
         <div className="relative">
           <button
@@ -332,7 +334,7 @@ const Milestones = () => {
             className="flex items-center justify-center border-2 text-[black] border-[red] px-4 py-2 w-[100px]"
             disabled={loading}
           >
-            {loading ? "Processing..." : "Next"}
+            {loading ? "Processing..." : "Save"}
           </button>
         </div>
       </div>

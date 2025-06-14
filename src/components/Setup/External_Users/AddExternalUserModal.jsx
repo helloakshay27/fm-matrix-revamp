@@ -28,7 +28,7 @@ const AddExternalUserModal = ({
   );
   const { loading: editLoading,
     success: editSuccess, } = useSelector(state => state.fetchUpdateUser)
-    const[error,setError]=useState('');
+  const [error, setError] = useState('');
 
 
   const [formData, setFormData] = useState({
@@ -64,26 +64,29 @@ const AddExternalUserModal = ({
     }
   }, [isEditMode, initialData, open]);
 
-  const handleSubmit = async(e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-      if(formData.username===""){
-            setError("Please enter name");
-            return;
-        }else if(formData.mobile==""){
-            setError("Please enter mobile number");
-            return;
+    if (formData.username === "") {
+      setError("Please enter name");
+      return;
+    } else if (formData.mobile == "") {
+      setError("Please enter mobile number");
+      return;
 
-        }else if(formData.email==""){
-            setError("Please enter email");
-            return;
+    } else if (formData.email == "") {
+      setError("Please enter email");
+      return;
 
-        }
-     
+    }
+
+    const nameParts = formData.username.trim().split(" ");
+    const firstname = nameParts[0] || "";
+    const lastname = nameParts.slice(1).join(" ") || "";
 
     const payload = {
       user: {
-        firstname: formData.username.split(' ')[0],
-        lastname: formData.username.split(' ')[1] || '',
+        firstname: firstname,
+        lastname: lastname,
         organization_id: formData.organisation,
         mobile: formData.mobile,
         email: formData.email,
@@ -91,58 +94,58 @@ const AddExternalUserModal = ({
         user_type: 'external',
       },
     };
-    try{
+    try {
       let response;
-    if (isEditMode && initialData?.id) {
-      response=await dispatch(fetchUpdateUser({ userId: initialData.id, updatedData: payload }));
-    } else {
-      response=await dispatch(createExternalUser(payload));
-    }
-    console.log(response);
-    if(response.payload?.errors){
-      setError(response.payload.errors);
-    }else if(response.payload.user_exists){
-      setError(response.payload.message)
-    }else{
-      toast.success(`User ${isEditMode ? 'updated' : 'created'} successfully`,{
-        iconTheme: {
-          primary: 'red', // This might directly change the color of the success icon
-          secondary: 'white', // The circle background
-        },
-      })
-      handleSuccess();
-    }
-  }catch(error){
-    console.log(error);
-    setError(error.message);
+      if (isEditMode && initialData?.id) {
+        response = await dispatch(fetchUpdateUser({ userId: initialData.id, updatedData: payload }));
+      } else {
+        response = await dispatch(createExternalUser(payload));
+      }
+      console.log(response);
+      if (response.payload?.errors) {
+        setError(response.payload.errors);
+      } else if (response.payload.user_exists) {
+        setError(response.payload.message)
+      } else {
+        toast.success(`User ${isEditMode ? 'updated' : 'created'} successfully`, {
+          iconTheme: {
+            primary: 'red', // This might directly change the color of the success icon
+            secondary: 'white', // The circle background
+          },
+        })
+        handleSuccess();
+      }
+    } catch (error) {
+      console.log(error);
+      setError(error.message);
+    };
   };
-};
 
 
- const handleSuccess=()=>{
+  const handleSuccess = () => {
     setFormData({
-        username: '',
-        organisation: null,
-        email: '',
-        mobile: '',
-        role: null,
+      username: '',
+      organisation: null,
+      email: '',
+      mobile: '',
+      role: null,
     })
     setError('');
     onSuccess();
- }
+  }
 
- const handleClose=()=>{
-   setFormData({
-        username: '',
-        organisation: null,
-        email: '',
-        mobile: '',
-        role: null,
-    })  
-  setError('');
+  const handleClose = () => {
+    setFormData({
+      username: '',
+      organisation: null,
+      email: '',
+      mobile: '',
+      role: null,
+    })
+    setError('');
     onClose();
 
- }
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
@@ -221,9 +224,12 @@ const AddExternalUserModal = ({
               placeholder="Enter Mobile here"
               className="border border-[#C0C0C0] w-full py-2 px-3 text-[#1B1B1B] text-[13px] focus:outline-none"
               value={formData.mobile}
-              onChange={(e) =>
-                setFormData({ ...formData, mobile: e.target.value })
-              }
+              onChange={(e) => {
+                const input = e.target.value;
+                if (/^\d{0,10}$/.test(input)) {
+                  setFormData({ ...formData, mobile: input })
+                }
+              }}
             />
           </div>
         </div>
@@ -242,6 +248,7 @@ const AddExternalUserModal = ({
             type="button"
             className="border border-[#C72030] text-[#1B1B1B] text-[13px] px-8 py-2"
             onClick={handleSubmit}
+            disabled={loading || editLoading}
           >
             {loading || editLoading ? 'Submitting...' : isEditMode ? 'Update' : 'Save'}
           </button>

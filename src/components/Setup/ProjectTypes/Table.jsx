@@ -53,7 +53,7 @@ const TypesTable = () => {
     try {
       await dispatch(deleteProjectType(id)).unwrap(); // unwrap to handle async correctly
       toast.dismiss();
-      toast.success('Project Type deleted successfully',{
+      toast.success('Project Type deleted successfully', {
         iconTheme: {
           primary: 'red', // This might directly change the color of the success icon
           secondary: 'white', // The circle background
@@ -62,7 +62,7 @@ const TypesTable = () => {
       dispatch(fetchProjectTypes()); // refetch data after successful delete
     } catch (error) {
       console.error('Failed to delete:', error);
-      toast.error('Failed to delete Project Type.',{
+      toast.error('Failed to delete Project Type.', {
         iconTheme: {
           primary: 'red', // This might directly change the color of the error icon
           secondary: 'white', // The circle background
@@ -81,7 +81,7 @@ const TypesTable = () => {
     try {
       await dispatch(updateProjectType({ id: row.original.id, data: payload })).unwrap();
       toast.dismiss();
-      toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`,{
+      toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
         iconTheme: {
           primary: 'red', // This might directly change the color of the success icon
           secondary: 'white', // The circle background
@@ -89,7 +89,7 @@ const TypesTable = () => {
       });
       dispatch(fetchProjectTypes());
     } catch (error) {
-      console.error('Failed to update toggle:', error,{
+      console.error('Failed to update toggle:', error, {
         iconTheme: {
           primary: 'red', // This might directly change the color of the error icon
           secondary: 'white', // The circle background
@@ -137,7 +137,9 @@ const TypesTable = () => {
         header: 'Project Type Name',
         size: 450,
         cell: ({ row, getValue }) => {
-          return row.original ? getValue() : null;
+          const value = getValue();
+          if (!value) return null;
+          return value.charAt(0).toUpperCase() + value.slice(1);
         },
       },
       {
@@ -168,7 +170,7 @@ const TypesTable = () => {
         size: 150,
         cell: ({ getValue }) => {
           const rawDate = getValue();
-          return rawDate ? <span className="pl-2">{formatToDDMMYYYY(rawDate)} </span>: null;
+          return rawDate ? <span className="pl-2">{formatToDDMMYYYY(rawDate)} </span> : null;
         },
       },
       {
@@ -297,57 +299,57 @@ const TypesTable = () => {
         </div>
 
         {data.length > 0 && (
-                    <div className=" flex items-center justify-start gap-4 mt-4 text-[12px]">
-                        {/* Previous Button */}
-                        <button
-                            onClick={() => table.previousPage()}
-                            disabled={!table.getCanPreviousPage()}
-                            className="text-red-600 disabled:opacity-30"
-                        >
-                            {"<"}
-                        </button>
+          <div className=" flex items-center justify-start gap-4 mt-4 text-[12px]">
+            {/* Previous Button */}
+            <button
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="text-red-600 disabled:opacity-30"
+            >
+              {"<"}
+            </button>
 
-                        {/* Page Numbers (Sliding Window of 3) */}
-                        {(() => {
-                            const totalPages = table.getPageCount();
-                            const currentPage = table.getState().pagination.pageIndex;
-                            const visiblePages = 3;
+            {/* Page Numbers (Sliding Window of 3) */}
+            {(() => {
+              const totalPages = table.getPageCount();
+              const currentPage = table.getState().pagination.pageIndex;
+              const visiblePages = 3;
 
-                            let start = Math.max(0, currentPage - Math.floor(visiblePages / 2));
-                            let end = start + visiblePages;
+              let start = Math.max(0, currentPage - Math.floor(visiblePages / 2));
+              let end = start + visiblePages;
 
-                            // Ensure end does not exceed total pages
-                            if (end > totalPages) {
-                                end = totalPages;
-                                start = Math.max(0, end - visiblePages);
-                            }
+              // Ensure end does not exceed total pages
+              if (end > totalPages) {
+                end = totalPages;
+                start = Math.max(0, end - visiblePages);
+              }
 
-                            return [...Array(end - start)].map((_, i) => {
-                                const page = start + i;
-                                const isActive = page === currentPage;
+              return [...Array(end - start)].map((_, i) => {
+                const page = start + i;
+                const isActive = page === currentPage;
 
-                                return (
-                                    <button
-                                        key={page}
-                                        onClick={() => table.setPageIndex(page)}
-                                        className={` px-3 py-1 ${isActive ? "bg-gray-200 font-bold" : ""}`}
-                                    >
-                                        {page + 1}
-                                    </button>
-                                );
-                            });
-                        })()}
+                return (
+                  <button
+                    key={page}
+                    onClick={() => table.setPageIndex(page)}
+                    className={` px-3 py-1 ${isActive ? "bg-gray-200 font-bold" : ""}`}
+                  >
+                    {page + 1}
+                  </button>
+                );
+              });
+            })()}
 
-                        {/* Next Button */}
-                        <button
-                            onClick={() => table.nextPage()}
-                            disabled={!table.getCanNextPage()}
-                            className="text-red-600 disabled:opacity-30"
-                        >
-                            {">"}
-                        </button>
-                    </div>
-                )}
+            {/* Next Button */}
+            <button
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="text-red-600 disabled:opacity-30"
+            >
+              {">"}
+            </button>
+          </div>
+        )}
       </div>
       {openModal && (
         <Modal

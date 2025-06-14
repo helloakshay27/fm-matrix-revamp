@@ -12,10 +12,10 @@ const ActionIcons = ({ row, onEditClick }) => {
     return (
         <div className="action-icons flex justify-between gap-5">
             <div>
-                <EditOutlinedIcon
+                {/* <EditOutlinedIcon
                     sx={{ fontSize: '20px', cursor: 'pointer' }}
                     onClick={() => onEditClick(row.original)} // Pass user data on edit icon click
-                />
+                /> */}
                 <button
                     onClick={() => alert(`Deleting: ${row.original.name}`)}
                     title="Delete"
@@ -47,13 +47,13 @@ const ProjectTemplates = () => {
                 header: 'Owner Name',
                 size: 200,
             },
-              {
+            {
                 accessorKey: 'priority',
                 header: 'Priority',
                 size: 200,
                 cell: ({ row, getValue }) => row.original ? <span className='pl-2'>{getValue()}</span> : 0,
             },
-                 {
+            {
                 accessorKey: 'project_members',
                 header: 'Project Members',
                 size: 200,

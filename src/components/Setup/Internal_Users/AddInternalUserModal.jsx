@@ -24,11 +24,11 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
     const { fetchRoles: roles } = useSelector(state => state.fetchRoles)
     const { loading: editLoading,
         success: editSuccess, } = useSelector(state => state.fetchUpdateUser)
-    const {fetchUsers:users}=useSelector(state=>state.fetchUsers)
+    const { fetchUsers: users } = useSelector(state => state.fetchUsers)
     const [error, setError] = useState('');
 
     useEffect(() => {
-         dispatch(fetchRoles());
+        dispatch(fetchRoles());
         dispatch(fetchUsers());
     }, [dispatch])
 
@@ -39,72 +39,77 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                 mobile: selectedUser.mobile || '',
                 email: selectedUser.email || '',
                 role: selectedUser.lock_role?.id || null,
-                reportTo:selectedUser.report_to_id
+                reportTo: selectedUser.report_to_id
             });
         }
     }, [isEditMode, selectedUser]);
 
 
-    const handleSubmit = async(e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if(formData.name===""){
+        if (formData.name === "") {
             setError("Please enter name");
             return;
-        }else if(formData.mobile==""){
+        } else if (formData.mobile == "") {
             setError("Please enter mobile number");
             return;
 
-        }else if(formData.email==""){
+        } else if (formData.email == "") {
             setError("Please enter email");
             return;
 
-        }else if(formData.role==null){
+        } else if (formData.role == null) {
             setError("Please select role");
             return;
 
-        }else if(formData.reportTo==null){
+        } else if (formData.reportTo == null) {
             setError("Please select report to");
             return;
 
         }
 
+        const nameParts = formData.name.trim().split(" ");
+        const firstname = nameParts[0] || "";
+        const lastname = nameParts.slice(1).join(" ") || "";
+
         const payload = {
             user: {
-                firstname: formData.name.split(" ")[0] || "",
-                lastname: formData.name.split(" ")[1] || "",
+                firstname: firstname,
+                lastname: lastname,
                 mobile: formData.mobile,
                 email: formData.email,
                 role_id: formData.role,
                 user_type: "internal",
-                report_to_id:formData.reportTo
+                report_to_id: formData.reportTo
             }
         }
         let response;
-        try{
-        if (isEditMode) {
-            response=await dispatch(fetchUpdateUser({ userId: selectedUser.id, updatedData: payload })).unwrap();
-        } else {
-            response=await dispatch(createInternalUser(payload)).unwrap();
+        try {
+            if (isEditMode) {
+                response = await dispatch(fetchUpdateUser({ userId: selectedUser.id, updatedData: payload })).unwrap();
+            } else {
+                response = await dispatch(createInternalUser(payload)).unwrap();
+            }
+            console.log(response);
+            if (!response.user_exists && !response.error) {
+                toast.success(`User ${isEditMode ? 'updated' : 'created'} successfully`, {
+                    iconTheme: {
+                        primary: 'red', // This might directly change the color of the success icon
+                        secondary: 'white', // The circle background
+                    },
+                })
+                handleSuccess();
+            } else {
+                setError(response.message || response.error);
+            }
         }
-        console.log(response);
-        if(!response.user_exists && !response.error ){
-            toast.success(`User ${isEditMode ? 'updated' : 'created'} successfully`,{
-                iconTheme: {
-                  primary: 'red', // This might directly change the color of the success icon
-                  secondary: 'white', // The circle background
-                },
-            })
-            handleSuccess();  
-        }else
-        setError(response.message||response.error );
+        catch (error) {
+            console.log(error);
+            setError(error.errors);
+        }
+    };
 
-    }
-    catch(error){
-        console.log(error);
-        setError(error.errors);
-    }};
-
-    const handleClose=()=>{
+    const handleClose = () => {
         setFormData({
             email: "",
             mobile: "",
@@ -116,7 +121,7 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
         onClose();
     }
 
-    const handleSuccess=()=>{
+    const handleSuccess = () => {
         setFormData({
             email: "",
             mobile: "",
@@ -163,7 +168,12 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                             placeholder="Enter mobile here"
                             className="border border-[#C0C0C0] w-full py-2 px-3 text-[#1B1B1B] text-[13px] focus:outline-none"
                             value={formData.mobile}
-                            onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+                            onChange={(e) => {
+                                const input = e.target.value;
+                                if (/^\d{0,10}$/.test(input)) {
+                                    setFormData({ ...formData, mobile: input })
+                                }
+                            }}
                             required
                         />
                     </div>
@@ -181,7 +191,7 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                             className="w-full"
                             value={formData.role}
                             onChange={(value) => setFormData({ ...formData, role: value })}
-                            
+
                         />
                     </div>
                     <div className="px-6">
@@ -215,7 +225,7 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                 </div>
 
                 <div className="flex justify-end align-center text-[12px] mt-1 mr-4">
-                  {error && <p className="text-red-500">{error}</p>}
+                    {error && <p className="text-red-500">{error}</p>}
                 </div>
 
                 {/* Footer Buttons */}
@@ -224,6 +234,7 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                         type='button'
                         className="border border-[#C72030] text-[#1B1B1B] text-[13px] px-8 py-2"
                         onClick={handleSubmit}
+                        disabled={loading || editLoading}
                     >
                         {loading || editLoading ? "Submitting..." : isEditMode ? "Update" : "Save"}
                     </button>
