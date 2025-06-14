@@ -120,6 +120,7 @@ import CRMFMUserDashboard from "./pages/CRMFMUserDashboard";
 import CRMOccupantUsersDashboard from "./pages/CRMOccupantUsersDashboard";
 import { UtilityWaterDashboard } from "./pages/UtilityWaterDashboard";
 import UtilitySTPDashboard from "./pages/UtilitySTPDashboard";
+import UtilityDailyReadingsDashboard from "./pages/UtilityDailyReadingsDashboard";
 
 const queryClient = new QueryClient();
 
@@ -196,7 +197,7 @@ const App = () => (
                   <Route path="/utility/energy-meters" element={<Index />} />
                   <Route path="/utility/water" element={<UtilityWaterDashboard />} />
                   <Route path="/utility/stp" element={<UtilitySTPDashboard />} />
-                  <Route path="/utility/daily-readings" element={<Index />} />
+                  <Route path="/utility/daily-readings" element={<UtilityDailyReadingsDashboard />} />
                   <Route path="/utility/consumption" element={<Index />} />
                   <Route path="/utility/ev-consumption" element={<Index />} />
                   <Route path="/utility/solar-generator" element={<Index />} />
