@@ -114,6 +114,7 @@ import { RoleDashboard } from "./pages/setup/RoleDashboard";
 import { AddRoleDashboard } from "./pages/setup/AddRoleDashboard";
 import { TagDashboard } from "./pages/setup/TagDashboard";
 import { AddTicketDashboard } from "./pages/AddTicketDashboard";
+import { CRMFMUserDashboard } from "./pages/CRMFMUserDashboard";
 
 const queryClient = new QueryClient();
 
@@ -237,6 +238,7 @@ const App = () => (
                   <Route path="/experience/company-partners" element={<CompanyPartnersSetupDashboard />} />
                   <Route path="/tickets/add" element={<AddTicketDashboard />} />
                   <Route path="/crm/customers" element={<CRMCustomersDashboard />} />
+                  <Route path="/crm/fm-users" element={<CRMFMUserDashboard />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
