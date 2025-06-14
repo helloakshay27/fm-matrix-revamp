@@ -106,6 +106,7 @@ const App = () => (
             {/* Setup route - standalone layout without dynamic header */}
             <Route path="/setup" element={<SetupDashboard />} />
             <Route path="/setup/fm-user" element={<FMUserDashboard />} />
+            <Route path="/setup/occupant-users" element={<OccupantUsersDashboard />} />
             
             {/* Main app routes with Layout wrapper */}
             <Route path="/*" element={
