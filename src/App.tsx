@@ -125,6 +125,8 @@ import UtilityConsumptionDashboard from "./pages/UtilityConsumptionDashboard";
 import UtilityEVConsumptionDashboard from "./pages/UtilityEVConsumptionDashboard";
 import UtilitySolarGeneratorDashboard from "./pages/UtilitySolarGeneratorDashboard";
 import UtilityRequestDashboard from "./pages/UtilityRequestDashboard";
+import UtilityWasteGenerationDashboard from "./pages/UtilityWasteGenerationDashboard";
+import UtilityWasteGenerationSetupDashboard from "./pages/UtilityWasteGenerationSetupDashboard";
 
 const queryClient = new QueryClient();
 
@@ -206,7 +208,8 @@ const App = () => (
                   <Route path="/utility/ev-consumption" element={<UtilityEVConsumptionDashboard />} />
                   <Route path="/utility/solar-generator" element={<UtilitySolarGeneratorDashboard />} />
                   <Route path="/utility/utility-request" element={<UtilityRequestDashboard />} />
-                  <Route path="/utility/waste-generation" element={<Index />} />
+                  <Route path="/utility/waste-generation" element={<UtilityWasteGenerationDashboard />} />
+                  <Route path="/utility/waste-generation/setup" element={<UtilityWasteGenerationSetupDashboard />} />
                   
                   <Route path="/finance/material-pr" element={<MaterialPRDashboard />} />
                   <Route path="/finance/material-pr/add" element={<AddMaterialPRDashboard />} />
