@@ -75,11 +75,6 @@ import { SeatTypeDashboard } from "./pages/SeatTypeDashboard";
 import { OperationalAuditScheduledDashboard } from "./pages/OperationalAuditScheduledDashboard";
 import { OperationalAuditConductedDashboard } from "./pages/OperationalAuditConductedDashboard";
 import { OperationalAuditMasterChecklistsDashboard } from "./pages/OperationalAuditMasterChecklistsDashboard";
-import { VendorAuditScheduledDashboard } from "./pages/VendorAuditScheduledDashboard";
-import { VendorAuditConductedDashboard } from "./pages/VendorAuditConductedDashboard";
-import { MailroomInboundDashboard } from "./pages/MailroomInboundDashboard";
-import IncidentSetupDashboard from "./pages/IncidentSetupDashboard";
-import IncidentListDashboard from "./pages/IncidentListDashboard";
 
 const queryClient = new QueryClient();
 
@@ -108,10 +103,6 @@ const App = () => (
                   <Route path="/operational-audit/scheduled" element={<OperationalAuditScheduledDashboard />} />
                   <Route path="/operational-audit/conducted" element={<OperationalAuditConductedDashboard />} />
                   <Route path="/operational-audit/master-checklists" element={<OperationalAuditMasterChecklistsDashboard />} />
-                  <Route path="/vendor-audit/scheduled" element={<VendorAuditScheduledDashboard />} />
-                  <Route path="/vendor-audit/conducted" element={<VendorAuditConductedDashboard />} />
-                  <Route path="/incident/setup" element={<IncidentSetupDashboard />} />
-                  <Route path="/incident/list" element={<IncidentListDashboard />} />
                   <Route path="/surveys/list" element={<SurveyListDashboard />} />
                   <Route path="/surveys/mapping" element={<SurveyMappingDashboard />} />
                   <Route path="/surveys/response" element={<SurveyResponseDashboard />} />
@@ -142,7 +133,6 @@ const App = () => (
                   <Route path="/property/space/bookings" element={<BookingsDashboard />} />
                   <Route path="/property/booking/setup" element={<BookingSetupDashboard />} />
                   <Route path="/property/space/seat-type" element={<SeatTypeDashboard />} />
-                  <Route path="/property/mailroom/inbound" element={<MailroomInboundDashboard />} />
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
                   <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
                   <Route path="/visitors/r-vehicles" element={<RVehiclesDashboard />} />
