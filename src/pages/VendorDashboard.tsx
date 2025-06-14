@@ -74,7 +74,7 @@ export const VendorDashboard = () => {
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
           <span>Supplier</span>
-          <span>{'>'}}</span>
+          <span>&gt;</span>
           <span>Supplier List</span>
         </div>
         <h1 className="text-2xl font-bold text-[#1a1a1a]">SUPPLIER LIST</h1>
@@ -151,7 +151,7 @@ export const VendorDashboard = () => {
         <Button variant="outline" size="sm" className="w-8 h-8 p-0 bg-[#8B4513] text-white">1</Button>
         <Button variant="outline" size="sm" className="w-8 h-8 p-0">2</Button>
         <Button variant="outline" size="sm" className="w-8 h-8 p-0">3</Button>
-        <Button variant="outline" size="sm" className="px-3">Last {'>'}}</Button>
+        <Button variant="outline" size="sm" className="px-3">Last &gt;</Button>
       </div>
     </div>
   );
