@@ -1,5 +1,5 @@
-
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   MapPin,
   Building,
@@ -72,13 +72,13 @@ export const SetupSidebar = () => {
             {isLocationOpen && (
               <div className="ml-8 mt-1 space-y-1">
                 {locationItems.map((item) => (
-                  <a
+                  <Link
                     key={item.name}
-                    href={item.href}
+                    to={item.href}
                     className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
                   >
                     {item.name}
-                  </a>
+                  </Link>
                 ))}
               </div>
             )}

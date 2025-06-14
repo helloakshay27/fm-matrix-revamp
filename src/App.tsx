@@ -106,6 +106,11 @@ const App = () => (
           <Routes>
             {/* Setup route - standalone layout without dynamic header */}
             <Route path="/setup" element={<SetupDashboard />} />
+            <Route path="/setup/location/account" element={
+              <React.Suspense fallback={<div>Loading...</div>}>
+                {React.createElement(React.lazy(() => import('./pages/setup/location/AccountSetup')))}
+              </React.Suspense>
+            } />
             
             {/* Main app routes with Layout wrapper */}
             <Route path="/*" element={
