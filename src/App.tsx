@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -75,7 +74,6 @@ import { SeatTypeDashboard } from "./pages/SeatTypeDashboard";
 import { OperationalAuditScheduledDashboard } from "./pages/OperationalAuditScheduledDashboard";
 import { OperationalAuditConductedDashboard } from "./pages/OperationalAuditConductedDashboard";
 import { OperationalAuditMasterChecklistsDashboard } from "./pages/OperationalAuditMasterChecklistsDashboard";
-import { AddMasterChecklistDashboard } from "./pages/AddMasterChecklistDashboard";
 import { VendorAuditScheduledDashboard } from "./pages/VendorAuditScheduledDashboard";
 import { VendorAuditConductedDashboard } from "./pages/VendorAuditConductedDashboard";
 import { IncidentSetupDashboard } from "./pages/IncidentSetupDashboard";

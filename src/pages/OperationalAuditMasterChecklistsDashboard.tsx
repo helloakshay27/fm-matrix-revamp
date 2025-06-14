@@ -1,16 +1,11 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Upload } from "lucide-react";
-import { useNavigate } from 'react-router-dom';
 
 export const OperationalAuditMasterChecklistsDashboard = () => {
-  const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
-  const handleAddClick = () => {
-    navigate('/operational-audit/master-checklists/add');
-  };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -44,10 +39,7 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
       </div>
       
       <div className="mb-6">
-        <Button 
-          onClick={handleAddClick}
-          className="bg-[#8B4B8C] hover:bg-[#7a4179] text-white flex items-center gap-2"
-        >
+        <Button className="bg-[#8B4B8C] hover:bg-[#7a4179] text-white flex items-center gap-2">
           <Plus className="w-4 h-4" />
           Add
         </Button>
