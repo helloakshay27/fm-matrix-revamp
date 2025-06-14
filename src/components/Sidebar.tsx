@@ -1,658 +1,1097 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
 import { 
   Home, 
-  Settings, 
-  Building, 
+  Wrench, 
+  Package, 
   Users, 
   Calendar, 
   ClipboardList, 
-  UserCheck, 
-  FileText, 
-  Wrench,
-  Car,
-  Coffee,
-  DollarSign,
-  MapPin,
+  AlertTriangle,
+  FileText,
+  BarChart3,
+  Settings,
   ChevronDown,
   ChevronRight,
-  Hammer,
-  ListChecks,
-  AlertTriangle
+  Building,
+  UserCheck,
+  Car,
+  MapPin,
+  Zap,
+  Recycle,
+  Eye,
+  Coffee,
+  BookOpen,
+  Truck,
+  MessageSquare,
+  Target,
+  Space,
+  Mail,
+  DollarSign,
+  Receipt,
+  CreditCard,
+  Banknote,
+  History,
+  UserX,
+  Boxes,
+  Shield,
+  Search,
+  ClipboardCheck,
+  Lightbulb,
+  Hammer
 } from 'lucide-react';
 import { useLayout } from '../contexts/LayoutContext';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 
-const Sidebar = () => {
-  const location = useLocation();
+const maintenanceItems = [
+  { name: 'Asset', icon: Package, href: '/', current: window.location.pathname === '/' },
+  { name: 'AMC', icon: Wrench, href: '/amc', current: window.location.pathname === '/amc' },
+  { name: 'Services', icon: Settings, href: '/services', current: window.location.pathname === '/services' },
+];
+
+const surveyItems = [
+  { name: 'Survey List', href: '/surveys/list' },
+  { name: 'Mapping', href: '/surveys/mapping' },
+  { name: 'Response', href: '/surveys/response' },
+];
+
+const operationalAuditItems = [
+  { name: 'Scheduled', href: '/operational-audit/scheduled' },
+  { name: 'Conducted', href: '/operational-audit/conducted' },
+  { name: 'Master Checklists', href: '/operational-audit/master-checklists' },
+];
+
+const projectItems = [
+  { name: 'Projects', href: '/projects' },
+  { name: 'Add Project', href: '/projects/add' },
+];
+
+const crmItems = [
+  { name: 'Customers', href: '/crm/customers' },
+  { name: 'FM Users', href: '/crm/fm-users' },
+  { name: 'Occupant Users', href: '/crm/occupant-users' },
+];
+
+const utilityItems = [
+  { name: 'Dashboard', href: '/utility/dashboard' },
+  { name: 'Energy Meters', href: '/utility/energy-meters' },
+  { name: 'Daily Readings', href: '/utility/daily-readings' },
+  { name: 'Utility Consumption', href: '/utility/consumption' },
+  { name: 'Utility Request', href: '/utility/request' },
+];
+
+const wasteGenerationItems = [
+  { name: 'Waste Generation', href: '/utility/waste-generation' },
+  { name: 'Setup', href: '/utility/waste-setup' },
+];
+
+const inventoryItems = [
+  { name: 'Inventory', href: '/inventory' },
+  { name: 'Inventory Consumption', href: '/inventory-consumption' },
+];
+
+const visitorsItems = [
+  { name: 'Visitors', href: '/visitors/visitors', icon: Eye },
+  { name: 'Visitors History', href: '/visitors/history', icon: History },
+  { name: 'R Vehicles', href: '/visitors/r-vehicles', icon: Car },
+  { name: 'G Vehicles', href: '/visitors/g-vehicles', icon: Car },
+  { name: 'Staffs', href: '/visitors/staffs', icon: Users },
+  { name: 'Materials', href: '/visitors/materials', icon: Boxes },
+  { name: 'Patrolling', href: '/visitors/patrolling', icon: Shield },
+  { name: 'Patrolling Pending Approvals', href: '/visitors/patrolling-pending', icon: UserX },
+  { name: 'Goods In/Out', href: '/visitors/goods', icon: Package },
+];
+
+const rVehiclesSubItems = [
+  { name: 'All', href: '/visitors/r-vehicles' },
+  { name: 'History', href: '/visitors/r-vehicles/history' },
+];
+
+const goodsInOutSubItems = [
+  { name: 'Inwards', href: '/visitors/goods/inwards' },
+  { name: 'Outwards', href: '/visitors/goods/outwards' },
+];
+
+const experienceItems = [
+  { name: 'Events', href: '/experience/events' },
+  { name: 'Broadcast', href: '/experience/broadcast' },
+];
+
+const documentsItems = [
+  { name: 'Unit Related', href: '/experience/documents/unit' },
+  { name: 'Common', href: '/experience/documents/common' },
+];
+
+const transportItems = [
+  { name: 'Outstation', href: '/experience/transport/outstation' },
+  { name: 'Airline', href: '/experience/transport/airline' },
+  { name: 'Rail', href: '/experience/transport/rail' },
+  { name: 'Hotel', href: '/experience/transport/hotel' },
+];
+
+const selfTravelItems = [
+  { name: 'Self Travel Option 1', href: '/experience/transport/self-1' },
+  { name: 'Self Travel Option 2', href: '/experience/transport/self-2' },
+];
+
+const communityModulesItems = [
+  { name: 'Testimonials Setup', href: '/experience/community/testimonials' },
+  { name: 'Company Partners Setup', href: '/experience/community/partners' },
+  { name: 'Banners Setup', href: '/experience/community/banners' },
+  { name: 'Groups and Channel Config', href: '/experience/community/groups' },
+  { name: 'Amenities Setup', href: '/experience/community/amenities' },
+];
+
+const centreSetupItems = [
+  { name: 'Centre Setup Option 1', href: '/experience/community/centre-1' },
+  { name: 'Centre Setup Option 2', href: '/experience/community/centre-2' },
+];
+
+const propertySpaceItems = [
+  { name: 'Bookings', href: '/property/space/bookings' },
+  { name: 'Seat Requests', href: '/property/space/seat-requests' },
+];
+
+const propertySpaceSetupItems = [
+  { name: 'Space Setup Option 1', href: '/property/space/setup-1' },
+  { name: 'Space Setup Option 2', href: '/property/space/setup-2' },
+];
+
+const propertyBookingItems = [
+  { name: 'Setup', href: '/property/booking/setup' },
+];
+
+const propertyMailroomItems = [
+  { name: 'Inbound', href: '/property/mailroom/inbound' },
+  { name: 'Outbound', href: '/property/mailroom/outbound' },
+];
+
+const propertyParkingSetupItems = [
+  { name: 'Tag', href: '/property/parking/tag' },
+  { name: 'Parking Categories', href: '/property/parking/categories' },
+  { name: 'Parking Configurations', href: '/property/parking/configurations' },
+  { name: 'Parking Slots', href: '/property/parking/slots' },
+];
+
+const financeItems = [
+  { name: 'Material PR', href: '/finance/material-pr' },
+  { name: 'Service PR', href: '/finance/service-pr' },
+  { name: 'PO', href: '/finance/po' },
+  { name: 'WO', href: '/finance/wo' },
+  { name: 'GRN', href: '/finance/grn' },
+  { name: 'Invoices/SES', href: '/finance/invoices-ses' },
+  { name: 'Pending Approvals', href: '/finance/pending-approvals' },
+];
+
+const gdnItems = [
+  { name: 'GDN', href: '/finance/gdn' },
+  { name: 'Pending Approvals', href: '/finance/pending-approvals-2' },
+];
+
+const remainingFinanceItems = [
+  { name: 'Auto Saved PR', href: '/finance/auto-saved-pr' },
+  { name: 'WBS Element', href: '/finance/wbs-element' },
+  { name: 'Other Bills', href: '/finance/other-bills' },
+  { name: 'Accounting', href: '/finance/accounting' },
+  { name: 'Customer Bills', href: '/finance/customer-bills' },
+  { name: 'My Bills', href: '/finance/my-bills' },
+];
+
+const vendorAuditItems = [
+  { name: 'Scheduled', href: '/maintenance/vendor-audit/scheduled' },
+  { name: 'Conducted', href: '/maintenance/vendor-audit/conducted' },
+];
+
+const incidentItems = [
+  { name: 'Incident Setup', href: '/maintenance/incident/setup' },
+  { name: 'Incident', href: '/maintenance/incident/list' },
+];
+
+const permitItems = [
+  { name: 'Permit Setup', href: '/maintenance/permit/setup' },
+  { name: 'Permit', href: '/maintenance/permit/list' },
+  { name: 'Pending Approvals', href: '/maintenance/permit/pending-approvals' },
+];
+
+const designInsightsItems = [
+  { name: 'Design Insights', href: '/maintenance/design-insights/list' },
+  { name: 'Setup', href: '/maintenance/design-insights/setup' },
+];
+
+const fitoutItems = [
+  { name: 'Fitout Setup', href: '/projects/fitout-setup' },
+  { name: 'Fitout Request', href: '/fitout/request-list' },
+  { name: 'Fitout Checklist', href: '/fitout/checklist' },
+  { name: 'Fitout Violation', href: '/fitout/violation' },
+];
+
+export const Sidebar = () => {
   const { currentSection } = useLayout();
-  const [expandedMenus, setExpandedMenus] = React.useState<Record<string, boolean>>({
-    'fitout-setup': true,
-    'operational-audit': false,
-    'vendor-audit': false,
-    'incident': false,
-    'permit': false,
-    'design-insights': false,
-    'surveys': false,
-    'transport': false,
-    'documents': false,
-    'goods': false,
-    'r-vehicles': false,
-    'space': false,
-    'booking': false,
-    'parking': false,
-    'mailroom': false,
-    'material': false,
-    'service': false,
-    'finance-other': false,
-    'gdn': false,
-    'user-role': false,
-  });
+  const [isSurveyOpen, setIsSurveyOpen] = useState(false);
+  const [isOperationalAuditOpen, setIsOperationalAuditOpen] = useState(false);
+  const [isVendorAuditOpen, setIsVendorAuditOpen] = useState(false);
+  const [isIncidentOpen, setIsIncidentOpen] = useState(false);
+  const [isPermitOpen, setIsPermitOpen] = useState(false);
+  const [isDesignInsightsOpen, setIsDesignInsightsOpen] = useState(false);
+  const [isWasteGenerationOpen, setIsWasteGenerationOpen] = useState(false);
+  const [isDocumentsOpen, setIsDocumentsOpen] = useState(false);
+  const [isTransportOpen, setIsTransportOpen] = useState(false);
+  const [isSelfTravelOpen, setIsSelfTravelOpen] = useState(false);
+  const [isCommunityModulesOpen, setIsCommunityModulesOpen] = useState(false);
+  const [isCentreSetupOpen, setIsCentreSetupOpen] = useState(false);
+  const [isSpaceOpen, setIsSpaceOpen] = useState(false);
+  const [isSpaceSetupOpen, setIsSpaceSetupOpen] = useState(false);
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [isMailroomOpen, setIsMailroomOpen] = useState(false);
+  const [isParkingSetupOpen, setIsParkingSetupOpen] = useState(false);
+  const [isGrnOpen, setIsGrnOpen] = useState(false);
+  const [isGdnOpen, setIsGdnOpen] = useState(false);
+  const [isRVehiclesOpen, setIsRVehiclesOpen] = useState(false);
+  const [isGoodsInOutOpen, setIsGoodsInOutOpen] = useState(false);
+  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+  const [isFitoutOpen, setIsFitoutOpen] = useState(false);
 
-  const toggleMenu = (menuKey: string) => {
-    setExpandedMenus(prev => ({
-      ...prev,
-      [menuKey]: !prev[menuKey]
-    }));
-  };
+  const currentPath = window.location.pathname;
 
-  const isActive = (path: string) => location.pathname === path;
-  const isMenuActive = (paths: string[]) => paths.some(path => location.pathname.startsWith(path));
-
-  const maintenanceItems = [
-    { path: '/services', label: 'Services', icon: Wrench },
-    { path: '/supplier', label: 'Supplier', icon: Building },
-    { path: '/schedule', label: 'Schedule', icon: Calendar },
-    { path: '/amc', label: 'AMC', icon: FileText },
-    { path: '/attendance', label: 'Attendance', icon: UserCheck },
-    { path: '/tasks', label: 'Tasks', icon: ClipboardList },
-    { path: '/vendor', label: 'Vendor', icon: Building },
-    { path: '/schedule-list', label: 'Schedule List', icon: Calendar },
-    { path: '/task-list', label: 'Task List', icon: ClipboardList },
-    { path: '/tickets', label: 'Tickets', icon: FileText },
-  ];
-
-  const crmItems = [
-    { path: '/crm/customers', label: 'Customers', icon: Users },
-    { path: '/crm/fm-users', label: 'FM Users', icon: Users },
-    { path: '/crm/occupant-users', label: 'Occupant Users', icon: Users },
-  ];
-
-  const visitorsItems = [
-    { path: '/visitors/visitors', label: 'Visitors', icon: Users },
-    { path: '/visitors/history', label: 'History', icon: Calendar },
-    { path: '/visitors/r-vehicles', label: 'R Vehicles', icon: Car },
-    { path: '/visitors/r-vehicles/history', label: 'R Vehicles History', icon: Calendar },
-    { path: '/visitors/g-vehicles', label: 'G Vehicles', icon: Car },
-    { path: '/visitors/staffs', label: 'Staffs', icon: Users },
-    { path: '/visitors/materials', label: 'Materials', icon: ClipboardList },
-    { path: '/visitors/patrolling', label: 'Patrolling', icon: MapPin },
-    { path: '/visitors/patrolling-pending', label: 'Patrolling Pending', icon: MapPin },
-    { path: '/visitors/goods', label: 'Goods', icon: ClipboardList },
-    { path: '/visitors/goods/inwards', label: 'Inwards', icon: ClipboardList },
-    { path: '/visitors/goods/outwards', label: 'Outwards', icon: ClipboardList },
-    { path: '/visitors/vehicle-parkings', label: 'Vehicle Parkings', icon: Car },
-  ];
-
-  const experienceItems = [
-    { path: '/experience/events', label: 'Events', icon: Coffee },
-    { path: '/experience/broadcast', label: 'Broadcast', icon: ClipboardList },
-    { path: '/experience/business', label: 'Business Directory', icon: Building },
-    { path: '/experience/business/setup', label: 'Business Setup', icon: Settings },
-    { path: '/experience/documents/unit', label: 'Documents Unit', icon: FileText },
-    { path: '/experience/documents/common', label: 'Documents Common', icon: FileText },
-    { path: '/experience/transport/outstation', label: 'Outstation', icon: Car },
-    { path: '/experience/transport/airline', label: 'Airline', icon: Car },
-    { path: '/experience/transport/rail', label: 'Rail', icon: Car },
-    { path: '/experience/transport/hotel', label: 'Hotel', icon: Coffee },
-    { path: '/experience/transport/self-travel', label: 'Self Travel', icon: Car },
-    { path: '/experience/testimonials', label: 'Testimonials Setup', icon: Users },
-    { path: '/experience/company-partners', label: 'Company Partners Setup', icon: Users },
-  ];
-
-  const financeItems = [
-    { path: '/finance/material-pr', label: 'Material PR', icon: ClipboardList },
-    { path: '/finance/service-pr', label: 'Service PR', icon: ClipboardList },
-    { path: '/finance/po', label: 'PO', icon: ClipboardList },
-    { path: '/finance/wo', label: 'WO', icon: ClipboardList },
-    { path: '/finance/grn', label: 'GRN', icon: ClipboardList },
-    { path: '/finance/invoices-ses', label: 'Invoices SES', icon: ClipboardList },
-    { path: '/finance/pending-approvals', label: 'Pending Approvals', icon: ClipboardList },
-    { path: '/finance/gdn', label: 'GDN', icon: ClipboardList },
-    { path: '/finance/auto-saved-pr', label: 'Auto Saved PR', icon: ClipboardList },
-    { path: '/finance/wbs-element', label: 'WBS Element', icon: ClipboardList },
-    { path: '/finance/other-bills', label: 'Other Bills', icon: ClipboardList },
-    { path: '/finance/accounting', label: 'Accounting', icon: DollarSign },
-    { path: '/finance/customer-bills', label: 'Customer Bills', icon: ClipboardList },
-    { path: '/finance/my-bills', label: 'My Bills', icon: ClipboardList },
-    { path: '/finance/my-parking', label: 'My Parking', icon: Car },
-  ];
-
-  const propertyItems = [
-    { path: '/property/space/bookings', label: 'Bookings', icon: Calendar },
-    { path: '/property/booking/setup', label: 'Booking Setup', icon: Settings },
-    { path: '/property/space/seat-type', label: 'Seat Type', icon: ClipboardList },
-    { path: '/property/parking', label: 'Parking', icon: Car },
-    { path: '/property/parking/bookings', label: 'Parking Bookings', icon: Calendar },
-    { path: '/property/mailroom/inbound', label: 'Mailroom Inbound', icon: ClipboardList },
-  ];
-
-  const renderSection = () => {
+  const renderNavigationItems = () => {
     switch (currentSection) {
       case 'Maintenance':
         return (
-          <>
+          <nav className="space-y-2">
+            {/* Maintenance Items */}
             {maintenanceItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                  isActive(item.path)
-                    ? 'bg-gray-900 text-white'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              <a
+                key={item.name}
+                href={item.href}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  item.current
+                    ? 'bg-[#C72030] text-white'
+                    : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
                 }`}
               >
-                <item.icon className="mr-3 h-5 w-5" />
-                {item.label}
-              </Link>
+                <item.icon className="w-5 h-5" />
+                {item.name}
+              </a>
             ))}
-
-            {/* Operational Audit Submenu */}
-            <Collapsible
-              open={expandedMenus['operational-audit']}
-              onOpenChange={() => toggleMenu('operational-audit')}
-            >
-              <CollapsibleTrigger className={`flex items-center justify-between w-full px-4 py-2 text-sm font-medium rounded-md ${
-                isMenuActive(['/operational-audit'])
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-              }`}>
-                <div className="flex items-center">
-                  <ClipboardList className="mr-3 h-5 w-5" />
+            
+            {/* Operational Audit Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsOperationalAuditOpen(!isOperationalAuditOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Search className="w-5 h-5" />
                   Operational Audit
                 </div>
-                {expandedMenus['operational-audit'] ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </CollapsibleTrigger>
-              <CollapsibleContent className="ml-8 space-y-1">
-                <Link
-                  to="/operational-audit/scheduled"
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    isActive('/operational-audit/scheduled')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  Scheduled
-                </Link>
-                <Link
-                  to="/operational-audit/conducted"
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    isActive('/operational-audit/conducted')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  Conducted
-                </Link>
-                <Link
-                  to="/operational-audit/master-checklists"
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    isActive('/operational-audit/master-checklists')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  Master Checklists
-                </Link>
-              </CollapsibleContent>
-            </Collapsible>
+                {isOperationalAuditOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isOperationalAuditOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {operationalAuditItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
 
-            {/* Vendor Audit Submenu */}
-            <Collapsible
-              open={expandedMenus['vendor-audit']}
-              onOpenChange={() => toggleMenu('vendor-audit')}
-            >
-              <CollapsibleTrigger className={`flex items-center justify-between w-full px-4 py-2 text-sm font-medium rounded-md ${
-                isMenuActive(['/maintenance/vendor-audit'])
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-              }`}>
-                <div className="flex items-center">
-                  <Building className="mr-3 h-5 w-5" />
+            {/* Vendor Audit Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsVendorAuditOpen(!isVendorAuditOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Building className="w-5 h-5" />
                   Vendor Audit
                 </div>
-                {expandedMenus['vendor-audit'] ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </CollapsibleTrigger>
-              <CollapsibleContent className="ml-8 space-y-1">
-                <Link
-                  to="/maintenance/vendor-audit/scheduled"
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    isActive('/maintenance/vendor-audit/scheduled')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  Scheduled
-                </Link>
-                <Link
-                  to="/maintenance/vendor-audit/conducted"
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    isActive('/maintenance/vendor-audit/conducted')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  Conducted
-                </Link>
-              </CollapsibleContent>
-            </Collapsible>
+                {isVendorAuditOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isVendorAuditOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {vendorAuditItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
 
-            {/* Incident Submenu */}
-            <Collapsible
-              open={expandedMenus['incident']}
-              onOpenChange={() => toggleMenu('incident')}
-            >
-              <CollapsibleTrigger className={`flex items-center justify-between w-full px-4 py-2 text-sm font-medium rounded-md ${
-                isMenuActive(['/maintenance/incident'])
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-              }`}>
-                <div className="flex items-center">
-                  <AlertTriangle className="mr-3 h-5 w-5" />
+            {/* Incident Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsIncidentOpen(!isIncidentOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="w-5 h-5" />
                   Incident
                 </div>
-                {expandedMenus['incident'] ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </CollapsibleTrigger>
-              <CollapsibleContent className="ml-8 space-y-1">
-                <Link
-                  to="/maintenance/incident/setup"
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    isActive('/maintenance/incident/setup')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  Setup
-                </Link>
-                <Link
-                  to="/maintenance/incident/list"
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    isActive('/maintenance/incident/list')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  List
-                </Link>
-              </CollapsibleContent>
-            </Collapsible>
+                {isIncidentOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isIncidentOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {incidentItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
 
-            {/* Permit Submenu */}
-            <Collapsible
-              open={expandedMenus['permit']}
-              onOpenChange={() => toggleMenu('permit')}
-            >
-              <CollapsibleTrigger className={`flex items-center justify-between w-full px-4 py-2 text-sm font-medium rounded-md ${
-                isMenuActive(['/maintenance/permit'])
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-              }`}>
-                <div className="flex items-center">
-                  <FileText className="mr-3 h-5 w-5" />
+            {/* Permit Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsPermitOpen(!isPermitOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <ClipboardCheck className="w-5 h-5" />
                   Permit
                 </div>
-                {expandedMenus['permit'] ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </CollapsibleTrigger>
-              <CollapsibleContent className="ml-8 space-y-1">
-                <Link
-                  to="/maintenance/permit/setup"
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    isActive('/maintenance/permit/setup')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  Setup
-                </Link>
-                <Link
-                  to="/maintenance/permit/list"
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    isActive('/maintenance/permit/list')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  List
-                </Link>
-                <Link
-                  to="/maintenance/permit/pending-approvals"
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    isActive('/maintenance/permit/pending-approvals')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  Pending Approvals
-                </Link>
-              </CollapsibleContent>
-            </Collapsible>
+                {isPermitOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isPermitOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {permitItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
 
-            {/* Design Insights Submenu */}
-            <Collapsible
-              open={expandedMenus['design-insights']}
-              onOpenChange={() => toggleMenu('design-insights')}
-            >
-              <CollapsibleTrigger className={`flex items-center justify-between w-full px-4 py-2 text-sm font-medium rounded-md ${
-                isMenuActive(['/maintenance/design-insights'])
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-              }`}>
-                <div className="flex items-center">
-                  <FileText className="mr-3 h-5 w-5" />
+            {/* Design Insights Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsDesignInsightsOpen(!isDesignInsightsOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Lightbulb className="w-5 h-5" />
                   Design Insights
                 </div>
-                {expandedMenus['design-insights'] ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </CollapsibleTrigger>
-              <CollapsibleContent className="ml-8 space-y-1">
-                <Link
-                  to="/maintenance/design-insights/list"
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    isActive('/maintenance/design-insights/list')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  List
-                </Link>
-                <Link
-                  to="/maintenance/design-insights/setup"
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    isActive('/maintenance/design-insights/setup')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  Setup
-                </Link>
-              </CollapsibleContent>
-            </Collapsible>
-
-            {/* Surveys Submenu */}
-            <Collapsible
-              open={expandedMenus['surveys']}
-              onOpenChange={() => toggleMenu('surveys')}
-            >
-              <CollapsibleTrigger className={`flex items-center justify-between w-full px-4 py-2 text-sm font-medium rounded-md ${
-                isMenuActive(['/surveys'])
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-              }`}>
-                <div className="flex items-center">
-                  <ClipboardList className="mr-3 h-5 w-5" />
+                {isDesignInsightsOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isDesignInsightsOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {designInsightsItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Survey Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsSurveyOpen(!isSurveyOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <BarChart3 className="w-5 h-5" />
                   Surveys
                 </div>
-                {expandedMenus['surveys'] ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </CollapsibleTrigger>
-              <CollapsibleContent className="ml-8 space-y-1">
-                <Link
-                  to="/surveys/list"
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    isActive('/surveys/list')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  Survey List
-                </Link>
-                <Link
-                  to="/surveys/mapping"
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    isActive('/surveys/mapping')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  Survey Mapping
-                </Link>
-                <Link
-                  to="/surveys/response"
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    isActive('/surveys/response')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  Survey Response
-                </Link>
-              </CollapsibleContent>
-            </Collapsible>
+                {isSurveyOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isSurveyOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {surveyItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
 
-            <Link
-              to="/assets/inactive"
-              className={`flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                isActive('/assets/inactive')
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-              }`}
-            >
-              <Building className="mr-3 h-5 w-5" />
-              In-Active Assets
-            </Link>
-          </>
+            {/* Other Maintenance Items */}
+            <a href="/attendance" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+              <Users className="w-5 h-5" />
+              Attendance
+            </a>
+
+            {/* Inventory Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsInventoryOpen(!isInventoryOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Package className="w-5 h-5" />
+                  Inventory
+                </div>
+                {isInventoryOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isInventoryOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {inventoryItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <a href="/eco-friendly" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+              <Recycle className="w-5 h-5" />
+              Eco-Friendly
+            </a>
+            <a href="/vendor" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+              <Building className="w-5 h-5" />
+              Vendor
+            </a>
+            <a href="/schedule" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+              <Calendar className="w-5 h-5" />
+              Schedule
+            </a>
+            <a href="/tasks" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+              <ClipboardList className="w-5 h-5" />
+              Tasks
+            </a>
+            <a href="/tickets" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+              <FileText className="w-5 h-5" />
+              Tickets
+            </a>
+          </nav>
         );
 
       case 'Project':
         return (
-          <>
-            {/* Fitout Setup Submenu */}
-            <Collapsible
-              open={expandedMenus['fitout-setup']}
-              onOpenChange={() => toggleMenu('fitout-setup')}
+          <nav className="space-y-2">
+            {/* Main Project Items */}
+            <a
+              href="/projects"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
             >
-              <CollapsibleTrigger className={`flex items-center justify-between w-full px-4 py-2 text-sm font-medium rounded-md ${
-                isMenuActive(['/projects/fitout-setup', '/fitout'])
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-              }`}>
-                <div className="flex items-center">
-                  <Hammer className="mr-3 h-5 w-5" />
+              <Building className="w-5 h-5" />
+              Projects
+            </a>
+            <a
+              href="/projects/add"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+            >
+              <Building className="w-5 h-5" />
+              Add Project
+            </a>
+
+            {/* Fitout Setup Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsFitoutOpen(!isFitoutOpen)}
+                className={`flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  currentPath.startsWith('/projects/fitout-setup') || currentPath.startsWith('/fitout')
+                    ? 'bg-[#C72030] text-white'
+                    : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Hammer className="w-5 h-5" />
                   Fitout Setup
                 </div>
-                {expandedMenus['fitout-setup'] ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </CollapsibleTrigger>
-              <CollapsibleContent className="ml-8 space-y-1">
-                <Link
-                  to="/projects/fitout-setup"
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    isActive('/projects/fitout-setup')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  Fitout Setup
-                </Link>
-                <Link
-                  to="/fitout/request-list"
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    isActive('/fitout/request-list')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  Fitout Request
-                </Link>
-                <Link
-                  to="/fitout/checklist"
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    isActive('/fitout/checklist')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  Fitout Checklist
-                </Link>
-                <Link
-                  to="/fitout/violation"
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    isActive('/fitout/violation')
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  Fitout Violation
-                </Link>
-              </CollapsibleContent>
-            </Collapsible>
-          </>
+                {isFitoutOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isFitoutOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {fitoutItems.map((item) => {
+                    const isActive = currentPath === item.href;
+                    return (
+                      <a
+                        key={item.name}
+                        href={item.href}
+                        className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
+                          isActive
+                            ? 'bg-[#C72030] text-white'
+                            : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
+                        }`}
+                      >
+                        {item.name}
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </nav>
         );
 
       case 'CRM':
         return (
-          <>
+          <nav className="space-y-2">
             {crmItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                  isActive(item.path)
-                    ? 'bg-gray-900 text-white'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`}
+              <a
+                key={item.name}
+                href={item.href}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
               >
-                <item.icon className="mr-3 h-5 w-5" />
-                {item.label}
-              </Link>
+                <Users className="w-5 h-5" />
+                {item.name}
+              </a>
             ))}
-          </>
+          </nav>
+        );
+
+      case 'Utility':
+        return (
+          <nav className="space-y-2">
+            {utilityItems.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <Zap className="w-5 h-5" />
+                {item.name}
+              </a>
+            ))}
+            
+            {/* Waste Generation Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsWasteGenerationOpen(!isWasteGenerationOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Recycle className="w-5 h-5" />
+                  Waste Generation
+                </div>
+                {isWasteGenerationOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isWasteGenerationOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {wasteGenerationItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </nav>
         );
 
       case 'Visitors':
         return (
-          <>
-            {visitorsItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                  isActive(item.path)
-                    ? 'bg-gray-900 text-white'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`}
-              >
-                <item.icon className="mr-3 h-5 w-5" />
-                {item.label}
-              </Link>
-            ))}
-          </>
+          <nav className="space-y-2">
+            {visitorsItems.map((item) => {
+              const isActive = currentPath === item.href;
+              
+              // Special handling for R Vehicles with dropdown
+              if (item.name === 'R Vehicles') {
+                return (
+                  <div key={item.name}>
+                    <button
+                      onClick={() => setIsRVehiclesOpen(!isRVehiclesOpen)}
+                      className={`flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        isActive || currentPath.startsWith('/visitors/r-vehicles')
+                          ? 'bg-[#C72030] text-white'
+                          : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <item.icon className="w-5 h-5" />
+                        {item.name}
+                      </div>
+                      {isRVehiclesOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    </button>
+                    {isRVehiclesOpen && (
+                      <div className="ml-8 mt-1 space-y-1">
+                        {rVehiclesSubItems.map((subItem) => {
+                          const isSubActive = currentPath === subItem.href;
+                          return (
+                            <a
+                              key={subItem.name}
+                              href={subItem.href}
+                              className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
+                                isSubActive
+                                  ? 'bg-[#C72030] text-white'
+                                  : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
+                              }`}
+                            >
+                              {subItem.name}
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              // Special handling for Goods In/Out with dropdown
+              if (item.name === 'Goods In/Out') {
+                return (
+                  <div key={item.name}>
+                    <button
+                      onClick={() => setIsGoodsInOutOpen(!isGoodsInOutOpen)}
+                      className={`flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        isActive || currentPath.startsWith('/visitors/goods')
+                          ? 'bg-[#C72030] text-white'
+                          : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <item.icon className="w-5 h-5" />
+                        {item.name}
+                      </div>
+                      {isGoodsInOutOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    </button>
+                    {isGoodsInOutOpen && (
+                      <div className="ml-8 mt-1 space-y-1">
+                        {goodsInOutSubItems.map((subItem) => {
+                          const isSubActive = currentPath === subItem.href;
+                          return (
+                            <a
+                              key={subItem.name}
+                              href={subItem.href}
+                              className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
+                                isSubActive
+                                  ? 'bg-[#C72030] text-white'
+                                  : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
+                              }`}
+                            >
+                              {subItem.name}
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              
+              return (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-[#C72030] text-white'
+                      : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
+                  }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  {item.name}
+                </a>
+              );
+            })}
+          </nav>
         );
 
       case 'Experience':
         return (
-          <>
+          <nav className="space-y-2">
             {experienceItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                  isActive(item.path)
-                    ? 'bg-gray-900 text-white'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`}
+              <a
+                key={item.name}
+                href={item.href}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
               >
-                <item.icon className="mr-3 h-5 w-5" />
-                {item.label}
-              </Link>
+                <Coffee className="w-5 h-5" />
+                {item.name}
+              </a>
             ))}
-          </>
+            
+            {/* Documents Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsDocumentsOpen(!isDocumentsOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <BookOpen className="w-5 h-5" />
+                  Documents
+                </div>
+                {isDocumentsOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isDocumentsOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {documentsItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <a href="/experience/business" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+              <Building className="w-5 h-5" />
+              Business
+            </a>
+
+            {/* Transport Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsTransportOpen(!isTransportOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Truck className="w-5 h-5" />
+                  Transport
+                </div>
+                {isTransportOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isTransportOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {transportItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                  
+                  {/* Self Travel Dropdown */}
+                  <div>
+                    <button
+                      onClick={() => setIsSelfTravelOpen(!isSelfTravelOpen)}
+                      className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      <span>Self Travel</span>
+                      {isSelfTravelOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                    </button>
+                    {isSelfTravelOpen && (
+                      <div className="ml-4 mt-1 space-y-1">
+                        {selfTravelItems.map((item) => (
+                          <a
+                            key={item.name}
+                            href={item.href}
+                            className="block px-3 py-2 rounded-lg text-xs transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                          >
+                            {item.name}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Community Modules Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsCommunityModulesOpen(!isCommunityModulesOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="w-5 h-5" />
+                  Community Modules
+                </div>
+                {isCommunityModulesOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isCommunityModulesOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {communityModulesItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                  
+                  {/* Centre Setup Dropdown */}
+                  <div>
+                    <button
+                      onClick={() => setIsCentreSetupOpen(!isCentreSetupOpen)}
+                      className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      <span>Centre Setup</span>
+                      {isCentreSetupOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                    </button>
+                    {isCentreSetupOpen && (
+                      <div className="ml-4 mt-1 space-y-1">
+                        {centreSetupItems.map((item) => (
+                          <a
+                            key={item.name}
+                            href={item.href}
+                            className="block px-3 py-2 rounded-lg text-xs transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                          >
+                            {item.name}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <a href="/experience/setup" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+              <Settings className="w-5 h-5" />
+              Setup
+            </a>
+          </nav>
         );
 
       case 'Finance':
         return (
-          <>
+          <nav className="space-y-2">
+            {/* Basic Finance Items including GRN, Invoices/SES, Pending Approvals */}
             {financeItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                  isActive(item.path)
-                    ? 'bg-gray-900 text-white'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`}
+              <a
+                key={item.name}
+                href={item.href}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
               >
-                <item.icon className="mr-3 h-5 w-5" />
-                {item.label}
-              </Link>
+                <DollarSign className="w-5 h-5" />
+                {item.name}
+              </a>
             ))}
-          </>
+
+            {/* GDN Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsGdnOpen(!isGdnOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <FileText className="w-5 h-5" />
+                  GDN
+                </div>
+                {isGdnOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isGdnOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {gdnItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Remaining Finance Items */}
+            {remainingFinanceItems.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <DollarSign className="w-5 h-5" />
+                {item.name}
+              </a>
+            ))}
+          </nav>
         );
 
       case 'Property':
         return (
-          <>
-            {propertyItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                  isActive(item.path)
-                    ? 'bg-gray-900 text-white'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`}
+          <nav className="space-y-2">
+            {/* Space Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsSpaceOpen(!isSpaceOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
               >
-                <item.icon className="mr-3 h-5 w-5" />
-                {item.label}
-              </Link>
-            ))}
-          </>
+                <div className="flex items-center gap-3">
+                  <Space className="w-5 h-5" />
+                  Space
+                </div>
+                {isSpaceOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isSpaceOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {propertySpaceItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                  
+                  {/* Setup Dropdown */}
+                  <div>
+                    <button
+                      onClick={() => setIsSpaceSetupOpen(!isSpaceSetupOpen)}
+                      className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      <span>Setup</span>
+                      {isSpaceSetupOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                    </button>
+                    {isSpaceSetupOpen && (
+                      <div className="ml-4 mt-1 space-y-1">
+                        {propertySpaceSetupItems.map((item) => (
+                          <a
+                            key={item.name}
+                            href={item.href}
+                            className="block px-3 py-2 rounded-lg text-xs transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                          >
+                            {item.name}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Booking Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsBookingOpen(!isBookingOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5" />
+                  Booking
+                </div>
+                {isBookingOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isBookingOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {propertyBookingItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Mailroom Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsMailroomOpen(!isMailroomOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Mail className="w-5 h-5" />
+                  Mailroom
+                </div>
+                {isMailroomOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isMailroomOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {propertyMailroomItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <a href="/property/parking" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+              <Car className="w-5 h-5" />
+              Parking
+            </a>
+
+            {/* Setup Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsParkingSetupOpen(!isParkingSetupOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <Settings className="w-5 h-5" />
+                  Setup
+                </div>
+                {isParkingSetupOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isParkingSetupOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {propertyParkingSetupItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </nav>
         );
 
       default:
-        return null;
+        return (
+          <nav className="space-y-2">
+            <div className="px-3 py-4 text-center text-sm text-gray-500">
+              Select a section from the header to view navigation options
+            </div>
+          </nav>
+        );
     }
   };
 
   return (
-    <div className="bg-gray-800 text-white w-64 min-h-screen p-4">
-      <div className="mb-8">
-        <Link to="/" className="flex items-center text-lg font-bold">
-          <Home className="mr-2 h-6 w-6" />
-          Dashboard
-        </Link>
+    <div className="w-64 h-screen bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto">
+      <div className="p-6">
+        <div className="flex items-center gap-2 mb-8">
+          <div className="w-8 h-8 bg-[#C72030] rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-sm">FM</span>
+          </div>
+          <span className="text-[#1a1a1a] font-semibold text-lg">FacilityPro</span>
+        </div>
+        
+        {renderNavigationItems()}
       </div>
-      
-      <nav className="space-y-2">
-        {renderSection()}
-      </nav>
     </div>
   );
 };
-
-export default Sidebar;
