@@ -72,58 +72,60 @@ const Modal = ({ setOpenModal, openModal, isEdit, existingData = {} }) => {
   }
 
   return (
-    <div className="w-[560px] h-[300px] bg-white absolute top-[40%] left-[45%] translate-x-[-50%] translate-y-[-50%] border-[0.5px] border-[#C0C0C0] flex flex-col shadow-md z-50">
-      <div className="h-full flex flex-col gap-3 p-4 pb-1">
-        <div className="flex justify-end">
-          <CloseIcon className="cursor-pointer" onClick={() => handleClose()} />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label className="text-sm">Status Name</label>
-          <input
-            value={formData.title}
-            onChange={(e) => {
-              setFormData({ ...formData, title: e.target.value });
-            }}
-            placeholder="Enter Status Name"
-            className={`border-[1px] border-[#C0C0C0] p-2 text-sm`}
-          />
-        </div>
-
-
-        <div className='flex flex-col gap-2'>
-          <label className="text-sm">Pick Color</label>
-          <div className="border-[1px] border-[#C0C0C0] p-2">
-
-
+    <div className="fixed inset-0 bg-black bg-opacity-30 z-50">
+      <div className="w-[560px] h-[300px] bg-white absolute top-[40%] left-[45%] translate-x-[-50%] translate-y-[-50%] border-[0.5px] border-[#C0C0C0] flex flex-col shadow-md z-50">
+        <div className="h-full flex flex-col gap-3 p-4 pb-1">
+          <div className="flex justify-end">
+            <CloseIcon className="cursor-pointer" onClick={() => handleClose()} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm">Status Name</label>
             <input
-              type="color"
-              value={formData.color}
+              value={formData.title}
               onChange={(e) => {
-                setFormData({ ...formData, color: e.target.value });
+                setFormData({ ...formData, title: e.target.value });
               }}
-              className="w-1/3 text-sm"
+              placeholder="Enter Status Name"
+              className={`border-[1px] border-[#C0C0C0] p-2 text-sm`}
             />
           </div>
+
+
+          <div className='flex flex-col gap-2'>
+            <label className="text-sm">Pick Color</label>
+            <div className="border-[1px] border-[#C0C0C0] p-2">
+
+
+              <input
+                type="color"
+                value={formData.color}
+                onChange={(e) => {
+                  setFormData({ ...formData, color: e.target.value });
+                }}
+                className="w-1/3 text-sm"
+              />
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className="flex justify-end mt-1 mr-4">
-        <span className="text-red-600">{error}</span>
-      </div>
+        <div className="flex justify-end mt-1 mr-4">
+          <span className="text-red-600">{error}</span>
+        </div>
 
-      <div className="flex justify-center gap-3  bg-[#D5DBDB] items-center h-full">
-        <button
-          className="border-2 border-[#C72030] h-[28px] w-[100px] cursor-pointer text-[#C72030] px-4"
-          onClick={() => handleSave()}
-        >
-          Save
-        </button>
-        <button
-          className="border-2 border-[#C72030] h-[28px] w-[100px] cursor-pointer text-[#C72030] px-4"
-          onClick={() => handleClose()}
-        >
-          Cancel
-        </button>
+        <div className="flex justify-center gap-3  bg-[#D5DBDB] items-center h-full">
+          <button
+            className="border border-[#C72030] text-[#1B1B1B] text-[14px] px-8 py-2"
+            onClick={() => handleSave()}
+          >
+            Save
+          </button>
+          <button
+            className="border border-[#C72030] text-[#1B1B1B] text-[14px] px-8 py-2"
+            onClick={() => handleClose()}
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   );

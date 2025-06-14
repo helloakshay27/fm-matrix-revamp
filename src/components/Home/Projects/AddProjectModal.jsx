@@ -133,7 +133,7 @@ const CreateNewTeam = ({ setOpenModal }) => {
   )
 }
 
-const AddProjectModal = ({ isModalOpen, setIsModalOpen, projectname = "New Project", endText = "Next", isEdit, editData }) => {
+const AddProjectModal = ({ isModalOpen, setIsModalOpen, projectname = "New Project", endText = "Next", isEdit, editData, templateDetails }) => {
   const addTaskModalRef = useRef(null);
   const [tab, setTab] = useState("Details");
   const [openTagModal, setOpenTagModal] = useState(false);
@@ -201,7 +201,7 @@ const AddProjectModal = ({ isModalOpen, setIsModalOpen, projectname = "New Proje
           }
 
 
-          {tab == "Details" && <Details setTab={setTab} setOpenTagModal={setOpenTagModal} setOpenTeamModal={setOpenTeamModal} isEdit={isEdit} endText={isEdit ? "Save" : "Next"} />}
+          {tab == "Details" && <Details setTab={setTab} setOpenTagModal={setOpenTagModal} setOpenTeamModal={setOpenTeamModal} isEdit={isEdit} endText={isEdit ? "Save" : "Next"} templateDetails={templateDetails} />}
           {tab == "Milestone" && <Milestones />}
         </div>
 

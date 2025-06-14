@@ -18,7 +18,6 @@ import AddIssueModal from "./Issues/AddIssueModal";
 const TYPE_OPTIONS = [
     { key: "Kanban", icon: <ChartNoAxesColumn size={18} className="rotate-180 text-[#C72030]" />, label: "Kanban" },
     { key: "List", icon: <List size={20} className="text-[#C72030]" />, label: "List" },
-    // { key: "Gantt", icon: <ChartNoAxesGantt size={20} className="text-[#C72030]" />, label: "Gantt" },
 ];
 
 const SPRINT_TYPE_OPTIONS = [
@@ -224,7 +223,7 @@ const TaskActions = ({
                 <div className="flex items-center gap-3 divide-x divide-gray-400">
                     {addType !== "Issues" && addType !== "Sprint-Gantt" && addType !== "Sprint-Gantt" && !["Milestone", "templates", "archived"].includes(addType) && renderTypeDropdown()}
                     {addType !== "Issues" && !["Milestone", "Project", "Task", "active_projects", "templates", "archived"].includes(addType) && renderSprintTypeDropdown()}
-                    {addType !== "Milestone" && addType !== "templates"  && addType !== "archived" &&  (
+                    {addType !== "Milestone" && addType !== "templates" && addType !== "archived" && (
                         <div
                             className="flex items-center gap-1 cursor-pointer pl-4"
                             onClick={() =>
@@ -237,9 +236,9 @@ const TaskActions = ({
                             <Filter size={18} className={`${filter ? ' text-[#C72030]' : 'text-gray-600'}`} />
                         </div>
                     )}
-                    {addType !== "Milestone" && addType !== "Sprint-Gantt" && addType !== "templates"&& addType !== "archived" && renderStatusDropdown()}
+                    {addType !== "Milestone" && addType !== "Sprint-Gantt" && addType !== "templates" && addType !== "archived" && renderStatusDropdown()}
 
-                    {addType !== "templates" && addType !== "archived" &&  (
+                    {addType !== "templates" && addType !== "archived" && (
                         <button
                             onClick={handleAddClick}
                             className="text-[12px] flex items-center justify-center gap-1 bg-red text-white px-3 py-2 w-40"

@@ -10,7 +10,7 @@ import IssuesTable from "../../components/Home/Issues/Table";
 import ProjectTemplates from "../Setup/ProjectTemplates";
 const Projects = ({ setIsSidebarOpen }) => {
     const [activeTab, setActiveTab] = useState(tabs[0].id);
-    const [activeTabLabel, setActiveTabLabel] = useState(tabs[0].label);
+    const [activeTabLabel, setActiveTabLabel] = useState(tabs[0].id);
     const [selectedType, setSelectedType] = useState(
         "List");
     const [filters, setFilters] = useState({});
@@ -36,6 +36,8 @@ const Projects = ({ setIsSidebarOpen }) => {
     useEffect(() => {
         localStorage.setItem("selectedTaskType", selectedType);
     }, [selectedType]);
+
+    console.log(activeTab)
 
 
     return (
@@ -67,7 +69,7 @@ const Projects = ({ setIsSidebarOpen }) => {
                 setIsSidebarOpen={setIsSidebarOpen}
                 selectedType={selectedType}
                 setSelectedType={setSelectedType}
-                addType={activeTabLabel === "Active Projects" ? "Project" : activeTabLabel}
+                addType={activeTabLabel === "active_projects" ? "Project" : activeTabLabel}
                 setFilters={setFilters}
                 filters={filters}
                 context={"Projects"}

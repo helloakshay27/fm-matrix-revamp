@@ -311,6 +311,19 @@ const ProjectList = () => {
         [dispatch]
     );
 
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            localStorage.removeItem("projectFilters");
+        };
+
+        window.addEventListener("beforeunload", handleBeforeUnload); console.log("Resetting filters at", new Date().toISOString());
+
+
+        return () => {
+            window.removeEventListener("beforeunload", handleBeforeUnload);
+        };
+    }, []);
+
     const EditableTitleCell = ({ row, getValue }) => {
         const [title, setTitle] = useState(getValue());
         const [edit, setEdit] = useState(false);

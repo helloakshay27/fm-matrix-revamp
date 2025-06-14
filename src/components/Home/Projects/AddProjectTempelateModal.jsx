@@ -7,7 +7,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import AddProjectModal from "./AddProjectModal.jsx";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchTemplates } from "../../../redux/slices/projectSlice.js";
+import { fetchProjectDetails, fetchTemplates } from "../../../redux/slices/projectSlice.js";
 
 
 
@@ -16,10 +16,12 @@ const AddProjectTemplate = ({ isModalOpen, setIsModalOpen }) => {
   const dispatch = useDispatch();
 
   const { fetchTemplates: templates } = useSelector(state => state.fetchTemplates)
+  const { fetchProjectDetails: details } = useSelector(state => state.fetchProjectDetails)
 
   const addTaskModalRef = useRef(null);
   const [tab, setTab] = useState("All");
   const [AddProjectModalOpen, setAddProjectModalOpen] = useState(false);
+  const [templateDetails, setTemplateDetails] = useState({})
 
   useEffect(() => {
     dispatch(fetchTemplates())
@@ -44,12 +46,24 @@ const AddProjectTemplate = ({ isModalOpen, setIsModalOpen }) => {
     });
   };
 
+  const handleOpenTemplate = (id) => {
+    setAddProjectModalOpen(true)
+    dispatch(fetchProjectDetails({ id }))
+  }
+
+  useEffect(() => {
+    if (details) {
+      setTemplateDetails(details)
+    }
+  }, [details])
+
   return (
     <>
       {AddProjectModalOpen ? (
         <AddProjectModal
           isModalOpen={isModalOpen}
           setIsModalOpen={setIsModalOpen}
+          templateDetails={templateDetails}
         />
       ) : (
         <div className="fixed inset-0 flex items-center justify-end bg-black bg-opacity-50 z-10 text-[12px] ">
@@ -112,7 +126,7 @@ const AddProjectTemplate = ({ isModalOpen, setIsModalOpen }) => {
 
               {templates?.map((template) => (
                 <React.Fragment key={template.id}>
-                  <div className="flex justify-between gap-3 cursor-pointer mt-2 border-b border-gray-300 pb-2">
+                  <div className="flex justify-between gap-3 cursor-pointer mt-2 border-b border-gray-300 pb-2" onClick={() => handleOpenTemplate(template.id)}>
                     <div className="flex items-center gap-2 w-2/3">
                       <FolderIcon />
                       <span>{template.title}</span>

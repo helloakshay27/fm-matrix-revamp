@@ -15,7 +15,7 @@ import { fetchTags } from '../../../../redux/slices/tagsSlice';
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 
-const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", isEdit = false }) => {
+const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", isEdit = false, templateDetails }) => {
   const { id } = useParams();
   const dispatch = useDispatch();
 
@@ -68,6 +68,31 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
     dispatch(fetchTemplates());
     dispatch(fetchProjectTeams());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (templateDetails) {
+      const mappedTags = templateDetails.project_tags?.map((tag) => ({
+        value: tag?.company_tag?.id,
+        label: getTagName(tag?.company_tag?.id),
+        id: tag.id
+      })) || [];
+
+      setFormData({
+        projectTitle: templateDetails.title || "",
+        description: templateDetails.description || "",
+        projectOwner: templateDetails.owner_id || "",
+        template: templateDetails.template || "",
+        startDate: templateDetails.start_date || "",
+        endDate: templateDetails.end_date || "",
+        projectType: templateDetails.project_type_id || "",
+        priority: templateDetails.priority || "",
+        tags: mappedTags,
+        projectTeam: templateDetails.project_team_id || "",
+        createChannel: templateDetails.createChannel || false,
+        createTemplate: templateDetails.createTemplate || false,
+      });
+    }
+  }, [templateDetails])
 
   useEffect(() => {
     if (isEdit && editData?.id) {

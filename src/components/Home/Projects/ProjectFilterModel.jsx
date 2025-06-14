@@ -136,18 +136,6 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
         creatorSearch,
     ]);
 
-    useEffect(() => {
-        const handleBeforeUnload = () => {
-            localStorage.removeItem("projectFilters");
-        };
-
-        window.addEventListener("beforeunload", handleBeforeUnload);
-
-        return () => {
-            window.removeEventListener("beforeunload", handleBeforeUnload);
-        };
-    }, []);
-
     // Dropdown open/close state
     const [dropdowns, setDropdowns] = useState({
         status: false,
@@ -254,7 +242,6 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
 
     // Clear all selections and reset to initial data
     const clearAll = () => {
-        console.log("Resetting filters at", new Date().toISOString());
         setSelectedStatuses([]);
         setSelectedTypes([]);
         setSelectedManagers([]);
@@ -269,6 +256,19 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
         dispatch(fetchProjects()); // Ensure initialProjects is refreshed
         closeModal();
     };
+
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            localStorage.removeItem("projectFilters");
+        };
+
+        window.addEventListener("beforeunload", handleBeforeUnload); console.log("Resetting filters at", new Date().toISOString());
+
+
+        return () => {
+            window.removeEventListener("beforeunload", handleBeforeUnload);
+        };
+    }, []);
 
     // Apply filters and dispatch API call
     const handleApplyFilters = () => {
