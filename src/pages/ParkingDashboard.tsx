@@ -1,11 +1,16 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Download, Eye } from "lucide-react";
+import { AddParkingModal } from "@/components/AddParkingModal";
+import { useNavigate } from "react-router-dom";
 
 const ParkingDashboard = () => {
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const navigate = useNavigate();
+
   const parkingStats = [
     { title: "Vacant Two Wheeler Slots", count: 4, color: "bg-green-500" },
     { title: "Vacant Four Wheeler Slots", count: 7, color: "bg-green-500" },
@@ -29,12 +34,16 @@ const ParkingDashboard = () => {
     { id: "Vinayak Test", clientName: "Vinayak Test", twoWheeler: 0, fourWheeler: 0, freeParking: 1, paidParking: 0, availableSlots: 1 }
   ];
 
+  const handleViewBookings = () => {
+    navigate('/property/parking/bookings');
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">PARKING BOOKING LIST</h1>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => setIsAddModalOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
@@ -42,7 +51,7 @@ const ParkingDashboard = () => {
             <Download className="w-4 h-4 mr-2" />
             Import
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleViewBookings}>
             <Eye className="w-4 h-4 mr-2" />
             View Bookings
           </Button>
@@ -95,6 +104,11 @@ const ParkingDashboard = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <AddParkingModal 
+        open={isAddModalOpen} 
+        onOpenChange={setIsAddModalOpen} 
+      />
     </div>
   );
 };
