@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -75,6 +74,7 @@ import { SeatTypeDashboard } from "./pages/SeatTypeDashboard";
 import { OperationalAuditScheduledDashboard } from "./pages/OperationalAuditScheduledDashboard";
 import { OperationalAuditConductedDashboard } from "./pages/OperationalAuditConductedDashboard";
 import { OperationalAuditMasterChecklistsDashboard } from "./pages/OperationalAuditMasterChecklistsDashboard";
+import { VendorAuditScheduledDashboard } from "./pages/VendorAuditScheduledDashboard";
 import { VendorAuditConductedDashboard } from "./pages/VendorAuditConductedDashboard";
 import { IncidentSetupDashboard } from "./pages/IncidentSetupDashboard";
 import { IncidentListDashboard } from "./pages/IncidentListDashboard";
@@ -87,11 +87,9 @@ import { VendorDashboard } from "./pages/VendorDashboard";
 import { ScheduleListDashboard } from "./pages/ScheduleListDashboard";
 import { TaskListDashboard } from "./pages/TaskListDashboard";
 import { TicketListDashboard } from "./pages/TicketListDashboard";
-import { ParkingCreateDashboard } from "./pages/ParkingCreateDashboard";
-import { ParkingBookingDashboard } from "./pages/ParkingBookingDashboard";
-import { TagDashboard } from "./pages/TagDashboard";
-import { ParkingCategoriesDashboard } from "./pages/ParkingCategoriesDashboard";
-import { MailroomInboundDashboard } from "./pages/MailroomInboundDashboard";
+import { CustomerDashboard } from "./pages/CustomerDashboard";
+import { FMUsersDashboard } from "./pages/FMUsersDashboard";
+import { OccupantUsersDashboard } from "./pages/OccupantUsersDashboard";
 
 const queryClient = new QueryClient();
 
@@ -105,8 +103,6 @@ const App = () => (
           <Routes>
             {/* Setup route - standalone layout without dynamic header */}
             <Route path="/setup" element={<SetupDashboard />} />
-            <Route path="/setup/property/tag" element={<TagDashboard />} />
-            <Route path="/setup/property/parking-categories" element={<ParkingCategoriesDashboard />} />
             
             {/* Main app routes with Layout wrapper */}
             <Route path="/*" element={
@@ -123,10 +119,13 @@ const App = () => (
                   <Route path="/schedule-list" element={<ScheduleListDashboard />} />
                   <Route path="/task-list" element={<TaskListDashboard />} />
                   <Route path="/tickets" element={<TicketListDashboard />} />
+                  <Route path="/crm/customer" element={<CustomerDashboard />} />
+                  <Route path="/crm/fm-users" element={<FMUsersDashboard />} />
+                  <Route path="/crm/occupant-users" element={<OccupantUsersDashboard />} />
                   <Route path="/operational-audit/scheduled" element={<OperationalAuditScheduledDashboard />} />
                   <Route path="/operational-audit/conducted" element={<OperationalAuditConductedDashboard />} />
                   <Route path="/operational-audit/master-checklists" element={<OperationalAuditMasterChecklistsDashboard />} />
-                  <Route path="/maintenance/vendor-audit/scheduled" element={<VendorAuditConductedDashboard />} />
+                  <Route path="/maintenance/vendor-audit/scheduled" element={<VendorAuditScheduledDashboard />} />
                   <Route path="/maintenance/vendor-audit/conducted" element={<VendorAuditConductedDashboard />} />
                   <Route path="/maintenance/incident/setup" element={<IncidentSetupDashboard />} />
                   <Route path="/maintenance/incident/list" element={<IncidentListDashboard />} />
@@ -165,10 +164,6 @@ const App = () => (
                   <Route path="/property/space/bookings" element={<BookingsDashboard />} />
                   <Route path="/property/booking/setup" element={<BookingSetupDashboard />} />
                   <Route path="/property/space/seat-type" element={<SeatTypeDashboard />} />
-                  <Route path="/property/parking/create" element={<ParkingCreateDashboard />} />
-                  <Route path="/property/parking/booking" element={<ParkingBookingDashboard />} />
-                  <Route path="/property/parking" element={<VehicleParkingDashboard />} />
-                  <Route path="/property/mailroom/inbound" element={<MailroomInboundDashboard />} />
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
                   <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
                   <Route path="/visitors/r-vehicles" element={<RVehiclesDashboard />} />

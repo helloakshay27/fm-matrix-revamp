@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { 
-  MapPin,
-  Building,
-  Users,
+import {
+  Home,
+  Wrench,
+  Building2,
   Settings,
+  Users,
+  DollarSign,
   FileText,
   CheckSquare,
   AlertTriangle,
@@ -14,236 +16,286 @@ import {
   Target,
   BookOpen,
   Receipt,
-  Home,
+  MapPin,
   ChevronDown,
   ChevronRight,
+  LayoutDashboard,
+  Calendar,
+  Bell,
+  Package,
+  Truck,
+  BarChart,
+  ListChecks,
+  DoorOpen,
+  Key,
+  ParkingSquare,
   Car,
-  Calendar
+  User,
+  HardDrive,
+  Navigation,
+  Flag,
+  Newspaper,
+  Briefcase,
+  Building,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-const locationItems = [
-  { name: 'Account', href: '/setup/location/account' },
-  { name: 'Building', href: '/setup/location/building' },
-  { name: 'Wing', href: '/setup/location/wing' },
-  { name: 'Area', href: '/setup/location/area' },
-  { name: 'Floor', href: '/setup/location/floor' },
-  { name: 'Unit', href: '/setup/location/unit' },
-  { name: 'Room', href: '/setup/location/room' },
-];
+interface SidebarProps {
+  isCollapsed?: boolean;
+}
 
-const userRoleItems = [
-  { name: 'Department', href: '/setup/user-role/department' },
-  { name: 'Role', href: '/setup/user-role/role' },
-];
+interface SidebarItem {
+  label: string;
+  href?: string;
+  icon: React.ComponentType<any>;
+  children?: SidebarItem[];
+}
 
-const ticketItems = [
-  { name: 'Setup', href: '/setup/ticket/setup' },
-  { name: 'Escalation', href: '/setup/ticket/escalation' },
-  { name: 'Cost Approval', href: '/setup/ticket/cost-approval' },
-];
+export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false }) => {
+  const [openSections, setOpenSections] = useState<{ [key: string]: boolean }>({});
 
-const propertyItems = [
-  { name: 'Tag', href: '/setup/property/tag' },
-  { name: 'Parking Categories', href: '/setup/property/parking-categories' },
-];
+  const toggleSection = (section: string) => {
+    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
 
-export const Sidebar = () => {
-  const [isLocationOpen, setIsLocationOpen] = useState(false);
-  const [isUserRoleOpen, setIsUserRoleOpen] = useState(false);
-  const [isTicketOpen, setIsTicketOpen] = useState(false);
-  const [isPropertyOpen, setIsPropertyOpen] = useState(false);
+  const sidebarItems = [
+    {
+      label: 'Home',
+      href: '/',
+      icon: Home,
+    },
+    {
+      label: 'Services',
+      href: '/services',
+      icon: Wrench,
+    },
+    {
+      label: 'Supplier',
+      href: '/supplier',
+      icon: Building2,
+    },
+    {
+      label: 'Maintenance',
+      icon: Settings,
+      children: [
+        { label: 'Vendor', href: '/vendor' },
+        { label: 'Schedule', href: '/schedule-list' },
+        { label: 'Tasks', href: '/task-list' },
+        { label: 'Tickets', href: '/tickets' },
+        { label: 'Operational Audit', children: [
+          { label: 'Scheduled', href: '/operational-audit/scheduled' },
+          { label: 'Conducted', href: '/operational-audit/conducted' },
+          { label: 'Master Checklists', href: '/operational-audit/master-checklists' },
+        ]},
+        { label: 'Vendor Audit', children: [
+          { label: 'Scheduled', href: '/maintenance/vendor-audit/scheduled' },
+          { label: 'Conducted', href: '/maintenance/vendor-audit/conducted' },
+        ]},
+        { label: 'Incident', children: [
+          { label: 'Setup', href: '/maintenance/incident/setup' },
+          { label: 'List', href: '/maintenance/incident/list' },
+        ]},
+        { label: 'Permit', children: [
+          { label: 'Setup', href: '/maintenance/permit/setup' },
+          { label: 'List', href: '/maintenance/permit/list' },
+          { label: 'Pending Approvals', href: '/maintenance/permit/pending-approvals' },
+        ]},
+        { label: 'Design Insights', children: [
+          { label: 'List', href: '/maintenance/design-insights/list' },
+          { label: 'Setup', href: '/maintenance/design-insights/setup' },
+        ]},
+      ]
+    },
+    {
+      label: 'CRM',
+      icon: Users,
+      children: [
+        { label: 'Customer', href: '/crm/customer' },
+        { label: 'FM Users', href: '/crm/fm-users' },
+        { label: 'Occupant Users', href: '/crm/occupant-users' },
+      ]
+    },
+    {
+      label: 'Finance',
+      icon: DollarSign,
+      children: [
+        { label: 'Material PR', href: '/finance/material-pr' },
+        { label: 'Service PR', href: '/finance/service-pr' },
+        { label: 'PO', href: '/finance/po' },
+        { label: 'WO', href: '/finance/wo' },
+        { label: 'GRN', href: '/finance/grn' },
+        { label: 'Invoices SES', href: '/finance/invoices-ses' },
+        { label: 'Pending Approvals', href: '/finance/pending-approvals' },
+        { label: 'GDN', href: '/finance/gdn' },
+        { label: 'Auto Saved PR', href: '/finance/auto-saved-pr' },
+        { label: 'WBS Element', href: '/finance/wbs-element' },
+        { label: 'Other Bills', href: '/finance/other-bills' },
+        { label: 'Accounting', href: '/finance/accounting' },
+        { label: 'Customer Bills', href: '/finance/customer-bills' },
+        { label: 'My Bills', href: '/finance/my-bills' },
+      ]
+    },
+    {
+      label: 'Property',
+      icon: Building,
+      children: [
+        {
+          label: 'Space',
+          children: [
+            { label: 'Bookings', href: '/property/space/bookings' },
+            { label: 'Seat Type', href: '/property/space/seat-type' },
+          ],
+        },
+        {
+          label: 'Booking',
+          children: [
+            { label: 'Setup', href: '/property/booking/setup' },
+          ],
+        },
+      ],
+    },
+    {
+      label: 'Visitors',
+      icon: User,
+      children: [
+        { label: 'Visitors', href: '/visitors/visitors' },
+        { label: 'History', href: '/visitors/history' },
+        { label: 'R Vehicles', href: '/visitors/r-vehicles' },
+        { label: 'R Vehicles History', href: '/visitors/r-vehicles/history' },
+        { label: 'G Vehicles', href: '/visitors/g-vehicles' },
+        { label: 'Staffs', href: '/visitors/staffs' },
+        { label: 'Materials', href: '/visitors/materials' },
+        { label: 'Patrolling', href: '/visitors/patrolling' },
+        { label: 'Patrolling Pending', href: '/visitors/patrolling-pending' },
+        { label: 'Goods', href: '/visitors/goods' },
+        {
+          label: 'Goods Inwards',
+          href: '/visitors/goods/inwards',
+        },
+        {
+          label: 'Goods Outwards',
+          href: '/visitors/goods/outwards',
+        },
+        { label: 'Vehicle Parkings', href: '/visitors/vehicle-parkings' },
+      ],
+    },
+    {
+      label: 'Experience',
+      icon: Eye,
+      children: [
+        { label: 'Events', href: '/experience/events' },
+        { label: 'Broadcast', href: '/experience/broadcast' },
+        { label: 'Business Directory', href: '/experience/business' },
+        { label: 'Documents Unit', href: '/experience/documents/unit' },
+        { label: 'Documents Common', href: '/experience/documents/common' },
+        {
+          label: 'Transport',
+          children: [
+            { label: 'Outstation', href: '/experience/transport/outstation' },
+            { label: 'Airline', href: '/experience/transport/airline' },
+            { label: 'Rail', href: '/experience/transport/rail' },
+            { label: 'Hotel', href: '/experience/transport/hotel' },
+            { label: 'Self Travel', href: '/experience/transport/self-travel' },
+          ],
+        },
+        { label: 'Testimonials', href: '/experience/testimonials' },
+        { label: 'Company Partners', href: '/experience/company-partners' },
+      ],
+    },
+    {
+      label: 'Setup',
+      href: '/setup',
+      icon: Settings,
+    },
+  ];
 
   return (
-    <div className="w-64 h-screen bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto">
+    <aside className={`w-64 bg-[#f6f4ee] border-r border-[#D5DbDB] h-screen fixed top-0 left-0 overflow-y-auto ${isCollapsed ? 'hidden' : ''}`}>
       <div className="p-6">
         <div className="flex items-center gap-2 mb-8">
           <div className="w-8 h-8 bg-[#C72030] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">S</span>
           </div>
-          <span className="text-[#1a1a1a] font-semibold text-lg">Setup</span>
+          <span className="text-[#1a1a1a] font-semibold text-lg">Lockated</span>
         </div>
-        
+
         <nav className="space-y-2">
-          {/* Location Dropdown */}
-          <div>
-            <button
-              onClick={() => setIsLocationOpen(!isLocationOpen)}
-              className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-            >
-              <div className="flex items-center gap-3">
-                <MapPin className="w-5 h-5" />
-                Location
+          {sidebarItems.map((item, index) => (
+            item.href ? (
+              <Link
+                to={item.href}
+                key={index}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <item.icon className="w-5 h-5" />
+                {item.label}
+              </Link>
+            ) : (
+              <div key={index}>
+                <button
+                  onClick={() => toggleSection(item.label)}
+                  className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                >
+                  <div className="flex items-center gap-3">
+                    <item.icon className="w-5 h-5" />
+                    {item.label}
+                  </div>
+                  {openSections[item.label] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                </button>
+                {item.children && openSections[item.label] && (
+                  <div className="ml-6 space-y-1">
+                    {item.children.map((child, childIndex) => (
+                      child.href ? (
+                        <Link
+                          to={child.href}
+                          key={childIndex}
+                          className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                        >
+                          {child.label}
+                        </Link>
+                      ) : (
+                        <div key={childIndex}>
+                          {/* Nested Submenu */}
+                          {child.children && child.children.length > 0 ? (
+                            <>
+                              <button
+                                onClick={() => toggleSection(child.label)}
+                                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                              >
+                                <div className="flex items-center gap-3">
+                                  {child.label}
+                                </div>
+                                {openSections[child.label] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                              </button>
+                              {openSections[child.label] && (
+                                <div className="ml-6 space-y-1">
+                                  {child.children.map((grandchild, grandchildIndex) => (
+                                    <Link
+                                      to={grandchild.href || ""}
+                                      key={grandchildIndex}
+                                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                                    >
+                                      {grandchild.label}
+                                    </Link>
+                                  ))}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <span className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a]">
+                              {child.label}
+                            </span>
+                          )}
+                        </div>
+                      )
+                    ))}
+                  </div>
+                )}
               </div>
-              {isLocationOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            </button>
-            {isLocationOpen && (
-              <div className="ml-8 mt-1 space-y-1">
-                {locationItems.map((item) => (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                  >
-                    {item.name}
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Property Dropdown */}
-          <div>
-            <button
-              onClick={() => setIsPropertyOpen(!isPropertyOpen)}
-              className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-            >
-              <div className="flex items-center gap-3">
-                <Car className="w-5 h-5" />
-                Property
-              </div>
-              {isPropertyOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            </button>
-            {isPropertyOpen && (
-              <div className="ml-8 mt-1 space-y-1">
-                {propertyItems.map((item) => (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                  >
-                    {item.name}
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* User Role Dropdown */}
-          <div>
-            <button
-              onClick={() => setIsUserRoleOpen(!isUserRoleOpen)}
-              className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-            >
-              <div className="flex items-center gap-3">
-                <Users className="w-5 h-5" />
-                User Role
-              </div>
-              {isUserRoleOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            </button>
-            {isUserRoleOpen && (
-              <div className="ml-8 mt-1 space-y-1">
-                {userRoleItems.map((item) => (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                  >
-                    {item.name}
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Individual Items */}
-          <a href="/setup/fm-user" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Users className="w-5 h-5" />
-            FM User
-          </a>
-
-          <a href="/setup/occupant-users" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Users className="w-5 h-5" />
-            Occupant Users
-          </a>
-
-          <a href="/setup/meter-type" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Settings className="w-5 h-5" />
-            Meter Type
-          </a>
-
-          <a href="/setup/asset-groups" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Building className="w-5 h-5" />
-            Asset Groups
-          </a>
-
-          <a href="/setup/checklist-group" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <CheckSquare className="w-5 h-5" />
-            Checklist Group
-          </a>
-
-          {/* Ticket Dropdown */}
-          <div>
-            <button
-              onClick={() => setIsTicketOpen(!isTicketOpen)}
-              className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-            >
-              <div className="flex items-center gap-3">
-                <FileText className="w-5 h-5" />
-                Ticket
-              </div>
-              {isTicketOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            </button>
-            {isTicketOpen && (
-              <div className="ml-8 mt-1 space-y-1">
-                {ticketItems.map((item) => (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                  >
-                    {item.name}
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <a href="/setup/task-escalation" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <AlertTriangle className="w-5 h-5" />
-            Task Escalation
-          </a>
-
-          <a href="/setup/approval-matrix" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <ClipboardList className="w-5 h-5" />
-            Approval Matrix
-          </a>
-
-          <a href="/setup/patrolling-approval" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Shield className="w-5 h-5" />
-            Patrolling Approval
-          </a>
-
-          <a href="/setup/email-rule" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Mail className="w-5 h-5" />
-            Email Rule
-          </a>
-
-          <a href="/setup/fm-group" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Target className="w-5 h-5" />
-            FM Group
-          </a>
-
-          <a href="/setup/master-checklist" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <BookOpen className="w-5 h-5" />
-            Master Checklist
-          </a>
-
-          <a href="/setup/sac-hsn-setup" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Receipt className="w-5 h-5" />
-            SAC/HSN Setup
-          </a>
-
-          <a href="/setup/address" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Home className="w-5 h-5" />
-            Address
-          </a>
-
-          <a href="/setup/export" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <FileText className="w-5 h-5" />
-            Export
-          </a>
+            )
+          ))}
         </nav>
       </div>
-    </div>
+    </aside>
   );
 };
