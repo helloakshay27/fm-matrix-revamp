@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -40,10 +41,7 @@ import { BusinessSetupDashboard } from "./pages/BusinessSetupDashboard";
 import { ProjectsDashboard } from "./pages/ProjectsDashboard";
 import { ProjectDashboard } from "./pages/ProjectDashboard";
 import { AddProjectDashboard } from "./pages/AddProjectDashboard";
-import FitoutRequestDashboard from "./pages/FitoutRequestDashboard";
-import FitoutChecklistDashboard from "./pages/FitoutChecklistDashboard";
-import FitoutViolationDashboard from "./pages/FitoutViolationDashboard";
-import FitoutSetupDashboard from "./pages/FitoutSetupDashboard";
+import { FitoutSetupDashboard } from "./pages/FitoutSetupDashboard";
 import { OutstationDashboard } from "./pages/OutstationDashboard";
 import { AirlineDashboard } from "./pages/AirlineDashboard";
 import { RailDashboard } from "./pages/RailDashboard";
@@ -136,9 +134,6 @@ const App = () => (
                   <Route path="/surveys/response" element={<SurveyResponseDashboard />} />
                   <Route path="/assets/inactive" element={<InActiveAssetsDashboard />} />
                   <Route path="/projects" element={<ProjectDashboard />} />
-                  <Route path="/projects/fitout-request" element={<FitoutRequestDashboard />} />
-                  <Route path="/projects/fitout-checklist" element={<FitoutChecklistDashboard />} />
-                  <Route path="/projects/fitout-violation" element={<FitoutViolationDashboard />} />
                   <Route path="/projects/fitout-setup" element={<FitoutSetupDashboard />} />
                   <Route path="/projects/add" element={<AddProjectDashboard />} />
                   <Route path="/finance/material-pr" element={<MaterialPRDashboard />} />
