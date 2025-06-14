@@ -92,6 +92,7 @@ import ParkingDashboard from "./pages/ParkingDashboard";
 import ParkingBookingsDashboard from "./pages/ParkingBookingsDashboard";
 import MailroomInboundDashboard from "./pages/MailroomInboundDashboard";
 import { FMUserDashboard } from "./pages/setup/FMUserDashboard";
+import { MeterTypeDashboard } from "./pages/setup/MeterTypeDashboard";
 
 const queryClient = new QueryClient();
 
@@ -106,6 +107,7 @@ const App = () => (
             {/* Setup route - standalone layout without dynamic header */}
             <Route path="/setup" element={<SetupDashboard />} />
             <Route path="/setup/fm-user" element={<FMUserDashboard />} />
+            <Route path="/setup/meter-type" element={<MeterTypeDashboard />} />
             
             {/* Main app routes with Layout wrapper */}
             <Route path="/*" element={
