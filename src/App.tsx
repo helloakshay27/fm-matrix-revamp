@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -114,7 +113,7 @@ import { RoleDashboard } from "./pages/setup/RoleDashboard";
 import { AddRoleDashboard } from "./pages/setup/AddRoleDashboard";
 import { TagDashboard } from "./pages/setup/TagDashboard";
 import { AddTicketDashboard } from "./pages/AddTicketDashboard";
-import { CRMFMUserDashboard } from "./pages/CRMFMUserDashboard";
+import CRMFMUserDashboard from "./pages/CRMFMUserDashboard";
 
 const queryClient = new QueryClient();
 

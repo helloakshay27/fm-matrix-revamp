@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Eye, Download, Filter, FileTransfer } from 'lucide-react';
+import { Eye, Download, Filter, ArrowRightLeft } from 'lucide-react';
 
 // Enhanced FM Users data with additional columns as shown in the image
 const fmUsers = [
@@ -262,7 +261,7 @@ const CRMFMUserDashboard = () => {
             Export
           </Button>
           <Button className="bg-purple-700 hover:bg-purple-800 text-white">
-            <FileTransfer className="w-4 h-4 mr-2" />
+            <ArrowRightLeft className="w-4 h-4 mr-2" />
             Clone/Transfer
           </Button>
         </div>
