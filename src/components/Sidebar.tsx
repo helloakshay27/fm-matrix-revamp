@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Home, Calendar, Settings, ChevronRight, ChevronDown, Mail } from 'lucide-react';
@@ -11,10 +12,12 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+} from './ui/sidebar';
+import {
   Collapsible,
   CollapsibleTrigger,
   CollapsibleContent,
-} from './ui/sidebar';
+} from './ui/collapsible';
 
 export const Sidebar: React.FC = () => {
   return (
@@ -146,9 +149,66 @@ export const Sidebar: React.FC = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                  <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link to="/vendor-audit/scheduled" className="text-gray-700 hover:text-blue-500">Vendor Audit</Link>
-                  </SidebarMenuButton>
+                  <Collapsible>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton className="text-gray-700 hover:text-blue-500">
+                        <Settings className="w-4 h-4" />
+                        <span>Vendor Audit</span>
+                        <ChevronDown className="w-4 h-4 ml-auto" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenu className="ml-4">
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild>
+                            <Link to="/vendor-audit/scheduled" className="text-gray-600 hover:text-blue-500">
+                              <ChevronRight className="w-4 h-4" />
+                              <span>Scheduled</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild>
+                            <Link to="/vendor-audit/conducted" className="text-gray-600 hover:text-blue-500">
+                              <ChevronRight className="w-4 h-4" />
+                              <span>Conducted</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      </SidebarMenu>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <Collapsible>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton className="text-gray-700 hover:text-blue-500">
+                        <Settings className="w-4 h-4" />
+                        <span>Incident</span>
+                        <ChevronDown className="w-4 h-4 ml-auto" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenu className="ml-4">
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild>
+                            <Link to="/incident/setup" className="text-gray-600 hover:text-blue-500">
+                              <ChevronRight className="w-4 h-4" />
+                              <span>Incident Setup</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild>
+                            <Link to="/incident/list" className="text-gray-600 hover:text-blue-500">
+                              <ChevronRight className="w-4 h-4" />
+                              <span>Incident</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      </SidebarMenu>
+                    </CollapsibleContent>
+                  </Collapsible>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>

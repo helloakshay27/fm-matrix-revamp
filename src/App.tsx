@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -77,6 +78,8 @@ import { OperationalAuditMasterChecklistsDashboard } from "./pages/OperationalAu
 import { VendorAuditScheduledDashboard } from "./pages/VendorAuditScheduledDashboard";
 import { VendorAuditConductedDashboard } from "./pages/VendorAuditConductedDashboard";
 import { MailroomInboundDashboard } from "./pages/MailroomInboundDashboard";
+import IncidentSetupDashboard from "./pages/IncidentSetupDashboard";
+import IncidentListDashboard from "./pages/IncidentListDashboard";
 
 const queryClient = new QueryClient();
 
@@ -107,6 +110,8 @@ const App = () => (
                   <Route path="/operational-audit/master-checklists" element={<OperationalAuditMasterChecklistsDashboard />} />
                   <Route path="/vendor-audit/scheduled" element={<VendorAuditScheduledDashboard />} />
                   <Route path="/vendor-audit/conducted" element={<VendorAuditConductedDashboard />} />
+                  <Route path="/incident/setup" element={<IncidentSetupDashboard />} />
+                  <Route path="/incident/list" element={<IncidentListDashboard />} />
                   <Route path="/surveys/list" element={<SurveyListDashboard />} />
                   <Route path="/surveys/mapping" element={<SurveyMappingDashboard />} />
                   <Route path="/surveys/response" element={<SurveyResponseDashboard />} />
