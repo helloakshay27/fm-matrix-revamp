@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -49,6 +48,7 @@ import { HotelDashboard } from "./pages/HotelDashboard";
 import { SelfTravelDashboard } from "./pages/SelfTravelDashboard";
 import { TestimonialsSetupDashboard } from "./pages/TestimonialsSetupDashboard";
 import { CompanyPartnersSetupDashboard } from "./pages/CompanyPartnersSetupDashboard";
+import { MaterialPRDashboard } from "./pages/MaterialPRDashboard";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +81,7 @@ const App = () => (
                   <Route path="/projects" element={<ProjectDashboard />} />
                   <Route path="/projects/fitout-setup" element={<FitoutSetupDashboard />} />
                   <Route path="/projects/add" element={<AddProjectDashboard />} />
+                  <Route path="/finance/material-pr" element={<MaterialPRDashboard />} />
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
                   <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
                   <Route path="/visitors/r-vehicles" element={<RVehiclesDashboard />} />
