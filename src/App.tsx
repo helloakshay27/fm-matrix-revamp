@@ -75,6 +75,7 @@ import { SeatTypeDashboard } from "./pages/SeatTypeDashboard";
 import { OperationalAuditScheduledDashboard } from "./pages/OperationalAuditScheduledDashboard";
 import { OperationalAuditConductedDashboard } from "./pages/OperationalAuditConductedDashboard";
 import { OperationalAuditMasterChecklistsDashboard } from "./pages/OperationalAuditMasterChecklistsDashboard";
+import MailroomInboundDashboard from "./pages/MailroomInboundDashboard";
 
 const queryClient = new QueryClient();
 
@@ -133,6 +134,7 @@ const App = () => (
                   <Route path="/property/space/bookings" element={<BookingsDashboard />} />
                   <Route path="/property/booking/setup" element={<BookingSetupDashboard />} />
                   <Route path="/property/space/seat-type" element={<SeatTypeDashboard />} />
+                  <Route path="/property/mailroom/inbound" element={<MailroomInboundDashboard />} />
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
                   <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
                   <Route path="/visitors/r-vehicles" element={<RVehiclesDashboard />} />
@@ -172,3 +174,4 @@ const App = () => (
 );
 
 export default App;
+</lov-writate>
