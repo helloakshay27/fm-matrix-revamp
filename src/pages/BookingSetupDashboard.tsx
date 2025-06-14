@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Filter } from "lucide-react";
 import { BookingSetupFilterDialog } from "@/components/BookingSetupFilterDialog";
+import { BookingSetupForm } from "@/components/BookingSetupForm";
 
 export const BookingSetupDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -157,22 +158,7 @@ export const BookingSetupDashboard = () => {
 
         {/* Add Booking Setup Form */}
         {isAddBookingOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-4 overflow-y-auto">
-            <div className="bg-white rounded-lg p-6 w-full max-w-4xl mx-4 mb-4">
-              {/* This will be replaced with the actual form component */}
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">NEW BOOKING SETUP</h2>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => setIsAddBookingOpen(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </Button>
-              </div>
-              <p>Form will be implemented based on the detailed images you provided.</p>
-            </div>
-          </div>
+          <BookingSetupForm onClose={() => setIsAddBookingOpen(false)} />
         )}
       </div>
     </div>
