@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Filter } from "lucide-react";
@@ -8,6 +9,7 @@ import { MyBillsFilterDialog } from "@/components/MyBillsFilterDialog";
 export const MyBillsDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('My Bills');
+  const navigate = useNavigate();
 
   const statsCards = [
     { label: "Total Bills", value: "0", color: "bg-gradient-to-r from-purple-500 to-pink-500" },
@@ -20,6 +22,14 @@ export const MyBillsDashboard = () => {
     console.log('Applied filters:', filters);
   };
 
+  const handleTabClick = (tabName: string) => {
+    if (tabName === 'Tickets') {
+      navigate('/tickets');
+    } else {
+      setActiveTab(tabName);
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar */}
@@ -28,7 +38,7 @@ export const MyBillsDashboard = () => {
           <div className="space-y-2">
             <div 
               className={`p-3 rounded-lg cursor-pointer flex items-center gap-3 transition-all duration-200 ${activeTab === 'Tickets' ? 'bg-purple-700 shadow-md' : 'hover:bg-purple-800'}`}
-              onClick={() => setActiveTab('Tickets')}
+              onClick={() => handleTabClick('Tickets')}
             >
               <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
                 <span className="text-purple-900 text-lg font-bold">🎫</span>
@@ -38,7 +48,7 @@ export const MyBillsDashboard = () => {
             
             <div 
               className={`p-3 rounded-lg cursor-pointer flex items-center gap-3 transition-all duration-200 ${activeTab === 'My Bills' ? 'bg-purple-700 shadow-md border-l-4 border-white' : 'hover:bg-purple-800'}`}
-              onClick={() => setActiveTab('My Bills')}
+              onClick={() => handleTabClick('My Bills')}
             >
               <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
                 <span className="text-purple-900 text-lg font-bold">📄</span>
@@ -48,7 +58,7 @@ export const MyBillsDashboard = () => {
             
             <div 
               className={`p-3 rounded-lg cursor-pointer flex items-center gap-3 transition-all duration-200 ${activeTab === 'My Parking' ? 'bg-purple-700 shadow-md' : 'hover:bg-purple-800'}`}
-              onClick={() => setActiveTab('My Parking')}
+              onClick={() => handleTabClick('My Parking')}
             >
               <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
                 <span className="text-purple-900 text-lg font-bold">🅿️</span>
