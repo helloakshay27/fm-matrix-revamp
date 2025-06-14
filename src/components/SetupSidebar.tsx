@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   MapPin,
@@ -17,8 +16,7 @@ import {
   Receipt,
   Home,
   ChevronDown,
-  ChevronRight,
-  Tag
+  ChevronRight
 } from 'lucide-react';
 
 const locationItems = [
@@ -203,11 +201,6 @@ export const SetupSidebar = () => {
           <a href="/setup/address" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
             <Home className="w-5 h-5" />
             Address
-          </a>
-
-          <a href="/setup/tag" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Tag className="w-5 h-5" />
-            Tag
           </a>
 
           <a href="/setup/export" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
