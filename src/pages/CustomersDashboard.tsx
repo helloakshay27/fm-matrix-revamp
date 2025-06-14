@@ -228,7 +228,7 @@ export const CustomersDashboard = () => {
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Customer List</h2>
           <p className="text-muted-foreground">
-            Customer > Customer List
+            Customer &gt; Customer List
           </p>
         </div>
       </div>
