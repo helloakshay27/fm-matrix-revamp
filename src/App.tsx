@@ -74,7 +74,7 @@ import { SeatTypeDashboard } from "./pages/SeatTypeDashboard";
 import { OperationalAuditScheduledDashboard } from "./pages/OperationalAuditScheduledDashboard";
 import { OperationalAuditConductedDashboard } from "./pages/OperationalAuditConductedDashboard";
 import { OperationalAuditMasterChecklistsDashboard } from "./pages/OperationalAuditMasterChecklistsDashboard";
-import { VendorAuditScheduledDashboard } from "./pages/VendorAuditScheduledDashboard";
+import { VendorAuditScheduledDashboard } from "./pages/VendorAuditConductedDashboard";
 import { VendorAuditConductedDashboard } from "./pages/VendorAuditConductedDashboard";
 import { IncidentSetupDashboard } from "./pages/IncidentSetupDashboard";
 import { IncidentListDashboard } from "./pages/IncidentListDashboard";
@@ -91,6 +91,7 @@ import { ParkingCreateDashboard } from "./pages/ParkingCreateDashboard";
 import { ParkingBookingDashboard } from "./pages/ParkingBookingDashboard";
 import { TagDashboard } from "./pages/TagDashboard";
 import { ParkingCategoriesDashboard } from "./pages/ParkingCategoriesDashboard";
+import { MailroomInboundDashboard } from "./pages/MailroomInboundDashboard";
 
 const queryClient = new QueryClient();
 
@@ -166,6 +167,7 @@ const App = () => (
                   <Route path="/property/space/seat-type" element={<SeatTypeDashboard />} />
                   <Route path="/property/parking/create" element={<ParkingCreateDashboard />} />
                   <Route path="/property/parking/booking" element={<ParkingBookingDashboard />} />
+                  <Route path="/property/mailroom/inbound" element={<MailroomInboundDashboard />} />
                   <Route path="/visitors/visitors" element={<VisitorsDashboard />} />
                   <Route path="/visitors/history" element={<VisitorsHistoryDashboard />} />
                   <Route path="/visitors/r-vehicles" element={<RVehiclesDashboard />} />
