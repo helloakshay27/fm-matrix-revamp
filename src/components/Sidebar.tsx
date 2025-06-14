@@ -1,1045 +1,883 @@
-import React, { useState } from 'react';
-import { 
-  Home, 
-  Wrench, 
-  Package, 
-  Users, 
-  Calendar, 
-  ClipboardList, 
-  AlertTriangle,
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import {
+  Sidebar as SidebarComponent,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarHeader,
+} from "@/components/ui/sidebar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Home,
+  Wrench,
+  Users,
+  Calendar,
+  ClipboardList,
   FileText,
   BarChart3,
-  Settings,
-  ChevronDown,
-  ChevronRight,
-  Building,
-  UserCheck,
-  Car,
   MapPin,
-  Zap,
-  Recycle,
-  Eye,
-  Coffee,
-  BookOpen,
-  Truck,
-  MessageSquare,
-  Target,
-  Space,
-  Mail,
-  DollarSign,
-  Receipt,
-  CreditCard,
-  Banknote,
-  History,
-  UserX,
-  Boxes,
+  Car,
   Shield,
-  Search,
-  ClipboardCheck,
-  Lightbulb
+  Package,
+  Truck,
+  Camera,
+  Settings,
+  Building,
+  Plane,
+  Train,
+  Hotel,
+  MessageSquare,
+  Star,
+  Handshake,
+  CreditCard,
+  Receipt,
+  Briefcase,
+  Gavel,
+  Lightbulb,
+  ChevronDown,
+  Tags,
 } from 'lucide-react';
-import { useLayout } from '../contexts/LayoutContext';
 
-const maintenanceItems = [
-  { name: 'Asset', icon: Package, href: '/', current: window.location.pathname === '/' },
-  { name: 'AMC', icon: Wrench, href: '/amc', current: window.location.pathname === '/amc' },
-  { name: 'Services', icon: Settings, href: '/services', current: window.location.pathname === '/services' },
-];
+interface SidebarProps {
+  className?: string;
+}
 
-const surveyItems = [
-  { name: 'Survey List', href: '/surveys/list' },
-  { name: 'Mapping', href: '/surveys/mapping' },
-  { name: 'Response', href: '/surveys/response' },
-];
+const Sidebar: React.FC<SidebarProps> = ({ className }) => {
+  const location = useLocation();
 
-const operationalAuditItems = [
-  { name: 'Scheduled', href: '/operational-audit/scheduled' },
-  { name: 'Conducted', href: '/operational-audit/conducted' },
-  { name: 'Master Checklists', href: '/operational-audit/master-checklists' },
-];
-
-const projectItems = [
-  { name: 'Projects', href: '/projects' },
-  { name: 'Add Project', href: '/projects/add' },
-];
-
-const crmItems = [
-  { name: 'Customers', href: '/crm/customers' },
-  { name: 'FM Users', href: '/crm/fm-users' },
-  { name: 'Occupant Users', href: '/crm/occupant-users' },
-];
-
-const utilityItems = [
-  { name: 'Dashboard', href: '/utility/dashboard' },
-  { name: 'Energy Meters', href: '/utility/energy-meters' },
-  { name: 'Daily Readings', href: '/utility/daily-readings' },
-  { name: 'Utility Consumption', href: '/utility/consumption' },
-  { name: 'Utility Request', href: '/utility/request' },
-];
-
-const wasteGenerationItems = [
-  { name: 'Waste Generation', href: '/utility/waste-generation' },
-  { name: 'Setup', href: '/utility/waste-setup' },
-];
-
-const inventoryItems = [
-  { name: 'Inventory', href: '/inventory' },
-  { name: 'Inventory Consumption', href: '/inventory-consumption' },
-];
-
-const visitorsItems = [
-  { name: 'Visitors', href: '/visitors/visitors', icon: Eye },
-  { name: 'Visitors History', href: '/visitors/history', icon: History },
-  { name: 'R Vehicles', href: '/visitors/r-vehicles', icon: Car },
-  { name: 'G Vehicles', href: '/visitors/g-vehicles', icon: Car },
-  { name: 'Staffs', href: '/visitors/staffs', icon: Users },
-  { name: 'Materials', href: '/visitors/materials', icon: Boxes },
-  { name: 'Patrolling', href: '/visitors/patrolling', icon: Shield },
-  { name: 'Patrolling Pending Approvals', href: '/visitors/patrolling-pending', icon: UserX },
-  { name: 'Goods In/Out', href: '/visitors/goods', icon: Package },
-];
-
-const rVehiclesSubItems = [
-  { name: 'All', href: '/visitors/r-vehicles' },
-  { name: 'History', href: '/visitors/r-vehicles/history' },
-];
-
-const goodsInOutSubItems = [
-  { name: 'Inwards', href: '/visitors/goods/inwards' },
-  { name: 'Outwards', href: '/visitors/goods/outwards' },
-];
-
-const experienceItems = [
-  { name: 'Events', href: '/experience/events' },
-  { name: 'Broadcast', href: '/experience/broadcast' },
-];
-
-const documentsItems = [
-  { name: 'Unit Related', href: '/experience/documents/unit' },
-  { name: 'Common', href: '/experience/documents/common' },
-];
-
-const transportItems = [
-  { name: 'Outstation', href: '/experience/transport/outstation' },
-  { name: 'Airline', href: '/experience/transport/airline' },
-  { name: 'Rail', href: '/experience/transport/rail' },
-  { name: 'Hotel', href: '/experience/transport/hotel' },
-];
-
-const selfTravelItems = [
-  { name: 'Self Travel Option 1', href: '/experience/transport/self-1' },
-  { name: 'Self Travel Option 2', href: '/experience/transport/self-2' },
-];
-
-const communityModulesItems = [
-  { name: 'Testimonials Setup', href: '/experience/community/testimonials' },
-  { name: 'Company Partners Setup', href: '/experience/community/partners' },
-  { name: 'Banners Setup', href: '/experience/community/banners' },
-  { name: 'Groups and Channel Config', href: '/experience/community/groups' },
-  { name: 'Amenities Setup', href: '/experience/community/amenities' },
-];
-
-const centreSetupItems = [
-  { name: 'Centre Setup Option 1', href: '/experience/community/centre-1' },
-  { name: 'Centre Setup Option 2', href: '/experience/community/centre-2' },
-];
-
-const propertySpaceItems = [
-  { name: 'Bookings', href: '/property/space/bookings' },
-  { name: 'Seat Requests', href: '/property/space/seat-requests' },
-];
-
-const propertySpaceSetupItems = [
-  { name: 'Space Setup Option 1', href: '/property/space/setup-1' },
-  { name: 'Space Setup Option 2', href: '/property/space/setup-2' },
-];
-
-const propertyBookingItems = [
-  { name: 'Setup', href: '/property/booking/setup' },
-];
-
-const propertyMailroomItems = [
-  { name: 'Inbound', href: '/property/mailroom/inbound' },
-  { name: 'Outbound', href: '/property/mailroom/outbound' },
-];
-
-const propertyParkingSetupItems = [
-  { name: 'Tag', href: '/property/parking/tag' },
-  { name: 'Parking Categories', href: '/property/parking/categories' },
-  { name: 'Parking Configurations', href: '/property/parking/configurations' },
-  { name: 'Parking Slots', href: '/property/parking/slots' },
-];
-
-const financeItems = [
-  { name: 'Material PR', href: '/finance/material-pr' },
-  { name: 'Service PR', href: '/finance/service-pr' },
-  { name: 'PO', href: '/finance/po' },
-  { name: 'WO', href: '/finance/wo' },
-  { name: 'GRN', href: '/finance/grn' },
-  { name: 'Invoices/SES', href: '/finance/invoices-ses' },
-  { name: 'Pending Approvals', href: '/finance/pending-approvals' },
-];
-
-const gdnItems = [
-  { name: 'GDN', href: '/finance/gdn' },
-  { name: 'Pending Approvals', href: '/finance/pending-approvals-2' },
-];
-
-const remainingFinanceItems = [
-  { name: 'Auto Saved PR', href: '/finance/auto-saved-pr' },
-  { name: 'WBS Element', href: '/finance/wbs-element' },
-  { name: 'Other Bills', href: '/finance/other-bills' },
-  { name: 'Accounting', href: '/finance/accounting' },
-  { name: 'Customer Bills', href: '/finance/customer-bills' },
-  { name: 'My Bills', href: '/finance/my-bills' },
-];
-
-const vendorAuditItems = [
-  { name: 'Scheduled', href: '/maintenance/vendor-audit/scheduled' },
-  { name: 'Conducted', href: '/maintenance/vendor-audit/conducted' },
-];
-
-const incidentItems = [
-  { name: 'Incident Setup', href: '/maintenance/incident/setup' },
-  { name: 'Incident', href: '/maintenance/incident/list' },
-];
-
-const permitItems = [
-  { name: 'Permit Setup', href: '/maintenance/permit/setup' },
-  { name: 'Permit', href: '/maintenance/permit/list' },
-  { name: 'Pending Approvals', href: '/maintenance/permit/pending-approvals' },
-];
-
-const designInsightsItems = [
-  { name: 'Design Insights', href: '/maintenance/design-insights/list' },
-  { name: 'Setup', href: '/maintenance/design-insights/setup' },
-];
-
-export const Sidebar = () => {
-  const { currentSection } = useLayout();
-  const [isSurveyOpen, setIsSurveyOpen] = useState(false);
-  const [isOperationalAuditOpen, setIsOperationalAuditOpen] = useState(false);
-  const [isVendorAuditOpen, setIsVendorAuditOpen] = useState(false);
-  const [isIncidentOpen, setIsIncidentOpen] = useState(false);
-  const [isPermitOpen, setIsPermitOpen] = useState(false);
-  const [isDesignInsightsOpen, setIsDesignInsightsOpen] = useState(false);
-  const [isWasteGenerationOpen, setIsWasteGenerationOpen] = useState(false);
-  const [isDocumentsOpen, setIsDocumentsOpen] = useState(false);
-  const [isTransportOpen, setIsTransportOpen] = useState(false);
-  const [isSelfTravelOpen, setIsSelfTravelOpen] = useState(false);
-  const [isCommunityModulesOpen, setIsCommunityModulesOpen] = useState(false);
-  const [isCentreSetupOpen, setIsCentreSetupOpen] = useState(false);
-  const [isSpaceOpen, setIsSpaceOpen] = useState(false);
-  const [isSpaceSetupOpen, setIsSpaceSetupOpen] = useState(false);
-  const [isBookingOpen, setIsBookingOpen] = useState(false);
-  const [isMailroomOpen, setIsMailroomOpen] = useState(false);
-  const [isParkingSetupOpen, setIsParkingSetupOpen] = useState(false);
-  const [isGrnOpen, setIsGrnOpen] = useState(false);
-  const [isGdnOpen, setIsGdnOpen] = useState(false);
-  const [isRVehiclesOpen, setIsRVehiclesOpen] = useState(false);
-  const [isGoodsInOutOpen, setIsGoodsInOutOpen] = useState(false);
-  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
-
-  const currentPath = window.location.pathname;
-
-  const renderNavigationItems = () => {
-    switch (currentSection) {
-      case 'Maintenance':
-        return (
-          <nav className="space-y-2">
-            {/* Maintenance Items */}
-            {maintenanceItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  item.current
-                    ? 'bg-[#C72030] text-white'
-                    : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
-                }`}
-              >
-                <item.icon className="w-5 h-5" />
-                {item.name}
-              </a>
-            ))}
-            
-            {/* Operational Audit Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsOperationalAuditOpen(!isOperationalAuditOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <Search className="w-5 h-5" />
-                  Operational Audit
-                </div>
-                {isOperationalAuditOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isOperationalAuditOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {operationalAuditItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Vendor Audit Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsVendorAuditOpen(!isVendorAuditOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <Building className="w-5 h-5" />
-                  Vendor Audit
-                </div>
-                {isVendorAuditOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isVendorAuditOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {vendorAuditItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Incident Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsIncidentOpen(!isIncidentOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <AlertTriangle className="w-5 h-5" />
-                  Incident
-                </div>
-                {isIncidentOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isIncidentOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {incidentItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Permit Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsPermitOpen(!isPermitOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <ClipboardCheck className="w-5 h-5" />
-                  Permit
-                </div>
-                {isPermitOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isPermitOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {permitItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Design Insights Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsDesignInsightsOpen(!isDesignInsightsOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <Lightbulb className="w-5 h-5" />
-                  Design Insights
-                </div>
-                {isDesignInsightsOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isDesignInsightsOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {designInsightsItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            {/* Survey Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsSurveyOpen(!isSurveyOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <BarChart3 className="w-5 h-5" />
-                  Surveys
-                </div>
-                {isSurveyOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isSurveyOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {surveyItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Other Maintenance Items */}
-            <a href="/attendance" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <Users className="w-5 h-5" />
-              Attendance
-            </a>
-
-            {/* Inventory Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsInventoryOpen(!isInventoryOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <Package className="w-5 h-5" />
-                  Inventory
-                </div>
-                {isInventoryOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isInventoryOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {inventoryItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <a href="/eco-friendly" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <Recycle className="w-5 h-5" />
-              Eco-Friendly
-            </a>
-            <a href="/vendor" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <Building className="w-5 h-5" />
-              Vendor
-            </a>
-            <a href="/schedule" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <Calendar className="w-5 h-5" />
-              Schedule
-            </a>
-            <a href="/tasks" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <ClipboardList className="w-5 h-5" />
-              Tasks
-            </a>
-            <a href="/tickets" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <FileText className="w-5 h-5" />
-              Tickets
-            </a>
-          </nav>
-        );
-
-      case 'Project':
-        return (
-          <nav className="space-y-2">
-            {projectItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <Building className="w-5 h-5" />
-                {item.name}
-              </a>
-            ))}
-          </nav>
-        );
-
-      case 'CRM':
-        return (
-          <nav className="space-y-2">
-            {crmItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <Users className="w-5 h-5" />
-                {item.name}
-              </a>
-            ))}
-          </nav>
-        );
-
-      case 'Utility':
-        return (
-          <nav className="space-y-2">
-            {utilityItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <Zap className="w-5 h-5" />
-                {item.name}
-              </a>
-            ))}
-            
-            {/* Waste Generation Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsWasteGenerationOpen(!isWasteGenerationOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <Recycle className="w-5 h-5" />
-                  Waste Generation
-                </div>
-                {isWasteGenerationOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isWasteGenerationOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {wasteGenerationItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-          </nav>
-        );
-
-      case 'Visitors':
-        return (
-          <nav className="space-y-2">
-            {visitorsItems.map((item) => {
-              const isActive = currentPath === item.href;
-              
-              // Special handling for R Vehicles with dropdown
-              if (item.name === 'R Vehicles') {
-                return (
-                  <div key={item.name}>
-                    <button
-                      onClick={() => setIsRVehiclesOpen(!isRVehiclesOpen)}
-                      className={`flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        isActive || currentPath.startsWith('/visitors/r-vehicles')
-                          ? 'bg-[#C72030] text-white'
-                          : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <item.icon className="w-5 h-5" />
-                        {item.name}
-                      </div>
-                      {isRVehiclesOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                    </button>
-                    {isRVehiclesOpen && (
-                      <div className="ml-8 mt-1 space-y-1">
-                        {rVehiclesSubItems.map((subItem) => {
-                          const isSubActive = currentPath === subItem.href;
-                          return (
-                            <a
-                              key={subItem.name}
-                              href={subItem.href}
-                              className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
-                                isSubActive
-                                  ? 'bg-[#C72030] text-white'
-                                  : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
-                              }`}
-                            >
-                              {subItem.name}
-                            </a>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
-              // Special handling for Goods In/Out with dropdown
-              if (item.name === 'Goods In/Out') {
-                return (
-                  <div key={item.name}>
-                    <button
-                      onClick={() => setIsGoodsInOutOpen(!isGoodsInOutOpen)}
-                      className={`flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        isActive || currentPath.startsWith('/visitors/goods')
-                          ? 'bg-[#C72030] text-white'
-                          : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <item.icon className="w-5 h-5" />
-                        {item.name}
-                      </div>
-                      {isGoodsInOutOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                    </button>
-                    {isGoodsInOutOpen && (
-                      <div className="ml-8 mt-1 space-y-1">
-                        {goodsInOutSubItems.map((subItem) => {
-                          const isSubActive = currentPath === subItem.href;
-                          return (
-                            <a
-                              key={subItem.name}
-                              href={subItem.href}
-                              className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
-                                isSubActive
-                                  ? 'bg-[#C72030] text-white'
-                                  : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
-                              }`}
-                            >
-                              {subItem.name}
-                            </a>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-              
-              return (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-[#C72030] text-white'
-                      : 'text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]'
-                  }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  {item.name}
-                </a>
-              );
-            })}
-          </nav>
-        );
-
-      case 'Experience':
-        return (
-          <nav className="space-y-2">
-            {experienceItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <Coffee className="w-5 h-5" />
-                {item.name}
-              </a>
-            ))}
-            
-            {/* Documents Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsDocumentsOpen(!isDocumentsOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <BookOpen className="w-5 h-5" />
-                  Documents
-                </div>
-                {isDocumentsOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isDocumentsOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {documentsItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <a href="/experience/business" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <Building className="w-5 h-5" />
-              Business
-            </a>
-
-            {/* Transport Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsTransportOpen(!isTransportOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <Truck className="w-5 h-5" />
-                  Transport
-                </div>
-                {isTransportOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isTransportOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {transportItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                  
-                  {/* Self Travel Dropdown */}
-                  <div>
-                    <button
-                      onClick={() => setIsSelfTravelOpen(!isSelfTravelOpen)}
-                      className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      <span>Self Travel</span>
-                      {isSelfTravelOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                    </button>
-                    {isSelfTravelOpen && (
-                      <div className="ml-4 mt-1 space-y-1">
-                        {selfTravelItems.map((item) => (
-                          <a
-                            key={item.name}
-                            href={item.href}
-                            className="block px-3 py-2 rounded-lg text-xs transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                          >
-                            {item.name}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Community Modules Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsCommunityModulesOpen(!isCommunityModulesOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <MessageSquare className="w-5 h-5" />
-                  Community Modules
-                </div>
-                {isCommunityModulesOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isCommunityModulesOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {communityModulesItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                  
-                  {/* Centre Setup Dropdown */}
-                  <div>
-                    <button
-                      onClick={() => setIsCentreSetupOpen(!isCentreSetupOpen)}
-                      className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      <span>Centre Setup</span>
-                      {isCentreSetupOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                    </button>
-                    {isCentreSetupOpen && (
-                      <div className="ml-4 mt-1 space-y-1">
-                        {centreSetupItems.map((item) => (
-                          <a
-                            key={item.name}
-                            href={item.href}
-                            className="block px-3 py-2 rounded-lg text-xs transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                          >
-                            {item.name}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <a href="/experience/setup" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <Settings className="w-5 h-5" />
-              Setup
-            </a>
-          </nav>
-        );
-
-      case 'Finance':
-        return (
-          <nav className="space-y-2">
-            {/* Basic Finance Items including GRN, Invoices/SES, Pending Approvals */}
-            {financeItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <DollarSign className="w-5 h-5" />
-                {item.name}
-              </a>
-            ))}
-
-            {/* GDN Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsGdnOpen(!isGdnOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5" />
-                  GDN
-                </div>
-                {isGdnOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isGdnOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {gdnItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Remaining Finance Items */}
-            {remainingFinanceItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <DollarSign className="w-5 h-5" />
-                {item.name}
-              </a>
-            ))}
-          </nav>
-        );
-
-      case 'Property':
-        return (
-          <nav className="space-y-2">
-            {/* Space Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsSpaceOpen(!isSpaceOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <Space className="w-5 h-5" />
-                  Space
-                </div>
-                {isSpaceOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isSpaceOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {propertySpaceItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                  
-                  {/* Setup Dropdown */}
-                  <div>
-                    <button
-                      onClick={() => setIsSpaceSetupOpen(!isSpaceSetupOpen)}
-                      className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      <span>Setup</span>
-                      {isSpaceSetupOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                    </button>
-                    {isSpaceSetupOpen && (
-                      <div className="ml-4 mt-1 space-y-1">
-                        {propertySpaceSetupItems.map((item) => (
-                          <a
-                            key={item.name}
-                            href={item.href}
-                            className="block px-3 py-2 rounded-lg text-xs transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                          >
-                            {item.name}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Booking Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsBookingOpen(!isBookingOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5" />
-                  Booking
-                </div>
-                {isBookingOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isBookingOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {propertyBookingItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Mailroom Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsMailroomOpen(!isMailroomOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <Mail className="w-5 h-5" />
-                  Mailroom
-                </div>
-                {isMailroomOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isMailroomOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {propertyMailroomItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <a href="/property/parking" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <Car className="w-5 h-5" />
-              Parking
-            </a>
-
-            {/* Setup Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsParkingSetupOpen(!isParkingSetupOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <Settings className="w-5 h-5" />
-                  Setup
-                </div>
-                {isParkingSetupOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isParkingSetupOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {propertyParkingSetupItems.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-          </nav>
-        );
-
-      default:
-        return (
-          <nav className="space-y-2">
-            <div className="px-3 py-4 text-center text-sm text-gray-500">
-              Select a section from the header to view navigation options
-            </div>
-          </nav>
-        );
-    }
+  const isActive = (path: string) => {
+    return location.pathname === path;
   };
 
   return (
-    <div className="w-64 h-screen bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto">
-      <div className="p-6">
-        <div className="flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 bg-[#C72030] rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">FM</span>
-          </div>
-          <span className="text-[#1a1a1a] font-semibold text-lg">FacilityPro</span>
-        </div>
-        
-        {renderNavigationItems()}
-      </div>
-    </div>
+    <SidebarComponent className={className}>
+      <SidebarHeader>
+        {/* You can add a logo or header content here */}
+        <div className="p-4 font-bold">LOGO</div>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Main</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive("/")}>
+                  <Link to="/">
+                    <Home className="w-4 h-4" />
+                    <span>Dashboard</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive("/services")}>
+                  <Link to="/services">
+                    <Wrench className="w-4 h-4" />
+                    <span>Services</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive("/supplier")}>
+                  <Link to="/supplier">
+                    <Truck className="w-4 h-4" />
+                    <span>Supplier</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive("/schedule")}>
+                  <Link to="/schedule">
+                    <Calendar className="w-4 h-4" />
+                    <span>Schedule</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive("/amc")}>
+                  <Link to="/amc">
+                    <ClipboardList className="w-4 h-4" />
+                    <span>AMC</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive("/attendance")}>
+                  <Link to="/attendance">
+                    <FileText className="w-4 h-4" />
+                    <span>Attendance</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive("/tasks")}>
+                  <Link to="/tasks">
+                    <BarChart3 className="w-4 h-4" />
+                    <span>Tasks</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive("/vendor")}>
+                  <Link to="/vendor">
+                    <MapPin className="w-4 h-4" />
+                    <span>Vendor</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive("/schedule-list")}>
+                  <Link to="/schedule-list">
+                    <Calendar className="w-4 h-4" />
+                    <span>Schedule List</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/task-list" isActive={isActive("/task-list")}>
+                    <ClipboardList className="w-4 h-4" />
+                    <span>Task List</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/tickets" isActive={isActive("/tickets")}>
+                    <FileText className="w-4 h-4" />
+                    <span>Tickets</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Operational Audit Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Operational Audit</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/operational-audit/scheduled">
+                    <Calendar className="w-4 h-4" />
+                    <span>Scheduled</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/operational-audit/conducted">
+                    <ClipboardList className="w-4 h-4" />
+                    <span>Conducted</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/operational-audit/master-checklists">
+                    <FileText className="w-4 h-4" />
+                    <span>Master Checklists</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Maintenance Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Maintenance</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {/* Vendor Audit Submenu */}
+              <Collapsible>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton>
+                      <Shield className="w-4 h-4" />
+                      <span>Vendor Audit</span>
+                      <ChevronDown className="ml-auto h-4 w-4" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild>
+                          <Link to="/maintenance/vendor-audit/scheduled">
+                            <span>Scheduled</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild>
+                          <Link to="/maintenance/vendor-audit/conducted">
+                            <span>Conducted</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+
+              {/* Incident Submenu */}
+              <Collapsible>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton>
+                      <Package className="w-4 h-4" />
+                      <span>Incident</span>
+                      <ChevronDown className="ml-auto h-4 w-4" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild>
+                          <Link to="/maintenance/incident/setup">
+                            <span>Setup</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild>
+                          <Link to="/maintenance/incident/list">
+                            <span>List</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+
+              {/* Permit Submenu */}
+              <Collapsible>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton>
+                      <Truck className="w-4 h-4" />
+                      <span>Permit</span>
+                      <ChevronDown className="ml-auto h-4 w-4" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild>
+                          <Link to="/maintenance/permit/setup">
+                            <span>Setup</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild>
+                          <Link to="/maintenance/permit/list">
+                            <span>List</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild>
+                          <Link to="/maintenance/permit/pending-approvals">
+                            <span>Pending Approvals</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+
+              {/* Design Insights Submenu */}
+              <Collapsible>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton>
+                      <Camera className="w-4 h-4" />
+                      <span>Design Insights</span>
+                      <ChevronDown className="ml-auto h-4 w-4" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild>
+                          <Link to="/maintenance/design-insights/list">
+                            <span>List</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild>
+                          <Link to="/maintenance/design-insights/setup">
+                            <span>Setup</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Surveys Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Surveys</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/surveys/list">
+                    <ClipboardList className="w-4 h-4" />
+                    <span>List</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/surveys/mapping">
+                    <Settings className="w-4 h-4" />
+                    <span>Mapping</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/surveys/response">
+                    <FileText className="w-4 h-4" />
+                    <span>Response</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Assets Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Assets</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/assets/inactive">
+                    <Package className="w-4 h-4" />
+                    <span>InActive Assets</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Projects Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Projects</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/projects">
+                    <Building className="w-4 h-4" />
+                    <span>Projects</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/projects/fitout-setup">
+                    <Wrench className="w-4 h-4" />
+                    <span>Fitout Setup</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/projects/add">
+                    <Plus className="w-4 h-4" />
+                    <span>Add Project</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Finance Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Finance</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/material-pr">
+                    <Package className="w-4 h-4" />
+                    <span>Material PR</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/material-pr/add">
+                    <Plus className="w-4 h-4" />
+                    <span>Add Material PR</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/service-pr">
+                    <Wrench className="w-4 h-4" />
+                    <span>Service PR</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/service-pr/add">
+                    <Plus className="w-4 h-4" />
+                    <span>Add Service PR</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/po">
+                  <CreditCard className="w-4 h-4" />
+                    <span>PO</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/po/add">
+                    <Plus className="w-4 h-4" />
+                    <span>Add PO</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/wo">
+                    <Briefcase className="w-4 h-4" />
+                    <span>WO</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/grn">
+                    <Package className="w-4 h-4" />
+                    <span>GRN</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/grn/add">
+                    <Plus className="w-4 h-4" />
+                    <span>Add GRN</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/invoices-ses">
+                    <Receipt className="w-4 h-4" />
+                    <span>Invoices SES</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/pending-approvals">
+                    <Gavel className="w-4 h-4" />
+                    <span>Pending Approvals</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/gdn">
+                    <Truck className="w-4 h-4" />
+                    <span>GDN</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/gdn/pending-approvals">
+                    <Gavel className="w-4 h-4" />
+                    <span>GDN Pending Approvals</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/auto-saved-pr">
+                    <FileText className="w-4 h-4" />
+                    <span>Auto Saved PR</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/wbs-element">
+                    <Lightbulb className="w-4 h-4" />
+                    <span>WBS Element</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/other-bills">
+                    <CreditCard className="w-4 h-4" />
+                    <span>Other Bills</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+               <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/other-bills/add">
+                    <Plus className="w-4 h-4" />
+                    <span>Add New Bill</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/accounting">
+                    <BarChart3 className="w-4 h-4" />
+                    <span>Accounting</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/customer-bills">
+                    <Receipt className="w-4 h-4" />
+                    <span>Customer Bills</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/finance/my-bills">
+                    <Receipt className="w-4 h-4" />
+                    <span>My Bills</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Property Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Property</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/property/space/bookings">
+                    <Calendar className="w-4 h-4" />
+                    <span>Bookings</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/property/booking/setup">
+                    <Settings className="w-4 h-4" />
+                    <span>Booking Setup</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/property/space/seat-type">
+                    <Users className="w-4 h-4" />
+                    <span>Seat Type</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/property/parking">
+                    <Car className="w-4 h-4" />
+                    <span>Parking</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              {/* Setup Submenu */}
+              <Collapsible>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton>
+                      <Settings className="w-4 h-4" />
+                      <span>Setup</span>
+                      <ChevronDown className="ml-auto h-4 w-4" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild>
+                          <Link to="/property/setup/tag">
+                            <Tags className="w-4 h-4" />
+                            <span>Tag</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Visitors Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Visitors</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/visitors/visitors">
+                    <Users className="w-4 h-4" />
+                    <span>Visitors</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/visitors/history">
+                    <ClipboardList className="w-4 h-4" />
+                    <span>History</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/visitors/r-vehicles">
+                    <Car className="w-4 h-4" />
+                    <span>R Vehicles</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/visitors/r-vehicles/history">
+                    <ClipboardList className="w-4 h-4" />
+                    <span>R Vehicles History</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/visitors/g-vehicles">
+                    <Car className="w-4 h-4" />
+                    <span>G Vehicles</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/visitors/staffs">
+                    <Users className="w-4 h-4" />
+                    <span>Staffs</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/visitors/materials">
+                    <Package className="w-4 h-4" />
+                    <span>Materials</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/visitors/patrolling">
+                    <Shield className="w-4 h-4" />
+                    <span>Patrolling</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/visitors/patrolling-pending">
+                    <Gavel className="w-4 h-4" />
+                    <span>Patrolling Pending</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/visitors/goods">
+                    <Package className="w-4 h-4" />
+                    <span>Goods</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/visitors/goods/inwards">
+                    <Truck className="w-4 h-4" />
+                    <span>Inwards</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/visitors/goods/outwards">
+                    <Truck className="w-4 h-4" />
+                    <span>Outwards</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/visitors/vehicle-parkings">
+                    <Car className="w-4 h-4" />
+                    <span>Vehicle Parkings</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Experience Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Experience</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/experience/events">
+                    <Calendar className="w-4 h-4" />
+                    <span>Events</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/experience/broadcast">
+                    <MessageSquare className="w-4 h-4" />
+                    <span>Broadcast</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/experience/business">
+                    <Briefcase className="w-4 h-4" />
+                    <span>Business Directory</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/experience/business/setup">
+                    <Settings className="w-4 h-4" />
+                    <span>Business Setup</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/experience/documents/unit">
+                    <FileText className="w-4 h-4" />
+                    <span>Documents Unit</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/experience/documents/common">
+                    <FileText className="w-4 h-4" />
+                    <span>Documents Common</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/experience/transport/outstation">
+                    <MapPin className="w-4 h-4" />
+                    <span>Outstation</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/experience/transport/airline">
+                    <Plane className="w-4 h-4" />
+                    <span>Airline</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/experience/transport/rail">
+                    <Train className="w-4 h-4" />
+                    <span>Rail</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/experience/transport/hotel">
+                    <Hotel className="w-4 h-4" />
+                    <span>Hotel</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/experience/transport/self-travel">
+                    <Car className="w-4 h-4" />
+                    <span>Self Travel</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/experience/testimonials">
+                    <Star className="w-4 h-4" />
+                    <span>Testimonials</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/experience/company-partners">
+                    <Handshake className="w-4 h-4" />
+                    <span>Company Partners</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </SidebarComponent>
   );
 };
+
+export default Sidebar;
