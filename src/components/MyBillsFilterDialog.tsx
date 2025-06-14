@@ -43,7 +43,7 @@ export const MyBillsFilterDialog: React.FC<MyBillsFilterDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold">Filter</DialogTitle>
           <Button
@@ -57,42 +57,44 @@ export const MyBillsFilterDialog: React.FC<MyBillsFilterDialogProps> = ({
         </DialogHeader>
         
         <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-2 block">Bill No</label>
-            <Input
-              placeholder="Bill Number Search"
-              value={filters.billNo}
-              onChange={(e) => setFilters({ ...filters, billNo: e.target.value })}
-              className="text-sm"
-            />
-          </div>
-          
-          <div>
-            <label className="text-sm font-medium mb-2 block">Payment Status</label>
-            <Select value={filters.paymentStatus} onValueChange={(value) => setFilters({ ...filters, paymentStatus: value })}>
-              <SelectTrigger className="text-sm">
-                <SelectValue placeholder="Select Payment Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="overdue">Overdue</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Bill No</label>
+              <Input
+                placeholder="Bill Number Search"
+                value={filters.billNo}
+                onChange={(e) => setFilters({ ...filters, billNo: e.target.value })}
+                className="text-sm"
+              />
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium mb-2 block">Payment Status</label>
+              <Select value={filters.paymentStatus} onValueChange={(value) => setFilters({ ...filters, paymentStatus: value })}>
+                <SelectTrigger className="text-sm">
+                  <SelectValue placeholder="Select Payment Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="overdue">Overdue</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div>
-            <label className="text-sm font-medium mb-2 block">Publish Status</label>
-            <Select value={filters.publishStatus} onValueChange={(value) => setFilters({ ...filters, publishStatus: value })}>
-              <SelectTrigger className="text-sm">
-                <SelectValue placeholder="Select Publish Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="published">Published</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
-              </SelectContent>
-            </Select>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Publish Status</label>
+              <Select value={filters.publishStatus} onValueChange={(value) => setFilters({ ...filters, publishStatus: value })}>
+                <SelectTrigger className="text-sm">
+                  <SelectValue placeholder="Select Publish Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
