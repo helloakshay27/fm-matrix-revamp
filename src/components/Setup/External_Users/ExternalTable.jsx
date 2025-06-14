@@ -60,10 +60,10 @@ const ActionIcons = ({ row, onEdit }) => {
         sx={{ fontSize: 20, cursor: 'pointer' }}
         onClick={() => onEdit(row.original)}
       />
-      <DeleteOutlineOutlinedIcon
+      {/* <DeleteOutlineOutlinedIcon
         sx={{ fontSize: 20, cursor: 'pointer' }}
         onClick={() => alert(`Delete user: ${row.original.userName}`)}
-      />
+      /> */}
     </div>
   );
 };

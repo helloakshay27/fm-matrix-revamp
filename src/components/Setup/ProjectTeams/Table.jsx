@@ -288,40 +288,65 @@ import {
   getPaginationRowModel,
 } from '@tanstack/react-table';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProjectTeams } from '../../../redux/slices/projectSlice';
+import { deleteProjectTeam, fetchProjectTeams } from '../../../redux/slices/projectSlice';
 import TeamModal from './Modal';
+import toast from 'react-hot-toast';
 
-const ActionIcons = ({ row, open }) => (
-  <div className="action-icons flex justify-between gap-5">
-    <div>
-      <button
-        onClick={() => open(row.original.id)}
-      >
-        <EditOutlinedIcon sx={{ fontSize: "20px" }} />
-      </button>
-      <button
-        onClick={() => alert(`Deleting: ${row.original.name}`)}
-        title="Delete"
-      >
-        <DeleteOutlineOutlinedIcon sx={{ fontSize: "20px" }} />
-      </button>
-    </div>
-  </div>
-);
 
 const TeamsTable = () => {
   const dispatch = useDispatch();
   const { fetchProjectTeams: projectTeams } = useSelector(state => state.fetchProjectTeams);
-
+  
   const [data, setData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState(null);
   const fixedRowsPerPage = 13;
-
+  
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: fixedRowsPerPage,
   });
+  const ActionIcons = ({ row, open }) => {
+      const handleDeleteClick = async (id) => {
+      try {
+        await dispatch(deleteProjectTeam({id})).unwrap(); // unwrap to handle async correctly
+        dispatch(fetchProjectTeams()); // refetch data after successful delete
+        toast.dismiss();
+        toast.success('Project Team deleted successfully',{
+            iconTheme: {
+            primary: 'red', // This might directly change the color of the success icon
+            secondary: 'white', // The circle background
+          },
+        });
+  
+      } catch (error) {
+        console.error('Failed to delete:', error);
+        toast.error('Failed to delete Project Team.',{
+            iconTheme: {
+            primary: 'red', // This might directly change the color of the success icon
+            secondary: 'white', // The circle background
+          },
+        });
+      }
+    };
+  
+    return (
+    <div className="action-icons flex justify-between gap-5">
+      <div>
+        <button
+          onClick={() => open(row.original.id)}
+        >
+          <EditOutlinedIcon sx={{ fontSize: "20px" }} />
+        </button>
+        <button
+          onClick={() => handleDeleteClick(row.original.id)}
+          title="Delete"
+        >
+          <DeleteOutlineOutlinedIcon sx={{ fontSize: "20px" }} />
+        </button>
+      </div>
+    </div>
+  )};
 
   useEffect(() => {
     dispatch(fetchProjectTeams());

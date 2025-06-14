@@ -78,10 +78,26 @@ export const editRole = createAsyncThunk('editRole', async ({ id, payload }) => 
     }
 })
 
+export const deleteRole = createAsyncThunk('deleteRole', async ({ id }) => {
+    try {
+        const response = await axios.delete(`https://api-tasks.lockated.com/lock_roles/${id}.json`, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
 export const createRoleSlice = createApiSlice('createRole', createRole);
 export const fetchRoleSlice = createApiSlice('fetchRoles', fetchRoles);
 export const editRoleSlice = createApiSlice('editRole', editRole);
+export const deleteRoleSlice = createApiSlice('deleteRole', deleteRole);
 
 export const createRoleReducer = createRoleSlice.reducer;
 export const fetchRolesReducer = fetchRoleSlice.reducer;
 export const editRoleReducer = editRoleSlice.reducer;
+export const deleteRoleReducer = deleteRoleSlice.reducer;

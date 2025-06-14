@@ -20,7 +20,7 @@ const ActionIcons = ({ row }) => (
         onClick={() => alert(`Deleting: ${row.original.roles}`)}
         title="Delete"
       >
-        <DeleteOutlineOutlinedIcon sx={{ fontSize: "20px" }} />
+        {/* <DeleteOutlineOutlinedIcon sx={{ fontSize: "20px" }} /> */}
       </button>
     </div>
   </div>

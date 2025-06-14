@@ -6,7 +6,7 @@ import Switch from '@mui/joy/Switch';
 import CustomTable from '../CustomTable';
 import RoleModal from './Modal';
 import { useDispatch, useSelector } from 'react-redux';
-import { editRole, fetchRoles } from '../../../redux/slices/roleSlice';
+import { deleteRole, editRole, fetchRoles } from '../../../redux/slices/roleSlice';
 import toast from 'react-hot-toast';
 
 const ActionIcons = ({ row, onEdit }) => {
@@ -35,6 +35,29 @@ const ActionIcons = ({ row, onEdit }) => {
     });
   };
 
+    const handleDeleteClick = async (id) => {
+      try {
+        await dispatch(deleteRole({id})).unwrap(); // unwrap to handle async correctly
+        dispatch(fetchRoles()); // refetch data after successful delete
+        toast.dismiss();
+        toast.success('Role deleted successfully',{
+            iconTheme: {
+            primary: 'red', // This might directly change the color of the success icon
+            secondary: 'white', // The circle background
+          },
+        });
+  
+      } catch (error) {
+        console.error('Failed to delete:', error);
+        toast.error('Failed to delete Role.',{
+            iconTheme: {
+            primary: 'red', // This might directly change the color of the success icon
+            secondary: 'white', // The circle background
+          },
+        });
+      }
+    };
+
   return (
     <div className="action-icons flex justify-between gap-5">
       <Switch
@@ -49,7 +72,7 @@ const ActionIcons = ({ row, onEdit }) => {
           onClick={() => onEdit(row.original)}
         />
         <button
-          onClick={() => alert(`Deleting: ${row.original.roles}`)}
+          onClick={() => handleDeleteClick(row.original.id)}
           title="Delete"
         >
           <DeleteOutlineOutlinedIcon sx={{ fontSize: '20px' }} />

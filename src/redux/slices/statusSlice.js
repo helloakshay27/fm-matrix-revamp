@@ -75,10 +75,27 @@ export const updateStatus = createAsyncThunk("updateStatus", async ({ id, payloa
     }
 })
 
+export const deleteStatus = createAsyncThunk("deleteStatus", async ({ id }) => {
+    try {
+        const response = await axios.delete(`https://api-tasks.lockated.com/project_statuses/${id}.json`, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            }
+        })
+        return response.data;
+    }
+    catch (error) {
+        console.log(error)
+    }
+})
+
 const fetchStatusSlice = createApiSlice("fetchStatus", fetchStatus);
 const createStatusSlice = createApiSlice("createStatus", createStatus);
 const updateStatusSlice = createApiSlice("updateStatus", updateStatus);
+const deleteStatusSlice = createApiSlice("deleteStatus", deleteStatus);
+
 export const fetchStatusReducer = fetchStatusSlice.reducer;
 export const createStatusReducer = createStatusSlice.reducer;
 export const updateStatusReducer = updateStatusSlice.reducer;
+export const deleteStatusReducer = deleteStatusSlice.reducer;
 

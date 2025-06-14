@@ -60,7 +60,7 @@ const ActionIcons = ({ row, onEditClick }) => {
           onClick={() => alert(`Deleting: ${row.original.name}`)}
           title="Delete"
         >
-          <DeleteOutlineOutlinedIcon sx={{ fontSize: '20px' }} />
+          {/* <DeleteOutlineOutlinedIcon sx={{ fontSize: '20px' }} /> */}
         </button>
       </div>
     </div>

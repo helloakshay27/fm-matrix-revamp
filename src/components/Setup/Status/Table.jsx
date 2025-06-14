@@ -3,7 +3,7 @@ import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import Switch from '@mui/joy/Switch';
 // import axios from 'axios'; // Not used, can remove
-import { fetchStatus, updateStatus, createStatus } from '../../../redux/slices/statusSlice.js';
+import { fetchStatus, updateStatus, createStatus, deleteStatus } from '../../../redux/slices/statusSlice.js';
 import { useDispatch } from 'react-redux';
 
 import {
@@ -16,34 +16,6 @@ import {
 import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 
-const ActionIcons = ({ row, setOpenModal, setIsEdit, setExistingData }) => {
-  const handleEditClick = () => {
-    setIsEdit(true);
-    setExistingData(row.original);
-    setOpenModal(true);
-    console.log(row.original);
-  };
-
-  return (
-    <div className="action-icons flex justify-between gap-5">
-      <div>
-        <EditOutlinedIcon
-          onClick={handleEditClick}
-          sx={{ fontSize: '20px', cursor: 'pointer' }}
-        />
-        <button
-          // You had 'data.title' here, which is undefined in this component's scope
-          // Use row.original.status or row.original.name for deletion
-          onClick={() => alert(`Deleting: ${row.original.status || 'item'}`)}
-          title="Delete"
-          className="ml-2"
-        >
-          <DeleteOutlineOutlinedIcon sx={{ fontSize: '20px' }} />
-        </button>
-      </div>
-    </div>
-  );
-};
 
 const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
   const dispatch = useDispatch();
@@ -65,6 +37,59 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
         dispatch(fetchStatus());
     }
   }, [dispatch]); 
+
+  const ActionIcons = ({ row, setOpenModal, setIsEdit, setExistingData }) => {
+  const handleEditClick = () => {
+    setIsEdit(true);
+    setExistingData(row.original);
+    setOpenModal(true);
+    console.log(row.original);
+  };
+
+    const handleDeleteClick = async (id) => {
+      try {
+        await dispatch(deleteStatus({id})).unwrap(); // unwrap to handle async correctly
+        dispatch(fetchStatus()); // refetch data after successful delete
+        toast.dismiss();
+        toast.success('Status deleted successfully',{
+            iconTheme: {
+            primary: 'red', // This might directly change the color of the success icon
+            secondary: 'white', // The circle background
+          },
+        });
+  
+      } catch (error) {
+        console.error('Failed to delete:', error);
+        toast.error('Failed to delete Status.',{
+            iconTheme: {
+            primary: 'red', // This might directly change the color of the success icon
+            secondary: 'white', // The circle background
+          },
+        });
+      }
+    };
+
+  return (
+    <div className="action-icons flex justify-between gap-5">
+      <div>
+        <EditOutlinedIcon
+          onClick={handleEditClick}
+          sx={{ fontSize: '20px', cursor: 'pointer' }}
+        />
+        <button
+          // You had 'data.title' here, which is undefined in this component's scope
+          // Use row.original.status or row.original.name for deletion
+          onClick={() => handleDeleteClick(row.original.id)}
+          title="Delete"
+          className="ml-2"
+        >
+          <DeleteOutlineOutlinedIcon sx={{ fontSize: '20px' }} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
 
 
   // Handler to toggle status

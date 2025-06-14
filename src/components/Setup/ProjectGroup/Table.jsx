@@ -10,7 +10,7 @@ import {
   getPaginationRowModel,
 } from '@tanstack/react-table';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProjectGroup, createProjectGroup, updateProjectGroup } from '../../../redux/slices/projectSlice';
+import { fetchProjectGroup, createProjectGroup, updateProjectGroup, deleteProjectGroup } from '../../../redux/slices/projectSlice';
 import Modal from './Modal';
 import toast from 'react-hot-toast';
 
@@ -58,14 +58,28 @@ const GroupTable = () => {
     setOpenModal(true);
   };
 
-//   const handleDeleteClick = async (id) => {
-//     try {
-//       await dispatch(deleteProjectType(id)).unwrap(); // unwrap to handle async correctly
-//       dispatch(fetchProjectTypes()); // refetch data after successful delete
-//     } catch (error) {
-//       console.error('Failed to delete:', error);
-//     }
-//   };
+  const handleDeleteClick = async (id) => {
+    try {
+      await dispatch(deleteProjectGroup(id)).unwrap(); // unwrap to handle async correctly
+      dispatch(fetchProjectGroup()); // refetch data after successful delete
+      toast.dismiss();
+      toast.success('Project Group deleted successfully',{
+          iconTheme: {
+          primary: 'red', // This might directly change the color of the success icon
+          secondary: 'white', // The circle background
+        },
+      });
+
+    } catch (error) {
+      console.error('Failed to delete:', error);
+      toast.error('Failed to delete Project Group.',{
+          iconTheme: {
+          primary: 'red', // This might directly change the color of the success icon
+          secondary: 'white', // The circle background
+        },
+      });
+    }
+  };
 
 
   const handleToggle = async (row) => {

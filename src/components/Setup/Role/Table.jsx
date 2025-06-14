@@ -9,21 +9,47 @@ import {
   flexRender,
   getPaginationRowModel,
 } from '@tanstack/react-table';
+import { deleteRole, fetchRoles } from '../../../redux/slices/roleSlice';
 
-const ActionIcons = ({ row }) => (
+const ActionIcons = ({ row }) => {
+    
+       const handleDeleteClick = async (id) => {
+         try {
+           await dispatch(deleteRole(id)).unwrap(); // unwrap to handle async correctly
+           dispatch(fetchRoles()); // refetch data after successful delete
+           toast.dismiss();
+           toast.success('Role deleted successfully',{
+               iconTheme: {
+               primary: 'red', // This might directly change the color of the success icon
+               secondary: 'white', // The circle background
+             },
+           });
+     
+         } catch (error) {
+           console.error('Failed to delete:', error);
+           toast.error('Failed to delete Role',{
+               iconTheme: {
+               primary: 'red', // This might directly change the color of the success icon
+               secondary: 'white', // The circle background
+             },
+           });
+         }
+       };
+
+  (
   <div className="action-icons flex justify-between gap-5">
     <Switch color="danger" />
     <div>
       <EditOutlinedIcon sx={{ fontSize: "20px" }} />
       <button
-        onClick={() => alert(`Deleting: ${row.original.roles}`)}
+        onClick={() => handleDeleteClick(row.original.id)}
         title="Delete"
       >
         <DeleteOutlineOutlinedIcon sx={{ fontSize: "20px" }} />
       </button>
     </div>
   </div>
-);
+)};
 
 const defaultData = [
   {

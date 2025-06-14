@@ -296,6 +296,21 @@ export const updateProjectGroup = createAsyncThunk('updateProjectGroup', async (
     }
 })
 
+export const deleteProjectGroup = createAsyncThunk('deleteProjectGroup', async (id) => {
+    try {
+        const response = await axios.delete(`https://api-tasks.lockated.com/project_groups/${id}.json`, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            },
+        })
+        return response.data;
+    }
+    catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
 export const createProjectTeam = createAsyncThunk('createProjectTeam', async ({ payload }) => {
     try {
         const response = await axios.post(`https://api-tasks.lockated.com/project_teams.json`, payload, {
@@ -329,6 +344,21 @@ export const fetchProjectTeams = createAsyncThunk('fetchProjectTeams', async () 
 export const fetchProjectTeam = createAsyncThunk('fetchProjectTeam', async ({ id }) => {
     try {
         const response = await axios.get(`https://api-tasks.lockated.com/project_teams/${id}.json`, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            },
+        })
+        return response.data;
+    }
+    catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
+export const deleteProjectTeam = createAsyncThunk('deleteProjectTeam', async ({ id }) => {
+    try {
+        const response = await axios.delete(`https://api-tasks.lockated.com/project_teams/${id}.json`, {
             headers: {
                 Authorization: `Bearer ${access_token}`,
             },
@@ -401,6 +431,8 @@ export const removeMembersFromGroup = createAsyncThunk('removeMembersFromGroup',
     }
 })
 
+
+
 export const createProjectSlice = createApiSlice('createProject', createProject);
 export const fetchProjectsSlice = createApiSlice('fetchProjects', fetchProjects);
 export const fetchProjectDetailsSlice = createApiSlice('fetchProjectDetails', fetchProjectDetails);
@@ -423,7 +455,8 @@ export const updateProjectTeamSlice = createApiSlice('updateProjectTeam', update
 export const removeTagFromProjectSlice = createApiSlice('removeTagFromProject', removeTagFromProject);
 export const removeMembersFromTeamSlice = createApiSlice('removeMembersFromTeam', removeMembersFromTeam);
 export const removeMembersFromGroupSlice = createApiSlice('removeMembersFromGroup', removeMembersFromGroup);
-
+export const deleteProjectTeamSlice = createApiSlice('deleteProjectTeam', deleteProjectTeam);
+export const deleteProjectGroupSlice = createApiSlice('deleteProjectGroup', deleteProjectGroup);
 
 export const createProjectReducer = createProjectSlice.reducer;
 export const fetchProjectsReducer = fetchProjectsSlice.reducer;
@@ -447,5 +480,7 @@ export const updateProjectTeamReducer = updateProjectTeamSlice.reducer;
 export const removeTagFromProjectReducer = removeTagFromProjectSlice.reducer;
 export const removeMembersFromTeamReducer = removeMembersFromTeamSlice.reducer;
 export const removeMembersFromGroupReducer = removeMembersFromGroupSlice.reducer;
+export const deleteProjectTeamReducer = deleteProjectTeamSlice.reducer;
+export const deleteProjectGroupReducer = deleteProjectGroupSlice.reducer;
 
 export const { resetSuccess } = createProjectTeamSlice.actions;
