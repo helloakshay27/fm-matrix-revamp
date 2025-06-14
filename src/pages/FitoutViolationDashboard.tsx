@@ -1,60 +1,37 @@
 
-import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Plus, Filter } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import React from 'react';
+import { Plus, Filter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ProjectLayout } from '@/components/ProjectLayout';
 
 export const FitoutViolationDashboard = () => {
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-
   return (
-    <div className="p-6">
-      {/* Breadcrumb */}
-      <div className="mb-4">
-        <span className="text-sm text-gray-600">Fitout &gt; Fitout Violation</span>
-      </div>
+    <ProjectLayout>
+      <div className="space-y-6">
+        <div className="text-sm text-gray-600">
+          <span>Project</span>
+          <span className="mx-2">&gt;</span>
+          <span className="text-gray-900">Fitout Violation</span>
+        </div>
 
-      {/* Page Title */}
-      <h1 className="text-2xl font-bold mb-6">FITOUT VIOLATION</h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900">FITOUT VIOLATION</h1>
+          <div className="flex gap-2">
+            <Button className="bg-[#C72030] hover:bg-[#A01828] text-white">
+              <Plus className="w-4 h-4 mr-2" />
+              Add
+            </Button>
+            <Button variant="outline">
+              <Filter className="w-4 h-4 mr-2" />
+              Filters
+            </Button>
+          </div>
+        </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-4 mb-6">
-        <Button className="bg-purple-700 hover:bg-purple-800 text-white">
-          <Plus className="w-4 h-4 mr-2" />
-          Add
-        </Button>
-        <Button 
-          variant="outline"
-          onClick={() => setIsFilterOpen(true)}
-          className="border-purple-700 text-purple-700 hover:bg-purple-50"
-        >
-          <Filter className="w-4 h-4 mr-2" />
-          Filters
-        </Button>
+        <div className="bg-white p-6 rounded-lg border">
+          <p className="text-gray-500">Fitout violation content will be displayed here.</p>
+        </div>
       </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold">Actions</TableHead>
-              <TableHead className="font-semibold">Violation ID</TableHead>
-              <TableHead className="font-semibold">Description</TableHead>
-              <TableHead className="font-semibold">Severity</TableHead>
-              <TableHead className="font-semibold">Status</TableHead>
-              <TableHead className="font-semibold">Reported Date</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow>
-              <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                No violations found.
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+    </ProjectLayout>
   );
 };
