@@ -192,11 +192,17 @@ const vendorAuditItems = [
   { name: 'Conducted', href: '/maintenance/vendor-audit/conducted' },
 ];
 
+const incidentItems = [
+  { name: 'Incident Setup', href: '/maintenance/incident/setup' },
+  { name: 'Incident', href: '/maintenance/incident/list' },
+];
+
 export const Sidebar = () => {
   const { currentSection } = useLayout();
   const [isSurveyOpen, setIsSurveyOpen] = useState(false);
   const [isOperationalAuditOpen, setIsOperationalAuditOpen] = useState(false);
   const [isVendorAuditOpen, setIsVendorAuditOpen] = useState(false);
+  const [isIncidentOpen, setIsIncidentOpen] = useState(false);
   const [isWasteGenerationOpen, setIsWasteGenerationOpen] = useState(false);
   const [isDocumentsOpen, setIsDocumentsOpen] = useState(false);
   const [isTransportOpen, setIsTransportOpen] = useState(false);
@@ -278,6 +284,33 @@ export const Sidebar = () => {
               {isVendorAuditOpen && (
                 <div className="ml-8 mt-1 space-y-1">
                   {vendorAuditItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Incident Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsIncidentOpen(!isIncidentOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="w-5 h-5" />
+                  Incident
+                </div>
+                {isIncidentOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isIncidentOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {incidentItems.map((item) => (
                     <a
                       key={item.name}
                       href={item.href}
