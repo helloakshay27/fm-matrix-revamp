@@ -124,7 +124,7 @@ export const DesignInsightsDashboard = () => {
     <div className="flex-1 p-6 bg-white min-h-screen">
       {/* Breadcrumb */}
       <div className="mb-4">
-        <span className="text-sm text-gray-600">Design Insights > Design Insights List</span>
+        <span className="text-sm text-gray-600">Design Insights {'>'}  Design Insights List</span>
       </div>
 
       {/* Header */}

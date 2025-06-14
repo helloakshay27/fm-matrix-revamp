@@ -30,7 +30,7 @@ export const DesignInsightsSetupDashboard = () => {
     <div className="flex-1 p-6 bg-white min-h-screen">
       {/* Breadcrumb */}
       <div className="mb-4">
-        <span className="text-sm text-gray-600">Design Insight > Design Insight Tag</span>
+        <span className="text-sm text-gray-600">Design Insight {'>'}  Design Insight Tag</span>
       </div>
 
       {/* Header */}
