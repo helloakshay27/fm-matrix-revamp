@@ -199,16 +199,25 @@ import gsap from "gsap";
 const SetupSidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
     const [isUsersSubMenuOpen, setIsUsersSubMenuOpen] = useState(true);
     const [isProjectSubMenuOpen, setIsProjectSubMenuOpen] = useState(false);
+    const [isIssuesSubMenuOpen, setIsIssuesSubMenuOpen] = useState(false);
     const sidebarRef = useRef(null);
 
     const toggleUsersSubMenu = () => {
         setIsUsersSubMenuOpen((prev) => !prev);
-        setIsProjectSubMenuOpen((prev) => !prev);
+        setIsProjectSubMenuOpen(false);
+        setIsIssuesSubMenuOpen(false);
     };
 
     const toggleProjectSubMenu = () => {
         setIsProjectSubMenuOpen((prev) => !prev);
-        setIsUsersSubMenuOpen((prev) => !prev);
+        setIsUsersSubMenuOpen(false);
+        setIsIssuesSubMenuOpen(false);
+    };
+
+    const toggleIssuesSubMenu = () => {
+        setIsIssuesSubMenuOpen((prev) => !prev);
+        setIsProjectSubMenuOpen(false);
+        setIsUsersSubMenuOpen(false);
     };
 
     useGSAP(() => {
@@ -373,6 +382,31 @@ const SetupSidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
                                         Project Template
                                     </NavLink>
                                 </li>
+                            </>
+                        )}
+
+                        <li
+                            className={`sidebar-link cursor-pointer ${!isSidebarOpen ? "justify-center" : ""} ${isIssuesSubMenuOpen ? "bg-[#c72030] text-white" : ""
+                                }`}
+                            onClick={toggleIssuesSubMenu}
+                        >
+                            <Home size={20} />
+                            {isSidebarOpen ? "Issue Master" : ""}
+                        </li>
+
+                        {isSidebarOpen && isIssuesSubMenuOpen && (
+                            <>
+                                <li className="text-[14px] ms-[60px] mb-4 mt-2">
+                                    <NavLink
+                                        to="/setup/issues/types"
+                                        className={({ isActive }) =>
+                                            `${isActive ? "text-red font-bold" : "text-gray-700"}`
+                                        }
+                                    >
+                                        Types
+                                    </NavLink>
+                                </li>
+                                
                             </>
                         )}
                     </ul>

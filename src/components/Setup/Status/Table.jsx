@@ -97,7 +97,7 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
     () => [
       {
         accessorKey: 'status', // Assuming 'status' is the property in your status object
-        header: 'Project Status Title',
+        header: 'Status Name',
         size: 250,
         cell: ({ getValue }) => getValue(),
       },

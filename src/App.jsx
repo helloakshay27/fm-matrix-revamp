@@ -39,6 +39,8 @@ import GroupTable from "./components/Setup/ProjectGroup/Table.jsx";
 import ProjectGroup from "./pages/Setup/ProjectGroup.jsx";
 import ProjectTemplates from "./pages/Setup/ProjectTemplates.jsx";
 import { Toaster } from "react-hot-toast";
+import Table from "./components/Setup/Issues_Type/Table.jsx";
+import IssuesType from "./pages/Setup/IssueType.jsx";
 
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -124,6 +126,10 @@ const App = () => {
                   <Route
                     path="/setup/project-template"
                     element={<ProjectTemplates />}
+                  />
+                  <Route
+                    path="/setup/issues/types"
+                    element={<IssuesType />}
                   />
                 </Routes>
               </Layout>

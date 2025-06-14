@@ -113,7 +113,7 @@ const Modal = ({ setOpenModal, openModal, isEdit, existingData = {} }) => {
 
       <div className="flex justify-center gap-3  bg-[#D5DBDB] items-center h-full">
         <button
-          className="bg-[#C72030] h-[28px] w-[100px] cursor-pointer text-white px-4"
+          className="border-2 border-[#C72030] h-[28px] w-[100px] cursor-pointer text-[#C72030] px-4"
           onClick={() => handleSave()}
         >
           Save

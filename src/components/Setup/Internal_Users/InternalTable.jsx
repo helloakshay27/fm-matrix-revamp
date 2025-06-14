@@ -118,9 +118,19 @@ const InternalTable = () => {
         },
       },
       {
+        accessorKey: 'mobile',
+        header: 'Mobile No.',
+        size: 150,
+
+      },
+      {
         accessorKey: 'email',
         header: 'Email Id',
         size: 200,
+        cell :({ row, getValue }) => {
+          const value = row.original ? getValue() : null;
+          return <span className="pl-2">{value}</span>;
+        }
       },
       {
         accessorKey: 'lock_role.display_name',
