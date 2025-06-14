@@ -106,6 +106,7 @@ import { AddAddressDashboard } from "./pages/setup/AddAddressDashboard";
 import { MasterChecklistDashboard } from "./pages/setup/MasterChecklistDashboard";
 import { AddMasterChecklistDashboard } from "./pages/setup/AddMasterChecklistDashboard";
 import { ExportDashboard } from "./pages/setup/ExportDashboard";
+import { DepartmentDashboard } from "./pages/setup/DepartmentDashboard";
 
 const queryClient = new QueryClient();
 
@@ -135,6 +136,7 @@ const App = () => (
             <Route path="/setup/master-checklist" element={<MasterChecklistDashboard />} />
             <Route path="/setup/master-checklist/add" element={<AddMasterChecklistDashboard />} />
             <Route path="/setup/export" element={<ExportDashboard />} />
+            <Route path="/setup/user-role/department" element={<DepartmentDashboard />} />
             
             {/* Main app routes with Layout wrapper */}
             <Route path="/*" element={
