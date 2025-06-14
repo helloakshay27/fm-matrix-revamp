@@ -1,13 +1,16 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Filter, Eye } from "lucide-react";
+import AddInboundMailModal from "@/components/AddInboundMailModal";
+import InboundFilterDialog from "@/components/InboundFilterDialog";
 
 const MailroomInboundDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
 
   const mailData = [
     {
@@ -108,6 +111,11 @@ const MailroomInboundDashboard = () => {
     }
   };
 
+  const handleApplyFilters = (filters: any) => {
+    console.log('Applied filters:', filters);
+    // Apply filter logic here
+  };
+
   const filteredData = mailData.filter(item =>
     item.vendorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.recipientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -129,11 +137,18 @@ const MailroomInboundDashboard = () => {
       </div>
 
       <div className="flex items-center gap-4">
-        <Button className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white">
+        <Button 
+          className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white"
+          onClick={() => setIsAddModalOpen(true)}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
-        <Button variant="outline" className="border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6] hover:text-white">
+        <Button 
+          variant="outline" 
+          className="border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6] hover:text-white"
+          onClick={() => setIsFilterDialogOpen(true)}
+        >
           <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
@@ -218,6 +233,17 @@ const MailroomInboundDashboard = () => {
           </div>
         </div>
       </div>
+
+      <AddInboundMailModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+      />
+
+      <InboundFilterDialog
+        isOpen={isFilterDialogOpen}
+        onClose={() => setIsFilterDialogOpen(false)}
+        onApplyFilters={handleApplyFilters}
+      />
     </div>
   );
 };
