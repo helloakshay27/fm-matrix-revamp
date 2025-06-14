@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -88,6 +87,9 @@ import { VendorDashboard } from "./pages/VendorDashboard";
 import { ScheduleListDashboard } from "./pages/ScheduleListDashboard";
 import { TaskListDashboard } from "./pages/TaskListDashboard";
 import { TicketListDashboard } from "./pages/TicketListDashboard";
+import { CustomersDashboard } from "./pages/CustomersDashboard";
+import { FMUsersDashboard } from "./pages/FMUsersDashboard";
+import { OccupantUsersDashboard } from "./pages/OccupantUsersDashboard";
 
 const queryClient = new QueryClient();
 
@@ -117,6 +119,13 @@ const App = () => (
                   <Route path="/schedule-list" element={<ScheduleListDashboard />} />
                   <Route path="/task-list" element={<TaskListDashboard />} />
                   <Route path="/tickets" element={<TicketListDashboard />} />
+                  
+                  {/* CRM Routes */}
+                  <Route path="/crm/customers" element={<CustomersDashboard />} />
+                  <Route path="/crm/fm-users" element={<FMUsersDashboard />} />
+                  <Route path="/crm/occupant-users" element={<OccupantUsersDashboard />} />
+                  
+                  {/* ... keep existing code for all other routes */}
                   <Route path="/operational-audit/scheduled" element={<OperationalAuditScheduledDashboard />} />
                   <Route path="/operational-audit/conducted" element={<OperationalAuditConductedDashboard />} />
                   <Route path="/operational-audit/master-checklists" element={<OperationalAuditMasterChecklistsDashboard />} />
