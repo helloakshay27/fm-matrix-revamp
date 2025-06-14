@@ -1,89 +1,31 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Upload } from "lucide-react";
+import { Plus } from "lucide-react";
 
 export const OperationalAuditMasterChecklistsDashboard = () => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-    }
-  };
-
-  const handleDragOver = (event: React.DragEvent) => {
-    event.preventDefault();
-  };
-
-  const handleDrop = (event: React.DragEvent) => {
-    event.preventDefault();
-    const file = event.dataTransfer.files[0];
-    if (file) {
-      setSelectedFile(file);
-    }
-  };
-
-  // Sample data - can be empty as shown in image 3
-  const masterChecklistData: any[] = [];
+  // Sample data - you can replace with actual data
+  const masterChecklistData = [
+    { id: "MC001", checklistName: "Fire Safety Checklist", category: "Safety", status: "Active", createdOn: "15/01/2025, 10:30 AM" },
+    { id: "MC002", checklistName: "HVAC Maintenance", category: "Maintenance", status: "Active", createdOn: "12/01/2025, 02:15 PM" },
+    { id: "MC003", checklistName: "Security Audit", category: "Security", status: "Inactive", createdOn: "08/01/2025, 09:45 AM" },
+  ];
 
   return (
     <div className="p-6">
       <div className="mb-6">
         <div>
-          <p className="text-[#1a1a1a] opacity-70 mb-2">Master Checklist &gt; Master Checklist List</p>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">MASTER CHECKLIST LIST</h1>
+          <p className="text-[#1a1a1a] opacity-70 mb-2">Operational Audit &gt; Master Checklists</p>
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">MASTER CHECKLISTS</h1>
         </div>
       </div>
       
       <div className="mb-4">
-        <Button className="bg-[#6B46C1] hover:bg-[#5B21B6] text-white flex items-center gap-2">
+        <Button className="bg-[#C72030] hover:bg-[#a91b28] text-white flex items-center gap-2">
           <Plus className="w-4 h-4" />
           Add
         </Button>
-      </div>
-
-      {/* File Upload Section */}
-      <div className="mb-6 flex gap-4 items-start">
-        {/* Drag & Drop Area */}
-        <div 
-          className="flex-1 border-2 border-dashed border-orange-300 rounded-lg p-8 text-center bg-orange-50"
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-        >
-          <div className="text-orange-600 mb-2">
-            <Upload className="w-8 h-8 mx-auto mb-2" />
-            Drag & Drop or
-          </div>
-          <input
-            type="file"
-            id="file-upload"
-            className="hidden"
-            onChange={handleFileSelect}
-            accept=".xlsx,.xls,.csv"
-          />
-          <label 
-            htmlFor="file-upload" 
-            className="text-orange-600 underline cursor-pointer hover:text-orange-700"
-          >
-            Choose File
-          </label>
-          <div className="text-gray-500 text-sm mt-1">
-            {selectedFile ? selectedFile.name : 'No file chosen'}
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-col gap-2">
-          <Button className="bg-[#6B46C1] hover:bg-[#5B21B6] text-white px-6">
-            Download Sample Format
-          </Button>
-          <Button className="bg-[#6B46C1] hover:bg-[#5B21B6] text-white px-6">
-            Import Questions
-          </Button>
-        </div>
       </div>
 
       <div className="bg-white rounded-lg border shadow-sm overflow-x-auto">
@@ -91,26 +33,22 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
           <TableHeader>
             <TableRow className="bg-gray-50">
               <TableHead className="font-semibold text-gray-700">ID</TableHead>
-              <TableHead className="font-semibold text-gray-700">Activity Name</TableHead>
-              <TableHead className="font-semibold text-gray-700 text-right">Number Of Questions</TableHead>
+              <TableHead className="font-semibold text-gray-700">Checklist Name</TableHead>
+              <TableHead className="font-semibold text-gray-700">Category</TableHead>
+              <TableHead className="font-semibold text-gray-700">Status</TableHead>
+              <TableHead className="font-semibold text-gray-700">Created on</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {masterChecklistData.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center py-8 text-gray-500">
-                  No master checklists available
-                </TableCell>
+            {masterChecklistData.map((item, index) => (
+              <TableRow key={index}>
+                <TableCell className="text-blue-600 font-medium">{item.id}</TableCell>
+                <TableCell>{item.checklistName}</TableCell>
+                <TableCell>{item.category}</TableCell>
+                <TableCell>{item.status}</TableCell>
+                <TableCell>{item.createdOn}</TableCell>
               </TableRow>
-            ) : (
-              masterChecklistData.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell className="text-blue-600 font-medium">{item.id}</TableCell>
-                  <TableCell>{item.activityName}</TableCell>
-                  <TableCell className="text-right">{item.numberOfQuestions}</TableCell>
-                </TableRow>
-              ))
-            )}
+            ))}
           </TableBody>
         </Table>
       </div>
