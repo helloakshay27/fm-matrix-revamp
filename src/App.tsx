@@ -60,7 +60,7 @@ import { AddGRNDashboard } from "./pages/AddGRNDashboard";
 import { InvoicesSESDashboard } from "./pages/InvoicesSESDashboard";
 import { PendingApprovalsDashboard } from "./pages/PendingApprovalsDashboard";
 import { GDNDashboard } from "./pages/GDNDashboard";
-import { GDNPendingApprovalsDashboard } from "./pages/GDNPendingApprovalsDashboard";
+import { GDNPendingApprovalsDashboard } from "./pages/GDN";
 import { AutoSavedPRDashboard } from "./pages/AutoSavedPRDashboard";
 import { WBSElementDashboard } from "./pages/WBSElementDashboard";
 import { OtherBillsDashboard } from "./pages/OtherBillsDashboard";
@@ -110,10 +110,8 @@ import { ExportDashboard } from "./pages/setup/ExportDashboard";
 import { DepartmentDashboard } from "./pages/setup/DepartmentDashboard";
 import { RoleDashboard } from "./pages/setup/RoleDashboard";
 import { AddRoleDashboard } from "./pages/setup/AddRoleDashboard";
+import { TagDashboard } from "./pages/setup/TagDashboard";
 import { AddTicketDashboard } from "./pages/AddTicketDashboard";
-import { FitoutRequestListDashboard } from "./pages/FitoutRequestListDashboard";
-import { FitoutChecklistDashboard } from "./pages/FitoutChecklistDashboard";
-import { FitoutViolationDashboard } from "./pages/FitoutViolationDashboard";
 
 const queryClient = new QueryClient();
 
@@ -142,6 +140,7 @@ const App = () => (
             <Route path="/setup/address/add" element={<AddAddressDashboard />} />
             <Route path="/setup/master-checklist" element={<MasterChecklistDashboard />} />
             <Route path="/setup/master-checklist/add" element={<AddMasterChecklistDashboard />} />
+            <Route path="/setup/tag" element={<TagDashboard />} />
             <Route path="/setup/export" element={<ExportDashboard />} />
             <Route path="/setup/user-role/department" element={<DepartmentDashboard />} />
             <Route path="/setup/user-role/role" element={<RoleDashboard />} />
@@ -180,9 +179,6 @@ const App = () => (
                   <Route path="/assets/inactive" element={<InActiveAssetsDashboard />} />
                   <Route path="/projects" element={<ProjectDashboard />} />
                   <Route path="/projects/fitout-setup" element={<FitoutSetupDashboard />} />
-                  <Route path="/projects/fitout-request" element={<FitoutRequestListDashboard />} />
-                  <Route path="/projects/fitout-checklist" element={<FitoutChecklistDashboard />} />
-                  <Route path="/projects/fitout-violation" element={<FitoutViolationDashboard />} />
                   <Route path="/projects/add" element={<AddProjectDashboard />} />
                   <Route path="/finance/material-pr" element={<MaterialPRDashboard />} />
                   <Route path="/finance/material-pr/add" element={<AddMaterialPRDashboard />} />
