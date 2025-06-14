@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -118,11 +119,6 @@ import { TagDashboard } from "./pages/setup/TagDashboard";
 import { AddTicketDashboard } from "./pages/AddTicketDashboard";
 import CRMFMUserDashboard from "./pages/CRMFMUserDashboard";
 import CRMOccupantUsersDashboard from "./pages/CRMOccupantUsersDashboard";
-import UtilityWaterDashboard from "./pages/UtilityWaterDashboard";
-import UtilitySTPDashboard from "./pages/UtilitySTPDashboard";
-import UtilityDailyReadingsDashboard from "./pages/UtilityDailyReadingsDashboard";
-import UtilityConsumptionDashboard from "./pages/UtilityConsumptionDashboard";
-import UtilityEVConsumptionDashboard from "./pages/UtilityEVConsumptionDashboard";
 
 const queryClient = new QueryClient();
 
@@ -197,11 +193,11 @@ const App = () => (
                   
                   {/* Utility routes */}
                   <Route path="/utility/energy-meters" element={<Index />} />
-                  <Route path="/utility/water" element={<UtilityWaterDashboard />} />
-                  <Route path="/utility/stp" element={<UtilitySTPDashboard />} />
-                  <Route path="/utility/daily-readings" element={<UtilityDailyReadingsDashboard />} />
-                  <Route path="/utility/consumption" element={<UtilityConsumptionDashboard />} />
-                  <Route path="/utility/ev-consumption" element={<UtilityEVConsumptionDashboard />} />
+                  <Route path="/utility/water" element={<Index />} />
+                  <Route path="/utility/stp" element={<Index />} />
+                  <Route path="/utility/daily-readings" element={<Index />} />
+                  <Route path="/utility/consumption" element={<Index />} />
+                  <Route path="/utility/ev-consumption" element={<Index />} />
                   <Route path="/utility/solar-generator" element={<Index />} />
                   <Route path="/utility/utility-request" element={<Index />} />
                   <Route path="/utility/waste-generation" element={<Index />} />
