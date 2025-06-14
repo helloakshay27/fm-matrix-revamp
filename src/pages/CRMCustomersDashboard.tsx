@@ -132,78 +132,6 @@ const customers = [
     createdAt: "",
     updatedAt: "",
     colorCode: "#00FFFF"
-  },
-  {
-    id: 8,
-    actionId: 1935,
-    name: "demon",
-    customerCode: "",
-    customerType: "",
-    email: "demon@123",
-    mobile: "1256894378",
-    plantCode: "",
-    companyCode: "",
-    leaseStartDate: "",
-    leaseEndDate: "",
-    freeParking: "",
-    paidParking: "",
-    createdAt: "",
-    updatedAt: "",
-    colorCode: "#00FFFF"
-  },
-  {
-    id: 9,
-    actionId: 1937,
-    name: "dooc",
-    customerCode: "",
-    customerType: "",
-    email: "dooc@2gmail.com",
-    mobile: "456123789",
-    plantCode: "",
-    companyCode: "",
-    leaseStartDate: "",
-    leaseEndDate: "",
-    freeParking: "",
-    paidParking: "",
-    createdAt: "",
-    updatedAt: "",
-    colorCode: "#808000"
-  },
-  {
-    id: 10,
-    actionId: 2124,
-    name: "Vinayak Test web 1",
-    customerCode: "",
-    customerType: "",
-    email: "Test3006@yopmail.com",
-    mobile: "98765432123",
-    plantCode: "",
-    companyCode: "",
-    leaseStartDate: "",
-    leaseEndDate: "",
-    freeParking: "",
-    paidParking: "",
-    createdAt: "",
-    updatedAt: "",
-    colorCode: "#FFD700"
-  },
-  {
-    id: 11,
-    actionId: 2168,
-    name: "Vinayak Test",
-    customerCode: "",
-    customerType: "",
-    email: "vinayak@lockated.com",
-    mobile: "2839382982",
-    plantCode: "",
-    companyCode: "",
-    leaseStartDate: "",
-    leaseEndDate: "",
-    freeParking: "",
-    paidParking: "",
-    createdAt: "2025-04-29 15:47:27 +0530",
-    updatedAt: "2025-04-29 15:47:27 +0530",
-    colorCode: "#FF00FF"
   }
 ];
 
@@ -218,7 +146,7 @@ const CRMCustomersDashboard = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Breadcrumb */}
+      {/* Breadcrumb - Updated to show CRM instead of Customer */}
       <div className="text-sm text-gray-600">
         Customer &gt; Customer List
       </div>
