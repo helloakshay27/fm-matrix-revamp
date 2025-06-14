@@ -34,7 +34,8 @@ import {
   UserX,
   Boxes,
   Shield,
-  Search
+  Search,
+  ClipboardCheck
 } from 'lucide-react';
 import { useLayout } from '../contexts/LayoutContext';
 
@@ -197,12 +198,19 @@ const incidentItems = [
   { name: 'Incident', href: '/maintenance/incident/list' },
 ];
 
+const permitItems = [
+  { name: 'Permit Setup', href: '/maintenance/permit/setup' },
+  { name: 'Permit', href: '/maintenance/permit/list' },
+  { name: 'Pending Approvals', href: '/maintenance/permit/pending-approvals' },
+];
+
 export const Sidebar = () => {
   const { currentSection } = useLayout();
   const [isSurveyOpen, setIsSurveyOpen] = useState(false);
   const [isOperationalAuditOpen, setIsOperationalAuditOpen] = useState(false);
   const [isVendorAuditOpen, setIsVendorAuditOpen] = useState(false);
   const [isIncidentOpen, setIsIncidentOpen] = useState(false);
+  const [isPermitOpen, setIsPermitOpen] = useState(false);
   const [isWasteGenerationOpen, setIsWasteGenerationOpen] = useState(false);
   const [isDocumentsOpen, setIsDocumentsOpen] = useState(false);
   const [isTransportOpen, setIsTransportOpen] = useState(false);
@@ -311,6 +319,33 @@ export const Sidebar = () => {
               {isIncidentOpen && (
                 <div className="ml-8 mt-1 space-y-1">
                   {incidentItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Permit Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsPermitOpen(!isPermitOpen)}
+                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <div className="flex items-center gap-3">
+                  <ClipboardCheck className="w-5 h-5" />
+                  Permit
+                </div>
+                {isPermitOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isPermitOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {permitItems.map((item) => (
                     <a
                       key={item.name}
                       href={item.href}
