@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Home, 
@@ -54,6 +55,11 @@ const operationalAuditItems = [
   { name: 'Scheduled', href: '/operational-audit/scheduled' },
   { name: 'Conducted', href: '/operational-audit/conducted' },
   { name: 'Master Checklists', href: '/operational-audit/master-checklists' },
+];
+
+const projectItems = [
+  { name: 'Projects', href: '/projects' },
+  { name: 'Add Project', href: '/projects/add' },
 ];
 
 const crmItems = [
