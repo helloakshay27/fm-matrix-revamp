@@ -84,7 +84,6 @@ import { PermitListDashboard } from "./pages/PermitListDashboard";
 import { PermitPendingApprovalsDashboard } from "./pages/PermitPendingApprovalsDashboard";
 import { DesignInsightsDashboard } from "./pages/DesignInsightsDashboard";
 import { DesignInsightsSetupDashboard } from "./pages/DesignInsightsSetupDashboard";
-import { InventoryDashboard } from "./pages/InventoryDashboard";
 import { VendorDashboard } from "./pages/VendorDashboard";
 import { ScheduleListDashboard } from "./pages/ScheduleListDashboard";
 import { TaskListDashboard } from "./pages/TaskListDashboard";
@@ -118,7 +117,6 @@ const App = () => (
                   <Route path="/schedule-list" element={<ScheduleListDashboard />} />
                   <Route path="/task-list" element={<TaskListDashboard />} />
                   <Route path="/tickets" element={<TicketListDashboard />} />
-                  <Route path="/inventory" element={<InventoryDashboard />} />
                   <Route path="/operational-audit/scheduled" element={<OperationalAuditScheduledDashboard />} />
                   <Route path="/operational-audit/conducted" element={<OperationalAuditConductedDashboard />} />
                   <Route path="/operational-audit/master-checklists" element={<OperationalAuditMasterChecklistsDashboard />} />
