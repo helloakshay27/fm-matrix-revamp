@@ -36,9 +36,7 @@ import {
   Shield,
   Search,
   ClipboardCheck,
-  Lightbulb,
-  FolderOpen,
-  PresentationChart
+  Lightbulb
 } from 'lucide-react';
 import { useLayout } from '../contexts/LayoutContext';
 
@@ -669,17 +667,16 @@ export const Sidebar = () => {
       case 'Experience':
         return (
           <nav className="space-y-2">
-            {/* Events */}
-            <a href="/experience/events" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <Calendar className="w-5 h-5" />
-              Events
-            </a>
-
-            {/* Broadcast */}
-            <a href="/experience/broadcast" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <MessageSquare className="w-5 h-5" />
-              Broadcast
-            </a>
+            {experienceItems.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              >
+                <Coffee className="w-5 h-5" />
+                {item.name}
+              </a>
+            ))}
             
             {/* Documents Dropdown */}
             <div>
@@ -708,34 +705,6 @@ export const Sidebar = () => {
               )}
             </div>
 
-            {/* Survey */}
-            <div>
-              <button
-                onClick={() => setIsSurveyOpen(!isSurveyOpen)}
-                className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-3">
-                  <BarChart3 className="w-5 h-5" />
-                  Survey
-                </div>
-                {isSurveyOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isSurveyOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  <a href="/surveys/list" className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-                    Survey List
-                  </a>
-                  <a href="/surveys/mapping" className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-                    Mapping
-                  </a>
-                  <a href="/surveys/response" className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-                    Response
-                  </a>
-                </div>
-              )}
-            </div>
-
-            {/* Business */}
             <a href="/experience/business" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
               <Building className="w-5 h-5" />
               Business
@@ -776,27 +745,21 @@ export const Sidebar = () => {
                     </button>
                     {isSelfTravelOpen && (
                       <div className="ml-4 mt-1 space-y-1">
-                        <a href="/experience/transport/self-travel" className="block px-3 py-2 rounded-lg text-xs transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-                          Self Travel
-                        </a>
+                        {selfTravelItems.map((item) => (
+                          <a
+                            key={item.name}
+                            href={item.href}
+                            className="block px-3 py-2 rounded-lg text-xs transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                          >
+                            {item.name}
+                          </a>
+                        ))}
                       </div>
                     )}
                   </div>
                 </div>
               )}
             </div>
-
-            {/* MOM */}
-            <a href="/experience/mom" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <FolderOpen className="w-5 h-5" />
-              MOM
-            </a>
-
-            {/* Project Management */}
-            <a href="/experience/project-management" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-              <PresentationChart className="w-5 h-5" />
-              Project Management
-            </a>
 
             {/* Community Modules Dropdown */}
             <div>
@@ -812,17 +775,43 @@ export const Sidebar = () => {
               </button>
               {isCommunityModulesOpen && (
                 <div className="ml-8 mt-1 space-y-1">
-                  <a href="/experience/testimonials" className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-                    Testimonials Setup
-                  </a>
-                  <a href="/experience/company-partners" className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-                    Company Partners Setup
-                  </a>
+                  {communityModulesItems.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                  
+                  {/* Centre Setup Dropdown */}
+                  <div>
+                    <button
+                      onClick={() => setIsCentreSetupOpen(!isCentreSetupOpen)}
+                      className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    >
+                      <span>Centre Setup</span>
+                      {isCentreSetupOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                    </button>
+                    {isCentreSetupOpen && (
+                      <div className="ml-4 mt-1 space-y-1">
+                        {centreSetupItems.map((item) => (
+                          <a
+                            key={item.name}
+                            href={item.href}
+                            className="block px-3 py-2 rounded-lg text-xs transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                          >
+                            {item.name}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Setup */}
             <a href="/experience/setup" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
               <Settings className="w-5 h-5" />
               Setup
