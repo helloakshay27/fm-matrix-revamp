@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -68,6 +69,7 @@ import { AddNewBillDashboard } from "./pages/AddNewBillDashboard";
 import { AccountingDashboard } from "./pages/AccountingDashboard";
 import { CustomerBillsDashboard } from "./pages/CustomerBillsDashboard";
 import { MyBillsDashboard } from "./pages/MyBillsDashboard";
+import { MyParkingDashboard } from "./pages/MyParkingDashboard";
 import { BookingsDashboard } from "./pages/BookingsDashboard";
 import { BookingSetupDashboard } from "./pages/BookingSetupDashboard";
 import { SeatTypeDashboard } from "./pages/SeatTypeDashboard";
@@ -197,6 +199,7 @@ const App = () => (
                   <Route path="/finance/accounting" element={<AccountingDashboard />} />
                   <Route path="/finance/customer-bills" element={<CustomerBillsDashboard />} />
                   <Route path="/finance/my-bills" element={<MyBillsDashboard />} />
+                  <Route path="/finance/my-parking" element={<MyParkingDashboard />} />
                   <Route path="/property/space/bookings" element={<BookingsDashboard />} />
                   <Route path="/property/booking/setup" element={<BookingSetupDashboard />} />
                   <Route path="/property/space/seat-type" element={<SeatTypeDashboard />} />

@@ -25,6 +25,8 @@ export const MyBillsDashboard = () => {
   const handleTabClick = (tabName: string) => {
     if (tabName === 'Tickets') {
       navigate('/tickets');
+    } else if (tabName === 'My Parking') {
+      navigate('/finance/my-parking');
     } else {
       setActiveTab(tabName);
     }
