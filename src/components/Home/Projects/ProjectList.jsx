@@ -152,6 +152,7 @@ const globalProjectTypeOptions = [
 const globalPriorityOptionsForNew = ["Low", "Medium", "High", "Urgent"];
 
 const ProjectList = () => {
+    const token = localStorage.getItem("token");
     const fixedRowsPerPage = 10;
     const dispatch = useDispatch();
 
@@ -272,8 +273,8 @@ const ProjectList = () => {
     });
 
     useEffect(() => {
-        dispatch(fetchUsers());
-        dispatch(fetchProjects());
+        dispatch(fetchUsers({ token }));
+        dispatch(fetchProjects({ token }));
     }, [dispatch]);
 
     useEffect(() => {
@@ -296,11 +297,12 @@ const ProjectList = () => {
             try {
                 await dispatch(
                     changeProjectStatus({
+                        token,
                         id: actualProjectId,
                         payload: { project_management: { [name]: apiCompatibleValue } },
                     })
                 ).unwrap();
-                dispatch(fetchProjects());
+                dispatch(fetchProjects({ token }));
             } catch (err) {
                 console.error(
                     `Failed to update project ${name} for ID ${actualProjectId}:`,
@@ -421,9 +423,9 @@ const ProjectList = () => {
 
         try {
             await dispatch(
-                createProject({ project_management: projectPayload })
+                createProject({ token, project_management: projectPayload })
             ).unwrap();
-            dispatch(fetchProjects());
+            dispatch(fetchProjects({ token }));
             handleCancelNewProject();
         } catch (error) {
             console.error("Failed to create project:", error);

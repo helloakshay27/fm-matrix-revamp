@@ -12,6 +12,7 @@ import {
 import { toast } from 'react-hot-toast';
 
 const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = false, selectedUser = null }) => {
+    const token = localStorage.getItem("token");
     const [formData, setFormData] = useState({
         name: "",
         mobile: "",
@@ -28,8 +29,8 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
     const [error, setError] = useState('');
 
     useEffect(() => {
-        dispatch(fetchRoles());
-        dispatch(fetchUsers());
+        dispatch(fetchRoles({ token }));
+        dispatch(fetchUsers({ token }));
     }, [dispatch])
 
     useEffect(() => {
@@ -86,9 +87,9 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
         let response;
         try {
             if (isEditMode) {
-                response = await dispatch(fetchUpdateUser({ userId: selectedUser.id, updatedData: payload })).unwrap();
+                response = await dispatch(fetchUpdateUser({ token, userId: selectedUser.id, updatedData: payload })).unwrap();
             } else {
-                response = await dispatch(createInternalUser(payload)).unwrap();
+                response = await dispatch(createInternalUser({ token, payload })).unwrap();
             }
             console.log(response);
             if (!response.user_exists && !response.error) {

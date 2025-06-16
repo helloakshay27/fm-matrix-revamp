@@ -29,9 +29,9 @@ const Details = () => {
     const [name, setName] = useState("");
 
     useEffect(() => {
-        dispatch(fetchInternalUserDetails(id));
-        dispatch(fetchUsers());
-        dispatch(fetchRoles());
+        dispatch(fetchInternalUserDetails({ token, id }));
+        dispatch(fetchUsers({ token }));
+        dispatch(fetchRoles({ token }));
     }, [dispatch])
 
     useEffect(() => {

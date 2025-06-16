@@ -16,6 +16,7 @@ import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 
 const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", isEdit = false, templateDetails }) => {
+  const token = localStorage.getItem("token");
   const { id } = useParams();
   const dispatch = useDispatch();
 
@@ -62,11 +63,11 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
   );
 
   useEffect(() => {
-    dispatch(fetchUsers());
-    dispatch(fetchTags());
-    dispatch(fetchProjectTypes());
-    dispatch(fetchTemplates());
-    dispatch(fetchProjectTeams());
+    dispatch(fetchUsers({ token }));
+    dispatch(fetchTags({ token }));
+    dispatch(fetchProjectTypes({ token }));
+    dispatch(fetchTemplates({ token }));
+    dispatch(fetchProjectTeams({ token }));
   }, [dispatch]);
 
   useEffect(() => {
@@ -140,7 +141,7 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
       );
 
       if (removed && isEdit) {
-        dispatch(removeTagFromProject({ id: removed.id }));
+        dispatch(removeTagFromProject({ token, id: removed.id }));
       }
 
       setPrevTags(selectedOptions);
@@ -201,9 +202,9 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
     };
 
     if (isEdit) {
-      dispatch(editProject({ id, payload }));
+      dispatch(editProject({ token, id, payload }));
     } else {
-      dispatch(createProject(payload));
+      dispatch(createProject({ token, payload }));
     }
   };
 

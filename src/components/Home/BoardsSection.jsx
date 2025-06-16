@@ -13,6 +13,7 @@ import { debounce } from "lodash";
 import { useParams } from "react-router-dom";
 
 const BoardsSection = ({ section }) => {
+  const token = localStorage.getItem("token");
   const { mid } = useParams();
   const [subCardVisibility, setSubCardVisibility] = useState({});
   const [arrowLinks, setArrowLinks] = useState([]);
@@ -29,9 +30,9 @@ const BoardsSection = ({ section }) => {
   useEffect(() => {
     batch(() => {
       if (section === "Tasks") {
-        dispatch(fetchTasks({ id: mid }));
+        dispatch(fetchTasks({ token, id: mid }));
       } else {
-        dispatch(fetchProjects());
+        dispatch(fetchProjects({ token }));
       }
     });
   }, [dispatch, section]);
@@ -88,6 +89,7 @@ const BoardsSection = ({ section }) => {
       try {
         await dispatch(
           changeTaskStatus({
+            token,
             id: taskId,
             payload: { [fieldName]: newValue },
             isSubtask,
@@ -99,7 +101,7 @@ const BoardsSection = ({ section }) => {
         setLocalError(
           `Update failed: ${error?.response?.data?.errors || error?.message || "Server error"}`
         );
-        dispatch(fetchTasks({ id: mid }));
+        dispatch(fetchTasks({ token, id: mid }));
       }
     }, 300),
     [dispatch]
@@ -127,11 +129,12 @@ const BoardsSection = ({ section }) => {
       try {
         await dispatch(
           changeProjectStatus({
+            token,
             id: actualProjectId,
             payload: { status: apiCompatibleValue },
           })
         ).unwrap();
-        dispatch(fetchProjects());
+        dispatch(fetchProjects({ token }));
       } catch (err) {
         console.error(`Failed to update project status for ID ${actualProjectId}:`, err);
       }

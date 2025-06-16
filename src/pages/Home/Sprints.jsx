@@ -6,6 +6,7 @@ import { fetchProjects } from "../../redux/slices/projectSlice";
 import { fetchTasksOfProject } from "../../redux/slices/taskSlice";
 
 const Sprints = () => {
+  const token = localStorage.getItem("token");
   const [isOpen, setIsOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
@@ -17,7 +18,7 @@ const Sprints = () => {
 
   useEffect(() => {
     if (!fetchProject?.fetchProjects?.length) {
-      dispatch(fetchProjects());
+      dispatch(fetchProjects({ token }));
     }
   }, [dispatch, fetchProject]);
 
@@ -37,7 +38,7 @@ const Sprints = () => {
       return;
     }
     setSelectedProject(project);
-    dispatch(fetchTasksOfProject(project.id));
+    dispatch(fetchTasksOfProject({ token, id: project.id }));
     setIsOpen(false);
     setSearchTerm(""); // Clear search input after selection
   };
@@ -50,11 +51,11 @@ const Sprints = () => {
 
       if (defaultProject) {
         setSelectedProject(defaultProject);
-        dispatch(fetchTasksOfProject(defaultProject.id));
+        dispatch(fetchTasksOfProject({ token, id: defaultProject.id }));
       } else {
         const fallbackProject = fetchProject.fetchProjects[0];
         setSelectedProject(fallbackProject);
-        dispatch(fetchTasksOfProject(fallbackProject.id));
+        dispatch(fetchTasksOfProject({ token, id: fallbackProject.id }));
       }
     }
   }, [fetchProject, selectedProject, dispatch]);

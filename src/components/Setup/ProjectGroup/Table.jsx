@@ -15,6 +15,7 @@ import Modal from './Modal';
 import toast from 'react-hot-toast';
 
 const GroupTable = () => {
+  const token = localStorage.getItem('token')
   const [openModal, setOpenModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedData, setSelectedData] = useState(null);
@@ -28,7 +29,7 @@ const GroupTable = () => {
 
   // Initial fetch of project Group
   useEffect(() => {
-     dispatch(fetchProjectGroup()).unwrap();
+    dispatch(fetchProjectGroup({ token })).unwrap();
   }, [dispatch]);
 
   // Update table data when ProjectTypes changes
@@ -36,85 +37,85 @@ const GroupTable = () => {
     if (projectGroup && projectGroup.length > 0) {
       setData(projectGroup);
     }
-  },[projectGroup]);
+  }, [projectGroup]);
 
   // Fetch data when modal closes to ensure table is refreshed
   useEffect(() => {
     if (!openModal) {
-      dispatch(fetchProjectGroup());
+      dispatch(fetchProjectGroup({ token }));
     }
   }, [openModal, dispatch]);
 
-  
+
 
 
   const ActionIcons = ({ row }) => {
-    
+
     const handleEditClick = (row) => {
-    console.log("hi");
-    console.log(row.original);
-    setSelectedData(row.original);
-    setEditMode(true);
-    setOpenModal(true);
-  };
-
-  const handleDeleteClick = async (id) => {
-    try {
-      await dispatch(deleteProjectGroup(id)).unwrap(); // unwrap to handle async correctly
-      dispatch(fetchProjectGroup()); // refetch data after successful delete
-      toast.dismiss();
-      toast.success('Project Group deleted successfully',{
-          iconTheme: {
-          primary: 'red', // This might directly change the color of the success icon
-          secondary: 'white', // The circle background
-        },
-      });
-
-    } catch (error) {
-      console.error('Failed to delete:', error);
-      toast.error('Failed to delete Project Group.',{
-          iconTheme: {
-          primary: 'red', // This might directly change the color of the success icon
-          secondary: 'white', // The circle background
-        },
-      });
-    }
-  };
-
-
-  const handleToggle = async (row) => {
-    const updatedValue = !row.original.active;
-    const payload = {
-      active: updatedValue,
+      console.log("hi");
+      console.log(row.original);
+      setSelectedData(row.original);
+      setEditMode(true);
+      setOpenModal(true);
     };
 
-    try {
-      await dispatch(updateProjectGroup({ id: row.original.id, payload })).unwrap();
-      toast.dismiss();
-      toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`,{
-        iconTheme: {
-          primary: 'red', // This might directly change the color of the success icon
-          secondary: 'white', // The circle background
-        },
-      });
-      dispatch(fetchProjectGroup());
-    } catch (error) {
-      console.error('Failed to update toggle:', error,{
-        iconTheme: {
-          primary: 'red', // This might directly change the color of the error icon
-          secondary: 'white', // The circle background
-        },
-      });
-    }
-  };
-    return (
-    <div className=" flex justify-start items-start gap-5 ml-2">
-              <Switch
-        color={`${row.original.active ? 'success' : 'danger'}`}
+    const handleDeleteClick = async (id) => {
+      try {
+        await dispatch(deleteProjectGroup({ token, id })).unwrap(); // unwrap to handle async correctly
+        dispatch(fetchProjectGroup({ token })); // refetch data after successful delete
+        toast.dismiss();
+        toast.success('Project Group deleted successfully', {
+          iconTheme: {
+            primary: 'red', // This might directly change the color of the success icon
+            secondary: 'white', // The circle background
+          },
+        });
 
-                checked={row.original.active}
-                onChange={() => handleToggle(row)} // toggle the row state
-              />
+      } catch (error) {
+        console.error('Failed to delete:', error);
+        toast.error('Failed to delete Project Group.', {
+          iconTheme: {
+            primary: 'red', // This might directly change the color of the success icon
+            secondary: 'white', // The circle background
+          },
+        });
+      }
+    };
+
+
+    const handleToggle = async (row) => {
+      const updatedValue = !row.original.active;
+      const payload = {
+        active: updatedValue,
+      };
+
+      try {
+        await dispatch(updateProjectGroup({ token, id: row.original.id, payload })).unwrap();
+        toast.dismiss();
+        toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
+          iconTheme: {
+            primary: 'red', // This might directly change the color of the success icon
+            secondary: 'white', // The circle background
+          },
+        });
+        dispatch(fetchProjectGroup({ token }));
+      } catch (error) {
+        console.error('Failed to update toggle:', error, {
+          iconTheme: {
+            primary: 'red', // This might directly change the color of the error icon
+            secondary: 'white', // The circle background
+          },
+        });
+      }
+    };
+    return (
+      <div className=" flex justify-start items-start gap-5 ml-2">
+        <Switch
+          color={`${row.original.active ? 'success' : 'danger'}`}
+
+          checked={row.original.active}
+          onChange={() => handleToggle(row)} // toggle the row state
+        />
 
         <EditOutlinedIcon
           sx={{ fontSize: '20px', cursor: 'pointer' }}
@@ -125,9 +126,9 @@ const GroupTable = () => {
         >
           <DeleteOutlineOutlinedIcon sx={{ fontSize: '20px' }} onClick={() => handleDeleteClick(row.original.id)} />
         </button>
-    </div>
-  )
-};
+      </div>
+    )
+  };
 
 
 
@@ -159,7 +160,7 @@ const GroupTable = () => {
         header: 'Actions',
         size: 50,
         cell: ({ row }) => (row.original ? <ActionIcons row={row} /> : null),
-        
+
       },
     ],
     []
@@ -195,7 +196,7 @@ const GroupTable = () => {
       <div className="project-table-container text-[14px] font-light ">
         <div
           className="table-wrapper overflow-x-auto"
-          style={{ height: `${desiredTableHeight}px`}}
+          style={{ height: `${desiredTableHeight}px` }}
         >
           <table className="w-full">
             <thead>
@@ -270,57 +271,57 @@ const GroupTable = () => {
         </div>
 
         {data.length > 0 && (
-                    <div className=" flex items-center justify-start gap-4 mt-4 text-[12px]">
-                        {/* Previous Button */}
-                        <button
-                            onClick={() => table.previousPage()}
-                            disabled={!table.getCanPreviousPage()}
-                            className="text-red-600 disabled:opacity-30"
-                        >
-                            {"<"}
-                        </button>
+          <div className=" flex items-center justify-start gap-4 mt-4 text-[12px]">
+            {/* Previous Button */}
+            <button
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="text-red-600 disabled:opacity-30"
+            >
+              {"<"}
+            </button>
 
-                        {/* Page Numbers (Sliding Window of 3) */}
-                        {(() => {
-                            const totalPages = table.getPageCount();
-                            const currentPage = table.getState().pagination.pageIndex;
-                            const visiblePages = 3;
+            {/* Page Numbers (Sliding Window of 3) */}
+            {(() => {
+              const totalPages = table.getPageCount();
+              const currentPage = table.getState().pagination.pageIndex;
+              const visiblePages = 3;
 
-                            let start = Math.max(0, currentPage - Math.floor(visiblePages / 2));
-                            let end = start + visiblePages;
+              let start = Math.max(0, currentPage - Math.floor(visiblePages / 2));
+              let end = start + visiblePages;
 
-                            // Ensure end does not exceed total pages
-                            if (end > totalPages) {
-                                end = totalPages;
-                                start = Math.max(0, end - visiblePages);
-                            }
+              // Ensure end does not exceed total pages
+              if (end > totalPages) {
+                end = totalPages;
+                start = Math.max(0, end - visiblePages);
+              }
 
-                            return [...Array(end - start)].map((_, i) => {
-                                const page = start + i;
-                                const isActive = page === currentPage;
+              return [...Array(end - start)].map((_, i) => {
+                const page = start + i;
+                const isActive = page === currentPage;
 
-                                return (
-                                    <button
-                                        key={page}
-                                        onClick={() => table.setPageIndex(page)}
-                                        className={` px-3 py-1 ${isActive ? "bg-gray-200 font-bold" : ""}`}
-                                    >
-                                        {page + 1}
-                                    </button>
-                                );
-                            });
-                        })()}
+                return (
+                  <button
+                    key={page}
+                    onClick={() => table.setPageIndex(page)}
+                    className={` px-3 py-1 ${isActive ? "bg-gray-200 font-bold" : ""}`}
+                  >
+                    {page + 1}
+                  </button>
+                );
+              });
+            })()}
 
-                        {/* Next Button */}
-                        <button
-                            onClick={() => table.nextPage()}
-                            disabled={!table.getCanNextPage()}
-                            className="text-red-600 disabled:opacity-30"
-                        >
-                            {">"}
-                        </button>
-                    </div>
-                )}
+            {/* Next Button */}
+            <button
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="text-red-600 disabled:opacity-30"
+            >
+              {">"}
+            </button>
+          </div>
+        )}
       </div>
 
       {openModal && (

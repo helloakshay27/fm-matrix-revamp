@@ -233,6 +233,7 @@ const WorkflowStatus = ({ taskStatusLogs }) => {
 };
 
 const Comments = ({ comments }) => {
+    const token = localStorage.getItem("token");
     const { tid } = useParams();
     const [comment, setComment] = useState("");
     const [editingCommentId, setEditingCommentId] = useState(null);
@@ -244,7 +245,7 @@ const Comments = ({ comments }) => {
     const { fetchUsers: name } = useSelector((state) => state.fetchUsers);
 
     useEffect(() => {
-        dispatch(fetchUsers());
+        dispatch(fetchUsers({ token }));
     }, [])
 
     const mentionData = name
@@ -267,7 +268,7 @@ const Comments = ({ comments }) => {
         if (editingCommentId) {
             const formData = new FormData();
             formData.append("comment[body]", comment);
-            return dispatch(editTaskComment({ id: editingCommentId, payload: formData }));
+            return dispatch(editTaskComment({ token, id: editingCommentId, payload: formData }));
         }
         const payload = {
             comment: {
@@ -279,7 +280,7 @@ const Comments = ({ comments }) => {
             },
         };
 
-        dispatch(createTaskComment(payload));
+        dispatch(createTaskComment({ token, payload }));
     };
 
     const handleEdit = (comment) => {
@@ -300,7 +301,7 @@ const Comments = ({ comments }) => {
         if (success || editSuccess) {
             setComment("");
             setEditingCommentId(null);
-            dispatch(taskDetails(tid));
+            dispatch(taskDetails({ token, id: tid }));
         }
     }, [success, editSuccess, dispatch, tid]);
 
@@ -428,7 +429,7 @@ const Attachments = ({ attachments, id }) => {
 
 
         try {
-            const result = dispatch(attachFiles({ id, payload: formData }));
+            const result = dispatch(attachFiles({ token, id, payload: formData }));
             const updatedAttachments = result?.payload?.attachments || [];
             setFiles(updatedAttachments);
         } catch (error) {
@@ -482,6 +483,7 @@ const Attachments = ({ attachments, id }) => {
 };
 
 const TaskDetails = () => {
+    const token = localStorage.getItem("token");
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
@@ -515,8 +517,8 @@ const TaskDetails = () => {
     }, [task]);
 
     useEffect(() => {
-        dispatch(taskDetails(tid));
-        dispatch(fetchStatus())
+        dispatch(taskDetails({ token, id: tid }));
+        dispatch(fetchStatus({ token }))
     }, [dispatch]);
 
     useEffect(() => {
@@ -533,7 +535,7 @@ const TaskDetails = () => {
 
     const handleDeleteTask = (id) => {
         try {
-            dispatch(deleteTask(id));
+            dispatch(deleteTask({ token, id }));
             navigate(-1);
         } catch (err) {
             console.log(err)
@@ -547,6 +549,7 @@ const TaskDetails = () => {
         setOpenDropdown(false);
         dispatch(
             changeTaskStatus({
+                token,
                 id: tid,
                 payload: { status: mapDisplayToApiStatus(option) },
             })
@@ -560,6 +563,7 @@ const TaskDetails = () => {
         setOpenWorkflowDropdown(false);
         dispatch(
             editTask({
+                token,
                 id: tid,
                 payload: { project_status_id: option.id },
             })
@@ -568,7 +572,7 @@ const TaskDetails = () => {
 
     useEffect(() => {
         if (success || editSuccess) {
-            dispatch(taskDetails(tid))
+            dispatch(taskDetails({ token, id: tid }))
         }
     }, [success, editSuccess])
 

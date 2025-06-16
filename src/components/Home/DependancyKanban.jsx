@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { createDependancy, fetchTasksOfProject, updateDependancy } from "../../redux/slices/taskSlice";
 
 const DependancyKanban = () => {
+    const token = localStorage.getItem("token");
     const dispatch = useDispatch();
 
     const { fetchTasksOfProject: tasks = [] } = useSelector(state => state.fetchTasksOfProject);
@@ -14,7 +15,7 @@ const DependancyKanban = () => {
 
     useEffect(() => {
         if (task?.project_management_id) {
-            dispatch(fetchTasksOfProject(task.project_management_id));
+            dispatch(fetchTasksOfProject({ token, id: task.project_management_id }));
         }
     }, [dispatch, task?.project_management_id]);
 
@@ -68,9 +69,9 @@ const DependancyKanban = () => {
             const alreadySuccessor = successorIds.includes(draggedTaskId);
 
             if (alreadyPredecessor || alreadySuccessor) {
-                dispatch(updateDependancy({ id: dependancyId, payload }));
+                dispatch(updateDependancy({ token, id: dependancyId, payload }));
             } else {
-                dispatch(createDependancy({ payload }));
+                dispatch(createDependancy({ token, payload }));
             }
         }
     };

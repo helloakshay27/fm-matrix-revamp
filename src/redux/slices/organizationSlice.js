@@ -33,11 +33,11 @@ const createApiSlice = (name, fetchThunk) => createSlice({
     },
 });
 
-export const fetchOrganizations = createAsyncThunk('fetchOrganizations', async () => {
+export const fetchOrganizations = createAsyncThunk('fetchOrganizations', async ({ token }) => {
     try {
         const response = await axios.get(`https://api-tasks.lockated.com/organizations.json`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             }
         })
 

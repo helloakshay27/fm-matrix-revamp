@@ -33,11 +33,11 @@ const createApiSlice = (name, fetchThunk) => createSlice({
     },
 });
 
-export const createRole = createAsyncThunk('createRole', async (paylode) => {
+export const createRole = createAsyncThunk('createRole', async ({ token, paylode }) => {
     try {
         const response = await axios.post(`https://api-tasks.lockated.com/lock_roles.json`, paylode, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             }
         })
 
@@ -48,11 +48,11 @@ export const createRole = createAsyncThunk('createRole', async (paylode) => {
     }
 })
 
-export const fetchRoles = createAsyncThunk('fetchRoles', async () => {
+export const fetchRoles = createAsyncThunk('fetchRoles', async ({ token }) => {
     try {
         const response = await axios.get(`https://api-tasks.lockated.com/lock_roles.json`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             }
         })
 
@@ -63,12 +63,12 @@ export const fetchRoles = createAsyncThunk('fetchRoles', async () => {
     }
 })
 
-export const editRole = createAsyncThunk('editRole', async ({ id, payload }) => {
+export const editRole = createAsyncThunk('editRole', async ({ token, id, payload }) => {
     console.log(payload)
     try {
         const response = await axios.patch(`https://api-tasks.lockated.com/lock_roles/${id}.json`, payload, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             }
         });
         return response.data;
@@ -78,11 +78,11 @@ export const editRole = createAsyncThunk('editRole', async ({ id, payload }) => 
     }
 })
 
-export const deleteRole = createAsyncThunk('deleteRole', async ({ id }) => {
+export const deleteRole = createAsyncThunk('deleteRole', async ({ token, id }) => {
     try {
         const response = await axios.delete(`https://api-tasks.lockated.com/lock_roles/${id}.json`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             }
         });
         return response.data;

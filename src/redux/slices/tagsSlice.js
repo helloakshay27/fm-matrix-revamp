@@ -37,11 +37,11 @@ const createApiSlice = (name, fetchThunk) => createSlice({
     },
 });
 
-export const fetchTags = createAsyncThunk('fetchTags', async () => {
+export const fetchTags = createAsyncThunk('fetchTags', async ({ token }) => {
     try {
         const response = await axios.get(`https://api-tasks.lockated.com/company_tags.json`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             },
         });
         return response.data;
@@ -50,11 +50,11 @@ export const fetchTags = createAsyncThunk('fetchTags', async () => {
     }
 });
 
-export const createTag = createAsyncThunk('createTag', async (payload) => {
+export const createTag = createAsyncThunk('createTag', async ({ token, payload }) => {
     try {
         const response = await axios.post(`https://api-tasks.lockated.com/company_tags.json`, payload, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             },
         });
         return response.data;
@@ -65,14 +65,14 @@ export const createTag = createAsyncThunk('createTag', async (payload) => {
 
 export const updateTag = createAsyncThunk(
     'tag/update',
-    async ({ id, data }, { rejectWithValue }) => {
+    async ({ token, id, data }, { rejectWithValue }) => {
         try {
             const response = await axios.patch(
                 `https://api-tasks.lockated.com/company_tags/${id}.json`,
                 data,
                 {
                     headers: {
-                        Authorization: `Bearer ${access_token}`,
+                        Authorization: `Bearer ${token}`,
                     },
                 }
             );
@@ -85,11 +85,11 @@ export const updateTag = createAsyncThunk(
 
 export const deleteTag = createAsyncThunk(
     'deleteTag',
-    async (id, { rejectWithValue }) => {
+    async ({ token, id }, { rejectWithValue }) => {
         try {
             await axios.delete(`https://api-tasks.lockated.com/company_tags/${id}.json`, {
                 headers: {
-                    Authorization: `Bearer ${access_token}`,
+                    Authorization: `Bearer ${token}`,
                 },
             });
 

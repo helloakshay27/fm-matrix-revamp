@@ -6,10 +6,10 @@ import {
   fetchProjectTypes,
   updateProjectType
 } from '../../../redux/slices/projectSlice';
-import { set } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 
 const Modal = ({ openModal, setOpenModal, editMode = false, existingData = {} }) => {
+  const token = localStorage.getItem('token');
   const [type, setType] = useState(editMode ? existingData?.name || '' : '');
   const [warningOpen, setWarningOpen] = useState(false);
 
@@ -22,7 +22,7 @@ const Modal = ({ openModal, setOpenModal, editMode = false, existingData = {} })
     setOpenModal(false);
   }, [setOpenModal]);
 
-  const handleSave = useCallback(async() => {
+  const handleSave = useCallback(async () => {
     const trimmedType = type.trim();
 
     if (!trimmedType) return;
@@ -32,36 +32,35 @@ const Modal = ({ openModal, setOpenModal, editMode = false, existingData = {} })
       created_by_id: 158,
     };
 
-   try{
-    let response;
-    if(editMode && existingData?.id){
-      response=await dispatch(updateProjectType({ id: existingData.id, data: payload })).unwrap();
-    }
+    try {
+      let response;
+      if (editMode && existingData?.id) {
+        response = await dispatch(updateProjectType({ token, id: existingData.id, data: payload })).unwrap();
+      }
       else
-       response=await dispatch(createProjectType(payload)).unwrap(); 
-     if(response.name[0]!="has already been taken")
-      {
-        toast.success(`Type ${editMode ? 'Updated' : 'Created'} successfully`,{
+        response = await dispatch(createProjectType({ token, payload })).unwrap();
+      if (response.name[0] != "has already been taken") {
+        toast.success(`Type ${editMode ? 'Updated' : 'Created'} successfully`, {
           iconTheme: {
             primary: 'red', // This might directly change the color of the success icon
             secondary: 'white', // The circle background
           },
         })
         resetModal();
-        dispatch(fetchProjectTypes());
+        dispatch(fetchProjectTypes({ token }));
       }
-      else{
+      else {
         setWarningOpen(true);
       }
     }
 
-    catch(error){
+    catch (error) {
       console.log(error);
       setWarningOpen(true);
     }
   }, [type, warningOpen, dispatch, editMode, existingData, resetModal]);
 
-  
+
 
   if (!openModal) return null;
 

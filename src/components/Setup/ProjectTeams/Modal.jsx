@@ -23,6 +23,7 @@ const TeamModal = ({
     isEdit = false,
     id = null,
 }) => {
+    const token = localStorage.getItem("token");
     const dispatch = useDispatch();
     const addTaskModalRef = useRef(null);
 
@@ -67,12 +68,12 @@ const TeamModal = ({
     };
 
     useEffect(() => {
-        dispatch(fetchUsers());
-        dispatch(fetchProjects());
+        dispatch(fetchUsers({ token }));
+        dispatch(fetchProjects({ token }));
     }, [dispatch]);
 
     useEffect(() => {
-        isEdit && dispatch(fetchProjectTeam({ id }));
+        isEdit && dispatch(fetchProjectTeam({ token, id }));
     }, [dispatch]);
 
     useEffect(() => {
@@ -117,7 +118,7 @@ const TeamModal = ({
             );
 
             if (removed && isEdit) {
-                dispatch(removeMembersFromTeam({ id: removed.id }));
+                dispatch(removeMembersFromTeam({ token, id: removed.id }));
             }
 
             setPrevMembers(selectedOptions);
@@ -161,9 +162,9 @@ const TeamModal = ({
         console.log(payload)
 
         if (isEdit) {
-            dispatch(updateProjectTeam({ payload, id: projectTeamId }));
+            dispatch(updateProjectTeam({ token, payload, id: projectTeamId }));
         } else {
-            dispatch(createProjectTeam({ payload }));
+            dispatch(createProjectTeam({ token, payload }));
         }
     };
 

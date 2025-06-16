@@ -28,11 +28,12 @@ const ActionIcons = ({ row, onEditClick }) => {
 }
 
 const ProjectTemplates = () => {
+    const token = localStorage.getItem('token')
     const dispatch = useDispatch()
     const { fetchTemplates: templates } = useSelector(state => state.fetchTemplates)
 
     useEffect(() => {
-        dispatch(fetchTemplates())
+        dispatch(fetchTemplates({ token }))
     }, [dispatch])
 
     const columns = useMemo(

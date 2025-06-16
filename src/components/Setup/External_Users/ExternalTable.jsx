@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 
 
 const ActionIcons = ({ row, onEdit }) => {
+  const token = localStorage.getItem('token');
   const dispatch = useDispatch();
   const [isActive, setIsActive] = useState(!!row.original.active);
 
@@ -28,7 +29,7 @@ const ActionIcons = ({ row, onEdit }) => {
       },
     };
 
-    dispatch(fetchUpdateUser({ userId: userData.id, updatedData: payload }))
+    dispatch(fetchUpdateUser({ token, userId: userData.id, updatedData: payload }))
       .then(() => {
         toast.dismiss();
         toast.success(`Status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
@@ -70,11 +71,12 @@ const ActionIcons = ({ row, onEdit }) => {
 
 
 const ExternalTable = () => {
+  const token = localStorage.getItem('token');
   const dispatch = useDispatch();
   const { fetchExternalUser: externalUsers } = useSelector(state => state.fetchExternalUser);
 
   useEffect(() => {
-    dispatch(fetchExternalUser());
+    dispatch(fetchExternalUser({ token }));
   }, [dispatch]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -95,7 +97,7 @@ const ExternalTable = () => {
 
 
   const handleSuccess = useCallback(() => {
-    dispatch(fetchExternalUser()); // refresh roles list
+    dispatch(fetchExternalUser({ token })); // refresh roles list
     setIsModalOpen(false);  // close modal
   }, [dispatch]);
 
@@ -115,7 +117,7 @@ const ExternalTable = () => {
       size: 200,
     },
     {
-   
+
       accessorKey: 'mobile',
       header: 'Mobile No.',
       size: 200,

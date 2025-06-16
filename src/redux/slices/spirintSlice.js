@@ -33,11 +33,11 @@ const createApiSlice = (name, fetchThunk) => createSlice({
     },
 });
 
-export const fetchSpirints = createAsyncThunk('fetchSpirints', async () => {
+export const fetchSpirints = createAsyncThunk('fetchSpirints', async ({ token }) => {
     try {
         const response = await axios.get(`https://api-tasks.lockated.com/sprints.json`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             }
         });
 
@@ -49,11 +49,11 @@ export const fetchSpirints = createAsyncThunk('fetchSpirints', async () => {
 }
 );
 
-export const fetchSpirintById = createAsyncThunk('fetchSpirintById', async ({ id }) => {
+export const fetchSpirintById = createAsyncThunk('fetchSpirintById', async ({ token, id }) => {
     try {
         const response = await axios.get(`https://api-tasks.lockated.com/sprints/${id}.json`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             }
         });
 
@@ -66,14 +66,14 @@ export const fetchSpirintById = createAsyncThunk('fetchSpirintById', async ({ id
 );
 
 
-export const postSprint = createAsyncThunk('postSprint', async (payload) => {
+export const postSprint = createAsyncThunk('postSprint', async ({ token, payload }) => {
     try {
         const response = await axios.post(
             'https://api-tasks.lockated.com/sprints.json',
             payload,
             {
                 headers: {
-                    Authorization: `Bearer ${access_token}`,
+                    Authorization: `Bearer ${token}`,
                 },
             }
         );
@@ -84,14 +84,14 @@ export const postSprint = createAsyncThunk('postSprint', async (payload) => {
     }
 });
 
-export const putSprint = createAsyncThunk('putSprint', async ({ id, payload }, { rejectWithValue }) => {
+export const putSprint = createAsyncThunk('putSprint', async ({ token, id, payload }, { rejectWithValue }) => {
     try {
         const response = await axios.put(
             `https://api-tasks.lockated.com/sprints/${id}.json`,
             payload,
             {
                 headers: {
-                    Authorization: `Bearer ${access_token}`,
+                    Authorization: `Bearer ${token}`,
                 },
             }
         );

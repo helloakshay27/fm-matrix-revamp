@@ -13,6 +13,7 @@ import MultiSelectBox from "../../MultiSelectBox.jsx";
 import { createProjectTeam, fetchProjectTeams, resetSuccess } from "../../../redux/slices/projectSlice.js";
 
 const CreateNewTeam = ({ setOpenModal }) => {
+  const token = localStorage.getItem("token");
   const dispatch = useDispatch();
 
   const { fetchUsers: users = [] } = useSelector((state) => state.fetchUsers);
@@ -25,7 +26,7 @@ const CreateNewTeam = ({ setOpenModal }) => {
   });
 
   useEffect(() => {
-    dispatch(fetchUsers());
+    dispatch(fetchUsers({ token }));
   }, [dispatch]);
 
   const handleChange = (e) => {
@@ -47,12 +48,12 @@ const CreateNewTeam = ({ setOpenModal }) => {
     };
 
 
-    dispatch(createProjectTeam({ payload }));
+    dispatch(createProjectTeam({ token, payload }));
   };
 
   useEffect(() => {
     if (success) {
-      dispatch(fetchProjectTeams())
+      dispatch(fetchProjectTeams({ token }))
       setOpenModal(false);
       dispatch(resetSuccess());
     }

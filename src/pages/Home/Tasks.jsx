@@ -8,6 +8,7 @@ import { fetchProjectDetails } from '../../redux/slices/projectSlice.js';
 import { fetchMilestoneById } from '../../redux/slices/milestoneSlice.js';
 
 const Tasks = ({ setIsSidebarOpen }) => {
+    const token = localStorage.getItem("token");
     const { id, mid } = useParams();
     const dispatch = useDispatch();
 
@@ -17,8 +18,8 @@ const Tasks = ({ setIsSidebarOpen }) => {
     );
 
     useEffect(() => {
-        dispatch(fetchProjectDetails({ id }))
-        dispatch(fetchMilestoneById({ id: mid }));
+        dispatch(fetchProjectDetails({ token, id }))
+        dispatch(fetchMilestoneById({ token, id: mid }));
     }, [dispatch])
 
     const [selectedType, setSelectedType] = useState(() => {

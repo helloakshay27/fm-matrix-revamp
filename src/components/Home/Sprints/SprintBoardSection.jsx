@@ -28,6 +28,7 @@ import { useParams } from "react-router-dom";
 import TaskSubCard from "../Task/TaskSubCard";
 
 const SprintBoardSection = ({ selectedProject }) => {
+  const token = localStorage.getItem("token");
   const { id } = useParams();
   const dispatch = useDispatch();
   const [subCardVisibility, setSubCardVisibility] = useState({});
@@ -49,12 +50,12 @@ const SprintBoardSection = ({ selectedProject }) => {
   );
 
   useEffect(() => {
-    dispatch(fetchSpirintById({ id }));
+    dispatch(fetchSpirintById({ token, id }));
   }, [dispatch, id]);
 
   useEffect(() => {
-    dispatch(fetchTasks());
-    dispatch(fetchSpirints());
+    dispatch(fetchTasks({ token }));
+    dispatch(fetchSpirints({ token }));
   }, [dispatch]);
 
   // Initialize taskData and sprintBoardTasks when fetchProjects changes
@@ -158,6 +159,7 @@ const SprintBoardSection = ({ selectedProject }) => {
         try {
           await dispatch(
             changeTaskStatus({
+              token,
               id: taskId,
               payload: { [fieldName]: newValue },
               isSubtask,
@@ -166,7 +168,7 @@ const SprintBoardSection = ({ selectedProject }) => {
           ).unwrap();
         } catch (error) {
           console.error(`Task update failed for ${taskId}:`, error);
-          dispatch(fetchTasks());
+          dispatch(fetchTasks({ token }));
         }
       },
       300
@@ -271,7 +273,7 @@ const SprintBoardSection = ({ selectedProject }) => {
         };
 
         try {
-          await dispatch(putSprint({ id, payload })).unwrap();
+          await dispatch(putSprint({ token, id, payload })).unwrap();
         } catch (error) {
           console.error("Failed to update sprint:", error);
         }
@@ -386,7 +388,7 @@ const SprintBoardSection = ({ selectedProject }) => {
   );
 
   useEffect(() => {
-    dispatch(fetchSpirintById({ id }));
+    dispatch(fetchSpirintById({ token, id }));
   }, [dispatch, id]);
 
   useEffect(() => {
@@ -467,7 +469,7 @@ const SprintBoardSection = ({ selectedProject }) => {
       }
       const payload = { status: newStatus };
       try {
-        const response = await dispatch(putSprint({ id, payload })).unwrap();
+        const response = await dispatch(putSprint({ token, id, payload })).unwrap();
         setSelectedSprint((prev) => ({
           ...prev,
           status: newStatus,
@@ -477,7 +479,7 @@ const SprintBoardSection = ({ selectedProject }) => {
         }
       } catch (error) {
         console.error("Failed to update sprint status:", error);
-        dispatch(fetchSpirints());
+        dispatch(fetchSpirints({ token }));
       }
     }, 300),
     [id, dispatch]

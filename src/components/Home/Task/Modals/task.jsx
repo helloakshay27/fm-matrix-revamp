@@ -26,7 +26,8 @@ const TaskForm = ({
   isEdit,
   dispatch,
   milestoneStartDate,
-  milestoneEndDate
+  milestoneEndDate,
+  token
 }) => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -48,7 +49,7 @@ const TaskForm = ({
       );
 
       if (removed && isEdit) {
-        dispatch(removeTagFromProject({ id: removed.id }));
+        dispatch(removeTagFromProject({ token, id: removed.id }));
       }
 
       setPrevTags(selectedOptions);
@@ -60,7 +61,7 @@ const TaskForm = ({
       );
 
       if (removed && isEdit) {
-        dispatch(removeUserFromProject({ id: removed.id }));
+        dispatch(removeUserFromProject({ token, id: removed.id }));
       }
 
       setPrevObservers(selectedOptions);
@@ -269,6 +270,7 @@ const TaskForm = ({
 };
 
 const Tasks = ({ isEdit }) => {
+  const token = localStorage.getItem("token");
   const { id, mid, tid } = useParams();
   const dispatch = useDispatch();
   const { loading, success, error } = useSelector((state) => state.createTask);
@@ -304,9 +306,10 @@ const Tasks = ({ isEdit }) => {
   const [prevObservers, setPrevObservers] = useState([]);
 
   useEffect(() => {
-    dispatch(fetchUsers());
-    dispatch(fetchTags());
-    dispatch(fetchProjectDetails({ id }));
+    dispatch(fetchUsers({ token }));
+    dispatch(fetchTags({ token }));
+    dispatch(fetchProjectDetails({ token, id }));
+    dispatch(fetchMilestoneById({ token, id: mid }));
   }, [dispatch, id, mid]);
 
   const getTagName = useCallback(
@@ -381,7 +384,7 @@ const Tasks = ({ isEdit }) => {
     const payload = createTaskPayload(formData);
 
     try {
-      const resultAction = await dispatch(createTask(payload));
+      const resultAction = await dispatch(createTask({ token, payload }));
       if (createTask.fulfilled.match(resultAction)) {
         toast.success("Task created successfully.");
         setSavedTasks([...savedTasks, { id: nextId, formData }]);
@@ -428,8 +431,8 @@ const Tasks = ({ isEdit }) => {
 
     try {
       const resultAction = isEdit
-        ? await dispatch(editTask({ id: editId, payload }))
-        : await dispatch(createTask(payload));
+        ? await dispatch(editTask({ token, id: editId, payload }))
+        : await dispatch(createTask({ token, payload }));
       if (
         (isEdit && editTask.fulfilled.match(resultAction)) ||
         (!isEdit && createTask.fulfilled.match(resultAction))
@@ -474,6 +477,7 @@ const Tasks = ({ isEdit }) => {
             dispatch={dispatch}
             milestoneStartDate={milestone?.start_date}
             milestoneEndDate={milestone?.end_date}
+            token={token}
           />
         ))}
         <TaskForm
@@ -492,6 +496,7 @@ const Tasks = ({ isEdit }) => {
           dispatch={dispatch}
           milestoneStartDate={milestone?.start_date}
           milestoneEndDate={milestone?.end_date}
+          token={token}
         />
         {!isEdit && (
           <div className="relative">

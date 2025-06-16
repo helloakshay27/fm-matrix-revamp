@@ -2,6 +2,8 @@ import { Flag, Timer, User2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDrag } from "react-dnd";
 import { useNavigate } from "react-router-dom";
+import { changeTaskStatus } from "../../../redux/slices/taskSlice";
+import { useDispatch } from "react-redux";
 
 const formatCountdown = (ms) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -13,6 +15,8 @@ const formatCountdown = (ms) => {
 };
 
 const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232", count }) => {
+    const token = localStorage.getItem("token");
+    const dispatch = useDispatch();
     const navigate = useNavigate();
     const [{ isDragging }, dragRef] = useDrag(() => ({
         type: "TASK",
@@ -25,15 +29,19 @@ const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232", coun
     const [countdown, setCountdown] = useState("");
 
     useEffect(() => {
-        if (!task?.target_date) return;
+        if (!task?.target_date || task.status === "completed") {
+            setCountdown("Completed");
+            return;
+        }
 
         const interval = setInterval(() => {
             const now = new Date();
             const end = new Date(task.target_date);
             const diff = end - now;
 
-            if (diff <= 0) {
-                setCountdown("Expired");
+            if (diff <= 0 && task.status !== "completed") {
+                setCountdown("Overdued");
+                dispatch(changeTaskStatus({ token, id: task.id, payload: { status: "overdue" } }));
                 clearInterval(interval);
             } else {
                 setCountdown(formatCountdown(diff));
@@ -210,7 +218,12 @@ const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232", coun
                                 fill="#C72030"
                             />
                         </svg>
-                        <span className="text-[8px] w-max">30 Nov</span>
+                        <span className="text-[9px] w-max">
+                            {new Date(task.target_date).toLocaleDateString("en-GB", {
+                                day: "2-digit",
+                                month: "short",
+                            })}
+                        </span>
                     </span>
                     <span className="h-5 w-5 flex items-center justify-center bg-green-600 text-white rounded-full text-[7px] font-light">
                         AT

@@ -33,11 +33,11 @@ const createApiSlice = (name, fetchThunk) => createSlice({
     },
 });
 
-export const fetchStatus = createAsyncThunk("fetchStatus", async () => {
+export const fetchStatus = createAsyncThunk("fetchStatus", async ({ token }) => {
     try {
         const response = await axios.get(`https://api-tasks.lockated.com/project_statuses.json`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             }
         })
         return response.data;
@@ -47,11 +47,11 @@ export const fetchStatus = createAsyncThunk("fetchStatus", async () => {
     }
 })
 
-export const createStatus = createAsyncThunk("createStatus", async (payload) => {
+export const createStatus = createAsyncThunk("createStatus", async ({ token, payload }) => {
     try {
         const response = await axios.post(`https://api-tasks.lockated.com/project_statuses.json`, payload, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             }
         })
         return response.data;
@@ -61,11 +61,11 @@ export const createStatus = createAsyncThunk("createStatus", async (payload) => 
     }
 })
 
-export const updateStatus = createAsyncThunk("updateStatus", async ({ id, payload }) => {
+export const updateStatus = createAsyncThunk("updateStatus", async ({ token, id, payload }) => {
     try {
         const response = await axios.put(`https://api-tasks.lockated.com/project_statuses/${id}.json`, payload, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             }
         })
         return response.data;
@@ -75,11 +75,11 @@ export const updateStatus = createAsyncThunk("updateStatus", async ({ id, payloa
     }
 })
 
-export const deleteStatus = createAsyncThunk("deleteStatus", async ({ id }) => {
+export const deleteStatus = createAsyncThunk("deleteStatus", async ({ token, id }) => {
     try {
         const response = await axios.delete(`https://api-tasks.lockated.com/project_statuses/${id}.json`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             }
         })
         return response.data;

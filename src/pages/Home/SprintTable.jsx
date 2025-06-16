@@ -43,6 +43,7 @@ const formatDuration = (days) => {
 };
 
 const SprintTable = (setIsSidebarOpen) => {
+    const token = localStorage.getItem("token");
     const dispatch = useDispatch();
     const newSpirints = useSelector(
         (state) => state.fetchSpirints?.fetchSpirints || []
@@ -52,7 +53,7 @@ const SprintTable = (setIsSidebarOpen) => {
 
     const handlefetchSpirints = () => {
         try {
-            dispatch(fetchSpirints()).unwrap();
+            dispatch(fetchSpirints({ token })).unwrap();
         } catch (error) {
             console.log(error);
         }
@@ -60,7 +61,7 @@ const SprintTable = (setIsSidebarOpen) => {
 
     const handleCreateSprints = async (payload) => {
         try {
-            dispatch(postSprint(payload)).unwrap();
+            dispatch(postSprint({ token, payload })).unwrap();
         } catch (error) {
             console.log(error);
         }
@@ -125,6 +126,7 @@ const SprintTable = (setIsSidebarOpen) => {
                         onStatusChange={(newStatus) => {
                             dispatch(
                                 putSprint({
+                                    token,
                                     id: info.row.original.id,
                                     payload: { status: newStatus.toLowerCase() },
                                 })

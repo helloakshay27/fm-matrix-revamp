@@ -1,17 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
-import axios from 'axios';
-import { updateStatus, createStatus, fetchStatus } from '../../../redux/slices/statusSlice';
+import { updateStatus, createStatus } from '../../../redux/slices/statusSlice';
 import { useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 
 const Modal = ({ setOpenModal, openModal, isEdit, existingData = {} }) => {
-  console.log(existingData, isEdit);
+  const token = localStorage.getItem('token');
   const dispatch = useDispatch();
-  const [type, setType] = useState('');
-  const [color, setColor] = useState('#c72030');
-  const [warningOpen, setWarningOpen] = useState(false);
-  const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState(() => { // Using a function for initial state for safety
     if (isEdit && existingData) {
@@ -39,9 +34,9 @@ const Modal = ({ setOpenModal, openModal, isEdit, existingData = {} }) => {
     };
     try {
       if (isEdit) {
-        await dispatch(updateStatus({ id: existingData.id, payload })).unwrap();
+        await dispatch(updateStatus({ token, id: existingData.id, payload })).unwrap();
       } else {
-        await dispatch(createStatus(payload)).unwrap();
+        await dispatch(createStatus({ token, payload })).unwrap();
       }
 
       toast.success(`Status ${isEdit ? 'updated' : 'created'} successfully`)

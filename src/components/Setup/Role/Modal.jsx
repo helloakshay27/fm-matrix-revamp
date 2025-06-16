@@ -3,34 +3,35 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { createRole, editRole } from '../../../redux/slices/roleSlice';
-import {toast} from  'react-hot-toast';
+import { toast } from 'react-hot-toast';
 
 const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
+  const token = localStorage.getItem('token');
 
-    const [roleInput, setRoleInput] = useState();
+  const [roleInput, setRoleInput] = useState();
 
-    useEffect(() => {
+  useEffect(() => {
     if (role?.display_name) {
-        const formattedValue = role.display_name.replace(/_/g, ' ');
-        const capitalized =
-            formattedValue.charAt(0).toUpperCase() + formattedValue.slice(1);
-        setRoleInput(capitalized);
+      const formattedValue = role.display_name.replace(/_/g, ' ');
+      const capitalized =
+        formattedValue.charAt(0).toUpperCase() + formattedValue.slice(1);
+      setRoleInput(capitalized);
     }
-}, [role]);
-  const [error,setError]=useState('');
+  }, [role]);
+  const [error, setError] = useState('');
 
   const dispatch = useDispatch();
   const { loading, success } = useSelector((state) => state.createRole);
   const {
     loading: editLoading,
     success: editSuccess,
-   
+
   } = useSelector((state) => state.editRole);
 
-  const handleSubmit = async(e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if(roleInput===""){setError("Please enter role name");return;}
+    if (roleInput === "") { setError("Please enter role name"); return; }
 
     const payload = {
       lock_role: {
@@ -40,38 +41,38 @@ const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
       },
     };
     let response;
-      try{
-    if (mode === 'edit' && role?.id) {
-     response=await dispatch(editRole({ id: role.id, payload })).unwrap();
-    } else {
-     response=await  dispatch(createRole(payload)).unwrap();
+    try {
+      if (mode === 'edit' && role?.id) {
+        response = await dispatch(editRole({ token, id: role.id, payload })).unwrap();
+      } else {
+        response = await dispatch(createRole({ token, payload })).unwrap();
+      }
+      console.log(response);
+      if (response.name[0] != "has already been taken") {
+        toast.success(`Role ${mode === 'edit' ? 'updated' : 'created'} successfully`, {
+          iconTheme: {
+            primary: 'red', // This might directly change the color of the success icon
+            secondary: 'white', // The circle background
+          },
+        });
+        handleSuccess();
+      }
+      else {
+        setError("Role name already exists");
+      }
     }
-    console.log(response);
-     if(response.name[0]!="has already been taken"){
-      toast.success(`Role ${mode === 'edit' ? 'updated' : 'created'} successfully`,{
-        iconTheme: {
-          primary: 'red', // This might directly change the color of the success icon
-          secondary: 'white', // The circle background
-        },
-      });
-      handleSuccess();
-     }
-    else{
-      setError("Role name already exists");
+    catch (error) {
+      console.log(error);
     }
-  }
-  catch(error){
-    console.log(error);
-  }
   };
 
 
   const handleSuccess = () => {
-      setError("");
-      onSuccess();
+    setError("");
+    onSuccess();
   }
 
-  const handleClose=()=>{
+  const handleClose = () => {
     setError("");
     onClose();
   }

@@ -16,7 +16,7 @@ import { useDeepCompareEffectNoCheck } from 'use-deep-compare-effect';
 import { toast } from "react-hot-toast";
 
 const Modal = ({ openModal, setOpenModal, editMode, existingData }) => {
-  console.log(existingData);
+  const token = localStorage.getItem('token');
   const alreadySelectedUsers = existingData?.project_group_members.map((user) => ({ value: user.user_id, label: user.user_name, id: user.id }));
   const [groupName, setGroupName] = useState(editMode ? existingData?.name || '' : '');
   const [selectedUsers, setSelectedUsers] = useState(editMode ? alreadySelectedUsers || [] : []);
@@ -29,7 +29,7 @@ const Modal = ({ openModal, setOpenModal, editMode, existingData }) => {
   const { fetchUsers: users } = useSelector((state) => state.fetchUsers);
 
   const resetModal = useCallback(() => {
-    dispatch(fetchProjectGroup());
+    dispatch(fetchProjectGroup({ token }));
     setGroupName('');
     setSelectedUsers([]);
     setWarningOpen(false);
@@ -38,7 +38,7 @@ const Modal = ({ openModal, setOpenModal, editMode, existingData }) => {
   }, [setOpenModal]);
 
   useEffect(() => {
-    dispatch(fetchUsers());
+    dispatch(fetchUsers({ token }));
   }, [dispatch]);
 
   const handleSave = async () => {
@@ -69,10 +69,10 @@ const Modal = ({ openModal, setOpenModal, editMode, existingData }) => {
     let response;
     try {
       if (editMode) {
-        response = await dispatch(updateProjectGroup({ id: existingData.id, payload })).unwrap();
+        response = await dispatch(updateProjectGroup({ token, id: existingData.id, payload })).unwrap();
       }
       else {
-        response = await dispatch(createProjectGroup(payload)).unwrap();
+        response = await dispatch(createProjectGroup({ token, payload })).unwrap();
       }
       console.log(response);
       if (response.name[0] === "has already been taken") {
@@ -102,7 +102,7 @@ const Modal = ({ openModal, setOpenModal, editMode, existingData }) => {
     );
     console.log(removed);
     if (removed && editMode) {
-      dispatch(removeMembersFromGroup({ id: removed.id }));
+      dispatch(removeMembersFromGroup({ token, id: removed.id }));
     }
     setPrevMembers(values);
     setSelectedUsers(values);

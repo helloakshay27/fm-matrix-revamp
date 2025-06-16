@@ -6,13 +6,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchProjectDetails } from "../redux/slices/projectSlice";
 
 const MilestoneHeader = () => {
+    const token = localStorage.getItem("token");
     const { id } = useParams();
     const dispatch = useDispatch();
 
     const { fetchProjectDetails: project } = useSelector(state => state.fetchProjectDetails)
 
     useEffect(() => {
-        dispatch(fetchProjectDetails({ id }))
+        dispatch(fetchProjectDetails({ token, id }))
     }, [dispatch])
 
     return (

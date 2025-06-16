@@ -204,6 +204,7 @@ const processTaskData = (task) => {
 };
 
 const TaskTable = () => {
+  const token = localStorage.getItem("token");
   const { id, mid } = useParams();
   const dispatch = useDispatch();
   const location = useLocation();
@@ -279,7 +280,7 @@ const TaskTable = () => {
       !isCreatingTask &&
       !isUpdatingTask
     ) {
-      dispatch(fetchTasks({ id: mid }));
+      dispatch(fetchTasks({ token, id: mid }));
     }
   }, [dispatch, isCreatingTask, isUpdatingTask, location.pathname]);
 
@@ -293,7 +294,7 @@ const TaskTable = () => {
       !isUpdatingTask
     ) {
       if (!userFetchInitiatedRef.current) {
-        dispatch(fetchUsers());
+        dispatch(fetchUsers({ token }));
         userFetchInitiatedRef.current = true;
       }
     } else if (Array.isArray(users) && (users.length > 0 || usersFetchError)) {
@@ -315,8 +316,8 @@ const TaskTable = () => {
     if (filterTask && filterTask.length > 0) {
       newProcessedData = filterTask.map((task) =>
         processTaskData(task)
-    );
-     setData(newProcessedData);
+      );
+      setData(newProcessedData);
       setLocalError(null);
     }
     else if (tasksFromStore && Array.isArray(tasksFromStore)) {
@@ -335,7 +336,7 @@ const TaskTable = () => {
     if (isAddingNewTask && newTaskTitleInputRef.current) {
       newTaskTitleInputRef.current.focus();
     }
-  }, [isAddingNewTask,filterTask, tasksFromStore]);
+  }, [isAddingNewTask, filterTask, tasksFromStore]);
 
   const resetNewTaskForm = useCallback(() => {
     const defaults = createNewTaskDefaults();
@@ -380,11 +381,11 @@ const TaskTable = () => {
     };
     setIsCreatingTask(true);
     setIsAddingNewTask(false);
-    dispatch(createTask(taskAttributes))
+    dispatch(createTask({ token, payload: taskAttributes }))
       .unwrap()
       .then(() => {
         resetNewTaskForm();
-        return dispatch(fetchTasks({ id: mid })).unwrap();
+        return dispatch(fetchTasks({ token, id: mid })).unwrap();
       })
       .catch((error) => {
         console.error("Task creation failed:", error);
@@ -461,17 +462,17 @@ const TaskTable = () => {
       setLocalError(null);
       try {
         if (fieldName === "status") {
-          dispatch(changeTaskStatus({ id: taskId, payload })) // Using changeTaskStatus as per import
+          dispatch(changeTaskStatus({ token, id: taskId, payload })) // Using changeTaskStatus as per import
             .unwrap()
             .then(() => {
-              return dispatch(fetchTasks({ id: mid })).unwrap();
+              return dispatch(fetchTasks({ token, id: mid })).unwrap();
             })
         }
         else {
-          dispatch(updateTask({ id: taskId, payload }))
+          dispatch(updateTask({ token, id: taskId, payload }))
             .unwrap()
             .then(() => {
-              return dispatch(fetchTasks({ id: mid })).unwrap();
+              return dispatch(fetchTasks({ token, id: mid })).unwrap();
             })
         }
       } catch (error) {
@@ -483,7 +484,7 @@ const TaskTable = () => {
           `Update failed: ${error?.response?.data?.errors || error?.message || "Server error"
           }`
         );
-        dispatch(fetchTasks({ id: mid }));
+        dispatch(fetchTasks({ token, id: mid }));
       }
       finally {
         setIsUpdatingTask(false);

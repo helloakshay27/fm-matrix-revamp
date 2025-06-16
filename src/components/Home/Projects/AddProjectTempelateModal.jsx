@@ -13,6 +13,7 @@ import { fetchProjectDetails, fetchTemplates } from "../../../redux/slices/proje
 
 
 const AddProjectTemplate = ({ isModalOpen, setIsModalOpen }) => {
+  const token = localStorage.getItem('token')
   const dispatch = useDispatch();
 
   const { fetchTemplates: templates } = useSelector(state => state.fetchTemplates)
@@ -24,7 +25,7 @@ const AddProjectTemplate = ({ isModalOpen, setIsModalOpen }) => {
   const [templateDetails, setTemplateDetails] = useState({})
 
   useEffect(() => {
-    dispatch(fetchTemplates())
+    dispatch(fetchTemplates({ token }))
   }, [dispatch])
 
   useGSAP(() => {
@@ -48,7 +49,7 @@ const AddProjectTemplate = ({ isModalOpen, setIsModalOpen }) => {
 
   const handleOpenTemplate = (id) => {
     setAddProjectModalOpen(true)
-    dispatch(fetchProjectDetails({ id }))
+    dispatch(fetchProjectDetails({ token, id }))
   }
 
   useEffect(() => {

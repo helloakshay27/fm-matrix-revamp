@@ -33,11 +33,11 @@ const createApiSlice = (name, fetchThunk) => createSlice({
     },
 });
 
-export const createIssue = createAsyncThunk("createIssue", async (data) => {
+export const createIssue = createAsyncThunk("createIssue", async ({ token, data }) => {
     try {
         const response = await axios.post("https://api-tasks.lockated.com/issues.json", { issue: data }, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             },
 
         });
@@ -49,11 +49,11 @@ export const createIssue = createAsyncThunk("createIssue", async (data) => {
     }
 })
 
-export const fetchIssue = createAsyncThunk("fetchIssue", async () => {
+export const fetchIssue = createAsyncThunk("fetchIssue", async ({ token }) => {
     try {
         const response = await axios.get("https://api-tasks.lockated.com/issues.json", {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             },
 
         });
@@ -65,13 +65,13 @@ export const fetchIssue = createAsyncThunk("fetchIssue", async () => {
     }
 })
 
-export const updateIssue = createAsyncThunk("updateIssue", async ({ id, payload }) => {
+export const updateIssue = createAsyncThunk("updateIssue", async ({ token, id, payload }) => {
     try {
         const response = await axios.put(`https://api-tasks.lockated.com/issues/${id}.json`, {
             issue: payload
         }, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             },
 
         });

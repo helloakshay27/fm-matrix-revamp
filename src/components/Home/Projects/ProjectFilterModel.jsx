@@ -21,9 +21,8 @@ const statusOptions = [
     { label: "Overdue", value: "overdue", color: "bg-red-500" },
 ];
 
-const createdByOptions = ["Admin", "User", "System"];
-
 const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
+    const token = localStorage.getItem("token");
     const dispatch = useDispatch();
     const { fetchUsers: users, error: fetchUsersError } = useSelector(
         (state) => state.fetchUsers
@@ -31,7 +30,7 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
     const { fetchProjectTypes: projectTypes } = useSelector(state => state.fetchProjectTypes)
 
     useEffect(() => {
-        dispatch(fetchProjectTypes())
+        dispatch(fetchProjectTypes({ token }))
     }, [dispatch])
 
     const firstNames =
@@ -252,8 +251,8 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
         setCreatorSearch("");
         setDates({ startDate: "", endDate: "" });
         localStorage.removeItem("projectFilters"); // Clear filters from localStorage
-        dispatch(filterProjects({})); // Dispatch filterProjects with empty params
-        dispatch(fetchProjects()); // Ensure initialProjects is refreshed
+        dispatch(filterProjects({ token })); // Dispatch filterProjects with empty params
+        dispatch(fetchProjects({ token })); // Ensure initialProjects is refreshed
         closeModal();
     };
 
@@ -292,7 +291,7 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
             "q[end_date_eq]": dates.endDate || "",
         };
         const queryString = qs.stringify(newFilters, { arrayFormat: 'repeat' });
-        dispatch(filterProjects(queryString));
+        dispatch(filterProjects({ token, filters: queryString }));
         closeModal();
     };
 

@@ -98,7 +98,7 @@ const AddMilestoneModal = ({
             value={formData.startDate || ""}
             onChange={handleInputChange}
             type="date"
-            min={ new Date().toISOString().split("T")[0] || projectStartDate}
+            min={new Date().toISOString().split("T")[0] || projectStartDate}
             max={projectEndDate}
             className="w-full border outline-none border-gray-300 p-2 text-[12px] placeholder-shown:text-transparent"
             disabled={isReadOnly}
@@ -150,6 +150,7 @@ const AddMilestoneModal = ({
 };
 
 const Milestones = () => {
+  const token = localStorage.getItem('token')
   const location = useLocation();
   const dispatch = useDispatch();
   const { id } = useParams();
@@ -176,8 +177,8 @@ const Milestones = () => {
       try {
         setIsLoading(true);
         await Promise.all([
-          dispatch(fetchUsers()),
-          dispatch(fetchMilestone({ id })),
+          dispatch(fetchUsers({ token })),
+          dispatch(fetchMilestone({ token, id })),
         ]);
       } catch (error) {
         toast.error("Failed to load data.");
@@ -239,7 +240,7 @@ const Milestones = () => {
     const payload = createMilestonePayload(formData);
 
     try {
-      const resultAction = await dispatch(createMilestone(payload));
+      const resultAction = await dispatch(createMilestone({ token, payload }));
       if (createMilestone.fulfilled.match(resultAction)) {
         toast.success("Milestone created successfully.");
         setSavedMilestones([...savedMilestones, { id: nextId, formData }]);
@@ -251,7 +252,7 @@ const Milestones = () => {
           dependsOnId: null,
         });
         setNextId(nextId + 1);
-        await dispatch(fetchMilestone({ id })); // Refresh milestones
+        await dispatch(fetchMilestone({ token, id })); // Refresh milestones
       } else {
         toast.error("Failed to create milestone.");
       }
@@ -268,10 +269,10 @@ const Milestones = () => {
     const payload = createMilestonePayload(formData);
 
     try {
-      const resultAction = await dispatch(createMilestone(payload));
+      const resultAction = await dispatch(createMilestone({ token, payload }));
       if (createMilestone.fulfilled.match(resultAction)) {
         toast.success("Milestone created successfully.");
-        await dispatch(fetchMilestone({ id }));
+        await dispatch(fetchMilestone({ token, id }));
         window.location.reload();
       } else {
         toast.error("Milestone creation failed.");

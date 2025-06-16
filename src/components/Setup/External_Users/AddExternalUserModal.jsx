@@ -17,7 +17,7 @@ const AddExternalUserModal = ({
   initialData = null,
   onSuccess
 }) => {
-
+  const token = localStorage.getItem('token');
   const dispatch = useDispatch();
   const { fetchRoles: roles } = useSelector((state) => state.fetchRoles);
   const { fetchOrganizations: organizations } = useSelector(
@@ -40,8 +40,8 @@ const AddExternalUserModal = ({
   });
 
   useEffect(() => {
-    dispatch(fetchRoles());
-    dispatch(fetchOrganizations());
+    dispatch(fetchRoles({ token }));
+    dispatch(fetchOrganizations({ token }));
   }, [dispatch]);
 
   useEffect(() => {
@@ -97,9 +97,9 @@ const AddExternalUserModal = ({
     try {
       let response;
       if (isEditMode && initialData?.id) {
-        response = await dispatch(fetchUpdateUser({ userId: initialData.id, updatedData: payload }));
+        response = await dispatch(fetchUpdateUser({ token, userId: initialData.id, updatedData: payload }));
       } else {
-        response = await dispatch(createExternalUser(payload));
+        response = await dispatch(createExternalUser({ token, payload }));
       }
       console.log(response);
       if (response.payload?.errors) {

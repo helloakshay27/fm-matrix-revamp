@@ -108,6 +108,7 @@ const Status = ({ project }) => {
 
 
 const Documents = () => {
+    const token = localStorage.getItem("token");
     const { id } = useParams();
     const dispatch = useDispatch();
     const attahmentRef = useRef(null);
@@ -124,7 +125,7 @@ const Documents = () => {
         }
 
         if (file) {
-            dispatch(editProject({ id, payload }))
+            dispatch(editProject({ token, id, payload }))
         }
     };
 
@@ -174,6 +175,7 @@ const mapDisplayToApiStatus = (displayStatus) => {
 };
 
 const ProjectDetails = () => {
+    const token = localStorage.getItem("token");
     const { id } = useParams();
     const navigate = useNavigate()
 
@@ -220,12 +222,12 @@ const ProjectDetails = () => {
         setSelectedOption(option);
         setOpenDropdown(false);
 
-        dispatch(changeProjectStatus({ id, payload: { project_management: { status: mapDisplayToApiStatus(option) } } }));
+        dispatch(changeProjectStatus({ token, id, payload: { project_management: { status: mapDisplayToApiStatus(option) } } }));
     };
 
     useEffect(() => {
         if (statusSuccess) {
-            dispatch(fetchProjectDetails({ id }))
+            dispatch(fetchProjectDetails({ token, id }))
         }
     }, [statusSuccess])
 
@@ -254,7 +256,7 @@ const ProjectDetails = () => {
     };
 
     useEffect(() => {
-        dispatch(fetchProjectDetails({ id }))
+        dispatch(fetchProjectDetails({ token, id }))
     }, [])
 
     useEffect(() => {
@@ -375,7 +377,7 @@ const ProjectDetails = () => {
 
                         <span
                             className="flex items-center gap-1 cursor-pointer"
-                            onClick={() => dispatch(deleteProject(project.id))}
+                            onClick={() => dispatch(deleteProject({ token, id: project.id }))}
                         >
                             <Trash2 size={15} />
                             <span>Delete Project</span>

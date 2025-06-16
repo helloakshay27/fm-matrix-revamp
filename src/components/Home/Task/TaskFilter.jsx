@@ -3,28 +3,22 @@ import gsap from "gsap";
 import { X, Search, ChevronRight, ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
-import { get, set } from "react-hook-form";
-import {fetchUsers} from "../../../redux/slices/userSlice"
-import { useSelector , useDispatch} from "react-redux";
-import { filterTask,fetchTasks } from "../../../redux/slices/taskSlice";
+import { useSelector, useDispatch } from "react-redux";
+import { filterTask, fetchTasks } from "../../../redux/slices/taskSlice";
 import { useParams } from "react-router-dom";
 
 const colorOptions = [
-    { label: "Open", color: "bg-[#c85e68]",value:"open" },
-    { label: "In Progress", color: "bg-yellow-500",value:"in_progress" },
-    { label: "Completed", color: "bg-green-400",value:"completed" },
-    { label: "Overdue", color: "bg-red-500" ,value:"overdue"},
-    { label: "On Hold", color: "bg-grey-500" ,value:"on_hold"},
-    { label: "Abort", color: "bg-red-800" ,value:"abort"},
+    { label: "Open", color: "bg-[#c85e68]", value: "open" },
+    { label: "In Progress", color: "bg-yellow-500", value: "in_progress" },
+    { label: "Completed", color: "bg-green-400", value: "completed" },
+    { label: "Overdue", color: "bg-red-500", value: "overdue" },
+    { label: "On Hold", color: "bg-grey-500", value: "on_hold" },
+    { label: "Abort", color: "bg-red-800", value: "abort" },
 ];
 
-
-const projectTypeOptions = ["Design", "Development", "Marketing"];
-const projectManagerOptions = ["Anuj", "Anagha", "Tara"];
-// const createdByOptions = ["Admin", "User", "System"];
-
 const TaskFilter = ({ isModalOpen, setIsModalOpen }) => {
-    const {id,mid}=useParams();
+    const token = localStorage.getItem("token");
+    const { id, mid } = useParams();
     const modalRef = useRef(null);
 
     const getInitialFilters = () => {
@@ -54,17 +48,17 @@ const TaskFilter = ({ isModalOpen, setIsModalOpen }) => {
             };
         }
     };
-    
+
     // Selected options
     const [selectedStatuses, setSelectedStatuses] = useState(getInitialFilters().selectedStatuses);
     const [selectedResponsible, setSelectedResponsible] = useState(getInitialFilters().selectedResponsible);
     // const [selectedManagers, setSelectedManagers] = useState([]);
     const [selectedCreators, setSelectedCreators] = useState(getInitialFilters().selectedCreators);
     const [dates, setDates] = useState({ "Start Date": "", "End Date": "" });
-    const [responsiblePersonOptions,setResponsiblePersonOptions]=useState([]);
-    const [createdByOptions,setCreatedByOptions]=useState([]);
-    const [statusOptions,setStatusOptions]=useState([]);    
-    
+    const [responsiblePersonOptions, setResponsiblePersonOptions] = useState([]);
+    const [createdByOptions, setCreatedByOptions] = useState([]);
+    const [statusOptions, setStatusOptions] = useState([]);
+
     // Search inputs inside dropdowns
     const [statusSearch, setStatusSearch] = useState("");
     const [ResponsiblePersonSearch, setResponsiblePersonSearch] = useState("");
@@ -77,64 +71,64 @@ const TaskFilter = ({ isModalOpen, setIsModalOpen }) => {
         endDate: false,
         creator: false,
     });
-    const dispatch=useDispatch();
-    
+    const dispatch = useDispatch();
+
     const {
-      loading: loadingTasks,
-      error: tasksError,
-      fetchTasks: tasksFromStore,
+        loading: loadingTasks,
+        error: tasksError,
+        fetchTasks: tasksFromStore,
     } = useSelector((state) => state.fetchTasks);
-    
+
     const {
-        fetchUsers:users,
+        fetchUsers: users,
         loading,
-    error,
-}=useSelector(state=>state.fetchUsers)
+        error,
+    } = useSelector(state => state.fetchUsers)
 
-// const {
-//     loading:filterLoading,
-//     error:filterError,
-// }=useSelector(state=>state.filterTask)
+    // const {
+    //     loading:filterLoading,
+    //     error:filterError,
+    // }=useSelector(state=>state.filterTask)
 
-useEffect(()=>{
-    if(tasksFromStore.length>0){
-        const uniqueMap = new Map();
+    useEffect(() => {
+        if (tasksFromStore.length > 0) {
+            const uniqueMap = new Map();
 
-tasksFromStore.forEach((task) => {
-    const color = colorOptions.find((option) => option.value === task.status);
-    if (color && !uniqueMap.has(color.value)) {
-        uniqueMap.set(color.value, {
-            label: color.label,
-            color: color.color,
-            value: color.value
-        });
-    }
-});
+            tasksFromStore.forEach((task) => {
+                const color = colorOptions.find((option) => option.value === task.status);
+                if (color && !uniqueMap.has(color.value)) {
+                    uniqueMap.set(color.value, {
+                        label: color.label,
+                        color: color.color,
+                        value: color.value
+                    });
+                }
+            });
 
-     setStatusOptions(Array.from(uniqueMap.values()));
-}
-      
-       if(tasksFromStore.length>0){
-           const uniqueMap = new Map();
+            setStatusOptions(Array.from(uniqueMap.values()));
+        }
 
-           tasksFromStore.forEach((task) => {
-               if (task.responsible_person && !uniqueMap.has(task.responsible_person.id)) {
-                   uniqueMap.set(task.responsible_person.id, {
-                       label: task.responsible_person.name,
-                       value: task.responsible_person.id
-                   });
-               }
-           });
-       
-       setResponsiblePersonOptions(Array.from(uniqueMap.values()));
-    }
+        if (tasksFromStore.length > 0) {
+            const uniqueMap = new Map();
 
-    if(users.length>0){
-        setCreatedByOptions(users.map(user=>({label:user.firstname+" "+user.lastname,value:user.id})));
-    }
-},[tasksFromStore,users])
-    
- // Save filter state to localStorage whenever it changes
+            tasksFromStore.forEach((task) => {
+                if (task.responsible_person && !uniqueMap.has(task.responsible_person.id)) {
+                    uniqueMap.set(task.responsible_person.id, {
+                        label: task.responsible_person.name,
+                        value: task.responsible_person.id
+                    });
+                }
+            });
+
+            setResponsiblePersonOptions(Array.from(uniqueMap.values()));
+        }
+
+        if (users.length > 0) {
+            setCreatedByOptions(users.map(user => ({ label: user.firstname + " " + user.lastname, value: user.id })));
+        }
+    }, [tasksFromStore, users])
+
+    // Save filter state to localStorage whenever it changes
     useEffect(() => {
         const filters = {
             selectedStatuses,
@@ -145,8 +139,8 @@ tasksFromStore.forEach((task) => {
             ResponsiblePersonSearch,
             creatorSearch,
         };
-        if(selectedStatuses.length>0 || selectedResponsible.length>0 || selectedCreators.length>0 || dates["Start Date"] || dates["End Date"] || statusSearch || ResponsiblePersonSearch || creatorSearch){
-            
+        if (selectedStatuses.length > 0 || selectedResponsible.length > 0 || selectedCreators.length > 0 || dates["Start Date"] || dates["End Date"] || statusSearch || ResponsiblePersonSearch || creatorSearch) {
+
             localStorage.setItem("taskFilters", JSON.stringify(filters));
         }
     }, [
@@ -160,26 +154,25 @@ tasksFromStore.forEach((task) => {
     ]);
 
 
-const  handleApplyFilter=(overideFilters)=>{
-     console.log(dates);
-    try{
-            const newFilter= {
-                "q[status_eq]": selectedStatuses.length>0?selectedStatuses:[],
-                "q[created_by_id_eq]": selectedCreators.length>0?selectedCreators:[],
+    const handleApplyFilter = (overideFilters) => {
+        console.log(dates);
+        try {
+            const newFilter = {
+                "q[status_eq]": selectedStatuses.length > 0 ? selectedStatuses : [],
+                "q[created_by_id_eq]": selectedCreators.length > 0 ? selectedCreators : [],
                 "q[start_date_eq]": dates["Start Date"],
                 "q[end_date_eq]": dates["End Date"],
-                "q[responsible_person_id_eq]": selectedResponsible.length>0?selectedResponsible:[],
-                "q[milestone_id_eq]":mid
+                "q[responsible_person_id_eq]": selectedResponsible.length > 0 ? selectedResponsible : [],
+                "q[milestone_id_eq]": mid
             }
-            if(newFilter){
-                dispatch(filterTask(overideFilters?overideFilters:newFilter));
+            if (newFilter) {
+                dispatch(filterTask({ token, filter: overideFilters ? overideFilters : newFilter }));
                 setIsModalOpen(false);
             }
-            console.log(newFilter);
-    }catch(e){
-      console.log(e);
+        } catch (e) {
+            console.log(e);
+        }
     }
-}
 
 
 
@@ -240,7 +233,7 @@ const  handleApplyFilter=(overideFilters)=>{
                 {filtered.map((option) => {
                     const label = typeof option === "string" ? option : option.label;
                     const color = typeof option === "string" ? null : option.color;
-                    const value=typeof option === "string" ? option : option.value
+                    const value = typeof option === "string" ? option : option.value
 
                     return (
                         <label
@@ -276,10 +269,10 @@ const  handleApplyFilter=(overideFilters)=>{
         setResponsiblePersonSearch("");
         setCreatorSearch("");
         localStorage.removeItem("taskFilters");
-         handleApplyFilter({
-        "q[milestone_id_eq]": mid
-    });
-     dispatch(fetchTasks());        
+        handleApplyFilter({
+            "q[milestone_id_eq]": mid
+        });
+        dispatch(fetchTasks({ token }));
     };
 
 
@@ -469,7 +462,7 @@ const  handleApplyFilter=(overideFilters)=>{
                 <div className="flex justify-center items-center gap-4 px-6 py-3 border-t">
                     <button
                         className="bg-[#C62828] text-white rounded px-10 py-2 text-sm font-semibold hover:bg-[#b71c1c]"
-                        onClick={()=>handleApplyFilter(null)}
+                        onClick={() => handleApplyFilter(null)}
                     >
                         Apply
                     </button>

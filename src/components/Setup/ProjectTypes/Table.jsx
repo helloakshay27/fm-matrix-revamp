@@ -13,7 +13,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { deleteProjectType, fetchProjectTypes, updateProjectType } from '../../../redux/slices/projectSlice';
 import Modal from './Modal';
 import toast from 'react-hot-toast';
+
 const TypesTable = () => {
+  const token = localStorage.getItem('token');
   const [openModal, setOpenModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedData, setSelectedData] = useState(null);
@@ -26,7 +28,7 @@ const TypesTable = () => {
 
   // Initial fetch of project types
   useEffect(() => {
-    dispatch(fetchProjectTypes());
+    dispatch(fetchProjectTypes({ token }));
   }, [dispatch]);
 
   // Update table data when ProjectTypes changes
@@ -39,7 +41,7 @@ const TypesTable = () => {
   // Fetch data when modal closes to ensure table is refreshed
   useEffect(() => {
     if (!openModal) {
-      dispatch(fetchProjectTypes());
+      dispatch(fetchProjectTypes({ token }));
     }
   }, [openModal, dispatch]);
 
@@ -51,7 +53,7 @@ const TypesTable = () => {
 
   const handleDeleteClick = async (id) => {
     try {
-      await dispatch(deleteProjectType(id)).unwrap(); // unwrap to handle async correctly
+      await dispatch(deleteProjectType({ token, id })).unwrap(); // unwrap to handle async correctly
       toast.dismiss();
       toast.success('Project Type deleted successfully', {
         iconTheme: {
@@ -59,7 +61,7 @@ const TypesTable = () => {
           secondary: 'white', // The circle background
         },
       });
-      dispatch(fetchProjectTypes()); // refetch data after successful delete
+      dispatch(fetchProjectTypes({ token })); // refetch data after successful delete
     } catch (error) {
       console.error('Failed to delete:', error);
       toast.error('Failed to delete Project Type.', {
@@ -79,7 +81,7 @@ const TypesTable = () => {
     };
 
     try {
-      await dispatch(updateProjectType({ id: row.original.id, data: payload })).unwrap();
+      await dispatch(updateProjectType({ token, id: row.original.id, data: payload })).unwrap();
       toast.dismiss();
       toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
         iconTheme: {
@@ -87,7 +89,7 @@ const TypesTable = () => {
           secondary: 'white', // The circle background
         },
       });
-      dispatch(fetchProjectTypes());
+      dispatch(fetchProjectTypes({ token }));
     } catch (error) {
       console.error('Failed to update toggle:', error, {
         iconTheme: {

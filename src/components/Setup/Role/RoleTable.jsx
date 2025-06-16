@@ -10,6 +10,7 @@ import { deleteRole, editRole, fetchRoles } from '../../../redux/slices/roleSlic
 import toast from 'react-hot-toast';
 
 const ActionIcons = ({ row, onEdit }) => {
+  const token = localStorage.getItem('token');
   const [isActive, setIsActive] = useState(row.original.active);
   const dispatch = useDispatch();
 
@@ -25,9 +26,9 @@ const ActionIcons = ({ row, onEdit }) => {
       },
     };
 
-    dispatch(editRole({ id: row.original.id, payload }));
+    dispatch(editRole({ token, id: row.original.id, payload }));
     toast.dismiss();
-    toast.success(`Status ${updatedValue?"activated":"deactivated"} successfully`,{
+    toast.success(`Status ${updatedValue ? "activated" : "deactivated"} successfully`, {
       iconTheme: {
         primary: 'red', // This might directly change the color of the success icon
         secondary: 'white', // The circle background
@@ -35,28 +36,28 @@ const ActionIcons = ({ row, onEdit }) => {
     });
   };
 
-    const handleDeleteClick = async (id) => {
-      try {
-        await dispatch(deleteRole({id})).unwrap(); // unwrap to handle async correctly
-        dispatch(fetchRoles()); // refetch data after successful delete
-        toast.dismiss();
-        toast.success('Role deleted successfully',{
-            iconTheme: {
-            primary: 'red', // This might directly change the color of the success icon
-            secondary: 'white', // The circle background
-          },
-        });
-  
-      } catch (error) {
-        console.error('Failed to delete:', error);
-        toast.error('Failed to delete Role.',{
-            iconTheme: {
-            primary: 'red', // This might directly change the color of the success icon
-            secondary: 'white', // The circle background
-          },
-        });
-      }
-    };
+  const handleDeleteClick = async (id) => {
+    try {
+      await dispatch(deleteRole({ token, id })).unwrap(); // unwrap to handle async correctly
+      dispatch(fetchRoles({ token })); // refetch data after successful delete
+      toast.dismiss();
+      toast.success('Role deleted successfully', {
+        iconTheme: {
+          primary: 'red', // This might directly change the color of the success icon
+          secondary: 'white', // The circle background
+        },
+      });
+
+    } catch (error) {
+      console.error('Failed to delete:', error);
+      toast.error('Failed to delete Role.', {
+        iconTheme: {
+          primary: 'red', // This might directly change the color of the success icon
+          secondary: 'white', // The circle background
+        },
+      });
+    }
+  };
 
   return (
     <div className="action-icons flex justify-between gap-5">
@@ -83,6 +84,7 @@ const ActionIcons = ({ row, onEdit }) => {
 };
 
 const RoleTable = () => {
+  const token = localStorage.getItem('token');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
   const [modalMode, setModalMode] = useState('create');
@@ -91,7 +93,7 @@ const RoleTable = () => {
   const { fetchRoles: roles } = useSelector((state) => state.fetchRoles);
 
   useEffect(() => {
-    dispatch(fetchRoles());
+    dispatch(fetchRoles({ token }));
   }, [dispatch]);
 
   const handleEdit = useCallback((role) => {
@@ -101,7 +103,7 @@ const RoleTable = () => {
   }, []);
 
   const handleSuccess = useCallback(() => {
-    dispatch(fetchRoles()); // refresh roles list
+    dispatch(fetchRoles({ token })); // refresh roles list
     setIsModalOpen(false);  // close modal
   }, [dispatch]);
 

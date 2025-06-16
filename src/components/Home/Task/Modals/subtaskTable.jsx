@@ -177,6 +177,7 @@ const calculateDuration = (startDateStr, endDateStr) => {
 };
 
 const SubtaskTable = () => {
+  const token = localStorage.getItem('token');
   const { mid, tid: parentId } = useParams();
   const dispatch = useDispatch();
 
@@ -233,16 +234,16 @@ const SubtaskTable = () => {
       setLocalError(null);
       try {
         if (fieldName === "status") {
-          await dispatch(changeTaskStatus({ id: taskId, payload })) // Using changeTaskStatus as per import
+          await dispatch(changeTaskStatus({ token, id: taskId, payload })) // Using changeTaskStatus as per import
             .unwrap()
 
         }
         else {
-          await dispatch(updateTask({ id: taskId, payload }))
+          await dispatch(updateTask({ token, id: taskId, payload }))
             .unwrap()
 
         }
-        await dispatch(fetchTasks({ id: mid })).unwrap();
+        await dispatch(fetchTasks({ token, id: mid })).unwrap();
       } catch (error) {
         console.error(
           `Task field update failed for ${taskId} (${fieldName}):`,
@@ -252,7 +253,7 @@ const SubtaskTable = () => {
           `Update failed: ${error?.response?.data?.errors || error?.message || "Server error"
           }`
         );
-        dispatch(fetchTasks({ id: mid }));
+        dispatch(fetchTasks({ token, id: mid }));
       }
       finally {
         setIsUpdatingTask(false);
@@ -263,7 +264,7 @@ const SubtaskTable = () => {
 
   useEffect(() => {
     if (!loadingAllTasks && (!allTasksFromStore || !Array.isArray(allTasksFromStore) || allTasksFromStore.length === 0) && !allTasksError && !allTasksFetchInitiatedRef.current) {
-      dispatch(fetchTasks({ id: mid }));
+      dispatch(fetchTasks({ token, id: mid }));
       allTasksFetchInitiatedRef.current = true;
     } else if (allTasksFromStore || allTasksError) {
       allTasksFetchInitiatedRef.current = true;
@@ -272,7 +273,7 @@ const SubtaskTable = () => {
 
   useEffect(() => {
     if (!loadingUsers && (!Array.isArray(users) || users.length === 0) && !usersFetchError && !userFetchInitiatedRef.current) {
-      dispatch(fetchUsers());
+      dispatch(fetchUsers({ token }));
       userFetchInitiatedRef.current = true;
     } else if ((Array.isArray(users) && users.length > 0) || usersFetchError) {
       userFetchInitiatedRef.current = true;
@@ -281,7 +282,7 @@ const SubtaskTable = () => {
 
   useEffect(() => {
     if (!loadingTags && (!Array.isArray(tagList) || tagList.length === 0) && !tagsError && !tagsFetchInitiatedRef.current) {
-      dispatch(fetchTags());
+      dispatch(fetchTags({ token }));
       tagsFetchInitiatedRef.current = true;
     } else if ((Array.isArray(tagList) && tagList.length > 0) || tagsError) {
       tagsFetchInitiatedRef.current = true;
@@ -402,8 +403,8 @@ const SubtaskTable = () => {
     };
 
     try {
-      await dispatch(createSubTask(subtaskPayload)).unwrap();
-      dispatch(fetchTasks({ id: mid }));
+      await dispatch(createSubTask({ token, payload: subtaskPayload })).unwrap();
+      dispatch(fetchTasks({ token, id: mid }));
       setIsAddingNewSubtask(false);
       resetNewSubtaskForm();
     } catch (error) {

@@ -37,11 +37,11 @@ const createApiSlice = (name, fetchThunk) => createSlice({
     },
 });
 
-export const createProject = createAsyncThunk('createProject', async (payload) => {
+export const createProject = createAsyncThunk('createProject', async ({ token, payload }) => {
     try {
         const response = await axios.post(`https://api-tasks.lockated.com/project_managements.json`, payload, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             }
         })
 
@@ -52,11 +52,11 @@ export const createProject = createAsyncThunk('createProject', async (payload) =
     }
 })
 
-export const fetchProjects = createAsyncThunk('fetchProjects', async () => {
+export const fetchProjects = createAsyncThunk('fetchProjects', async ({ token }) => {
     try {
         const response = await axios.get(`https://api-tasks.lockated.com/project_managements.json`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             }
         })
 
@@ -67,11 +67,11 @@ export const fetchProjects = createAsyncThunk('fetchProjects', async () => {
     }
 })
 
-export const fetchProjectDetails = createAsyncThunk('fetchProjectDetails', async ({ id }) => {
+export const fetchProjectDetails = createAsyncThunk('fetchProjectDetails', async ({ token, id }) => {
     try {
         const response = await axios.get(`https://api-tasks.lockated.com/project_managements/${id}.json`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             }
         })
 
@@ -82,11 +82,11 @@ export const fetchProjectDetails = createAsyncThunk('fetchProjectDetails', async
     }
 })
 
-export const changeProjectStatus = createAsyncThunk('changeProjectStatus', async ({ id, payload }) => {
+export const changeProjectStatus = createAsyncThunk('changeProjectStatus', async ({ token, id, payload }) => {
     try {
         const response = await axios.put(`https://api-tasks.lockated.com/project_managements/${id}.json`, payload, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             }
         })
 
@@ -99,14 +99,14 @@ export const changeProjectStatus = createAsyncThunk('changeProjectStatus', async
 
 export const editProject = createAsyncThunk(
     'editProject',
-    async ({ id, payload }, { rejectWithValue }) => {
+    async ({ token, id, payload }, { rejectWithValue }) => {
         try {
             const response = await axios.put(
                 `https://api-tasks.lockated.com/project_managements/${id}.json`,
                 payload,
                 {
                     headers: {
-                        Authorization: `Bearer ${access_token}`,
+                        Authorization: `Bearer ${token}`,
                         'Content-Type': 'application/json',
                     },
                 }
@@ -120,11 +120,11 @@ export const editProject = createAsyncThunk(
 )
 
 
-export const fetchProjectTypes = createAsyncThunk('fetchProjectTypes', async () => {
+export const fetchProjectTypes = createAsyncThunk('fetchProjectTypes', async ({ token }) => {
     try {
         const response = await axios.get(`https://api-tasks.lockated.com/project_types.json`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             }
         })
 
@@ -137,14 +137,14 @@ export const fetchProjectTypes = createAsyncThunk('fetchProjectTypes', async () 
 
 export const createProjectType = createAsyncThunk(
     'createProjectTypes',
-    async (payload, { rejectWithValue }) => {
+    async ({ token, payload }, { rejectWithValue }) => {
         try {
             const response = await axios.post(
                 `https://api-tasks.lockated.com/project_types.json`,
                 payload,
                 {
                     headers: {
-                        Authorization: `Bearer ${access_token}`,
+                        Authorization: `Bearer ${token}`,
                     },
                 }
             );
@@ -159,14 +159,14 @@ export const createProjectType = createAsyncThunk(
 
 export const updateProjectType = createAsyncThunk(
     'projectTypesUpdate',
-    async ({ id, data }, { rejectWithValue }) => {
+    async ({ token, id, data }, { rejectWithValue }) => {
         try {
             const response = await axios.patch(
                 `https://api-tasks.lockated.com/project_types/${id}.json`,
                 data,
                 {
                     headers: {
-                        Authorization: `Bearer ${access_token}`,
+                        Authorization: `Bearer ${token}`,
                     },
                 }
             );
@@ -179,11 +179,11 @@ export const updateProjectType = createAsyncThunk(
 
 export const deleteProjectType = createAsyncThunk(
     'deleteProjectType',
-    async (id, { rejectWithValue }) => {
+    async ({ token, id }, { rejectWithValue }) => {
         try {
             await axios.delete(`https://api-tasks.lockated.com/project_types/${id}.json`, {
                 headers: {
-                    Authorization: `Bearer ${access_token}`,
+                    Authorization: `Bearer ${token}`,
                 },
             });
 
@@ -196,13 +196,13 @@ export const deleteProjectType = createAsyncThunk(
 
 export const deleteProject = createAsyncThunk(
     'deleteProject',
-    async (id, { rejectWithValue }) => {
+    async ({ token, id }, { rejectWithValue }) => {
         try {
             const response = await axios.delete(
                 `https://api-tasks.lockated.com/project_managements/${id}.json`,
                 {
                     headers: {
-                        Authorization: `Bearer ${access_token}`,
+                        Authorization: `Bearer ${token}`,
                     },
                 }
             )
@@ -214,11 +214,11 @@ export const deleteProject = createAsyncThunk(
     }
 )
 
-export const fetchTemplates = createAsyncThunk('fetchTemplates', async () => {
+export const fetchTemplates = createAsyncThunk('fetchTemplates', async ({ token }) => {
     try {
         const response = await axios.get(`https://api-tasks.lockated.com/project_managements.json?q[is_template_eq]=true`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             }
         })
 
@@ -231,7 +231,7 @@ export const fetchTemplates = createAsyncThunk('fetchTemplates', async () => {
 
 export const filterProjects = createAsyncThunk(
     'filterProjects',
-    async (filters, { rejectWithValue }) => {
+    async ({ token, filters }, { rejectWithValue }) => {
         try {
             const params = new URLSearchParams(filters).toString();
             console.log(params);
@@ -239,7 +239,7 @@ export const filterProjects = createAsyncThunk(
                 `https://api-tasks.lockated.com/project_managements.json?${params}`,
                 {
                     headers: {
-                        Authorization: `Bearer ${access_token}`,
+                        Authorization: `Bearer ${token}`,
                     },
                 }
             );
@@ -251,11 +251,11 @@ export const filterProjects = createAsyncThunk(
     }
 );
 
-export const fetchProjectGroup = createAsyncThunk('fetchProjectGroup', async () => {
+export const fetchProjectGroup = createAsyncThunk('fetchProjectGroup', async ({ token }) => {
     try {
         const response = await axios.get(`https://api-tasks.lockated.com/project_groups.json`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             }
         })
 
@@ -266,11 +266,11 @@ export const fetchProjectGroup = createAsyncThunk('fetchProjectGroup', async () 
     }
 })
 
-export const createProjectGroup = createAsyncThunk('createProjectGroup', async (payload) => {
+export const createProjectGroup = createAsyncThunk('createProjectGroup', async ({ token, payload }) => {
     try {
         const response = await axios.post(`https://api-tasks.lockated.com/project_groups.json`, { project_group: payload }, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             },
         })
         return response.data;
@@ -281,11 +281,11 @@ export const createProjectGroup = createAsyncThunk('createProjectGroup', async (
     }
 })
 
-export const updateProjectGroup = createAsyncThunk('updateProjectGroup', async ({ id, payload }) => {
+export const updateProjectGroup = createAsyncThunk('updateProjectGroup', async ({ token, id, payload }) => {
     try {
         const response = await axios.put(`https://api-tasks.lockated.com/project_groups/${id}.json`, { project_group: payload }, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             },
         })
         return response.data;
@@ -296,11 +296,11 @@ export const updateProjectGroup = createAsyncThunk('updateProjectGroup', async (
     }
 })
 
-export const deleteProjectGroup = createAsyncThunk('deleteProjectGroup', async (id) => {
+export const deleteProjectGroup = createAsyncThunk('deleteProjectGroup', async ({ token, id }) => {
     try {
         const response = await axios.delete(`https://api-tasks.lockated.com/project_groups/${id}.json`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             },
         })
         return response.data;
@@ -311,11 +311,11 @@ export const deleteProjectGroup = createAsyncThunk('deleteProjectGroup', async (
     }
 })
 
-export const createProjectTeam = createAsyncThunk('createProjectTeam', async ({ payload }) => {
+export const createProjectTeam = createAsyncThunk('createProjectTeam', async ({ token, payload }) => {
     try {
         const response = await axios.post(`https://api-tasks.lockated.com/project_teams.json`, payload, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             },
         })
         return response.data;
@@ -326,11 +326,11 @@ export const createProjectTeam = createAsyncThunk('createProjectTeam', async ({ 
     }
 })
 
-export const fetchProjectTeams = createAsyncThunk('fetchProjectTeams', async () => {
+export const fetchProjectTeams = createAsyncThunk('fetchProjectTeams', async ({ token }) => {
     try {
         const response = await axios.get(`https://api-tasks.lockated.com/project_teams.json`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             },
         })
         return response.data;
@@ -341,11 +341,11 @@ export const fetchProjectTeams = createAsyncThunk('fetchProjectTeams', async () 
     }
 })
 
-export const fetchProjectTeam = createAsyncThunk('fetchProjectTeam', async ({ id }) => {
+export const fetchProjectTeam = createAsyncThunk('fetchProjectTeam', async ({ token, id }) => {
     try {
         const response = await axios.get(`https://api-tasks.lockated.com/project_teams/${id}.json`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             },
         })
         return response.data;
@@ -356,11 +356,11 @@ export const fetchProjectTeam = createAsyncThunk('fetchProjectTeam', async ({ id
     }
 })
 
-export const deleteProjectTeam = createAsyncThunk('deleteProjectTeam', async ({ id }) => {
+export const deleteProjectTeam = createAsyncThunk('deleteProjectTeam', async ({ token, id }) => {
     try {
         const response = await axios.delete(`https://api-tasks.lockated.com/project_teams/${id}.json`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             },
         })
         return response.data;
@@ -371,11 +371,11 @@ export const deleteProjectTeam = createAsyncThunk('deleteProjectTeam', async ({ 
     }
 })
 
-export const updateProjectTeam = createAsyncThunk('updateProjectTeam', async ({ payload, id }) => {
+export const updateProjectTeam = createAsyncThunk('updateProjectTeam', async ({ token, payload, id }) => {
     try {
         const response = await axios.put(`https://api-tasks.lockated.com/project_teams/${id}.json`, payload, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             },
         })
         return response.data;
@@ -386,11 +386,11 @@ export const updateProjectTeam = createAsyncThunk('updateProjectTeam', async ({ 
     }
 })
 
-export const removeTagFromProject = createAsyncThunk('removeTagFromProject', async ({ id }) => {
+export const removeTagFromProject = createAsyncThunk('removeTagFromProject', async ({ token, id }) => {
     try {
         const response = await axios.delete(`https://api-tasks.lockated.com/task_tags/${id}.json`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             },
         })
         return response.data;
@@ -401,11 +401,11 @@ export const removeTagFromProject = createAsyncThunk('removeTagFromProject', asy
     }
 })
 
-export const removeMembersFromTeam = createAsyncThunk('removeMembersFromTeam', async ({ id }) => {
+export const removeMembersFromTeam = createAsyncThunk('removeMembersFromTeam', async ({ token, id }) => {
     try {
         const response = await axios.delete(`https://api-tasks.lockated.com/project_team_members/${id}.json`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             },
         })
         return response.data;
@@ -416,11 +416,11 @@ export const removeMembersFromTeam = createAsyncThunk('removeMembersFromTeam', a
     }
 })
 
-export const removeMembersFromGroup = createAsyncThunk('removeMembersFromGroup', async ({ id }) => {
+export const removeMembersFromGroup = createAsyncThunk('removeMembersFromGroup', async ({ token, id }) => {
     try {
         const response = await axios.delete(`https://api-tasks.lockated.com/project_group_members/${id}.json`, {
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${token}`,
             },
         })
         return response.data;

@@ -22,6 +22,7 @@ const formatCountdown = (ms) => {
 };
 
 const ProjectCard = ({ project }) => {
+    const token = localStorage.getItem("token");
     const dispatch = useDispatch();
 
     const navigate = useNavigate();
@@ -48,7 +49,7 @@ const ProjectCard = ({ project }) => {
 
             if (diff <= 0 && project.status !== "completed") {
                 setCountdown("Overdued");
-                dispatch(changeProjectStatus({ id: project.id, payload: { status: "overdue" } }));
+                dispatch(changeProjectStatus({ token, id: project.id, payload: { status: "overdue" } }));
                 clearInterval(interval);
             } else {
                 setCountdown(formatCountdown(diff));

@@ -1,31 +1,30 @@
-import React, { useState ,useEffect} from 'react'
+import React, { useState, useEffect } from 'react'
 import KeyboardArrowLeftOutlinedIcon from '@mui/icons-material/KeyboardArrowLeftOutlined';
-import { Link,useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
 import { fetchProjectTeam } from '../../../redux/slices/projectSlice';
 
-
-
 const TeamDetails = () => {
-  const {id} =useParams();
-  const dispatch=useDispatch();
-  const {fetchProjectTeam:projectTeam} =useSelector(state=>state.fetchProjectTeam)
-   
-  useEffect(()=>{
-        try{
-        let response=dispatch(fetchProjectTeam({id}));
-        setData(response);
-        }catch(err){
-          console.log(err);
-        }
-  },[dispatch,id])
+  const token = localStorage.getItem('token');
+  const { id } = useParams();
+  const dispatch = useDispatch();
+  const { fetchProjectTeam: projectTeam } = useSelector(state => state.fetchProjectTeam)
+
+  useEffect(() => {
+    try {
+      let response = dispatch(fetchProjectTeam({ token, id }));
+      setData(response);
+    } catch (err) {
+      console.log(err);
+    }
+  }, [dispatch, id])
 
   return (
     <div className="flex flex-col gap-5 p-10 m-10 text-[14px] bg-[#D9D9D933] h-full">
       <div className="flex justify-between gap-10">
         <div className="flex justify-start gap-4 w-2/3">
-          <span className="rounded-full bg-[#D5DBDB] w-[65px] h-[65px] flex justify-center items-center text-[25px]">{projectTeam?.name?.charAt(0) }</span>
+          <span className="rounded-full bg-[#D5DBDB] w-[65px] h-[65px] flex justify-center items-center text-[25px]">{projectTeam?.name?.charAt(0)}</span>
           <div className='flex flex-col gap-3'>
             <span>{projectTeam?.name}</span>
             <div className="flex justify-between gap-10">
@@ -58,8 +57,8 @@ const TeamDetails = () => {
             <div className="flex flex-col gap-2">
               <h1 className="block mb-4 font-bold">Team Lead</h1>
               {
-                  <span>{projectTeam?.team_lead?.name}</span>
-                
+                <span>{projectTeam?.team_lead?.name}</span>
+
               }
             </div>
             <span className='border-x-2 border-gray-300 h-[80px]'></span>

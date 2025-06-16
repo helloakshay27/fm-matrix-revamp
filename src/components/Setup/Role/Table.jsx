@@ -1,55 +1,49 @@
-import React, { useState, useMemo } from 'react';
-import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import Switch from '@mui/joy/Switch';
-
+import React, { useState, useMemo } from "react";
+import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import Switch from "@mui/joy/Switch";
 import {
   useReactTable,
   getCoreRowModel,
   flexRender,
   getPaginationRowModel,
-} from '@tanstack/react-table';
-import { deleteRole, fetchRoles } from '../../../redux/slices/roleSlice';
+} from "@tanstack/react-table";
+import { deleteRole, fetchRoles } from "../../../redux/slices/roleSlice";
 
 const ActionIcons = ({ row }) => {
-    
-       const handleDeleteClick = async (id) => {
-         try {
-           await dispatch(deleteRole(id)).unwrap(); // unwrap to handle async correctly
-           dispatch(fetchRoles()); // refetch data after successful delete
-           toast.dismiss();
-           toast.success('Role deleted successfully',{
-               iconTheme: {
-               primary: 'red', // This might directly change the color of the success icon
-               secondary: 'white', // The circle background
-             },
-           });
-     
-         } catch (error) {
-           console.error('Failed to delete:', error);
-           toast.error('Failed to delete Role',{
-               iconTheme: {
-               primary: 'red', // This might directly change the color of the success icon
-               secondary: 'white', // The circle background
-             },
-           });
-         }
-       };
+  const token = localStorage.getItem("token");
+  const handleDeleteClick = async (id) => {
+    try {
+      await dispatch(deleteRole({ token, id })).unwrap(); // unwrap to handle async correctly
+      dispatch(fetchRoles({ token })); // refetch data after successful delete
+      toast.dismiss();
+      toast.success("Role deleted successfully", {
+        iconTheme: {
+          primary: "red", // This might directly change the color of the success icon
+          secondary: "white", // The circle background
+        },
+      });
+    } catch (error) {
+      console.error("Failed to delete:", error);
+      toast.error("Failed to delete Role", {
+        iconTheme: {
+          primary: "red", // This might directly change the color of the success icon
+          secondary: "white", // The circle background
+        },
+      });
+    }
+  };
 
-  (
   <div className="action-icons flex justify-between gap-5">
     <Switch color="danger" />
     <div>
       <EditOutlinedIcon sx={{ fontSize: "20px" }} />
-      <button
-        onClick={() => handleDeleteClick(row.original.id)}
-        title="Delete"
-      >
+      <button onClick={() => handleDeleteClick(row.original.id)} title="Delete">
         <DeleteOutlineOutlinedIcon sx={{ fontSize: "20px" }} />
       </button>
     </div>
-  </div>
-)};
+  </div>;
+};
 
 const defaultData = [
   {
@@ -68,7 +62,6 @@ const defaultData = [
     roles: "Project SPOC",
     createdOn: "01 Jan 2025",
   },
-
 ];
 
 const RoleTable = () => {
@@ -83,26 +76,26 @@ const RoleTable = () => {
   const columns = useMemo(
     () => [
       {
-        accessorKey: 'roles',
-        header: 'Roles',
+        accessorKey: "roles",
+        header: "Roles",
         size: 650,
         cell: ({ row, getValue }) => {
           return row.original ? getValue() : null;
         },
       },
       {
-        accessorKey: 'createdOn',
-        header: 'Created On',
+        accessorKey: "createdOn",
+        header: "Created On",
         size: 100,
         cell: ({ row, getValue }) => (row.original ? getValue() : null),
       },
       {
-        id: 'actions',
-        header: 'Actions',
+        id: "actions",
+        header: "Actions",
         size: 60,
         cell: ({ row }) => (row.original ? <ActionIcons row={row} /> : null),
         meta: {
-          cellClassName: 'actions-cell-content',
+          cellClassName: "actions-cell-content",
         },
       },
     ],
@@ -125,11 +118,10 @@ const RoleTable = () => {
   const numDataRowsOnPage = pageRows.length;
   const numEmptyRowsToAdd = Math.max(0, fixedRowsPerPage - numDataRowsOnPage);
 
-  const rowHeight = 40; 
+  const rowHeight = 40;
 
-  const headerHeight = 48; 
-  const desiredTableHeight = (fixedRowsPerPage * rowHeight) + headerHeight;
-
+  const headerHeight = 48;
+  const desiredTableHeight = fixedRowsPerPage * rowHeight + headerHeight;
 
   return (
     <div className="project-table-container text-[14px] font-light ">
@@ -139,9 +131,9 @@ const RoleTable = () => {
       >
         <table className="w-[100%]">
           <thead>
-            {table.getHeaderGroups().map(headerGroup => (
+            {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
+                {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
                     colSpan={header.colSpan}
@@ -161,27 +153,39 @@ const RoleTable = () => {
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y" style={{ height: `${fixedRowsPerPage * rowHeight}px` }}>
-            {pageRows.map(row => {
-              const isDataRowConsideredEmpty = !row.original || Object.values(row.original).every(v => v === null || v === '');
+          <tbody
+            className="divide-y"
+            style={{ height: `${fixedRowsPerPage * rowHeight}px` }}
+          >
+            {pageRows.map((row) => {
+              const isDataRowConsideredEmpty =
+                !row.original ||
+                Object.values(row.original).every(
+                  (v) => v === null || v === ""
+                );
 
               return (
                 <tr
                   key={row.id}
-                  className={`hover:bg-gray-50 even:bg-[#D5DBDB4D] ${isDataRowConsideredEmpty ? 'pointer-events-none text-transparent' : ''}`}
+                  className={`hover:bg-gray-50 even:bg-[#D5DBDB4D] ${isDataRowConsideredEmpty
+                    ? "pointer-events-none text-transparent"
+                    : ""
+                    }`}
                   style={{ height: `${rowHeight}px` }}
                 >
-                  {row.getVisibleCells().map(cell => (
+                  {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}
                       style={{ width: cell.column.getSize() }}
-                      className={`${
-                        cell.column.columnDef.meta?.cellClassName || ''
-                      } whitespace-nowrap px-3 py-2 border-r-2
+                      className={`${cell.column.columnDef.meta?.cellClassName || ""
+                        } whitespace-nowrap px-3 py-2 border-r-2
                       }`}
                     >
                       {!isDataRowConsideredEmpty
-                        ? flexRender(cell.column.columnDef.cell, cell.getContext())
+                        ? flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )
                         : null}
                     </td>
                   ))}
@@ -194,7 +198,7 @@ const RoleTable = () => {
                 style={{ height: `${rowHeight}px` }}
                 className="even:bg-[#D5DBDB4D] pointer-events-none"
               >
-                {table.getAllLeafColumns().map(column => (
+                {table.getAllLeafColumns().map((column) => (
                   <td
                     key={`empty-cell-${index}-${column.id}`}
                     style={{ width: column.getSize() }}
@@ -216,34 +220,35 @@ const RoleTable = () => {
             disabled={!table.getCanPreviousPage()}
             className="p-1 border rounded disabled:opacity-50"
           >
-            {'<<'}
+            {"<<"}
           </button>
           <button
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
             className="p-1 border rounded disabled:opacity-50"
           >
-            {'<'}
+            {"<"}
           </button>
           <button
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
             className="p-1 border rounded disabled:opacity-50"
           >
-            {'>'}
+            {">"}
           </button>
           <button
             onClick={() => table.setPageIndex(table.getPageCount() - 1)}
             disabled={!table.getCanNextPage()}
             className="p-1 border rounded disabled:opacity-50"
           >
-            {'>>'}
+            {">>"}
           </button>
         </div>
         <span className="flex items-center gap-1">
           <div>Page</div>
           <strong>
-            {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+            {table.getState().pagination.pageIndex + 1} of{" "}
+            {table.getPageCount()}
           </strong>
         </span>
       </div>

@@ -12,17 +12,14 @@ import {
   flexRender,
   getPaginationRowModel,
 } from '@tanstack/react-table';
-// import Modal from '../Status/Modal.jsx'; // Not used in StatusTable directly, remove
 import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 
 
 const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
+  const token = localStorage.getItem('token');
   const dispatch = useDispatch();
-  // Correctly get data from Redux state
-  // Assuming your status slice has a 'list' property, and 'fetchStatus' is the slice name
   const statusList = useSelector(state => state.fetchStatus.fetchStatus || []); // <-- Assuming state.status.list is your array of statuses
-                                                                  // Add || [] to ensure it's always an array
   const fixedRowsPerPage = 13;
 
   const [pagination, setPagination] = useState({
@@ -31,37 +28,35 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
   });
 
   useEffect(() => {
-    // Only dispatch fetchStatus when the component mounts
-    // and if the statusList is empty or needs refreshing
     if (statusList.length === 0) { // Optional: only fetch if data is not already there
-        dispatch(fetchStatus());
+      dispatch(fetchStatus({ token }));
     }
-  }, [dispatch]); 
+  }, [dispatch]);
 
   const ActionIcons = ({ row, setOpenModal, setIsEdit, setExistingData }) => {
-  const handleEditClick = () => {
-    setIsEdit(true);
-    setExistingData(row.original);
-    setOpenModal(true);
-    console.log(row.original);
-  };
+    const handleEditClick = () => {
+      setIsEdit(true);
+      setExistingData(row.original);
+      setOpenModal(true);
+      console.log(row.original);
+    };
 
     const handleDeleteClick = async (id) => {
       try {
-        await dispatch(deleteStatus({id})).unwrap(); // unwrap to handle async correctly
-        dispatch(fetchStatus()); // refetch data after successful delete
+        await dispatch(deleteStatus({ token, id })).unwrap(); // unwrap to handle async correctly
+        dispatch(fetchStatus({ token })); // refetch data after successful delete
         toast.dismiss();
-        toast.success('Status deleted successfully',{
-            iconTheme: {
+        toast.success('Status deleted successfully', {
+          iconTheme: {
             primary: 'red', // This might directly change the color of the success icon
             secondary: 'white', // The circle background
           },
         });
-  
+
       } catch (error) {
         console.error('Failed to delete:', error);
-        toast.error('Failed to delete Status.',{
-            iconTheme: {
+        toast.error('Failed to delete Status.', {
+          iconTheme: {
             primary: 'red', // This might directly change the color of the success icon
             secondary: 'white', // The circle background
           },
@@ -69,26 +64,26 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
       }
     };
 
-  return (
-    <div className="action-icons flex justify-between gap-5">
-      <div>
-        <EditOutlinedIcon
-          onClick={handleEditClick}
-          sx={{ fontSize: '20px', cursor: 'pointer' }}
-        />
-        <button
-          // You had 'data.title' here, which is undefined in this component's scope
-          // Use row.original.status or row.original.name for deletion
-          onClick={() => handleDeleteClick(row.original.id)}
-          title="Delete"
-          className="ml-2"
-        >
-          <DeleteOutlineOutlinedIcon sx={{ fontSize: '20px' }} />
-        </button>
+    return (
+      <div className="action-icons flex justify-between gap-5">
+        <div>
+          <EditOutlinedIcon
+            onClick={handleEditClick}
+            sx={{ fontSize: '20px', cursor: 'pointer' }}
+          />
+          <button
+            // You had 'data.title' here, which is undefined in this component's scope
+            // Use row.original.status or row.original.name for deletion
+            onClick={() => handleDeleteClick(row.original.id)}
+            title="Delete"
+            className="ml-2"
+          >
+            <DeleteOutlineOutlinedIcon sx={{ fontSize: '20px' }} />
+          </button>
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
 
 
@@ -98,18 +93,18 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
       const payload = {
         active: !row.original.active
       };
-      await dispatch(updateStatus({ id: row.original.id,  payload })).unwrap(); // Use 'data' as key for payload if your thunk expects it
+      await dispatch(updateStatus({ token, id: row.original.id, payload })).unwrap(); // Use 'data' as key for payload if your thunk expects it
       toast.dismiss();
-      toast.success(`Status ${payload.active ? 'activated' : 'deactivated'} successfully`,{
+      toast.success(`Status ${payload.active ? 'activated' : 'deactivated'} successfully`, {
         iconTheme: {
           primary: 'red', // This might directly change the color of the success icon
           secondary: 'white', // The circle background
         },
       });
-      dispatch(fetchStatus()); // Re-fetch all statuses to update the table
+      dispatch(fetchStatus({ token })); // Re-fetch all statuses to update the table
     } catch (error) {
       console.error("Failed to toggle status:", error); // Use console.error for errors
-      toast.error("Failed to update status.",{
+      toast.error("Failed to update status.", {
         iconTheme: {
           primary: 'red', // This might directly change the color of the error icon
           secondary: 'white', // The circle background
@@ -150,7 +145,7 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
           <div className="flex gap-4 items-center justify-center">
             <span>Inactive</span>
             <Switch
-                color={`${getValue() ? 'success' : 'danger'}`}
+              color={`${getValue() ? 'success' : 'danger'}`}
               checked={getValue()}
               onChange={() => toggleStatus(row)}
             />
@@ -248,18 +243,16 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
               return (
                 <tr
                   key={row.id}
-                  className={`hover:bg-gray-50 even:bg-[#D5DBDB4D] ${
-                    isEmpty ? 'pointer-events-none text-transparent' : ''
-                  }`}
+                  className={`hover:bg-gray-50 even:bg-[#D5DBDB4D] ${isEmpty ? 'pointer-events-none text-transparent' : ''
+                    }`}
                   style={{ height: `${rowHeight}px` }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}
                       style={{ width: cell.column.getSize(), padding: '10px' }}
-                      className={`whitespace-nowrap px-3 py-2 border-r-2 ${
-                        cell.column.columnDef.meta?.cellClassName || ''
-                      }`}
+                      className={`whitespace-nowrap px-3 py-2 border-r-2 ${cell.column.columnDef.meta?.cellClassName || ''
+                        }`}
                     >
                       {!isEmpty
                         ? flexRender(cell.column.columnDef.cell, cell.getContext())
@@ -324,9 +317,8 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
                 <button
                   key={page}
                   onClick={() => table.setPageIndex(page)}
-                  className={`px-3 py-1 ${
-                    isActive ? 'bg-gray-200 font-bold' : ''
-                  }`}
+                  className={`px-3 py-1 ${isActive ? 'bg-gray-200 font-bold' : ''
+                    }`}
                 >
                   {page + 1}
                 </button>
