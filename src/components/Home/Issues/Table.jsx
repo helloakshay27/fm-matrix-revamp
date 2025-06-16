@@ -55,6 +55,7 @@ const IssuesTable = () => {
   const { id: parentId } = useParams();
   console.log(parentId);
   const dispatch = useDispatch();
+  const token=localStorage.getItem('token');
 
   const {
     fetchIssue: allIssuesFromStore, // Corrected: Assuming 'issues' is the key in state.fetchIssues
@@ -90,7 +91,7 @@ const IssuesTable = () => {
 
   useEffect(() => {
     if (!loadingAllIssues && (!allIssuesFromStore || !Array.isArray(allIssuesFromStore) || allIssuesFromStore.length === 0) && !allIssuesError && !allIssuesFetchInitiatedRef.current) {
-      dispatch(fetchIssue());
+      dispatch(fetchIssue({token}));
       allIssuesFetchInitiatedRef.current = true;
     } else if (allIssuesFromStore || allIssuesError) {
       allIssuesFetchInitiatedRef.current = true;
@@ -99,7 +100,7 @@ const IssuesTable = () => {
 
   useEffect(() => {
     if (!loadingUsers && (!Array.isArray(users) || users.length === 0) && !usersFetchError && !userFetchInitiatedRef.current) {
-      dispatch(fetchUsers());
+      dispatch(fetchUsers({token}));
       userFetchInitiatedRef.current = true;
     } else if ((Array.isArray(users) && users.length > 0) || usersFetchError) {
       userFetchInitiatedRef.current = true;
@@ -191,7 +192,7 @@ const IssuesTable = () => {
 
     try {
       await dispatch(createIssue(IssuesPayload)).unwrap();
-      dispatch(fetchIssue()); // Re-fetch issues to get the latest data including the new one
+      dispatch(fetchIssue({token})); // Re-fetch issues to get the latest data including the new one
       setIsAddingNewIssues(false);
       resetNewIssuesForm();
     } catch (error) {
@@ -224,13 +225,13 @@ const IssuesTable = () => {
         payload.responsible_person_id = newValue;
       }
 
-      await dispatch(updateIssue({ id: id, payload })).unwrap();
-      dispatch(fetchIssue());
+      await dispatch(updateIssue({ id: id, token,payload })).unwrap();
+      dispatch(fetchIssue({token}));
     } catch (error) {
       console.error("Failed to update issue:", error);
       const errorMessage = error?.response?.data?.message || error?.message || "Failed to update issue.";
       setLocalError(errorMessage);
-      dispatch(fetchIssue());
+      dispatch(fetchIssue({token}));
     } finally {
       setIsUpdatingIssue(false);
     }
