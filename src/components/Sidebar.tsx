@@ -60,27 +60,28 @@ const modulesByPackage = {
       subItems: [
         { name: 'PR/ SR', href: '/finance/pr-sr', color: 'text-[#1a1a1a]' },
         { name: 'PO/WO', href: '/finance/po-wo', color: 'text-[#1a1a1a]' },
-        { name: 'GRN/ SRN', href: '/finance/grn-srn', color: 'text-[#1a1a1a]' }
+        { name: 'GRN/ SRN', href: '/finance/grn-srn', color: 'text-[#1a1a1a]' },
+        { name: 'Auto Saved PR', href: '/finance/auto-saved-pr', color: 'text-[#1a1a1a]' }
       ]
     },
     { name: 'Invoices', icon: Receipt, href: '/finance/invoices' },
     { name: 'Bill Booking', icon: FileText, href: '/finance/bill-booking' },
-    { name: 'Accounting', icon: Calculator, href: '/finance/accounting' },
     { 
-      name: 'Cost Center', 
-      icon: Target, 
-      href: '/finance/cost-center',
-      color: 'text-orange-600'
+      name: 'Accounting', 
+      icon: Calculator, 
+      href: '/finance/accounting',
+      subItems: [
+        { name: 'Cost Center', href: '/finance/cost-center', color: 'text-[#1a1a1a]' },
+        { name: 'Budgeting', href: '/finance/budgeting', color: 'text-[#1a1a1a]' },
+        { name: 'Pending Approvals', href: '/finance/pending-approvals', color: 'text-[#1a1a1a]' }
+      ]
     },
-    { name: 'Budgeting', icon: BarChart3, href: '/finance/budgeting' },
     { 
       name: 'Lease Management', 
       icon: FileText, 
       href: '/finance/lease-management',
-      color: 'text-orange-600'
-    },
-    { name: 'Pending Approvals', icon: Clock, href: '/finance/pending-approvals' },
-    { name: 'Auto Saved PR', icon: FileText, href: '/finance/auto-saved-pr' }
+      color: 'text-[#1a1a1a]'
+    }
   ],
   'CRM': [
     { name: 'Cloud Telephony', icon: Phone, href: '/crm/cloud-telephony' },
