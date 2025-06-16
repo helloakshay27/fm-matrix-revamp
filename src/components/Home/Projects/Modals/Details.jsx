@@ -203,12 +203,15 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
     if (isEdit) {
       dispatch(editProject({ id, payload }));
     } else {
-      const result = dispatch(createProject(payload));
-      if (result.meta.requestStatus === "fulfilled") {
-        setTab("Milestone");
-      }
+      dispatch(createProject(payload));
     }
   };
+
+  useEffect(() => {
+    if (success) {
+      setTab('Milestone')
+    }
+  }, [success])
 
   useEffect(() => {
     if (editsuccess) {
