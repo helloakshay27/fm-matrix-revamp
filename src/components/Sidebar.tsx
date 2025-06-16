@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useLayout } from '../contexts/LayoutContext';
 import { 
@@ -30,10 +29,16 @@ const modulesByPackage = {
     { name: 'Ticket', icon: FileText, href: '/maintenance/ticket' },
     { name: 'Task', icon: CheckSquare, href: '/maintenance/task' },
     { name: 'Schedule', icon: Calendar, href: '/maintenance/schedule' },
-    { name: 'Safety', icon: Shield, href: '/maintenance/safety' },
-    { name: 'Incident', icon: AlertTriangle, href: '/maintenance/incident', color: 'text-orange-600' },
-    { name: 'Permit to Work', icon: FileText, href: '/maintenance/permit', color: 'text-orange-600' },
-    { name: 'M Safe', icon: ShieldCheck, href: '/maintenance/m-safe', color: 'text-orange-600' },
+    { 
+      name: 'Safety', 
+      icon: Shield, 
+      href: '/maintenance/safety',
+      subItems: [
+        { name: 'Incident', href: '/maintenance/incident', color: 'text-[#1a1a1a]' },
+        { name: 'Permit to Work', href: '/maintenance/permit', color: 'text-[#1a1a1a]' },
+        { name: 'M Safe', href: '/maintenance/m-safe', color: 'text-[#1a1a1a]' }
+      ]
+    },
     { 
       name: 'Audit', 
       icon: Clipboard, 
@@ -205,7 +210,7 @@ export const Sidebar = () => {
                           key={subItem.name}
                           href={subItem.href}
                           className={`block px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] ${
-                            subItem.color || 'text-orange-600'
+                            subItem.color || 'text-[#1a1a1a]'
                           }`}
                         >
                           {subItem.name}
