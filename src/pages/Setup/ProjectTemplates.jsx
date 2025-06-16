@@ -3,11 +3,17 @@ import CustomTable from '../../components/Setup/CustomTable'
 import { useEffect, useMemo, useState } from 'react';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import { fetchTemplates } from '../../redux/slices/projectSlice';
+import { editProject, fetchTemplates } from '../../redux/slices/projectSlice';
+import toast from 'react-hot-toast';
 
 const ActionIcons = ({ row, onEditClick }) => {
+    const token = localStorage.getItem('token')
     const dispatch = useDispatch();
     const [isActive, setIsActive] = useState(!!row.original.active);
+
+    const deleteTemplate = () => {
+        dispatch(editProject({ token, id: row.original.id, payload: { is_template: false } }))
+    }
 
     return (
         <div className="action-icons flex justify-between gap-5">
@@ -17,7 +23,7 @@ const ActionIcons = ({ row, onEditClick }) => {
                     onClick={() => onEditClick(row.original)} // Pass user data on edit icon click
                 /> */}
                 <button
-                    onClick={() => alert(`Deleting: ${row.original.name}`)}
+                    onClick={deleteTemplate}
                     title="Delete"
                 >
                     <DeleteOutlineOutlinedIcon sx={{ fontSize: '20px' }} />
@@ -31,10 +37,18 @@ const ProjectTemplates = () => {
     const token = localStorage.getItem('token')
     const dispatch = useDispatch()
     const { fetchTemplates: templates } = useSelector(state => state.fetchTemplates)
+    const { success } = useSelector(state => state.editProject)
 
     useEffect(() => {
         dispatch(fetchTemplates({ token }))
     }, [dispatch])
+
+    useEffect(() => {
+        if (success) {
+            toast.success('Template deleted successfully')
+            dispatch(fetchTemplates({ token }))
+        }
+    }, [success])
 
     const columns = useMemo(
         () => [

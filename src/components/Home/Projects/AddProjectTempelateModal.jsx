@@ -110,7 +110,10 @@ const AddProjectTemplate = ({ isModalOpen, setIsModalOpen }) => {
               {/* New Project click opens AddProjectModal */}
               <div
                 className="flex justify-between gap-3 cursor-pointer mt-4 "
-                onClick={() => setAddProjectModalOpen(true)}
+                onClick={() => {
+                  setTemplateDetails({}); // Clear template data
+                  setAddProjectModalOpen(true);
+                }}
               >
                 <div className="flex items-center gap-2 w-2/3">
                   <FolderIcon />
