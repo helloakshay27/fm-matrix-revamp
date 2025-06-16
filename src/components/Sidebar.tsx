@@ -53,24 +53,15 @@ const modulesByPackage = {
     }
   ],
   'Finance': [
-    { name: 'Procurement', icon: Briefcase, href: '/finance/procurement' },
     { 
-      name: 'PR/ SR', 
-      icon: FileText, 
-      href: '/finance/pr-sr',
-      color: 'text-orange-600'
-    },
-    { 
-      name: 'PO/WO', 
-      icon: FileText, 
-      href: '/finance/po-wo',
-      color: 'text-orange-600'
-    },
-    { 
-      name: 'GRN/ SRN', 
-      icon: Receipt, 
-      href: '/finance/grn-srn',
-      color: 'text-orange-600'
+      name: 'Procurement', 
+      icon: Briefcase, 
+      href: '/finance/procurement',
+      subItems: [
+        { name: 'PR/ SR', href: '/finance/pr-sr', color: 'text-[#1a1a1a]' },
+        { name: 'PO/WO', href: '/finance/po-wo', color: 'text-[#1a1a1a]' },
+        { name: 'GRN/ SRN', href: '/finance/grn-srn', color: 'text-[#1a1a1a]' }
+      ]
     },
     { name: 'Invoices', icon: Receipt, href: '/finance/invoices' },
     { name: 'Bill Booking', icon: FileText, href: '/finance/bill-booking' },
