@@ -4,7 +4,7 @@ import { useLayout } from '../contexts/LayoutContext';
 
 const packages = [
   'Transitioning',
-  'Maintenance', 
+  'Maintenance',
   'Finance',
   'CRM',
   'Utility',

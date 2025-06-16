@@ -9,7 +9,7 @@ interface LayoutContextType {
 const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
 
 export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentSection, setCurrentSection] = useState('Utility');
+  const [currentSection, setCurrentSection] = useState('Transitioning');
 
   return (
     <LayoutContext.Provider value={{ currentSection, setCurrentSection }}>

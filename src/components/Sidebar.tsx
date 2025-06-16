@@ -10,138 +10,141 @@ import {
   Video, Lock, Key, Eye, ShieldCheck, Headphones, Gift,
   Star, MessageSquare, Coffee, Wifi, Home, ChevronDown,
   ChevronRight, Plus, Search, Filter, Download, Upload,
-  Handshake
+  HandHeart, Briefcase, BookOpen, FileSpreadsheet, Target,
+  Layers, Archive, UserCog, TreePine, FlaskConical
 } from 'lucide-react';
 
 const modulesByPackage = {
   'Transitioning': [
-    { name: 'Projects', icon: Building, href: '/projects' },
-    { name: 'Assets', icon: Package, href: '/assets' },
-    { name: 'Fit-out', icon: Wrench, href: '/fitout' },
+    { name: 'HOTO', icon: HandHeart, href: '/transitioning/hoto' },
+    { name: 'Snagging', icon: CheckSquare, href: '/transitioning/snagging' },
+    { name: 'Design Insight', icon: BarChart3, href: '/transitioning/design-insight' },
+    { name: 'Fitout', icon: Wrench, href: '/transitioning/fitout' }
   ],
   'Maintenance': [
-    { name: 'Services', icon: Wrench, href: '/services' },
-    { name: 'Supplier', icon: Users, href: '/supplier' },
-    { name: 'Schedule', icon: Calendar, href: '/schedule' },
-    { name: 'AMC', icon: FileText, href: '/amc' },
-    { name: 'Attendance', icon: Clock, href: '/attendance' },
-    { name: 'Tasks', icon: CheckSquare, href: '/tasks' },
-    { name: 'Vendor', icon: Users, href: '/vendor' },
-    { name: 'Operational Audit', icon: Clipboard, href: '/operational-audit', 
+    { name: 'Assets', icon: Building, href: '/maintenance/assets' },
+    { name: 'AMC', icon: FileText, href: '/maintenance/amc' },
+    { name: 'Services', icon: Wrench, href: '/maintenance/services' },
+    { name: 'Attendance', icon: Clock, href: '/maintenance/attendance' },
+    { name: 'Inventory', icon: Package, href: '/maintenance/inventory' },
+    { name: 'Ticket', icon: FileText, href: '/maintenance/ticket' },
+    { name: 'Task', icon: CheckSquare, href: '/maintenance/task' },
+    { name: 'Schedule', icon: Calendar, href: '/maintenance/schedule' },
+    { name: 'Safety', icon: Shield, href: '/maintenance/safety' },
+    { name: 'Incident', icon: AlertTriangle, href: '/maintenance/incident', color: 'text-orange-600' },
+    { name: 'Permit to Work', icon: FileText, href: '/maintenance/permit', color: 'text-orange-600' },
+    { name: 'M Safe', icon: ShieldCheck, href: '/maintenance/m-safe', color: 'text-orange-600' },
+    { 
+      name: 'Audit', 
+      icon: Clipboard, 
+      href: '/maintenance/audit',
       subItems: [
-        { name: 'Scheduled', href: '/operational-audit/scheduled' },
-        { name: 'Conducted', href: '/operational-audit/conducted' },
-        { name: 'Master Checklists', href: '/operational-audit/master-checklists' }
-      ]
-    },
-    { name: 'Vendor Audit', icon: Users, href: '/maintenance/vendor-audit',
-      subItems: [
-        { name: 'Scheduled', href: '/maintenance/vendor-audit/scheduled' },
-        { name: 'Conducted', href: '/maintenance/vendor-audit/conducted' }
-      ]
-    },
-    { name: 'Incident', icon: AlertTriangle, href: '/maintenance/incident',
-      subItems: [
-        { name: 'Setup', href: '/maintenance/incident/setup' },
-        { name: 'List', href: '/maintenance/incident/list' }
-      ]
-    },
-    { name: 'Permit', icon: FileText, href: '/maintenance/permit',
-      subItems: [
-        { name: 'Setup', href: '/maintenance/permit/setup' },
-        { name: 'List', href: '/maintenance/permit/list' },
-        { name: 'Pending Approvals', href: '/maintenance/permit/pending-approvals' }
-      ]
-    },
-    { name: 'Design Insights', icon: BarChart3, href: '/maintenance/design-insights',
-      subItems: [
-        { name: 'List', href: '/maintenance/design-insights/list' },
-        { name: 'Setup', href: '/maintenance/design-insights/setup' }
+        { name: 'Operational', href: '/maintenance/audit/operational', color: 'text-orange-600' },
+        { name: 'Vendor', href: '/maintenance/audit/vendor', color: 'text-orange-600' },
+        { name: 'Assets', href: '/maintenance/audit/assets', color: 'text-orange-600' },
+        { name: 'Waste', href: '/maintenance/audit/waste', color: 'text-orange-600' },
+        { name: 'Survey', href: '/maintenance/audit/survey', color: 'text-orange-600' }
       ]
     }
   ],
   'Finance': [
-    { name: 'Material PR', icon: Package, href: '/finance/material-pr' },
-    { name: 'Service PR', icon: Wrench, href: '/finance/service-pr' },
-    { name: 'PO', icon: FileText, href: '/finance/po' },
-    { name: 'WO', icon: Wrench, href: '/finance/wo' },
-    { name: 'GRN', icon: Receipt, href: '/finance/grn' },
-    { name: 'Invoices SES', icon: Receipt, href: '/finance/invoices-ses' },
-    { name: 'Pending Approvals', icon: Clock, href: '/finance/pending-approvals' },
-    { name: 'GDN', icon: FileText, href: '/finance/gdn' },
-    { name: 'Auto Saved PR', icon: FileText, href: '/finance/auto-saved-pr' },
-    { name: 'WBS Element', icon: BarChart3, href: '/finance/wbs-element' },
-    { name: 'Other Bills', icon: CreditCard, href: '/finance/other-bills' },
+    { name: 'Procurement', icon: Briefcase, href: '/finance/procurement' },
+    { 
+      name: 'PR/ SR', 
+      icon: FileText, 
+      href: '/finance/pr-sr',
+      color: 'text-orange-600'
+    },
+    { 
+      name: 'PO/WO', 
+      icon: FileText, 
+      href: '/finance/po-wo',
+      color: 'text-orange-600'
+    },
+    { 
+      name: 'GRN/ SRN', 
+      icon: Receipt, 
+      href: '/finance/grn-srn',
+      color: 'text-orange-600'
+    },
+    { name: 'Invoices', icon: Receipt, href: '/finance/invoices' },
+    { name: 'Bill Booking', icon: FileText, href: '/finance/bill-booking' },
     { name: 'Accounting', icon: Calculator, href: '/finance/accounting' },
-    { name: 'Customer Bills', icon: Receipt, href: '/finance/customer-bills' },
-    { name: 'My Bills', icon: CreditCard, href: '/finance/my-bills' },
-    { name: 'My Parking', icon: Car, href: '/finance/my-parking' }
+    { 
+      name: 'Cost Center', 
+      icon: Target, 
+      href: '/finance/cost-center',
+      color: 'text-orange-600'
+    },
+    { name: 'Budgeting', icon: BarChart3, href: '/finance/budgeting' },
+    { 
+      name: 'Lease Management', 
+      icon: FileText, 
+      href: '/finance/lease-management',
+      color: 'text-orange-600'
+    },
+    { name: 'Pending Approvals', icon: Clock, href: '/finance/pending-approvals' },
+    { name: 'Auto Saved PR', icon: FileText, href: '/finance/auto-saved-pr' }
   ],
   'CRM': [
-    { name: 'Customers', icon: Users, href: '/crm/customers' },
-    { name: 'FM Users', icon: UserCheck, href: '/crm/fm-users' },
-    { name: 'Occupant Users', icon: Users, href: '/crm/occupant-users' }
+    { name: 'Cloud Telephony', icon: Phone, href: '/crm/cloud-telephony' },
+    { name: 'Lead', icon: Target, href: '/crm/lead' },
+    { name: 'Opportunity', icon: Star, href: '/crm/opportunity' },
+    { name: 'CRM', icon: Users, href: '/crm/crm' }
   ],
   'Utility': [
-    { name: 'Energy Meters', icon: Zap, href: '/utility/energy-meters' },
+    { name: 'Energy', icon: Zap, href: '/utility/energy' },
     { name: 'Water', icon: Droplets, href: '/utility/water' },
-    { name: 'STP', icon: Database, href: '/utility/stp' },
-    { name: 'Daily Readings', icon: Gauge, href: '/utility/daily-readings' },
-    { name: 'Consumption', icon: BarChart3, href: '/utility/consumption' },
-    { name: 'EV Consumption', icon: Battery, href: '/utility/ev-consumption' },
-    { name: 'Solar Generator', icon: Sun, href: '/utility/solar-generator' },
-    { name: 'Utility Request', icon: FileText, href: '/utility/utility-request' },
-    { name: 'Waste Generation', icon: Trash2, href: '/utility/waste-generation',
-      subItems: [
-        { name: 'Waste Generation', href: '/utility/waste-generation' },
-        { name: 'Setup', href: '/utility/waste-setup' }
-      ]
-    }
+    { name: 'STP', icon: Database, href: '/utility/stp' }
   ],
   'Security': [
-    { name: 'Visitors', icon: Users, href: '/visitors/visitors' },
-    { name: 'History', icon: Clock, href: '/visitors/history' },
-    { name: 'R-Vehicles', icon: Car, href: '/visitors/r-vehicles' },
-    { name: 'G-Vehicles', icon: Truck, href: '/visitors/g-vehicles' },
-    { name: 'Staffs', icon: Users, href: '/visitors/staffs' },
-    { name: 'Materials', icon: Package, href: '/visitors/materials' },
-    { name: 'Patrolling', icon: Shield, href: '/visitors/patrolling' },
-    { name: 'Goods In/Out', icon: Package, href: '/visitors/goods' },
-    { name: 'Vehicle Parkings', icon: Car, href: '/visitors/vehicle-parkings' }
+    { name: 'Gate Pass', icon: Shield, href: '/security/gate-pass' },
+    { name: 'Visitor', icon: Users, href: '/security/visitor' },
+    { name: 'Staff', icon: UserCog, href: '/security/staff' },
+    { name: 'Vehicle', icon: Car, href: '/security/vehicle' },
+    { name: 'Patrolling', icon: Shield, href: '/security/patrolling' }
   ],
   'Value Added Services': [
-    { name: 'Events', icon: Calendar, href: '/experience/events' },
-    { name: 'Broadcast', icon: Bell, href: '/experience/broadcast' },
-    { name: 'Business Directory', icon: Building, href: '/experience/business' },
-    { name: 'Documents', icon: FileText, href: '/experience/documents',
-      subItems: [
-        { name: 'Unit', href: '/experience/documents/unit' },
-        { name: 'Common', href: '/experience/documents/common' }
-      ]
-    },
-    { name: 'Transport', icon: Car, href: '/experience/transport',
-      subItems: [
-        { name: 'Outstation', href: '/experience/transport/outstation' },
-        { name: 'Airline', href: '/experience/transport/airline' },
-        { name: 'Rail', href: '/experience/transport/rail' },
-        { name: 'Hotel', href: '/experience/transport/hotel' },
-        { name: 'Self Travel', href: '/experience/transport/self-travel' }
-      ]
-    },
-    { name: 'Testimonials', icon: Star, href: '/experience/testimonials' },
-    { name: 'Company Partners', icon: Handshake, href: '/experience/company-partners' },
-    { name: 'Property', icon: Home, href: '/property',
-      subItems: [
-        { name: 'Space Bookings', href: '/property/space/bookings' },
-        { name: 'Booking Setup', href: '/property/booking/setup' },
-        { name: 'Seat Type', href: '/property/space/seat-type' },
-        { name: 'Parking', href: '/property/parking' },
-        { name: 'Mailroom', href: '/property/mailroom/inbound' }
-      ]
-    }
+    { name: 'F&B', icon: Coffee, href: '/vas/fnb' },
+    { name: 'Parking', icon: Car, href: '/vas/parking' },
+    { name: 'OSR', icon: TreePine, href: '/vas/osr' },
+    { name: 'Space Management', icon: Layers, href: '/vas/space-management' },
+    { name: 'Training List', icon: BookOpen, href: '/vas/training-list' }
   ],
   'Settings': [
-    { name: 'Setup', icon: Settings, href: '/setup' }
+    { name: 'General', icon: Settings, href: '/settings/general' },
+    { name: 'Account', icon: UserCog, href: '/settings/account' },
+    { name: 'Users', icon: Users, href: '/settings/users' },
+    { name: 'Roles (RACI)', icon: UserCheck, href: '/settings/roles' },
+    { name: 'Approval Matrix', icon: CheckSquare, href: '/settings/approval-matrix' },
+    { 
+      name: 'Module 1', 
+      icon: Package, 
+      href: '/settings/module1',
+      subItems: [
+        { name: 'Function 1', href: '/settings/module1/function1', color: 'text-orange-600' },
+        { name: 'Function 2', href: '/settings/module1/function2', color: 'text-orange-600' }
+      ]
+    },
+    { 
+      name: 'Module 2', 
+      icon: Package, 
+      href: '/settings/module2',
+      subItems: [
+        { name: 'Function 1', href: '/settings/module2/function1', color: 'text-orange-600' },
+        { name: 'Function 2', href: '/settings/module2/function2', color: 'text-orange-600' }
+      ]
+    },
+    { 
+      name: 'Masters', 
+      icon: Archive, 
+      href: '/settings/masters',
+      subItems: [
+        { name: 'Checklist Master', href: '/settings/masters/checklist', color: 'text-orange-600' },
+        { name: 'Unit Master', href: '/settings/masters/unit', color: 'text-orange-600' },
+        { name: 'Address Master', href: '/settings/masters/address', color: 'text-orange-600' }
+      ]
+    }
   ]
 };
 
@@ -184,7 +187,7 @@ export const Sidebar = () => {
                 <div>
                   <button
                     onClick={() => toggleExpanded(module.name)}
-                    className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-blue-600 hover:bg-[#DBC2A9] hover:text-blue-700"
                   >
                     <div className="flex items-center gap-3">
                       <module.icon className="w-5 h-5" />
@@ -201,7 +204,9 @@ export const Sidebar = () => {
                         <a
                           key={subItem.name}
                           href={subItem.href}
-                          className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                          className={`block px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] ${
+                            subItem.color || 'text-orange-600'
+                          }`}
                         >
                           {subItem.name}
                         </a>
@@ -212,7 +217,9 @@ export const Sidebar = () => {
               ) : (
                 <a
                   href={module.href}
-                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] ${
+                    module.color || 'text-blue-600'
+                  }`}
                 >
                   <module.icon className="w-5 h-5" />
                   {module.name}
