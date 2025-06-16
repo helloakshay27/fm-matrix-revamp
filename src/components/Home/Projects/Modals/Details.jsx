@@ -307,9 +307,9 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
                 onChange={handleInputChange}
                 className="w-full border outline-none border-gray-300 p-2"
                 min={
-                  field === "startDate"
+                  field === "startDate" && !isEdit
                     ? new Date().toISOString().split("T")[0]
-                    : formData.startDate || new Date().toISOString().split("T")[0]
+                    : undefined
                 }
               />
             </div>
