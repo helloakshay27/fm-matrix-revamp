@@ -9,7 +9,8 @@ import {
   Database, Zap, Droplets, Trash2, Sun, Battery, Gauge,
   Video, Lock, Key, Eye, ShieldCheck, Headphones, Gift,
   Star, MessageSquare, Coffee, Wifi, Home, ChevronDown,
-  ChevronRight, Plus, Search, Filter, Download, Upload
+  ChevronRight, Plus, Search, Filter, Download, Upload,
+  Handshake
 } from 'lucide-react';
 
 const modulesByPackage = {
