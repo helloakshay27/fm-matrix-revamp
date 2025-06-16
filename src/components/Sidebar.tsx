@@ -44,11 +44,11 @@ const modulesByPackage = {
       icon: Clipboard, 
       href: '/maintenance/audit',
       subItems: [
-        { name: 'Operational', href: '/maintenance/audit/operational', color: 'text-orange-600' },
-        { name: 'Vendor', href: '/maintenance/audit/vendor', color: 'text-orange-600' },
-        { name: 'Assets', href: '/maintenance/audit/assets', color: 'text-orange-600' },
-        { name: 'Waste', href: '/maintenance/audit/waste', color: 'text-orange-600' },
-        { name: 'Survey', href: '/maintenance/audit/survey', color: 'text-orange-600' }
+        { name: 'Operational', href: '/maintenance/audit/operational', color: 'text-[#1a1a1a]' },
+        { name: 'Vendor', href: '/maintenance/audit/vendor', color: 'text-[#1a1a1a]' },
+        { name: 'Assets', href: '/maintenance/audit/assets', color: 'text-[#1a1a1a]' },
+        { name: 'Waste', href: '/maintenance/audit/waste', color: 'text-[#1a1a1a]' },
+        { name: 'Survey', href: '/maintenance/audit/survey', color: 'text-[#1a1a1a]' }
       ]
     }
   ],
