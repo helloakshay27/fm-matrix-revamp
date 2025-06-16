@@ -163,7 +163,7 @@ export const Sidebar = () => {
   const currentModules = modulesByPackage[currentSection] || [];
 
   return (
-    <div className="w-64 h-screen bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto">
+    <div className="w-64 h-screen bg-[#f6f4ee] border-r border-[#1a1a1a] fixed left-0 top-0 overflow-y-auto">
       <div className="p-6">
         <div className="flex items-center gap-2 mb-8">
           <div className="w-8 h-8 bg-[#C72030] rounded-lg flex items-center justify-center">
@@ -187,7 +187,7 @@ export const Sidebar = () => {
                 <div>
                   <button
                     onClick={() => toggleExpanded(module.name)}
-                    className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-[#D5DbDB] hover:bg-[#DBC2A9] hover:text-[#D5DbDB]"
+                    className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
                   >
                     <div className="flex items-center gap-3">
                       <module.icon className="w-5 h-5" />
@@ -218,7 +218,7 @@ export const Sidebar = () => {
                 <a
                   href={module.href}
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] ${
-                    module.color || 'text-[#D5DbDB]'
+                    module.color || 'text-[#1a1a1a]'
                   }`}
                 >
                   <module.icon className="w-5 h-5" />
