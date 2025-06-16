@@ -187,7 +187,7 @@ export const Sidebar = () => {
                 <div>
                   <button
                     onClick={() => toggleExpanded(module.name)}
-                    className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-blue-600 hover:bg-[#DBC2A9] hover:text-blue-700"
+                    className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-[#D5DbDB] hover:bg-[#DBC2A9] hover:text-[#D5DbDB]"
                   >
                     <div className="flex items-center gap-3">
                       <module.icon className="w-5 h-5" />
@@ -218,7 +218,7 @@ export const Sidebar = () => {
                 <a
                   href={module.href}
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] ${
-                    module.color || 'text-blue-600'
+                    module.color || 'text-[#D5DbDB]'
                   }`}
                 >
                   <module.icon className="w-5 h-5" />
