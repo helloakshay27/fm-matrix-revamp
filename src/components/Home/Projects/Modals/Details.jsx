@@ -307,13 +307,14 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
                 onChange={handleInputChange}
                 className="w-full border outline-none border-gray-300 p-2"
                 min={
-                  field === "startDate" && !isEdit
-                    ? new Date().toISOString().split("T")[0]
-                    : undefined
+                  field === "startDate"
+                    ? (!isEdit ? new Date().toISOString().split("T")[0] : undefined)
+                    : formData.startDate || new Date().toISOString().split("T")[0]
                 }
               />
             </div>
           ))}
+
 
           <div className="w-[300px] space-y-2">
             <label className="block ms-2">Duration</label>
@@ -347,7 +348,10 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
             <div className="w-1/2">
               <label className="block mb-2">Project Type</label>
               <SelectBox
-                options={projectTypes.map(type => ({ value: type.id, label: type.name }))}
+                options={projectTypes.map(type => ({
+                  value: type.id,
+                  label: type.name.charAt(0).toUpperCase() + type.name.slice(1)
+                }))}
                 value={formData.projectType}
                 onChange={value => handleSelectChange("projectType", value)}
                 placeholder="Select Type"
