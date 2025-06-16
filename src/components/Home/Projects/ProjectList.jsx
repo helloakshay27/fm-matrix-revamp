@@ -423,7 +423,7 @@ const ProjectList = () => {
 
         try {
             await dispatch(
-                createProject({ token, project_management: projectPayload })
+                createProject({ token, payload: { project_management: projectPayload } })
             ).unwrap();
             dispatch(fetchProjects({ token }));
             handleCancelNewProject();
