@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -89,6 +90,9 @@ import { CreateRosterTemplateDashboard } from './pages/setup/CreateRosterTemplat
 import { EmployeesDashboard } from './pages/setup/EmployeesDashboard';
 import { AddEmployeeDashboard } from './pages/setup/AddEmployeeDashboard';
 
+// Import Check In Margin page
+import { CheckInMarginDashboard } from './pages/setup/CheckInMarginDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -163,6 +167,7 @@ function App() {
               <Route path="/vas/space-management/setup/roaster/add" element={<CreateRosterTemplateDashboard />} />
               <Route path="/vas/space-management/setup/employees" element={<EmployeesDashboard />} />
               <Route path="/vas/space-management/setup/employees/add" element={<AddEmployeeDashboard />} />
+              <Route path="/vas/space-management/setup/check-in-margin" element={<CheckInMarginDashboard />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
