@@ -22,6 +22,7 @@ const globalPriorityOptions = [
 ];
 
 const Issues = ({ closeModal }) => {
+  const token = localStorage.getItem("token");
   const [title, setTitle] = useState("");
   const [responsiblePerson, setResponsiblePerson] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -39,7 +40,7 @@ const Issues = ({ closeModal }) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(fetchUsers());
+    dispatch(fetchUsers({ token }));
   }, [dispatch]);
 
   const handleSubmit = useCallback(async (event) => {
