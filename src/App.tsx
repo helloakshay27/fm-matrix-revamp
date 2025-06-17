@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -60,6 +59,9 @@ import AddSTPAssetDashboard from './pages/AddSTPAssetDashboard';
 import { ScheduleListDashboard } from './pages/ScheduleListDashboard';
 import { AddSchedulePage } from './pages/AddSchedulePage';
 import { ScheduleExportPage } from './pages/ScheduleExportPage';
+import { EditSchedulePage } from './pages/EditSchedulePage';
+import { CopySchedulePage } from './pages/CopySchedulePage';
+import { ViewSchedulePage } from './pages/ViewSchedulePage';
 
 // Import Visitors pages
 import { VisitorsDashboard } from './pages/VisitorsDashboard';
@@ -175,6 +177,9 @@ function App() {
               <Route path="/maintenance/schedule" element={<ScheduleListDashboard />} />
               <Route path="/maintenance/schedule/add" element={<AddSchedulePage />} />
               <Route path="/maintenance/schedule/export" element={<ScheduleExportPage />} />
+              <Route path="/maintenance/schedule/edit/:id" element={<EditSchedulePage />} />
+              <Route path="/maintenance/schedule/copy/:id" element={<CopySchedulePage />} />
+              <Route path="/maintenance/schedule/view/:id" element={<ViewSchedulePage />} />
               
               {/* Inventory Routes */}
               <Route path="/maintenance/inventory" element={<InventoryDashboard />} />

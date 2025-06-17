@@ -86,6 +86,18 @@ export const ScheduleListDashboard = () => {
     );
   };
 
+  const handleEditSchedule = (scheduleId: string) => {
+    navigate(`/maintenance/schedule/edit/${scheduleId}`);
+  };
+
+  const handleCopySchedule = (scheduleId: string) => {
+    navigate(`/maintenance/schedule/copy/${scheduleId}`);
+  };
+
+  const handleViewSchedule = (scheduleId: string) => {
+    navigate(`/maintenance/schedule/view/${scheduleId}`);
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -173,17 +185,29 @@ export const ScheduleListDashboard = () => {
             {filteredSchedules.map((schedule) => (
               <TableRow key={schedule.id}>
                 <TableCell>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleEditSchedule(schedule.id)}
+                  >
                     <Edit className="w-4 h-4" />
                   </Button>
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleCopySchedule(schedule.id)}
+                  >
                     <Copy className="w-4 h-4" />
                   </Button>
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleViewSchedule(schedule.id)}
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
                 </TableCell>
