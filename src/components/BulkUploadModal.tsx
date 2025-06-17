@@ -18,17 +18,6 @@ export const BulkUploadModal = ({ isOpen, onClose }: BulkUploadModalProps) => {
     }
   };
 
-  const handleImport = () => {
-    console.log('Importing file:', selectedFile);
-    // Handle import functionality
-    onClose();
-  };
-
-  const handleDownloadSample = () => {
-    console.log('Downloading sample format');
-    // Handle download sample format
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
@@ -48,7 +37,7 @@ export const BulkUploadModal = ({ isOpen, onClose }: BulkUploadModalProps) => {
               />
               <label 
                 htmlFor="file-upload" 
-                className="text-[#C72030] hover:text-[#A01B28] cursor-pointer font-medium"
+                className="text-orange-500 hover:text-orange-600 cursor-pointer"
               >
                 Choose File
               </label>
@@ -60,16 +49,13 @@ export const BulkUploadModal = ({ isOpen, onClose }: BulkUploadModalProps) => {
 
           <div className="flex justify-between">
             <Button 
-              onClick={handleDownloadSample}
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:bg-[#A01B28] text-white px-6"
+              className="bg-[#8B5A5A] hover:bg-[#7A4949] text-white px-6"
             >
               Download Sample Format
             </Button>
             <Button 
-              onClick={handleImport}
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:bg-[#A01B28] text-white px-6"
+              className="bg-[#8B5A5A] hover:bg-[#7A4949] text-white px-6"
+              onClick={onClose}
             >
               Import
             </Button>
