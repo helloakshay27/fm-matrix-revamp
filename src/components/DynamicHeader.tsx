@@ -2,9 +2,7 @@
 import React from 'react';
 import { useLayout } from '../contexts/LayoutContext';
 
-type Section = 'Transitioning' | 'Maintenance' | 'Finance' | 'CRM' | 'Utility' | 'Security' | 'Value Added Services' | 'Settings';
-
-const packages: Section[] = [
+const packages = [
   'Transitioning',
   'Maintenance',
   'Finance',

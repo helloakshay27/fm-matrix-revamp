@@ -40,7 +40,7 @@ export const AssetDashboard = () => {
       </div>
       
       {/* Asset Table */}
-      <AssetTable />
+      <AssetTable onAddAsset={() => setIsAddAssetOpen(true)} />
 
       {/* Add Asset Form Modal */}
       <AddAssetForm 
