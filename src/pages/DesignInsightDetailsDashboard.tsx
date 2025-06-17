@@ -3,13 +3,15 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Edit } from "lucide-react";
+import { useParams } from 'react-router-dom';
 
 export const DesignInsightDetailsDashboard = () => {
+  const { id } = useParams();
   const [isEditing, setIsEditing] = useState(false);
 
   // Mock data for the specific design insight
   const designInsightData = {
-    id: '#231',
+    id: `#${id || '231'}`,
     category: 'Façade',
     subCategory: '',
     zone: 'Mumbai',
@@ -25,7 +27,7 @@ export const DesignInsightDetailsDashboard = () => {
   const handleEdit = () => {
     setIsEditing(true);
     // Navigate to edit form
-    window.location.href = `/transitioning/design-insight/edit${designInsightData.id.replace('#', '/')}`;
+    window.location.href = `/transitioning/design-insight/edit/${id || '231'}`;
   };
 
   return (
