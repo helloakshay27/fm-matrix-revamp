@@ -20,6 +20,7 @@ export const AddSchedulePage = () => {
   
   // Form states
   const [formData, setFormData] = useState({
+    template: '',
     activityName: '',
     description: '',
     group: '',
@@ -61,6 +62,94 @@ export const AddSchedulePage = () => {
   const handleAddSection = () => {
     console.log('Adding new section');
   };
+
+  // If Create New is toggled, show template selection
+  if (createNew) {
+    return (
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate('/maintenance/schedule')}
+            className="p-2"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            <div className="text-sm text-gray-600 mb-1">Schedule</div>
+            <h1 className="text-2xl font-bold">Add Schedule</h1>
+          </div>
+        </div>
+
+        {/* Toggles */}
+        <div className="flex gap-6">
+          <div className="flex items-center space-x-2">
+            <Switch 
+              checked={createNew} 
+              onCheckedChange={setCreateNew}
+              id="create-new"
+            />
+            <Label htmlFor="create-new">Create New</Label>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Switch 
+              checked={createTicket} 
+              onCheckedChange={setCreateTicket}
+              id="create-ticket"
+            />
+            <Label htmlFor="create-ticket">Create Ticket</Label>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Switch 
+              checked={weightage} 
+              onCheckedChange={setWeightage}
+              id="weightage"
+            />
+            <Label htmlFor="weightage">Weightage</Label>
+          </div>
+        </div>
+
+        {/* Template Selection */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="template-select">Select from the existing Template</Label>
+                <Select value={formData.template} onValueChange={(value) => handleInputChange('template', value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select from the existing Template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="template1">Template 1</SelectItem>
+                    <SelectItem value="template2">Template 2</SelectItem>
+                    <SelectItem value="template3">Template 3</SelectItem>
+                    <SelectItem value="custom">Custom Template</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-4">
+          <Button variant="outline" onClick={() => navigate('/maintenance/schedule')}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={() => setCreateNew(false)}
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white"
+          >
+            Continue with Template
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
