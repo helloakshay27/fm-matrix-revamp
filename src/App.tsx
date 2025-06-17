@@ -27,6 +27,7 @@ import { AddServicePage } from './pages/AddServicePage';
 import { ServiceDetailsPage } from './pages/ServiceDetailsPage';
 import { EditServicePage } from './pages/EditServicePage';
 import { AttendanceDashboard } from './pages/AttendanceDashboard';
+import { AttendanceDetailsPage } from './pages/AttendanceDetailsPage';
 
 // Import Utility pages
 import { UtilityDashboard } from './pages/UtilityDashboard';
@@ -141,6 +142,8 @@ function App() {
               <Route path="/maintenance/service/details/:id" element={<ServiceDetailsPage />} />
               <Route path="/maintenance/service/edit/:id" element={<EditServicePage />} />
               <Route path="/maintenance/services" element={<ServiceDashboard />} />
+              <Route path="/maintenance/attendance" element={<AttendanceDashboard />} />
+              <Route path="/maintenance/attendance/details/:id" element={<AttendanceDetailsPage />} />
               
               {/* Utility Routes */}
               <Route path="/utility/energy" element={<UtilityDashboard />} />
