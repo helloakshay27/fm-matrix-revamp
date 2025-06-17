@@ -1,29 +1,50 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
 
-interface AddCategoryModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (category: { category: string; amount: string }) => void;
+interface Category {
+  id: number;
+  category: string;
+  amount: string;
+  active: boolean;
 }
 
-export const AddCategoryModal = ({ isOpen, onClose, onSubmit }: AddCategoryModalProps) => {
+interface EditCategoryModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  category: Category | null;
+  onSubmit: (category: Category) => void;
+}
+
+export const EditCategoryModal = ({ isOpen, onClose, category, onSubmit }: EditCategoryModalProps) => {
   const [formData, setFormData] = useState({
     category: "",
     amount: ""
   });
 
-  const handleSubmit = () => {
-    if (formData.category.trim()) {
-      onSubmit(formData);
-      setFormData({ category: "", amount: "" });
-      onClose();
+  useEffect(() => {
+    if (category) {
+      setFormData({
+        category: category.category,
+        amount: category.amount
+      });
     }
+  }, [category]);
+
+  const handleSubmit = () => {
+    if (category) {
+      onSubmit({
+        ...category,
+        category: formData.category,
+        amount: formData.amount
+      });
+    }
+    setFormData({ category: "", amount: "" });
+    onClose();
   };
 
   return (
@@ -31,7 +52,7 @@ export const AddCategoryModal = ({ isOpen, onClose, onSubmit }: AddCategoryModal
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg font-semibold">Add Category</DialogTitle>
+            <DialogTitle className="text-lg font-semibold">Edit Category</DialogTitle>
             <Button
               variant="ghost"
               size="icon"
@@ -45,11 +66,11 @@ export const AddCategoryModal = ({ isOpen, onClose, onSubmit }: AddCategoryModal
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="category">
+            <Label htmlFor="edit-category">
               Category <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="category"
+              id="edit-category"
               placeholder=""
               value={formData.category}
               onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
@@ -58,9 +79,9 @@ export const AddCategoryModal = ({ isOpen, onClose, onSubmit }: AddCategoryModal
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount</Label>
+            <Label htmlFor="edit-amount">Amount</Label>
             <Input
-              id="amount"
+              id="edit-amount"
               placeholder=""
               value={formData.amount}
               onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}

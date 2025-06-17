@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Edit } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AddCategoryModal } from "@/components/AddCategoryModal";
+import { EditCategoryModal } from "@/components/EditCategoryModal";
 import { AddDeviationStatusModal } from "@/components/AddDeviationStatusModal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -11,12 +11,55 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload } from "lucide-react";
 
+interface Category {
+  id: number;
+  category: string;
+  amount: string;
+  active: boolean;
+}
+
 export const FitoutSetupDashboard = () => {
   const [activeTab, setActiveTab] = useState('Category');
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
+  const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false);
   const [isAddDeviationOpen, setIsAddDeviationOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  
+  const [categories, setCategories] = useState<Category[]>([
+    { id: 1, category: 'ho', amount: '', active: true },
+    { id: 2, category: 'Furniture', amount: '', active: true },
+    { id: 3, category: 'xx', amount: '', active: false }
+  ]);
 
   const tabs = ['Category', 'Status', 'Fitout Guide', 'Deviation Status'];
+
+  const handleAddCategory = (newCategory: { category: string; amount: string }) => {
+    const category: Category = {
+      id: categories.length + 1,
+      category: newCategory.category,
+      amount: newCategory.amount,
+      active: true
+    };
+    setCategories([...categories, category]);
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    setIsEditCategoryOpen(true);
+  };
+
+  const handleUpdateCategory = (updatedCategory: Category) => {
+    setCategories(categories.map(cat => 
+      cat.id === updatedCategory.id ? updatedCategory : cat
+    ));
+    setEditingCategory(null);
+  };
+
+  const handleToggleActive = (id: number) => {
+    setCategories(categories.map(cat =>
+      cat.id === id ? { ...cat, active: !cat.active } : cat
+    ));
+  };
 
   const renderCategoryTab = () => (
     <div>
@@ -41,36 +84,24 @@ export const FitoutSetupDashboard = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            <TableRow>
-              <TableCell>
-                <Edit className="w-4 h-4 text-blue-500 cursor-pointer" />
-              </TableCell>
-              <TableCell>ho</TableCell>
-              <TableCell></TableCell>
-              <TableCell>
-                <Checkbox checked={true} />
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>
-                <Edit className="w-4 h-4 text-blue-500 cursor-pointer" />
-              </TableCell>
-              <TableCell>Furniture</TableCell>
-              <TableCell></TableCell>
-              <TableCell>
-                <Checkbox checked={true} />
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>
-                <Edit className="w-4 h-4 text-blue-500 cursor-pointer" />
-              </TableCell>
-              <TableCell>xx</TableCell>
-              <TableCell></TableCell>
-              <TableCell>
-                <Checkbox checked={false} />
-              </TableCell>
-            </TableRow>
+            {categories.map((category) => (
+              <TableRow key={category.id}>
+                <TableCell>
+                  <Edit 
+                    className="w-4 h-4 text-blue-500 cursor-pointer" 
+                    onClick={() => handleEditCategory(category)}
+                  />
+                </TableCell>
+                <TableCell>{category.category}</TableCell>
+                <TableCell>{category.amount}</TableCell>
+                <TableCell>
+                  <Checkbox 
+                    checked={category.active} 
+                    onCheckedChange={() => handleToggleActive(category.id)}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>
@@ -277,6 +308,14 @@ export const FitoutSetupDashboard = () => {
       <AddCategoryModal 
         isOpen={isAddCategoryOpen}
         onClose={() => setIsAddCategoryOpen(false)}
+        onSubmit={handleAddCategory}
+      />
+      
+      <EditCategoryModal 
+        isOpen={isEditCategoryOpen}
+        onClose={() => setIsEditCategoryOpen(false)}
+        category={editingCategory}
+        onSubmit={handleUpdateCategory}
       />
       
       <AddDeviationStatusModal 
