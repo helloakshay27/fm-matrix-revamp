@@ -36,8 +36,8 @@ import { StaffsDashboard } from './pages/StaffsDashboard';
 
 // Import Value Added Services pages
 import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
-import { ParkingDashboard } from './pages/ParkingDashboard';
-import { ParkingBookingsDashboard } from './pages/ParkingBookingsDashboard';
+import ParkingDashboard from './pages/ParkingDashboard';
+import ParkingBookingsDashboard from './pages/ParkingBookingsDashboard';
 
 const queryClient = new QueryClient();
 
