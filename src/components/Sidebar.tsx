@@ -132,7 +132,21 @@ const modulesByPackage = {
       subItems: [
         { name: 'Bookings', href: '/vas/space-management/bookings', color: 'text-[#1a1a1a]' },
         { name: 'Seat Requests', href: '/vas/space-management/seat-requests', color: 'text-[#1a1a1a]' },
-        { name: 'Setup', href: '/vas/space-management/setup', color: 'text-[#1a1a1a]' }
+        { 
+          name: 'Setup', 
+          href: '/vas/space-management/setup', 
+          color: 'text-[#1a1a1a]',
+          subItems: [
+            { name: 'Seat Type', href: '/vas/space-management/setup/seat-type', color: 'text-[#1a1a1a]' },
+            { name: 'Seat Setup', href: '/vas/space-management/setup/seat-setup', color: 'text-[#1a1a1a]' },
+            { name: 'Shift', href: '/vas/space-management/setup/shift', color: 'text-[#1a1a1a]' },
+            { name: 'Roster', href: '/vas/space-management/setup/roster', color: 'text-[#1a1a1a]' },
+            { name: 'Employees', href: '/vas/space-management/setup/employees', color: 'text-[#1a1a1a]' },
+            { name: 'Check in Margin', href: '/vas/space-management/setup/check-in-margin', color: 'text-[#1a1a1a]' },
+            { name: 'Roster Calendar', href: '/vas/space-management/setup/roster-calendar', color: 'text-[#1a1a1a]' },
+            { name: 'Export', href: '/vas/space-management/setup/export', color: 'text-[#1a1a1a]' }
+          ]
+        }
       ]
     },
     { name: 'Training List', icon: BookOpen, href: '/vas/training-list' }
@@ -219,6 +233,51 @@ export const Sidebar = () => {
 
   const currentModules = modulesByPackage[currentSection] || [];
 
+  const renderMenuItem = (item: any, level: number = 0) => {
+    const hasSubItems = item.subItems && item.subItems.length > 0;
+    const isExpanded = expandedItems.includes(item.name);
+    const marginLeft = level > 0 ? `ml-${level * 4}` : '';
+
+    if (hasSubItems) {
+      return (
+        <div key={item.name} className={marginLeft}>
+          <button
+            onClick={() => toggleExpanded(item.name)}
+            className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+          >
+            <div className="flex items-center gap-3">
+              {level === 0 && <item.icon className="w-5 h-5" />}
+              {item.name}
+            </div>
+            {isExpanded ? 
+              <ChevronDown className="w-4 h-4" /> : 
+              <ChevronRight className="w-4 h-4" />
+            }
+          </button>
+          {isExpanded && (
+            <div className={`${level === 0 ? 'ml-8' : 'ml-4'} mt-1 space-y-1`}>
+              {item.subItems.map((subItem: any) => renderMenuItem(subItem, level + 1))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div key={item.name} className={marginLeft}>
+        <button
+          onClick={() => handleNavigation(item.href, currentSection)}
+          className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] ${
+            item.color || 'text-[#1a1a1a]'
+          }`}
+        >
+          {level === 0 && <item.icon className="w-5 h-5" />}
+          {item.name}
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div className="w-64 h-screen bg-[#f6f4ee] border-r border-[#1a1a1a] fixed left-0 top-0 overflow-y-auto">
       <div className="p-6">
@@ -238,52 +297,7 @@ export const Sidebar = () => {
         )}
         
         <nav className="space-y-2">
-          {currentModules.map((module) => (
-            <div key={module.name}>
-              {module.subItems ? (
-                <div>
-                  <button
-                    onClick={() => toggleExpanded(module.name)}
-                    className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                  >
-                    <div className="flex items-center gap-3">
-                      <module.icon className="w-5 h-5" />
-                      {module.name}
-                    </div>
-                    {expandedItems.includes(module.name) ? 
-                      <ChevronDown className="w-4 h-4" /> : 
-                      <ChevronRight className="w-4 h-4" />
-                    }
-                  </button>
-                  {expandedItems.includes(module.name) && (
-                    <div className="ml-8 mt-1 space-y-1">
-                      {module.subItems.map((subItem) => (
-                        <button
-                          key={subItem.name}
-                          onClick={() => handleNavigation(subItem.href, currentSection)}
-                          className={`block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] ${
-                            subItem.color || 'text-[#1a1a1a]'
-                          }`}
-                        >
-                          {subItem.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <button
-                  onClick={() => handleNavigation(module.href, currentSection)}
-                  className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] ${
-                    module.color || 'text-[#1a1a1a]'
-                  }`}
-                >
-                  <module.icon className="w-5 h-5" />
-                  {module.name}
-                </button>
-              )}
-            </div>
-          ))}
+          {currentModules.map((module) => renderMenuItem(module))}
         </nav>
       </div>
     </div>
