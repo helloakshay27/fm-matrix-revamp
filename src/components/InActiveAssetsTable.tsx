@@ -13,8 +13,20 @@ export const InActiveAssetsTable = () => {
   };
 
   const handleExportAll = () => {
-    console.log('Exporting all assets...');
-    // Handle export all functionality
+    // Create and download CSV file
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      "Asset Name,Asset ID,Asset Code,Asset No.,Asset Status,Equipment Id,Site,Building,Wing,Floor,Area,Room,Meter Type,Asset Type\n" +
+      "No in-active assets found";
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "inactive_assets.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    console.log('Exporting all inactive assets data...');
   };
 
   const handleSearch = () => {
@@ -31,7 +43,7 @@ export const InActiveAssetsTable = () => {
             <div className="flex items-center gap-3">
               <button 
                 onClick={handleExportAll}
-                className="flex items-center gap-2 px-4 py-2 bg-[#8B4B8C] text-white rounded-lg hover:bg-[#8B4B8C]/90 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-[#C72030] text-white rounded-lg hover:bg-[#C72030]/90 transition-colors"
               >
                 <Download className="w-4 h-4" />
                 Export All
@@ -52,10 +64,15 @@ export const InActiveAssetsTable = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="px-4 py-2 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch();
+                  }
+                }}
               />
               <button 
                 onClick={handleSearch}
-                className="flex items-center gap-2 px-4 py-2 bg-[#10B981] text-white rounded-lg hover:bg-[#10B981]/90 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-[#C72030] text-white rounded-lg hover:bg-[#C72030]/90 transition-colors"
               >
                 Go!
               </button>
