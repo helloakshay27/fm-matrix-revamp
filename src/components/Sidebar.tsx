@@ -13,7 +13,19 @@ import {
   Layers, Archive, UserCog, TreePine, FlaskConical
 } from 'lucide-react';
 
-const modulesByPackage = {
+interface ModuleItem {
+  name: string;
+  icon: any;
+  href: string;
+  color?: string;
+  subItems?: {
+    name: string;
+    href: string;
+    color?: string;
+  }[];
+}
+
+const modulesByPackage: Record<string, ModuleItem[]> = {
   'Transitioning': [
     { name: 'HOTO', icon: HandHeart, href: '/transitioning/hoto' },
     { name: 'Snagging', icon: CheckSquare, href: '/transitioning/snagging' },
