@@ -81,7 +81,8 @@ const DateEditor = ({
   onEnterPress,
   className,
   placeholder = "Select date",
-  validator
+  validator,
+  min
 
 }) => {
   const [date, setDate] = useState(
@@ -139,6 +140,7 @@ const DateEditor = ({
       onClick={handleInputClick}
       className={`${validator ? 'border border-red-400' : 'border-none'} w-full focus:outline-none rounded text-[12px] p-1 my-custom-date-editor  `}
       placeholder={placeholder}
+      min={min || null}
     />
   );
 };
@@ -622,6 +624,7 @@ const TaskTable = () => {
             value={getValue()}
             onUpdate={(date) => handleUpdateTaskFieldCell(row.original.id, "target_date", date)}
             className="text-[12px]"
+            min={row.original.startDate}
           />
         ),
       },
@@ -869,6 +872,7 @@ const TaskTable = () => {
                       isNewRow={true}
                       onEnterPress={handleSaveNewTask}
                       validator={validator}
+                      min={new Date().toISOString().split("T")[0]}
                     />
                   </td>
                   {" "}
@@ -880,6 +884,7 @@ const TaskTable = () => {
                       onEnterPress={handleSaveNewTask}
                       className="text-[12px]"
                       validator={validator}
+                      min={newTaskStartDate}
                     />
                   </td>
                   {" "}

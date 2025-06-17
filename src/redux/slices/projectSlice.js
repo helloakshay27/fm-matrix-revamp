@@ -67,6 +67,7 @@ export const fetchProjects = createAsyncThunk('fetchProjects', async ({ token })
     }
 })
 
+
 export const fetchProjectDetails = createAsyncThunk('fetchProjectDetails', async ({ token, id }) => {
     try {
         const response = await axios.get(`https://api-tasks.lockated.com/project_managements/${id}.json`, {

@@ -22,6 +22,7 @@ import {
     fetchProjects,
     changeProjectStatus,
     createProject,
+    deleteProject
 } from "../../../redux/slices/projectSlice";
 import { fetchUsers } from "../../../redux/slices/userSlice";
 import StatusBadge from "./statusBadge";
@@ -65,6 +66,7 @@ const NewProjectDateEditor = ({
     placeholder,
     className,
     validator,
+    min
 }) => {
     const handleKeyDown = (event) => {
         if (event.key === "Enter" && onEnterPress) {
@@ -81,11 +83,20 @@ const NewProjectDateEditor = ({
             onKeyDown={handleKeyDown}
             className={`${validator ? "border border-red-500" : "border-none"
                 } w-full p-1 focus:outline-none rounded text-[13px] ${className || ""}`}
+            min={min || null}
         />
     );
 };
 
-const ActionIcons = ({ row }) => (
+const ActionIcons = ({ row }) => {
+    const dispatch = useDispatch();
+    const handleDelete = async(id) => {
+        const formatId= id.split('-')[1];
+        console.log(formatId);
+        await dispatch(deleteProject({id:formatId,token: localStorage.getItem('token')})).unwrap();
+        await dispatch(fetchProjects({token: localStorage.getItem('token')})).unwrap();
+    }
+    return (
     <div className="action-icons flex justify-around items-center">
         <button
             onClick={() => alert(`Viewing/Editing Project ID: ${row.original.id}`)}
@@ -106,13 +117,14 @@ const ActionIcons = ({ row }) => (
             <ArchiveOutlinedIcon sx={{ fontSize: "1.2em" }} />
         </button>
         <button
-            onClick={() => alert(`Deleting: ${row.original.title}`)}
+            onClick={() => handleDelete(row.original.id)}
             title="Delete"
         >
-            <DeleteOutlineOutlinedIcon sx={{ fontSize: "1.2em" }} />
+            <DeleteOutlineOutlinedIcon sx={{ fontSize: "1.2em" }}  />
         </button>
     </div>
-);
+)
+};
 
 const ProgressBar = ({ progressString }) => {
     const numericValue = parseInt(progressString, 10);
@@ -178,6 +190,11 @@ const ProjectList = () => {
     } = useSelector(
         (state) => state.fetchUsers || { users: [], loading: false, error: null }
     );
+
+    const {
+        loading: deleteProjectLoading,
+        error: deleteProjectError
+    }=useSelector((state) => state.deleteProject);
 
     const [isAddingNewProject, setIsAddingNewProject] = useState(false);
     const [newProjectTitle, setNewProjectTitle] = useState("");
@@ -647,19 +664,23 @@ const ProjectList = () => {
                 : loadingUsers
                     ? "Loading Users..."
                     : anyFilterLoading
-                        ? "Applying Filters..."
+                        ? "Applying Filters...":
+                         deleteProjectLoading?
+                        "Deleting Project..."
                         : "Updating Status...";
         content = <Loader message={loadingMessage} />;
     } else if (
         fetchProjectsError ||
         usersFetchError ||
         anyFilterError ||
-        statusChangeError
+        statusChangeError ||
+        deleteProjectError
     ) {
         const error =
             fetchProjectsError ||
             usersFetchError ||
             anyFilterError ||
+            deleteProjectError ||
             statusChangeError;
         content = (
             <div className="p-4 text-red-600">
@@ -819,6 +840,7 @@ const ProjectList = () => {
                                             onChange={(e) => setNewProjectStartDate(e.target.value)}
                                             onEnterPress={handleSaveNewProject}
                                             validator={validator}
+                                            min={new Date().toISOString().split("T")[0]}
                                         />
                                     </td>
                                     <td className="p-0 border-r-2 align-middle">
@@ -827,6 +849,7 @@ const ProjectList = () => {
                                             onChange={(e) => setNewProjectEndDate(e.target.value)}
                                             onEnterPress={handleSaveNewProject}
                                             validator={validator}
+                                            min={newProjectStartDate}
                                         />
                                     </td>
                                     <td className="p-1 border-r-2 align-middle">
