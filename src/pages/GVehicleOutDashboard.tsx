@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const vehicleOutData = [
   {
@@ -36,6 +37,11 @@ const vehicleOutData = [
 
 export const GVehicleOutDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
+
+  const handleHistoryClick = () => {
+    navigate('/security/vehicle/g-vehicles');
+  };
 
   const handleOut = (vehicleId: number) => {
     console.log('Vehicle out:', vehicleId);
@@ -62,7 +68,10 @@ export const GVehicleOutDashboard = () => {
           {/* Action Buttons */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <div className="flex gap-3">
-              <Button className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-6 py-2 rounded">
+              <Button 
+                onClick={handleHistoryClick}
+                className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-6 py-2 rounded"
+              >
                 History
               </Button>
               <Button className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-6 py-2 rounded">

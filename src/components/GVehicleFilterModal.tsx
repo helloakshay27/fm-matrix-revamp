@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X } from 'lucide-react';
 
 interface GVehicleFilterModalProps {
   isOpen: boolean;
@@ -28,16 +27,8 @@ export const GVehicleFilterModal = ({ isOpen, onClose }: GVehicleFilterModalProp
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl bg-white">
-        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
+        <DialogHeader className="border-b pb-4">
           <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-6 w-6 p-0"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
         
         <div className="p-6 space-y-6">
