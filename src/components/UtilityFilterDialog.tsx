@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X } from 'lucide-react';
 
 interface UtilityFilterDialogProps {
   isOpen: boolean;
@@ -38,16 +37,8 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
-        <DialogHeader className="flex flex-row items-center justify-between">
+        <DialogHeader>
           <DialogTitle>FILTER BY</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-6 w-6"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
         
         <div className="space-y-6 py-4">
