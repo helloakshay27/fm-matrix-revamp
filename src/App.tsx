@@ -81,6 +81,10 @@ import { AddSeatSetupDashboard } from './pages/setup/AddSeatSetupDashboard';
 // Import Shift page
 import { ShiftDashboard } from './pages/setup/ShiftDashboard';
 
+// Import User Roasters pages
+import { UserRoastersDashboard } from './pages/setup/UserRoastersDashboard';
+import { CreateRosterTemplateDashboard } from './pages/setup/CreateRosterTemplateDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -151,6 +155,8 @@ function App() {
               <Route path="/vas/space-management/setup/seat-setup" element={<SeatSetupDashboard />} />
               <Route path="/vas/space-management/setup/seat-setup/add" element={<AddSeatSetupDashboard />} />
               <Route path="/vas/space-management/setup/shift" element={<ShiftDashboard />} />
+              <Route path="/vas/space-management/setup/roaster" element={<UserRoastersDashboard />} />
+              <Route path="/vas/space-management/setup/roaster/add" element={<CreateRosterTemplateDashboard />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
