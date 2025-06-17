@@ -17,6 +17,13 @@ import { FitoutChecklistDashboard } from './pages/FitoutChecklistDashboard';
 import { AddChecklistDashboard } from './pages/AddChecklistDashboard';
 import { FitoutViolationDashboard } from './pages/FitoutViolationDashboard';
 
+// Import Maintenance pages
+import { AssetDashboard } from './pages/AssetDashboard';
+import { AMCDashboard } from './pages/AMCDashboard';
+import { ServiceDashboard } from './pages/ServiceDashboard';
+import { AttendanceDashboard } from './pages/AttendanceDashboard';
+import { ScheduleDashboard } from './pages/ScheduleDashboard';
+
 // Import Utility pages
 import { UtilityDashboard } from './pages/UtilityDashboard';
 import { AddAssetDashboard } from './pages/AddAssetDashboard';
@@ -70,6 +77,13 @@ function App() {
               <Route path="/transitioning/fitout/checklist" element={<FitoutChecklistDashboard />} />
               <Route path="/transitioning/fitout/checklist/add" element={<AddChecklistDashboard />} />
               <Route path="/transitioning/fitout/violation" element={<FitoutViolationDashboard />} />
+              
+              {/* Maintenance Routes */}
+              <Route path="/maintenance/assets" element={<AssetDashboard />} />
+              <Route path="/maintenance/amc" element={<AMCDashboard />} />
+              <Route path="/maintenance/services" element={<ServiceDashboard />} />
+              <Route path="/maintenance/attendance" element={<AttendanceDashboard />} />
+              <Route path="/maintenance/schedule" element={<ScheduleDashboard />} />
               
               {/* Utility Routes */}
               <Route path="/utility/energy" element={<UtilityDashboard />} />
