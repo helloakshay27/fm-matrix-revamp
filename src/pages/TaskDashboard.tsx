@@ -10,6 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TaskAdvancedFilterDialog } from '@/components/TaskAdvancedFilterDialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const taskData = [
   {
@@ -125,8 +129,8 @@ export const TaskDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchChecklist, setSearchChecklist] = useState('');
   const [filteredTasks, setFilteredTasks] = useState(taskData);
-  const [startDate, setStartDate] = useState('01/06/2025');
-  const [endDate, setEndDate] = useState('30/06/2025');
+  const [startDate, setStartDate] = useState<Date>(new Date(2025, 5, 1)); // June 1, 2025
+  const [endDate, setEndDate] = useState<Date>(new Date(2025, 5, 30)); // June 30, 2025
   const [view, setView] = useState<'List' | 'Calendar'>('List');
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [calendarDate, setCalendarDate] = useState<Date | undefined>(new Date());
@@ -272,7 +276,7 @@ export const TaskDashboard = () => {
           variant={view === 'List' ? 'default' : 'outline'}
           onClick={() => setView('List')}
           style={view === 'List' ? { backgroundColor: '#C72030' } : {}}
-          className={view === 'List' ? 'text-white' : 'border-[#C72030] text-[#C7030]'}
+          className={view === 'List' ? 'text-white' : 'border-[#C72030] text-[#C72030]'}
         >
           List
         </Button>
@@ -288,20 +292,56 @@ export const TaskDashboard = () => {
 
       {view === 'List' ? (
         <>
-          {/* Date Range and Apply/Reset */}
+          {/* Date Range with Calendar Dropdown */}
           <div className="flex items-center gap-3 mb-6">
-            <Input
-              type="text"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-32"
-            />
-            <Input
-              type="text"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-32"
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[200px] justify-start text-left font-normal",
+                    !startDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {startDate ? format(startDate, "dd/MM/yyyy") : <span>Pick start date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={(date) => date && setStartDate(date)}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[200px] justify-start text-left font-normal",
+                    !endDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {endDate ? format(endDate, "dd/MM/yyyy") : <span>Pick end date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={endDate}
+                  onSelect={(date) => date && setEndDate(date)}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            
             <Button style={{ backgroundColor: '#00A651' }} className="text-white">
               Apply
             </Button>
@@ -513,18 +553,54 @@ export const TaskDashboard = () => {
         <div className="space-y-6">
           {/* Calendar Controls */}
           <div className="flex items-center gap-3 mb-6">
-            <Input
-              type="text"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-32"
-            />
-            <Input
-              type="text"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-32"
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[200px] justify-start text-left font-normal",
+                    !startDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {startDate ? format(startDate, "dd/MM/yyyy") : <span>Pick start date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={(date) => date && setStartDate(date)}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[200px] justify-start text-left font-normal",
+                    !endDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {endDate ? format(endDate, "dd/MM/yyyy") : <span>Pick end date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={endDate}
+                  onSelect={(date) => date && setEndDate(date)}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            
             <Input
               placeholder="Select Some Options"
               className="w-48"
