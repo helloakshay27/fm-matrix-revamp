@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -19,6 +20,7 @@ import { FitoutViolationDashboard } from './pages/FitoutViolationDashboard';
 
 // Import Maintenance pages
 import { AssetDashboard } from './pages/AssetDashboard';
+import { AssetDetailsPage } from './pages/AssetDetailsPage';
 import { AddAssetPage } from './pages/AddAssetPage';
 import { AMCDashboard } from './pages/AMCDashboard';
 import { ServiceDashboard } from './pages/ServiceDashboard';
@@ -72,6 +74,7 @@ import { SpaceManagementSeatRequestsDashboard } from './pages/SpaceManagementSea
 // Import Seat Setup pages
 import { SeatSetupDashboard } from './pages/setup/SeatSetupDashboard';
 import { AddSeatSetupDashboard } from './pages/setup/AddSeatSetupDashboard';
+import { SeatTypeDashboard } from './pages/SeatTypeDashboard';
 
 // Import Shift page
 import { ShiftDashboard } from './pages/setup/ShiftDashboard';
