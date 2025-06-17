@@ -16,20 +16,16 @@ interface SeatType {
 export const SeatTypeDashboard = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [seatTypes, setSeatTypes] = useState<SeatType[]>([
-    { id: 1, name: "Hostcast", active: true, createdOn: "19/03/2024" },
+    { id: 1, name: "Hotseat", active: true, createdOn: "19/03/2024" },
     { id: 2, name: "Cafe", active: true, createdOn: "05/05/2023" },
     { id: 3, name: "Cubical", active: true, createdOn: "13/03/2023" },
     { id: 4, name: "Fixed Angular Chair", active: true, createdOn: "24/01/2023" },
     { id: 5, name: "Hot Desk", active: true, createdOn: "30/11/2022" },
-    { id: 6, name: "structchair", active: true, createdOn: "29/11/2022" },
+    { id: 6, name: "circularchair", active: true, createdOn: "29/11/2022" },
     { id: 7, name: "Rectangle", active: true, createdOn: "28/11/2022" },
     { id: 8, name: "circular", active: true, createdOn: "28/11/2022" },
     { id: 9, name: "cabin", active: true, createdOn: "10/11/2022" },
-    { id: 10, name: "iOS", active: true, createdOn: "09/11/2022" },
-    { id: 11, name: "Fixed Desk", active: true, createdOn: "31/07/2021" },
-    { id: 12, name: "Cabin", active: true, createdOn: "31/07/2021" },
-    { id: 13, name: "Flexi Desk", active: true, createdOn: "31/07/2021" },
-    { id: 14, name: "Angular Wa", active: true, createdOn: "31/07/2021" }
+    { id: 10, name: "iOS", active: true, createdOn: "09/11/2022" }
   ]);
 
   const handleAddSeatType = (data: { categoryName: string; file?: File }) => {
@@ -50,50 +46,51 @@ export const SeatTypeDashboard = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <div className="text-sm text-gray-500 mb-1">Space &gt; Seat Type</div>
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Main Content */}
+      <div className="flex-1 p-6">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="text-sm text-gray-500 mb-2">Space &gt; Seat Type</div>
+          <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-800">SEAT TYPE</h1>
+            <Button 
+              onClick={() => setIsAddDialogOpen(true)}
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add
+            </Button>
           </div>
-          
-          <Button 
-            onClick={() => setIsAddDialogOpen(true)}
-            className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add
-          </Button>
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-lg border shadow-sm overflow-x-auto">
+        <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-gray-700">Actions</TableHead>
+                <TableHead className="font-semibold text-gray-700 w-20">Actions</TableHead>
                 <TableHead className="font-semibold text-gray-700">Name</TableHead>
-                <TableHead className="font-semibold text-gray-700">Active/Inactive</TableHead>
+                <TableHead className="font-semibold text-gray-700">Active/ Inactive</TableHead>
                 <TableHead className="font-semibold text-gray-700">Created On</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {seatTypes.map((seat) => (
-                <TableRow key={seat.id}>
+                <TableRow key={seat.id} className="border-b">
                   <TableCell>
-                    <Button size="sm" variant="ghost">
+                    <Button size="sm" variant="ghost" className="p-1">
                       <Edit className="w-4 h-4" />
                     </Button>
                   </TableCell>
-                  <TableCell>{seat.name}</TableCell>
+                  <TableCell className="font-medium">{seat.name}</TableCell>
                   <TableCell>
                     <Switch 
                       checked={seat.active} 
                       onCheckedChange={() => handleToggleActive(seat.id)}
                     />
                   </TableCell>
-                  <TableCell>{seat.createdOn}</TableCell>
+                  <TableCell className="text-gray-600">{seat.createdOn}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
