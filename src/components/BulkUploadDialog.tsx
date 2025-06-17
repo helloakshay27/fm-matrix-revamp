@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { X } from 'lucide-react';
 
 interface BulkUploadDialogProps {
   isOpen: boolean;
@@ -41,16 +40,8 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({ isOpen, onCl
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
-        <DialogHeader className="flex flex-row items-center justify-between">
+        <DialogHeader>
           <DialogTitle>Bulk Upload</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-6 w-6"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
         
         <div className="space-y-6 py-4">
