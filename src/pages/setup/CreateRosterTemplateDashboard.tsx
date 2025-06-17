@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from 'react-router-dom';
+import { EmployeeListDialog } from '@/components/EmployeeListDialog';
 
 export const CreateRosterTemplateDashboard = () => {
   const navigate = useNavigate();
+  const [isEmployeeListOpen, setIsEmployeeListOpen] = useState(false);
   const [templateName, setTemplateName] = useState<string>("");
   const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [selectedDepartment, setSelectedDepartment] = useState<string>("");
@@ -35,6 +37,10 @@ export const CreateRosterTemplateDashboard = () => {
 
   const handleCancel = () => {
     navigate('/vas/space-management/setup/roaster');
+  };
+
+  const handleViewList = () => {
+    setIsEmployeeListOpen(true);
   };
 
   return (
@@ -297,7 +303,8 @@ export const CreateRosterTemplateDashboard = () => {
             
             <div className="flex justify-end">
               <Button 
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={handleViewList}
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
                 size="sm"
               >
                 View List
@@ -305,6 +312,13 @@ export const CreateRosterTemplateDashboard = () => {
             </div>
           </div>
         </div>
+
+        {/* Employee List Dialog */}
+        <EmployeeListDialog 
+          open={isEmployeeListOpen}
+          onOpenChange={setIsEmployeeListOpen}
+          onViewList={handleViewList}
+        />
       </div>
     </div>
   );
