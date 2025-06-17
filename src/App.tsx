@@ -85,6 +85,10 @@ import { ShiftDashboard } from './pages/setup/ShiftDashboard';
 import { UserRoastersDashboard } from './pages/setup/UserRoastersDashboard';
 import { CreateRosterTemplateDashboard } from './pages/setup/CreateRosterTemplateDashboard';
 
+// Import Employee pages
+import { EmployeesDashboard } from './pages/setup/EmployeesDashboard';
+import { AddEmployeeDashboard } from './pages/setup/AddEmployeeDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -157,6 +161,8 @@ function App() {
               <Route path="/vas/space-management/setup/shift" element={<ShiftDashboard />} />
               <Route path="/vas/space-management/setup/roaster" element={<UserRoastersDashboard />} />
               <Route path="/vas/space-management/setup/roaster/add" element={<CreateRosterTemplateDashboard />} />
+              <Route path="/vas/space-management/setup/employees" element={<EmployeesDashboard />} />
+              <Route path="/vas/space-management/setup/employees/add" element={<AddEmployeeDashboard />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
