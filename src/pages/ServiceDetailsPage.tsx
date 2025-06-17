@@ -1,12 +1,14 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Settings } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { AssociateServiceModal } from '@/components/AssociateServiceModal';
 
 export const ServiceDetailsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [showAssociateModal, setShowAssociateModal] = useState(false);
 
   // Mock service data - in real app this would come from API
   const serviceData = {
@@ -55,6 +57,14 @@ export const ServiceDetailsPage = () => {
     });
   };
 
+  const handleEditClick = () => {
+    navigate(`/maintenance/service/edit/${id}`);
+  };
+
+  const handleAssociateServiceClick = () => {
+    setShowAssociateModal(true);
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -76,11 +86,13 @@ export const ServiceDetailsPage = () => {
           <div className="flex gap-2">
             <Button 
               variant="outline"
+              onClick={handleEditClick}
               className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
             >
               Edit
             </Button>
             <Button 
+              onClick={handleAssociateServiceClick}
               style={{ backgroundColor: '#C72030' }}
               className="text-white hover:bg-[#C72030]/90"
             >
@@ -222,6 +234,12 @@ export const ServiceDetailsPage = () => {
           Powered by <span className="font-semibold">go</span><span className="text-[#C72030]">Phygital</span><span className="font-semibold">.work</span>
         </div>
       </div>
+
+      {/* Associate Service Modal */}
+      <AssociateServiceModal 
+        isOpen={showAssociateModal}
+        onClose={() => setShowAssociateModal(false)}
+      />
     </div>
   );
 };
