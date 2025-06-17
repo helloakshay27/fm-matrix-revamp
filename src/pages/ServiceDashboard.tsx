@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
 import { Plus, Upload, FileText, Filter, Search, Eye, RotateCcw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const serviceData = [
   {
@@ -112,6 +112,7 @@ const serviceData = [
 ];
 
 export const ServiceDashboard = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [services, setServices] = useState(serviceData);
   const [filteredServices, setFilteredServices] = useState(serviceData);
@@ -151,6 +152,10 @@ export const ServiceDashboard = () => {
     setFilteredServices(services);
   };
 
+  const handleAddClick = () => {
+    navigate('/maintenance/service/add');
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -161,7 +166,11 @@ export const ServiceDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex items-center gap-3 mb-6">
-        <Button style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
+        <Button 
+          onClick={handleAddClick}
+          style={{ backgroundColor: '#C72030' }} 
+          className="text-white hover:bg-[#C72030]/90"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>

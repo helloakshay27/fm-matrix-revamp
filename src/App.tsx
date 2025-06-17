@@ -22,13 +22,8 @@ import { AssetDashboard } from './pages/AssetDashboard';
 import { AddAssetPage } from './pages/AddAssetPage';
 import { AMCDashboard } from './pages/AMCDashboard';
 import { ServiceDashboard } from './pages/ServiceDashboard';
+import { AddServicePage } from './pages/AddServicePage';
 import { AttendanceDashboard } from './pages/AttendanceDashboard';
-import { ScheduleDashboard } from './pages/ScheduleDashboard';
-import { InventoryDashboard } from './pages/InventoryDashboard';
-import { TicketDashboard } from './pages/TicketDashboard';
-import { TaskDashboard } from './pages/TaskDashboard';
-import { AssetDetailsPage } from './pages/AssetDetailsPage';
-import { SeatTypeDashboard } from './pages/SeatTypeDashboard';
 
 // Import Utility pages
 import { UtilityDashboard } from './pages/UtilityDashboard';
@@ -138,6 +133,7 @@ function App() {
               <Route path="/maintenance/amc/details/:id" element={<AMCDetailsPage />} />
               <Route path="/maintenance/amc/edit/:id" element={<EditAMCPage />} />
               <Route path="/maintenance/service" element={<ServiceDashboard />} />
+              <Route path="/maintenance/service/add" element={<AddServicePage />} />
               
               {/* Utility Routes */}
               <Route path="/utility/energy" element={<UtilityDashboard />} />
