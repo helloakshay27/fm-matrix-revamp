@@ -31,6 +31,9 @@ import UtilitySTPDashboard from './pages/UtilitySTPDashboard';
 import { VisitorsDashboard } from './pages/VisitorsDashboard';
 import { VisitorsHistoryDashboard } from './pages/VisitorsHistoryDashboard';
 
+// Import Staff pages
+import { StaffsDashboard } from './pages/StaffsDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -62,6 +65,7 @@ function App() {
               {/* Security/Visitors Routes */}
               <Route path="/security/visitor" element={<VisitorsDashboard />} />
               <Route path="/security/visitor/history" element={<VisitorsHistoryDashboard />} />
+              <Route path="/security/staff" element={<StaffsDashboard />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
