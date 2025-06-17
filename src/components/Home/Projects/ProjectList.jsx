@@ -29,6 +29,7 @@ import StatusBadge from "./statusBadge";
 import "./Table.css";
 import Loader from "../../Loader";
 import SelectBox from "../../SelectBox";
+import {toast} from "react-hot-toast";
 
 const NewProjectTextField = ({
     value,
@@ -95,6 +96,13 @@ const ActionIcons = ({ row }) => {
         console.log(formatId);
         await dispatch(deleteProject({id:formatId,token: localStorage.getItem('token')})).unwrap();
         await dispatch(fetchProjects({token: localStorage.getItem('token')})).unwrap();
+        toast.dismiss();
+        toast.success("Project deleted successfully", {
+            iconTheme: {
+                primary: "red", // This might directly change the color of the success icon
+                secondary: "white", // The circle background
+            },
+        })
     }
     return (
     <div className="action-icons flex justify-around items-center">
