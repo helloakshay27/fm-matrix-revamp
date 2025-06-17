@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 const vehicleOutData = [
   {
@@ -35,12 +34,17 @@ const vehicleOutData = [
   }
 ];
 
-export const GVehicleOutDashboard = () => {
+interface GVehicleOutDashboardProps {
+  onHistoryClick?: () => void;
+}
+
+export const GVehicleOutDashboard = ({ onHistoryClick }: GVehicleOutDashboardProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const navigate = useNavigate();
 
   const handleHistoryClick = () => {
-    navigate('/security/vehicle/g-vehicles');
+    if (onHistoryClick) {
+      onHistoryClick();
+    }
   };
 
   const handleOut = (vehicleId: number) => {

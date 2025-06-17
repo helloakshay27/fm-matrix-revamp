@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { SlidersHorizontal, Plus, Filter } from 'lucide-react';
@@ -158,7 +159,7 @@ export const GVehiclesDashboard = () => {
 
   // If Vehicle Out view is active, render the Vehicle Out component
   if (currentView === 'vehicle-out') {
-    return <GVehicleOutDashboard />;
+    return <GVehicleOutDashboard onHistoryClick={handleHistoryClick} />;
   }
 
   return (
