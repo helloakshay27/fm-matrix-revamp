@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Switch } from '@/components/ui/switch';
 import { Plus, Upload, FileText, Filter, Search, Eye, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { ServiceBulkUploadModal } from '@/components/ServiceBulkUploadModal';
 
 const serviceData = [
   {
@@ -116,6 +117,7 @@ export const ServiceDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [services, setServices] = useState(serviceData);
   const [filteredServices, setFilteredServices] = useState(serviceData);
+  const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -156,6 +158,10 @@ export const ServiceDashboard = () => {
     navigate('/maintenance/service/add');
   };
 
+  const handleImportClick = () => {
+    setShowBulkUploadModal(true);
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -174,7 +180,11 @@ export const ServiceDashboard = () => {
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
-        <Button style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
+        <Button 
+          onClick={handleImportClick}
+          style={{ backgroundColor: '#C72030' }} 
+          className="text-white hover:bg-[#C72030]/90"
+        >
           <Upload className="w-4 h-4 mr-2" />
           Import
         </Button>
@@ -287,6 +297,12 @@ export const ServiceDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Bulk Upload Modal */}
+      <ServiceBulkUploadModal 
+        isOpen={showBulkUploadModal}
+        onClose={() => setShowBulkUploadModal(false)}
+      />
     </div>
   );
 };
