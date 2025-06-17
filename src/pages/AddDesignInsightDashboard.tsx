@@ -39,6 +39,10 @@ export const AddDesignInsightDashboard = () => {
     window.location.href = '/transitioning/design-insight';
   };
 
+  const handleMustHaveChange = (checked: boolean | "indeterminate") => {
+    setMustHave(checked === true);
+  };
+
   return (
     <div className="p-6 bg-white min-h-screen">
       {/* Breadcrumb */}
@@ -187,7 +191,7 @@ export const AddDesignInsightDashboard = () => {
               <Checkbox 
                 id="mustHave" 
                 checked={mustHave}
-                onCheckedChange={setMustHave}
+                onCheckedChange={handleMustHaveChange}
               />
               <Label htmlFor="mustHave" className="text-sm font-medium">
                 Must Have
