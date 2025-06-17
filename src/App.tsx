@@ -56,6 +56,11 @@ import { AddDesignInsightDashboard } from './pages/AddDesignInsightDashboard';
 import { DesignInsightDetailsDashboard } from './pages/DesignInsightDetailsDashboard';
 import { EditDesignInsightDashboard } from './pages/EditDesignInsightDashboard';
 
+// Import Security pages  
+import { VehicleParkingDashboard } from './pages/VehicleParkingDashboard';
+import { RVehiclesDashboard } from './pages/RVehiclesDashboard';
+import { RVehiclesHistoryDashboard } from './pages/RVehiclesHistoryDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -105,6 +110,9 @@ function App() {
               <Route path="/security/visitor" element={<VisitorsDashboard />} />
               <Route path="/security/visitor/history" element={<VisitorsHistoryDashboard />} />
               <Route path="/security/staff" element={<StaffsDashboard />} />
+              <Route path="/security/vehicle" element={<VehicleParkingDashboard />} />
+              <Route path="/security/vehicle/r-vehicles" element={<RVehiclesDashboard />} />
+              <Route path="/security/vehicle/r-vehicles/history" element={<RVehiclesHistoryDashboard />} />
               <Route path="/security/patrolling" element={<PatrollingDashboard />} />
               
               {/* Value Added Services Routes */}

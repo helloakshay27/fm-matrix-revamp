@@ -110,7 +110,15 @@ const modulesByPackage = {
     { name: 'Gate Pass', icon: Shield, href: '/security/gate-pass' },
     { name: 'Visitor', icon: Users, href: '/security/visitor' },
     { name: 'Staff', icon: UserCog, href: '/security/staff' },
-    { name: 'Vehicle', icon: Car, href: '/security/vehicle' },
+    { 
+      name: 'Vehicle', 
+      icon: Car, 
+      href: '/security/vehicle',
+      subItems: [
+        { name: 'R Vehicles', href: '/security/vehicle/r-vehicles', color: 'text-[#1a1a1a]' },
+        { name: 'G Vehicles', href: '/security/vehicle/g-vehicles', color: 'text-[#1a1a1a]' }
+      ]
+    },
     { name: 'Patrolling', icon: Shield, href: '/security/patrolling' }
   ],
   'Value Added Services': [

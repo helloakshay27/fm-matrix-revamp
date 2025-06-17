@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Download, SlidersHorizontal, Edit } from 'lucide-react';
 import { AddVehicleParkingModal } from '@/components/AddVehicleParkingModal';
+import { useNavigate } from 'react-router-dom';
 
 const vehicleData = [
   {
@@ -106,6 +107,11 @@ const vehicleData = [
 export const RVehiclesDashboard = () => {
   const [activeTab, setActiveTab] = useState('History');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleHistoryClick = () => {
+    navigate('/security/vehicle/r-vehicles/history');
+  };
 
   return (
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
@@ -151,7 +157,12 @@ export const RVehiclesDashboard = () => {
             {['History', 'All', 'In', 'Out'].map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  setActiveTab(tab);
+                  if (tab === 'History') {
+                    handleHistoryClick();
+                  }
+                }}
                 className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab
                     ? 'border-[#8B5A3C] text-[#8B5A3C] bg-[#8B5A3C]/5'
