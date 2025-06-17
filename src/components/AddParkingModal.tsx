@@ -18,21 +18,21 @@ export const AddParkingModal: React.FC<AddParkingModalProps> = ({ open, onOpenCh
   const [leaser, setLeaser] = useState('');
 
   const handleSubmit = () => {
-    // Handle form submission logic here
     console.log('Parking created:', { building, floor, parkingSlot, clientName, leaser });
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
         <DialogHeader>
+          <div className="text-sm text-gray-600 mb-2">Parking</div>
           <DialogTitle className="text-xl font-semibold">Parking Create</DialogTitle>
         </DialogHeader>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-4">
-          {/* Left Column */}
-          <div className="space-y-4">
+        <div className="space-y-6 py-4">
+          {/* First Row */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
             <div>
               <Label htmlFor="building" className="text-sm font-medium">Building</Label>
               <Select value={building} onValueChange={setBuilding}>
@@ -48,25 +48,6 @@ export const AddParkingModal: React.FC<AddParkingModalProps> = ({ open, onOpenCh
             </div>
 
             <div>
-              <Label htmlFor="clientName" className="text-sm font-medium">
-                Client Name<span className="text-red-500">*</span>
-              </Label>
-              <Select value={clientName} onValueChange={setClientName}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select Client Name" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="client1">HSBC</SelectItem>
-                  <SelectItem value="client2">Localized</SelectItem>
-                  <SelectItem value="client3">Demo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Middle Column */}
-          <div className="space-y-4">
-            <div>
               <Label htmlFor="floor" className="text-sm font-medium">Floor</Label>
               <Select value={floor} onValueChange={setFloor}>
                 <SelectTrigger className="mt-1">
@@ -81,25 +62,6 @@ export const AddParkingModal: React.FC<AddParkingModalProps> = ({ open, onOpenCh
             </div>
 
             <div>
-              <Label htmlFor="leaser" className="text-sm font-medium">
-                Leaser<span className="text-red-500">*</span>
-              </Label>
-              <Select value={leaser} onValueChange={setLeaser}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select Customer Lease" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="lease1">Lease Agreement 1</SelectItem>
-                  <SelectItem value="lease2">Lease Agreement 2</SelectItem>
-                  <SelectItem value="lease3">Lease Agreement 3</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-4">
-            <div>
               <Label htmlFor="parkingSlot" className="text-sm font-medium">Parking Slot</Label>
               <Select value={parkingSlot} onValueChange={setParkingSlot}>
                 <SelectTrigger className="mt-1">
@@ -113,7 +75,7 @@ export const AddParkingModal: React.FC<AddParkingModalProps> = ({ open, onOpenCh
               </Select>
             </div>
 
-            <div className="flex justify-end mt-6">
+            <div className="flex justify-center">
               <Button 
                 onClick={handleSubmit}
                 className="bg-purple-600 hover:bg-purple-700 text-white px-8"
@@ -121,8 +83,42 @@ export const AddParkingModal: React.FC<AddParkingModalProps> = ({ open, onOpenCh
                 Submit
               </Button>
             </div>
+          </div>
 
-            {/* Right side info */}
+          {/* Second Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <Label htmlFor="clientName" className="text-sm font-medium">
+                Client Name<span className="text-red-500">*</span>
+              </Label>
+              <Select value={clientName} onValueChange={setClientName}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select Client Name" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="client1">HSBC</SelectItem>
+                  <SelectItem value="client2">Localized</SelectItem>
+                  <SelectItem value="client3">Demo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="leaser" className="text-sm font-medium">
+                Leases<span className="text-red-500">*</span>
+              </Label>
+              <Select value={leaser} onValueChange={setLeaser}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select Customer Lease" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="lease1">Lease Agreement 1</SelectItem>
+                  <SelectItem value="lease2">Lease Agreement 2</SelectItem>
+                  <SelectItem value="lease3">Lease Agreement 3</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-2 text-sm">
               <div>
                 <span className="font-medium">Free Parking:</span> N/A
@@ -135,15 +131,16 @@ export const AddParkingModal: React.FC<AddParkingModalProps> = ({ open, onOpenCh
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex justify-center mt-6">
-          <Button 
-            onClick={handleSubmit}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-8"
-          >
-            Submit
-          </Button>
+          {/* Bottom Submit Button */}
+          <div className="flex justify-center pt-4">
+            <Button 
+              onClick={handleSubmit}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+            >
+              Submit
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

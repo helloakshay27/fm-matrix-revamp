@@ -5,16 +5,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Download, Eye } from "lucide-react";
 import { AddParkingModal } from "@/components/AddParkingModal";
+import { BulkUploadModal } from "@/components/BulkUploadModal";
 import { useNavigate } from "react-router-dom";
 
 const ParkingDashboard = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const navigate = useNavigate();
 
   const parkingStats = [
     { title: "Vacant Two Wheeler Slots", count: 4, color: "bg-green-500" },
     { title: "Vacant Four Wheeler Slots", count: 7, color: "bg-green-500" },
-    { title: "Total Two Wheeler Allotted Slots", count: 2, color: "bg-red-500" },
+    { title: "Total Two Wheeler Allotted Slots", count: 0, color: "bg-red-500" },
     { title: "Total Four Wheeler Allotted Slots", count: 0, color: "bg-orange-500" },
     { title: "Total Allotted Slots", count: 0, color: "bg-red-500" },
     { title: "Total Vacant Slots", count: 11, color: "bg-purple-500" }
@@ -27,32 +29,41 @@ const ParkingDashboard = () => {
     { id: "Sohail Ansari", clientName: "Sohail Ansari", twoWheeler: 0, fourWheeler: 0, freeParking: 5, paidParking: 5, availableSlots: 10 },
     { id: "Deepak Jain", clientName: "Deepak Jain", twoWheeler: 0, fourWheeler: 0, freeParking: 5, paidParking: 2, availableSlots: 7 },
     { id: "Mahendra Lungare", clientName: "Mahendra Lungare", twoWheeler: 0, fourWheeler: 0, freeParking: 2, paidParking: 1, availableSlots: 3 },
-    { id: "Rajnish Patil", clientName: "Rajnish Patil", twoWheeler: 0, fourWheeler: 0, freeParking: 5, paidParking: 2, availableSlots: 7 },
-    { id: "demon", clientName: "demon", twoWheeler: 0, fourWheeler: 0, freeParking: 2, paidParking: 2, availableSlots: 4 },
-    { id: "pop", clientName: "pop", twoWheeler: 0, fourWheeler: 0, freeParking: 2, paidParking: 4, availableSlots: 6 },
-    { id: "Vinayak Test web 1", clientName: "Vinayak Test web 1", twoWheeler: 0, fourWheeler: 0, freeParking: 1, paidParking: 10, availableSlots: 11 },
-    { id: "Vinayak Test", clientName: "Vinayak Test", twoWheeler: 0, fourWheeler: 0, freeParking: 1, paidParking: 0, availableSlots: 1 }
+    { id: "Rajnish Patil", clientName: "Rajnish Patil", twoWheeler: 0, fourWheeler: 0, freeParking: 5, paidParking: 2, availableSlots: 7 }
   ];
 
   const handleViewBookings = () => {
     navigate('/property/parking/bookings');
   };
 
+  const handleExport = () => {
+    setIsBulkUploadOpen(true);
+  };
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 bg-[#f6f4ee] min-h-screen">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">PARKING BOOKING LIST</h1>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setIsAddModalOpen(true)}>
+          <Button 
+            className="bg-[#8B4A9C] hover:bg-[#7A4089] text-white px-4 py-2 rounded" 
+            onClick={() => setIsAddModalOpen(true)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            className="border-gray-300 text-gray-700 px-4 py-2 rounded"
+            onClick={handleExport}
+          >
             <Download className="w-4 h-4 mr-2" />
             Import
           </Button>
-          <Button variant="outline" size="sm" onClick={handleViewBookings}>
-            <Eye className="w-4 h-4 mr-2" />
+          <Button 
+            className="bg-[#C72030] hover:bg-[#B01E2A] text-white px-4 py-2 rounded" 
+            onClick={handleViewBookings}
+          >
             View Bookings
           </Button>
         </div>
@@ -79,24 +90,30 @@ const ParkingDashboard = () => {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold">ID</TableHead>
-                <TableHead className="font-semibold">Client Name</TableHead>
-                <TableHead className="font-semibold">No. of 2 Wheeler</TableHead>
-                <TableHead className="font-semibold">No. of 4 Wheeler</TableHead>
-                <TableHead className="font-semibold">Free Parking</TableHead>
-                <TableHead className="font-semibold">Paid Parking</TableHead>
+                <TableHead className="font-semibold border-r">
+                  <Eye className="w-4 h-4" />
+                </TableHead>
+                <TableHead className="font-semibold border-r">Client Name</TableHead>
+                <TableHead className="font-semibold border-r">No. of 2 Wheeler</TableHead>
+                <TableHead className="font-semibold border-r">No. of 4 Wheeler</TableHead>
+                <TableHead className="font-semibold border-r">Free Parking</TableHead>
+                <TableHead className="font-semibold border-r">Paid Parking</TableHead>
                 <TableHead className="font-semibold">Available Parking Slots</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {parkingData.map((row) => (
                 <TableRow key={row.id} className="hover:bg-gray-50">
-                  <TableCell className="font-medium">{row.id}</TableCell>
-                  <TableCell>{row.clientName}</TableCell>
-                  <TableCell className="text-center">{row.twoWheeler}</TableCell>
-                  <TableCell className="text-center">{row.fourWheeler}</TableCell>
-                  <TableCell className="text-center">{row.freeParking}</TableCell>
-                  <TableCell className="text-center">{row.paidParking}</TableCell>
+                  <TableCell className="border-r">
+                    <button className="text-gray-400 hover:text-gray-600">
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  </TableCell>
+                  <TableCell className="font-medium border-r">{row.clientName}</TableCell>
+                  <TableCell className="text-center border-r">{row.twoWheeler}</TableCell>
+                  <TableCell className="text-center border-r">{row.fourWheeler}</TableCell>
+                  <TableCell className="text-center border-r">{row.freeParking}</TableCell>
+                  <TableCell className="text-center border-r">{row.paidParking}</TableCell>
                   <TableCell className="text-center">{row.availableSlots}</TableCell>
                 </TableRow>
               ))}
@@ -108,6 +125,11 @@ const ParkingDashboard = () => {
       <AddParkingModal 
         open={isAddModalOpen} 
         onOpenChange={setIsAddModalOpen} 
+      />
+      
+      <BulkUploadModal 
+        isOpen={isBulkUploadOpen} 
+        onClose={() => setIsBulkUploadOpen(false)} 
       />
     </div>
   );

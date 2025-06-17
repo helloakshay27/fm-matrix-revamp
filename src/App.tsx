@@ -36,6 +36,8 @@ import { StaffsDashboard } from './pages/StaffsDashboard';
 
 // Import Value Added Services pages
 import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
+import { ParkingDashboard } from './pages/ParkingDashboard';
+import { ParkingBookingsDashboard } from './pages/ParkingBookingsDashboard';
 
 const queryClient = new QueryClient();
 
@@ -73,6 +75,8 @@ function App() {
               
               {/* Value Added Services Routes */}
               <Route path="/vas/fnb" element={<FnBRestaurantDashboard />} />
+              <Route path="/vas/parking" element={<ParkingDashboard />} />
+              <Route path="/property/parking/bookings" element={<ParkingBookingsDashboard />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
