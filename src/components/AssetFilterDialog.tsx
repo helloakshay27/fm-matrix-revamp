@@ -11,12 +11,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-interface InActiveAssetsFilterDialogProps {
+interface AssetFilterDialogProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProps> = ({ isOpen, onClose }) => {
+export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, onClose }) => {
   const [assetName, setAssetName] = useState('');
   const [dateRange, setDateRange] = useState('');
   const [group, setGroup] = useState('');
@@ -28,7 +28,18 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
   const [room, setRoom] = useState('');
 
   const handleSubmit = () => {
-    console.log('Filter submitted');
+    const filters = {
+      assetName,
+      dateRange,
+      group,
+      subgroup,
+      building,
+      wing,
+      area,
+      floor,
+      room
+    };
+    console.log('Apply filters:', filters);
     onClose();
   };
 

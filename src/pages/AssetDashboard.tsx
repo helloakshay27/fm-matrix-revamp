@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -5,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Upload, Download, FileText, Search, Filter, Eye } from 'lucide-react';
+import { BulkUploadDialog } from '@/components/BulkUploadDialog';
+import { AssetFilterDialog } from '@/components/AssetFilterDialog';
 
 const assetData = [
   {
@@ -46,9 +49,127 @@ export const AssetDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredAssets, setFilteredAssets] = useState(assetData);
+  const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const handleAddAsset = () => {
     navigate('/maintenance/asset/add');
+  };
+
+  const handleImport = () => {
+    setUploadType('import');
+    setIsBulkUploadOpen(true);
+  };
+
+  const handleUpdate = () => {
+    setUploadType('update');
+    setIsBulkUploadOpen(true);
+  };
+
+  const handleInActiveAssets = () => {
+    navigate('/maintenance/assets/inactive');
+  };
+
+  const handleExportAll = () => {
+    const assetsToExport = selectedAssets.length > 0 
+      ? filteredAssets.filter(asset => selectedAssets.includes(asset.id))
+      : filteredAssets;
+
+    // Create CSV content
+    const headers = "Asset Name,Asset ID,Asset Code,Asset No.,Asset Status,Equipment Id,Site,Building,Wing,Floor,Area,Room,Meter Type,Asset Type\n";
+    const csvContent = assetsToExport.map(asset => 
+      `"${asset.name}","${asset.id}","${asset.code}","${asset.assetNo}","${asset.status}","${asset.equipmentId}","${asset.site}","${asset.building}","${asset.wing}","${asset.floor}","${asset.area}","${asset.room}","${asset.meterType}","${asset.assetType}"`
+    ).join('\n');
+
+    const fullContent = "data:text/csv;charset=utf-8," + headers + csvContent;
+    const encodedUri = encodeURI(fullContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `assets_${selectedAssets.length > 0 ? 'selected' : 'all'}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handlePrintQR = () => {
+    const assetsToPrint = selectedAssets.length > 0 
+      ? filteredAssets.filter(asset => selectedAssets.includes(asset.id))
+      : [];
+
+    if (assetsToPrint.length === 0) {
+      alert('Please select assets to print QR codes for.');
+      return;
+    }
+
+    // Create a new window for printing QR codes
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>QR Codes - Assets</title>
+            <style>
+              body { font-family: Arial, sans-serif; }
+              .qr-container { display: flex; flex-wrap: wrap; gap: 20px; padding: 20px; }
+              .qr-item { border: 1px solid #ccc; padding: 10px; text-align: center; }
+              .qr-code { width: 100px; height: 100px; border: 1px solid #000; margin: 10px auto; }
+            </style>
+          </head>
+          <body>
+            <h1>Asset QR Codes</h1>
+            <div class="qr-container">
+              ${assetsToPrint.map(asset => `
+                <div class="qr-item">
+                  <div class="qr-code">QR</div>
+                  <p><strong>${asset.name}</strong></p>
+                  <p>ID: ${asset.id}</p>
+                  <p>Code: ${asset.code}</p>
+                </div>
+              `).join('')}
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
+  const handlePrintAllQR = () => {
+    // Print QR codes for all assets
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>All QR Codes - Assets</title>
+            <style>
+              body { font-family: Arial, sans-serif; }
+              .qr-container { display: flex; flex-wrap: wrap; gap: 20px; padding: 20px; }
+              .qr-item { border: 1px solid #ccc; padding: 10px; text-align: center; }
+              .qr-code { width: 100px; height: 100px; border: 1px solid #000; margin: 10px auto; }
+            </style>
+          </head>
+          <body>
+            <h1>All Asset QR Codes</h1>
+            <div class="qr-container">
+              ${filteredAssets.map(asset => `
+                <div class="qr-item">
+                  <div class="qr-code">QR</div>
+                  <p><strong>${asset.name}</strong></p>
+                  <p>ID: ${asset.id}</p>
+                  <p>Code: ${asset.code}</p>
+                </div>
+              `).join('')}
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
   };
 
   const handleSearch = (value: string) => {
@@ -62,6 +183,22 @@ export const AssetDashboard = () => {
       setFilteredAssets(filtered);
     } else {
       setFilteredAssets(assetData);
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedAssets(filteredAssets.map(asset => asset.id));
+    } else {
+      setSelectedAssets([]);
+    }
+  };
+
+  const handleSelectAsset = (assetId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedAssets([...selectedAssets, assetId]);
+    } else {
+      setSelectedAssets(selectedAssets.filter(id => id !== assetId));
     }
   };
 
@@ -122,30 +259,58 @@ export const AssetDashboard = () => {
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+        <Button 
+          onClick={handleImport}
+          variant="outline" 
+          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+        >
           <Upload className="w-4 h-4 mr-2" />
           Import
         </Button>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+        <Button 
+          onClick={handleUpdate}
+          variant="outline" 
+          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+        >
           <Download className="w-4 h-4 mr-2" />
           Update
         </Button>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+        <Button 
+          onClick={handleExportAll}
+          variant="outline" 
+          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+        >
           <Download className="w-4 h-4 mr-2" />
           Export All
         </Button>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+        <Button 
+          onClick={handlePrintQR}
+          variant="outline" 
+          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+        >
           <FileText className="w-4 h-4 mr-2" />
           Print QR
         </Button>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+        <Button 
+          onClick={handleInActiveAssets}
+          variant="outline" 
+          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+        >
           In Active Assets
         </Button>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+        <Button 
+          onClick={handlePrintAllQR}
+          variant="outline" 
+          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+        >
           <FileText className="w-4 h-4 mr-2" />
           Print All QR
         </Button>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+        <Button 
+          onClick={() => setIsFilterOpen(true)}
+          variant="outline" 
+          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+        >
           <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
@@ -168,7 +333,11 @@ export const AssetDashboard = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="w-12">
-                <input type="checkbox" />
+                <input 
+                  type="checkbox" 
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  checked={selectedAssets.length === filteredAssets.length && filteredAssets.length > 0}
+                />
               </TableHead>
               <TableHead>Actions</TableHead>
               <TableHead>Asset Name</TableHead>
@@ -191,7 +360,11 @@ export const AssetDashboard = () => {
             {filteredAssets.map((asset) => (
               <TableRow key={asset.id}>
                 <TableCell>
-                  <input type="checkbox" />
+                  <input 
+                    type="checkbox" 
+                    checked={selectedAssets.includes(asset.id)}
+                    onChange={(e) => handleSelectAsset(asset.id, e.target.checked)}
+                  />
                 </TableCell>
                 <TableCell>
                   <Button variant="ghost" size="sm">
@@ -237,6 +410,18 @@ export const AssetDashboard = () => {
         ))}
         <Button variant="outline" size="sm">Last »</Button>
       </div>
+
+      {/* Modals */}
+      <BulkUploadDialog 
+        isOpen={isBulkUploadOpen}
+        onClose={() => setIsBulkUploadOpen(false)}
+        type={uploadType}
+      />
+
+      <AssetFilterDialog 
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+      />
     </div>
   );
 };
