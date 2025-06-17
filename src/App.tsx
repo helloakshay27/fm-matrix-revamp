@@ -174,6 +174,7 @@ function App() {
               <Route path="/vas/space-management/setup/roaster" element={<UserRoastersDashboard />} />
               <Route path="/vas/space-management/setup/roaster/add" element={<CreateRosterTemplateDashboard />} />
               <Route path="/vas/space-management/setup/roaster/calendar" element={<RosterCalendarDashboard />} />
+              <Route path="/vas/space-management/setup/roster-calendar" element={<RosterCalendarDashboard />} />
               <Route path="/vas/space-management/setup/employees" element={<EmployeesDashboard />} />
               <Route path="/vas/space-management/setup/employees/add" element={<AddEmployeeDashboard />} />
               <Route path="/vas/space-management/setup/check-in-margin" element={<CheckInMarginDashboard />} />
