@@ -4,7 +4,7 @@ import { Layout } from './components/Layout';
 import { ScheduleListDashboard } from './pages/ScheduleListDashboard';
 import { AddSchedulePage } from './pages/AddSchedulePage';
 import { ExportSchedulePage } from './pages/ExportSchedulePage';
-import NotFound from './pages/NotFound';
+import { NotFound } from './pages/NotFound';
 
 function App() {
   return (
