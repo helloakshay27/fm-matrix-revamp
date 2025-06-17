@@ -36,6 +36,11 @@ import { EditServicePage } from './pages/EditServicePage';
 import { AttendanceDashboard } from './pages/AttendanceDashboard';
 import { AttendanceDetailsPage } from './pages/AttendanceDetailsPage';
 
+// Import Inventory pages
+import { InventoryDashboard } from './pages/InventoryDashboard';
+import { InventoryDetailsPage } from './pages/InventoryDetailsPage';
+import { InventoryFeedsPage } from './pages/InventoryFeedsPage';
+
 // Import Utility pages
 import { UtilityDashboard } from './pages/UtilityDashboard';
 import { AddAssetDashboard } from './pages/AddAssetDashboard';
@@ -151,6 +156,11 @@ function App() {
               <Route path="/maintenance/services" element={<ServiceDashboard />} />
               <Route path="/maintenance/attendance" element={<AttendanceDashboard />} />
               <Route path="/maintenance/attendance/details/:id" element={<AttendanceDetailsPage />} />
+              
+              {/* Inventory Routes */}
+              <Route path="/maintenance/inventory" element={<InventoryDashboard />} />
+              <Route path="/maintenance/inventory/details/:id" element={<InventoryDetailsPage />} />
+              <Route path="/maintenance/inventory/feeds/:id" element={<InventoryFeedsPage />} />
               
               {/* Utility Routes */}
               <Route path="/utility/energy" element={<UtilityDashboard />} />

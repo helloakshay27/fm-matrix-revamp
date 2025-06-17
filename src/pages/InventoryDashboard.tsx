@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -158,6 +159,7 @@ const inventoryData = [
 ];
 
 export const InventoryDashboard = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredInventory, setFilteredInventory] = useState(inventoryData);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -195,6 +197,10 @@ export const InventoryDashboard = () => {
       setSelectedItems(selectedItems.filter(id => id !== itemId));
       setSelectAll(false);
     }
+  };
+
+  const handleViewItem = (itemId: string) => {
+    navigate(`/maintenance/inventory/details/${itemId}`);
   };
 
   const handleExport = () => {
@@ -241,43 +247,46 @@ export const InventoryDashboard = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-[#f6f4ee] min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <p className="text-[#1a1a1a] opacity-70 mb-2">Inventories &gt; Inventory List</p>
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">INVENTORY LIST</h1>
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+          <span>Inventories</span>
+          <span>&gt;</span>
+          <span>Inventory List</span>
+        </div>
+        <h1 className="text-2xl font-bold text-[#1a1a1a] uppercase">INVENTORY LIST</h1>
       </div>
 
       {/* Action Buttons */}
       <div className="flex items-center gap-3 mb-6">
         <Button 
           onClick={() => setShowBulkUpload(true)}
-          style={{ backgroundColor: '#C72030' }} 
-          className="text-white hover:bg-[#C72030]/90"
+          className="bg-[#C72030] hover:bg-[#A61B2A] text-white"
         >
           <Upload className="w-4 h-4 mr-2" />
           Import
         </Button>
         <Button 
           onClick={handleExport}
-          style={{ backgroundColor: '#C72030' }} 
-          className="text-white hover:bg-[#C72030]/90"
+          variant="outline" 
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <Download className="w-4 h-4 mr-2" />
           Export
         </Button>
         <Button 
           onClick={() => handlePrintQR(false)}
-          style={{ backgroundColor: '#C72030' }} 
-          className="text-white hover:bg-[#C72030]/90"
+          variant="outline" 
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <FileText className="w-4 h-4 mr-2" />
           Print QR
         </Button>
         <Button 
           onClick={() => handlePrintQR(true)}
-          style={{ backgroundColor: '#C72030' }} 
-          className="text-white hover:bg-[#C72030]/90"
+          variant="outline" 
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <FileText className="w-4 h-4 mr-2" />
           Print All QR
@@ -285,18 +294,29 @@ export const InventoryDashboard = () => {
         <Button 
           onClick={() => setShowFilter(true)}
           variant="outline" 
-          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
+        <div className="ml-auto">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search inventory..."
+              value={searchTerm}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="pl-10 w-64 bg-white"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Inventory Table */}
-      <div className="bg-white rounded-lg border overflow-x-auto">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-[#f6f4ee]">
               <TableHead className="w-12">
                 <input 
                   type="checkbox" 
@@ -340,7 +360,11 @@ export const InventoryDashboard = () => {
                   />
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleViewItem(item.id)}
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
                 </TableCell>
