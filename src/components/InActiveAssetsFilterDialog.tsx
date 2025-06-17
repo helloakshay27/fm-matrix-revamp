@@ -70,7 +70,7 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
         <div className="space-y-6 py-4">
           {/* Asset Details */}
           <div>
-            <h3 className="text-sm font-medium text-orange-600 mb-3">Asset Details</h3>
+            <h3 className="text-sm font-medium text-[#C72030] mb-3">Asset Details</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="assetName" className="text-sm">Asset Name</Label>
@@ -123,7 +123,7 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
 
           {/* Location Details */}
           <div>
-            <h3 className="text-sm font-medium text-orange-600 mb-3">Location Details</h3>
+            <h3 className="text-sm font-medium text-[#C72030] mb-3">Location Details</h3>
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label className="text-sm">Building</Label>
@@ -209,7 +209,7 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
             <Button 
               variant="outline" 
               onClick={handleReset}
-              className="flex-1"
+              className="flex-1 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
             >
               Reset
             </Button>

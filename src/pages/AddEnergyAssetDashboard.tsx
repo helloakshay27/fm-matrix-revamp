@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -91,11 +90,11 @@ export const AddEnergyAssetDashboard = () => {
             className="flex items-center gap-3 mb-4 cursor-pointer"
             onClick={() => toggleSection('location')}
           >
-            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
               1
             </div>
-            <h3 className="text-lg font-semibold text-orange-500">LOCATION DETAILS</h3>
-            {expandedSections.location ? <ChevronUp className="w-5 h-5 text-orange-500" /> : <ChevronDown className="w-5 h-5 text-orange-500" />}
+            <h3 className="text-lg font-semibold text-[#C72030]">LOCATION DETAILS</h3>
+            {expandedSections.location ? <ChevronUp className="w-5 h-5 text-[#C72030]" /> : <ChevronDown className="w-5 h-5 text-[#C72030]" />}
           </div>
           
           {expandedSections.location && (
@@ -186,11 +185,11 @@ export const AddEnergyAssetDashboard = () => {
             className="flex items-center gap-3 mb-4 cursor-pointer"
             onClick={() => toggleSection('asset')}
           >
-            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
               2
             </div>
-            <h3 className="text-lg font-semibold text-orange-500">ASSET DETAILS</h3>
-            {expandedSections.asset ? <ChevronUp className="w-5 h-5 text-orange-500" /> : <ChevronDown className="w-5 h-5 text-orange-500" />}
+            <h3 className="text-lg font-semibold text-[#C72030]">ASSET DETAILS</h3>
+            {expandedSections.asset ? <ChevronUp className="w-5 h-5 text-[#C72030]" /> : <ChevronDown className="w-5 h-5 text-[#C72030]" />}
           </div>
           
           {expandedSections.asset && (
@@ -361,11 +360,11 @@ export const AddEnergyAssetDashboard = () => {
             className="flex items-center gap-3 mb-4 cursor-pointer"
             onClick={() => toggleSection('warranty')}
           >
-            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
               3
             </div>
-            <h3 className="text-lg font-semibold text-orange-500">Warranty Details</h3>
-            {expandedSections.warranty ? <ChevronUp className="w-5 h-5 text-orange-500" /> : <ChevronDown className="w-5 h-5 text-orange-500" />}
+            <h3 className="text-lg font-semibold text-[#C72030]">Warranty Details</h3>
+            {expandedSections.warranty ? <ChevronUp className="w-5 h-5 text-[#C72030]" /> : <ChevronDown className="w-5 h-5 text-[#C72030]" />}
           </div>
           
           {expandedSections.warranty && (
@@ -408,42 +407,42 @@ export const AddEnergyAssetDashboard = () => {
             className="flex items-center gap-3 mb-4 cursor-pointer"
             onClick={() => toggleSection('meterCategory')}
           >
-            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
               4
             </div>
-            <h3 className="text-lg font-semibold text-orange-500">Meter Category Type</h3>
-            {expandedSections.meterCategory ? <ChevronUp className="w-5 h-5 text-orange-500" /> : <ChevronDown className="w-5 h-5 text-orange-500" />}
+            <h3 className="text-lg font-semibold text-[#C72030]">Meter Category Type</h3>
+            {expandedSections.meterCategory ? <ChevronUp className="w-5 h-5 text-[#C72030]" /> : <ChevronDown className="w-5 h-5 text-[#C72030]" />}
           </div>
           
           {expandedSections.meterCategory && (
             <div className="bg-white p-6 rounded-lg border border-gray-200">
               <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 cursor-pointer transition-colors bg-purple-100">
+                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-[#C72030] cursor-pointer transition-colors bg-purple-100">
                   <input type="radio" name="meterCategory" value="board" className="mb-2" />
                   <span className="text-2xl mb-2">📋</span>
                   <span className="text-sm">Board</span>
                 </label>
-                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 cursor-pointer transition-colors bg-purple-100">
+                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-[#C72030] cursor-pointer transition-colors bg-purple-100">
                   <input type="radio" name="meterCategory" value="dg" className="mb-2" />
                   <span className="text-2xl mb-2">⚡</span>
                   <span className="text-sm">DG</span>
                 </label>
-                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 cursor-pointer transition-colors bg-purple-100">
+                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-[#C72030] cursor-pointer transition-colors bg-purple-100">
                   <input type="radio" name="meterCategory" value="renewable" className="mb-2" />
                   <span className="text-2xl mb-2">🔄</span>
                   <span className="text-sm">Renewable</span>
                 </label>
-                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 cursor-pointer transition-colors bg-purple-100">
+                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-[#C72030] cursor-pointer transition-colors bg-purple-100">
                   <input type="radio" name="meterCategory" value="freshWater" className="mb-2" />
                   <span className="text-2xl mb-2">💧</span>
                   <span className="text-sm">Fresh Water</span>
                 </label>
-                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 cursor-pointer transition-colors bg-purple-100">
+                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-[#C72030] cursor-pointer transition-colors bg-purple-100">
                   <input type="radio" name="meterCategory" value="recycled" className="mb-2" />
                   <span className="text-2xl mb-2">♻️</span>
                   <span className="text-sm">Recycled</span>
                 </label>
-                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 cursor-pointer transition-colors bg-purple-100">
+                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-[#C72030] cursor-pointer transition-colors bg-purple-100">
                   <input type="radio" name="meterCategory" value="iexGdam" className="mb-2" />
                   <span className="text-2xl mb-2">🏭</span>
                   <span className="text-sm">IEX-GDAM</span>
@@ -459,11 +458,11 @@ export const AddEnergyAssetDashboard = () => {
             className="flex items-center gap-3 mb-4 cursor-pointer"
             onClick={() => toggleSection('consumption')}
           >
-            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
               5+
             </div>
-            <h3 className="text-lg font-semibold text-orange-500 flex-1">CONSUMPTION ASSET MEASURE</h3>
-            {expandedSections.consumption ? <ChevronUp className="w-5 h-5 text-orange-500" /> : <ChevronDown className="w-5 h-5 text-orange-500" />}
+            <h3 className="text-lg font-semibold text-[#C72030] flex-1">CONSUMPTION ASSET MEASURE</h3>
+            {expandedSections.consumption ? <ChevronUp className="w-5 h-5 text-[#C72030]" /> : <ChevronDown className="w-5 h-5 text-[#C72030]" />}
           </div>
           
           {expandedSections.consumption && (
@@ -532,7 +531,7 @@ export const AddEnergyAssetDashboard = () => {
               <Button
                 variant="outline"
                 onClick={addConsumptionMeasure}
-                className="w-full border-dashed border-2 border-orange-300 text-orange-600 hover:bg-orange-50"
+                className="w-full border-dashed border-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add More
@@ -547,11 +546,11 @@ export const AddEnergyAssetDashboard = () => {
             className="flex items-center gap-3 mb-4 cursor-pointer"
             onClick={() => toggleSection('nonConsumption')}
           >
-            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
               6+
             </div>
-            <h3 className="text-lg font-semibold text-orange-500 flex-1">NON CONSUMPTION ASSET MEASURE</h3>
-            {expandedSections.nonConsumption ? <ChevronUp className="w-5 h-5 text-orange-500" /> : <ChevronDown className="w-5 h-5 text-orange-500" />}
+            <h3 className="text-lg font-semibold text-[#C72030] flex-1">NON CONSUMPTION ASSET MEASURE</h3>
+            {expandedSections.nonConsumption ? <ChevronUp className="w-5 h-5 text-[#C72030]" /> : <ChevronDown className="w-5 h-5 text-[#C72030]" />}
           </div>
           
           {expandedSections.nonConsumption && (
@@ -620,7 +619,7 @@ export const AddEnergyAssetDashboard = () => {
               <Button
                 variant="outline"
                 onClick={addNonConsumptionMeasure}
-                className="w-full border-dashed border-2 border-orange-300 text-orange-600 hover:bg-orange-50"
+                className="w-full border-dashed border-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add More
@@ -635,11 +634,11 @@ export const AddEnergyAssetDashboard = () => {
             className="flex items-center gap-3 mb-4 cursor-pointer"
             onClick={() => toggleSection('attachments')}
           >
-            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
               📎
             </div>
-            <h3 className="text-lg font-semibold text-orange-500 flex-1">ATTACHMENTS</h3>
-            {expandedSections.attachments ? <ChevronUp className="w-5 h-5 text-orange-500" /> : <ChevronDown className="w-5 h-5 text-orange-500" />}
+            <h3 className="text-lg font-semibold text-[#C72030] flex-1">ATTACHMENTS</h3>
+            {expandedSections.attachments ? <ChevronUp className="w-5 h-5 text-[#C72030]" /> : <ChevronDown className="w-5 h-5 text-[#C72030]" />}
           </div>
           
           {expandedSections.attachments && (
@@ -650,7 +649,10 @@ export const AddEnergyAssetDashboard = () => {
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                     <div className="text-gray-500 mb-2">Choose File</div>
                     <div className="text-sm text-gray-400">No file chosen</div>
-                    <Button variant="outline" className="mt-2">
+                    <Button 
+                      variant="outline" 
+                      className="mt-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                    >
                       <Plus className="w-4 h-4 mr-2" />
                       Add
                     </Button>
@@ -661,7 +663,10 @@ export const AddEnergyAssetDashboard = () => {
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                     <div className="text-gray-500 mb-2">Choose File</div>
                     <div className="text-sm text-gray-400">No file chosen</div>
-                    <Button variant="outline" className="mt-2">
+                    <Button 
+                      variant="outline" 
+                      className="mt-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                    >
                       <Plus className="w-4 h-4 mr-2" />
                       Add
                     </Button>
@@ -672,7 +677,10 @@ export const AddEnergyAssetDashboard = () => {
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                     <div className="text-gray-500 mb-2">Choose File</div>
                     <div className="text-sm text-gray-400">No file chosen</div>
-                    <Button variant="outline" className="mt-2">
+                    <Button 
+                      variant="outline" 
+                      className="mt-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                    >
                       <Plus className="w-4 h-4 mr-2" />
                       Add
                     </Button>
@@ -683,7 +691,10 @@ export const AddEnergyAssetDashboard = () => {
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                     <div className="text-gray-500 mb-2">Choose File</div>
                     <div className="text-sm text-gray-400">No file chosen</div>
-                    <Button variant="outline" className="mt-2">
+                    <Button 
+                      variant="outline" 
+                      className="mt-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                    >
                       <Plus className="w-4 h-4 mr-2" />
                       Add
                     </Button>
@@ -699,13 +710,14 @@ export const AddEnergyAssetDashboard = () => {
           <Button 
             variant="outline"
             onClick={handleSaveAndShowDetails}
-            className="px-8 py-3"
+            className="px-8 py-3 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
           >
             Save & Show Details
           </Button>
           <Button 
             onClick={handleSaveAndCreateNew}
-            className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white"
+            style={{ backgroundColor: '#C72030' }}
+            className="px-8 py-3 text-white hover:bg-[#C72030]/90"
           >
             Save & Create New Asset
           </Button>

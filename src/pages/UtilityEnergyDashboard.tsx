@@ -7,10 +7,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Search, Plus, Import, RefreshCw, FileDown, Printer, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { WaterFilterDialog } from '../components/WaterFilterDialog';
 import { BulkUploadDialog } from '../components/BulkUploadDialog';
 
-export const UtilityWaterDashboard = () => {
+export const UtilityEnergyDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -30,7 +29,7 @@ export const UtilityWaterDashboard = () => {
   ];
 
   const handleAdd = () => {
-    navigate('/utility/water/add-asset');
+    navigate('/add-energy-asset');
   };
 
   const handleImport = () => {
@@ -51,12 +50,12 @@ export const UtilityWaterDashboard = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "water_assets.csv");
+    link.setAttribute("download", "energy_assets.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     
-    console.log('Exporting all water assets data...');
+    console.log('Exporting all energy assets data...');
   };
 
   const handlePrintQR = () => {
@@ -220,18 +219,13 @@ export const UtilityWaterDashboard = () => {
       </Card>
 
       {/* Dialogs */}
-      <WaterFilterDialog 
-        isOpen={isFilterOpen} 
-        onClose={() => setIsFilterOpen(false)} 
-      />
-      
       <BulkUploadDialog 
         open={isBulkUploadOpen} 
         onOpenChange={setIsBulkUploadOpen}
-        title={uploadType === 'import' ? 'Import Water Assets' : 'Update Water Assets'}
+        title={uploadType === 'import' ? 'Import Energy Assets' : 'Update Energy Assets'}
       />
     </div>
   );
 };
 
-export default UtilityWaterDashboard;
+export default UtilityEnergyDashboard;

@@ -54,6 +54,7 @@ import { UtilityWaterDashboard } from './pages/UtilityWaterDashboard';
 import { AddWaterAssetDashboard } from './pages/AddWaterAssetDashboard';
 import UtilitySTPDashboard from './pages/UtilitySTPDashboard';
 import AddSTPAssetDashboard from './pages/AddSTPAssetDashboard';
+import { UtilityEnergyDashboard } from './pages/UtilityEnergyDashboard';
 
 // Import Schedule pages
 import { ScheduleListDashboard } from './pages/ScheduleListDashboard';
@@ -177,7 +178,7 @@ function App() {
               <Route path="/maintenance/inventory/feeds/:id" element={<InventoryFeedsPage />} />
               
               {/* Utility Routes */}
-              <Route path="/utility/energy" element={<UtilityDashboard />} />
+              <Route path="/utility/energy" element={<UtilityEnergyDashboard />} />
               <Route path="/utility/energy/add-asset" element={<AddEnergyAssetDashboard />} />
               <Route path="/utility/inactive-assets" element={<InActiveAssetsDashboard />} />
               <Route path="/utility/water" element={<UtilityWaterDashboard />} />
