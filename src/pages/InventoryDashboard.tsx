@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Upload, Download, FileText, Filter, Search, Eye } from 'lucide-react';
+import { BulkUploadDialog } from '@/components/BulkUploadDialog';
+import { InventoryFilterDialog } from '@/components/InventoryFilterDialog';
 
 const inventoryData = [
   {
@@ -29,7 +31,7 @@ const inventoryData = [
   },
   {
     id: '96857',
-    name: 'test 1234',
+    name: 'Test 1234',
     referenceNumber: '123',
     code: '',
     serialNumber: '',
@@ -110,12 +112,58 @@ const inventoryData = [
     maxStockLevel: '1',
     minStockLevel: '',
     minOrderLevel: '1'
+  },
+  {
+    id: '96067',
+    name: 'Laptop',
+    referenceNumber: '1234565454',
+    code: 'abc01',
+    serialNumber: '',
+    type: '',
+    group: 'Electronic Devices',
+    subGroup: 'Laptops',
+    category: '',
+    manufacturer: '',
+    criticality: 'Non-Critical',
+    quantity: '46.0',
+    active: 'Active',
+    unit: 'Piece',
+    cost: '20000.0',
+    sacHsnCode: '',
+    maxStockLevel: '50',
+    minStockLevel: '10',
+    minOrderLevel: ''
+  },
+  {
+    id: '69988',
+    name: 'Drainex Power',
+    referenceNumber: '1234565454',
+    code: '',
+    serialNumber: '',
+    type: 'Consumable',
+    group: '',
+    subGroup: 'Housekeeping',
+    category: '',
+    manufacturer: '',
+    criticality: 'Non-Critical',
+    quantity: '64.0',
+    active: 'Active',
+    unit: 'Piece',
+    cost: '1800.0',
+    sacHsnCode: '',
+    maxStockLevel: '10',
+    minStockLevel: '5',
+    minOrderLevel: '3'
   }
 ];
 
 export const InventoryDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredInventory, setFilteredInventory] = useState(inventoryData);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -131,6 +179,67 @@ export const InventoryDashboard = () => {
     }
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    setSelectAll(checked);
+    if (checked) {
+      setSelectedItems(filteredInventory.map(item => item.id));
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems([...selectedItems, itemId]);
+    } else {
+      setSelectedItems(selectedItems.filter(id => id !== itemId));
+      setSelectAll(false);
+    }
+  };
+
+  const handleExport = () => {
+    const dataToExport = selectedItems.length > 0 
+      ? inventoryData.filter(item => selectedItems.includes(item.id))
+      : inventoryData;
+    
+    console.log('Exporting data:', dataToExport);
+    
+    // Create CSV content
+    const headers = ['ID', 'Name', 'Reference Number', 'Code', 'Group', 'Sub Group', 'Criticality', 'Quantity', 'Active'];
+    const csvContent = [
+      headers.join(','),
+      ...dataToExport.map(item => [
+        item.id,
+        `"${item.name}"`,
+        item.referenceNumber,
+        item.code,
+        item.group,
+        item.subGroup,
+        item.criticality,
+        item.quantity,
+        item.active
+      ].join(','))
+    ].join('\n');
+
+    // Download CSV file
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `inventory_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handlePrintQR = (printAll = false) => {
+    const itemsToPrint = printAll 
+      ? inventoryData 
+      : inventoryData.filter(item => selectedItems.includes(item.id));
+    
+    console.log('Printing QR codes for:', itemsToPrint);
+    alert(`Printing QR codes for ${itemsToPrint.length} items`);
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -141,23 +250,43 @@ export const InventoryDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex items-center gap-3 mb-6">
-        <Button style={{ backgroundColor: '#C72030' }} className="text-white">
+        <Button 
+          onClick={() => setShowBulkUpload(true)}
+          style={{ backgroundColor: '#C72030' }} 
+          className="text-white hover:bg-[#C72030]/90"
+        >
           <Upload className="w-4 h-4 mr-2" />
           Import
         </Button>
-        <Button style={{ backgroundColor: '#C72030' }} className="text-white">
+        <Button 
+          onClick={handleExport}
+          style={{ backgroundColor: '#C72030' }} 
+          className="text-white hover:bg-[#C72030]/90"
+        >
           <Download className="w-4 h-4 mr-2" />
           Export
         </Button>
-        <Button style={{ backgroundColor: '#C72030' }} className="text-white">
+        <Button 
+          onClick={() => handlePrintQR(false)}
+          style={{ backgroundColor: '#C72030' }} 
+          className="text-white hover:bg-[#C72030]/90"
+        >
           <FileText className="w-4 h-4 mr-2" />
           Print QR
         </Button>
-        <Button style={{ backgroundColor: '#C72030' }} className="text-white">
+        <Button 
+          onClick={() => handlePrintQR(true)}
+          style={{ backgroundColor: '#C72030' }} 
+          className="text-white hover:bg-[#C72030]/90"
+        >
           <FileText className="w-4 h-4 mr-2" />
           Print All QR
         </Button>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+        <Button 
+          onClick={() => setShowFilter(true)}
+          variant="outline" 
+          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+        >
           <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
@@ -169,7 +298,11 @@ export const InventoryDashboard = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="w-12">
-                <input type="checkbox" />
+                <input 
+                  type="checkbox" 
+                  checked={selectAll}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                />
               </TableHead>
               <TableHead>Action</TableHead>
               <TableHead>Name</TableHead>
@@ -191,13 +324,20 @@ export const InventoryDashboard = () => {
               <TableHead>Max Stock Level</TableHead>
               <TableHead>Min Stock Level</TableHead>
               <TableHead>Min Order Level</TableHead>
+              <TableHead>Asset</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Expiry Date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredInventory.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                  <input type="checkbox" />
+                  <input 
+                    type="checkbox" 
+                    checked={selectedItems.includes(item.id)}
+                    onChange={(e) => handleSelectItem(item.id, e.target.checked)}
+                  />
                 </TableCell>
                 <TableCell>
                   <Button variant="ghost" size="sm">
@@ -222,13 +362,28 @@ export const InventoryDashboard = () => {
                   </span>
                 </TableCell>
                 <TableCell>{item.quantity}</TableCell>
-                <TableCell>{item.active}</TableCell>
+                <TableCell>
+                  <span className="px-2 py-1 rounded text-xs bg-green-100 text-green-700">
+                    {item.active}
+                  </span>
+                </TableCell>
                 <TableCell>{item.unit}</TableCell>
                 <TableCell>{item.cost}</TableCell>
                 <TableCell>{item.sacHsnCode}</TableCell>
                 <TableCell>{item.maxStockLevel}</TableCell>
                 <TableCell>{item.minStockLevel}</TableCell>
                 <TableCell className="text-blue-600">{item.minOrderLevel}</TableCell>
+                <TableCell>
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs">✓</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs">✓</span>
+                  </div>
+                </TableCell>
+                <TableCell></TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -237,10 +392,26 @@ export const InventoryDashboard = () => {
         {/* Footer with pagination info */}
         <div className="p-4 border-t bg-gray-50">
           <div className="text-sm text-gray-600 text-right">
-            Showing 1 - 15 of 72 items
+            Showing 1 - {filteredInventory.length} of {inventoryData.length} items
           </div>
         </div>
       </div>
+
+      {/* Dialogs */}
+      <BulkUploadDialog 
+        open={showBulkUpload}
+        onOpenChange={setShowBulkUpload}
+        title="Bulk Upload"
+      />
+      
+      <InventoryFilterDialog
+        open={showFilter}
+        onOpenChange={setShowFilter}
+        onApply={(filters) => {
+          console.log('Applied filters:', filters);
+          // Apply filter logic here
+        }}
+      />
     </div>
   );
 };
