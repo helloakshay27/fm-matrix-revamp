@@ -3,17 +3,21 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RefreshCw, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const VisitorsDashboard = () => {
   const [activeTab, setActiveTab] = useState('visitor-in');
+  const navigate = useNavigate();
+
+  const handleHistoryClick = () => {
+    navigate('/security/visitor/history');
+  };
 
   return (
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
           <span>visitors</span>
-          <span>&gt;</span>
-          <span>Visitors</span>
         </div>
         
         {/* Tab Navigation */}
@@ -39,7 +43,7 @@ export const VisitorsDashboard = () => {
             Visitor Out
           </Button>
           <Button 
-            onClick={() => setActiveTab('history')}
+            onClick={handleHistoryClick}
             className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
               activeTab === 'history' 
                 ? 'bg-white text-gray-900 shadow-sm' 
