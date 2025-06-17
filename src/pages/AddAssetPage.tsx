@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,37 @@ export const AddAssetPage = () => {
 
   const [meterCategoryType, setMeterCategoryType] = useState('');
   const [subCategoryType, setSubCategoryType] = useState('');
+  
+  // State for consumption asset measures
+  const [consumptionMeasures, setConsumptionMeasures] = useState([
+    {
+      id: 1,
+      name: '',
+      unitType: '',
+      min: '',
+      max: '',
+      alertBelowVal: '',
+      alertAboveVal: '',
+      multiplierFactor: '',
+      checkPreviousReading: false
+    }
+  ]);
+
+  // State for non-consumption asset measures
+  const [nonConsumptionMeasures, setNonConsumptionMeasures] = useState([
+    {
+      id: 1,
+      name: '',
+      unitType: '',
+      min: '',
+      max: '',
+      alertBelowVal: '',
+      alertAboveVal: '',
+      multiplierFactor: '',
+      checkPreviousReading: false
+    }
+  ]);
+
   const [attachments, setAttachments] = useState({
     manualsUpload: [] as File[],
     insuranceDetails: [] as File[],
@@ -104,6 +136,62 @@ export const AddAssetPage = () => {
   const handleMeterCategoryChange = (value: string) => {
     setMeterCategoryType(value);
     setSubCategoryType(''); // Reset sub-category when main category changes
+  };
+
+  // Functions for consumption measures
+  const addConsumptionMeasure = () => {
+    const newId = Math.max(...consumptionMeasures.map(m => m.id)) + 1;
+    setConsumptionMeasures([...consumptionMeasures, {
+      id: newId,
+      name: '',
+      unitType: '',
+      min: '',
+      max: '',
+      alertBelowVal: '',
+      alertAboveVal: '',
+      multiplierFactor: '',
+      checkPreviousReading: false
+    }]);
+  };
+
+  const removeConsumptionMeasure = (id: number) => {
+    if (consumptionMeasures.length > 1) {
+      setConsumptionMeasures(consumptionMeasures.filter(m => m.id !== id));
+    }
+  };
+
+  const updateConsumptionMeasure = (id: number, field: string, value: any) => {
+    setConsumptionMeasures(consumptionMeasures.map(m => 
+      m.id === id ? { ...m, [field]: value } : m
+    ));
+  };
+
+  // Functions for non-consumption measures
+  const addNonConsumptionMeasure = () => {
+    const newId = Math.max(...nonConsumptionMeasures.map(m => m.id)) + 1;
+    setNonConsumptionMeasures([...nonConsumptionMeasures, {
+      id: newId,
+      name: '',
+      unitType: '',
+      min: '',
+      max: '',
+      alertBelowVal: '',
+      alertAboveVal: '',
+      multiplierFactor: '',
+      checkPreviousReading: false
+    }]);
+  };
+
+  const removeNonConsumptionMeasure = (id: number) => {
+    if (nonConsumptionMeasures.length > 1) {
+      setNonConsumptionMeasures(nonConsumptionMeasures.filter(m => m.id !== id));
+    }
+  };
+
+  const updateNonConsumptionMeasure = (id: number, field: string, value: any) => {
+    setNonConsumptionMeasures(nonConsumptionMeasures.map(m => 
+      m.id === id ? { ...m, [field]: value } : m
+    ));
   };
 
   return (
@@ -519,13 +607,124 @@ export const AddAssetPage = () => {
           </CardHeader>
           {expandedSections.consumption && (
             <CardContent className="pt-6">
-              <Button 
-                style={{ backgroundColor: '#C72030' }}
-                className="text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Measure
-              </Button>
+              <div className="space-y-6">
+                {consumptionMeasures.map((measure) => (
+                  <div key={measure.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="font-medium text-gray-700">Consumption Asset Measure</h4>
+                      {consumptionMeasures.length > 1 && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => removeConsumptionMeasure(measure.id)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+                      <div>
+                        <Label htmlFor={`name-${measure.id}`}>Name</Label>
+                        <Input
+                          id={`name-${measure.id}`}
+                          placeholder="Enter Text"
+                          value={measure.name}
+                          onChange={(e) => updateConsumptionMeasure(measure.id, 'name', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`unitType-${measure.id}`}>Unit Type</Label>
+                        <Select
+                          value={measure.unitType}
+                          onValueChange={(value) => updateConsumptionMeasure(measure.id, 'unitType', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Unit Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="kwh">kWh</SelectItem>
+                            <SelectItem value="liters">Liters</SelectItem>
+                            <SelectItem value="cubic-meters">Cubic Meters</SelectItem>
+                            <SelectItem value="units">Units</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor={`min-${measure.id}`}>Min</Label>
+                        <Input
+                          id={`min-${measure.id}`}
+                          placeholder="Enter Number"
+                          type="number"
+                          value={measure.min}
+                          onChange={(e) => updateConsumptionMeasure(measure.id, 'min', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`max-${measure.id}`}>Max</Label>
+                        <Input
+                          id={`max-${measure.id}`}
+                          placeholder="Enter Number"
+                          type="number"
+                          value={measure.max}
+                          onChange={(e) => updateConsumptionMeasure(measure.id, 'max', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`alertBelow-${measure.id}`}>Alert Below Val.</Label>
+                        <Input
+                          id={`alertBelow-${measure.id}`}
+                          placeholder="Enter Value"
+                          type="number"
+                          value={measure.alertBelowVal}
+                          onChange={(e) => updateConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div>
+                        <Label htmlFor={`alertAbove-${measure.id}`}>Alert Above Val.</Label>
+                        <Input
+                          id={`alertAbove-${measure.id}`}
+                          placeholder="Enter Value"
+                          type="number"
+                          value={measure.alertAboveVal}
+                          onChange={(e) => updateConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`multiplier-${measure.id}`}>Multiplier Factor</Label>
+                        <Input
+                          id={`multiplier-${measure.id}`}
+                          placeholder="Enter Text"
+                          value={measure.multiplierFactor}
+                          onChange={(e) => updateConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`checkPrevious-${measure.id}`}
+                        checked={measure.checkPreviousReading}
+                        onCheckedChange={(checked) => updateConsumptionMeasure(measure.id, 'checkPreviousReading', checked)}
+                      />
+                      <Label htmlFor={`checkPrevious-${measure.id}`}>Check Previous Reading</Label>
+                    </div>
+                  </div>
+                ))}
+                
+                <Button 
+                  onClick={addConsumptionMeasure}
+                  style={{ backgroundColor: '#C72030' }}
+                  className="text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Measure
+                </Button>
+              </div>
             </CardContent>
           )}
         </Card>
@@ -546,13 +745,125 @@ export const AddAssetPage = () => {
           </CardHeader>
           {expandedSections.nonConsumption && (
             <CardContent className="pt-6">
-              <Button 
-                style={{ backgroundColor: '#C72030' }}
-                className="text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Measure
-              </Button>
+              <div className="space-y-6">
+                {nonConsumptionMeasures.map((measure) => (
+                  <div key={measure.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="font-medium text-gray-700">Non Consumption Asset Measure</h4>
+                      {nonConsumptionMeasures.length > 1 && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => removeNonConsumptionMeasure(measure.id)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+                      <div>
+                        <Label htmlFor={`nc-name-${measure.id}`}>Name</Label>
+                        <Input
+                          id={`nc-name-${measure.id}`}
+                          placeholder="Name"
+                          value={measure.name}
+                          onChange={(e) => updateNonConsumptionMeasure(measure.id, 'name', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`nc-unitType-${measure.id}`}>Unit Type</Label>
+                        <Select
+                          value={measure.unitType}
+                          onValueChange={(value) => updateNonConsumptionMeasure(measure.id, 'unitType', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Unit Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="temperature">Temperature</SelectItem>
+                            <SelectItem value="pressure">Pressure</SelectItem>
+                            <SelectItem value="voltage">Voltage</SelectItem>
+                            <SelectItem value="current">Current</SelectItem>
+                            <SelectItem value="frequency">Frequency</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor={`nc-min-${measure.id}`}>Min</Label>
+                        <Input
+                          id={`nc-min-${measure.id}`}
+                          placeholder="Min"
+                          type="number"
+                          value={measure.min}
+                          onChange={(e) => updateNonConsumptionMeasure(measure.id, 'min', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`nc-max-${measure.id}`}>Max</Label>
+                        <Input
+                          id={`nc-max-${measure.id}`}
+                          placeholder="Max"
+                          type="number"
+                          value={measure.max}
+                          onChange={(e) => updateNonConsumptionMeasure(measure.id, 'max', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`nc-alertBelow-${measure.id}`}>Alert Below Val.</Label>
+                        <Input
+                          id={`nc-alertBelow-${measure.id}`}
+                          placeholder="Alert Below Value"
+                          type="number"
+                          value={measure.alertBelowVal}
+                          onChange={(e) => updateNonConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div>
+                        <Label htmlFor={`nc-alertAbove-${measure.id}`}>Alert Above Val.</Label>
+                        <Input
+                          id={`nc-alertAbove-${measure.id}`}
+                          placeholder="Alert Above Value"
+                          type="number"
+                          value={measure.alertAboveVal}
+                          onChange={(e) => updateNonConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`nc-multiplier-${measure.id}`}>Multiplier Factor</Label>
+                        <Input
+                          id={`nc-multiplier-${measure.id}`}
+                          placeholder="Multiplier Factor"
+                          value={measure.multiplierFactor}
+                          onChange={(e) => updateNonConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`nc-checkPrevious-${measure.id}`}
+                        checked={measure.checkPreviousReading}
+                        onCheckedChange={(checked) => updateNonConsumptionMeasure(measure.id, 'checkPreviousReading', checked)}
+                      />
+                      <Label htmlFor={`nc-checkPrevious-${measure.id}`}>Check Previous Reading</Label>
+                    </div>
+                  </div>
+                ))}
+                
+                <Button 
+                  onClick={addNonConsumptionMeasure}
+                  style={{ backgroundColor: '#C72030' }}
+                  className="text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Measure
+                </Button>
+              </div>
             </CardContent>
           )}
         </Card>
@@ -771,3 +1082,4 @@ export const AddAssetPage = () => {
     </div>
   );
 };
+
