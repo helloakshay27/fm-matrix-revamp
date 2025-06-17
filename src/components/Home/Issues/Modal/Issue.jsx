@@ -89,8 +89,8 @@ const Issues = ({ closeModal }) => {
     };
 
     try {
-      await dispatch(createIssue(data)).unwrap();
-      dispatch(fetchIssue());
+      await dispatch(createIssue({ token, data })).unwrap();
+      dispatch(fetchIssue({ token }));
       closeModal();
       toast.success("Issue created successfully!");
     } catch (error) {
