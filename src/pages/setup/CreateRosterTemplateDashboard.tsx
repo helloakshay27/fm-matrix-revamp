@@ -273,14 +273,15 @@ export const CreateRosterTemplateDashboard = () => {
               <div className="flex gap-4 pt-4">
                 <Button 
                   onClick={handleSubmit}
-                  className="bg-green-600 hover:bg-green-700 text-white px-8"
+                  style={{ backgroundColor: '#C72030', borderColor: '#C72030' }}
+                  className="hover:bg-[#B01E2A] text-white px-8"
                 >
                   Submit
                 </Button>
                 <Button 
                   onClick={handleCancel}
                   variant="outline" 
-                  className="border-gray-300 text-gray-700 px-8"
+                  className="border-gray-300 text-gray-700 px-8 hover:bg-gray-50"
                 >
                   Cancel
                 </Button>
@@ -304,7 +305,8 @@ export const CreateRosterTemplateDashboard = () => {
             <div className="flex justify-end">
               <Button 
                 onClick={handleViewList}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                style={{ backgroundColor: '#C72030', borderColor: '#C72030' }}
+                className="hover:bg-[#B01E2A] text-white"
                 size="sm"
               >
                 View List

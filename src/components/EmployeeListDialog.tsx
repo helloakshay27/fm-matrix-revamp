@@ -121,7 +121,8 @@ export const EmployeeListDialog = ({ open, onOpenChange, onViewList }: EmployeeL
           <div className="flex justify-center">
             <Button
               onClick={handleSubmit}
-              className="bg-green-600 hover:bg-green-700 text-white px-8"
+              style={{ backgroundColor: '#C72030', borderColor: '#C72030' }}
+              className="hover:bg-[#B01E2A] text-white px-8"
             >
               Submit
             </Button>

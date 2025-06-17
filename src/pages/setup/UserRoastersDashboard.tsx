@@ -119,7 +119,8 @@ export const UserRoastersDashboard = () => {
             <h1 className="text-2xl font-bold text-gray-800">USER ROASTERS</h1>
             <Button 
               onClick={handleAddClick}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
+              style={{ backgroundColor: '#C72030', borderColor: '#C72030' }}
+              className="hover:bg-[#B01E2A] text-white flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Add
