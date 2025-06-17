@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, X, Plus } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { toast } from "sonner";
 
 export const AddProjectDashboard = () => {
   const navigate = useNavigate();
@@ -24,12 +25,36 @@ export const AddProjectDashboard = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Creating project:', formData);
-    // Handle form submission
-    navigate('/projects');
+    
+    // Add the new project data to localStorage for the Fitout Request List
+    const existingProjects = JSON.parse(localStorage.getItem('fitoutProjects') || '[]');
+    const newProject = {
+      id: Date.now(),
+      user: formData.user || 'New User',
+      category: formData.category || 'General',
+      description: formData.description || 'No description',
+      tower: formData.building || 'Building A',
+      unit: formData.unit || 'Unit 101',
+      supplier: formData.vendor || 'Default Vendor',
+      masterStatus: 'Pending',
+      createdOn: new Date().toLocaleDateString()
+    };
+    
+    existingProjects.push(newProject);
+    localStorage.setItem('fitoutProjects', JSON.stringify(existingProjects));
+    
+    toast.success('Project created successfully!');
+    navigate('/transitioning/fitout/request');
   };
 
   const handleAddCategory = () => {
     console.log('Adding new category');
+    toast.info('Add Category functionality');
+  };
+
+  const handleFileUpload = () => {
+    console.log('File upload clicked');
+    toast.info('File upload functionality');
   };
 
   return (
@@ -53,8 +78,9 @@ export const AddProjectDashboard = () => {
                 <SelectValue placeholder="Select Building" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="building1">Building 1</SelectItem>
-                <SelectItem value="building2">Building 2</SelectItem>
+                <SelectItem value="building-a">Building A</SelectItem>
+                <SelectItem value="building-b">Building B</SelectItem>
+                <SelectItem value="building-c">Building C</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -68,8 +94,9 @@ export const AddProjectDashboard = () => {
                 <SelectValue placeholder="Select Floor" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="floor1">Floor 1</SelectItem>
-                <SelectItem value="floor2">Floor 2</SelectItem>
+                <SelectItem value="ground">Ground Floor</SelectItem>
+                <SelectItem value="first">First Floor</SelectItem>
+                <SelectItem value="second">Second Floor</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -83,8 +110,9 @@ export const AddProjectDashboard = () => {
                 <SelectValue placeholder="Select Unit" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="unit1">Unit 1</SelectItem>
-                <SelectItem value="unit2">Unit 2</SelectItem>
+                <SelectItem value="unit-101">Unit 101</SelectItem>
+                <SelectItem value="unit-102">Unit 102</SelectItem>
+                <SelectItem value="unit-103">Unit 103</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -98,8 +126,9 @@ export const AddProjectDashboard = () => {
                 <SelectValue placeholder="Select User" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="user1">User 1</SelectItem>
-                <SelectItem value="user2">User 2</SelectItem>
+                <SelectItem value="john-doe">John Doe</SelectItem>
+                <SelectItem value="jane-smith">Jane Smith</SelectItem>
+                <SelectItem value="mike-johnson">Mike Johnson</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -141,8 +170,9 @@ export const AddProjectDashboard = () => {
                 <SelectValue placeholder="Select Vendor" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="vendor1">Vendor 1</SelectItem>
-                <SelectItem value="vendor2">Vendor 2</SelectItem>
+                <SelectItem value="vendor-a">Vendor A</SelectItem>
+                <SelectItem value="vendor-b">Vendor B</SelectItem>
+                <SelectItem value="vendor-c">Vendor C</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -169,15 +199,17 @@ export const AddProjectDashboard = () => {
                   <SelectValue placeholder="Select Category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="category1">Category 1</SelectItem>
-                  <SelectItem value="category2">Category 2</SelectItem>
+                  <SelectItem value="renovation">Renovation</SelectItem>
+                  <SelectItem value="electrical">Electrical</SelectItem>
+                  <SelectItem value="plumbing">Plumbing</SelectItem>
+                  <SelectItem value="flooring">Flooring</SelectItem>
                 </SelectContent>
               </Select>
               <Button 
                 type="button" 
                 variant="destructive" 
                 size="icon"
-                className="bg-red-500 hover:bg-red-600"
+                className="bg-[#C72030] hover:bg-[#C72030]/90"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -190,9 +222,11 @@ export const AddProjectDashboard = () => {
           <Button
             type="button"
             variant="outline"
-            className="bg-purple-700 text-white hover:bg-purple-800 border-purple-700"
+            onClick={handleFileUpload}
+            className="bg-[#8B4B8C] text-white hover:bg-[#8B4B8C]/90 border-[#8B4B8C]"
           >
             <Upload className="w-4 h-4 mr-2" />
+            Upload File
           </Button>
         </div>
 
@@ -200,7 +234,7 @@ export const AddProjectDashboard = () => {
         <Button
           type="button"
           onClick={handleAddCategory}
-          className="bg-purple-700 hover:bg-purple-800 text-white"
+          className="bg-[#8B4B8C] hover:bg-[#8B4B8C]/90 text-white"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Category
@@ -211,7 +245,7 @@ export const AddProjectDashboard = () => {
       <div className="flex justify-end">
         <Button
           onClick={handleSubmit}
-          className="bg-purple-700 hover:bg-purple-800 text-white px-8"
+          className="bg-[#8B4B8C] hover:bg-[#8B4B8C]/90 text-white px-8"
         >
           Create
         </Button>

@@ -39,6 +39,7 @@ function App() {
               {/* Fitout Routes */}
               <Route path="/transitioning/fitout/setup" element={<FitoutSetupDashboard />} />
               <Route path="/transitioning/fitout/request" element={<FitoutRequestListDashboard />} />
+              <Route path="/transitioning/fitout/add-project" element={<AddProjectDashboard />} />
               <Route path="/transitioning/fitout/checklist" element={<FitoutChecklistDashboard />} />
               <Route path="/transitioning/fitout/violation" element={<FitoutViolationDashboard />} />
               
