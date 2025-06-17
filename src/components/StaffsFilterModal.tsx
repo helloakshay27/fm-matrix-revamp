@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { X } from 'lucide-react';
 
 interface StaffsFilterModalProps {
   isOpen: boolean;
@@ -31,16 +30,8 @@ export const StaffsFilterModal = ({ isOpen, onClose }: StaffsFilterModalProps) =
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md bg-white">
-        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
+        <DialogHeader>
           <DialogTitle className="text-lg font-semibold">FILTER</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-6 w-6 p-0"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
         
         <div className="p-6 space-y-4">
@@ -103,7 +94,7 @@ export const StaffsFilterModal = ({ isOpen, onClose }: StaffsFilterModalProps) =
             </Button>
             <Button
               onClick={handleApply}
-              className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-6 py-2"
+              className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2"
             >
               Apply
             </Button>

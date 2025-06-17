@@ -104,7 +104,70 @@ export const StaffsDashboard = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  const handlePrintQR = () => {
+    console.log('Printing QR codes for selected staff...');
+    // Mock QR generation logic
+    const selectedStaffs = allStaffsData.slice(0, 1); // Mock selected staff
+    
+    const qrData = selectedStaffs.map(staff => ({
+      id: staff.id,
+      name: staff.name,
+      mobile: staff.mobile,
+      qrCode: `STAFF-${staff.id}-${Date.now()}`
+    }));
+    
+    console.log('Generated QR codes:', qrData);
+    
+    // In a real app, this would integrate with a QR code library
+    alert(`Generated QR codes for ${qrData.length} staff member(s)`);
+  };
+
+  const handlePrintAllQR = () => {
+    console.log('Printing QR codes for all staff...');
+    
+    const qrData = allStaffsData.map(staff => ({
+      id: staff.id,
+      name: staff.name,
+      mobile: staff.mobile,
+      qrCode: `STAFF-${staff.id}-${Date.now()}`
+    }));
+    
+    console.log('Generated QR codes for all staff:', qrData);
+    
+    // In a real app, this would integrate with a QR code library
+    alert(`Generated QR codes for all ${qrData.length} staff members`);
+  };
+
+  const handleSearch = () => {
+    console.log('Searching for:', searchTerm);
+    // Search functionality is already implemented via filteredData
+  };
+
+  const filteredData = () => {
+    if (activeTab === 'history') {
+      return historyData.filter(staff =>
+        staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        staff.mobile.includes(searchTerm)
+      );
+    }
+    
+    const baseData = activeTab === 'in' 
+      ? allStaffsData.filter(staff => staff.isIn)
+      : activeTab === 'out'
+      ? allStaffsData.filter(staff => !staff.isIn)
+      : allStaffsData;
+    
+    return baseData.filter(staff =>
+      staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      staff.mobile.includes(searchTerm) ||
+      staff.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      staff.id.includes(searchTerm)
+    );
+  };
+
   const renderTableView = () => {
+    const data = filteredData();
+    
     return (
       <div className="overflow-x-auto">
         <Table>
@@ -128,8 +191,8 @@ export const StaffsDashboard = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {allStaffsData.map((staff, index) => (
-              <TableRow key={staff.id} className="hover:bg-gray-50">
+            {data.map((staff, index) => (
+              <TableRow key={staff.id || index} className="hover:bg-gray-50">
                 <TableCell>
                   <input type="checkbox" className="rounded" />
                 </TableCell>
@@ -164,6 +227,8 @@ export const StaffsDashboard = () => {
   };
 
   const renderHistoryView = () => {
+    const data = filteredData();
+    
     return (
       <div className="overflow-x-auto">
         <Table>
@@ -183,7 +248,7 @@ export const StaffsDashboard = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {historyData.map((staff, index) => (
+            {data.map((staff, index) => (
               <TableRow key={index} className="hover:bg-gray-50">
                 <TableCell className="text-blue-600">{staff.name}</TableCell>
                 <TableCell>{staff.mobile}</TableCell>
@@ -209,14 +274,12 @@ export const StaffsDashboard = () => {
   };
 
   const renderCardView = () => {
-    const inStaffs = allStaffsData.filter(staff => staff.isIn);
-    const outStaffs = allStaffsData.filter(staff => !staff.isIn);
-    const dataToShow = activeTab === 'in' ? inStaffs : outStaffs;
+    const data = filteredData();
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-        {dataToShow.map((staff, index) => (
-          <div key={staff.id} className="bg-white rounded-lg border border-gray-200 p-4 flex items-center gap-4">
+        {data.map((staff, index) => (
+          <div key={staff.id || index} className="bg-white rounded-lg border border-gray-200 p-4 flex items-center gap-4">
             <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center">
               <span className="text-white font-bold">👤</span>
             </div>
@@ -263,24 +326,29 @@ export const StaffsDashboard = () => {
             <div className="flex gap-3 mb-4">
               <Button 
                 onClick={() => setIsAddModalOpen(true)}
-                className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-4 py-2 rounded-md"
+                className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-md"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add
               </Button>
               <Button 
                 onClick={() => setIsFilterModalOpen(true)}
-                variant="outline" 
-                className="border-gray-300 px-4 py-2 rounded-md"
+                className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-md"
               >
                 <Filter className="w-4 h-4 mr-2" />
                 Filters
               </Button>
-              <Button variant="outline" className="border-gray-300 px-4 py-2 rounded-md">
-                <FileText className="w-4 h-4 mr-2" />
+              <Button 
+                onClick={handlePrintQR}
+                className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-md"
+              >
+                <QrCode className="w-4 h-4 mr-2" />
                 Print QR
               </Button>
-              <Button variant="outline" className="border-gray-300 px-4 py-2 rounded-md">
+              <Button 
+                onClick={handlePrintAllQR}
+                className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-md"
+              >
                 <FileText className="w-4 h-4 mr-2" />
                 Print ALL QR
               </Button>
@@ -292,7 +360,7 @@ export const StaffsDashboard = () => {
                 onClick={() => setActiveTab('history')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === 'history' 
-                    ? 'bg-[#8B4B8C] text-white shadow-sm' 
+                    ? 'bg-purple-700 text-white shadow-sm' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -302,7 +370,7 @@ export const StaffsDashboard = () => {
                 onClick={() => setActiveTab('all')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === 'all' 
-                    ? 'bg-[#8B4B8C] text-white shadow-sm' 
+                    ? 'bg-purple-700 text-white shadow-sm' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -312,7 +380,7 @@ export const StaffsDashboard = () => {
                 onClick={() => setActiveTab('in')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === 'in' 
-                    ? 'bg-[#8B4B8C] text-white shadow-sm' 
+                    ? 'bg-purple-700 text-white shadow-sm' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -322,7 +390,7 @@ export const StaffsDashboard = () => {
                 onClick={() => setActiveTab('out')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === 'out' 
-                    ? 'bg-[#8B4B8C] text-white shadow-sm' 
+                    ? 'bg-purple-700 text-white shadow-sm' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -340,10 +408,42 @@ export const StaffsDashboard = () => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSearch();
+                      }
+                    }}
                   />
                 </div>
                 <Button 
-                  className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-4 py-2 rounded-md"
+                  onClick={handleSearch}
+                  className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-md"
+                >
+                  Go!
+                </Button>
+              </div>
+            )}
+
+            {/* Search Bar for History and All tabs */}
+            {(activeTab === 'history' || activeTab === 'all') && (
+              <div className="flex gap-4 items-center">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Search by name, mobile, email or ID"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSearch();
+                      }
+                    }}
+                  />
+                </div>
+                <Button 
+                  onClick={handleSearch}
+                  className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-md"
                 >
                   Go!
                 </Button>
