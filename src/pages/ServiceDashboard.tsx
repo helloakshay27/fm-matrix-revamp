@@ -6,6 +6,8 @@ import { Switch } from '@/components/ui/switch';
 import { Plus, Upload, FileText, Filter, Search, Eye, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ServiceBulkUploadModal } from '@/components/ServiceBulkUploadModal';
+import { ImportLocationsModal } from '@/components/ImportLocationsModal';
+import { ServiceFilterModal } from '@/components/ServiceFilterModal';
 
 const serviceData = [
   {
@@ -118,6 +120,8 @@ export const ServiceDashboard = () => {
   const [services, setServices] = useState(serviceData);
   const [filteredServices, setFilteredServices] = useState(serviceData);
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
+  const [showImportLocationsModal, setShowImportLocationsModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -162,6 +166,85 @@ export const ServiceDashboard = () => {
     setShowBulkUploadModal(true);
   };
 
+  const handleImportLocationsClick = () => {
+    setShowImportLocationsModal(true);
+  };
+
+  const handleFiltersClick = () => {
+    setShowFilterModal(true);
+  };
+
+  const handleApplyFilters = (filters: any) => {
+    console.log('Applying filters:', filters);
+    let filtered = services;
+    
+    if (filters.serviceName) {
+      filtered = filtered.filter(service => 
+        service.serviceName.toLowerCase().includes(filters.serviceName.toLowerCase())
+      );
+    }
+    
+    if (filters.building) {
+      filtered = filtered.filter(service => 
+        service.building.toLowerCase().includes(filters.building.toLowerCase())
+      );
+    }
+    
+    if (filters.area) {
+      filtered = filtered.filter(service => 
+        service.area.toLowerCase().includes(filters.area.toLowerCase())
+      );
+    }
+    
+    setFilteredServices(filtered);
+  };
+
+  const handlePrintQR = () => {
+    console.log('Printing QR codes for all services');
+    
+    // Create a zip-like download simulation
+    const serviceIds = filteredServices.map(service => service.id);
+    
+    serviceIds.forEach((id, index) => {
+      setTimeout(() => {
+        // Create a simple QR code placeholder for each service
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 200;
+        canvas.height = 200;
+        
+        if (ctx) {
+          // Create a simple pattern as QR code placeholder
+          ctx.fillStyle = '#000';
+          for (let i = 0; i < 20; i++) {
+            for (let j = 0; j < 20; j++) {
+              if (Math.random() > 0.5) {
+                ctx.fillRect(i * 10, j * 10, 10, 10);
+              }
+            }
+          }
+        }
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `service_${id}_qr.png`;
+            link.click();
+            URL.revokeObjectURL(url);
+          }
+        });
+      }, index * 100); // Stagger downloads
+    });
+    
+    alert(`Downloading QR codes for ${serviceIds.length} services`);
+  };
+
+  const handleViewService = (serviceId: string) => {
+    navigate(`/maintenance/service/details/${serviceId}`);
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -188,15 +271,27 @@ export const ServiceDashboard = () => {
           <Upload className="w-4 h-4 mr-2" />
           Import
         </Button>
-        <Button style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
+        <Button 
+          onClick={handleImportLocationsClick}
+          style={{ backgroundColor: '#C72030' }} 
+          className="text-white hover:bg-[#C72030]/90"
+        >
           <Upload className="w-4 h-4 mr-2" />
           Import Locations
         </Button>
-        <Button style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
+        <Button 
+          onClick={handleFiltersClick}
+          style={{ backgroundColor: '#C72030' }} 
+          className="text-white hover:bg-[#C72030]/90"
+        >
           <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
-        <Button style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
+        <Button 
+          onClick={handlePrintQR}
+          style={{ backgroundColor: '#C72030' }} 
+          className="text-white hover:bg-[#C72030]/90"
+        >
           <FileText className="w-4 h-4 mr-2" />
           Print QR
         </Button>
@@ -254,7 +349,11 @@ export const ServiceDashboard = () => {
                   <input type="checkbox" className="rounded border-gray-300" />
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleViewService(service.id)}
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
                 </TableCell>
@@ -298,10 +397,21 @@ export const ServiceDashboard = () => {
         </div>
       </div>
 
-      {/* Bulk Upload Modal */}
+      {/* Modals */}
       <ServiceBulkUploadModal 
         isOpen={showBulkUploadModal}
         onClose={() => setShowBulkUploadModal(false)}
+      />
+      
+      <ImportLocationsModal 
+        isOpen={showImportLocationsModal}
+        onClose={() => setShowImportLocationsModal(false)}
+      />
+      
+      <ServiceFilterModal 
+        isOpen={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={handleApplyFilters}
       />
     </div>
   );

@@ -3,20 +3,19 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-interface ServiceBulkUploadModalProps {
+interface ImportLocationsModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const ServiceBulkUploadModal = ({ isOpen, onClose }: ServiceBulkUploadModalProps) => {
+export const ImportLocationsModal = ({ isOpen, onClose }: ImportLocationsModalProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadType, setUploadType] = useState<'upload' | 'update'>('upload');
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
-      console.log('File selected:', file.name);
+      console.log('Location file selected:', file.name);
     }
   };
 
@@ -25,7 +24,7 @@ export const ServiceBulkUploadModal = ({ isOpen, onClose }: ServiceBulkUploadMod
     const file = event.dataTransfer.files?.[0];
     if (file) {
       setSelectedFile(file);
-      console.log('File dropped:', file.name);
+      console.log('Location file dropped:', file.name);
     }
   };
 
@@ -38,23 +37,20 @@ export const ServiceBulkUploadModal = ({ isOpen, onClose }: ServiceBulkUploadMod
       alert('Please select a file first');
       return;
     }
-    console.log('Importing file:', selectedFile);
-    console.log('Upload type:', uploadType);
-    // Handle import logic here
-    alert(`${uploadType === 'upload' ? 'Bulk Upload' : 'Bulk Update'} completed successfully!`);
+    console.log('Importing locations file:', selectedFile);
+    alert('Locations imported successfully!');
     onClose();
   };
 
   const handleDownloadSample = () => {
-    console.log('Downloading sample format');
-    // Create a sample CSV content
-    const csvContent = "Service Name,Site,Building,Wing,Area,Floor,Room,Group,Sub-Group\nSample Service,Tower 4,Wing2,South,Lobby,Ground Floor,Room 101,Maintenance,Electrical";
+    console.log('Downloading locations sample format');
+    const csvContent = "Site,Building,Wing,Area,Floor,Room\nTower 4,Wing2,South,Lobby,Ground Floor,Room 101\nSEBC,Main Building,North,Office,First Floor,Room 201";
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     if (link.download !== undefined) {
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
-      link.setAttribute('download', 'service_sample_format.csv');
+      link.setAttribute('download', 'locations_sample_format.csv');
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
@@ -70,34 +66,6 @@ export const ServiceBulkUploadModal = ({ isOpen, onClose }: ServiceBulkUploadMod
         </DialogHeader>
         
         <div className="space-y-6">
-          {/* Radio buttons for upload type */}
-          <div className="flex gap-6">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="uploadType"
-                value="upload"
-                checked={uploadType === 'upload'}
-                onChange={(e) => setUploadType(e.target.value as 'upload' | 'update')}
-                className="w-4 h-4"
-                style={{ accentColor: '#C72030' }}
-              />
-              <span className="text-sm">Bulk Upload</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="uploadType"
-                value="update"
-                checked={uploadType === 'update'}
-                onChange={(e) => setUploadType(e.target.value as 'upload' | 'update')}
-                className="w-4 h-4"
-                style={{ accentColor: '#C72030' }}
-              />
-              <span className="text-sm">Bulk Update</span>
-            </label>
-          </div>
-
           {/* File upload area */}
           <div 
             className="border-2 border-dashed border-orange-300 rounded-lg p-12 text-center"
@@ -108,13 +76,13 @@ export const ServiceBulkUploadModal = ({ isOpen, onClose }: ServiceBulkUploadMod
               type="file"
               onChange={handleFileChange}
               className="hidden"
-              id="file-upload"
+              id="locations-file-upload"
               accept=".csv,.xlsx,.xls"
             />
             <div className="mb-4">
               <span className="text-gray-600">Drag & Drop or </span>
               <label 
-                htmlFor="file-upload" 
+                htmlFor="locations-file-upload" 
                 className="text-orange-500 hover:text-orange-600 cursor-pointer underline"
               >
                 Choose File

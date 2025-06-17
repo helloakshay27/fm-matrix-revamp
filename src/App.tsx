@@ -24,6 +24,7 @@ import { AddAssetPage } from './pages/AddAssetPage';
 import { AMCDashboard } from './pages/AMCDashboard';
 import { ServiceDashboard } from './pages/ServiceDashboard';
 import { AddServicePage } from './pages/AddServicePage';
+import { ServiceDetailsPage } from './pages/ServiceDetailsPage';
 import { AttendanceDashboard } from './pages/AttendanceDashboard';
 
 // Import Utility pages
@@ -136,6 +137,7 @@ function App() {
               <Route path="/maintenance/amc/edit/:id" element={<EditAMCPage />} />
               <Route path="/maintenance/service" element={<ServiceDashboard />} />
               <Route path="/maintenance/service/add" element={<AddServicePage />} />
+              <Route path="/maintenance/service/details/:id" element={<ServiceDetailsPage />} />
               <Route path="/maintenance/services" element={<ServiceDashboard />} />
               
               {/* Utility Routes */}
