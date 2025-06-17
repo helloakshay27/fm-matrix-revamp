@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -116,6 +115,7 @@ export const UtilityWaterDashboard = () => {
         <Button 
           variant="outline"
           onClick={handleImport}
+          className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
         >
           <Import className="w-4 h-4 mr-2" />
           Import
@@ -123,6 +123,7 @@ export const UtilityWaterDashboard = () => {
         <Button 
           variant="outline"
           onClick={handleUpdate}
+          className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
         >
           <RefreshCw className="w-4 h-4 mr-2" />
           Update
@@ -130,6 +131,7 @@ export const UtilityWaterDashboard = () => {
         <Button 
           variant="outline"
           onClick={handleExportAll}
+          className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
         >
           <FileDown className="w-4 h-4 mr-2" />
           Export All
@@ -137,17 +139,18 @@ export const UtilityWaterDashboard = () => {
         <Button 
           variant="outline"
           onClick={handlePrintQR}
+          className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
         >
           <Printer className="w-4 h-4 mr-2" />
           Print QR
         </Button>
-        <Badge 
-          variant="secondary" 
-          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
+        <Button 
+          variant="outline" 
           onClick={handleInActiveAssets}
+          className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
         >
           In-Active Assets
-        </Badge>
+        </Button>
       </div>
 
       {/* Search and Filter */}
@@ -155,6 +158,7 @@ export const UtilityWaterDashboard = () => {
         <Button 
           variant="outline"
           onClick={() => setIsFilterOpen(true)}
+          className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
         >
           <Filter className="w-4 h-4 mr-2" />
           Filters
@@ -167,6 +171,11 @@ export const UtilityWaterDashboard = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 w-64"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch();
+                }
+              }}
             />
           </div>
           <Button 
