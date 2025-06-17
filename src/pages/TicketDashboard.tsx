@@ -3,34 +3,63 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Filter, Download, Search, Eye } from 'lucide-react';
+import { Plus, Search, Eye, Filter, Download } from 'lucide-react';
 
 const ticketData = [
   {
-    id: '2301-1163',
-    jobNumber: 'null writing',
-    description: 'FnB SYSTEM',
-    category: 'Asset Engine',
-    subCategory: 'Closed On site',
-    createdBy: 'General Clerk',
-    assignedTo: 'General Clerk',
-    status: 'Closed',
-    site: 'Loccated',
-    uom: '',
-    department: 'P1',
-    clientName: '11-09-2025',
-    createdOn: '11-09-2025',
-    ticketNo: 'Completed',
-    referenceNo: 'Approved',
-    completedDate: '10-09-2025',
-    assignedOn: 'Closed',
-    approvedExpense: 'NA',
-    approvedExpenseAmt: 'Approved',
-    requestedExpenseAmt: 'Advanced',
-    resolutionDate: 'Normal'
+    id: '238117516',
+    taskNumber: 'not waiting',
+    description: '',
+    category: 'FIRE SYSTEM',
+    subCategory: 'NA',
+    createdBy: 'Vishal Vora',
+    owner: 'Owner Guna',
+    unit: 'Locatled',
+    site: 'Locatled',
+    building: 'J1',
+    wing: 'Wings',
+    floor: '1',
+    area: '',
+    room: '',
+    priority: 'Planning',
+    status: 'Resolved',
+    costToTeam: 'Resolved',
+    takesTime: 'NA',
+    referenceNumber: '',
+    completeNotes: '',
+    assignedTo: 'NA',
+    assignToName: 'Advanced',
+    responseTime: 'Advanced',
+    resolveTime: 'Resolved',
+    resolution: 'Resolved'
   },
-  // Add more sample data as needed
+  {
+    id: '238117515',
+    taskNumber: 'Test 1234',
+    description: '',
+    category: 'Fire slab form',
+    subCategory: 'Cleaning',
+    createdBy: 'Vishal Vora',
+    owner: 'Desai Guna',
+    unit: 'Locatled',
+    site: 'Locatled',
+    building: 'J1',
+    wing: 'Wings',
+    floor: '1',
+    area: '',
+    room: '',
+    priority: 'Planning',
+    status: 'Resolved',
+    costToTeam: 'Resolved',
+    takesTime: 'NA',
+    referenceNumber: '',
+    completeNotes: '',
+    assignedTo: 'NA',
+    assignToName: 'Advanced',
+    responseTime: 'Advanced',
+    resolveTime: 'Resolved',
+    resolution: 'Resolved'
+  }
 ];
 
 export const TicketDashboard = () => {
@@ -42,23 +71,14 @@ export const TicketDashboard = () => {
     if (value) {
       const filtered = ticketData.filter(ticket =>
         ticket.id.toLowerCase().includes(value.toLowerCase()) ||
-        ticket.description.toLowerCase().includes(value.toLowerCase()) ||
-        ticket.status.toLowerCase().includes(value.toLowerCase())
+        ticket.taskNumber.toLowerCase().includes(value.toLowerCase()) ||
+        ticket.category.toLowerCase().includes(value.toLowerCase())
       );
       setFilteredTickets(filtered);
     } else {
       setFilteredTickets(ticketData);
     }
   };
-
-  // Stats cards data
-  const statsData = [
-    { label: 'New Ticket', count: 1107, color: 'bg-purple-500' },
-    { label: 'Open', count: 171, color: 'bg-green-500' },
-    { label: 'In Progress', count: 15, color: 'bg-orange-500' },
-    { label: 'Closed', count: 1105, color: 'bg-orange-600' },
-    { label: 'Overdue', count: 1287, color: 'bg-red-500' }
-  ];
 
   return (
     <div className="p-6">
@@ -68,18 +88,28 @@ export const TicketDashboard = () => {
         <h1 className="text-2xl font-bold text-[#1a1a1a]">TICKET LIST</h1>
       </div>
 
-      {/* Stats Cards */}
+      {/* Status Cards */}
       <div className="grid grid-cols-5 gap-4 mb-6">
-        {statsData.map((stat, index) => (
-          <div key={index} className={`${stat.color} text-white p-4 rounded-lg`}>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <span className="text-lg font-bold">{stat.count}</span>
-              </div>
-              <span className="font-medium text-sm">{stat.label}</span>
-            </div>
-          </div>
-        ))}
+        <div className="bg-blue-500 text-white p-4 rounded-lg text-center">
+          <div className="text-2xl font-bold">537</div>
+          <div className="text-sm">Total Tickets</div>
+        </div>
+        <div className="bg-green-500 text-white p-4 rounded-lg text-center">
+          <div className="text-2xl font-bold">171</div>
+          <div className="text-sm">Open</div>
+        </div>
+        <div className="bg-orange-500 text-white p-4 rounded-lg text-center">
+          <div className="text-2xl font-bold">6</div>
+          <div className="text-sm">In Progress</div>
+        </div>
+        <div className="bg-yellow-500 text-white p-4 rounded-lg text-center">
+          <div className="text-2xl font-bold">6</div>
+          <div className="text-sm">Closed</div>
+        </div>
+        <div className="bg-red-500 text-white p-4 rounded-lg text-center">
+          <div className="text-2xl font-bold">1287</div>
+          <div className="text-sm">Overdue</div>
+        </div>
       </div>
 
       {/* Action Buttons */}
@@ -96,7 +126,7 @@ export const TicketDashboard = () => {
           <Download className="w-4 h-4 mr-2" />
           Export
         </Button>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
@@ -106,10 +136,10 @@ export const TicketDashboard = () => {
               className="pl-10 w-64"
             />
           </div>
+          <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+            Reset
+          </Button>
         </div>
-        <Button style={{ backgroundColor: '#C72030' }} className="text-white">
-          GO
-        </Button>
       </div>
 
       {/* Ticket Table */}
@@ -119,24 +149,30 @@ export const TicketDashboard = () => {
             <TableRow>
               <TableHead>Action</TableHead>
               <TableHead>Ticket ID</TableHead>
-              <TableHead>Job Number</TableHead>
+              <TableHead>Task Number</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Category</TableHead>
-              <TableHead>Sub-Category</TableHead>
+              <TableHead>Sub Category</TableHead>
               <TableHead>Created By</TableHead>
+              <TableHead>Owner</TableHead>
+              <TableHead>Unit</TableHead>
               <TableHead>Site</TableHead>
-              <TableHead>UoM</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Client Name</TableHead>
-              <TableHead>Created On</TableHead>
-              <TableHead>Ticket No</TableHead>
+              <TableHead>Building</TableHead>
+              <TableHead>Wing</TableHead>
+              <TableHead>Floor</TableHead>
+              <TableHead>Area</TableHead>
+              <TableHead>Room</TableHead>
+              <TableHead>Priority</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Cost To Team</TableHead>
+              <TableHead>Takes Time</TableHead>
               <TableHead>Reference Number</TableHead>
-              <TableHead>Completed Date</TableHead>
-              <TableHead>Assigned On</TableHead>
-              <TableHead>Approved Expense</TableHead>
-              <TableHead>Approved Expense Amount</TableHead>
-              <TableHead>Requested Expense Amount</TableHead>
-              <TableHead>Resolution Priority</TableHead>
+              <TableHead>Complete Notes</TableHead>
+              <TableHead>Assigned To</TableHead>
+              <TableHead>Assign To Name</TableHead>
+              <TableHead>Response Time</TableHead>
+              <TableHead>Resolve Time</TableHead>
+              <TableHead>Resolution</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -148,44 +184,42 @@ export const TicketDashboard = () => {
                   </Button>
                 </TableCell>
                 <TableCell className="font-medium">{ticket.id}</TableCell>
-                <TableCell>{ticket.jobNumber}</TableCell>
+                <TableCell>{ticket.taskNumber}</TableCell>
                 <TableCell>{ticket.description}</TableCell>
                 <TableCell>{ticket.category}</TableCell>
                 <TableCell>{ticket.subCategory}</TableCell>
                 <TableCell>{ticket.createdBy}</TableCell>
+                <TableCell>{ticket.owner}</TableCell>
+                <TableCell>{ticket.unit}</TableCell>
                 <TableCell>{ticket.site}</TableCell>
-                <TableCell>{ticket.uom}</TableCell>
-                <TableCell>{ticket.department}</TableCell>
-                <TableCell>{ticket.clientName}</TableCell>
-                <TableCell>{ticket.createdOn}</TableCell>
-                <TableCell>{ticket.ticketNo}</TableCell>
-                <TableCell>{ticket.referenceNo}</TableCell>
-                <TableCell>{ticket.completedDate}</TableCell>
-                <TableCell>{ticket.assignedOn}</TableCell>
-                <TableCell>{ticket.approvedExpense}</TableCell>
-                <TableCell>{ticket.approvedExpenseAmt}</TableCell>
-                <TableCell>{ticket.requestedExpenseAmt}</TableCell>
-                <TableCell>{ticket.resolutionDate}</TableCell>
+                <TableCell>{ticket.building}</TableCell>
+                <TableCell>{ticket.wing}</TableCell>
+                <TableCell>{ticket.floor}</TableCell>
+                <TableCell>{ticket.area}</TableCell>
+                <TableCell>{ticket.room}</TableCell>
+                <TableCell>
+                  <span className="px-2 py-1 rounded text-xs bg-blue-100 text-blue-700">
+                    {ticket.priority}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <span className="px-2 py-1 rounded text-xs bg-green-100 text-green-700">
+                    {ticket.status}
+                  </span>
+                </TableCell>
+                <TableCell>{ticket.costToTeam}</TableCell>
+                <TableCell>{ticket.takesTime}</TableCell>
+                <TableCell>{ticket.referenceNumber}</TableCell>
+                <TableCell>{ticket.completeNotes}</TableCell>
+                <TableCell>{ticket.assignedTo}</TableCell>
+                <TableCell>{ticket.assignToName}</TableCell>
+                <TableCell>{ticket.responseTime}</TableCell>
+                <TableCell>{ticket.resolveTime}</TableCell>
+                <TableCell>{ticket.resolution}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-center gap-2 p-4">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((page) => (
-            <Button
-              key={page}
-              variant={page === 1 ? "default" : "outline"}
-              size="sm"
-              style={page === 1 ? { backgroundColor: '#C72030' } : {}}
-              className={page === 1 ? "text-white" : ""}
-            >
-              {page}
-            </Button>
-          ))}
-          <Button variant="outline" size="sm">Last »</Button>
-        </div>
       </div>
     </div>
   );

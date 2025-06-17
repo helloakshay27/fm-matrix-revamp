@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -11,7 +12,7 @@ import NotFound from './pages/NotFound';
 
 // Import new Fitout pages
 import { FitoutSetupDashboard } from './pages/FitoutSetupDashboard';
-import { FitoutRequestListDashboard } from './pages/FitoutRequestListDashboard';
+import { FitoutRequestListDashboard } from './pages/Fit 100utRequestListDashboard';
 import { AddProjectDashboard } from './pages/AddProjectDashboard';
 import { FitoutChecklistDashboard } from './pages/FitoutChecklistDashboard';
 import { AddChecklistDashboard } from './pages/AddChecklistDashboard';
@@ -23,6 +24,9 @@ import { AMCDashboard } from './pages/AMCDashboard';
 import { ServiceDashboard } from './pages/ServiceDashboard';
 import { AttendanceDashboard } from './pages/AttendanceDashboard';
 import { ScheduleDashboard } from './pages/ScheduleDashboard';
+import { InventoryDashboard } from './pages/InventoryDashboard';
+import { TicketDashboard } from './pages/TicketDashboard';
+import { TaskDashboard } from './pages/TaskDashboard';
 
 // Import Utility pages
 import { UtilityDashboard } from './pages/UtilityDashboard';
@@ -79,11 +83,14 @@ function App() {
               <Route path="/transitioning/fitout/violation" element={<FitoutViolationDashboard />} />
               
               {/* Maintenance Routes */}
-              <Route path="/maintenance/assets" element={<AssetDashboard />} />
+              <Route path="/maintenance/asset" element={<AssetDashboard />} />
               <Route path="/maintenance/amc" element={<AMCDashboard />} />
-              <Route path="/maintenance/services" element={<ServiceDashboard />} />
+              <Route path="/maintenance/service" element={<ServiceDashboard />} />
               <Route path="/maintenance/attendance" element={<AttendanceDashboard />} />
               <Route path="/maintenance/schedule" element={<ScheduleDashboard />} />
+              <Route path="/maintenance/inventory" element={<InventoryDashboard />} />
+              <Route path="/maintenance/ticket" element={<TicketDashboard />} />
+              <Route path="/maintenance/task" element={<TaskDashboard />} />
               
               {/* Utility Routes */}
               <Route path="/utility/energy" element={<UtilityDashboard />} />
