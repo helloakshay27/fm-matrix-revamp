@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { X } from "lucide-react";
 
 interface AddCategoryModalProps {
   isOpen: boolean;
@@ -30,17 +29,7 @@ export const AddCategoryModal = ({ isOpen, onClose, onSubmit }: AddCategoryModal
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg font-semibold">Add Category</DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="h-6 w-6"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle className="text-lg font-semibold">Add Category</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
@@ -72,7 +61,7 @@ export const AddCategoryModal = ({ isOpen, onClose, onSubmit }: AddCategoryModal
         <div className="flex justify-center pt-4">
           <Button 
             onClick={handleSubmit}
-            className="bg-purple-700 hover:bg-purple-800 text-white px-8"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
           >
             Submit
           </Button>
