@@ -238,15 +238,26 @@ export const CopySchedulePage = () => {
               </div>
               <div className="space-y-2 flex items-center gap-4 pt-6">
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="mandatory" defaultChecked />
+                  <Checkbox 
+                    id="mandatory" 
+                    defaultChecked 
+                    onCheckedChange={(checked) => console.log('Mandatory:', checked)}
+                  />
                   <Label htmlFor="mandatory">Mandatory</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="reading" defaultChecked />
+                  <Checkbox 
+                    id="reading" 
+                    defaultChecked 
+                    onCheckedChange={(checked) => console.log('Reading:', checked)}
+                  />
                   <Label htmlFor="reading">Reading</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="helptext" />
+                  <Checkbox 
+                    id="helptext" 
+                    onCheckedChange={(checked) => console.log('Help Text:', checked)}
+                  />
                   <Label htmlFor="helptext">Help Text</Label>
                 </div>
               </div>
@@ -584,7 +595,7 @@ export const CopySchedulePage = () => {
                 <Checkbox 
                   id="specific-minute" 
                   checked={specificMinute}
-                  onCheckedChange={setSpecificMinute}
+                  onCheckedChange={(checked) => setSpecificMinute(checked === true)}
                 />
                 <Label htmlFor="specific-minute">Specific minute (choose one or many)</Label>
               </div>
@@ -593,7 +604,10 @@ export const CopySchedulePage = () => {
                 <div className="grid grid-cols-10 gap-2">
                   {minuteOptions.map((minute) => (
                     <div key={minute} className="flex items-center space-x-1">
-                      <Checkbox id={`minute-${minute}`} />
+                      <Checkbox 
+                        id={`minute-${minute}`} 
+                        onCheckedChange={(checked) => console.log(`Minute ${minute}:`, checked)}
+                      />
                       <Label htmlFor={`minute-${minute}`} className="text-xs">{minute}</Label>
                     </div>
                   ))}
