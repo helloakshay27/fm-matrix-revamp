@@ -5,8 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 export const AssetTable = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-
   // Sample data matching the screenshot
   const assets = [
     {
@@ -141,22 +139,6 @@ export const AssetTable = () => {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-[#D5DbDB]">
-      {/* Search Section */}
-      <div className="p-4 border-b border-[#D5DbDB] flex justify-end">
-        <div className="flex items-center gap-3">
-          <Input
-            type="text"
-            placeholder="Search..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-64"
-          />
-          <Button className="bg-green-600 hover:bg-green-700 text-white">
-            Go!
-          </Button>
-        </div>
-      </div>
-
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full">

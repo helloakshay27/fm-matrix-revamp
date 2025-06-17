@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -101,7 +102,7 @@ export const UtilityDashboard = () => {
         />
       </div>
       
-      {/* Action Buttons */}
+      {/* Action Buttons Row 1 */}
       <div className="flex flex-wrap gap-3 mb-6">
         <Button 
           onClick={handleAddClick}
@@ -156,7 +157,7 @@ export const UtilityDashboard = () => {
         </Button>
       </div>
 
-      {/* Second Row Buttons */}
+      {/* Action Buttons Row 2 */}
       <div className="flex flex-wrap gap-3 mb-6">
         <Button 
           variant="outline" 
@@ -175,31 +176,31 @@ export const UtilityDashboard = () => {
           <Filter className="w-4 h-4" />
           Filters
         </Button>
-      </div>
 
-      {/* Search Bar */}
-      <div className="flex justify-end items-center mb-6">
-        <div className="flex items-center space-x-2">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-            <Input
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleSearch();
-                }
-              }}
-            />
+        {/* Search Bar - moved here from the separate section */}
+        <div className="flex items-center ml-auto">
+          <div className="flex items-center space-x-2">
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+              <Input
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-64"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch();
+                  }
+                }}
+              />
+            </div>
+            <Button 
+              onClick={handleSearch}
+              className="bg-[#8B4513] hover:bg-[#8B4513]/90 text-white"
+            >
+              Go
+            </Button>
           </div>
-          <Button 
-            onClick={handleSearch}
-            className="bg-[#8B4513] hover:bg-[#8B4513]/90 text-white"
-          >
-            Go
-          </Button>
         </div>
       </div>
       
