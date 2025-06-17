@@ -15,6 +15,7 @@ import { FitoutSetupDashboard } from './pages/FitoutSetupDashboard';
 import { FitoutRequestListDashboard } from './pages/FitoutRequestListDashboard';
 import { AddProjectDashboard } from './pages/AddProjectDashboard';
 import { FitoutChecklistDashboard } from './pages/FitoutChecklistDashboard';
+import { AddChecklistDashboard } from './pages/AddChecklistDashboard';
 import { FitoutViolationDashboard } from './pages/FitoutViolationDashboard';
 
 // Import Utility pages
@@ -46,6 +47,7 @@ function App() {
               <Route path="/transitioning/fitout/request" element={<FitoutRequestListDashboard />} />
               <Route path="/transitioning/fitout/add-project" element={<AddProjectDashboard />} />
               <Route path="/transitioning/fitout/checklist" element={<FitoutChecklistDashboard />} />
+              <Route path="/transitioning/fitout/checklist/add" element={<AddChecklistDashboard />} />
               <Route path="/transitioning/fitout/violation" element={<FitoutViolationDashboard />} />
               
               {/* Utility Routes */}
