@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Plus, Search, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const amcData = [
+const initialAmcData = [
   {
     id: '51016',
     assetName: '',
@@ -68,7 +68,8 @@ const amcData = [
 export const AMCDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredAMC, setFilteredAMC] = useState(amcData);
+  const [amcData, setAmcData] = useState(initialAmcData);
+  const [filteredAMC, setFilteredAMC] = useState(initialAmcData);
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -93,7 +94,18 @@ export const AMCDashboard = () => {
 
   const handleStatusToggle = (id: string, checked: boolean) => {
     console.log(`Toggling status for AMC ${id} to ${checked}`);
-    // Handle status update logic here
+    
+    // Update the main data array
+    const updatedAmcData = amcData.map(amc => 
+      amc.id === id ? { ...amc, status: checked } : amc
+    );
+    setAmcData(updatedAmcData);
+    
+    // Update the filtered data array
+    const updatedFilteredData = filteredAMC.map(amc => 
+      amc.id === id ? { ...amc, status: checked } : amc
+    );
+    setFilteredAMC(updatedFilteredData);
   };
 
   const handleReset = () => {
