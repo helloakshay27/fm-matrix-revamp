@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Eye } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
-import { EmployeeListDialog } from '@/components/EmployeeListDialog';
 
 interface RoasterData {
   id: number;
@@ -20,7 +19,6 @@ interface RoasterData {
 
 export const UserRoastersDashboard = () => {
   const navigate = useNavigate();
-  const [isEmployeeListOpen, setIsEmployeeListOpen] = useState(false);
   const [roasters] = useState<RoasterData[]>([
     {
       id: 1,
@@ -105,10 +103,6 @@ export const UserRoastersDashboard = () => {
     navigate('/vas/space-management/setup/roaster/add');
   };
 
-  const handleViewList = () => {
-    setIsEmployeeListOpen(true);
-  };
-
   return (
     <div className="flex min-h-screen bg-gray-50">
       <div className="flex-1 p-6">
@@ -119,8 +113,7 @@ export const UserRoastersDashboard = () => {
             <h1 className="text-2xl font-bold text-gray-800">USER ROASTERS</h1>
             <Button 
               onClick={handleAddClick}
-              style={{ backgroundColor: '#C72030', borderColor: '#C72030' }}
-              className="hover:bg-[#B01E2A] text-white flex items-center gap-2"
+              className="bg-[#8B4D6B] hover:bg-[#8B4D6B]/90 text-white flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Add
@@ -165,13 +158,6 @@ export const UserRoastersDashboard = () => {
             </TableBody>
           </Table>
         </div>
-
-        {/* Employee List Dialog */}
-        <EmployeeListDialog 
-          open={isEmployeeListOpen}
-          onOpenChange={setIsEmployeeListOpen}
-          onViewList={handleViewList}
-        />
       </div>
     </div>
   );

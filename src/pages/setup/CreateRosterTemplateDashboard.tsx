@@ -6,11 +6,9 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from 'react-router-dom';
-import { EmployeeListDialog } from '@/components/EmployeeListDialog';
 
 export const CreateRosterTemplateDashboard = () => {
   const navigate = useNavigate();
-  const [isEmployeeListOpen, setIsEmployeeListOpen] = useState(false);
   const [templateName, setTemplateName] = useState<string>("");
   const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [selectedDepartment, setSelectedDepartment] = useState<string>("");
@@ -37,10 +35,6 @@ export const CreateRosterTemplateDashboard = () => {
 
   const handleCancel = () => {
     navigate('/vas/space-management/setup/roaster');
-  };
-
-  const handleViewList = () => {
-    setIsEmployeeListOpen(true);
   };
 
   return (
@@ -273,15 +267,14 @@ export const CreateRosterTemplateDashboard = () => {
               <div className="flex gap-4 pt-4">
                 <Button 
                   onClick={handleSubmit}
-                  style={{ backgroundColor: '#C72030', borderColor: '#C72030' }}
-                  className="hover:bg-[#B01E2A] text-white px-8"
+                  className="bg-green-600 hover:bg-green-700 text-white px-8"
                 >
                   Submit
                 </Button>
                 <Button 
                   onClick={handleCancel}
                   variant="outline" 
-                  className="border-gray-300 text-gray-700 px-8 hover:bg-gray-50"
+                  className="border-gray-300 text-gray-700 px-8"
                 >
                   Cancel
                 </Button>
@@ -304,9 +297,7 @@ export const CreateRosterTemplateDashboard = () => {
             
             <div className="flex justify-end">
               <Button 
-                onClick={handleViewList}
-                style={{ backgroundColor: '#C72030', borderColor: '#C72030' }}
-                className="hover:bg-[#B01E2A] text-white"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
                 size="sm"
               >
                 View List
@@ -314,13 +305,6 @@ export const CreateRosterTemplateDashboard = () => {
             </div>
           </div>
         </div>
-
-        {/* Employee List Dialog */}
-        <EmployeeListDialog 
-          open={isEmployeeListOpen}
-          onOpenChange={setIsEmployeeListOpen}
-          onViewList={handleViewList}
-        />
       </div>
     </div>
   );
