@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -22,6 +21,7 @@ export const AddAssetPage = () => {
     attachments: true
   });
 
+  const [meterCategoryType, setMeterCategoryType] = useState('');
   const [attachments, setAttachments] = useState({
     manualsUpload: [] as File[],
     insuranceDetails: [] as File[],
@@ -61,6 +61,33 @@ export const AddAssetPage = () => {
   const handleSaveAndCreate = () => {
     console.log('Save and create new asset');
     // Reset form or navigate as needed
+  };
+
+  const getMeterCategoryOptions = () => {
+    const baseOptions = [
+      { value: 'board', label: 'Board' },
+      { value: 'dg', label: 'DG' },
+      { value: 'renewable', label: 'Renewable' },
+      { value: 'fresh-water', label: 'Fresh Water' },
+      { value: 'recycled', label: 'Recycled' },
+      { value: 'iex-gdam', label: 'IEX-GDAM' }
+    ];
+
+    // Add additional options when Renewable is selected
+    if (meterCategoryType === 'renewable') {
+      return [
+        ...baseOptions,
+        { value: 'ht', label: 'HT' },
+        { value: 'vcb', label: 'VCB' },
+        { value: 'transformer', label: 'Transformer' },
+        { value: 'lt', label: 'LT' },
+        { value: 'solar', label: 'Solar' },
+        { value: 'bio-methanol', label: 'Bio Methanol' },
+        { value: 'wind', label: 'Wind' }
+      ];
+    }
+
+    return baseOptions;
   };
 
   return (
@@ -410,89 +437,25 @@ export const AddAssetPage = () => {
           </CardHeader>
           {expandedSections.meterCategory && (
             <CardContent className="pt-6">
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-                <div className="bg-purple-100 p-4 rounded-lg text-center">
-                  <RadioGroup>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="board" id="board" />
-                      <Label htmlFor="board" className="text-sm">Board</Label>
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-4">
+                {getMeterCategoryOptions().map((option) => (
+                  <div key={option.value} className="bg-purple-100 p-4 rounded-lg text-center">
+                    <div className="flex items-center justify-center space-x-2">
+                      <input
+                        type="radio"
+                        id={option.value}
+                        name="meterCategory"
+                        value={option.value}
+                        checked={meterCategoryType === option.value}
+                        onChange={(e) => setMeterCategoryType(e.target.value)}
+                        className="w-4 h-4 text-[#C72030] bg-gray-100 border-gray-300 focus:ring-[#C72030] focus:ring-2"
+                      />
+                      <Label htmlFor={option.value} className="text-sm cursor-pointer">
+                        {option.label}
+                      </Label>
                     </div>
-                  </RadioGroup>
-                </div>
-                <div className="bg-purple-100 p-4 rounded-lg text-center">
-                  <RadioGroup>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="dg" id="dg" />
-                      <Label htmlFor="dg" className="text-sm">DG</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                <div className="bg-purple-100 p-4 rounded-lg text-center">
-                  <RadioGroup>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="renewable" id="renewable" />
-                      <Label htmlFor="renewable" className="text-sm">Renewable</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                <div className="bg-purple-100 p-4 rounded-lg text-center">
-                  <RadioGroup>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="fresh-water" id="fresh-water" />
-                      <Label htmlFor="fresh-water" className="text-sm">Fresh Water</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                <div className="bg-purple-100 p-4 rounded-lg text-center">
-                  <RadioGroup>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="recycled" id="recycled" />
-                      <Label htmlFor="recycled" className="text-sm">Recycled</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div className="bg-purple-100 p-4 rounded-lg text-center">
-                  <RadioGroup>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="iex-gdam" id="iex-gdam" />
-                      <Label htmlFor="iex-gdam" className="text-sm">IEX-GDAM</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                <div className="bg-purple-100 p-4 rounded-lg text-center">
-                  <RadioGroup>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="ht" id="ht" />
-                      <Label htmlFor="ht" className="text-sm">HT</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                <div className="bg-purple-100 p-4 rounded-lg text-center">
-                  <RadioGroup>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="vcb" id="vcb" />
-                      <Label htmlFor="vcb" className="text-sm">VCB</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                <div className="bg-purple-100 p-4 rounded-lg text-center">
-                  <RadioGroup>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="transformer" id="transformer" />
-                      <Label htmlFor="transformer" className="text-sm">Transformer</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                <div className="bg-purple-100 p-4 rounded-lg text-center">
-                  <RadioGroup>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="lt" id="lt" />
-                      <Label htmlFor="lt" className="text-sm">LT</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
+                  </div>
+                ))}
               </div>
             </CardContent>
           )}
