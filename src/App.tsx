@@ -97,6 +97,12 @@ import { AddAMCPage } from './pages/AddAMCPage';
 import { AMCDetailsPage } from './pages/AMCDetailsPage';
 import { EditAMCPage } from './pages/EditAMCPage';
 
+// Import Roster Calendar page
+import { RosterCalendarDashboard } from './pages/setup/RosterCalendarDashboard';
+
+// Import Export page
+import { ExportDashboard } from './pages/setup/ExportDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -167,9 +173,11 @@ function App() {
               <Route path="/vas/space-management/setup/shift" element={<ShiftDashboard />} />
               <Route path="/vas/space-management/setup/roaster" element={<UserRoastersDashboard />} />
               <Route path="/vas/space-management/setup/roaster/add" element={<CreateRosterTemplateDashboard />} />
+              <Route path="/vas/space-management/setup/roaster/calendar" element={<RosterCalendarDashboard />} />
               <Route path="/vas/space-management/setup/employees" element={<EmployeesDashboard />} />
               <Route path="/vas/space-management/setup/employees/add" element={<AddEmployeeDashboard />} />
               <Route path="/vas/space-management/setup/check-in-margin" element={<CheckInMarginDashboard />} />
+              <Route path="/vas/space-management/setup/export" element={<ExportDashboard />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
@@ -202,7 +210,7 @@ function App() {
               <Route path="/setup/sac-hsn-setup" element={<div>SAC/HSN Setup</div>} />
               <Route path="/setup/address" element={<div>Address</div>} />
               <Route path="/setup/tag" element={<div>Tag</div>} />
-              <Route path="/setup/export" element={<div>Export</div>} />
+              <Route path="/setup/export" element={<ExportDashboard />} />
             </Route>
           </Routes>
           <Toaster />
