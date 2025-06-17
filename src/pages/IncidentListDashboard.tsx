@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Search, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const IncidentListDashboard = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
 
   const incidents = [
@@ -61,6 +63,14 @@ export const IncidentListDashboard = () => {
     setSearchTerm('');
   };
 
+  const handleAddIncident = () => {
+    navigate('/maintenance/incident/add');
+  };
+
+  const handleViewIncident = (incidentId: string) => {
+    navigate(`/maintenance/incident/${incidentId.replace('#', '')}`);
+  };
+
   return (
     <div className="flex-1 p-6 bg-white min-h-screen">
       {/* Breadcrumb */}
@@ -75,7 +85,11 @@ export const IncidentListDashboard = () => {
 
       {/* Action Bar */}
       <div className="flex justify-between items-center mb-6">
-        <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+        <Button 
+          onClick={handleAddIncident}
+          style={{ backgroundColor: '#C72030' }} 
+          className="text-white hover:opacity-90"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
@@ -91,7 +105,11 @@ export const IncidentListDashboard = () => {
               className="pl-10 w-80"
             />
           </div>
-          <Button onClick={handleSearch} className="bg-purple-600 hover:bg-purple-700 text-white">
+          <Button 
+            onClick={handleSearch} 
+            style={{ backgroundColor: '#C72030' }} 
+            className="text-white hover:opacity-90"
+          >
             Go!
           </Button>
           <Button onClick={handleReset} variant="outline">
@@ -124,7 +142,11 @@ export const IncidentListDashboard = () => {
             {incidents.map((incident) => (
               <TableRow key={incident.id}>
                 <TableCell>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleViewIncident(incident.id)}
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
                 </TableCell>
