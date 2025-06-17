@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,8 +7,21 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+
+interface TaskSection {
+  id: string;
+  group: string;
+  subGroup: string;
+  task: string;
+  inputType: string;
+  mandatory: boolean;
+  reading: boolean;
+  helpText: string;
+  weightageValue: string;
+  failing: boolean;
+}
 
 export const AddSchedulePage = () => {
   const navigate = useNavigate();
@@ -17,6 +29,22 @@ export const AddSchedulePage = () => {
   const [createTicket, setCreateTicket] = useState(false);
   const [weightage, setWeightage] = useState(false);
   const [activeTab, setActiveTab] = useState('Minutes');
+  
+  // Task sections state
+  const [taskSections, setTaskSections] = useState<TaskSection[]>([
+    {
+      id: '1',
+      group: '',
+      subGroup: '',
+      task: '',
+      inputType: '',
+      mandatory: false,
+      reading: false,
+      helpText: '',
+      weightageValue: '',
+      failing: false
+    }
+  ]);
   
   // Form states
   const [formData, setFormData] = useState({
@@ -26,15 +54,6 @@ export const AddSchedulePage = () => {
     ticketCategory: '',
     activityName: '',
     description: '',
-    group: '',
-    subGroup: '',
-    task: '',
-    inputType: '',
-    mandatory: false,
-    reading: false,
-    helpText: '',
-    weightageValue: '',
-    failing: false,
     checklistType: 'Individual',
     asset: '',
     assignTo: '',
@@ -56,14 +75,42 @@ export const AddSchedulePage = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {
-    console.log('Submitting schedule data:', formData);
-    // Handle form submission
-    navigate('/maintenance/schedule');
+  const handleTaskSectionChange = (sectionId: string, field: keyof TaskSection, value: any) => {
+    setTaskSections(prev => 
+      prev.map(section => 
+        section.id === sectionId 
+          ? { ...section, [field]: value }
+          : section
+      )
+    );
   };
 
   const handleAddSection = () => {
-    console.log('Adding new section');
+    const newSection: TaskSection = {
+      id: Date.now().toString(),
+      group: '',
+      subGroup: '',
+      task: '',
+      inputType: '',
+      mandatory: false,
+      reading: false,
+      helpText: '',
+      weightageValue: '',
+      failing: false
+    };
+    setTaskSections(prev => [...prev, newSection]);
+  };
+
+  const handleRemoveSection = (sectionId: string) => {
+    if (taskSections.length > 1) {
+      setTaskSections(prev => prev.filter(section => section.id !== sectionId));
+    }
+  };
+
+  const handleSubmit = () => {
+    console.log('Submitting schedule data:', { formData, taskSections });
+    // Handle form submission
+    navigate('/maintenance/schedule');
   };
 
   return (
@@ -287,105 +334,129 @@ export const AddSchedulePage = () => {
             </Button>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Group</Label>
-              <Select value={formData.group} onValueChange={(value) => handleInputChange('group', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Group" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="group1">Group 1</SelectItem>
-                  <SelectItem value="group2">Group 2</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>SubGroup</Label>
-              <Select value={formData.subGroup} onValueChange={(value) => handleInputChange('subGroup', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Sub Group" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="subgroup1">Sub Group 1</SelectItem>
-                  <SelectItem value="subgroup2">Sub Group 2</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+        <CardContent className="space-y-6">
+          {taskSections.map((section, index) => (
+            <div key={section.id} className="space-y-4 p-4 border rounded-lg relative">
+              {taskSections.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleRemoveSection(section.id)}
+                  className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Group</Label>
+                  <Select 
+                    value={section.group} 
+                    onValueChange={(value) => handleTaskSectionChange(section.id, 'group', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="group1">Group 1</SelectItem>
+                      <SelectItem value="group2">Group 2</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>SubGroup</Label>
+                  <Select 
+                    value={section.subGroup} 
+                    onValueChange={(value) => handleTaskSectionChange(section.id, 'subGroup', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Sub Group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="subgroup1">Sub Group 1</SelectItem>
+                      <SelectItem value="subgroup2">Sub Group 2</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label>Task</Label>
-              <Input
-                placeholder="Enter Task"
-                value={formData.task}
-                onChange={(e) => handleInputChange('task', e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Input Type</Label>
-              <Select value={formData.inputType} onValueChange={(value) => handleInputChange('inputType', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Input Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="text">Text</SelectItem>
-                  <SelectItem value="number">Number</SelectItem>
-                  <SelectItem value="dropdown">Dropdown</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-4 pt-6">
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="mandatory"
-                  checked={formData.mandatory}
-                  onCheckedChange={(checked) => handleInputChange('mandatory', checked)}
-                />
-                <Label htmlFor="mandatory">Mandatory</Label>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label>Task</Label>
+                  <Input
+                    placeholder="Enter Task"
+                    value={section.task}
+                    onChange={(e) => handleTaskSectionChange(section.id, 'task', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Input Type</Label>
+                  <Select 
+                    value={section.inputType} 
+                    onValueChange={(value) => handleTaskSectionChange(section.id, 'inputType', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Input Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="text">Text</SelectItem>
+                      <SelectItem value="number">Number</SelectItem>
+                      <SelectItem value="dropdown">Dropdown</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-4 pt-6">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`mandatory-${section.id}`}
+                      checked={section.mandatory}
+                      onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'mandatory', checked)}
+                    />
+                    <Label htmlFor={`mandatory-${section.id}`}>Mandatory</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`reading-${section.id}`}
+                      checked={section.reading}
+                      onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'reading', checked)}
+                    />
+                    <Label htmlFor={`reading-${section.id}`}>Reading</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`help-text-${section.id}`}
+                      checked={!!section.helpText}
+                      onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'helpText', checked ? 'Help text' : '')}
+                    />
+                    <Label htmlFor={`help-text-${section.id}`}>Help Text</Label>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="reading"
-                  checked={formData.reading}
-                  onCheckedChange={(checked) => handleInputChange('reading', checked)}
-                />
-                <Label htmlFor="reading">Reading</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="help-text"
-                  checked={!!formData.helpText}
-                  onCheckedChange={(checked) => checked ? handleInputChange('helpText', 'Help text') : handleInputChange('helpText', '')}
-                />
-                <Label htmlFor="help-text">Help Text</Label>
-              </div>
-            </div>
-          </div>
 
-          {/* Weightage option - only show when weightage toggle is on */}
-          {weightage && (
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div>
-                <Label>Weightage</Label>
-                <Input
-                  placeholder="Enter Weightage"
-                  value={formData.weightageValue}
-                  onChange={(e) => handleInputChange('weightageValue', e.target.value)}
-                />
-              </div>
-              <div className="flex items-center space-x-2 pt-6">
-                <Checkbox 
-                  id="failing"
-                  checked={formData.failing}
-                  onCheckedChange={(checked) => handleInputChange('failing', checked)}
-                />
-                <Label htmlFor="failing">Failing</Label>
-              </div>
+              {/* Weightage option - only show when weightage toggle is on */}
+              {weightage && (
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <Label>Weightage</Label>
+                    <Input
+                      placeholder="Enter Weightage"
+                      value={section.weightageValue}
+                      onChange={(e) => handleTaskSectionChange(section.id, 'weightageValue', e.target.value)}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 pt-6">
+                    <Checkbox 
+                      id={`failing-${section.id}`}
+                      checked={section.failing}
+                      onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'failing', checked)}
+                    />
+                    <Label htmlFor={`failing-${section.id}`}>Failing</Label>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          ))}
         </CardContent>
       </Card>
 
@@ -627,7 +698,6 @@ export const AddSchedulePage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Cron Expression Builder */}
           <div className="space-y-4">
             <div className="flex border rounded-lg overflow-hidden">
               {['Minutes', 'Hours', 'Day', 'Month'].map((tab, index) => (
@@ -646,7 +716,6 @@ export const AddSchedulePage = () => {
               ))}
             </div>
 
-            {/* Active Tab Content */}
             <div className="space-y-4">
               {activeTab === 'Minutes' && (
                 <>
@@ -655,7 +724,6 @@ export const AddSchedulePage = () => {
                     <Label htmlFor="specific-minutes">Specific minute (choose one or many)</Label>
                   </div>
 
-                  {/* Minute Selection Grid */}
                   <div className="grid grid-cols-12 gap-2 text-sm">
                     {Array.from({ length: 60 }, (_, i) => (
                       <div key={i} className="flex items-center space-x-1">
@@ -830,7 +898,6 @@ export const AddSchedulePage = () => {
                 <div className="mt-2 font-mono text-sm">0 0 ? * *</div>
               </div>
 
-              {/* Calendar View */}
               <div className="grid grid-cols-5 gap-4 mt-6">
                 <div className="text-center">
                   <div className="font-medium mb-2">Minutes</div>
