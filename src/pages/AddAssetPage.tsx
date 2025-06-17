@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ export const AddAssetPage = () => {
   });
 
   const [meterCategoryType, setMeterCategoryType] = useState('');
+  const [subCategoryType, setSubCategoryType] = useState('');
   const [attachments, setAttachments] = useState({
     manualsUpload: [] as File[],
     insuranceDetails: [] as File[],
@@ -64,7 +66,7 @@ export const AddAssetPage = () => {
   };
 
   const getMeterCategoryOptions = () => {
-    const baseOptions = [
+    return [
       { value: 'board', label: 'Board' },
       { value: 'dg', label: 'DG' },
       { value: 'renewable', label: 'Renewable' },
@@ -72,22 +74,36 @@ export const AddAssetPage = () => {
       { value: 'recycled', label: 'Recycled' },
       { value: 'iex-gdam', label: 'IEX-GDAM' }
     ];
+  };
 
-    // Add additional options when Renewable is selected
-    if (meterCategoryType === 'renewable') {
-      return [
-        ...baseOptions,
-        { value: 'ht', label: 'HT' },
-        { value: 'vcb', label: 'VCB' },
-        { value: 'transformer', label: 'Transformer' },
-        { value: 'lt', label: 'LT' },
-        { value: 'solar', label: 'Solar' },
-        { value: 'bio-methanol', label: 'Bio Methanol' },
-        { value: 'wind', label: 'Wind' }
-      ];
+  const getSubCategoryOptions = () => {
+    switch (meterCategoryType) {
+      case 'board':
+        return [
+          { value: 'ht', label: 'HT' },
+          { value: 'vcb', label: 'VCB' },
+          { value: 'transformer', label: 'Transformer' },
+          { value: 'lt', label: 'LT' }
+        ];
+      case 'renewable':
+        return [
+          { value: 'solar', label: 'Solar' },
+          { value: 'bio-methanol', label: 'Bio Methanol' },
+          { value: 'wind', label: 'Wind' }
+        ];
+      case 'fresh-water':
+        return [
+          { value: 'source', label: 'Source (Input)' },
+          { value: 'destination', label: 'Destination (Output)' }
+        ];
+      default:
+        return [];
     }
+  };
 
-    return baseOptions;
+  const handleMeterCategoryChange = (value: string) => {
+    setMeterCategoryType(value);
+    setSubCategoryType(''); // Reset sub-category when main category changes
   };
 
   return (
@@ -447,7 +463,7 @@ export const AddAssetPage = () => {
                         name="meterCategory"
                         value={option.value}
                         checked={meterCategoryType === option.value}
-                        onChange={(e) => setMeterCategoryType(e.target.value)}
+                        onChange={(e) => handleMeterCategoryChange(e.target.value)}
                         className="w-4 h-4 text-[#C72030] bg-gray-100 border-gray-300 focus:ring-[#C72030] focus:ring-2"
                       />
                       <Label htmlFor={option.value} className="text-sm cursor-pointer">
@@ -457,6 +473,32 @@ export const AddAssetPage = () => {
                   </div>
                 ))}
               </div>
+
+              {/* Sub-category options based on selected main category */}
+              {getSubCategoryOptions().length > 0 && (
+                <div className="mt-6">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {getSubCategoryOptions().map((option) => (
+                      <div key={option.value} className="bg-purple-100 p-4 rounded-lg text-center">
+                        <div className="flex items-center justify-center space-x-2">
+                          <input
+                            type="radio"
+                            id={`sub-${option.value}`}
+                            name="subMeterCategory"
+                            value={option.value}
+                            checked={subCategoryType === option.value}
+                            onChange={(e) => setSubCategoryType(e.target.value)}
+                            className="w-4 h-4 text-[#C72030] bg-gray-100 border-gray-300 focus:ring-[#C72030] focus:ring-2"
+                          />
+                          <Label htmlFor={`sub-${option.value}`} className="text-sm cursor-pointer">
+                            {option.label}
+                          </Label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           )}
         </Card>
