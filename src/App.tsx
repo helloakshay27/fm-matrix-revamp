@@ -69,6 +69,9 @@ import { GVehiclesDashboard } from './pages/GVehiclesDashboard';
 // Import GVehicleOutDashboard
 import { GVehicleOutDashboard } from './pages/GVehicleOutDashboard';
 
+// Import Space Management pages
+import { SpaceManagementBookingsDashboard } from './pages/SpaceManagementBookingsDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -130,6 +133,9 @@ function App() {
               <Route path="/vas/fnb" element={<FnBRestaurantDashboard />} />
               <Route path="/vas/parking" element={<ParkingDashboard />} />
               <Route path="/property/parking/bookings" element={<ParkingBookingsDashboard />} />
+              
+              {/* Space Management Routes */}
+              <Route path="/vas/space-management/bookings" element={<SpaceManagementBookingsDashboard />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
