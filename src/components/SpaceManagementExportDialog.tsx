@@ -39,7 +39,7 @@ export const SpaceManagementExportDialog: React.FC<SpaceManagementExportDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md [&>button]:hidden">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold">Report</DialogTitle>
           <Button
@@ -58,7 +58,7 @@ export const SpaceManagementExportDialog: React.FC<SpaceManagementExportDialogPr
               placeholder="01/06/2025"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
-              className="text-sm"
+              className="text-sm h-12 bg-gray-50"
             />
           </div>
           
@@ -67,14 +67,14 @@ export const SpaceManagementExportDialog: React.FC<SpaceManagementExportDialogPr
               placeholder="30/06/2025"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
-              className="text-sm"
+              className="text-sm h-12 bg-gray-50"
             />
           </div>
 
           <div className="pt-4">
             <Button 
               onClick={handleSubmit}
-              className="w-full bg-[#8B4A9C] hover:bg-[#7A4089] text-white"
+              className="w-full bg-[#8B4A9C] hover:bg-[#7A4089] text-white h-12 rounded-md"
             >
               Submit
             </Button>

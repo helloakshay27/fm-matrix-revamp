@@ -49,7 +49,7 @@ export const BookingsFilterDialog: React.FC<BookingsFilterDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md [&>button]:hidden">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
           <Button
@@ -70,14 +70,14 @@ export const BookingsFilterDialog: React.FC<BookingsFilterDialogProps> = ({
                 placeholder="Search by Name or Email"
                 value={filters.searchByNameOrEmail}
                 onChange={(e) => setFilters({ ...filters, searchByNameOrEmail: e.target.value })}
-                className="text-sm"
+                className="text-sm h-10 bg-gray-50"
               />
             </div>
             
             <div>
               <label className="text-sm font-medium mb-2 block">Category</label>
               <Select value={filters.category} onValueChange={(value) => setFilters({ ...filters, category: value })}>
-                <SelectTrigger className="text-sm">
+                <SelectTrigger className="text-sm h-10 bg-gray-50">
                   <SelectValue placeholder="Select Category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -96,14 +96,14 @@ export const BookingsFilterDialog: React.FC<BookingsFilterDialogProps> = ({
                 placeholder="Scheduled on"
                 value={filters.scheduledOn}
                 onChange={(e) => setFilters({ ...filters, scheduledOn: e.target.value })}
-                className="text-sm"
+                className="text-sm h-10 bg-gray-50"
               />
             </div>
 
             <div>
               <label className="text-sm font-medium mb-2 block">Status</label>
               <Select value={filters.status} onValueChange={(value) => setFilters({ ...filters, status: value })}>
-                <SelectTrigger className="text-sm">
+                <SelectTrigger className="text-sm h-10 bg-gray-50">
                   <SelectValue placeholder="Select Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -121,25 +121,25 @@ export const BookingsFilterDialog: React.FC<BookingsFilterDialogProps> = ({
               placeholder="Booked on"
               value={filters.bookedOn}
               onChange={(e) => setFilters({ ...filters, bookedOn: e.target.value })}
-              className="text-sm"
+              className="text-sm h-10 bg-gray-50"
             />
           </div>
-        </div>
 
-        <div className="flex gap-3 pt-4">
-          <Button 
-            onClick={handleApply}
-            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
-          >
-            Apply
-          </Button>
-          <Button 
-            onClick={handleReset}
-            variant="outline"
-            className="flex-1"
-          >
-            Reset
-          </Button>
+          <div className="flex gap-3 pt-4">
+            <Button 
+              onClick={handleApply}
+              className="flex-1 bg-[#8B4A9C] hover:bg-[#7A4089] text-white h-12"
+            >
+              Apply
+            </Button>
+            <Button 
+              onClick={handleReset}
+              variant="outline"
+              className="flex-1 h-12 border-gray-300"
+            >
+              Reset
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
