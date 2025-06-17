@@ -13,6 +13,7 @@ import NotFound from './pages/NotFound';
 // Import new Fitout pages
 import { FitoutSetupDashboard } from './pages/FitoutSetupDashboard';
 import { FitoutRequestListDashboard } from './pages/FitoutRequestListDashboard';
+import { AddProjectDashboard } from './pages/AddProjectDashboard';
 import { FitoutChecklistDashboard } from './pages/FitoutChecklistDashboard';
 import { FitoutViolationDashboard } from './pages/FitoutViolationDashboard';
 
