@@ -74,6 +74,10 @@ import { GVehicleOutDashboard } from './pages/GVehicleOutDashboard';
 import { SpaceManagementBookingsDashboard } from './pages/SpaceManagementBookingsDashboard';
 import { SpaceManagementSeatRequestsDashboard } from './pages/SpaceManagementSeatRequestsDashboard';
 
+// Import Seat Setup pages
+import { SeatSetupDashboard } from './pages/setup/SeatSetupDashboard';
+import { AddSeatSetupDashboard } from './pages/setup/AddSeatSetupDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
