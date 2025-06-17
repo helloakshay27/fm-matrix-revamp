@@ -5,13 +5,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   createProject,
   editProject,
+  fetchActiveProjectTypes,
   fetchProjectTeams,
   fetchProjectTypes,
   fetchTemplates,
   removeTagFromProject,
 } from '../../../../redux/slices/projectSlice';
 import { fetchUsers } from '../../../../redux/slices/userSlice';
-import { fetchTags } from '../../../../redux/slices/tagsSlice';
+import { fetchActiveTags, fetchTags } from '../../../../redux/slices/tagsSlice';
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -22,20 +23,20 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
 
   const {
     fetchUsers: users = [],
-    fetchTags: tags = [],
+    fetchActiveTags: tags = [],
     fetchProjectDetails: editData = {},
     createProject: { success },
     editProject: { success: editsuccess },
-    fetchProjectTypes: projectTypes = [],
+    fetchActiveProjectTypes: projectTypes = [],
     fetchTemplates: templates = [],
     fetchProjectTeams: teams = []
   } = useSelector((state) => ({
     fetchUsers: state.fetchUsers.fetchUsers,
-    fetchTags: state.fetchTags.fetchTags,
+    fetchActiveTags: state.fetchActiveTags.fetchActiveTags,
     fetchProjectDetails: state.fetchProjectDetails.fetchProjectDetails,
     createProject: state.createProject,
     editProject: state.editProject,
-    fetchProjectTypes: state.fetchProjectTypes.fetchProjectTypes,
+    fetchActiveProjectTypes: state.fetchActiveProjectTypes.fetchActiveProjectTypes,
     fetchTemplates: state.fetchTemplates.fetchTemplates,
     fetchProjectTeams: state.fetchProjectTeams.fetchProjectTeams
   }));
@@ -64,8 +65,8 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
 
   useEffect(() => {
     dispatch(fetchUsers({ token }));
-    dispatch(fetchTags({ token }));
-    dispatch(fetchProjectTypes({ token }));
+    dispatch(fetchActiveTags({ token }));
+    dispatch(fetchActiveProjectTypes({ token }));
     dispatch(fetchTemplates({ token }));
     dispatch(fetchProjectTeams({ token }));
   }, [dispatch]);

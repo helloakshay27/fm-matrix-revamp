@@ -11,7 +11,11 @@ const createApiSlice = (name, fetchThunk) => createSlice({
         error: null,
         [name]: [],
     },
-    reducers: {},
+    reducers: {
+        resetIssueSuccess: (state) => {
+            state.success = false;
+        },
+    },
     extraReducers: (builder) => {
         builder
             .addCase(fetchThunk.pending, (state) => {
@@ -90,3 +94,5 @@ export const updateIssueSlice = createApiSlice('updateIssue', updateIssue);
 export const createIssueReducer = createIssueSlice.reducer;
 export const fetchIssueReducer = fetchIssueSlice.reducer;
 export const updateIssueReducer = updateIssueSlice.reducer;
+
+export const { resetIssueSuccess } = createIssueSlice.actions;

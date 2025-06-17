@@ -1,14 +1,14 @@
 import { configureStore } from '@reduxjs/toolkit'
-import { changeProjectStatusReducer,deleteProjectGroupReducer, deleteProjectTeamReducer,createProject, createProjectReducer, createProjectTypesReducer, deleteProjectReducer, editProjectReducer, fetchProjectDetailsReducer, fetchProjectsReducer, fetchProjectTypeReducer, fetchTemplatesReducer, filterProjectsReducer, updateProjectTypeReducer, fetchProjectGroupReducer, createProjectGroupReducer, updateProjectGroupReducer, createProjectTeamReducer, fetchProjectTeamsReducer, fetchProjectTeamReducer, updateProjectTeamReducer, removeTagFromProjectReducer, removeMembersFromTeamReducer, deleteProject } from './slices/projectSlice'
+import { changeProjectStatusReducer, deleteProjectGroupReducer, deleteProjectTeamReducer, createProject, createProjectReducer, createProjectTypesReducer, deleteProjectReducer, editProjectReducer, fetchProjectDetailsReducer, fetchProjectsReducer, fetchProjectTypeReducer, fetchTemplatesReducer, filterProjectsReducer, updateProjectTypeReducer, fetchProjectGroupReducer, createProjectGroupReducer, updateProjectGroupReducer, createProjectTeamReducer, fetchProjectTeamsReducer, fetchProjectTeamReducer, updateProjectTeamReducer, removeTagFromProjectReducer, removeMembersFromTeamReducer, deleteProject, fetchActiveProjectTypesReducer } from './slices/projectSlice'
 import { createExternalUserReducer, createInternalUserReducer, fetchExternalUserReducer, fetchInternalUserDetailsReducer, fetchInternalUserReducer, fetchUpdatelUserReducer, removeUserFromProjectReducer, userReducer } from './slices/userSlice'
-import { createTagReducer, deleteTagReducer, fetchTagsReducer, updateTagReducer } from './slices/tagsSlice'
-import { createRoleReducer,deleteRoleReducer ,editRoleReducer, fetchRolesReducer } from './slices/roleSlice'
+import { createTagReducer, deleteTagReducer, fetchActiveTagsReducer, fetchTagsReducer, updateTagReducer } from './slices/tagsSlice'
+import { createRoleReducer, deleteRoleReducer, editRoleReducer, fetchRolesReducer } from './slices/roleSlice'
 import { changeTaskStatusReducer, createDependancyReducer, createTaskCommentReducer, createTaskReducer, editTaskCommentReducer, editTaskReducer, fetchTasksOfProjectReducer, fetchTasksReducer, filterTaskReducer, taskDetailsReducer, updateDependancyReducer } from './slices/taskSlice'
 import { fetchOrganizationsReducer } from './slices/organizationSlice'
 import { createMilestoneReducer, fetchMilestoneByIdReducer, fetchMilestoneReducer } from './slices/milestoneSlice'
 import { fetchSpirintByIdReducer, fetchSpirintsReducer, postSprintReducer, putSprintReducer } from './slices/spirintSlice'
 import { createIssueReducer, fetchIssueReducer, updateIssueReducer } from './slices/IssueSlice'
-import { fetchStatusReducer, createStatusReducer,deleteStatusReducer, updateStatusReducer } from './slices/statusSlice'
+import { fetchStatusReducer, createStatusReducer, deleteStatusReducer, updateStatusReducer } from './slices/statusSlice'
 
 export const store = configureStore({
   reducer: {
@@ -19,6 +19,7 @@ export const store = configureStore({
     changeProjectStatus: changeProjectStatusReducer,
     editProject: editProjectReducer,
     fetchProjectTypes: fetchProjectTypeReducer,
+    fetchActiveProjectTypes: fetchActiveProjectTypesReducer,
     createdProjectTypes: createProjectTypesReducer,
     fetchTemplates: fetchTemplatesReducer,
     deleteProject: deleteProjectReducer,
@@ -49,7 +50,7 @@ export const store = configureStore({
     updateDependancy: updateDependancyReducer,
 
     //issues
-    createIssues: createIssueReducer,
+    createIssue: createIssueReducer,
     fetchIssues: fetchIssueReducer,
     updateIssues: updateIssueReducer,
 
@@ -87,6 +88,7 @@ export const store = configureStore({
 
     //tags
     fetchTags: fetchTagsReducer,
+    fetchActiveTags: fetchActiveTagsReducer,
     createTag: createTagReducer,
     updateTag: updateTagReducer,
     deleteTag: deleteTagReducer,

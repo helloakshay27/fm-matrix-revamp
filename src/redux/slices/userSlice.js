@@ -37,7 +37,7 @@ const createApiSlice = (name, fetchThunk) => createSlice({
 // Fetch users thunk
 export const fetchUsers = createAsyncThunk('fetchUsers', async ({ token }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/users.json`, {
+        const response = await axios.get(`https://api-tasks.lockated.com/users.json?q[active_eq]=true`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },

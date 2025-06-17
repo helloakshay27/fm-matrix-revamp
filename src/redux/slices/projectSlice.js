@@ -135,6 +135,21 @@ export const fetchProjectTypes = createAsyncThunk('fetchProjectTypes', async ({ 
     }
 })
 
+export const fetchActiveProjectTypes = createAsyncThunk('fetchActiveProjectTypes', async ({ token }) => {
+    try {
+        const response = await axios.get(`https://api-tasks.lockated.com/project_types.json?q[active_eq]=true`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            }
+        })
+
+        return response.data
+    } catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
 export const createProjectType = createAsyncThunk(
     'createProjectTypes',
     async ({ token, payload }, { rejectWithValue }) => {
@@ -439,6 +454,7 @@ export const fetchProjectDetailsSlice = createApiSlice('fetchProjectDetails', fe
 export const changeProjectStatusSlice = createApiSlice('changeProjectStatus', changeProjectStatus);
 export const editProjectSlice = createApiSlice('editProject', editProject);
 export const fetchProjectTypesSlice = createApiSlice('fetchProjectTypes', fetchProjectTypes);
+export const fetchActiveProjectTypesSlice = createApiSlice('fetchActiveProjectTypes', fetchActiveProjectTypes);
 export const createProjectTypesSlice = createApiSlice('createProjectTypes', createProjectType);
 export const fetchTemplatesSlice = createApiSlice('fetchTemplates', fetchTemplates);
 export const deleteProjectSlice = createApiSlice('deleteProject', deleteProject);
@@ -464,6 +480,7 @@ export const fetchProjectDetailsReducer = fetchProjectDetailsSlice.reducer;
 export const changeProjectStatusReducer = changeProjectStatusSlice.reducer;
 export const editProjectReducer = editProjectSlice.reducer;
 export const fetchProjectTypeReducer = fetchProjectTypesSlice.reducer;
+export const fetchActiveProjectTypesReducer = fetchActiveProjectTypesSlice.reducer;
 export const createProjectTypesReducer = createProjectTypesSlice.reducer;
 export const fetchTemplatesReducer = fetchTemplatesSlice.reducer;
 export const deleteProjectReducer = deleteProjectSlice.reducer;
