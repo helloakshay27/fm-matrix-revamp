@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -124,7 +125,16 @@ const modulesByPackage = {
     { name: 'F&B', icon: Coffee, href: '/vas/fnb' },
     { name: 'Parking', icon: Car, href: '/vas/parking' },
     { name: 'OSR', icon: TreePine, href: '/vas/osr' },
-    { name: 'Space Management', icon: Layers, href: '/vas/space-management' },
+    { 
+      name: 'Space Management', 
+      icon: Layers, 
+      href: '/vas/space-management',
+      subItems: [
+        { name: 'Bookings', href: '/vas/space-management/bookings', color: 'text-[#1a1a1a]' },
+        { name: 'Seat Requests', href: '/vas/space-management/seat-requests', color: 'text-[#1a1a1a]' },
+        { name: 'Setup', href: '/vas/space-management/setup', color: 'text-[#1a1a1a]' }
+      ]
+    },
     { name: 'Training List', icon: BookOpen, href: '/vas/training-list' }
   ],
   'Settings': [
