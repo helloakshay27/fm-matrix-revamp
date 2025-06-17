@@ -1,4 +1,6 @@
+
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 import { 
   Users, Settings, FileText, Building, Car, Shield, DollarSign, 
@@ -156,7 +158,9 @@ const modulesByPackage = {
 };
 
 export const Sidebar = () => {
-  const { currentSection } = useLayout();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { currentSection, setCurrentSection } = useLayout();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   const toggleExpanded = (itemName: string) => {
@@ -166,6 +170,35 @@ export const Sidebar = () => {
         : [...prev, itemName]
     );
   };
+
+  const handleNavigation = (href: string, section?: string) => {
+    if (section && section !== currentSection) {
+      setCurrentSection(section);
+    }
+    navigate(href);
+  };
+
+  // Determine current section from route if not already set
+  React.useEffect(() => {
+    const path = location.pathname;
+    if (path.startsWith('/utility')) {
+      setCurrentSection('Utility');
+    } else if (path.startsWith('/transitioning')) {
+      setCurrentSection('Transitioning');
+    } else if (path.startsWith('/security')) {
+      setCurrentSection('Security');
+    } else if (path.startsWith('/vas')) {
+      setCurrentSection('Value Added Services');
+    } else if (path.startsWith('/finance')) {
+      setCurrentSection('Finance');
+    } else if (path.startsWith('/maintenance')) {
+      setCurrentSection('Maintenance');
+    } else if (path.startsWith('/crm')) {
+      setCurrentSection('CRM');
+    } else if (path.startsWith('/settings')) {
+      setCurrentSection('Settings');
+    }
+  }, [location.pathname, setCurrentSection]);
 
   const currentModules = modulesByPackage[currentSection] || [];
 
@@ -208,29 +241,29 @@ export const Sidebar = () => {
                   {expandedItems.includes(module.name) && (
                     <div className="ml-8 mt-1 space-y-1">
                       {module.subItems.map((subItem) => (
-                        <a
+                        <button
                           key={subItem.name}
-                          href={subItem.href}
-                          className={`block px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] ${
+                          onClick={() => handleNavigation(subItem.href, currentSection)}
+                          className={`block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] ${
                             subItem.color || 'text-[#1a1a1a]'
                           }`}
                         >
                           {subItem.name}
-                        </a>
+                        </button>
                       ))}
                     </div>
                   )}
                 </div>
               ) : (
-                <a
-                  href={module.href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] ${
+                <button
+                  onClick={() => handleNavigation(module.href, currentSection)}
+                  className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] ${
                     module.color || 'text-[#1a1a1a]'
                   }`}
                 >
                   <module.icon className="w-5 h-5" />
                   {module.name}
-                </a>
+                </button>
               )}
             </div>
           ))}
