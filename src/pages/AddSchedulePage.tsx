@@ -21,6 +21,9 @@ export const AddSchedulePage = () => {
   // Form states
   const [formData, setFormData] = useState({
     template: '',
+    ticketLevel: 'Question Level',
+    assignedTo: '',
+    ticketCategory: '',
     activityName: '',
     description: '',
     group: '',
@@ -62,94 +65,6 @@ export const AddSchedulePage = () => {
   const handleAddSection = () => {
     console.log('Adding new section');
   };
-
-  // If Create New is toggled, show template selection
-  if (createNew) {
-    return (
-      <div className="p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate('/maintenance/schedule')}
-            className="p-2"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <div className="text-sm text-gray-600 mb-1">Schedule</div>
-            <h1 className="text-2xl font-bold">Add Schedule</h1>
-          </div>
-        </div>
-
-        {/* Toggles */}
-        <div className="flex gap-6">
-          <div className="flex items-center space-x-2">
-            <Switch 
-              checked={createNew} 
-              onCheckedChange={setCreateNew}
-              id="create-new"
-            />
-            <Label htmlFor="create-new">Create New</Label>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Switch 
-              checked={createTicket} 
-              onCheckedChange={setCreateTicket}
-              id="create-ticket"
-            />
-            <Label htmlFor="create-ticket">Create Ticket</Label>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Switch 
-              checked={weightage} 
-              onCheckedChange={setWeightage}
-              id="weightage"
-            />
-            <Label htmlFor="weightage">Weightage</Label>
-          </div>
-        </div>
-
-        {/* Template Selection */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="template-select">Select from the existing Template</Label>
-                <Select value={formData.template} onValueChange={(value) => handleInputChange('template', value)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select from the existing Template" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="template1">Template 1</SelectItem>
-                    <SelectItem value="template2">Template 2</SelectItem>
-                    <SelectItem value="template3">Template 3</SelectItem>
-                    <SelectItem value="custom">Custom Template</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-4">
-          <Button variant="outline" onClick={() => navigate('/maintenance/schedule')}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={() => setCreateNew(false)}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white"
-          >
-            Continue with Template
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="p-6 space-y-6">
@@ -197,6 +112,91 @@ export const AddSchedulePage = () => {
           <Label htmlFor="weightage">Weightage</Label>
         </div>
       </div>
+
+      {/* Create New Toggle Section */}
+      {createNew && (
+        <Card>
+          <CardContent className="pt-6">
+            <div>
+              <Label htmlFor="template-select">Select from the existing Template</Label>
+              <Select value={formData.template} onValueChange={(value) => handleInputChange('template', value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select from the existing Template" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="template1">Template 1</SelectItem>
+                  <SelectItem value="template2">Template 2</SelectItem>
+                  <SelectItem value="template3">Template 3</SelectItem>
+                  <SelectItem value="custom">Custom Template</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Create Ticket Toggle Section */}
+      {createTicket && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center space-x-2">
+                  <input 
+                    type="radio" 
+                    id="checklist-level" 
+                    name="ticketLevel" 
+                    value="Checklist Level"
+                    checked={formData.ticketLevel === 'Checklist Level'}
+                    onChange={(e) => handleInputChange('ticketLevel', e.target.value)}
+                  />
+                  <Label htmlFor="checklist-level">Checklist Level</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input 
+                    type="radio" 
+                    id="question-level" 
+                    name="ticketLevel" 
+                    value="Question Level"
+                    checked={formData.ticketLevel === 'Question Level'}
+                    onChange={(e) => handleInputChange('ticketLevel', e.target.value)}
+                  />
+                  <Label htmlFor="question-level">Question Level</Label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Select Assigned To</Label>
+                  <Select value={formData.assignedTo} onValueChange={(value) => handleInputChange('assignedTo', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Assigned To" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="supervisor">Supervisor</SelectItem>
+                      <SelectItem value="technician">Technician</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Select Category</Label>
+                  <Select value={formData.ticketCategory} onValueChange={(value) => handleInputChange('ticketCategory', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="technical">Technical</SelectItem>
+                      <SelectItem value="non-technical">Non Technical</SelectItem>
+                      <SelectItem value="maintenance">Maintenance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Basic Info Section */}
       <Card>
@@ -325,7 +325,7 @@ export const AddSchedulePage = () => {
               />
             </div>
             <div>
-              <Label>Task</Label>
+              <Label>Input Type</Label>
               <Select value={formData.inputType} onValueChange={(value) => handleInputChange('inputType', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Input Type" />
@@ -629,63 +629,201 @@ export const AddSchedulePage = () => {
         <CardContent>
           {/* Cron Expression Builder */}
           <div className="space-y-4">
-            <div className="flex border rounded-lg">
-              {['Minutes', 'Hours', 'Day', 'Month'].map((tab) => (
+            <div className="flex border rounded-lg overflow-hidden">
+              {['Minutes', 'Hours', 'Day', 'Month'].map((tab, index) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 ${
+                  className={`px-4 py-2 flex-1 transition-colors ${
                     activeTab === tab 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-gray-100 text-gray-700'
-                  } ${tab === 'Minutes' ? 'rounded-l-lg' : ''} ${tab === 'Month' ? 'rounded-r-lg' : ''}`}
+                      ? 'text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  style={activeTab === tab ? { backgroundColor: '#C72030' } : {}}
                 >
                   {tab}
                 </button>
               ))}
             </div>
 
+            {/* Active Tab Content */}
             <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <input type="radio" id="specific-minutes" name="minutes-option" />
-                <Label htmlFor="specific-minutes">Specific minute (choose one or many)</Label>
-              </div>
-
-              {/* Minute Selection Grid */}
-              <div className="grid grid-cols-12 gap-2 text-sm">
-                {Array.from({ length: 60 }, (_, i) => (
-                  <div key={i} className="flex items-center space-x-1">
-                    <Checkbox id={`minute-${i}`} />
-                    <Label htmlFor={`minute-${i}`} className="text-xs">{i.toString().padStart(2, '0')}</Label>
+              {activeTab === 'Minutes' && (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="specific-minutes" name="minutes-option" defaultChecked />
+                    <Label htmlFor="specific-minutes">Specific minute (choose one or many)</Label>
                   </div>
-                ))}
-              </div>
 
-              <div className="flex items-center space-x-2">
-                <input type="radio" id="every-minute" name="minutes-option" />
-                <Label htmlFor="every-minute">Every minute between minute</Label>
-                <Select>
-                  <SelectTrigger className="w-20">
-                    <SelectValue placeholder="00" />
-                  </SelectTrigger>
-                  <SelectContent>
+                  {/* Minute Selection Grid */}
+                  <div className="grid grid-cols-12 gap-2 text-sm">
                     {Array.from({ length: 60 }, (_, i) => (
-                      <SelectItem key={i} value={i.toString()}>{i.toString().padStart(2, '0')}</SelectItem>
+                      <div key={i} className="flex items-center space-x-1">
+                        <Checkbox id={`minute-${i}`} />
+                        <Label htmlFor={`minute-${i}`} className="text-xs">{i.toString().padStart(2, '0')}</Label>
+                      </div>
                     ))}
-                  </SelectContent>
-                </Select>
-                <span>and minute</span>
-                <Select>
-                  <SelectTrigger className="w-20">
-                    <SelectValue placeholder="59" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 60 }, (_, i) => (
-                      <SelectItem key={i} value={i.toString()}>{i.toString().padStart(2, '0')}</SelectItem>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="every-minute" name="minutes-option" />
+                    <Label htmlFor="every-minute">Every minute between minute</Label>
+                    <Select>
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="00" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 60 }, (_, i) => (
+                          <SelectItem key={i} value={i.toString()}>{i.toString().padStart(2, '0')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span>and minute</span>
+                    <Select>
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="59" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 60 }, (_, i) => (
+                          <SelectItem key={i} value={i.toString()}>{i.toString().padStart(2, '0')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'Hours' && (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="specific-hours" name="hours-option" defaultChecked />
+                    <Label htmlFor="specific-hours">Specific hour (choose one or many)</Label>
+                  </div>
+
+                  <div className="grid grid-cols-12 gap-2 text-sm">
+                    {Array.from({ length: 24 }, (_, i) => (
+                      <div key={i} className="flex items-center space-x-1">
+                        <Checkbox id={`hour-${i}`} />
+                        <Label htmlFor={`hour-${i}`} className="text-xs">{i.toString().padStart(2, '0')}</Label>
+                      </div>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="every-hour" name="hours-option" />
+                    <Label htmlFor="every-hour">Every hour between hour</Label>
+                    <Select>
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="00" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <SelectItem key={i} value={i.toString()}>{i.toString().padStart(2, '0')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span>and hour</span>
+                    <Select>
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="23" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <SelectItem key={i} value={i.toString()}>{i.toString().padStart(2, '0')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'Day' && (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="specific-days" name="days-option" defaultChecked />
+                    <Label htmlFor="specific-days">Specific day (choose one or many)</Label>
+                  </div>
+
+                  <div className="grid grid-cols-8 gap-2 text-sm">
+                    {Array.from({ length: 31 }, (_, i) => (
+                      <div key={i} className="flex items-center space-x-1">
+                        <Checkbox id={`day-${i + 1}`} />
+                        <Label htmlFor={`day-${i + 1}`} className="text-xs">{(i + 1).toString()}</Label>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="every-day" name="days-option" />
+                    <Label htmlFor="every-day">Every day between day</Label>
+                    <Select>
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="01" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 31 }, (_, i) => (
+                          <SelectItem key={i} value={(i + 1).toString()}>{(i + 1).toString().padStart(2, '0')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span>and day</span>
+                    <Select>
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="31" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 31 }, (_, i) => (
+                          <SelectItem key={i} value={(i + 1).toString()}>{(i + 1).toString().padStart(2, '0')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'Month' && (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="specific-months" name="months-option" defaultChecked />
+                    <Label htmlFor="specific-months">Specific month (choose one or many)</Label>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2 text-sm">
+                    {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
+                      <div key={i} className="flex items-center space-x-1">
+                        <Checkbox id={`month-${i + 1}`} />
+                        <Label htmlFor={`month-${i + 1}`} className="text-xs">{month}</Label>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="every-month" name="months-option" />
+                    <Label htmlFor="every-month">Every month between month</Label>
+                    <Select>
+                      <SelectTrigger className="w-24">
+                        <SelectValue placeholder="Jan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
+                          <SelectItem key={i} value={(i + 1).toString()}>{month}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span>and month</span>
+                    <Select>
+                      <SelectTrigger className="w-24">
+                        <SelectValue placeholder="Dec" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
+                          <SelectItem key={i} value={(i + 1).toString()}>{month}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
 
               <div className="bg-gray-50 p-4 rounded">
                 <Label className="text-sm font-medium">Resulting Cron Expression:</Label>
