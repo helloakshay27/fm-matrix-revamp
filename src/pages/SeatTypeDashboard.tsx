@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { Edit, Plus } from "lucide-react";
-import { AddCategoryModal } from "@/components/AddCategoryModal";
+import { AddSeatTypeDialog } from "@/components/AddSeatTypeDialog";
 
 interface SeatType {
   id: number;
@@ -14,7 +14,7 @@ interface SeatType {
 }
 
 export const SeatTypeDashboard = () => {
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [seatTypes, setSeatTypes] = useState<SeatType[]>([
     { id: 1, name: "Hostcast", active: true, createdOn: "19/03/2024" },
     { id: 2, name: "Cafe", active: true, createdOn: "05/05/2023" },
@@ -32,14 +32,15 @@ export const SeatTypeDashboard = () => {
     { id: 14, name: "Angular Wa", active: true, createdOn: "31/07/2021" }
   ]);
 
-  const handleAddSeatType = (newSeatType: { category: string; amount: string }) => {
+  const handleAddSeatType = (data: { categoryName: string; file?: File }) => {
     const seatType: SeatType = {
       id: seatTypes.length + 1,
-      name: newSeatType.category,
+      name: data.categoryName,
       active: true,
       createdOn: new Date().toLocaleDateString('en-GB')
     };
     setSeatTypes([...seatTypes, seatType]);
+    console.log('Added seat type:', data);
   };
 
   const handleToggleActive = (id: number) => {
@@ -58,7 +59,7 @@ export const SeatTypeDashboard = () => {
           </div>
           
           <Button 
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={() => setIsAddDialogOpen(true)}
             className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
@@ -99,10 +100,10 @@ export const SeatTypeDashboard = () => {
           </Table>
         </div>
 
-        {/* Add Category Modal */}
-        <AddCategoryModal 
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
+        {/* Add Seat Type Dialog */}
+        <AddSeatTypeDialog 
+          open={isAddDialogOpen}
+          onOpenChange={setIsAddDialogOpen}
           onSubmit={handleAddSeatType}
         />
       </div>
