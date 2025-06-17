@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -137,6 +136,7 @@ function App() {
               <Route path="/maintenance/amc/edit/:id" element={<EditAMCPage />} />
               <Route path="/maintenance/service" element={<ServiceDashboard />} />
               <Route path="/maintenance/service/add" element={<AddServicePage />} />
+              <Route path="/maintenance/services" element={<ServiceDashboard />} />
               
               {/* Utility Routes */}
               <Route path="/utility/energy" element={<UtilityDashboard />} />
