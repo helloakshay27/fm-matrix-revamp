@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -35,6 +36,12 @@ import { ServiceDetailsPage } from './pages/ServiceDetailsPage';
 import { EditServicePage } from './pages/EditServicePage';
 import { AttendanceDashboard } from './pages/AttendanceDashboard';
 import { AttendanceDetailsPage } from './pages/AttendanceDetailsPage';
+
+// Import Incident pages
+import { IncidentListDashboard } from './pages/IncidentListDashboard';
+import { AddIncidentPage } from './pages/AddIncidentPage';
+import { IncidentDetailsPage } from './pages/IncidentDetailsPage';
+import { EditIncidentDetailsPage } from './pages/EditIncidentDetailsPage';
 
 // Import Inventory pages
 import { InventoryDashboard } from './pages/InventoryDashboard';
