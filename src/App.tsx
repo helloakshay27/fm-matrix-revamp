@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -22,6 +23,9 @@ import { AssetDashboard } from './pages/AssetDashboard';
 import { AMCDashboard } from './pages/AMCDashboard';
 import { ServiceDashboard } from './pages/ServiceDashboard';
 import { AttendanceDashboard } from './pages/AttendanceDashboard';
+import { InventoryDashboard } from './pages/InventoryDashboard';
+import { TicketDashboard } from './pages/TicketDashboard';
+import { TaskDashboard } from './pages/TaskDashboard';
 import { ScheduleDashboard } from './pages/ScheduleDashboard';
 
 // Import Utility pages
@@ -83,6 +87,9 @@ function App() {
               <Route path="/maintenance/amc" element={<AMCDashboard />} />
               <Route path="/maintenance/services" element={<ServiceDashboard />} />
               <Route path="/maintenance/attendance" element={<AttendanceDashboard />} />
+              <Route path="/maintenance/inventory" element={<InventoryDashboard />} />
+              <Route path="/maintenance/ticket" element={<TicketDashboard />} />
+              <Route path="/maintenance/task" element={<TaskDashboard />} />
               <Route path="/maintenance/schedule" element={<ScheduleDashboard />} />
               
               {/* Utility Routes */}
