@@ -78,6 +78,9 @@ import { SpaceManagementSeatRequestsDashboard } from './pages/SpaceManagementSea
 import { SeatSetupDashboard } from './pages/setup/SeatSetupDashboard';
 import { AddSeatSetupDashboard } from './pages/setup/AddSeatSetupDashboard';
 
+// Import Shift page
+import { ShiftDashboard } from './pages/setup/ShiftDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -145,6 +148,9 @@ function App() {
               <Route path="/vas/space-management/bookings" element={<SpaceManagementBookingsDashboard />} />
               <Route path="/vas/space-management/seat-requests" element={<SpaceManagementSeatRequestsDashboard />} />
               <Route path="/vas/space-management/setup/seat-type" element={<SeatTypeDashboard />} />
+              <Route path="/vas/space-management/setup/seat-setup" element={<SeatSetupDashboard />} />
+              <Route path="/vas/space-management/setup/seat-setup/add" element={<AddSeatSetupDashboard />} />
+              <Route path="/vas/space-management/setup/shift" element={<ShiftDashboard />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
