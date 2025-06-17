@@ -1,13 +1,15 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Filter, Search, Eye, Download } from 'lucide-react';
+import { Filter, Search, Eye, Download, ChevronDown } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TaskAdvancedFilterDialog } from '@/components/TaskAdvancedFilterDialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const taskData = [
   {
@@ -128,6 +130,13 @@ export const TaskDashboard = () => {
   const [view, setView] = useState<'List' | 'Calendar'>('List');
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [calendarDate, setCalendarDate] = useState<Date | undefined>(new Date());
+  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
+  
+  // Filter dropdown states
+  const [filterType, setFilterType] = useState('');
+  const [filterScheduleType, setFilterScheduleType] = useState('');
+  const [filterGroup, setFilterGroup] = useState('');
+  const [filterSubGroup, setFilterSubGroup] = useState('');
 
   const handleSearch = () => {
     let filtered = taskData;
@@ -184,6 +193,71 @@ export const TaskDashboard = () => {
     }
   };
 
+  const handleAdvancedFilter = (filters: any) => {
+    console.log('Advanced filters applied:', filters);
+    // Apply advanced filters logic here
+    let filtered = taskData;
+    
+    if (filters.type) {
+      filtered = filtered.filter(task => task.type.toLowerCase() === filters.type.toLowerCase());
+    }
+    if (filters.assignedTo) {
+      filtered = filtered.filter(task => task.assignTo.toLowerCase().includes(filters.assignedTo.toLowerCase()));
+    }
+    
+    setFilteredTasks(filtered);
+  };
+
+  const handleExport = () => {
+    // Create CSV content
+    const headers = ['ID', 'Checklist', 'Type', 'Schedule', 'Assign to', 'Status', 'Schedule For', 'Assets/Services', 'Site', 'Location', 'Supplier', 'Grace Time', 'Duration'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredTasks.map(task => [
+        task.id,
+        `"${task.checklist}"`,
+        task.type,
+        `"${task.schedule}"`,
+        `"${task.assignTo}"`,
+        task.status,
+        task.scheduleFor,
+        `"${task.assetsServices}"`,
+        task.site,
+        `"${task.location}"`,
+        task.supplier,
+        task.graceTime,
+        task.duration
+      ].join(','))
+    ].join('\n');
+
+    // Create and download CSV file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'scheduled_tasks.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleBasicFilter = () => {
+    let filtered = taskData;
+    
+    if (filterType) {
+      filtered = filtered.filter(task => task.type.toLowerCase() === filterType.toLowerCase());
+    }
+    if (filterGroup) {
+      filtered = filtered.filter(task => task.checklist.toLowerCase().includes(filterGroup.toLowerCase()));
+    }
+    if (filterSubGroup) {
+      filtered = filtered.filter(task => task.checklist.toLowerCase().includes(filterSubGroup.toLowerCase()));
+    }
+    
+    setFilteredTasks(filtered);
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -198,7 +272,7 @@ export const TaskDashboard = () => {
           variant={view === 'List' ? 'default' : 'outline'}
           onClick={() => setView('List')}
           style={view === 'List' ? { backgroundColor: '#C72030' } : {}}
-          className={view === 'List' ? 'text-white' : 'border-[#C72030] text-[#C72030]'}
+          className={view === 'List' ? 'text-white' : 'border-[#C72030] text-[#C7030]'}
         >
           List
         </Button>
@@ -252,12 +326,97 @@ export const TaskDashboard = () => {
             ))}
           </div>
 
+          {/* Filter Row */}
+          <div className="flex items-center gap-3 mb-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+                  <Filter className="w-4 h-4 mr-2" />
+                  Filter
+                  <ChevronDown className="w-4 h-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-80 p-4 space-y-3">
+                <div className="grid grid-cols-1 gap-3">
+                  <Select value={filterType} onValueChange={setFilterType}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ppm">PPM</SelectItem>
+                      <SelectItem value="breakdown">Breakdown</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select value={filterScheduleType} onValueChange={setFilterScheduleType}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Schedule Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select value={filterGroup} onValueChange={setFilterGroup}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cleaning">Cleaning</SelectItem>
+                      <SelectItem value="washroom">Washroom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select value={filterSubGroup} onValueChange={setFilterSubGroup}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Sub Group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ladies">Ladies</SelectItem>
+                      <SelectItem value="lobby">Lobby</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    onClick={handleBasicFilter}
+                    style={{ backgroundColor: '#C72030' }}
+                    className="text-white flex-1"
+                  >
+                    Apply
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setFilterType('');
+                      setFilterScheduleType('');
+                      setFilterGroup('');
+                      setFilterSubGroup('');
+                      setFilteredTasks(taskData);
+                    }}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    Reset
+                  </Button>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button 
+              variant="outline" 
+              className="border-[#C72030] text-[#C72030]"
+              onClick={() => setShowAdvancedFilter(true)}
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Advanced Filter
+            </Button>
+          </div>
+
           {/* Filter and Search */}
           <div className="flex items-center gap-3 mb-6">
-            <Button variant="outline" className="border-[#C72030] text-[#C72030]">
-              <Filter className="w-4 h-4 mr-2" />
-              Filters
-            </Button>
             <Input
               placeholder="Search with Task ID"
               value={searchTerm}
@@ -277,7 +436,12 @@ export const TaskDashboard = () => {
             >
               GO
             </Button>
-            <Button variant="outline" className="border-[#C72030] text-[#C72030] ml-auto">
+            <Button 
+              variant="outline" 
+              className="border-[#C72030] text-[#C72030] ml-auto"
+              onClick={handleExport}
+            >
+              <Download className="w-4 h-4 mr-2" />
               Export
             </Button>
           </div>
@@ -461,6 +625,13 @@ export const TaskDashboard = () => {
           </Card>
         </div>
       )}
+      
+      {/* Advanced Filter Dialog */}
+      <TaskAdvancedFilterDialog
+        open={showAdvancedFilter}
+        onOpenChange={setShowAdvancedFilter}
+        onApply={handleAdvancedFilter}
+      />
     </div>
   );
 };
