@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -35,6 +34,9 @@ import { PatrollingDashboard } from './pages/PatrollingDashboard';
 // Import Staff pages
 import { StaffsDashboard } from './pages/StaffsDashboard';
 
+// Import Value Added Services pages
+import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -68,6 +70,9 @@ function App() {
               <Route path="/security/visitor/history" element={<VisitorsHistoryDashboard />} />
               <Route path="/security/staff" element={<StaffsDashboard />} />
               <Route path="/security/patrolling" element={<PatrollingDashboard />} />
+              
+              {/* Value Added Services Routes */}
+              <Route path="/vas/fnb" element={<FnBRestaurantDashboard />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
