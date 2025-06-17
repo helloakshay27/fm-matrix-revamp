@@ -201,6 +201,10 @@ export const AssetDashboard = () => {
     }
   };
 
+  const handleViewAsset = (assetId: string) => {
+    navigate(`/maintenance/asset/details/${assetId}`);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'In Use':
@@ -369,7 +373,11 @@ export const AssetDashboard = () => {
                   />
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleViewAsset(asset.id)}
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
                 </TableCell>

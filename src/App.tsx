@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -28,6 +27,8 @@ import { ScheduleDashboard } from './pages/ScheduleDashboard';
 import { InventoryDashboard } from './pages/InventoryDashboard';
 import { TicketDashboard } from './pages/TicketDashboard';
 import { TaskDashboard } from './pages/TaskDashboard';
+import { AssetDetailsPage } from './pages/AssetDetailsPage';
+import { SeatTypeDashboard } from './pages/SeatTypeDashboard';
 
 // Import Utility pages
 import { UtilityDashboard } from './pages/UtilityDashboard';
@@ -100,6 +101,7 @@ function App() {
               
               {/* Maintenance Routes */}
               <Route path="/maintenance/asset" element={<AssetDashboard />} />
+              <Route path="/maintenance/asset/details/:id" element={<AssetDetailsPage />} />
               <Route path="/maintenance/asset/add" element={<AddAssetPage />} />
               <Route path="/maintenance/asset/inactive" element={<InActiveAssetsDashboard />} />
               <Route path="/maintenance/amc" element={<AMCDashboard />} />
@@ -138,6 +140,7 @@ function App() {
               {/* Space Management Routes */}
               <Route path="/vas/space-management/bookings" element={<SpaceManagementBookingsDashboard />} />
               <Route path="/vas/space-management/seat-requests" element={<SpaceManagementSeatRequestsDashboard />} />
+              <Route path="/vas/space-management/setup/seat-type" element={<SeatTypeDashboard />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
