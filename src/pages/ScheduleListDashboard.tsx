@@ -3,10 +3,8 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Upload, Filter, Download, Eye, Edit, Copy } from 'lucide-react';
+import { Plus, Upload, Filter, Download, Search, Eye, Edit, Copy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { BulkUploadModal } from '@/components/BulkUploadModal';
-import { ScheduleFilterModal } from '@/components/ScheduleFilterModal';
 
 const scheduleData = [
   {
@@ -35,66 +33,30 @@ const scheduleData = [
     active: true,
     createdOn: '14/08/2024, 04:17 PM'
   },
+  // Add more sample data as needed
 ];
 
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredSchedules, setFilteredSchedules] = useState(scheduleData);
-  const [showBulkUpload, setShowBulkUpload] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
-  const [schedules, setSchedules] = useState(scheduleData);
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
     if (value) {
-      const filtered = schedules.filter(schedule =>
+      const filtered = scheduleData.filter(schedule =>
         schedule.activityName.toLowerCase().includes(value.toLowerCase()) ||
         schedule.id.toLowerCase().includes(value.toLowerCase()) ||
         schedule.type.toLowerCase().includes(value.toLowerCase())
       );
       setFilteredSchedules(filtered);
     } else {
-      setFilteredSchedules(schedules);
+      setFilteredSchedules(scheduleData);
     }
   };
 
   const handleAddSchedule = () => {
     navigate('/maintenance/schedule/add');
-  };
-
-  const handleExport = () => {
-    navigate('/maintenance/schedule/export');
-  };
-
-  const handleFilterApply = (filters: any) => {
-    let filtered = schedules;
-    
-    if (filters.activityName) {
-      filtered = filtered.filter(schedule =>
-        schedule.activityName.toLowerCase().includes(filters.activityName.toLowerCase())
-      );
-    }
-    
-    if (filters.type) {
-      filtered = filtered.filter(schedule => schedule.type === filters.type);
-    }
-    
-    if (filters.category) {
-      filtered = filtered.filter(schedule => schedule.category === filters.category);
-    }
-    
-    setFilteredSchedules(filtered);
-  };
-
-  const toggleActiveStatus = (scheduleId: string) => {
-    const updatedSchedules = schedules.map(schedule =>
-      schedule.id === scheduleId
-        ? { ...schedule, active: !schedule.active }
-        : schedule
-    );
-    setSchedules(updatedSchedules);
-    setFilteredSchedules(updatedSchedules);
   };
 
   return (
@@ -115,27 +77,15 @@ export const ScheduleListDashboard = () => {
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
-        <Button 
-          variant="outline" 
-          className="border-[#C72030] text-[#C72030]"
-          onClick={() => setShowBulkUpload(true)}
-        >
+        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
           <Upload className="w-4 h-4 mr-2" />
           Import
         </Button>
-        <Button 
-          variant="outline" 
-          className="border-[#C72030] text-[#C72030]"
-          onClick={() => setShowFilters(true)}
-        >
+        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
           <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
-        <Button 
-          variant="outline" 
-          className="border-[#C72030] text-[#C72030]"
-          onClick={handleExport}
-        >
+        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
           <Download className="w-4 h-4 mr-2" />
           Export
         </Button>
@@ -214,18 +164,12 @@ export const ScheduleListDashboard = () => {
                   </span>
                 </TableCell>
                 <TableCell>
-                  <button
-                    onClick={() => toggleActiveStatus(schedule.id)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      schedule.active ? 'bg-[#C72030]' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        schedule.active ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
+                  <div className="flex items-center">
+                    <div className={`w-4 h-4 rounded-full ${schedule.active ? 'bg-green-500' : 'bg-gray-300'} mr-2`}></div>
+                    <span className={schedule.active ? 'text-green-600' : 'text-gray-500'}>
+                      {schedule.active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
                 </TableCell>
                 <TableCell>{schedule.createdOn}</TableCell>
               </TableRow>
@@ -233,14 +177,6 @@ export const ScheduleListDashboard = () => {
           </TableBody>
         </Table>
       </div>
-
-      {/* Modals */}
-      <BulkUploadModal isOpen={showBulkUpload} onClose={() => setShowBulkUpload(false)} />
-      <ScheduleFilterModal 
-        isOpen={showFilters} 
-        onClose={() => setShowFilters(false)}
-        onApply={handleFilterApply}
-      />
     </div>
   );
 };
