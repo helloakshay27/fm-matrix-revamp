@@ -29,7 +29,7 @@ function App() {
       <LayoutProvider>
         <Router>
           <Routes>
-            <Route path="/" element={<Layout />}>
+            <Route path="/" element={<Layout><div /></Layout>}>
               <Route index element={<Index />} />
               
               {/* Fitout Routes */}
@@ -47,7 +47,7 @@ function App() {
             </Route>
             
             {/* Setup Routes */}
-            <Route path="/setup" element={<SetupLayout />}>
+            <Route path="/setup" element={<SetupLayout><div /></SetupLayout>}>
               <Route path="/setup/location/account" element={<div>Location Account</div>} />
               <Route path="/setup/location/building" element={<div>Location Building</div>} />
               <Route path="/setup/location/wing" element={<div>Location Wing</div>} />

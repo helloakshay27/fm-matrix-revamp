@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { DynamicHeader } from './DynamicHeader';
 import { Header } from './Header';
@@ -11,13 +12,12 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-[#fafafa]">
-        <Header />
+      <Header />
       <Sidebar />
       <DynamicHeader />
-    
       
       <main className="ml-64 pt-28">
-        {children}
+        <Outlet />
       </main>
     </div>
   );
