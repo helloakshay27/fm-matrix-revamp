@@ -30,6 +30,7 @@ import UtilitySTPDashboard from './pages/UtilitySTPDashboard';
 // Import Visitors pages
 import { VisitorsDashboard } from './pages/VisitorsDashboard';
 import { VisitorsHistoryDashboard } from './pages/VisitorsHistoryDashboard';
+import { PatrollingDashboard } from './pages/PatrollingDashboard';
 
 // Import Staff pages
 import { StaffsDashboard } from './pages/StaffsDashboard';
@@ -66,6 +67,7 @@ function App() {
               <Route path="/security/visitor" element={<VisitorsDashboard />} />
               <Route path="/security/visitor/history" element={<VisitorsHistoryDashboard />} />
               <Route path="/security/staff" element={<StaffsDashboard />} />
+              <Route path="/security/patrolling" element={<PatrollingDashboard />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
