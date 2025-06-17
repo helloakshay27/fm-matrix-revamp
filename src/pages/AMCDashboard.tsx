@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Switch } from '@/components/ui/switch';
 import { Plus, Search, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -29,7 +30,39 @@ const amcData = [
     status: true,
     createdOn: '04/04/2025, 03:24PM'
   },
-  // Add more sample data as needed
+  {
+    id: '49130',
+    assetName: '',
+    type: 'Asset',
+    vendor: 'Mohan Khopade',
+    startDate: '04/02/2025',
+    endDate: '04/02/2025',
+    firstService: '04/02/2025',
+    status: true,
+    createdOn: '04/02/2025, 04:29PM'
+  },
+  {
+    id: '49120',
+    assetName: '',
+    type: 'Asset',
+    vendor: 'MODWIN NETWORKS PVT.LTD',
+    startDate: '04/02/2025',
+    endDate: '04/02/2025',
+    firstService: '04/02/2025',
+    status: true,
+    createdOn: '04/02/2025, 12:43AM'
+  },
+  {
+    id: '49119',
+    assetName: '',
+    type: 'Asset',
+    vendor: 'Mohammad Sageer',
+    startDate: '04/02/2025',
+    endDate: '04/02/2025',
+    firstService: '04/02/2025',
+    status: true,
+    createdOn: '04/02/2025, 12:31AM'
+  }
 ];
 
 export const AMCDashboard = () => {
@@ -56,6 +89,16 @@ export const AMCDashboard = () => {
 
   const handleViewDetails = (id: string) => {
     navigate(`/maintenance/amc/details/${id}`);
+  };
+
+  const handleStatusToggle = (id: string, checked: boolean) => {
+    console.log(`Toggling status for AMC ${id} to ${checked}`);
+    // Handle status update logic here
+  };
+
+  const handleReset = () => {
+    setSearchTerm('');
+    setFilteredAMC(amcData);
   };
 
   return (
@@ -86,7 +129,11 @@ export const AMCDashboard = () => {
               className="pl-10 w-64"
             />
           </div>
-          <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+          <Button 
+            variant="outline" 
+            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+            onClick={handleReset}
+          >
             Reset
           </Button>
         </div>
@@ -129,16 +176,21 @@ export const AMCDashboard = () => {
                 <TableCell>{amc.endDate}</TableCell>
                 <TableCell>{amc.firstService}</TableCell>
                 <TableCell>
-                  <div className="flex items-center">
-                    <div className={`w-4 h-4 rounded-full ${amc.status ? 'bg-green-500' : 'bg-gray-300'} mr-2`}></div>
-                    <span className={amc.status ? 'text-green-600' : 'text-gray-500'}>
-                      {amc.status ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
+                  <Switch
+                    checked={amc.status}
+                    onCheckedChange={(checked) => handleStatusToggle(amc.id, checked)}
+                  />
                 </TableCell>
                 <TableCell>{amc.createdOn}</TableCell>
               </TableRow>
             ))}
+            {filteredAMC.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={10} className="text-center py-8 text-gray-500">
+                  No AMC records found
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
