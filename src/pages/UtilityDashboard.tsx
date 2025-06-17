@@ -215,9 +215,9 @@ export const UtilityDashboard = () => {
 
       {/* Bulk Upload Dialog */}
       <BulkUploadDialog 
-        isOpen={isBulkUploadOpen} 
-        onClose={() => setIsBulkUploadOpen(false)}
-        type={uploadType}
+        open={isBulkUploadOpen} 
+        onOpenChange={setIsBulkUploadOpen}
+        title={uploadType === 'import' ? 'Import Assets' : 'Update Assets'}
       />
     </div>
   );

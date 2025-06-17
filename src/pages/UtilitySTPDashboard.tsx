@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Plus, Upload, RefreshCw, Download, QrCode, Filter, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -296,14 +297,14 @@ const UtilitySTPDashboard = () => {
 
       {/* Dialogs */}
       <BulkUploadDialog 
-        isOpen={isImportOpen} 
-        onClose={() => setIsImportOpen(false)} 
-        type="import"
+        open={isImportOpen} 
+        onOpenChange={setIsImportOpen}
+        title="Import STP Assets"
       />
       <BulkUploadDialog 
-        isOpen={isUpdateOpen} 
-        onClose={() => setIsUpdateOpen(false)} 
-        type="update"
+        open={isUpdateOpen} 
+        onOpenChange={setIsUpdateOpen}
+        title="Update STP Assets"
       />
       <UtilitySTPFilterDialog 
         isOpen={isFilterOpen} 

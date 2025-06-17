@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -422,9 +423,9 @@ export const AssetDashboard = () => {
 
       {/* Modals */}
       <BulkUploadDialog 
-        isOpen={isBulkUploadOpen}
-        onClose={() => setIsBulkUploadOpen(false)}
-        type={uploadType}
+        open={isBulkUploadOpen}
+        onOpenChange={setIsBulkUploadOpen}
+        title={uploadType === 'import' ? 'Import Assets' : 'Update Assets'}
       />
 
       <AssetFilterDialog 

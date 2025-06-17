@@ -221,9 +221,9 @@ export const UtilityWaterDashboard = () => {
       />
       
       <BulkUploadDialog 
-        isOpen={isBulkUploadOpen} 
-        onClose={() => setIsBulkUploadOpen(false)}
-        type={uploadType}
+        open={isBulkUploadOpen} 
+        onOpenChange={setIsBulkUploadOpen}
+        title={uploadType === 'import' ? 'Import Water Assets' : 'Update Water Assets'}
       />
       
       <InActiveAssetsFilterDialog 
