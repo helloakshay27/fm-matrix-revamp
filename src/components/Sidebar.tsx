@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -33,7 +32,7 @@ const modulesByPackage = {
     }
   ],
   'Maintenance': [
-    { name: 'Assets', icon: Building, href: '/maintenance/assets' },
+    { name: 'Assets', icon: Building, href: '/maintenance/asset' },
     { name: 'AMC', icon: FileText, href: '/maintenance/amc' },
     { name: 'Services', icon: Wrench, href: '/maintenance/services' },
     { name: 'Attendance', icon: Clock, href: '/maintenance/attendance' },

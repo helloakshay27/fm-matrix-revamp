@@ -1,5 +1,5 @@
-
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -43,8 +43,13 @@ const assetData = [
 ];
 
 export const AssetDashboard = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredAssets, setFilteredAssets] = useState(assetData);
+
+  const handleAddAsset = () => {
+    navigate('/maintenance/asset/add');
+  };
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -109,7 +114,11 @@ export const AssetDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex items-center gap-3 mb-6">
-        <Button style={{ backgroundColor: '#C72030' }} className="text-white">
+        <Button 
+          onClick={handleAddAsset}
+          style={{ backgroundColor: '#C72030' }} 
+          className="text-white"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
