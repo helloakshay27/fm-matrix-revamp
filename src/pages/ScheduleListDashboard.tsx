@@ -3,8 +3,11 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Upload, Filter, Download, Search, Eye, Edit, Copy } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Plus, Upload, Filter, Download, Eye, Edit, Copy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { BulkUploadDialog } from '@/components/BulkUploadDialog';
+import { ScheduleFilterDialog } from '@/components/ScheduleFilterDialog';
 
 const scheduleData = [
   {
@@ -33,13 +36,15 @@ const scheduleData = [
     active: true,
     createdOn: '14/08/2024, 04:17 PM'
   },
-  // Add more sample data as needed
 ];
 
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredSchedules, setFilteredSchedules] = useState(scheduleData);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showFilterDialog, setShowFilterDialog] = useState(false);
+  const [schedules, setSchedules] = useState(scheduleData);
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -57,6 +62,28 @@ export const ScheduleListDashboard = () => {
 
   const handleAddSchedule = () => {
     navigate('/maintenance/schedule/add');
+  };
+
+  const handleExport = () => {
+    navigate('/maintenance/schedule/export');
+  };
+
+  const handleToggleActive = (scheduleId: string) => {
+    setSchedules(prev => 
+      prev.map(schedule => 
+        schedule.id === scheduleId 
+          ? { ...schedule, active: !schedule.active }
+          : schedule
+      )
+    );
+    
+    setFilteredSchedules(prev => 
+      prev.map(schedule => 
+        schedule.id === scheduleId 
+          ? { ...schedule, active: !schedule.active }
+          : schedule
+      )
+    );
   };
 
   return (
@@ -77,15 +104,27 @@ export const ScheduleListDashboard = () => {
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+        <Button 
+          onClick={() => setShowImportModal(true)}
+          variant="outline" 
+          className="border-[#C72030] text-[#C72030]"
+        >
           <Upload className="w-4 h-4 mr-2" />
           Import
         </Button>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+        <Button 
+          onClick={() => setShowFilterDialog(true)}
+          variant="outline" 
+          className="border-[#C72030] text-[#C72030]"
+        >
           <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+        <Button 
+          onClick={handleExport}
+          variant="outline" 
+          className="border-[#C72030] text-[#C72030]"
+        >
           <Download className="w-4 h-4 mr-2" />
           Export
         </Button>
@@ -164,12 +203,11 @@ export const ScheduleListDashboard = () => {
                   </span>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center">
-                    <div className={`w-4 h-4 rounded-full ${schedule.active ? 'bg-green-500' : 'bg-gray-300'} mr-2`}></div>
-                    <span className={schedule.active ? 'text-green-600' : 'text-gray-500'}>
-                      {schedule.active ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
+                  <Switch 
+                    checked={schedule.active}
+                    onCheckedChange={() => handleToggleActive(schedule.id)}
+                    className="data-[state=checked]:bg-[#C72030]"
+                  />
                 </TableCell>
                 <TableCell>{schedule.createdOn}</TableCell>
               </TableRow>
@@ -177,6 +215,18 @@ export const ScheduleListDashboard = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Modals */}
+      <BulkUploadDialog
+        open={showImportModal}
+        onOpenChange={setShowImportModal}
+        title="Bulk Upload"
+      />
+
+      <ScheduleFilterDialog
+        open={showFilterDialog}
+        onOpenChange={setShowFilterDialog}
+      />
     </div>
   );
 };

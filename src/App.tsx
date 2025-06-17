@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -58,6 +59,7 @@ import AddSTPAssetDashboard from './pages/AddSTPAssetDashboard';
 // Import Schedule pages
 import { ScheduleListDashboard } from './pages/ScheduleListDashboard';
 import { AddSchedulePage } from './pages/AddSchedulePage';
+import { ScheduleExportPage } from './pages/ScheduleExportPage';
 
 // Import Visitors pages
 import { VisitorsDashboard } from './pages/VisitorsDashboard';
@@ -172,6 +174,7 @@ function App() {
               {/* Schedule Routes */}
               <Route path="/maintenance/schedule" element={<ScheduleListDashboard />} />
               <Route path="/maintenance/schedule/add" element={<AddSchedulePage />} />
+              <Route path="/maintenance/schedule/export" element={<ScheduleExportPage />} />
               
               {/* Inventory Routes */}
               <Route path="/maintenance/inventory" element={<InventoryDashboard />} />
