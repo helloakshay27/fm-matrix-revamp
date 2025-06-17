@@ -18,7 +18,17 @@ const modulesByPackage = {
     { name: 'HOTO', icon: HandHeart, href: '/transitioning/hoto' },
     { name: 'Snagging', icon: CheckSquare, href: '/transitioning/snagging' },
     { name: 'Design Insight', icon: BarChart3, href: '/transitioning/design-insight' },
-    { name: 'Fitout', icon: Wrench, href: '/transitioning/fitout' }
+    { 
+      name: 'Fitout', 
+      icon: Wrench, 
+      href: '/transitioning/fitout',
+      subItems: [
+        { name: 'Fitout Setup', href: '/transitioning/fitout/setup', color: 'text-[#1a1a1a]' },
+        { name: 'Fitout Request', href: '/transitioning/fitout/request', color: 'text-[#1a1a1a]' },
+        { name: 'Fitout Checklist', href: '/transitioning/fitout/checklist', color: 'text-[#1a1a1a]' },
+        { name: 'Fitout Violation', href: '/transitioning/fitout/violation', color: 'text-[#1a1a1a]' }
+      ]
+    }
   ],
   'Maintenance': [
     { name: 'Assets', icon: Building, href: '/maintenance/assets' },
