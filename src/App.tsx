@@ -41,6 +41,10 @@ import { InventoryDashboard } from './pages/InventoryDashboard';
 import { InventoryDetailsPage } from './pages/InventoryDetailsPage';
 import { InventoryFeedsPage } from './pages/InventoryFeedsPage';
 
+// Import Task pages
+import { TaskDashboard } from './pages/TaskDashboard';
+import { TaskDetailsPage } from './pages/TaskDetailsPage';
+
 // Import Utility pages
 import { UtilityDashboard } from './pages/UtilityDashboard';
 import { AddAssetDashboard } from './pages/AddAssetDashboard';
@@ -50,6 +54,9 @@ import { UtilityWaterDashboard } from './pages/UtilityWaterDashboard';
 import { AddWaterAssetDashboard } from './pages/AddWaterAssetDashboard';
 import UtilitySTPDashboard from './pages/UtilitySTPDashboard';
 import AddSTPAssetDashboard from './pages/AddSTPAssetDashboard';
+
+// Import Schedule pages
+import { ScheduleListDashboard } from './pages/ScheduleListDashboard';
 
 // Import Visitors pages
 import { VisitorsDashboard } from './pages/VisitorsDashboard';
@@ -156,6 +163,13 @@ function App() {
               <Route path="/maintenance/services" element={<ServiceDashboard />} />
               <Route path="/maintenance/attendance" element={<AttendanceDashboard />} />
               <Route path="/maintenance/attendance/details/:id" element={<AttendanceDetailsPage />} />
+              
+              {/* Task Routes */}
+              <Route path="/maintenance/task" element={<TaskDashboard />} />
+              <Route path="/maintenance/task/details/:id" element={<TaskDetailsPage />} />
+              
+              {/* Schedule Routes */}
+              <Route path="/maintenance/schedule" element={<ScheduleListDashboard />} />
               
               {/* Inventory Routes */}
               <Route path="/maintenance/inventory" element={<InventoryDashboard />} />
