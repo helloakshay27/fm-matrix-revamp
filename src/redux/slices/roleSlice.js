@@ -33,9 +33,9 @@ const createApiSlice = (name, fetchThunk) => createSlice({
     },
 });
 
-export const createRole = createAsyncThunk('createRole', async ({ token, paylode }) => {
+export const createRole = createAsyncThunk('createRole', async ({ token, payload }) => {
     try {
-        const response = await axios.post(`https://api-tasks.lockated.com/lock_roles.json`, paylode, {
+        const response = await axios.post(`https://api-tasks.lockated.com/lock_roles.json`, payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
