@@ -39,6 +39,11 @@ import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
 import ParkingDashboard from './pages/ParkingDashboard';
 import ParkingBookingsDashboard from './pages/ParkingBookingsDashboard';
 
+// Import Design Insights pages
+import { DesignInsightsDashboard } from './pages/DesignInsightsDashboard';
+import { AddDesignInsightDashboard } from './pages/AddDesignInsightDashboard';
+import { DesignInsightDetailsDashboard } from './pages/DesignInsightDetailsDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -49,6 +54,11 @@ function App() {
           <Routes>
             <Route path="/" element={<Layout><div /></Layout>}>
               <Route index element={<Index />} />
+              
+              {/* Design Insights Routes */}
+              <Route path="/transitioning/design-insight" element={<DesignInsightsDashboard />} />
+              <Route path="/transitioning/design-insight/add" element={<AddDesignInsightDashboard />} />
+              <Route path="/transitioning/design-insight/details/:id" element={<DesignInsightDetailsDashboard />} />
               
               {/* Fitout Routes */}
               <Route path="/transitioning/fitout/setup" element={<FitoutSetupDashboard />} />
