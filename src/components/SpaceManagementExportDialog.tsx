@@ -3,35 +3,33 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X } from "lucide-react";
 
-interface SpaceManagementRosterExportDialogProps {
+interface SpaceManagementExportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export const SpaceManagementRosterExportDialog: React.FC<SpaceManagementRosterExportDialogProps> = ({
+export const SpaceManagementExportDialog: React.FC<SpaceManagementExportDialogProps> = ({
   open,
   onOpenChange,
 }) => {
   const [fromDate, setFromDate] = useState('01/06/2025');
   const [toDate, setToDate] = useState('30/06/2025');
-  const [department, setDepartment] = useState('');
 
   const handleSubmit = () => {
-    console.log('Roster Export submitted:', { fromDate, toDate, department });
+    console.log('Report Export submitted:', { fromDate, toDate });
     
-    // Create and download roster export file
+    // Create and download export file
     const exportContent = "data:text/csv;charset=utf-8," + 
-      "Employee ID,Employee Name,Schedule Date,Department,Building,Floor,Seat\n" +
-      "73974,HO Occupant 2,29 December 2023,HR,Jyoti Tower,2nd Floor,HR 1\n" +
-      "71905,Prashant P,29 December 2023,Tech,Jyoti Tower,2nd Floor,S7";
+      "ID,Employee ID,Employee Name,Employee Email,Schedule Date,Day,Category,Building,Floor,Designation,Department,Slots & Seat No.,Status,Created On\n" +
+      "142179,73974,HO Occupant 2,hooccupant2@locatard.com,29 December 2023,Friday,Angular War,Jyoti Tower,2nd Floor,,HR,10:00 AM to 08:00 PM - HR 1,Cancelled,15/02/2023, 5:44 PM\n" +
+      "142150,71905,Prashant P,889853791@gmail.com,29 December 2023,Friday,Angular War,Jyoti Tower,2nd Floor,,,10:00 AM to 08:00 PM - S7,Cancelled,15/02/2023, 5:43 PM";
     
     const encodedUri = encodeURI(exportContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `roster_export_${fromDate.replace(/\//g, '-')}_to_${toDate.replace(/\//g, '-')}.csv`);
+    link.setAttribute("download", `bookings_report_${fromDate.replace(/\//g, '-')}_to_${toDate.replace(/\//g, '-')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -41,9 +39,9 @@ export const SpaceManagementRosterExportDialog: React.FC<SpaceManagementRosterEx
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md [&>button]:hidden">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold">Roster Export</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">Report</DialogTitle>
           <Button
             variant="ghost"
             size="sm"
@@ -71,20 +69,6 @@ export const SpaceManagementRosterExportDialog: React.FC<SpaceManagementRosterEx
               onChange={(e) => setToDate(e.target.value)}
               className="text-sm"
             />
-          </div>
-
-          <div>
-            <Select value={department} onValueChange={setDepartment}>
-              <SelectTrigger className="text-sm">
-                <SelectValue placeholder="Select Department..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="tech">Technology</SelectItem>
-                <SelectItem value="hr">HR</SelectItem>
-                <SelectItem value="finance">Finance</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="pt-4">

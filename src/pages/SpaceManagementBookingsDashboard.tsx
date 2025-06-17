@@ -6,11 +6,13 @@ import { Filter, Download, Upload, FileText, Eye } from "lucide-react";
 import { BookingsFilterDialog } from "@/components/BookingsFilterDialog";
 import { SpaceManagementImportDialog } from "@/components/SpaceManagementImportDialog";
 import { SpaceManagementRosterExportDialog } from "@/components/SpaceManagementRosterExportDialog";
+import { SpaceManagementExportDialog } from "@/components/SpaceManagementExportDialog";
 
 export const SpaceManagementBookingsDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isRosterExportOpen, setIsRosterExportOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
 
   const handleFilterApply = (filters: any) => {
     console.log('Applied filters:', filters);
@@ -104,6 +106,7 @@ export const SpaceManagementBookingsDashboard = () => {
             Import
           </Button>
           <Button 
+            onClick={() => setIsExportOpen(true)}
             variant="outline" 
             className="border-gray-300 text-gray-700 px-4 py-2 rounded flex items-center gap-2 bg-white hover:bg-gray-50"
           >
@@ -208,6 +211,11 @@ export const SpaceManagementBookingsDashboard = () => {
         <SpaceManagementRosterExportDialog 
           open={isRosterExportOpen}
           onOpenChange={setIsRosterExportOpen}
+        />
+        
+        <SpaceManagementExportDialog 
+          open={isExportOpen}
+          onOpenChange={setIsExportOpen}
         />
       </div>
     </div>

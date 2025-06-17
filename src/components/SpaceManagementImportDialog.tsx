@@ -50,7 +50,7 @@ export const SpaceManagementImportDialog: React.FC<SpaceManagementImportDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md [&>button]:hidden">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold">Upload</DialogTitle>
           <Button
