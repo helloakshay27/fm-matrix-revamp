@@ -172,7 +172,7 @@ export const StaffsDashboard = () => {
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50">
+            <TableRow className="bg-[#f6f4ee]">
               <TableHead className="w-12">
                 <input type="checkbox" className="rounded" />
               </TableHead>
@@ -233,7 +233,7 @@ export const StaffsDashboard = () => {
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50">
+            <TableRow className="bg-[#f6f4ee]">
               <TableHead>Name</TableHead>
               <TableHead>Mobile Number</TableHead>
               <TableHead>Work Type</TableHead>
@@ -317,37 +317,37 @@ export const StaffsDashboard = () => {
           <span>Society Staffs</span>
         </div>
         
-        <div className="bg-white rounded-lg border border-gray-200">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           {/* Header */}
           <div className="p-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold mb-4">SOCIETY STAFFS</h2>
+            <h2 className="text-xl font-semibold mb-4 text-[#1a1a1a] uppercase">SOCIETY STAFFS</h2>
             
             {/* Action Buttons */}
             <div className="flex gap-3 mb-4">
               <Button 
                 onClick={() => setIsAddModalOpen(true)}
-                className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-md"
+                className="bg-[#C72030] hover:bg-[#A61B2A] text-white px-4 py-2 rounded-md"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add
               </Button>
               <Button 
                 onClick={() => setIsFilterModalOpen(true)}
-                className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-md"
+                className="bg-[#C72030] hover:bg-[#A61B2A] text-white px-4 py-2 rounded-md"
               >
                 <Filter className="w-4 h-4 mr-2" />
                 Filters
               </Button>
               <Button 
                 onClick={handlePrintQR}
-                className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-md"
+                className="bg-[#C72030] hover:bg-[#A61B2A] text-white px-4 py-2 rounded-md"
               >
                 <QrCode className="w-4 h-4 mr-2" />
                 Print QR
               </Button>
               <Button 
                 onClick={handlePrintAllQR}
-                className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-md"
+                className="bg-[#C72030] hover:bg-[#A61B2A] text-white px-4 py-2 rounded-md"
               >
                 <FileText className="w-4 h-4 mr-2" />
                 Print ALL QR
@@ -360,7 +360,7 @@ export const StaffsDashboard = () => {
                 onClick={() => setActiveTab('history')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === 'history' 
-                    ? 'bg-purple-700 text-white shadow-sm' 
+                    ? 'bg-[#C72030] text-white shadow-sm' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -370,7 +370,7 @@ export const StaffsDashboard = () => {
                 onClick={() => setActiveTab('all')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === 'all' 
-                    ? 'bg-purple-700 text-white shadow-sm' 
+                    ? 'bg-[#C72030] text-white shadow-sm' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -380,7 +380,7 @@ export const StaffsDashboard = () => {
                 onClick={() => setActiveTab('in')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === 'in' 
-                    ? 'bg-purple-700 text-white shadow-sm' 
+                    ? 'bg-[#C72030] text-white shadow-sm' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -390,7 +390,7 @@ export const StaffsDashboard = () => {
                 onClick={() => setActiveTab('out')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === 'out' 
-                    ? 'bg-purple-700 text-white shadow-sm' 
+                    ? 'bg-[#C72030] text-white shadow-sm' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -407,7 +407,7 @@ export const StaffsDashboard = () => {
                     placeholder="Search using staff's name or mobile number"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-white"
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
                         handleSearch();
@@ -417,7 +417,7 @@ export const StaffsDashboard = () => {
                 </div>
                 <Button 
                   onClick={handleSearch}
-                  className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-md"
+                  className="bg-[#C72030] hover:bg-[#A61B2A] text-white px-4 py-2 rounded-md"
                 >
                   Go!
                 </Button>
@@ -433,7 +433,7 @@ export const StaffsDashboard = () => {
                     placeholder="Search by name, mobile, email or ID"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-white"
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
                         handleSearch();
@@ -443,7 +443,7 @@ export const StaffsDashboard = () => {
                 </div>
                 <Button 
                   onClick={handleSearch}
-                  className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-md"
+                  className="bg-[#C72030] hover:bg-[#A61B2A] text-white px-4 py-2 rounded-md"
                 >
                   Go!
                 </Button>

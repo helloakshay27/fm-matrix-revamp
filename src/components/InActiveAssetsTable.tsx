@@ -9,7 +9,7 @@ export const InActiveAssetsTable = () => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-[#D5DbDB]">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full">
@@ -19,7 +19,7 @@ export const InActiveAssetsTable = () => {
                 <input
                   type="checkbox"
                   onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="rounded border-[#D5DbDB] text-[#C72030] focus:ring-[#C72030]"
+                  className="rounded border-gray-300 text-[#C72030] focus:ring-[#C72030]"
                 />
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
@@ -69,9 +69,9 @@ export const InActiveAssetsTable = () => {
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-[#D5DbDB]">
+          <tbody className="bg-white divide-y divide-gray-200">
             <tr>
-              <td colSpan={16} className="px-6 py-12 text-center text-[#1a1a1a] opacity-50">
+              <td colSpan={16} className="px-6 py-12 text-center text-gray-500">
                 No in-active assets found
               </td>
             </tr>

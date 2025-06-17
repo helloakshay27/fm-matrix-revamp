@@ -36,7 +36,7 @@ export const PatrollingDashboard = () => {
           <Button 
             onClick={() => setIsBulkUploadOpen(true)}
             variant="outline" 
-            className="border-gray-300 text-gray-700 px-4 py-2 rounded flex items-center gap-2"
+            className="border-gray-300 text-gray-700 px-4 py-2 rounded flex items-center gap-2 bg-white hover:bg-gray-50"
           >
             <Upload className="w-4 h-4" />
             Import
@@ -44,7 +44,7 @@ export const PatrollingDashboard = () => {
           <Button 
             onClick={() => setIsExportOpen(true)}
             variant="outline" 
-            className="border-gray-300 text-gray-700 px-4 py-2 rounded flex items-center gap-2"
+            className="border-gray-300 text-gray-700 px-4 py-2 rounded flex items-center gap-2 bg-white hover:bg-gray-50"
           >
             <Download className="w-4 h-4" />
             Export
@@ -52,7 +52,7 @@ export const PatrollingDashboard = () => {
           <Button 
             onClick={() => setIsFilterOpen(true)}
             variant="outline" 
-            className="border-gray-300 text-gray-700 px-4 py-2 rounded flex items-center gap-2"
+            className="border-gray-300 text-gray-700 px-4 py-2 rounded flex items-center gap-2 bg-white hover:bg-gray-50"
           >
             <Filter className="w-4 h-4" />
             Filters
@@ -60,19 +60,19 @@ export const PatrollingDashboard = () => {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-[#f6f4ee]">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-r">Actions</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-r">Patrol ID</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-r">Date</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-r">Time</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-r">Guard Name</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-r">Location</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-r">Status</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Notes</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">Actions</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">Patrol ID</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">Date</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">Time</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">Guard Name</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">Location</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">Status</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a]">Notes</th>
                 </tr>
               </thead>
               <tbody>

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -213,16 +214,20 @@ export const AssetDashboard = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-[#f6f4ee] min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <p className="text-[#1a1a1a] opacity-70 mb-2">Assets &gt; Asset List</p>
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">ASSET LIST</h1>
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+          <span>Assets</span>
+          <span>&gt;</span>
+          <span>Asset List</span>
+        </div>
+        <h1 className="text-2xl font-bold text-[#1a1a1a] uppercase">ASSET LIST</h1>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-3 gap-6 mb-6">
-        <div className="bg-orange-500 text-white p-4 rounded-lg">
+        <div className="bg-orange-500 text-white p-4 rounded-lg shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
               <span className="text-xl font-bold">315</span>
@@ -230,7 +235,7 @@ export const AssetDashboard = () => {
             <span className="font-medium">Total Asset</span>
           </div>
         </div>
-        <div className="bg-green-500 text-white p-4 rounded-lg">
+        <div className="bg-green-500 text-white p-4 rounded-lg shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
               <span className="text-xl font-bold">298</span>
@@ -238,7 +243,7 @@ export const AssetDashboard = () => {
             <span className="font-medium">In Use</span>
           </div>
         </div>
-        <div className="bg-red-500 text-white p-4 rounded-lg">
+        <div className="bg-red-500 text-white p-4 rounded-lg shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
               <span className="text-xl font-bold">27</span>
@@ -252,8 +257,7 @@ export const AssetDashboard = () => {
       <div className="flex items-center gap-3 mb-6">
         <Button 
           onClick={handleAddAsset}
-          style={{ backgroundColor: '#C72030' }} 
-          className="text-white"
+          className="bg-[#C72030] hover:bg-[#A61B2A] text-white"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add
@@ -261,7 +265,7 @@ export const AssetDashboard = () => {
         <Button 
           onClick={handleImport}
           variant="outline" 
-          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <Upload className="w-4 h-4 mr-2" />
           Import
@@ -269,7 +273,7 @@ export const AssetDashboard = () => {
         <Button 
           onClick={handleUpdate}
           variant="outline" 
-          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <Download className="w-4 h-4 mr-2" />
           Update
@@ -277,7 +281,7 @@ export const AssetDashboard = () => {
         <Button 
           onClick={handleExportAll}
           variant="outline" 
-          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <Download className="w-4 h-4 mr-2" />
           Export All
@@ -285,7 +289,7 @@ export const AssetDashboard = () => {
         <Button 
           onClick={handlePrintQR}
           variant="outline" 
-          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <FileText className="w-4 h-4 mr-2" />
           Print QR
@@ -293,14 +297,14 @@ export const AssetDashboard = () => {
         <Button 
           onClick={handleInActiveAssets}
           variant="outline" 
-          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           In Active Assets
         </Button>
         <Button 
           onClick={handlePrintAllQR}
           variant="outline" 
-          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <FileText className="w-4 h-4 mr-2" />
           Print All QR
@@ -308,7 +312,7 @@ export const AssetDashboard = () => {
         <Button 
           onClick={() => setIsFilterOpen(true)}
           variant="outline" 
-          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <Filter className="w-4 h-4 mr-2" />
           Filters
@@ -320,17 +324,17 @@ export const AssetDashboard = () => {
               placeholder="Search assets..."
               value={searchTerm}
               onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10 w-64"
+              className="pl-10 w-64 bg-white"
             />
           </div>
         </div>
       </div>
 
       {/* Asset Table */}
-      <div className="bg-white rounded-lg border">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-[#f6f4ee]">
               <TableHead className="w-12">
                 <input 
                   type="checkbox" 
@@ -401,13 +405,12 @@ export const AssetDashboard = () => {
             key={page}
             variant={page === 1 ? "default" : "outline"}
             size="sm"
-            style={page === 1 ? { backgroundColor: '#C72030' } : {}}
-            className={page === 1 ? "text-white" : ""}
+            className={page === 1 ? "bg-[#C72030] hover:bg-[#A61B2A] text-white" : "bg-white hover:bg-gray-50"}
           >
             {page}
           </Button>
         ))}
-        <Button variant="outline" size="sm">Last »</Button>
+        <Button variant="outline" size="sm" className="bg-white hover:bg-gray-50">Last »</Button>
       </div>
 
       {/* Modals */}
