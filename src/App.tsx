@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -13,6 +12,9 @@ import NotFound from './pages/NotFound';
 // Import Ticket pages
 import { TicketListDashboard } from './pages/TicketListDashboard';
 import { AddTicketDashboard } from './pages/AddTicketDashboard';
+import { TicketDetailsPage } from './pages/TicketDetailsPage';
+import { TicketFeedsPage } from './pages/TicketFeedsPage';
+import { TicketTagVendorPage } from './pages/TicketTagVendorPage';
 
 // Import Fitout pages
 import { FitoutSetupDashboard } from './pages/FitoutSetupDashboard';
@@ -196,6 +198,9 @@ function App() {
               <Route path="/tickets/add" element={<AddTicketDashboard />} />
               <Route path="/maintenance/ticket" element={<TicketListDashboard />} />
               <Route path="/maintenance/ticket/add" element={<AddTicketDashboard />} />
+              <Route path="/maintenance/ticket/:id" element={<TicketDetailsPage />} />
+              <Route path="/maintenance/ticket/:id/feeds" element={<TicketFeedsPage />} />
+              <Route path="/maintenance/ticket/:id/tag-vendor" element={<TicketTagVendorPage />} />
               <Route path="/maintenance/tickets" element={<TicketListDashboard />} />
               <Route path="/maintenance/tickets/add" element={<AddTicketDashboard />} />
               

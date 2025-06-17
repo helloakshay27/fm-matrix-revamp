@@ -81,6 +81,10 @@ export const TicketListDashboard = () => {
     navigate('/maintenance/tickets/add');
   };
 
+  const handleViewTicket = (ticketNumber: string) => {
+    navigate(`/maintenance/ticket/${ticketNumber}`);
+  };
+
   const handleExport = () => {
     console.log('Exporting tickets...');
     // Create CSV content
@@ -195,7 +199,10 @@ export const TicketListDashboard = () => {
             {mockTicketData.map((ticket) => (
               <TableRow key={ticket.ticketNumber}>
                 <TableCell>
-                  <Eye className="w-4 h-4 text-gray-600 cursor-pointer" />
+                  <Eye 
+                    className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+                    onClick={() => handleViewTicket(ticket.ticketNumber)}
+                  />
                 </TableCell>
                 <TableCell></TableCell>
                 <TableCell className="font-medium">{ticket.ticketNumber}</TableCell>
