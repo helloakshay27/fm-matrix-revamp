@@ -6,29 +6,33 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface AddDeviationStatusModalProps {
+interface AddStatusModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSubmit: (status: { status: string; fixedState: string; color: string; order: string }) => void;
 }
 
-export const AddDeviationStatusModal = ({ isOpen, onClose }: AddDeviationStatusModalProps) => {
+export const AddStatusModal = ({ isOpen, onClose, onSubmit }: AddStatusModalProps) => {
   const [formData, setFormData] = useState({
     status: "",
     fixedState: "",
-    order: "",
-    color: "#000000"
+    color: "#000000",
+    order: ""
   });
 
   const handleSubmit = () => {
-    console.log("Adding deviation status:", formData);
-    onClose();
+    if (formData.status.trim() && formData.fixedState && formData.order) {
+      onSubmit(formData);
+      setFormData({ status: "", fixedState: "", color: "#000000", order: "" });
+      onClose();
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">Add Deviation Status</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">Add Status</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">

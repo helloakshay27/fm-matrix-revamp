@@ -4,26 +4,125 @@ import { Button } from "@/components/ui/button";
 import { Plus, Edit } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AddCategoryModal } from "@/components/AddCategoryModal";
+import { EditCategoryModal } from "@/components/EditCategoryModal";
 import { AddDeviationStatusModal } from "@/components/AddDeviationStatusModal";
+import { AddStatusModal } from "@/components/AddStatusModal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+interface Category {
+  id: number;
+  category: string;
+  amount: string;
+  active: boolean;
+}
+
+interface Status {
+  id: number;
+  order: number;
+  status: string;
+  fixedState: string;
+  color: string;
+}
+
+interface UploadedFile {
+  id: number;
+  fileName: string;
+}
 
 export const FitoutSetupDashboard = () => {
   const [activeTab, setActiveTab] = useState('Category');
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
+  const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false);
   const [isAddDeviationOpen, setIsAddDeviationOpen] = useState(false);
+  const [isAddStatusOpen, setIsAddStatusOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const { toast } = useToast();
+  
+  const [categories, setCategories] = useState<Category[]>([
+    { id: 1, category: 'ho', amount: '', active: true },
+    { id: 2, category: 'Furniture', amount: '', active: true },
+    { id: 3, category: 'xx', amount: '', active: false }
+  ]);
+
+  const [statuses, setStatuses] = useState<Status[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
   const tabs = ['Category', 'Status', 'Fitout Guide', 'Deviation Status'];
+
+  const handleAddCategory = (newCategory: { category: string; amount: string }) => {
+    const category: Category = {
+      id: categories.length + 1,
+      category: newCategory.category,
+      amount: newCategory.amount,
+      active: true
+    };
+    setCategories([...categories, category]);
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    setIsEditCategoryOpen(true);
+  };
+
+  const handleUpdateCategory = (updatedCategory: Category) => {
+    setCategories(categories.map(cat => 
+      cat.id === updatedCategory.id ? updatedCategory : cat
+    ));
+    setEditingCategory(null);
+  };
+
+  const handleToggleActive = (id: number) => {
+    setCategories(categories.map(cat =>
+      cat.id === id ? { ...cat, active: !cat.active } : cat
+    ));
+    
+    // Show success toast
+    toast({
+      title: "Updated successfully.",
+      className: "bg-green-500 text-white border-green-500",
+    });
+  };
+
+  const handleAddStatus = (newStatus: { status: string; fixedState: string; color: string; order: string }) => {
+    const status: Status = {
+      id: statuses.length + 1,
+      order: parseInt(newStatus.order) || statuses.length + 1,
+      status: newStatus.status,
+      fixedState: newStatus.fixedState,
+      color: newStatus.color
+    };
+    setStatuses([...statuses, status]);
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      Array.from(files).forEach((file) => {
+        const newFile: UploadedFile = {
+          id: uploadedFiles.length + 1,
+          fileName: file.name
+        };
+        setUploadedFiles(prev => [...prev, newFile]);
+      });
+      
+      toast({
+        title: "File uploaded successfully.",
+        className: "bg-green-500 text-white border-green-500",
+      });
+    }
+  };
 
   const renderCategoryTab = () => (
     <div>
       <div className="mb-6">
         <Button 
           onClick={() => setIsAddCategoryOpen(true)}
-          className="bg-purple-700 hover:bg-purple-800 text-white"
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add
@@ -41,36 +140,24 @@ export const FitoutSetupDashboard = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            <TableRow>
-              <TableCell>
-                <Edit className="w-4 h-4 text-blue-500 cursor-pointer" />
-              </TableCell>
-              <TableCell>ho</TableCell>
-              <TableCell></TableCell>
-              <TableCell>
-                <Checkbox checked={true} />
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>
-                <Edit className="w-4 h-4 text-blue-500 cursor-pointer" />
-              </TableCell>
-              <TableCell>Furniture</TableCell>
-              <TableCell></TableCell>
-              <TableCell>
-                <Checkbox checked={true} />
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>
-                <Edit className="w-4 h-4 text-blue-500 cursor-pointer" />
-              </TableCell>
-              <TableCell>xx</TableCell>
-              <TableCell></TableCell>
-              <TableCell>
-                <Checkbox checked={false} />
-              </TableCell>
-            </TableRow>
+            {categories.map((category) => (
+              <TableRow key={category.id}>
+                <TableCell>
+                  <Edit 
+                    className="w-4 h-4 text-blue-500 cursor-pointer" 
+                    onClick={() => handleEditCategory(category)}
+                  />
+                </TableCell>
+                <TableCell>{category.category}</TableCell>
+                <TableCell>{category.amount}</TableCell>
+                <TableCell>
+                  <Checkbox 
+                    checked={category.active} 
+                    onCheckedChange={() => handleToggleActive(category.id)}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>
@@ -130,7 +217,10 @@ export const FitoutSetupDashboard = () => {
       </div>
 
       <div className="mb-6">
-        <Button className="bg-purple-700 hover:bg-purple-800 text-white">
+        <Button 
+          onClick={() => setIsAddStatusOpen(true)}
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
@@ -148,11 +238,30 @@ export const FitoutSetupDashboard = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            <TableRow>
-              <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                No data available
-              </TableCell>
-            </TableRow>
+            {statuses.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                  No data available
+                </TableCell>
+              </TableRow>
+            ) : (
+              statuses.map((status) => (
+                <TableRow key={status.id}>
+                  <TableCell>
+                    <Edit className="w-4 h-4 text-blue-500 cursor-pointer" />
+                  </TableCell>
+                  <TableCell>{status.order}</TableCell>
+                  <TableCell>{status.status}</TableCell>
+                  <TableCell>{status.fixedState}</TableCell>
+                  <TableCell>
+                    <div 
+                      className="w-6 h-6 rounded border" 
+                      style={{ backgroundColor: status.color }}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -167,10 +276,24 @@ export const FitoutSetupDashboard = () => {
             <span className="text-orange-500 font-medium">Choose File</span>
             <span className="text-gray-500 ml-2">No file chosen</span>
           </div>
-          <Button className="bg-purple-700 hover:bg-purple-800 text-white">
-            <Upload className="w-4 h-4 mr-2" />
-            Upload
-          </Button>
+          <label htmlFor="file-upload">
+            <Button 
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white cursor-pointer"
+              asChild
+            >
+              <span>
+                <Upload className="w-4 h-4 mr-2" />
+                Upload
+              </span>
+            </Button>
+          </label>
+          <input
+            id="file-upload"
+            type="file"
+            multiple
+            className="hidden"
+            onChange={handleFileUpload}
+          />
         </div>
       </div>
 
@@ -184,11 +307,23 @@ export const FitoutSetupDashboard = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            <TableRow>
-              <TableCell colSpan={3} className="text-center py-8 text-gray-500">
-                No files uploaded
-              </TableCell>
-            </TableRow>
+            {uploadedFiles.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-8 text-gray-500">
+                  No files uploaded
+                </TableCell>
+              </TableRow>
+            ) : (
+              uploadedFiles.map((file, index) => (
+                <TableRow key={file.id}>
+                  <TableCell>
+                    <Edit className="w-4 h-4 text-blue-500 cursor-pointer" />
+                  </TableCell>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{file.fileName}</TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -200,7 +335,7 @@ export const FitoutSetupDashboard = () => {
       <div className="mb-6">
         <Button 
           onClick={() => setIsAddDeviationOpen(true)}
-          className="bg-purple-700 hover:bg-purple-800 text-white"
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add
@@ -277,11 +412,25 @@ export const FitoutSetupDashboard = () => {
       <AddCategoryModal 
         isOpen={isAddCategoryOpen}
         onClose={() => setIsAddCategoryOpen(false)}
+        onSubmit={handleAddCategory}
+      />
+      
+      <EditCategoryModal 
+        isOpen={isEditCategoryOpen}
+        onClose={() => setIsEditCategoryOpen(false)}
+        category={editingCategory}
+        onSubmit={handleUpdateCategory}
       />
       
       <AddDeviationStatusModal 
         isOpen={isAddDeviationOpen}
         onClose={() => setIsAddDeviationOpen(false)}
+      />
+
+      <AddStatusModal 
+        isOpen={isAddStatusOpen}
+        onClose={() => setIsAddStatusOpen(false)}
+        onSubmit={handleAddStatus}
       />
     </div>
   );
