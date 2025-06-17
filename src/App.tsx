@@ -65,6 +65,9 @@ import { RVehiclesHistoryDashboard } from './pages/RVehiclesHistoryDashboard';
 // Import GVehiclesDashboard
 import { GVehiclesDashboard } from './pages/GVehiclesDashboard';
 
+// Import GVehicleOutDashboard
+import { GVehicleOutDashboard } from './pages/GVehicleOutDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -119,6 +122,7 @@ function App() {
               <Route path="/security/vehicle/r-vehicles" element={<RVehiclesDashboard />} />
               <Route path="/security/vehicle/r-vehicles/history" element={<RVehiclesHistoryDashboard />} />
               <Route path="/security/vehicle/g-vehicles" element={<GVehiclesDashboard />} />
+              <Route path="/security/vehicle/g-vehicles/out" element={<GVehicleOutDashboard />} />
               <Route path="/security/patrolling" element={<PatrollingDashboard />} />
               
               {/* Value Added Services Routes */}

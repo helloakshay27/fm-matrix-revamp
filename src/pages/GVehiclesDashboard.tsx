@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { SlidersHorizontal, Plus, Filter } from 'lucide-react';
 import { AddGVehicleModal } from '@/components/AddGVehicleModal';
 import { GVehicleFilterModal } from '@/components/GVehicleFilterModal';
+import { GVehicleOutDashboard } from './GVehicleOutDashboard';
 
 const gVehicleData = [
   {
@@ -144,6 +144,22 @@ export const GVehiclesDashboard = () => {
   const [activeTab, setActiveTab] = useState('History');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [currentView, setCurrentView] = useState('history'); // 'history' or 'vehicle-out'
+
+  const handleHistoryClick = () => {
+    setCurrentView('history');
+    setActiveTab('History');
+  };
+
+  const handleVehicleOutClick = () => {
+    setCurrentView('vehicle-out');
+    setActiveTab('Vehicle Out');
+  };
+
+  // If Vehicle Out view is active, render the Vehicle Out component
+  if (currentView === 'vehicle-out') {
+    return <GVehicleOutDashboard />;
+  }
 
   return (
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
@@ -168,12 +184,22 @@ export const GVehiclesDashboard = () => {
                 Add
               </Button>
               <Button 
-                className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-6 py-2 rounded"
+                onClick={handleHistoryClick}
+                className={`px-6 py-2 rounded ${
+                  activeTab === 'History' 
+                    ? 'bg-[#8B4B8C] hover:bg-[#7A4077] text-white' 
+                    : 'bg-[#8B4B8C] hover:bg-[#7A4077] text-white'
+                }`}
               >
                 History
               </Button>
               <Button 
-                className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-6 py-2 rounded"
+                onClick={handleVehicleOutClick}
+                className={`px-6 py-2 rounded ${
+                  activeTab === 'Vehicle Out' 
+                    ? 'bg-[#8B4B8C] hover:bg-[#7A4077] text-white' 
+                    : 'bg-[#8B4B8C] hover:bg-[#7A4077] text-white'
+                }`}
               >
                 Vehicle Out
               </Button>
