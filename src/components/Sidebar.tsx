@@ -236,11 +236,10 @@ export const Sidebar = () => {
   const renderMenuItem = (item: any, level: number = 0) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isExpanded = expandedItems.includes(item.name);
-    const marginLeft = level > 0 ? `ml-${level * 4}` : '';
-
+    
     if (hasSubItems) {
       return (
-        <div key={item.name} className={marginLeft}>
+        <div key={item.name}>
           <button
             onClick={() => toggleExpanded(item.name)}
             className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
@@ -255,8 +254,49 @@ export const Sidebar = () => {
             }
           </button>
           {isExpanded && (
-            <div className={`${level === 0 ? 'ml-8' : 'ml-4'} mt-1 space-y-1`}>
-              {item.subItems.map((subItem: any) => renderMenuItem(subItem, level + 1))}
+            <div className="space-y-1">
+              {item.subItems.map((subItem: any) => (
+                <div key={subItem.name} className="ml-8">
+                  {subItem.subItems ? (
+                    <div>
+                      <button
+                        onClick={() => toggleExpanded(subItem.name)}
+                        className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                      >
+                        <span>{subItem.name}</span>
+                        {expandedItems.includes(subItem.name) ? 
+                          <ChevronDown className="w-4 h-4" /> : 
+                          <ChevronRight className="w-4 h-4" />
+                        }
+                      </button>
+                      {expandedItems.includes(subItem.name) && (
+                        <div className="ml-4 mt-1 space-y-1">
+                          {subItem.subItems.map((nestedItem: any) => (
+                            <button
+                              key={nestedItem.name}
+                              onClick={() => handleNavigation(nestedItem.href, currentSection)}
+                              className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] ${
+                                nestedItem.color || 'text-[#1a1a1a]'
+                              }`}
+                            >
+                              {nestedItem.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleNavigation(subItem.href, currentSection)}
+                      className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] ${
+                        subItem.color || 'text-[#1a1a1a]'
+                      }`}
+                    >
+                      {subItem.name}
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -264,7 +304,7 @@ export const Sidebar = () => {
     }
 
     return (
-      <div key={item.name} className={marginLeft}>
+      <div key={item.name}>
         <button
           onClick={() => handleNavigation(item.href, currentSection)}
           className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] ${
