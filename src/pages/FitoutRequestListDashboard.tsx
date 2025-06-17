@@ -5,6 +5,7 @@ import { Plus, Filter } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useNavigate } from 'react-router-dom';
 import { FitoutRequestFilterDialog } from '@/components/FitoutRequestFilterDialog';
+import { EditProjectModal } from '@/components/EditProjectModal';
 
 interface FitoutProject {
   id: number;
@@ -21,6 +22,8 @@ interface FitoutProject {
 export const FitoutRequestListDashboard = () => {
   const navigate = useNavigate();
   const [showFilters, setShowFilters] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<FitoutProject | null>(null);
   const [projects, setProjects] = useState<FitoutProject[]>([]);
 
   useEffect(() => {
@@ -31,6 +34,21 @@ export const FitoutRequestListDashboard = () => {
 
   const handleAddClick = () => {
     navigate('/transitioning/fitout/add-project');
+  };
+
+  const handleEditClick = (project: FitoutProject) => {
+    setSelectedProject(project);
+    setShowEditModal(true);
+  };
+
+  const handleEditSubmit = (updatedProject: FitoutProject) => {
+    const updatedProjects = projects.map(p => 
+      p.id === updatedProject.id ? updatedProject : p
+    );
+    setProjects(updatedProjects);
+    localStorage.setItem('fitoutProjects', JSON.stringify(updatedProjects));
+    setShowEditModal(false);
+    setSelectedProject(null);
   };
 
   return (
@@ -55,7 +73,7 @@ export const FitoutRequestListDashboard = () => {
         <Button 
           variant="outline" 
           onClick={() => setShowFilters(true)}
-          className="border-gray-300"
+          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
         >
           <Filter className="w-4 h-4 mr-2" />
           Filters
@@ -84,7 +102,12 @@ export const FitoutRequestListDashboard = () => {
               projects.map((project) => (
                 <TableRow key={project.id}>
                   <TableCell>
-                    <Button variant="ghost" size="sm" className="text-[#C72030]">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-[#C72030] hover:bg-[#C72030]/10"
+                      onClick={() => handleEditClick(project)}
+                    >
                       Edit
                     </Button>
                   </TableCell>
@@ -118,6 +141,17 @@ export const FitoutRequestListDashboard = () => {
       <FitoutRequestFilterDialog 
         isOpen={showFilters}
         onClose={() => setShowFilters(false)}
+      />
+
+      {/* Edit Modal */}
+      <EditProjectModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedProject(null);
+        }}
+        project={selectedProject}
+        onSubmit={handleEditSubmit}
       />
     </div>
   );

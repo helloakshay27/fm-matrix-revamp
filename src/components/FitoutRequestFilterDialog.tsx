@@ -77,14 +77,14 @@ export const FitoutRequestFilterDialog = ({ isOpen, onClose }: FitoutRequestFilt
         <div className="flex justify-center gap-4 pt-4">
           <Button 
             onClick={handleApply}
-            className="bg-[#8B4B8C] hover:bg-[#8B4B8C]/90 text-white px-8"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
           >
             Apply
           </Button>
           <Button 
             variant="outline"
             onClick={handleReset}
-            className="px-8"
+            className="px-8 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
           >
             Reset
           </Button>
