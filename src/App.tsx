@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -93,6 +92,11 @@ import { AddEmployeeDashboard } from './pages/setup/AddEmployeeDashboard';
 // Import Check In Margin page
 import { CheckInMarginDashboard } from './pages/setup/CheckInMarginDashboard';
 
+// Import AMC pages
+import { AddAMCPage } from './pages/AddAMCPage';
+import { AMCDetailsPage } from './pages/AMCDetailsPage';
+import { EditAMCPage } from './pages/EditAMCPage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -124,12 +128,10 @@ function App() {
               <Route path="/maintenance/asset/add" element={<AddAssetPage />} />
               <Route path="/maintenance/asset/inactive" element={<InActiveAssetsDashboard />} />
               <Route path="/maintenance/amc" element={<AMCDashboard />} />
+              <Route path="/maintenance/amc/add" element={<AddAMCPage />} />
+              <Route path="/maintenance/amc/details/:id" element={<AMCDetailsPage />} />
+              <Route path="/maintenance/amc/edit/:id" element={<EditAMCPage />} />
               <Route path="/maintenance/service" element={<ServiceDashboard />} />
-              <Route path="/maintenance/attendance" element={<AttendanceDashboard />} />
-              <Route path="/maintenance/schedule" element={<ScheduleDashboard />} />
-              <Route path="/maintenance/inventory" element={<InventoryDashboard />} />
-              <Route path="/maintenance/ticket" element={<TicketDashboard />} />
-              <Route path="/maintenance/task" element={<TaskDashboard />} />
               
               {/* Utility Routes */}
               <Route path="/utility/energy" element={<UtilityDashboard />} />

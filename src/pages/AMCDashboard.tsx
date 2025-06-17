@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Search, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const amcData = [
   {
@@ -32,6 +33,7 @@ const amcData = [
 ];
 
 export const AMCDashboard = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredAMC, setFilteredAMC] = useState(amcData);
 
@@ -48,6 +50,14 @@ export const AMCDashboard = () => {
     }
   };
 
+  const handleAddClick = () => {
+    navigate('/maintenance/amc/add');
+  };
+
+  const handleViewDetails = (id: string) => {
+    navigate(`/maintenance/amc/details/${id}`);
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -58,7 +68,11 @@ export const AMCDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex items-center gap-3 mb-6">
-        <Button style={{ backgroundColor: '#C72030' }} className="text-white">
+        <Button 
+          onClick={handleAddClick}
+          style={{ backgroundColor: '#C72030' }} 
+          className="text-white hover:bg-[#C72030]/90"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
@@ -99,7 +113,11 @@ export const AMCDashboard = () => {
             {filteredAMC.map((amc) => (
               <TableRow key={amc.id}>
                 <TableCell>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleViewDetails(amc.id)}
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
                 </TableCell>
