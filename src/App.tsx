@@ -19,6 +19,7 @@ import { FitoutViolationDashboard } from './pages/FitoutViolationDashboard';
 // Import Utility pages
 import { UtilityDashboard } from './pages/UtilityDashboard';
 import { AddAssetDashboard } from './pages/AddAssetDashboard';
+import { AddEnergyAssetDashboard } from './pages/AddEnergyAssetDashboard';
 import { InActiveAssetsDashboard } from './pages/InActiveAssetsDashboard';
 import { UtilityWaterDashboard } from './pages/UtilityWaterDashboard';
 import { AddWaterAssetDashboard } from './pages/AddWaterAssetDashboard';
@@ -42,6 +43,7 @@ function App() {
               
               {/* Utility Routes */}
               <Route path="/utility/energy" element={<UtilityDashboard />} />
+              <Route path="/utility/energy/add-asset" element={<AddEnergyAssetDashboard />} />
               <Route path="/utility/water" element={<UtilityWaterDashboard />} />
               <Route path="/utility/water/add-asset" element={<AddWaterAssetDashboard />} />
               <Route path="/utility/add-asset" element={<AddAssetDashboard />} />

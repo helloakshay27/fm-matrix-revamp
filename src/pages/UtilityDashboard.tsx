@@ -1,23 +1,73 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { StatsCard } from '../components/StatsCard';
 import { AssetTable } from '../components/AssetTable';
 import { UtilityFilterDialog } from '../components/UtilityFilterDialog';
-import { Plus, Filter, Download, Upload, RotateCcw, FileText, QrCode, Eye } from 'lucide-react';
+import { BulkUploadDialog } from '../components/BulkUploadDialog';
+import { Plus, Filter, Download, Upload, RotateCcw, FileText, QrCode, Eye, Search } from 'lucide-react';
 import { Package, CheckCircle, AlertTriangle } from 'lucide-react';
 
 export const UtilityDashboard = () => {
   const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleAddClick = () => {
-    navigate('/utility/add-asset');
+    navigate('/utility/energy/add-asset');
   };
 
   const handleInActiveAssetsClick = () => {
     navigate('/utility/inactive-assets');
+  };
+
+  const handleImport = () => {
+    setUploadType('import');
+    setIsBulkUploadOpen(true);
+  };
+
+  const handleUpdate = () => {
+    setUploadType('update');
+    setIsBulkUploadOpen(true);
+  };
+
+  const handleExportAll = () => {
+    // Create and download CSV file
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      "Asset Name,Asset ID,Asset Code,Asset No.,Asset Status,Equipment Id,Site,Building,Wing,Floor,Area,Room,Meter Type,Asset Type\n" +
+      "Generator,GEN001,GEN001,001,In Use,EQ001,Main Site,Building A,East Wing,Ground Floor,Utility Area,Generator Room,Energy,Parent\n" +
+      "Transformer,TRF001,TRF001,002,In Use,EQ002,Main Site,Building A,East Wing,Ground Floor,Utility Area,Transformer Room,Energy,Parent\n" +
+      "UPS System,UPS001,UPS001,003,In Use,EQ003,Main Site,Building B,West Wing,First Floor,Server Room,UPS Room,Energy,Sub\n" +
+      "Solar Panel,SOL001,SOL001,004,In Use,EQ004,Main Site,Building C,North Wing,Rooftop,Solar Farm,Panel Area,Renewable,Parent\n" +
+      "Emergency Generator,EGEN001,EGEN001,005,Breakdown,EQ005,Main Site,Building A,East Wing,Basement,Emergency Area,Generator Room,Energy,Parent";
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "energy_assets.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    console.log('Exporting all energy assets data...');
+  };
+
+  const handlePrintQR = () => {
+    console.log('Printing QR codes for selected assets...');
+    // Logic for printing QR codes
+  };
+
+  const handlePrintAllQR = () => {
+    console.log('Printing QR codes for all assets...');
+    // Logic for printing all QR codes
+  };
+
+  const handleSearch = () => {
+    console.log('Searching for:', searchTerm);
+    // Logic for search functionality
   };
 
   return (
@@ -63,6 +113,7 @@ export const UtilityDashboard = () => {
         
         <Button 
           variant="outline" 
+          onClick={handleImport}
           className="flex items-center gap-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
         >
           <Download className="w-4 h-4" />
@@ -71,6 +122,7 @@ export const UtilityDashboard = () => {
         
         <Button 
           variant="outline" 
+          onClick={handleUpdate}
           className="flex items-center gap-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
         >
           <Upload className="w-4 h-4" />
@@ -79,6 +131,7 @@ export const UtilityDashboard = () => {
         
         <Button 
           variant="outline" 
+          onClick={handleExportAll}
           className="flex items-center gap-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
         >
           <Download className="w-4 h-4" />
@@ -87,6 +140,7 @@ export const UtilityDashboard = () => {
         
         <Button 
           variant="outline" 
+          onClick={handlePrintQR}
           className="flex items-center gap-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
         >
           <QrCode className="w-4 h-4" />
@@ -106,6 +160,7 @@ export const UtilityDashboard = () => {
       <div className="flex flex-wrap gap-3 mb-6">
         <Button 
           variant="outline" 
+          onClick={handlePrintAllQR}
           className="flex items-center gap-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
         >
           <QrCode className="w-4 h-4" />
@@ -121,6 +176,32 @@ export const UtilityDashboard = () => {
           Filters
         </Button>
       </div>
+
+      {/* Search Bar */}
+      <div className="flex justify-end items-center mb-6">
+        <div className="flex items-center space-x-2">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+            <Input
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-64"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch();
+                }
+              }}
+            />
+          </div>
+          <Button 
+            onClick={handleSearch}
+            className="bg-[#8B4513] hover:bg-[#8B4513]/90 text-white"
+          >
+            Go
+          </Button>
+        </div>
+      </div>
       
       {/* Asset Table */}
       <AssetTable />
@@ -129,6 +210,13 @@ export const UtilityDashboard = () => {
       <UtilityFilterDialog 
         isOpen={isFilterOpen} 
         onClose={() => setIsFilterOpen(false)} 
+      />
+
+      {/* Bulk Upload Dialog */}
+      <BulkUploadDialog 
+        isOpen={isBulkUploadOpen} 
+        onClose={() => setIsBulkUploadOpen(false)}
+        type={uploadType}
       />
     </div>
   );
