@@ -9,7 +9,11 @@ import { SetupLayout } from './components/SetupLayout';
 import Index from './pages/Index';
 import NotFound from './pages/NotFound';
 
-// Import new Fitout pages
+// Import Ticket pages
+import { TicketListDashboard } from './pages/TicketListDashboard';
+import { AddTicketDashboard } from './pages/AddTicketDashboard';
+
+// Import Fitout pages
 import { FitoutSetupDashboard } from './pages/FitoutSetupDashboard';
 import { FitoutRequestListDashboard } from './pages/FitoutRequestListDashboard';
 import { AddProjectDashboard } from './pages/AddProjectDashboard';
@@ -185,6 +189,12 @@ function App() {
               <Route path="/vas/space-management/setup/employees/add" element={<AddEmployeeDashboard />} />
               <Route path="/vas/space-management/setup/check-in-margin" element={<CheckInMarginDashboard />} />
               <Route path="/vas/space-management/setup/export" element={<ExportDashboard />} />
+              
+              {/* Ticket Routes */}
+              <Route path="/tickets" element={<TicketListDashboard />} />
+              <Route path="/tickets/add" element={<AddTicketDashboard />} />
+              <Route path="/maintenance/tickets" element={<TicketListDashboard />} />
+              <Route path="/maintenance/tickets/add" element={<AddTicketDashboard />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>

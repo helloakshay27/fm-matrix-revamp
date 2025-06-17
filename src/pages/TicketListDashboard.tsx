@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
@@ -13,7 +14,7 @@ const statusCards = [
   { title: 'Open Tickets', count: 738, color: 'bg-green-600', icon: AlertTriangle },
   { title: 'Complaint', count: 617, color: 'bg-orange-500', icon: MessageSquare },
   { title: 'Suggestion', count: 110, color: 'bg-orange-400', icon: FileText },
-  { title: 'Request', count: 308, color: 'bg-red-600', icon: Users }
+  { title: 'Request', count: 308, color: 'bg-[#C72030]', icon: Users }
 ];
 
 const mockTicketData = [
@@ -77,7 +78,23 @@ export const TicketListDashboard = () => {
   };
 
   const handleAddTicket = () => {
-    navigate('/tickets/add');
+    navigate('/maintenance/tickets/add');
+  };
+
+  const handleExport = () => {
+    console.log('Exporting tickets...');
+    // Create CSV content
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + "Ticket Number,Description,Category,Sub Category,Created By,Assigned To,Status,Site,Admin Priority,Created On,Ticket Type\n"
+      + mockTicketData.map(ticket => 
+          `${ticket.ticketNumber},"${ticket.description}",${ticket.category},${ticket.subCategory},${ticket.createdBy},${ticket.assignedTo},${ticket.status},${ticket.site},${ticket.adminPriority},${ticket.createdOn},${ticket.ticketType}`
+        ).join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "ticket_list.csv");
+    link.click();
   };
 
   return (
@@ -112,20 +129,25 @@ export const TicketListDashboard = () => {
       <div className="flex gap-3 mb-6">
         <Button 
           onClick={handleAddTicket}
-          className="bg-[#8B4513] hover:bg-[#7A3F12] text-white"
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:bg-[#C72030]/90"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
         <Button 
           variant="outline" 
-          className="border-[#8B4513] text-[#8B4513]"
+          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
           onClick={() => setIsFilterOpen(true)}
         >
           <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
-        <Button className="bg-[#8B4513] hover:bg-[#7A3F12] text-white">
+        <Button 
+          onClick={handleExport}
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:bg-[#C72030]/90"
+        >
           <Upload className="w-4 h-4 mr-2" />
           Export
         </Button>
@@ -136,7 +158,12 @@ export const TicketListDashboard = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-64"
           />
-          <Button className="bg-[#8B4513] hover:bg-[#7A3F12] text-white">Go!</Button>
+          <Button 
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
+          >
+            Go!
+          </Button>
           <Button variant="outline">Reset</Button>
         </div>
       </div>

@@ -21,8 +21,12 @@ export const TicketsFilterDialog: React.FC<TicketsFilterDialogProps> = ({
     createdDate: '',
     category: '',
     subcategory: '',
+    department: '',
+    site: '',
+    unit: '',
     status: '',
     adminPriority: '',
+    createdBy: '',
     assignedTo: ''
   });
 
@@ -37,15 +41,19 @@ export const TicketsFilterDialog: React.FC<TicketsFilterDialogProps> = ({
       createdDate: '',
       category: '',
       subcategory: '',
+      department: '',
+      site: '',
+      unit: '',
       status: '',
       adminPriority: '',
+      createdBy: '',
       assignedTo: ''
     });
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
           <Button
@@ -59,6 +67,7 @@ export const TicketsFilterDialog: React.FC<TicketsFilterDialogProps> = ({
         </DialogHeader>
         
         <div className="space-y-4">
+          {/* First Row */}
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">Select Created Date</label>
@@ -81,6 +90,8 @@ export const TicketsFilterDialog: React.FC<TicketsFilterDialogProps> = ({
                   <SelectItem value="fire-system">FIRE SYSTEM</SelectItem>
                   <SelectItem value="air-conditioner">Air Conditioner</SelectItem>
                   <SelectItem value="cleaning">Cleaning</SelectItem>
+                  <SelectItem value="electrical">Electrical</SelectItem>
+                  <SelectItem value="printer">Printer</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -93,11 +104,58 @@ export const TicketsFilterDialog: React.FC<TicketsFilterDialogProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="fire">fire</SelectItem>
+                  <SelectItem value="dentry">dentry</SelectItem>
+                  <SelectItem value="test">test</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
+          {/* Second Row */}
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Select Department</label>
+              <Select value={filters.department} onValueChange={(value) => setFilters({ ...filters, department: value })}>
+                <SelectTrigger className="text-sm">
+                  <SelectValue placeholder="Select Department" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="tech">Tech</SelectItem>
+                  <SelectItem value="operations">Operations</SelectItem>
+                  <SelectItem value="hr">HR</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">Select Site</label>
+              <Select value={filters.site} onValueChange={(value) => setFilters({ ...filters, site: value })}>
+                <SelectTrigger className="text-sm">
+                  <SelectValue placeholder="Select Site" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="lockated">Lockated</SelectItem>
+                  <SelectItem value="site-2">Site 2</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">Select Unit</label>
+              <Select value={filters.unit} onValueChange={(value) => setFilters({ ...filters, unit: value })}>
+                <SelectTrigger className="text-sm">
+                  <SelectValue placeholder="Select Unit" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unit-1">Unit 1</SelectItem>
+                  <SelectItem value="unit-2">Unit 2</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Third Row */}
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">Select Status</label>
@@ -109,6 +167,7 @@ export const TicketsFilterDialog: React.FC<TicketsFilterDialogProps> = ({
                   <SelectItem value="open">Open</SelectItem>
                   <SelectItem value="closed">Closed</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="in-progress">In Progress</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -123,10 +182,24 @@ export const TicketsFilterDialog: React.FC<TicketsFilterDialogProps> = ({
                   <SelectItem value="p1">P1</SelectItem>
                   <SelectItem value="p2">P2</SelectItem>
                   <SelectItem value="p3">P3</SelectItem>
+                  <SelectItem value="p4">P4</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
+            <div>
+              <label className="text-sm font-medium mb-2 block">Created By</label>
+              <Input
+                placeholder="Created by"
+                value={filters.createdBy}
+                onChange={(e) => setFilters({ ...filters, createdBy: e.target.value })}
+                className="text-sm"
+              />
+            </div>
+          </div>
+
+          {/* Fourth Row */}
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">Assigned To</label>
               <Input
@@ -142,7 +215,8 @@ export const TicketsFilterDialog: React.FC<TicketsFilterDialogProps> = ({
         <div className="flex gap-3 pt-4">
           <Button 
             onClick={handleApply}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90 px-8"
           >
             Apply
           </Button>
