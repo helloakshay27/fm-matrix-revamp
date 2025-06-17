@@ -4,6 +4,8 @@ import { Plus, Download, Filter, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BulkUploadModal } from '@/components/BulkUploadModal';
 import { ExportModal } from '@/components/ExportModal';
+import { PatrollingFilterModal } from '@/components/PatrollingFilterModal';
+import { AddPatrollingModal } from '@/components/AddPatrollingModal';
 
 export const PatrollingDashboard = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -85,6 +87,11 @@ export const PatrollingDashboard = () => {
         </div>
       </div>
 
+      <AddPatrollingModal 
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+      />
+
       <BulkUploadModal 
         isOpen={isBulkUploadOpen} 
         onClose={() => setIsBulkUploadOpen(false)} 
@@ -94,6 +101,13 @@ export const PatrollingDashboard = () => {
         isOpen={isExportOpen}
         onClose={() => setIsExportOpen(false)}
       />
+
+      <PatrollingFilterModal
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+      >
+        <div />
+      </PatrollingFilterModal>
     </div>
   );
 };
