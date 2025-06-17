@@ -71,6 +71,7 @@ import { GVehicleOutDashboard } from './pages/GVehicleOutDashboard';
 
 // Import Space Management pages
 import { SpaceManagementBookingsDashboard } from './pages/SpaceManagementBookingsDashboard';
+import { SpaceManagementSeatRequestsDashboard } from './pages/SpaceManagementSeatRequestsDashboard';
 
 const queryClient = new QueryClient();
 
@@ -136,6 +137,7 @@ function App() {
               
               {/* Space Management Routes */}
               <Route path="/vas/space-management/bookings" element={<SpaceManagementBookingsDashboard />} />
+              <Route path="/vas/space-management/seat-requests" element={<SpaceManagementSeatRequestsDashboard />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
