@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Category {
   id: number;
@@ -24,6 +25,7 @@ export const FitoutSetupDashboard = () => {
   const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false);
   const [isAddDeviationOpen, setIsAddDeviationOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const { toast } = useToast();
   
   const [categories, setCategories] = useState<Category[]>([
     { id: 1, category: 'ho', amount: '', active: true },
@@ -59,6 +61,12 @@ export const FitoutSetupDashboard = () => {
     setCategories(categories.map(cat =>
       cat.id === id ? { ...cat, active: !cat.active } : cat
     ));
+    
+    // Show success toast
+    toast({
+      title: "Updated successfully.",
+      className: "bg-green-500 text-white border-green-500",
+    });
   };
 
   const renderCategoryTab = () => (
