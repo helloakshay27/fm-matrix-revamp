@@ -57,6 +57,7 @@ import AddSTPAssetDashboard from './pages/AddSTPAssetDashboard';
 
 // Import Schedule pages
 import { ScheduleListDashboard } from './pages/ScheduleListDashboard';
+import { AddSchedulePage } from './pages/AddSchedulePage';
 
 // Import Visitors pages
 import { VisitorsDashboard } from './pages/VisitorsDashboard';
@@ -170,6 +171,7 @@ function App() {
               
               {/* Schedule Routes */}
               <Route path="/maintenance/schedule" element={<ScheduleListDashboard />} />
+              <Route path="/maintenance/schedule/add" element={<AddSchedulePage />} />
               
               {/* Inventory Routes */}
               <Route path="/maintenance/inventory" element={<InventoryDashboard />} />

@@ -1,20 +1,19 @@
 
 import React, { useState } from 'react';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { Badge } from '../components/ui/badge';
-import { Switch } from '../components/ui/switch';
-import { Eye, Plus, Download, Filter, Upload, Search, Edit, Copy } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Plus, Upload, Filter, Download, Search, Eye, Edit, Copy } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-const mockScheduleData = [
+const scheduleData = [
   {
     id: '11878',
     activityName: 'meter reading',
     amcId: '',
     type: 'PPM',
     scheduleType: 'Asset',
-    noOfAssociation: 2,
+    noOfAssociation: '2',
     validFrom: '01/05/2025, 12:00 AM',
     validTill: '31/05/2025, 11:59 PM',
     category: 'Technical',
@@ -27,88 +26,94 @@ const mockScheduleData = [
     amcId: '',
     type: 'Routine',
     scheduleType: 'Service',
-    noOfAssociation: 1,
+    noOfAssociation: '1',
     validFrom: '14/08/2024, 05:30 AM',
     validTill: '31/08/2025, 05:30 AM',
     category: 'Non Technical',
     active: true,
     createdOn: '14/08/2024, 04:17 PM'
   },
-  {
-    id: '11332',
-    activityName: 'All Task Mobile FM',
-    amcId: '',
-    type: 'PPM',
-    scheduleType: 'Asset',
-    noOfAssociation: 1,
-    validFrom: '12/08/2024, 05:30 AM',
-    validTill: '27/08/2024, 05:30 AM',
-    category: 'Non Technical',
-    active: false,
-    createdOn: '12/08/2024, 06:30 PM'
-  }
+  // Add more sample data as needed
 ];
 
 export const ScheduleListDashboard = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [allowAutomaticMapping, setAllowAutomaticMapping] = useState(false);
+  const [filteredSchedules, setFilteredSchedules] = useState(scheduleData);
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    if (value) {
+      const filtered = scheduleData.filter(schedule =>
+        schedule.activityName.toLowerCase().includes(value.toLowerCase()) ||
+        schedule.id.toLowerCase().includes(value.toLowerCase()) ||
+        schedule.type.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilteredSchedules(filtered);
+    } else {
+      setFilteredSchedules(scheduleData);
+    }
+  };
+
+  const handleAddSchedule = () => {
+    navigate('/maintenance/schedule/add');
+  };
 
   return (
     <div className="p-6">
+      {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-          <span>Schedule</span>
-        </div>
+        <p className="text-[#1a1a1a] opacity-70 mb-2">Schedule</p>
         <h1 className="text-2xl font-bold text-[#1a1a1a]">Schedule List</h1>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-3 mb-6">
-        <Button className="bg-[#8B4513] hover:bg-[#7A3F12] text-white">
+      <div className="flex items-center gap-3 mb-6">
+        <Button 
+          onClick={handleAddSchedule}
+          style={{ backgroundColor: '#C72030' }} 
+          className="text-white"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
-        <Button variant="outline" className="border-[#8B4513] text-[#8B4513]">
-          <Download className="w-4 h-4 mr-2" />
+        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+          <Upload className="w-4 h-4 mr-2" />
           Import
         </Button>
-        <Button variant="outline" className="border-[#8B4513] text-[#8B4513]">
+        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
           <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
-        <Button className="bg-[#8B4513] hover:bg-[#7A3F12] text-white">
-          <Upload className="w-4 h-4 mr-2" />
+        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+          <Download className="w-4 h-4 mr-2" />
           Export
         </Button>
-        <div className="flex items-center gap-2 ml-4">
-          <Switch 
-            checked={allowAutomaticMapping} 
-            onCheckedChange={setAllowAutomaticMapping}
-          />
-          <span className="text-sm">Allow Automatic Mapping</span>
+        <div className="flex items-center gap-2">
+          <input type="checkbox" id="allowMapping" />
+          <label htmlFor="allowMapping" className="text-sm">Allow Automatic Mapping</label>
         </div>
-      </div>
-
-      {/* Search */}
-      <div className="flex gap-3 mb-6">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input 
+        <div className="ml-auto flex items-center gap-3">
+          <Input
             placeholder="Enter Activity Name"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            onChange={(e) => handleSearch(e.target.value)}
+            className="w-64"
           />
+          <Button style={{ backgroundColor: '#C72030' }} className="text-white">
+            Go!
+          </Button>
+          <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+            Reset
+          </Button>
         </div>
-        <Button className="bg-[#8B4513] hover:bg-[#7A3F12] text-white">Go!</Button>
-        <Button variant="outline">Reset</Button>
       </div>
 
-      {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
+      {/* Schedule Table */}
+      <div className="bg-white rounded-lg border">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50">
+            <TableRow>
               <TableHead>Actions</TableHead>
               <TableHead>Copy</TableHead>
               <TableHead>View</TableHead>
@@ -126,18 +131,24 @@ export const ScheduleListDashboard = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockScheduleData.map((schedule) => (
+            {filteredSchedules.map((schedule) => (
               <TableRow key={schedule.id}>
                 <TableCell>
-                  <Edit className="w-4 h-4 text-gray-600 cursor-pointer" />
+                  <Button variant="ghost" size="sm">
+                    <Edit className="w-4 h-4" />
+                  </Button>
                 </TableCell>
                 <TableCell>
-                  <Copy className="w-4 h-4 text-gray-600 cursor-pointer" />
+                  <Button variant="ghost" size="sm">
+                    <Copy className="w-4 h-4" />
+                  </Button>
                 </TableCell>
                 <TableCell>
-                  <Eye className="w-4 h-4 text-gray-600 cursor-pointer" />
+                  <Button variant="ghost" size="sm">
+                    <Eye className="w-4 h-4" />
+                  </Button>
                 </TableCell>
-                <TableCell>{schedule.id}</TableCell>
+                <TableCell className="font-medium">{schedule.id}</TableCell>
                 <TableCell>{schedule.activityName}</TableCell>
                 <TableCell>{schedule.amcId}</TableCell>
                 <TableCell>{schedule.type}</TableCell>
@@ -145,9 +156,20 @@ export const ScheduleListDashboard = () => {
                 <TableCell>{schedule.noOfAssociation}</TableCell>
                 <TableCell>{schedule.validFrom}</TableCell>
                 <TableCell>{schedule.validTill}</TableCell>
-                <TableCell>{schedule.category}</TableCell>
                 <TableCell>
-                  <Switch checked={schedule.active} />
+                  <span className={`px-2 py-1 rounded text-xs ${
+                    schedule.category === 'Technical' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+                  }`}>
+                    {schedule.category}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center">
+                    <div className={`w-4 h-4 rounded-full ${schedule.active ? 'bg-green-500' : 'bg-gray-300'} mr-2`}></div>
+                    <span className={schedule.active ? 'text-green-600' : 'text-gray-500'}>
+                      {schedule.active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
                 </TableCell>
                 <TableCell>{schedule.createdOn}</TableCell>
               </TableRow>
