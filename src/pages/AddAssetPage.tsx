@@ -892,23 +892,32 @@ export const AddAssetPage = () => {
                     <input
                       type="file"
                       multiple
+                      accept=".pdf,.doc,.docx,.txt"
                       onChange={(e) => handleFileUpload('manualsUpload', e.target.files)}
                       className="hidden"
                       id="manuals-upload"
                     />
-                    <label htmlFor="manuals-upload" className="cursor-pointer">
-                      <span className="text-[#C72030]">Choose File</span>
-                      <span className="text-gray-500 ml-2">No file chosen</span>
+                    <label htmlFor="manuals-upload" className="cursor-pointer block">
+                      <div className="flex items-center justify-center space-x-2 mb-2">
+                        <span className="text-[#C72030] font-medium">Choose File</span>
+                        <span className="text-gray-500">
+                          {attachments.manualsUpload.length > 0 
+                            ? `${attachments.manualsUpload.length} file(s) selected` 
+                            : 'No file chosen'
+                          }
+                        </span>
+                      </div>
                     </label>
                     {attachments.manualsUpload.length > 0 && (
-                      <div className="mt-2">
+                      <div className="mt-2 space-y-1">
                         {attachments.manualsUpload.map((file, index) => (
-                          <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded mt-1">
-                            <span className="text-sm">{file.name}</span>
+                          <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                            <span className="text-sm truncate">{file.name}</span>
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => removeFile('manualsUpload', index)}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
                             >
                               <X className="w-4 h-4" />
                             </Button>
@@ -917,13 +926,20 @@ export const AddAssetPage = () => {
                       </div>
                     )}
                     <div className="mt-2">
-                      <Button
-                        size="sm"
-                        style={{ backgroundColor: '#C72030' }}
-                        className="text-white"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
+                      <label htmlFor="manuals-upload">
+                        <Button
+                          size="sm"
+                          type="button"
+                          style={{ backgroundColor: '#C72030' }}
+                          className="text-white hover:opacity-90"
+                          asChild
+                        >
+                          <span className="cursor-pointer">
+                            <Plus className="w-4 h-4 mr-1" />
+                            Upload Files
+                          </span>
+                        </Button>
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -935,23 +951,32 @@ export const AddAssetPage = () => {
                     <input
                       type="file"
                       multiple
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                       onChange={(e) => handleFileUpload('insuranceDetails', e.target.files)}
                       className="hidden"
                       id="insurance-upload"
                     />
-                    <label htmlFor="insurance-upload" className="cursor-pointer">
-                      <span className="text-[#C72030]">Choose File</span>
-                      <span className="text-gray-500 ml-2">No file chosen</span>
+                    <label htmlFor="insurance-upload" className="cursor-pointer block">
+                      <div className="flex items-center justify-center space-x-2 mb-2">
+                        <span className="text-[#C72030] font-medium">Choose File</span>
+                        <span className="text-gray-500">
+                          {attachments.insuranceDetails.length > 0 
+                            ? `${attachments.insuranceDetails.length} file(s) selected` 
+                            : 'No file chosen'
+                          }
+                        </span>
+                      </div>
                     </label>
                     {attachments.insuranceDetails.length > 0 && (
-                      <div className="mt-2">
+                      <div className="mt-2 space-y-1">
                         {attachments.insuranceDetails.map((file, index) => (
-                          <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded mt-1">
-                            <span className="text-sm">{file.name}</span>
+                          <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                            <span className="text-sm truncate">{file.name}</span>
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => removeFile('insuranceDetails', index)}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
                             >
                               <X className="w-4 h-4" />
                             </Button>
@@ -960,13 +985,20 @@ export const AddAssetPage = () => {
                       </div>
                     )}
                     <div className="mt-2">
-                      <Button
-                        size="sm"
-                        style={{ backgroundColor: '#C72030' }}
-                        className="text-white"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
+                      <label htmlFor="insurance-upload">
+                        <Button
+                          size="sm"
+                          type="button"
+                          style={{ backgroundColor: '#C72030' }}
+                          className="text-white hover:opacity-90"
+                          asChild
+                        >
+                          <span className="cursor-pointer">
+                            <Plus className="w-4 h-4 mr-1" />
+                            Upload Files
+                          </span>
+                        </Button>
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -978,23 +1010,32 @@ export const AddAssetPage = () => {
                     <input
                       type="file"
                       multiple
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                       onChange={(e) => handleFileUpload('purchaseInvoice', e.target.files)}
                       className="hidden"
                       id="invoice-upload"
                     />
-                    <label htmlFor="invoice-upload" className="cursor-pointer">
-                      <span className="text-[#C72030]">Choose File</span>
-                      <span className="text-gray-500 ml-2">No file chosen</span>
+                    <label htmlFor="invoice-upload" className="cursor-pointer block">
+                      <div className="flex items-center justify-center space-x-2 mb-2">
+                        <span className="text-[#C72030] font-medium">Choose File</span>
+                        <span className="text-gray-500">
+                          {attachments.purchaseInvoice.length > 0 
+                            ? `${attachments.purchaseInvoice.length} file(s) selected` 
+                            : 'No file chosen'
+                          }
+                        </span>
+                      </div>
                     </label>
                     {attachments.purchaseInvoice.length > 0 && (
-                      <div className="mt-2">
+                      <div className="mt-2 space-y-1">
                         {attachments.purchaseInvoice.map((file, index) => (
-                          <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded mt-1">
-                            <span className="text-sm">{file.name}</span>
+                          <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                            <span className="text-sm truncate">{file.name}</span>
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => removeFile('purchaseInvoice', index)}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
                             >
                               <X className="w-4 h-4" />
                             </Button>
@@ -1003,13 +1044,20 @@ export const AddAssetPage = () => {
                       </div>
                     )}
                     <div className="mt-2">
-                      <Button
-                        size="sm"
-                        style={{ backgroundColor: '#C72030' }}
-                        className="text-white"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
+                      <label htmlFor="invoice-upload">
+                        <Button
+                          size="sm"
+                          type="button"
+                          style={{ backgroundColor: '#C72030' }}
+                          className="text-white hover:opacity-90"
+                          asChild
+                        >
+                          <span className="cursor-pointer">
+                            <Plus className="w-4 h-4 mr-1" />
+                            Upload Files
+                          </span>
+                        </Button>
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -1021,23 +1069,32 @@ export const AddAssetPage = () => {
                     <input
                       type="file"
                       multiple
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                       onChange={(e) => handleFileUpload('amc', e.target.files)}
                       className="hidden"
                       id="amc-upload"
                     />
-                    <label htmlFor="amc-upload" className="cursor-pointer">
-                      <span className="text-[#C72030]">Choose File</span>
-                      <span className="text-gray-500 ml-2">No file chosen</span>
+                    <label htmlFor="amc-upload" className="cursor-pointer block">
+                      <div className="flex items-center justify-center space-x-2 mb-2">
+                        <span className="text-[#C72030] font-medium">Choose File</span>
+                        <span className="text-gray-500">
+                          {attachments.amc.length > 0 
+                            ? `${attachments.amc.length} file(s) selected` 
+                            : 'No file chosen'
+                          }
+                        </span>
+                      </div>
                     </label>
                     {attachments.amc.length > 0 && (
-                      <div className="mt-2">
+                      <div className="mt-2 space-y-1">
                         {attachments.amc.map((file, index) => (
-                          <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded mt-1">
-                            <span className="text-sm">{file.name}</span>
+                          <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                            <span className="text-sm truncate">{file.name}</span>
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => removeFile('amc', index)}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
                             >
                               <X className="w-4 h-4" />
                             </Button>
@@ -1046,13 +1103,20 @@ export const AddAssetPage = () => {
                       </div>
                     )}
                     <div className="mt-2">
-                      <Button
-                        size="sm"
-                        style={{ backgroundColor: '#C72030' }}
-                        className="text-white"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
+                      <label htmlFor="amc-upload">
+                        <Button
+                          size="sm"
+                          type="button"
+                          style={{ backgroundColor: '#C72030' }}
+                          className="text-white hover:opacity-90"
+                          asChild
+                        >
+                          <span className="cursor-pointer">
+                            <Plus className="w-4 h-4 mr-1" />
+                            Upload Files
+                          </span>
+                        </Button>
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -1082,4 +1146,3 @@ export const AddAssetPage = () => {
     </div>
   );
 };
-
