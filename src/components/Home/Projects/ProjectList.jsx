@@ -203,12 +203,20 @@ const ProjectList = () => {
     const [data, setData] = useState([]);
 
     const transformedData = useMemo(() => {
+        // const projectsSource =
+        //     isFiltered &&
+        //         Array.isArray(filteredProjects) &&
+        //         filteredProjects.length > 0
+        //         ? filteredProjects
+        //         : initialProjects;
+
         const projectsSource =
-            isFiltered &&
-                Array.isArray(filteredProjects) &&
-                filteredProjects.length > 0
-                ? filteredProjects
+            isFiltered && Array.isArray(filteredProjects)
+                ? filteredProjects.length > 0
+                    ? filteredProjects
+                    : []
                 : initialProjects;
+
 
 
         if (!projectsSource) return [];
@@ -240,7 +248,7 @@ const ProjectList = () => {
                     manager: project.project_owner_name || project.manager || "Unassigned",
                     milestones: project.milestones || "70%",
                     tasks: project.tasks || "90%",
-                    issues: project.issues || "8/10",
+                    issues: `${project.issues.length} / 10` || "8/10",
                     startDate: project.start_date
                         ? new Date(project.start_date).toLocaleDateString("en-CA")
                         : "N/A",
