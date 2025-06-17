@@ -319,7 +319,10 @@ export const Sidebar = () => {
   };
 
   return (
-    <div className="w-64 h-screen bg-[#f6f4ee] border-r border-[#1a1a1a] fixed left-0 top-0 overflow-y-auto">
+    <div
+  className="w-64 bg-[#f6f4ee] border-r border-[#1a1a1a] fixed left-0 top-0 overflow-y-auto"
+  style={{ top: '10vh', height: '90vh' }}
+>
       <div className="p-6">
         <div className="flex items-center gap-2 mb-8">
           <div className="w-8 h-8 bg-[#C72030] rounded-lg flex items-center justify-center">
