@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { SlidersHorizontal } from 'lucide-react';
 import { RVehiclesHistoryFilterModal } from '@/components/RVehiclesHistoryFilterModal';
+import { useNavigate } from 'react-router-dom';
 
 const vehicleHistoryData = [
   {
@@ -100,6 +100,11 @@ const vehicleHistoryData = [
 export const RVehiclesHistoryDashboard = () => {
   const [activeTab, setActiveTab] = useState('All Vehicles');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleAllVehiclesClick = () => {
+    navigate('/security/vehicle/r-vehicles');
+  };
 
   return (
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
@@ -125,6 +130,7 @@ export const RVehiclesHistoryDashboard = () => {
                 Filters
               </Button>
               <Button 
+                onClick={handleAllVehiclesClick}
                 className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-6 py-2 rounded"
               >
                 All Vehicles

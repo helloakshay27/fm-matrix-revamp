@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Download, SlidersHorizontal, Edit } from 'lucide-react';
 import { AddVehicleParkingModal } from '@/components/AddVehicleParkingModal';
+import { RVehicleImportModal } from '@/components/RVehicleImportModal';
+import { RVehicleFilterModal } from '@/components/RVehicleFilterModal';
 import { useNavigate } from 'react-router-dom';
 
 const vehicleData = [
@@ -105,8 +107,10 @@ const vehicleData = [
 ];
 
 export const RVehiclesDashboard = () => {
-  const [activeTab, setActiveTab] = useState('History');
+  const [activeTab, setActiveTab] = useState('All');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleHistoryClick = () => {
@@ -136,6 +140,7 @@ export const RVehiclesDashboard = () => {
                 Add
               </Button>
               <Button 
+                onClick={() => setIsImportModalOpen(true)}
                 variant="outline"
                 className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded flex items-center gap-2"
               >
@@ -143,6 +148,7 @@ export const RVehiclesDashboard = () => {
                 Import
               </Button>
               <Button 
+                onClick={() => setIsFilterModalOpen(true)}
                 variant="outline"
                 className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded flex items-center gap-2"
               >
@@ -242,6 +248,16 @@ export const RVehiclesDashboard = () => {
       <AddVehicleParkingModal 
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
+      />
+      
+      <RVehicleImportModal 
+        isOpen={isImportModalOpen} 
+        onClose={() => setIsImportModalOpen(false)} 
+      />
+      
+      <RVehicleFilterModal 
+        isOpen={isFilterModalOpen} 
+        onClose={() => setIsFilterModalOpen(false)} 
       />
     </div>
   );
