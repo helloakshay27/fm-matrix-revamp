@@ -1,6 +1,5 @@
 
 import React, { useEffect } from 'react';
-import { SetupLayout } from '@/components/SetupLayout';
 import { Download } from 'lucide-react';
 
 export const ExportDashboard = () => {
@@ -41,9 +40,12 @@ export const ExportDashboard = () => {
   };
 
   return (
-    <SetupLayout>
+    <div className="p-6">
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">EXPORT</h1>
+        <div className="mb-6">
+          <p className="text-[#1a1a1a] opacity-70 mb-2">Space Management &gt; Setup &gt; Export</p>
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">EXPORT</h1>
+        </div>
         
         <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
           <div className="flex flex-col items-center space-y-4">
@@ -81,6 +83,6 @@ export const ExportDashboard = () => {
           </div>
         </div>
       </div>
-    </SetupLayout>
+    </div>
   );
 };
