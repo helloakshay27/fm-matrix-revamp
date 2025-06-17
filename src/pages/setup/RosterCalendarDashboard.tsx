@@ -2,9 +2,11 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Filter } from "lucide-react";
+import { RosterCalendarFilterDialog } from "@/components/RosterCalendarFilterDialog";
 
 export const RosterCalendarDashboard = () => {
   const [selectedMonth] = useState('01 Jun 2025 - 30 Jun 2025');
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const shifts = [
     '10:00 AM to 08:00 PM',
@@ -38,6 +40,11 @@ export const RosterCalendarDashboard = () => {
     const day = (i + 1).toString().padStart(2, '0');
     return day;
   });
+
+  const handleFilterApply = (filters: any) => {
+    console.log('Filters applied:', filters);
+    // Handle filter application logic here
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -103,7 +110,11 @@ export const RosterCalendarDashboard = () => {
 
         {/* Filters Section */}
         <div className="bg-white rounded-lg p-6 mb-6">
-          <Button variant="outline" className="mb-4">
+          <Button 
+            variant="outline" 
+            className="mb-4"
+            onClick={() => setFilterOpen(true)}
+          >
             <Filter className="w-4 h-4 mr-2" />
             Filters
           </Button>
@@ -182,6 +193,13 @@ export const RosterCalendarDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Filter Dialog */}
+      <RosterCalendarFilterDialog
+        open={filterOpen}
+        onOpenChange={setFilterOpen}
+        onApply={handleFilterApply}
+      />
     </div>
   );
 };
