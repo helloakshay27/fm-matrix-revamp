@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X } from 'lucide-react';
 
 interface TaskAdvancedFilterDialogProps {
   open: boolean;
@@ -49,17 +48,7 @@ export const TaskAdvancedFilterDialog: React.FC<TaskAdvancedFilterDialogProps> =
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg font-semibold">Advanced Filter</DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-              className="h-6 w-6 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle className="text-lg font-semibold">Advanced Filter</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
@@ -174,8 +163,8 @@ export const TaskAdvancedFilterDialog: React.FC<TaskAdvancedFilterDialogProps> =
         <div className="flex justify-end pt-4">
           <Button 
             onClick={handleApply}
-            style={{ backgroundColor: '#00C851' }}
-            className="text-white hover:bg-green-600 px-8"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90 px-8"
           >
             Apply
           </Button>

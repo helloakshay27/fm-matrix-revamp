@@ -31,7 +31,7 @@ export const InActiveAssetsDashboard = () => {
   };
 
   return (
-    <div className="p-6 bg-[#f6f4ee] min-h-screen">
+    <div className="p-6 bg-white min-h-screen">
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
           <span>Assets</span>
@@ -46,7 +46,7 @@ export const InActiveAssetsDashboard = () => {
         <StatsCard
           title="Total Asset"
           value="0"
-          color="red"
+          color="orange"
           icon={<Package className="w-8 h-8" />}
         />
         <StatsCard
@@ -67,7 +67,8 @@ export const InActiveAssetsDashboard = () => {
       <div className="flex items-center gap-3 mb-6">
         <Button 
           onClick={handleExportAll}
-          className="bg-[#C72030] hover:bg-[#A61B2A] text-white"
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:bg-[#C72030]/90"
         >
           <Download className="w-4 h-4 mr-2" />
           Export All
@@ -97,7 +98,8 @@ export const InActiveAssetsDashboard = () => {
           </div>
           <Button 
             onClick={handleSearch}
-            className="bg-[#C72030] hover:bg-[#A61B2A] text-white"
+            style={{ backgroundColor: '#00C851' }}
+            className="text-white hover:bg-green-600"
           >
             Go!
           </Button>
