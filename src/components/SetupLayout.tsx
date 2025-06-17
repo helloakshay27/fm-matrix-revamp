@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Outlet } from 'react-router-dom';
 import { SetupSidebar } from './SetupSidebar';
 import { SetupHeader } from './SetupHeader';
 
@@ -15,7 +14,7 @@ export const SetupLayout = ({ children }: SetupLayoutProps) => {
       <div className="flex-1 ml-64">
         <SetupHeader />
         <main className="p-8">
-          <Outlet />
+          {children}
         </main>
       </div>
     </div>

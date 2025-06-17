@@ -1,74 +1,127 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Search, RefreshCw, MapPin, User, Car, CreditCard } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Eye, Filter } from 'lucide-react';
+import { VisitorsHistoryFilterModal } from '@/components/VisitorsHistoryFilterModal';
 
 const visitorsData = [
   {
     id: 1,
+    profileImage: '👤',
     name: 'Test',
-    status: 'Approved',
-    location: 'Delhi',
-    purpose: 'business bay',
-    category: 'Courier',
+    mobileNumber: '8791151106',
+    vehicleNumber: '0401',
     passNumber: '2345',
-    checkedIn: '',
-    checkedOut: ''
+    passValidFrom: '10/06/25',
+    passValidTo: '15/06/25',
+    daysPermitted: 'Mon',
+    personToMeet: 'Abdul Ghaffar',
+    visitorType: 'Guest',
+    purpose: 'Co'
   },
   {
     id: 2,
+    profileImage: '👤',
     name: 'ajit',
-    status: 'Approved',
-    location: 'Pune',
-    purpose: '',
-    category: 'Personal',
+    mobileNumber: '4323323212',
+    vehicleNumber: 'up80cq0402',
     passNumber: '2222',
-    checkedIn: '',
-    checkedOut: ''
+    passValidFrom: '',
+    passValidTo: '',
+    daysPermitted: '',
+    personToMeet: 'arun',
+    visitorType: 'Guest',
+    purpose: 'Per'
   },
   {
     id: 3,
-    name: 'Deepak',
-    status: 'Approved',
-    location: 'Mumbai',
-    purpose: '',
-    category: 'meeting',
-    passNumber: 'HK7658',
-    checkedIn: '',
-    checkedOut: ''
+    profileImage: '👤',
+    name: 'alok',
+    mobileNumber: '2311223311',
+    vehicleNumber: 'up80cq0401',
+    passNumber: '2345',
+    passValidFrom: '',
+    passValidTo: '',
+    daysPermitted: '',
+    personToMeet: 'aryan',
+    visitorType: 'Guest',
+    purpose: 'Per'
   },
   {
     id: 4,
-    name: 'sunil',
-    status: 'Approved',
-    location: 'jaipur',
-    purpose: 'Devesh Jain',
-    category: 'Personal',
-    passNumber: '',
-    checkedIn: '',
-    checkedOut: ''
+    profileImage: '👤',
+    name: 'Advya',
+    mobileNumber: '88788797875',
+    vehicleNumber: 'UP87B85432',
+    passNumber: 'HN9087',
+    passValidFrom: '',
+    passValidTo: '',
+    daysPermitted: '',
+    personToMeet: 'Vinayak Mane',
+    visitorType: 'Guest',
+    purpose: 'Conf'
+  },
+  {
+    id: 5,
+    profileImage: '👤',
+    name: 'Aditi',
+    mobileNumber: '5876345708',
+    vehicleNumber: 'WS43ED7654',
+    passNumber: 'HG675487',
+    passValidFrom: '',
+    passValidTo: '',
+    daysPermitted: '',
+    personToMeet: 'ABDUL Gaffar',
+    visitorType: 'Guest',
+    purpose: 'Per'
+  },
+  {
+    id: 6,
+    profileImage: '👤',
+    name: 'Deepak',
+    mobileNumber: '5435879378',
+    vehicleNumber: 'EH45MH7890',
+    passNumber: 'HK7658',
+    passValidFrom: '',
+    passValidTo: '',
+    daysPermitted: '',
+    personToMeet: 'Sohail Ansari',
+    visitorType: 'Guest',
+    purpose: 'me'
+  },
+  {
+    id: 7,
+    profileImage: '👤',
+    name: 'Advya',
+    mobileNumber: '88788797875',
+    vehicleNumber: 'UP87B85432',
+    passNumber: 'HN9087',
+    passValidFrom: '',
+    passValidTo: '',
+    daysPermitted: '',
+    personToMeet: 'Vinayak Mane',
+    visitorType: 'Guest',
+    purpose: 'Conf'
+  },
+  {
+    id: 8,
+    profileImage: '👤',
+    name: 'Aditi',
+    mobileNumber: '5876345708',
+    vehicleNumber: 'WS43ED7654',
+    passNumber: 'HG675487',
+    passValidFrom: '',
+    passValidTo: '',
+    daysPermitted: '',
+    personToMeet: 'ABDUL Gaffar',
+    visitorType: 'Guest',
+    purpose: 'Per'
   }
 ];
 
 export const VisitorsHistoryDashboard = () => {
   const [activeTab, setActiveTab] = useState('History');
-  const [searchTerm, setSearchTerm] = useState('');
-  const navigate = useNavigate();
-
-  const handleTabClick = (tab: string) => {
-    if (tab === 'Visitor In' || tab === 'Visitor Out') {
-      navigate('/security/visitor');
-    } else {
-      setActiveTab(tab);
-    }
-  };
-
-  const filteredVisitors = visitorsData.filter(visitor =>
-    visitor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    visitor.passNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   return (
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
@@ -79,13 +132,15 @@ export const VisitorsHistoryDashboard = () => {
           <span>Visitors History</span>
         </div>
         
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">VISITORS HISTORY</h1>
+        
         <div className="bg-white rounded-lg border border-gray-200">
           {/* Tab Navigation */}
           <div className="flex border-b border-gray-200">
-            {['Visitor In', 'Visitor Out', 'History'].map((tab) => (
+            {['History', 'Visitor In', 'Visitor Out'].map((tab) => (
               <button
                 key={tab}
-                onClick={() => handleTabClick(tab)}
+                onClick={() => setActiveTab(tab)}
                 className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab
                     ? 'border-[#C72030] text-[#C72030] bg-[#C72030]/5'
@@ -95,99 +150,74 @@ export const VisitorsHistoryDashboard = () => {
                 {tab}
               </button>
             ))}
-          </div>
-
-          {/* Search Bar */}
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center gap-2 max-w-md">
-              <div className="relative flex-1">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-                <Input
-                  placeholder="Search using Guest's Name or Pass Number"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Button variant="outline" size="sm">
-                <Search className="w-4 h-4" />
-              </Button>
-              <Button variant="outline" size="sm">
-                <RefreshCw className="w-4 h-4" />
+            
+            <div className="ml-auto p-3">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setIsFilterOpen(true)}
+                className="flex items-center gap-2 text-gray-600 border-gray-300 hover:bg-gray-50"
+              >
+                <Filter className="w-4 h-4" />
+                Filters
               </Button>
             </div>
           </div>
 
-          {/* Visitor Cards */}
-          <div className="p-4 space-y-4">
-            {filteredVisitors.map((visitor) => (
-              <div key={visitor.id} className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                      <User className="w-6 h-6 text-orange-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{visitor.name}</h3>
-                      {visitor.purpose && (
-                        <div className="flex items-center gap-1 text-sm text-gray-600">
-                          <User className="w-3 h-3" />
-                          <span>{visitor.purpose}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <span className="px-3 py-1 bg-green-200 text-green-800 rounded-full text-sm font-medium">
-                    {visitor.status}
-                  </span>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    <span>{visitor.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-4 h-4 flex items-center justify-center text-xs bg-gray-200 rounded">?</span>
-                    <span>{visitor.category}</span>
-                  </div>
-                  {visitor.passNumber && (
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="w-4 h-4" />
-                      <span>{visitor.passNumber}</span>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex justify-between mt-3 pt-3 border-t border-green-200 text-sm">
-                  <div>
-                    <span className="font-medium text-blue-600">Checked In at:</span>
-                    <span className="ml-1 text-gray-600">{visitor.checkedIn || 'N/A'}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-blue-600">Checked Out at:</span>
-                    <span className="ml-1 text-gray-600">{visitor.checkedOut || 'N/A'}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Pagination */}
-          <div className="flex justify-center items-center gap-2 p-4 border-t border-gray-200">
-            <Button variant="outline" size="sm" className="bg-[#C72030] text-white border-[#C72030]">
-              1
-            </Button>
-            <Button variant="outline" size="sm">2</Button>
-            <Button variant="outline" size="sm">3</Button>
-            <Button variant="outline" size="sm">4</Button>
-            <Button variant="outline" size="sm">5</Button>
-            <span className="text-gray-500">...</span>
-            <Button variant="outline" size="sm">»</Button>
-            <Button variant="outline" size="sm" className="text-blue-600">Last »</Button>
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profile Image</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile Number</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle Number</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pass Number</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pass Valid From</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pass Valid To</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Days Permitted</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Person To Meet</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visitor Type</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purpose</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {visitorsData.map((visitor) => (
+                  <tr key={visitor.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <button className="text-gray-400 hover:text-gray-600">
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 text-sm">
+                        {visitor.profileImage}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{visitor.name}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{visitor.mobileNumber}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600">{visitor.vehicleNumber}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{visitor.passNumber}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{visitor.passValidFrom}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{visitor.passValidTo}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{visitor.daysPermitted}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{visitor.personToMeet}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{visitor.visitorType}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{visitor.purpose}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
+
+      <VisitorsHistoryFilterModal 
+        isOpen={isFilterOpen} 
+        onClose={() => setIsFilterOpen(false)} 
+      />
     </div>
   );
 };

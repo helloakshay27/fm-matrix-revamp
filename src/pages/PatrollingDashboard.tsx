@@ -3,11 +3,9 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Eye, Edit, Trash2, Download, Filter, Plus, Upload } from "lucide-react";
+import { Eye, Edit, Trash2, Download, Filter, Plus } from "lucide-react";
 import { AddPatrollingForm } from "../components/AddPatrollingForm";
 import { PatrollingFilterModal } from "../components/PatrollingFilterModal";
-import { BulkUploadModal } from "../components/BulkUploadModal";
-import { ExportModal } from "../components/ExportModal";
 
 const patrollingData = [
   {
@@ -40,8 +38,6 @@ const patrollingData = [
 export const PatrollingDashboard = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
-  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   return (
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
@@ -74,35 +70,15 @@ export const PatrollingDashboard = () => {
                 </DialogContent>
               </Dialog>
 
-              <Dialog open={isBulkUploadModalOpen} onOpenChange={setIsBulkUploadModalOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="text-gray-700">
-                    <Download className="w-4 h-4 mr-2" />
-                    Import
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Bulk Upload</DialogTitle>
-                  </DialogHeader>
-                  <BulkUploadModal onClose={() => setIsBulkUploadModalOpen(false)} />
-                </DialogContent>
-              </Dialog>
+              <Button variant="outline" className="text-gray-700">
+                <Download className="w-4 h-4 mr-2" />
+                Import
+              </Button>
 
-              <Dialog open={isExportModalOpen} onOpenChange={setIsExportModalOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="text-gray-700">
-                    <Download className="w-4 h-4 mr-2" />
-                    Export
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Export</DialogTitle>
-                  </DialogHeader>
-                  <ExportModal onClose={() => setIsExportModalOpen(false)} />
-                </DialogContent>
-              </Dialog>
+              <Button variant="outline" className="text-gray-700">
+                <Download className="w-4 h-4 mr-2" />
+                Export
+              </Button>
 
               <Button variant="outline" className="text-gray-700">
                 Print QR

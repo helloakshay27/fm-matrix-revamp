@@ -6,47 +6,25 @@ import { Switch } from "@/components/ui/switch";
 import { Edit, Plus } from "lucide-react";
 import { AddCategoryModal } from "@/components/AddCategoryModal";
 
-interface SeatType {
-  id: number;
-  name: string;
-  active: boolean;
-  createdOn: string;
-}
-
 export const SeatTypeDashboard = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [seatTypes, setSeatTypes] = useState<SeatType[]>([
-    { id: 1, name: "Hostcast", active: true, createdOn: "19/03/2024" },
-    { id: 2, name: "Cafe", active: true, createdOn: "05/05/2023" },
-    { id: 3, name: "Cubical", active: true, createdOn: "13/03/2023" },
-    { id: 4, name: "Fixed Angular Chair", active: true, createdOn: "24/01/2023" },
-    { id: 5, name: "Hot Desk", active: true, createdOn: "30/11/2022" },
-    { id: 6, name: "structchair", active: true, createdOn: "29/11/2022" },
-    { id: 7, name: "Rectangle", active: true, createdOn: "28/11/2022" },
-    { id: 8, name: "circular", active: true, createdOn: "28/11/2022" },
-    { id: 9, name: "cabin", active: true, createdOn: "10/11/2022" },
-    { id: 10, name: "iOS", active: true, createdOn: "09/11/2022" },
-    { id: 11, name: "Fixed Desk", active: true, createdOn: "31/07/2021" },
-    { id: 12, name: "Cabin", active: true, createdOn: "31/07/2021" },
-    { id: 13, name: "Flexi Desk", active: true, createdOn: "31/07/2021" },
-    { id: 14, name: "Angular Wa", active: true, createdOn: "31/07/2021" }
-  ]);
 
-  const handleAddSeatType = (newSeatType: { category: string; amount: string }) => {
-    const seatType: SeatType = {
-      id: seatTypes.length + 1,
-      name: newSeatType.category,
-      active: true,
-      createdOn: new Date().toLocaleDateString('en-GB')
-    };
-    setSeatTypes([...seatTypes, seatType]);
-  };
-
-  const handleToggleActive = (id: number) => {
-    setSeatTypes(seatTypes.map(seat =>
-      seat.id === id ? { ...seat, active: !seat.active } : seat
-    ));
-  };
+  const seatTypeData = [
+    { name: "Hostcast", active: true, createdOn: "19/03/2024" },
+    { name: "Cafe", active: true, createdOn: "05/05/2023" },
+    { name: "Cubical", active: true, createdOn: "13/03/2023" },
+    { name: "Fixed Angular Chair", active: true, createdOn: "24/01/2023" },
+    { name: "Hot Desk", active: true, createdOn: "30/11/2022" },
+    { name: "structchair", active: true, createdOn: "29/11/2022" },
+    { name: "Rectangle", active: true, createdOn: "28/11/2022" },
+    { name: "circular", active: true, createdOn: "28/11/2022" },
+    { name: "cabin", active: true, createdOn: "10/11/2022" },
+    { name: "iOS", active: true, createdOn: "09/11/2022" },
+    { name: "Fixed Desk", active: true, createdOn: "31/07/2021" },
+    { name: "Cabin", active: true, createdOn: "31/07/2021" },
+    { name: "Flexi Desk", active: true, createdOn: "31/07/2021" },
+    { name: "Angular Wa", active: true, createdOn: "31/07/2021" }
+  ];
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -78,8 +56,8 @@ export const SeatTypeDashboard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {seatTypes.map((seat) => (
-                <TableRow key={seat.id}>
+              {seatTypeData.map((seat, index) => (
+                <TableRow key={index}>
                   <TableCell>
                     <Button size="sm" variant="ghost">
                       <Edit className="w-4 h-4" />
@@ -87,10 +65,7 @@ export const SeatTypeDashboard = () => {
                   </TableCell>
                   <TableCell>{seat.name}</TableCell>
                   <TableCell>
-                    <Switch 
-                      checked={seat.active} 
-                      onCheckedChange={() => handleToggleActive(seat.id)}
-                    />
+                    <Switch checked={seat.active} />
                   </TableCell>
                   <TableCell>{seat.createdOn}</TableCell>
                 </TableRow>
@@ -103,7 +78,6 @@ export const SeatTypeDashboard = () => {
         <AddCategoryModal 
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
-          onSubmit={handleAddSeatType}
         />
       </div>
     </div>

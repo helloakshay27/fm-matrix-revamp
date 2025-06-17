@@ -2,22 +2,14 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Search, Plus, Import, RefreshCw, FileDown, Printer, Filter } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { WaterFilterDialog } from '../components/WaterFilterDialog';
-import { BulkUploadDialog } from '../components/BulkUploadDialog';
-import { InActiveAssetsFilterDialog } from '../components/InActiveAssetsFilterDialog';
 
 export const UtilityWaterDashboard = () => {
-  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
-  const [isInActiveFilterOpen, setIsInActiveFilterOpen] = useState(false);
-  const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
 
   const stats = [
     { title: 'Total Asset', value: '0', color: 'bg-red-500' },
@@ -30,49 +22,6 @@ export const UtilityWaterDashboard = () => {
     'Asset Status', 'Equipment Id', 'Site', 'Building', 'Wing', 
     'Floor', 'Area', 'Room', 'Meter Type', 'Asset Type'
   ];
-
-  const handleAdd = () => {
-    navigate('/utility/water/add-asset');
-  };
-
-  const handleImport = () => {
-    setUploadType('import');
-    setIsBulkUploadOpen(true);
-  };
-
-  const handleUpdate = () => {
-    setUploadType('update');
-    setIsBulkUploadOpen(true);
-  };
-
-  const handleExportAll = () => {
-    // Create and download CSV file
-    const csvContent = "data:text/csv;charset=utf-8," + 
-      tableHeaders.join(",") + "\n" +
-      "No data available in table";
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "water_assets.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    console.log('Exporting all water assets data...');
-  };
-
-  const handlePrintQR = () => {
-    console.log('Printing QR codes...');
-  };
-
-  const handleInActiveAssets = () => {
-    navigate('/utility/inactive-assets');
-  };
-
-  const handleSearch = () => {
-    console.log('Searching for:', searchTerm);
-  };
 
   return (
     <div className="p-6 space-y-6">
@@ -105,61 +54,34 @@ export const UtilityWaterDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3">
-        <Button 
-          onClick={handleAdd}
-          className="bg-green-600 hover:bg-green-700"
-        >
+        <Button className="bg-green-600 hover:bg-green-700">
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
-        <Button 
-          variant="outline"
-          onClick={handleImport}
-          className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
-        >
+        <Button variant="outline">
           <Import className="w-4 h-4 mr-2" />
           Import
         </Button>
-        <Button 
-          variant="outline"
-          onClick={handleUpdate}
-          className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
-        >
+        <Button variant="outline">
           <RefreshCw className="w-4 h-4 mr-2" />
           Update
         </Button>
-        <Button 
-          variant="outline"
-          onClick={handleExportAll}
-          className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
-        >
+        <Button variant="outline">
           <FileDown className="w-4 h-4 mr-2" />
           Export All
         </Button>
-        <Button 
-          variant="outline"
-          onClick={handlePrintQR}
-          className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
-        >
+        <Button variant="outline">
           <Printer className="w-4 h-4 mr-2" />
           Print QR
         </Button>
-        <Button 
-          variant="outline" 
-          onClick={handleInActiveAssets}
-          className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
-        >
+        <Badge variant="secondary" className="px-4 py-2">
           In-Active Assets
-        </Button>
+        </Badge>
       </div>
 
       {/* Search and Filter */}
       <div className="flex justify-between items-center">
-        <Button 
-          variant="outline"
-          onClick={() => setIsFilterOpen(true)}
-          className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
-        >
+        <Button variant="outline">
           <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
@@ -171,17 +93,9 @@ export const UtilityWaterDashboard = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 w-64"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleSearch();
-                }
-              }}
             />
           </div>
-          <Button 
-            onClick={handleSearch}
-            className="bg-green-600 hover:bg-green-700"
-          >
+          <Button className="bg-green-600 hover:bg-green-700">
             Go
           </Button>
         </div>
@@ -213,23 +127,6 @@ export const UtilityWaterDashboard = () => {
           </Table>
         </CardContent>
       </Card>
-
-      {/* Dialogs */}
-      <WaterFilterDialog 
-        isOpen={isFilterOpen} 
-        onClose={() => setIsFilterOpen(false)} 
-      />
-      
-      <BulkUploadDialog 
-        isOpen={isBulkUploadOpen} 
-        onClose={() => setIsBulkUploadOpen(false)}
-        type={uploadType}
-      />
-      
-      <InActiveAssetsFilterDialog 
-        isOpen={isInActiveFilterOpen} 
-        onClose={() => setIsInActiveFilterOpen(false)} 
-      />
     </div>
   );
 };

@@ -4,15 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Plus, Filter, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { useNavigate } from 'react-router-dom';
 
 export const FitoutChecklistDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const navigate = useNavigate();
-
-  const handleAddChecklist = () => {
-    navigate('/transitioning/fitout/checklist/add');
-  };
 
   return (
     <div className="p-6">
@@ -35,10 +29,7 @@ export const FitoutChecklistDashboard = () => {
             className="pl-10"
           />
         </div>
-        <Button 
-          onClick={handleAddChecklist}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-        >
+        <Button className="bg-purple-700 hover:bg-purple-800 text-white">
           <Plus className="w-4 h-4 mr-2" />
           Add Checklist
         </Button>

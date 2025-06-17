@@ -1,10 +1,8 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { StatsCard } from '../components/StatsCard';
 import { InActiveAssetsTable } from '../components/InActiveAssetsTable';
-import { Package, CheckCircle, AlertTriangle, Search } from 'lucide-react';
+import { Package, CheckCircle, AlertTriangle } from 'lucide-react';
 
 export const InActiveAssetsDashboard = () => {
   return (

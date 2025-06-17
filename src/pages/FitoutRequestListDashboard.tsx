@@ -1,55 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Filter } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useNavigate } from 'react-router-dom';
-import { FitoutRequestFilterDialog } from '@/components/FitoutRequestFilterDialog';
-import { EditProjectModal } from '@/components/EditProjectModal';
-
-interface FitoutProject {
-  id: number;
-  user: string;
-  category: string;
-  description: string;
-  tower: string;
-  unit: string;
-  supplier: string;
-  masterStatus: string;
-  createdOn: string;
-}
 
 export const FitoutRequestListDashboard = () => {
-  const navigate = useNavigate();
   const [showFilters, setShowFilters] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<FitoutProject | null>(null);
-  const [projects, setProjects] = useState<FitoutProject[]>([]);
-
-  useEffect(() => {
-    // Load projects from localStorage
-    const savedProjects = JSON.parse(localStorage.getItem('fitoutProjects') || '[]');
-    setProjects(savedProjects);
-  }, []);
-
-  const handleAddClick = () => {
-    navigate('/transitioning/fitout/add-project');
-  };
-
-  const handleEditClick = (project: FitoutProject) => {
-    setSelectedProject(project);
-    setShowEditModal(true);
-  };
-
-  const handleEditSubmit = (updatedProject: FitoutProject) => {
-    const updatedProjects = projects.map(p => 
-      p.id === updatedProject.id ? updatedProject : p
-    );
-    setProjects(updatedProjects);
-    localStorage.setItem('fitoutProjects', JSON.stringify(updatedProjects));
-    setShowEditModal(false);
-    setSelectedProject(null);
-  };
 
   return (
     <div className="p-6">
@@ -63,17 +19,14 @@ export const FitoutRequestListDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex gap-4 mb-6">
-        <Button 
-          onClick={handleAddClick}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-        >
+        <Button className="bg-purple-700 hover:bg-purple-800 text-white">
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
         <Button 
           variant="outline" 
-          onClick={() => setShowFilters(true)}
-          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          onClick={() => setShowFilters(!showFilters)}
+          className="border-gray-300"
         >
           <Filter className="w-4 h-4 mr-2" />
           Filters
@@ -98,61 +51,14 @@ export const FitoutRequestListDashboard = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {projects.length > 0 ? (
-              projects.map((project) => (
-                <TableRow key={project.id}>
-                  <TableCell>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-[#C72030] hover:bg-[#C72030]/10"
-                      onClick={() => handleEditClick(project)}
-                    >
-                      Edit
-                    </Button>
-                  </TableCell>
-                  <TableCell>{project.id}</TableCell>
-                  <TableCell>{project.user}</TableCell>
-                  <TableCell>{project.category}</TableCell>
-                  <TableCell>{project.description}</TableCell>
-                  <TableCell>{project.tower}</TableCell>
-                  <TableCell>{project.unit}</TableCell>
-                  <TableCell>{project.supplier}</TableCell>
-                  <TableCell>
-                    <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
-                      {project.masterStatus}
-                    </span>
-                  </TableCell>
-                  <TableCell>{project.createdOn}</TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={10} className="text-center py-8 text-gray-500">
-                  No fitout requests found. Click "Add" to create your first project.
-                </TableCell>
-              </TableRow>
-            )}
+            <TableRow>
+              <TableCell colSpan={10} className="text-center py-8 text-gray-500">
+                No fitout requests found. Click "Add Project" to create your first project.
+              </TableCell>
+            </TableRow>
           </TableBody>
         </Table>
       </div>
-
-      {/* Filter Dialog */}
-      <FitoutRequestFilterDialog 
-        isOpen={showFilters}
-        onClose={() => setShowFilters(false)}
-      />
-
-      {/* Edit Modal */}
-      <EditProjectModal
-        isOpen={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setSelectedProject(null);
-        }}
-        project={selectedProject}
-        onSubmit={handleEditSubmit}
-      />
     </div>
   );
 };
