@@ -23,6 +23,7 @@ import { AddEnergyAssetDashboard } from './pages/AddEnergyAssetDashboard';
 import { InActiveAssetsDashboard } from './pages/InActiveAssetsDashboard';
 import { UtilityWaterDashboard } from './pages/UtilityWaterDashboard';
 import { AddWaterAssetDashboard } from './pages/AddWaterAssetDashboard';
+import UtilitySTPDashboard from './pages/UtilitySTPDashboard';
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ function App() {
               <Route path="/utility/energy/add-asset" element={<AddEnergyAssetDashboard />} />
               <Route path="/utility/water" element={<UtilityWaterDashboard />} />
               <Route path="/utility/water/add-asset" element={<AddWaterAssetDashboard />} />
+              <Route path="/utility/stp" element={<UtilitySTPDashboard />} />
               <Route path="/utility/add-asset" element={<AddAssetDashboard />} />
               <Route path="/utility/inactive-assets" element={<InActiveAssetsDashboard />} />
               
