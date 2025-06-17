@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,14 +6,24 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { TaskRescheduleDialog } from '@/components/TaskRescheduleDialog';
 
 export const TaskDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Help Text');
+  const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
 
   const handleBack = () => {
     navigate('/maintenance/task');
+  };
+
+  const handleSubmitTask = () => {
+    navigate(`/maintenance/task/submit/${id}`);
+  };
+
+  const handleTaskReschedule = () => {
+    setShowRescheduleDialog(true);
   };
 
   const taskDetails = {
@@ -57,12 +66,14 @@ export const TaskDetailsPage = () => {
           <h1 className="text-2xl font-bold text-[#1a1a1a]">Task Details</h1>
           <div className="flex gap-3">
             <Button 
+              onClick={handleSubmitTask}
               style={{ backgroundColor: '#C72030' }}
               className="text-white hover:bg-[#C72030]/90"
             >
               Submit Task
             </Button>
             <Button 
+              onClick={handleTaskReschedule}
               style={{ backgroundColor: '#C72030' }}
               className="text-white hover:bg-[#C72030]/90"
             >
@@ -251,6 +262,12 @@ export const TaskDetailsPage = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Task Reschedule Dialog */}
+      <TaskRescheduleDialog 
+        open={showRescheduleDialog}
+        onOpenChange={setShowRescheduleDialog}
+      />
     </div>
   );
 };
