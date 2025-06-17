@@ -179,6 +179,7 @@ function App() {
               {/* Utility Routes */}
               <Route path="/utility/energy" element={<UtilityDashboard />} />
               <Route path="/utility/energy/add-asset" element={<AddEnergyAssetDashboard />} />
+              <Route path="/utility/inactive-assets" element={<InActiveAssetsDashboard />} />
               <Route path="/utility/water" element={<UtilityWaterDashboard />} />
               <Route path="/utility/water/add-asset" element={<AddWaterAssetDashboard />} />
               <Route path="/utility/stp" element={<UtilitySTPDashboard />} />
