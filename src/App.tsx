@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -12,7 +11,7 @@ import NotFound from './pages/NotFound';
 
 // Import new Fitout pages
 import { FitoutSetupDashboard } from './pages/FitoutSetupDashboard';
-import { FitoutRequestListDashboard } from './pages/Fit 100utRequestListDashboard';
+import { FitoutRequestListDashboard } from './pages/FitoutRequestListDashboard';
 import { AddProjectDashboard } from './pages/AddProjectDashboard';
 import { FitoutChecklistDashboard } from './pages/FitoutChecklistDashboard';
 import { AddChecklistDashboard } from './pages/AddChecklistDashboard';
