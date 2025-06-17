@@ -3,16 +3,17 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Upload, FileText, Filter, Search, Eye } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Plus, Upload, FileText, Filter, Search, Eye, RotateCcw } from 'lucide-react';
 
 const serviceData = [
   {
     id: '16706',
-    serviceName: 'Test',
+    serviceName: 'test',
     referenceNumber: '',
     category: '',
     group: '',
-    serviceCode: '7308bca91681074e701c',
+    serviceCode: '7308bcd91b8107aa7e1c',
     uom: 'Loccated',
     site: 'Tower 4',
     building: 'Wing2',
@@ -21,15 +22,15 @@ const serviceData = [
     floor: '',
     room: '',
     status: true,
-    createdOn: '10/05/2025'
+    createdOn: '10/06/2025'
   },
   {
     id: '16694',
-    serviceName: '',
+    serviceName: 'u',
     referenceNumber: '',
     category: '',
     group: '',
-    serviceCode: '9431843a6f8b3962590e',
+    serviceCode: '94a1a94aada9b2f6259e',
     uom: 'Loccated',
     site: '',
     building: '',
@@ -38,27 +39,116 @@ const serviceData = [
     floor: '',
     room: '',
     status: true,
-    createdOn: '05/05/2025'
+    createdOn: '05/06/2025'
   },
-  // Add more sample data as needed
+  {
+    id: '16693',
+    serviceName: 'ews',
+    referenceNumber: '',
+    category: '',
+    group: '',
+    serviceCode: '6f136b262945d13570c6',
+    uom: 'Loccated',
+    site: 'sebc',
+    building: '',
+    wing: '',
+    area: '',
+    floor: '',
+    room: '',
+    status: true,
+    createdOn: '05/06/2025'
+  },
+  {
+    id: '16692',
+    serviceName: 'ews',
+    referenceNumber: '',
+    category: '',
+    group: '',
+    serviceCode: 'feeba741171911667a82',
+    uom: 'Loccated',
+    site: 'sebc',
+    building: '',
+    wing: '',
+    area: '',
+    floor: '',
+    room: '',
+    status: true,
+    createdOn: '05/06/2025'
+  },
+  {
+    id: '16691',
+    serviceName: 'ews',
+    referenceNumber: '',
+    category: '',
+    group: '',
+    serviceCode: '9265b6752ebde97ce115',
+    uom: 'Loccated',
+    site: '',
+    building: '',
+    wing: '',
+    area: '',
+    floor: '',
+    room: '',
+    status: true,
+    createdOn: '05/06/2025'
+  },
+  {
+    id: '16690',
+    serviceName: 'sfdyfdy',
+    referenceNumber: '',
+    category: '',
+    group: '',
+    serviceCode: '08559192e3e2130b068b',
+    uom: 'Loccated',
+    site: 'Hay',
+    building: '',
+    wing: '',
+    area: '',
+    floor: '',
+    room: '',
+    status: true,
+    createdOn: '05/06/2025'
+  }
 ];
 
 export const ServiceDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [services, setServices] = useState(serviceData);
   const [filteredServices, setFilteredServices] = useState(serviceData);
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
     if (value) {
-      const filtered = serviceData.filter(service =>
+      const filtered = services.filter(service =>
         service.serviceName.toLowerCase().includes(value.toLowerCase()) ||
         service.id.toLowerCase().includes(value.toLowerCase()) ||
         service.serviceCode.toLowerCase().includes(value.toLowerCase())
       );
       setFilteredServices(filtered);
     } else {
-      setFilteredServices(serviceData);
+      setFilteredServices(services);
     }
+  };
+
+  const handleStatusToggle = (id: string, checked: boolean) => {
+    console.log(`Toggling status for Service ${id} to ${checked}`);
+    
+    // Update the main data array
+    const updatedServices = services.map(service => 
+      service.id === id ? { ...service, status: checked } : service
+    );
+    setServices(updatedServices);
+    
+    // Update the filtered data array
+    const updatedFilteredData = filteredServices.map(service => 
+      service.id === id ? { ...service, status: checked } : service
+    );
+    setFilteredServices(updatedFilteredData);
+  };
+
+  const handleReset = () => {
+    setSearchTerm('');
+    setFilteredServices(services);
   };
 
   return (
@@ -71,23 +161,23 @@ export const ServiceDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex items-center gap-3 mb-6">
-        <Button style={{ backgroundColor: '#C72030' }} className="text-white">
+        <Button style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+        <Button style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
           <Upload className="w-4 h-4 mr-2" />
           Import
         </Button>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+        <Button style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
           <Upload className="w-4 h-4 mr-2" />
           Import Locations
         </Button>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+        <Button style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
           <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+        <Button style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
           <FileText className="w-4 h-4 mr-2" />
           Print QR
         </Button>
@@ -101,7 +191,12 @@ export const ServiceDashboard = () => {
               className="pl-10 w-64"
             />
           </div>
-          <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+          <Button 
+            variant="outline" 
+            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+            onClick={handleReset}
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
             Reset
           </Button>
         </div>
@@ -113,7 +208,7 @@ export const ServiceDashboard = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="w-12">
-                <input type="checkbox" />
+                <input type="checkbox" className="rounded border-gray-300" />
               </TableHead>
               <TableHead>View</TableHead>
               <TableHead>Service Name</TableHead>
@@ -137,7 +232,7 @@ export const ServiceDashboard = () => {
             {filteredServices.map((service) => (
               <TableRow key={service.id}>
                 <TableCell>
-                  <input type="checkbox" />
+                  <input type="checkbox" className="rounded border-gray-300" />
                 </TableCell>
                 <TableCell>
                   <Button variant="ghost" size="sm">
@@ -149,7 +244,7 @@ export const ServiceDashboard = () => {
                 <TableCell>{service.referenceNumber}</TableCell>
                 <TableCell>{service.category}</TableCell>
                 <TableCell>{service.group}</TableCell>
-                <TableCell>{service.serviceCode}</TableCell>
+                <TableCell className="font-mono text-sm">{service.serviceCode}</TableCell>
                 <TableCell>{service.uom}</TableCell>
                 <TableCell>{service.site}</TableCell>
                 <TableCell>{service.building}</TableCell>
@@ -158,33 +253,29 @@ export const ServiceDashboard = () => {
                 <TableCell>{service.floor}</TableCell>
                 <TableCell>{service.room}</TableCell>
                 <TableCell>
-                  <div className="flex items-center">
-                    <div className={`w-4 h-4 rounded-full ${service.status ? 'bg-green-500' : 'bg-gray-300'} mr-2`}></div>
-                    <span className={service.status ? 'text-green-600' : 'text-gray-500'}>
-                      {service.status ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
+                  <Switch
+                    checked={service.status}
+                    onCheckedChange={(checked) => handleStatusToggle(service.id, checked)}
+                  />
                 </TableCell>
                 <TableCell>{service.createdOn}</TableCell>
               </TableRow>
             ))}
+            {filteredServices.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={17} className="text-center py-8 text-gray-500">
+                  No service records found
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-center gap-2 p-4">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((page) => (
-            <Button
-              key={page}
-              variant={page === 1 ? "default" : "outline"}
-              size="sm"
-              style={page === 1 ? { backgroundColor: '#C72030' } : {}}
-              className={page === 1 ? "text-white" : ""}
-            >
-              {page}
-            </Button>
-          ))}
-          <Button variant="outline" size="sm">Last »</Button>
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-200 flex justify-center">
+          <div className="text-sm text-[#1a1a1a] opacity-70">
+            Powered by <span className="font-semibold">go</span><span className="text-[#C72030]">Phygital</span><span className="font-semibold">.work</span>
+          </div>
         </div>
       </div>
     </div>
