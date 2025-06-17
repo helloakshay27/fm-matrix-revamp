@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus, Upload, RefreshCw, Download, QrCode, Filter, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -62,7 +61,7 @@ const UtilitySTPDashboard = () => {
   ];
 
   const handleAdd = () => {
-    navigate('/utility/add-asset');
+    navigate('/utility/stp/add-asset');
   };
 
   const handleInActiveAssets = () => {

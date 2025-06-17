@@ -25,6 +25,7 @@ import { InActiveAssetsDashboard } from './pages/InActiveAssetsDashboard';
 import { UtilityWaterDashboard } from './pages/UtilityWaterDashboard';
 import { AddWaterAssetDashboard } from './pages/AddWaterAssetDashboard';
 import UtilitySTPDashboard from './pages/UtilitySTPDashboard';
+import AddSTPAssetDashboard from './pages/AddSTPAssetDashboard';
 
 // Import Visitors pages
 import { VisitorsDashboard } from './pages/VisitorsDashboard';
@@ -76,6 +77,7 @@ function App() {
               <Route path="/utility/water" element={<UtilityWaterDashboard />} />
               <Route path="/utility/water/add-asset" element={<AddWaterAssetDashboard />} />
               <Route path="/utility/stp" element={<UtilitySTPDashboard />} />
+              <Route path="/utility/stp/add-asset" element={<AddSTPAssetDashboard />} />
               <Route path="/utility/add-asset" element={<AddAssetDashboard />} />
               <Route path="/utility/inactive-assets" element={<InActiveAssetsDashboard />} />
               
