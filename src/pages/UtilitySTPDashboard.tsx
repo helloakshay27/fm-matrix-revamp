@@ -70,6 +70,7 @@ const UtilitySTPDashboard = () => {
   };
 
   const handleExportAll = () => {
+    // Create and download CSV file
     const csvContent = "data:text/csv;charset=utf-8," + 
       "Asset Name,Asset ID,Asset Code,Asset No.,Asset Status,Equipment Id,Site,Building,Wing,Floor,Area,Room,Meter Type,Asset Type\n" +
       mockData.map(item => 
@@ -158,8 +159,7 @@ const UtilitySTPDashboard = () => {
           <Button 
             onClick={() => setIsImportOpen(true)}
             variant="outline" 
-            style={{ borderColor: '#C72030', color: '#C72030' }}
-            className="bg-white hover:bg-[#C72030]/10"
+            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
           >
             <Upload className="w-4 h-4 mr-2" />
             Import
@@ -167,8 +167,7 @@ const UtilitySTPDashboard = () => {
           <Button 
             onClick={() => setIsUpdateOpen(true)}
             variant="outline" 
-            style={{ borderColor: '#C72030', color: '#C72030' }}
-            className="bg-white hover:bg-[#C72030]/10"
+            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Update
@@ -176,8 +175,7 @@ const UtilitySTPDashboard = () => {
           <Button 
             onClick={handleExportAll}
             variant="outline" 
-            style={{ borderColor: '#C72030', color: '#C72030' }}
-            className="bg-white hover:bg-[#C72030]/10"
+            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
           >
             <Download className="w-4 h-4 mr-2" />
             Export All
@@ -185,8 +183,7 @@ const UtilitySTPDashboard = () => {
           <Button 
             onClick={handlePrintQR}
             variant="outline" 
-            style={{ borderColor: '#C72030', color: '#C72030' }}
-            className="bg-white hover:bg-[#C72030]/10"
+            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
           >
             <QrCode className="w-4 h-4 mr-2" />
             Print QR
@@ -194,8 +191,7 @@ const UtilitySTPDashboard = () => {
           <Button 
             onClick={handleInActiveAssets}
             variant="outline" 
-            style={{ borderColor: '#C72030', color: '#C72030' }}
-            className="bg-white hover:bg-[#C72030]/10"
+            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
           >
             In-Active Assets
           </Button>
@@ -206,8 +202,7 @@ const UtilitySTPDashboard = () => {
           <Button 
             onClick={() => setIsFilterOpen(true)}
             variant="outline" 
-            style={{ borderColor: '#C72030', color: '#C72030' }}
-            className="bg-white hover:bg-[#C72030]/10"
+            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
           >
             <Filter className="w-4 h-4 mr-2" />
             Filters

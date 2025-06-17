@@ -44,6 +44,7 @@ export const UtilityWaterDashboard = () => {
   };
 
   const handleExportAll = () => {
+    // Create and download CSV file
     const csvContent = "data:text/csv;charset=utf-8," + 
       tableHeaders.join(",") + "\n" +
       "No data available in table";
@@ -113,8 +114,7 @@ export const UtilityWaterDashboard = () => {
         <Button 
           variant="outline"
           onClick={handleImport}
-          style={{ borderColor: '#C72030', color: '#C72030' }}
-          className="bg-white hover:bg-[#C72030]/10"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <Import className="w-4 h-4 mr-2" />
           Import
@@ -122,8 +122,7 @@ export const UtilityWaterDashboard = () => {
         <Button 
           variant="outline"
           onClick={handleUpdate}
-          style={{ borderColor: '#C72030', color: '#C72030' }}
-          className="bg-white hover:bg-[#C72030]/10"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <RefreshCw className="w-4 h-4 mr-2" />
           Update
@@ -131,8 +130,7 @@ export const UtilityWaterDashboard = () => {
         <Button 
           variant="outline"
           onClick={handleExportAll}
-          style={{ borderColor: '#C72030', color: '#C72030' }}
-          className="bg-white hover:bg-[#C72030]/10"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <FileDown className="w-4 h-4 mr-2" />
           Export All
@@ -140,8 +138,7 @@ export const UtilityWaterDashboard = () => {
         <Button 
           variant="outline"
           onClick={handlePrintQR}
-          style={{ borderColor: '#C72030', color: '#C72030' }}
-          className="bg-white hover:bg-[#C72030]/10"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <Printer className="w-4 h-4 mr-2" />
           Print QR
@@ -149,8 +146,7 @@ export const UtilityWaterDashboard = () => {
         <Button 
           variant="outline" 
           onClick={handleInActiveAssets}
-          style={{ borderColor: '#C72030', color: '#C72030' }}
-          className="bg-white hover:bg-[#C72030]/10"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           In-Active Assets
         </Button>
@@ -161,8 +157,7 @@ export const UtilityWaterDashboard = () => {
         <Button 
           variant="outline"
           onClick={() => setIsFilterOpen(true)}
-          style={{ borderColor: '#C72030', color: '#C72030' }}
-          className="bg-white hover:bg-[#C72030]/10"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <Filter className="w-4 h-4 mr-2" />
           Filters
