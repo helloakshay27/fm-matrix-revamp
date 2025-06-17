@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -69,7 +68,7 @@ export const AssetDashboard = () => {
   };
 
   const handleInActiveAssets = () => {
-    navigate('/utility/inactive-assets');
+    navigate('/maintenance/asset/inactive');
   };
 
   const handleExportAll = () => {

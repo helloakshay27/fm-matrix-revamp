@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -96,6 +97,7 @@ function App() {
               {/* Maintenance Routes */}
               <Route path="/maintenance/asset" element={<AssetDashboard />} />
               <Route path="/maintenance/asset/add" element={<AddAssetPage />} />
+              <Route path="/maintenance/asset/inactive" element={<InActiveAssetsDashboard />} />
               <Route path="/maintenance/amc" element={<AMCDashboard />} />
               <Route path="/maintenance/service" element={<ServiceDashboard />} />
               <Route path="/maintenance/attendance" element={<AttendanceDashboard />} />
@@ -112,7 +114,6 @@ function App() {
               <Route path="/utility/stp" element={<UtilitySTPDashboard />} />
               <Route path="/utility/stp/add-asset" element={<AddSTPAssetDashboard />} />
               <Route path="/utility/add-asset" element={<AddAssetDashboard />} />
-              <Route path="/utility/inactive-assets" element={<InActiveAssetsDashboard />} />
               
               {/* Security/Visitors Routes */}
               <Route path="/security/visitor" element={<VisitorsDashboard />} />

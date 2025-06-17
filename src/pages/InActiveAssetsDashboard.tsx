@@ -31,12 +31,14 @@ export const InActiveAssetsDashboard = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-[#f6f4ee] min-h-screen">
       <div className="mb-6">
-        <div>
-          <p className="text-[#1a1a1a] opacity-70 mb-2">Assets &gt; Asset List</p>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">IN-ACTIVE ASSET LIST</h1>
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+          <span>Assets</span>
+          <span>&gt;</span>
+          <span>Asset List</span>
         </div>
+        <h1 className="text-2xl font-bold text-[#1a1a1a] uppercase">IN-ACTIVE ASSET LIST</h1>
       </div>
       
       {/* Stats Cards */}
@@ -65,8 +67,7 @@ export const InActiveAssetsDashboard = () => {
       <div className="flex items-center gap-3 mb-6">
         <Button 
           onClick={handleExportAll}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
+          className="bg-[#C72030] hover:bg-[#A61B2A] text-white"
         >
           <Download className="w-4 h-4 mr-2" />
           Export All
@@ -74,7 +75,7 @@ export const InActiveAssetsDashboard = () => {
         <Button 
           onClick={() => setIsFilterOpen(true)}
           variant="outline" 
-          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <Filter className="w-4 h-4 mr-2" />
           Filters
@@ -86,7 +87,7 @@ export const InActiveAssetsDashboard = () => {
               placeholder="Search assets..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64"
+              className="pl-10 w-64 bg-white"
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
                   handleSearch();
@@ -96,8 +97,7 @@ export const InActiveAssetsDashboard = () => {
           </div>
           <Button 
             onClick={handleSearch}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
+            className="bg-[#C72030] hover:bg-[#A61B2A] text-white"
           >
             Go!
           </Button>
