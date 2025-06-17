@@ -9,14 +9,12 @@ import { Search, Plus, Import, RefreshCw, FileDown, Printer, Filter } from 'luci
 import { useNavigate } from 'react-router-dom';
 import { WaterFilterDialog } from '../components/WaterFilterDialog';
 import { BulkUploadDialog } from '../components/BulkUploadDialog';
-import { InActiveAssetsFilterDialog } from '../components/InActiveAssetsFilterDialog';
 
 export const UtilityWaterDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
-  const [isInActiveFilterOpen, setIsInActiveFilterOpen] = useState(false);
   const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
 
   const stats = [
@@ -107,7 +105,8 @@ export const UtilityWaterDashboard = () => {
       <div className="flex flex-wrap gap-3">
         <Button 
           onClick={handleAdd}
-          className="bg-green-600 hover:bg-green-700"
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:bg-[#C72030]/90"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add
@@ -115,7 +114,7 @@ export const UtilityWaterDashboard = () => {
         <Button 
           variant="outline"
           onClick={handleImport}
-          className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <Import className="w-4 h-4 mr-2" />
           Import
@@ -123,7 +122,7 @@ export const UtilityWaterDashboard = () => {
         <Button 
           variant="outline"
           onClick={handleUpdate}
-          className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <RefreshCw className="w-4 h-4 mr-2" />
           Update
@@ -131,7 +130,7 @@ export const UtilityWaterDashboard = () => {
         <Button 
           variant="outline"
           onClick={handleExportAll}
-          className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <FileDown className="w-4 h-4 mr-2" />
           Export All
@@ -139,7 +138,7 @@ export const UtilityWaterDashboard = () => {
         <Button 
           variant="outline"
           onClick={handlePrintQR}
-          className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <Printer className="w-4 h-4 mr-2" />
           Print QR
@@ -147,7 +146,7 @@ export const UtilityWaterDashboard = () => {
         <Button 
           variant="outline" 
           onClick={handleInActiveAssets}
-          className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           In-Active Assets
         </Button>
@@ -158,7 +157,7 @@ export const UtilityWaterDashboard = () => {
         <Button 
           variant="outline"
           onClick={() => setIsFilterOpen(true)}
-          className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
           <Filter className="w-4 h-4 mr-2" />
           Filters
@@ -180,7 +179,8 @@ export const UtilityWaterDashboard = () => {
           </div>
           <Button 
             onClick={handleSearch}
-            className="bg-green-600 hover:bg-green-700"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
           >
             Go
           </Button>
@@ -224,11 +224,6 @@ export const UtilityWaterDashboard = () => {
         open={isBulkUploadOpen} 
         onOpenChange={setIsBulkUploadOpen}
         title={uploadType === 'import' ? 'Import Water Assets' : 'Update Water Assets'}
-      />
-      
-      <InActiveAssetsFilterDialog 
-        isOpen={isInActiveFilterOpen} 
-        onClose={() => setIsInActiveFilterOpen(false)} 
       />
     </div>
   );
