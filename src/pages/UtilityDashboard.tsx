@@ -114,36 +114,36 @@ export const UtilityDashboard = () => {
         </Button>
         
         <Button 
-          variant="outline" 
           onClick={handleImport}
-          className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          style={{ backgroundColor: '#C72030' }}
+          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
         >
           <Download className="w-4 h-4" />
           Import
         </Button>
         
         <Button 
-          variant="outline" 
           onClick={handleUpdate}
-          className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          style={{ backgroundColor: '#C72030' }}
+          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
         >
           <Upload className="w-4 h-4" />
           Update
         </Button>
         
         <Button 
-          variant="outline" 
           onClick={handleExportAll}
-          className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          style={{ backgroundColor: '#C72030' }}
+          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
         >
           <Download className="w-4 h-4" />
           Export All
         </Button>
         
         <Button 
-          variant="outline" 
           onClick={handlePrintQR}
-          className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          style={{ backgroundColor: '#C72030' }}
+          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
         >
           <QrCode className="w-4 h-4" />
           Print QR
@@ -151,8 +151,8 @@ export const UtilityDashboard = () => {
         
         <Button 
           onClick={handleInActiveAssetsClick}
-          variant="outline" 
-          className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          style={{ backgroundColor: '#C72030' }}
+          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
         >
           In-Active Assets
         </Button>
@@ -161,9 +161,9 @@ export const UtilityDashboard = () => {
       {/* Action Buttons Row 2 */}
       <div className="flex flex-wrap gap-3 mb-6">
         <Button 
-          variant="outline" 
           onClick={handlePrintAllQR}
-          className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          style={{ backgroundColor: '#C72030' }}
+          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
         >
           <QrCode className="w-4 h-4" />
           Print All QR
@@ -171,8 +171,8 @@ export const UtilityDashboard = () => {
         
         <Button 
           onClick={() => setIsFilterOpen(true)}
-          variant="outline" 
-          className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          style={{ backgroundColor: '#C72030' }}
+          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
         >
           <Filter className="w-4 h-4" />
           Filters

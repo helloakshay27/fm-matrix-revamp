@@ -73,7 +73,7 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md [&>button]:hidden">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-semibold">{title}</DialogTitle>
@@ -123,8 +123,8 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
           <div className="flex gap-3">
             <Button 
               onClick={handleDownloadSample}
-              variant="outline"
-              className="flex-1"
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:bg-[#C72030]/90 flex-1"
             >
               Download Sample Format
             </Button>

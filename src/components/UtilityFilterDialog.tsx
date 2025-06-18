@@ -37,7 +37,7 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg [&>button]:hidden">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle>FILTER BY</DialogTitle>
@@ -188,9 +188,9 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
               Export
             </Button>
             <Button 
-              variant="outline" 
               onClick={handleReset}
-              className="flex-1"
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:bg-[#C72030]/90 text-white flex-1"
             >
               Reset
             </Button>
