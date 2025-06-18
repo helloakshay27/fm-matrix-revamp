@@ -14,7 +14,7 @@ import { SnaggingDashboard } from './pages/SnaggingDashboard';
 import { SnaggingDetailsPage } from './pages/SnaggingDetailsPage';
 
 // Import Ticket pages
-import { TicketListDashboard } from './pages/TicketListDashboard';
+import { TicketDashboard } from './pages/TicketDashboard';
 import { AddTicketDashboard } from './pages/AddTicketDashboard';
 import { TicketDetailsPage } from './pages/TicketDetailsPage';
 import { TicketFeedsPage } from './pages/TicketFeedsPage';
@@ -175,6 +175,13 @@ function App() {
               <Route path="/transitioning/fitout/checklist" element={<FitoutChecklistDashboard />} />
               <Route path="/transitioning/fitout/checklist/add" element={<AddChecklistDashboard />} />
               <Route path="/transitioning/fitout/violation" element={<FitoutViolationDashboard />} />
+              
+              {/* Ticket Routes */}
+              <Route path="/maintenance/ticket" element={<TicketDashboard />} />
+              <Route path="/maintenance/ticket/add" element={<AddTicketDashboard />} />
+              <Route path="/maintenance/ticket/details/:id" element={<TicketDetailsPage />} />
+              <Route path="/maintenance/ticket/:id/feeds" element={<TicketFeedsPage />} />
+              <Route path="/maintenance/ticket/:id/tag-vendor" element={<TicketTagVendorPage />} />
               
               {/* Maintenance Routes */}
               <Route path="/maintenance/asset" element={<AssetDashboard />} />

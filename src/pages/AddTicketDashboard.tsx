@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -59,7 +58,7 @@ export const AddTicketDashboard = () => {
     });
     // Here you would typically send the data to your backend
     alert('Ticket submitted successfully!');
-    navigate('/maintenance/tickets');
+    navigate('/maintenance/ticket');
   };
 
   const filteredUsers = onBehalfOf === 'occupant-user' 
@@ -75,7 +74,7 @@ export const AddTicketDashboard = () => {
         <div className="mb-6">
           <Button 
             variant="ghost" 
-            onClick={() => navigate('/maintenance/tickets')}
+            onClick={() => navigate('/maintenance/ticket')}
             className="mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -354,7 +353,7 @@ export const AddTicketDashboard = () => {
           </Button>
           <Button 
             variant="outline"
-            onClick={() => navigate('/maintenance/tickets')}
+            onClick={() => navigate('/maintenance/ticket')}
             className="px-8 py-2"
           >
             Reset

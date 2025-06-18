@@ -1,22 +1,33 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { X } from 'lucide-react';
 
-interface TicketsFilterDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onApply: (filters: any) => void;
+interface FilterData {
+  createdDate: string;
+  category: string;
+  subcategory: string;
+  department: string;
+  site: string;
+  unit: string;
+  status: string;
+  adminPriority: string;
+  createdBy: string;
+  assignedTo: string;
 }
 
-export const TicketsFilterDialog: React.FC<TicketsFilterDialogProps> = ({
-  open,
-  onOpenChange,
-  onApply,
-}) => {
-  const [filters, setFilters] = useState({
+interface TicketsFilterDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onApplyFilters: (filters: FilterData) => void;
+}
+
+export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: TicketsFilterDialogProps) => {
+  const [filters, setFilters] = useState<FilterData>({
     createdDate: '',
     category: '',
     subcategory: '',
@@ -29,10 +40,11 @@ export const TicketsFilterDialog: React.FC<TicketsFilterDialogProps> = ({
     assignedTo: ''
   });
 
-  const handleApply = () => {
-    console.log('Applying Tickets filters:', filters);
-    onApply(filters);
-    onOpenChange(false);
+  const handleFilterChange = (key: keyof FilterData, value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [key]: value
+    }));
   };
 
   const handleReset = () => {
@@ -50,160 +62,158 @@ export const TicketsFilterDialog: React.FC<TicketsFilterDialogProps> = ({
     });
   };
 
+  const handleApply = () => {
+    onApplyFilters(filters);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader className="flex flex-row items-center justify-between">
+          <DialogTitle className="text-xl font-bold">FILTER BY</DialogTitle>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <X className="w-4 h-4" />
+          </Button>
         </DialogHeader>
-        
-        <div className="space-y-4">
-          {/* First Row */}
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Select Created Date</label>
-              <Input
-                type="date"
-                placeholder="Select Created Date"
-                value={filters.createdDate}
-                onChange={(e) => setFilters({ ...filters, createdDate: e.target.value })}
-                className="text-sm"
-              />
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium mb-2 block">Select Category</label>
-              <Select value={filters.category} onValueChange={(value) => setFilters({ ...filters, category: value })}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Select Category Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fire-system">FIRE SYSTEM</SelectItem>
-                  <SelectItem value="air-conditioner">Air Conditioner</SelectItem>
-                  <SelectItem value="cleaning">Cleaning</SelectItem>
-                  <SelectItem value="electrical">Electrical</SelectItem>
-                  <SelectItem value="printer">Printer</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
-            <div>
-              <label className="text-sm font-medium mb-2 block">Select Subcategory</label>
-              <Select value={filters.subcategory} onValueChange={(value) => setFilters({ ...filters, subcategory: value })}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Select SubCategory" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fire">fire</SelectItem>
-                  <SelectItem value="dentry">dentry</SelectItem>
-                  <SelectItem value="test">test</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <div className="grid grid-cols-3 gap-4 py-4">
+          {/* Row 1 */}
+          <div className="space-y-2">
+            <Label>Select Created Date</Label>
+            <Input
+              type="date"
+              value={filters.createdDate}
+              onChange={(e) => handleFilterChange('createdDate', e.target.value)}
+              placeholder="Select Created Date"
+            />
           </div>
 
-          {/* Second Row */}
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Select Department</label>
-              <Select value={filters.department} onValueChange={(value) => setFilters({ ...filters, department: value })}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Select Department" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tech">Tech</SelectItem>
-                  <SelectItem value="operations">Operations</SelectItem>
-                  <SelectItem value="hr">HR</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-2 block">Select Site</label>
-              <Select value={filters.site} onValueChange={(value) => setFilters({ ...filters, site: value })}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Select Site" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="lockated">Lockated</SelectItem>
-                  <SelectItem value="site-2">Site 2</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-2 block">Select Unit</label>
-              <Select value={filters.unit} onValueChange={(value) => setFilters({ ...filters, unit: value })}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Select Unit" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unit-1">Unit 1</SelectItem>
-                  <SelectItem value="unit-2">Unit 2</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label>Select Category</Label>
+            <Select value={filters.category} onValueChange={(value) => handleFilterChange('category', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Category Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="air-conditioner">Air Conditioner</SelectItem>
+                <SelectItem value="fire-system">FIRE SYSTEM</SelectItem>
+                <SelectItem value="cleaning">Cleaning</SelectItem>
+                <SelectItem value="electrical">Electrical</SelectItem>
+                <SelectItem value="printer">Printer</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Third Row */}
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Select Status</label>
-              <Select value={filters.status} onValueChange={(value) => setFilters({ ...filters, status: value })}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Select Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="open">Open</SelectItem>
-                  <SelectItem value="closed">Closed</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-2 block">Select Admin Priority</label>
-              <Select value={filters.adminPriority} onValueChange={(value) => setFilters({ ...filters, adminPriority: value })}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Select Admin Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="p1">P1</SelectItem>
-                  <SelectItem value="p2">P2</SelectItem>
-                  <SelectItem value="p3">P3</SelectItem>
-                  <SelectItem value="p4">P4</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-2 block">Created By</label>
-              <Input
-                placeholder="Created by"
-                value={filters.createdBy}
-                onChange={(e) => setFilters({ ...filters, createdBy: e.target.value })}
-                className="text-sm"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label>Select Subcategory</Label>
+            <Select value={filters.subcategory} onValueChange={(value) => handleFilterChange('subcategory', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select SubCategory" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="test">test</SelectItem>
+                <SelectItem value="na">NA</SelectItem>
+                <SelectItem value="fire">fire</SelectItem>
+                <SelectItem value="dentry">dentry</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Fourth Row */}
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Assigned To</label>
-              <Input
-                placeholder="Assigned To"
-                value={filters.assignedTo}
-                onChange={(e) => setFilters({ ...filters, assignedTo: e.target.value })}
-                className="text-sm"
-              />
-            </div>
+          {/* Row 2 */}
+          <div className="space-y-2">
+            <Label>Select Department</Label>
+            <Select value={filters.department} onValueChange={(value) => handleFilterChange('department', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Department" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="technician">Technician</SelectItem>
+                <SelectItem value="maintenance">Maintenance</SelectItem>
+                <SelectItem value="facility">Facility</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Select Site</Label>
+            <Select value={filters.site} onValueChange={(value) => handleFilterChange('site', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Site" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="lockated">Lockated</SelectItem>
+                <SelectItem value="mumbai">Mumbai</SelectItem>
+                <SelectItem value="pune">Pune</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Select Unit</Label>
+            <Select value={filters.unit} onValueChange={(value) => handleFilterChange('unit', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Unit" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unit1">Unit 1</SelectItem>
+                <SelectItem value="unit2">Unit 2</SelectItem>
+                <SelectItem value="unit3">Unit 3</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Row 3 */}
+          <div className="space-y-2">
+            <Label>Select Status</Label>
+            <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="open">Open</SelectItem>
+                <SelectItem value="in-progress">In Progress</SelectItem>
+                <SelectItem value="closed">Closed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Select Admin Priority</Label>
+            <Select value={filters.adminPriority} onValueChange={(value) => handleFilterChange('adminPriority', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Admin Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="p1">P1</SelectItem>
+                <SelectItem value="p2">P2</SelectItem>
+                <SelectItem value="p3">P3</SelectItem>
+                <SelectItem value="p4">P4</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Created By</Label>
+            <Input
+              value={filters.createdBy}
+              onChange={(e) => handleFilterChange('createdBy', e.target.value)}
+              placeholder="Created by"
+            />
+          </div>
+
+          {/* Row 4 */}
+          <div className="space-y-2">
+            <Label>Assigned To</Label>
+            <Input
+              value={filters.assignedTo}
+              onChange={(e) => handleFilterChange('assignedTo', e.target.value)}
+              placeholder="Assigned To"
+            />
           </div>
         </div>
 
-        <div className="flex gap-3 pt-4">
+        <div className="flex justify-center gap-3 pt-4">
           <Button 
             onClick={handleApply}
             style={{ backgroundColor: '#C72030' }}
@@ -212,8 +222,8 @@ export const TicketsFilterDialog: React.FC<TicketsFilterDialogProps> = ({
             Apply
           </Button>
           <Button 
-            onClick={handleReset}
             variant="outline"
+            onClick={handleReset}
             className="px-8"
           >
             Reset
