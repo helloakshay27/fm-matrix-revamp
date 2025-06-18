@@ -1,9 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Filter, FileCheck, Clock, HourglassIcon, CheckCircle, XCircle, RotateCcw, Archive } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { PermitFilterModal } from '@/components/PermitFilterModal';
 
 const statsData = [
   { label: 'Total Permits', count: 0, icon: FileCheck, color: 'bg-purple-500' },
@@ -17,6 +19,25 @@ const statsData = [
 ];
 
 export const PermitListDashboard = () => {
+  const navigate = useNavigate();
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+
+  const handleAddPermit = () => {
+    navigate('/maintenance/permit/add');
+  };
+
+  const handleFilterApply = (filterData: any) => {
+    console.log('Applied filters:', filterData);
+    // Apply the filters to the data
+  };
+
+  const handleStatsCardClick = (label: string) => {
+    setSelectedFilter(label);
+    console.log('Filter by:', label);
+    // Filter the table data based on the selected card
+  };
+
   return (
     <div className="flex-1 p-6 bg-white min-h-screen">
       {/* Breadcrumb */}
@@ -32,7 +53,13 @@ export const PermitListDashboard = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         {statsData.map((stat, index) => (
-          <Card key={index} className="relative overflow-hidden">
+          <Card 
+            key={index} 
+            className={`relative overflow-hidden cursor-pointer transition-all hover:shadow-lg ${
+              selectedFilter === stat.label ? 'ring-2 ring-purple-500' : ''
+            }`}
+            onClick={() => handleStatsCardClick(stat.label)}
+          >
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className={`p-2 rounded-lg ${stat.color}`}>
@@ -52,11 +79,18 @@ export const PermitListDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex gap-4 mb-6">
-        <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+        <Button 
+          onClick={handleAddPermit}
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:opacity-90"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
-        <Button variant="outline">
+        <Button 
+          onClick={() => setShowFilterModal(true)}
+          variant="outline"
+        >
           <Filter className="w-4 h-4 mr-2" />
           Filter
         </Button>
@@ -97,6 +131,12 @@ export const PermitListDashboard = () => {
           </TableBody>
         </Table>
       </div>
+
+      <PermitFilterModal
+        isOpen={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={handleFilterApply}
+      />
     </div>
   );
 };
