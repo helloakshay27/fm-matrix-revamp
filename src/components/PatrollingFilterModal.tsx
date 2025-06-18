@@ -88,15 +88,13 @@ export const PatrollingFilterModal = ({ isOpen, onClose }: PatrollingFilterModal
 
           <div className="flex justify-between pt-6">
             <Button 
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:bg-[#C72030]/90 text-white px-8"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 border-0"
               onClick={onClose}
             >
               Submit
             </Button>
             <Button 
-              variant="outline" 
-              className="px-8"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 border-0"
               onClick={onClose}
             >
               Reset

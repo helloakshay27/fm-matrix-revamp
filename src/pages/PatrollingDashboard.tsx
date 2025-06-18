@@ -28,32 +28,28 @@ export const PatrollingDashboard = () => {
         <div className="flex gap-3 mb-6">
           <Button 
             onClick={() => setIsAddModalOpen(true)}
-            style={{ backgroundColor: '#C72030' }}
-            className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded flex items-center gap-2"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded flex items-center gap-2 border-0"
           >
             <Plus className="w-4 h-4" />
             Add
           </Button>
           <Button 
             onClick={() => setIsBulkUploadOpen(true)}
-            variant="outline" 
-            className="border-gray-300 text-gray-700 px-4 py-2 rounded flex items-center gap-2 bg-white hover:bg-gray-50"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded flex items-center gap-2 border-0"
           >
             <Upload className="w-4 h-4" />
             Import
           </Button>
           <Button 
             onClick={() => setIsExportOpen(true)}
-            variant="outline" 
-            className="border-gray-300 text-gray-700 px-4 py-2 rounded flex items-center gap-2 bg-white hover:bg-gray-50"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded flex items-center gap-2 border-0"
           >
             <Download className="w-4 h-4" />
             Export
           </Button>
           <Button 
             onClick={() => setIsFilterOpen(true)}
-            variant="outline" 
-            className="border-gray-300 text-gray-700 px-4 py-2 rounded flex items-center gap-2 bg-white hover:bg-gray-50"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded flex items-center gap-2 border-0"
           >
             <Filter className="w-4 h-4" />
             Filters
