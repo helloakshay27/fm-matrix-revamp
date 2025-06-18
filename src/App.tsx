@@ -99,6 +99,9 @@ import { GVehiclesDashboard } from './pages/GVehiclesDashboard';
 // Import GVehicleOutDashboard
 import { GVehicleOutDashboard } from './pages/GVehicleOutDashboard';
 
+// Import Gate Pass pages
+import { GatePassDashboard } from './pages/GatePassDashboard';
+
 // Import Space Management pages
 import { SpaceManagementBookingsDashboard } from './pages/SpaceManagementBookingsDashboard';
 import { SpaceManagementSeatRequestsDashboard } from './pages/SpaceManagementSeatRequestsDashboard';
@@ -208,6 +211,7 @@ function App() {
               <Route path="/utility/add-asset" element={<AddAssetDashboard />} />
               
               {/* Security/Visitors Routes */}
+              <Route path="/security/gate-pass" element={<GatePassDashboard />} />
               <Route path="/security/visitor" element={<VisitorsDashboard />} />
               <Route path="/security/visitor/history" element={<VisitorsHistoryDashboard />} />
               <Route path="/security/staff" element={<StaffsDashboard />} />
