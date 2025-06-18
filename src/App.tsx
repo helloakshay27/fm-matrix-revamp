@@ -107,6 +107,7 @@ import { SpaceManagementSeatRequestsDashboard } from './pages/SpaceManagementSea
 // Import Seat Setup pages
 import { SeatSetupDashboard } from './pages/setup/SeatSetupDashboard';
 import { AddSeatSetupDashboard } from './pages/setup/AddSeatSetupDashboard';
+import { EditSeatSetupDashboard } from './pages/setup/EditSeatSetupDashboard';
 import { SeatTypeDashboard } from './pages/SeatTypeDashboard';
 
 // Import Shift page
@@ -225,6 +226,7 @@ function App() {
               <Route path="/vas/space-management/setup/seat-type" element={<SeatTypeDashboard />} />
               <Route path="/vas/space-management/setup/seat-setup" element={<SeatSetupDashboard />} />
               <Route path="/vas/space-management/setup/seat-setup/add" element={<AddSeatSetupDashboard />} />
+              <Route path="/vas/space-management/setup/seat-setup/edit/:id" element={<EditSeatSetupDashboard />} />
               <Route path="/vas/space-management/setup/shift" element={<ShiftDashboard />} />
               <Route path="/vas/space-management/setup/roaster" element={<UserRoastersDashboard />} />
               <Route path="/vas/space-management/setup/roaster/add" element={<CreateRosterTemplateDashboard />} />
