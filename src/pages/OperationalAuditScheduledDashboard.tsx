@@ -1,10 +1,12 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
 
 export const OperationalAuditScheduledDashboard = () => {
+  const navigate = useNavigate();
+
   // Sample data matching the image
   const scheduleData = [
     { id: "11600", activityName: "clean", noOfAssociation: 1, task: "No", taskAssignedTo: "", createdOn: "02/01/2025, 01:41 PM" },
@@ -20,6 +22,10 @@ export const OperationalAuditScheduledDashboard = () => {
     { id: "8935", activityName: "Engineer audit", noOfAssociation: 0, task: "Yes", taskAssignedTo: "", createdOn: "13/02/2023, 05:14 PM" },
   ];
 
+  const handleAddSchedule = () => {
+    navigate('/maintenance/audit/operational/scheduled/add');
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -31,6 +37,7 @@ export const OperationalAuditScheduledDashboard = () => {
       
       <div className="mb-4">
         <Button 
+          onClick={handleAddSchedule}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:opacity-90 flex items-center gap-2"
         >

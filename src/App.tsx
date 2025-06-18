@@ -153,6 +153,7 @@ import { AddPermitPage } from './pages/AddPermitPage';
 
 // Import Operational Audit pages
 import { OperationalAuditScheduledDashboard } from './pages/OperationalAuditScheduledDashboard';
+import { AddOperationalAuditSchedulePage } from './pages/AddOperationalAuditSchedulePage';
 import { OperationalAuditConductedDashboard } from './pages/OperationalAuditConductedDashboard';
 import { OperationalAuditMasterChecklistsDashboard } from './pages/OperationalAuditMasterChecklistsDashboard';
 
