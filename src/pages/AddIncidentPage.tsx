@@ -38,18 +38,31 @@ export const AddIncidentPage = () => {
 
   const handleSubmit = () => {
     console.log('Incident submitted:', formData);
-    navigate('/maintenance/safety/incident');
+    navigate('/maintenance/incident');
   };
 
   const handleFileUpload = () => {
     console.log('File upload clicked');
+    // Create file input element
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.multiple = true;
+    fileInput.accept = '.jpg,.jpeg,.png,.pdf,.doc,.docx';
+    fileInput.onchange = (e) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (files) {
+        console.log('Files selected:', Array.from(files).map(f => f.name));
+        // Handle file upload logic here
+      }
+    };
+    fileInput.click();
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="flex-1 p-4 bg-white min-h-screen">
       {/* Header */}
-      <div className="mb-6">
-        <nav className="flex items-center text-sm text-gray-600 mb-4">
+      <div className="mb-4">
+        <nav className="flex items-center text-sm text-gray-600 mb-3">
           <span>Safety</span>
           <span className="mx-2">{'>'}</span>
           <span>Incident</span>
@@ -59,20 +72,21 @@ export const AddIncidentPage = () => {
         <h1 className="text-2xl font-bold text-gray-900">ADD INCIDENT</h1>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4 max-w-full">
         {/* Basic Information */}
-        <Card>
-          <CardHeader>
+        <Card className="w-full">
+          <CardHeader className="pb-4">
             <CardTitle>Basic Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Incident Date*</Label>
                 <Input
                   type="date"
                   value={formData.incidentDate}
                   onChange={(e) => handleInputChange('incidentDate', e.target.value)}
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
@@ -81,6 +95,7 @@ export const AddIncidentPage = () => {
                   type="time"
                   value={formData.incidentTime}
                   onChange={(e) => handleInputChange('incidentTime', e.target.value)}
+                  className="w-full"
                 />
               </div>
             </div>
@@ -91,6 +106,7 @@ export const AddIncidentPage = () => {
                 value={formData.location}
                 onChange={(e) => handleInputChange('location', e.target.value)}
                 placeholder="Enter incident location"
+                className="w-full"
               />
             </div>
             
@@ -100,23 +116,23 @@ export const AddIncidentPage = () => {
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 placeholder="Describe the incident in detail"
-                className="min-h-[100px]"
+                className="min-h-[120px] w-full"
               />
             </div>
           </CardContent>
         </Card>
 
         {/* Incident Classification */}
-        <Card>
-          <CardHeader>
+        <Card className="w-full">
+          <CardHeader className="pb-4">
             <CardTitle>Incident Classification</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Incident Type*</Label>
                 <Select value={formData.incidentType} onValueChange={(value) => handleInputChange('incidentType', value)}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select incident type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -133,7 +149,7 @@ export const AddIncidentPage = () => {
               <div className="space-y-2">
                 <Label>Severity Level*</Label>
                 <Select value={formData.severity} onValueChange={(value) => handleInputChange('severity', value)}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select severity" />
                   </SelectTrigger>
                   <SelectContent>
@@ -149,18 +165,19 @@ export const AddIncidentPage = () => {
         </Card>
 
         {/* People Involved */}
-        <Card>
-          <CardHeader>
+        <Card className="w-full">
+          <CardHeader className="pb-4">
             <CardTitle>People Involved</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Reported By*</Label>
                 <Input
                   value={formData.reportedBy}
                   onChange={(e) => handleInputChange('reportedBy', e.target.value)}
                   placeholder="Name of person reporting"
+                  className="w-full"
                 />
               </div>
               
@@ -170,6 +187,7 @@ export const AddIncidentPage = () => {
                   value={formData.witnessName}
                   onChange={(e) => handleInputChange('witnessName', e.target.value)}
                   placeholder="Name of witness (if any)"
+                  className="w-full"
                 />
               </div>
             </div>
@@ -177,12 +195,12 @@ export const AddIncidentPage = () => {
         </Card>
 
         {/* Incident Details */}
-        <Card>
-          <CardHeader>
+        <Card className="w-full">
+          <CardHeader className="pb-4">
             <CardTitle>Incident Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label>Was there any injury?*</Label>
               <RadioGroup value={formData.injuryOccurred} onValueChange={(value) => handleInputChange('injuryOccurred', value)}>
                 <div className="flex items-center space-x-2">
@@ -196,7 +214,7 @@ export const AddIncidentPage = () => {
               </RadioGroup>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label>Property Damage*</Label>
               <RadioGroup value={formData.propertyDamage} onValueChange={(value) => handleInputChange('propertyDamage', value)}>
                 <div className="flex items-center space-x-2">
@@ -216,15 +234,15 @@ export const AddIncidentPage = () => {
                 value={formData.immediateAction}
                 onChange={(e) => handleInputChange('immediateAction', e.target.value)}
                 placeholder="Describe immediate actions taken"
-                className="min-h-[80px]"
+                className="min-h-[100px] w-full"
               />
             </div>
           </CardContent>
         </Card>
 
         {/* Investigation */}
-        <Card>
-          <CardHeader>
+        <Card className="w-full">
+          <CardHeader className="pb-4">
             <CardTitle>Investigation</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -234,7 +252,7 @@ export const AddIncidentPage = () => {
                 value={formData.rootCause}
                 onChange={(e) => handleInputChange('rootCause', e.target.value)}
                 placeholder="Identify the root cause of the incident"
-                className="min-h-[80px]"
+                className="min-h-[100px] w-full"
               />
             </div>
             
@@ -244,21 +262,21 @@ export const AddIncidentPage = () => {
                 value={formData.preventiveMeasures}
                 onChange={(e) => handleInputChange('preventiveMeasures', e.target.value)}
                 placeholder="Recommend preventive measures"
-                className="min-h-[80px]"
+                className="min-h-[100px] w-full"
               />
             </div>
           </CardContent>
         </Card>
 
         {/* File Upload */}
-        <Card>
-          <CardHeader>
+        <Card className="w-full">
+          <CardHeader className="pb-4">
             <CardTitle>Attachments</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
               <Upload className="mx-auto h-12 w-12 text-gray-400" />
-              <div className="mt-2">
+              <div className="mt-3">
                 <Button
                   variant="outline"
                   onClick={handleFileUpload}
@@ -267,18 +285,18 @@ export const AddIncidentPage = () => {
                   Choose Files
                 </Button>
               </div>
-              <p className="text-sm text-gray-500 mt-2">
-                Upload photos, documents, or other relevant files
+              <p className="text-sm text-gray-500 mt-3">
+                Upload photos, documents, or other relevant files (JPG, PNG, PDF, DOC, DOCX)
               </p>
             </div>
           </CardContent>
         </Card>
 
         {/* Submit Buttons */}
-        <div className="flex gap-3 pt-6">
+        <div className="flex gap-3 pt-4 pb-6">
           <Button
             variant="outline"
-            onClick={() => navigate('/maintenance/safety/incident')}
+            onClick={() => navigate('/maintenance/incident')}
             className="px-8"
           >
             Cancel
