@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -42,6 +43,8 @@ export const EditSeatSetupDashboard = () => {
   const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [selectedFloor, setSelectedFloor] = useState<string>("");
   const [activeTab, setActiveTab] = useState("seat-configuration");
+  const [selectedSeatType, setSelectedSeatType] = useState<string>("Angular Ws");
+  const [seatCountToAdd, setSeatCountToAdd] = useState<string>("");
   
   const [seatTypes, setSeatTypes] = useState<SeatTypeConfig[]>([
     { name: "Angular Ws", totalSeats: "", reservedSeats: "" },
@@ -242,6 +245,49 @@ export const EditSeatSetupDashboard = () => {
     setExpandedSeatTypes(newExpanded);
   };
 
+  const handleSeatTypeClick = (seatTypeName: string) => {
+    setSelectedSeatType(seatTypeName);
+  };
+
+  const handleAddSeats = () => {
+    const count = parseInt(seatCountToAdd);
+    if (!count || count <= 0) return;
+
+    // Update the seat types table
+    const updatedSeatTypes = seatTypes.map(seatType => {
+      if (seatType.name === selectedSeatType) {
+        const currentTotal = parseInt(seatType.totalSeats) || 0;
+        return {
+          ...seatType,
+          totalSeats: (currentTotal + count).toString()
+        };
+      }
+      return seatType;
+    });
+    setSeatTypes(updatedSeatTypes);
+
+    // Update seat type assignments
+    const updatedAssignments = seatTypeAssignments.map(assignment => {
+      if (assignment.name === selectedSeatType) {
+        const currentTotal = assignment.total;
+        const newSeats = [];
+        for (let i = 1; i <= count; i++) {
+          newSeats.push(`S${currentTotal + i}`);
+        }
+        return {
+          ...assignment,
+          total: currentTotal + count,
+          selectedSeats: [...assignment.selectedSeats, ...newSeats]
+        };
+      }
+      return assignment;
+    });
+    setSeatTypeAssignments(updatedAssignments);
+
+    // Clear the input
+    setSeatCountToAdd("");
+  };
+
   const generateSeatGrid = (seatType: SeatTypeAssignment) => {
     if (seatType.total === 0 || seatType.selectedSeats.length === 0) return null;
     
@@ -261,6 +307,14 @@ export const EditSeatSetupDashboard = () => {
         </div>
       </div>
     );
+  };
+
+  const getSelectedSeatTypeData = () => {
+    return seatTypes.find(st => st.name === selectedSeatType);
+  };
+
+  const getSelectedSeatTypeAssignment = () => {
+    return seatTypeAssignments.find(sta => sta.name === selectedSeatType);
   };
 
   const handleProceed = () => {
@@ -343,7 +397,13 @@ export const EditSeatSetupDashboard = () => {
               <div className="flex-1 bg-white rounded-lg border shadow-sm p-6">
                 <div className="space-y-4">
                   {seatTypes.map((seatType, index) => (
-                    <div key={index} className="flex items-center gap-4 py-2 border-b border-gray-100">
+                    <div 
+                      key={index} 
+                      className={`flex items-center gap-4 py-2 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
+                        selectedSeatType === seatType.name ? 'bg-blue-50' : ''
+                      }`}
+                      onClick={() => handleSeatTypeClick(seatType.name)}
+                    >
                       <div className="w-40">
                         <span className="text-sm font-medium text-gray-700">{seatType.name}</span>
                       </div>
@@ -353,6 +413,7 @@ export const EditSeatSetupDashboard = () => {
                           value={seatType.totalSeats}
                           onChange={(e) => updateSeatType(index, 'totalSeats', e.target.value)}
                           className="w-32"
+                          onClick={(e) => e.stopPropagation()}
                         />
                       </div>
                       <div className="flex-1">
@@ -361,6 +422,7 @@ export const EditSeatSetupDashboard = () => {
                           value={seatType.reservedSeats}
                           onChange={(e) => updateSeatType(index, 'reservedSeats', e.target.value)}
                           className="w-32"
+                          onClick={(e) => e.stopPropagation()}
                         />
                       </div>
                     </div>
@@ -368,20 +430,45 @@ export const EditSeatSetupDashboard = () => {
                 </div>
               </div>
 
-              {/* Right Side - Angular Ws Preview */}
+              {/* Right Side - Dynamic Seat Type Preview */}
               <div className="w-80 bg-white rounded-lg border shadow-sm p-6">
                 <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-gray-800">Angular Ws</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">{selectedSeatType}</h3>
                   <p className="text-sm text-gray-600">Common Seats</p>
                 </div>
                 
                 <div className="space-y-4">
-                  <div>
+                  {/* Show existing seats if any */}
+                  {getSelectedSeatTypeAssignment()?.selectedSeats.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                      {getSelectedSeatTypeAssignment()?.selectedSeats.map((seat, idx) => (
+                        <Button
+                          key={idx}
+                          variant="outline"
+                          size="sm"
+                          className="h-10 text-xs border-orange-300 bg-orange-50 text-orange-700"
+                        >
+                          {seat}
+                          <span className="ml-1 text-red-500 cursor-pointer">×</span>
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="No. of Seats"
+                      value={seatCountToAdd}
+                      onChange={(e) => setSeatCountToAdd(e.target.value)}
+                      type="number"
+                      className="flex-1"
+                    />
                     <Button 
-                      className="bg-[#C72030] hover:bg-[#C72030]/90 text-white w-full"
+                      onClick={handleAddSeats}
+                      className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
                       size="sm"
                     >
-                      No. of Seats Add
+                      Add
                     </Button>
                   </div>
                   
@@ -391,7 +478,7 @@ export const EditSeatSetupDashboard = () => {
                       <div className="space-y-2">
                         <div className="text-gray-400">Drop seats here</div>
                         <Button 
-                          className="bg-[#C72030] hover:bg-[#C7030]/90 text-white"
+                          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
                           size="sm"
                         >
                           Add
