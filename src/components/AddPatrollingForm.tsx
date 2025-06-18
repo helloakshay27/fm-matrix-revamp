@@ -181,7 +181,11 @@ export const AddPatrollingForm = ({ onClose }: AddPatrollingFormProps) => {
                     variant={selectedHours.includes(hour) ? "default" : "outline"}
                     size="sm"
                     onClick={() => handleHourToggle(hour)}
-                    className="h-8 text-xs"
+                    className={`h-8 text-xs ${
+                      selectedHours.includes(hour) 
+                        ? 'bg-[#C72030] hover:bg-[#C72030]/90 text-white border-[#C72030]' 
+                        : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+                    }`}
                   >
                     {hour}
                   </Button>
@@ -196,7 +200,7 @@ export const AddPatrollingForm = ({ onClose }: AddPatrollingFormProps) => {
       <div className="flex justify-end pt-4">
         <Button 
           style={{ backgroundColor: '#C72030' }}
-          className="hover:bg-[#C72030]/90 text-white px-8"
+          className="hover:bg-[#C72030]/90 text-white px-8 border-0"
           onClick={onClose}
         >
           Submit

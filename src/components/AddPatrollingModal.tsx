@@ -11,7 +11,7 @@ interface AddPatrollingModalProps {
 export const AddPatrollingModal = ({ isOpen, onClose }: AddPatrollingModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white [&>button]:hidden">
         <DialogHeader>
           <DialogTitle>Add</DialogTitle>
         </DialogHeader>
