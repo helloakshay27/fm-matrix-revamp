@@ -8,59 +8,84 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Upload } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 export const CopySchedulePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  
+  const [createNewToggle, setCreateNewToggle] = useState(false);
+  const [createTicketToggle, setCreateTicketToggle] = useState(false);
+  const [selectedAssignTo, setSelectedAssignTo] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
 
-  // Basic Info state
+  // Basic Info state - pre-filled from original schedule
   const [type, setType] = useState('PPM');
   const [activityName, setActivityName] = useState('meter reading');
   const [description, setDescription] = useState('');
   const [scheduleFor, setScheduleFor] = useState('Asset');
 
-  // Task state
-  const [group, setGroup] = useState('');
-  const [subGroup, setSubGroup] = useState('');
-
   // Schedule state
   const [checklistType, setChecklistType] = useState('Individual');
-  const [asset, setAsset] = useState('Energy Meter 1[584931186764c2f8b565]');
+  const [asset, setAsset] = useState('');
   const [assignTo, setAssignTo] = useState('Users');
-  const [selectUser, setSelectUser] = useState('Ashiq Rasul');
   const [scanType, setScanType] = useState('');
   const [planDuration, setPlanDuration] = useState('Day');
-  const [planDurationField, setPlanDurationField] = useState('1');
+  const [planValue, setPlanValue] = useState('1');
   const [priority, setPriority] = useState('');
   const [emailTriggerRule, setEmailTriggerRule] = useState('');
   const [supervisors, setSupervisors] = useState('');
   const [category, setCategory] = useState('Technical');
-  const [submissionTime, setSubmissionTime] = useState('');
+  const [submissionType, setSubmissionType] = useState('');
+  const [submissionTimeValue, setSubmissionTimeValue] = useState('');
   const [graceTime, setGraceTime] = useState('Day');
-  const [graceTimeField, setGraceTimeField] = useState('3');
+  const [graceTimeValue, setGraceTimeValue] = useState('3');
   const [lockOverdueTask, setLockOverdueTask] = useState('');
   const [frequency, setFrequency] = useState('');
-  const [cronExpression, setCronExpression] = useState('0 0 * * *');
-  const [startFrom, setStartFrom] = useState('01/05/2025');
+  const [startTime, setStartTime] = useState('01/05/2025');
   const [endAt, setEndAt] = useState('31/05/2025');
   const [selectSupplier, setSelectSupplier] = useState('');
 
-  // Cron settings state
+  // Cron form state
   const [cronType, setCronType] = useState('Minutes');
-  const [specificMinute, setSpecificMinute] = useState(false);
-  const [everyMinute, setEveryMinute] = useState(false);
-  const [selectedMinutes, setSelectedMinutes] = useState([]);
-  const [selectedHours, setSelectedHours] = useState([]);
-  const [selectedDays, setSelectedDays] = useState([]);
+  const [selectedMinutes, setSelectedMinutes] = useState<number[]>([]);
+  const [selectedHours, setSelectedHours] = useState<number[]>([]);
+  const [selectedDays, setSelectedDays] = useState<number[]>([]);
+  const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
+  const [betweenMinuteStart, setBetweenMinuteStart] = useState('00');
+  const [betweenMinuteEnd, setBetweenMinuteEnd] = useState('00');
+  const [cronExpression, setCronExpression] = useState('0 0 ? * *');
 
-  const handleAddSection = () => {
-    console.log('Add Section clicked');
+  const handleMinuteToggle = (minute: number) => {
+    setSelectedMinutes(prev => 
+      prev.includes(minute) 
+        ? prev.filter(m => m !== minute)
+        : [...prev, minute]
+    );
   };
 
-  const handleAddQuestion = () => {
-    console.log('Add Question clicked');
+  const handleHourToggle = (hour: number) => {
+    setSelectedHours(prev => 
+      prev.includes(hour) 
+        ? prev.filter(h => h !== hour)
+        : [...prev, hour]
+    );
+  };
+
+  const handleDayToggle = (day: number) => {
+    setSelectedDays(prev => 
+      prev.includes(day) 
+        ? prev.filter(d => d !== day)
+        : [...prev, day]
+    );
+  };
+
+  const handleMonthToggle = (month: number) => {
+    setSelectedMonths(prev => 
+      prev.includes(month) 
+        ? prev.filter(m => m !== month)
+        : [...prev, month]
+    );
   };
 
   const handleSubmit = () => {
@@ -68,25 +93,124 @@ export const CopySchedulePage = () => {
     navigate('/maintenance/schedule');
   };
 
-  const minuteOptions = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
-  const hourOptions = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
-  const dayOptions = Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, '0'));
+  const renderCronGrid = (type: string, max: number, selectedItems: number[], toggleFunc: (item: number) => void) => {
+    const items = Array.from({ length: max }, (_, i) => i);
+    
+    return (
+      <div className="grid grid-cols-10 gap-1">
+        {items.map(item => (
+          <div
+            key={item}
+            className={`w-8 h-8 border rounded flex items-center justify-center text-xs cursor-pointer ${
+              selectedItems.includes(item)
+                ? 'bg-blue-500 text-white'
+                : 'bg-white border-gray-300 hover:bg-gray-50'
+            }`}
+            onClick={() => toggleFunc(item)}
+          >
+            {item.toString().padStart(2, '0')}
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#1a1a1a] mb-2">Copy Schedule</h1>
-        <div className="flex gap-3">
-          <Button style={{ backgroundColor: '#C72030' }} className="text-white">
-            Create New
-          </Button>
-          <Button variant="outline" className="border-[#C72030] text-[#C72030]">
-            Create Ticket
-          </Button>
-          <Button variant="outline" className="border-[#C72030] text-[#C72030]">
-            Weightage
-          </Button>
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+          <span>Schedule</span>
+          <span>&gt;</span>
+          <span>Copy Schedule</span>
+        </div>
+        <h1 className="text-2xl font-bold text-[#1a1a1a] mb-4">Copy Schedule</h1>
+        
+        {/* Toggle Section */}
+        <div className="flex items-center gap-8 mb-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium">Create New</label>
+            <div 
+              className={`w-12 h-6 rounded-full cursor-pointer transition-colors ${
+                createNewToggle ? 'bg-[#C72030]' : 'bg-gray-300'
+              }`}
+              onClick={() => setCreateNewToggle(!createNewToggle)}
+            >
+              <div 
+                className={`w-5 h-5 bg-white rounded-full transition-transform mt-0.5 ${
+                  createNewToggle ? 'translate-x-6' : 'translate-x-0.5'
+                }`}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium">Create Ticket</label>
+            <div 
+              className={`w-12 h-6 rounded-full cursor-pointer transition-colors ${
+                createTicketToggle ? 'bg-[#C72030]' : 'bg-gray-300'
+              }`}
+              onClick={() => setCreateTicketToggle(!createTicketToggle)}
+            >
+              <div 
+                className={`w-5 h-5 bg-white rounded-full transition-transform mt-0.5 ${
+                  createTicketToggle ? 'translate-x-6' : 'translate-x-0.5'
+                }`}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium">Weightage</label>
+            <div className="w-12 h-6 rounded-full bg-gray-300 cursor-pointer">
+              <div className="w-5 h-5 bg-white rounded-full mt-0.5 translate-x-0.5" />
+            </div>
+          </div>
+          
+          {createNewToggle && (
+            <div className="flex items-center gap-2">
+              <Select value="template" onValueChange={() => {}}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Select from the existing Template" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="template1">Template 1</SelectItem>
+                  <SelectItem value="template2">Template 2</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {createTicketToggle && (
+            <div className="flex items-center gap-4">
+              <div className="flex items-center space-x-2">
+                <input type="radio" name="level" value="checklist" />
+                <Label>Checklist Level</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input type="radio" name="level" value="question" defaultChecked />
+                <Label>Question Level</Label>
+              </div>
+              <Select value={selectedAssignTo} onValueChange={setSelectedAssignTo}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Select Assigned To" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user1">User 1</SelectItem>
+                  <SelectItem value="user2">User 2</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="technical">Technical</SelectItem>
+                  <SelectItem value="non-technical">Non Technical</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </div>
 
@@ -103,7 +227,7 @@ export const CopySchedulePage = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Type</Label>
-                <RadioGroup value={type} onValueChange={setType} className="flex gap-4">
+                <RadioGroup value={type} onValueChange={setType} className="flex gap-4 flex-wrap">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="PPM" id="ppm" />
                     <Label htmlFor="ppm">PPM</Label>
@@ -120,11 +244,11 @@ export const CopySchedulePage = () => {
                     <RadioGroupItem value="Hoto" id="hoto" />
                     <Label htmlFor="hoto">Hoto</Label>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 mt-2">
                     <RadioGroupItem value="Routine" id="routine" />
                     <Label htmlFor="routine">Routine</Label>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 mt-2">
                     <RadioGroupItem value="Audit" id="audit" />
                     <Label htmlFor="audit">Audit</Label>
                   </div>
@@ -175,44 +299,32 @@ export const CopySchedulePage = () => {
         {/* Task */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-orange-600 flex items-center gap-2">
-                <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
-                Task
-              </CardTitle>
-              <Button 
-                style={{ backgroundColor: '#C72030' }}
-                className="text-white"
-                onClick={handleAddSection}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Section
-              </Button>
-            </div>
+            <CardTitle className="text-orange-600 flex items-center gap-2">
+              <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
+              Task
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Select Group</Label>
-                <Select value={group} onValueChange={setGroup}>
+                <Label>Checklist Group</Label>
+                <Select>
                   <SelectTrigger>
                     <SelectValue placeholder="Select Group" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="group1">Group 1</SelectItem>
-                    <SelectItem value="group2">Group 2</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Select Sub-Group</Label>
-                <Select value={subGroup} onValueChange={setSubGroup}>
+                <Label>Checklist Group</Label>
+                <Select>
                   <SelectTrigger>
                     <SelectValue placeholder="Select Sub Group" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="subgroup1">Sub Group 1</SelectItem>
-                    <SelectItem value="subgroup2">Sub Group 2</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -225,53 +337,25 @@ export const CopySchedulePage = () => {
               </div>
               <div className="space-y-2">
                 <Label>Input Type</Label>
-                <Select defaultValue="Numeric">
+                <Select value="numeric">
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Numeric">Numeric</SelectItem>
-                    <SelectItem value="Text">Text</SelectItem>
-                    <SelectItem value="Boolean">Boolean</SelectItem>
+                    <SelectItem value="numeric">Numeric</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2 flex items-center gap-4 pt-6">
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="mandatory" 
-                    defaultChecked 
-                    onCheckedChange={(checked) => console.log('Mandatory:', checked)}
-                  />
-                  <Label htmlFor="mandatory">Mandatory</Label>
+                  <Checkbox checked disabled />
+                  <Label>Mandatory</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="reading" 
-                    defaultChecked 
-                    onCheckedChange={(checked) => console.log('Reading:', checked)}
-                  />
-                  <Label htmlFor="reading">Reading</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="helptext" 
-                    onCheckedChange={(checked) => console.log('Help Text:', checked)}
-                  />
-                  <Label htmlFor="helptext">Help Text</Label>
+                  <Checkbox checked disabled />
+                  <Label>Reading</Label>
                 </div>
               </div>
-            </div>
-
-            <div className="flex justify-end">
-              <Button 
-                variant="outline"
-                onClick={handleAddQuestion}
-                className="border-[#C72030] text-[#C72030]"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Question
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -301,15 +385,14 @@ export const CopySchedulePage = () => {
 
             <div className="space-y-2">
               <Label>Asset</Label>
-              <Select value={asset} onValueChange={setAsset}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Energy Meter 1[584931186764c2f8b565]">Energy Meter 1[584931186764c2f8b565]</SelectItem>
-                  <SelectItem value="Energy Meter 23[03835269926136105d:1]">Energy Meter 23[03835269926136105d:1]</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <div className="bg-red-50 border border-red-200 rounded p-2 text-red-600 text-sm">
+                  Energy Meter 1[584931186764c2f8b565]
+                </div>
+                <div className="bg-red-50 border border-red-200 rounded p-2 text-red-600 text-sm">
+                  Energy Meter 23[03835269926136105d:1]
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
@@ -327,13 +410,12 @@ export const CopySchedulePage = () => {
               </div>
               <div className="space-y-2">
                 <Label>Select User</Label>
-                <Select value={selectUser} onValueChange={setSelectUser}>
+                <Select>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Kshitij Rasal" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Ashiq Rasul">Ashiq Rasul</SelectItem>
-                    <SelectItem value="John Doe">John Doe</SelectItem>
+                    <SelectItem value="user1">Kshitij Rasal</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -366,23 +448,16 @@ export const CopySchedulePage = () => {
                     </SelectContent>
                   </Select>
                   <Input
-                    value={planDurationField}
-                    onChange={(e) => setPlanDurationField(e.target.value)}
+                    value={planValue}
+                    onChange={(e) => setPlanValue(e.target.value)}
                     className="w-20"
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Plan Duration Type</Label>
+                <Label>Plan Duration Field</Label>
                 <Input value="1" readOnly />
               </div>
-              <div className="space-y-2">
-                <Label>Plan value</Label>
-                <Input value="1" readOnly />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Priority</Label>
                 <Select value={priority} onValueChange={setPriority}>
@@ -396,6 +471,9 @@ export const CopySchedulePage = () => {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Email Trigger Rule</Label>
                 <Select value={emailTriggerRule} onValueChange={setEmailTriggerRule}>
@@ -404,7 +482,6 @@ export const CopySchedulePage = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="rule1">Rule 1</SelectItem>
-                    <SelectItem value="rule2">Rule 2</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -416,13 +493,9 @@ export const CopySchedulePage = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="supervisor1">Supervisor 1</SelectItem>
-                    <SelectItem value="supervisor2">Supervisor 2</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Category</Label>
                 <Select value={category} onValueChange={setCategory}>
@@ -435,25 +508,20 @@ export const CopySchedulePage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Submission Type</Label>
-                <Select value={submissionTime} onValueChange={setSubmissionTime}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Submission Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="immediate">Immediate</SelectItem>
-                    <SelectItem value="delayed">Delayed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Submission Time Value</Label>
-                <Input placeholder="Enter value" />
-              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Submission Time</Label>
+                <Select value={submissionType} onValueChange={setSubmissionType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Submission Time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="immediate">Immediate</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label>Grace Time</Label>
                 <div className="flex gap-2">
@@ -464,20 +532,22 @@ export const CopySchedulePage = () => {
                     <SelectContent>
                       <SelectItem value="Day">Day</SelectItem>
                       <SelectItem value="Hour">Hour</SelectItem>
-                      <SelectItem value="Week">Week</SelectItem>
                     </SelectContent>
                   </Select>
                   <Input
-                    value={graceTimeField}
-                    onChange={(e) => setGraceTimeField(e.target.value)}
+                    value={graceTimeValue}
+                    onChange={(e) => setGraceTimeValue(e.target.value)}
                     className="w-20"
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Grace Time Value</Label>
+                <Label>Grace Time Field</Label>
                 <Input value="3" readOnly />
               </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Lock Overdue Task</Label>
                 <Select value={lockOverdueTask} onValueChange={setLockOverdueTask}>
@@ -490,9 +560,6 @@ export const CopySchedulePage = () => {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Frequency</Label>
                 <Select value={frequency} onValueChange={setFrequency}>
@@ -502,7 +569,6 @@ export const CopySchedulePage = () => {
                   <SelectContent>
                     <SelectItem value="daily">Daily</SelectItem>
                     <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -513,16 +579,16 @@ export const CopySchedulePage = () => {
                   onChange={(e) => setCronExpression(e.target.value)}
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Start Time</Label>
-                <Input
-                  value={startFrom}
-                  onChange={(e) => setStartFrom(e.target.value)}
-                />
-              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Start From</Label>
+                <Input
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                />
+              </div>
               <div className="space-y-2">
                 <Label>End At</Label>
                 <Input
@@ -530,23 +596,23 @@ export const CopySchedulePage = () => {
                   onChange={(e) => setEndAt(e.target.value)}
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Select Supplier</Label>
-                <Select value={selectSupplier} onValueChange={setSelectSupplier}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Supplier" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="supplier1">Supplier 1</SelectItem>
-                    <SelectItem value="supplier2">Supplier 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Select Supplier</Label>
+              <Select value={selectSupplier} onValueChange={setSelectSupplier}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Supplier" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="supplier1">Supplier 1</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
 
-        {/* Cron form */}
+        {/* Cron Form */}
         <Card>
           <CardHeader>
             <CardTitle className="text-orange-600 flex items-center gap-2">
@@ -556,35 +622,35 @@ export const CopySchedulePage = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-4 mb-4">
-              <Button 
+              <Button
                 variant={cronType === 'Minutes' ? 'default' : 'outline'}
-                onClick={() => setCronType('Minutes')}
-                style={cronType === 'Minutes' ? { backgroundColor: '#3B82F6' } : {}}
+                style={cronType === 'Minutes' ? { backgroundColor: '#C72030' } : {}}
                 className={cronType === 'Minutes' ? 'text-white' : ''}
+                onClick={() => setCronType('Minutes')}
               >
                 Minutes
               </Button>
-              <Button 
+              <Button
                 variant={cronType === 'Hours' ? 'default' : 'outline'}
-                onClick={() => setCronType('Hours')}
-                style={cronType === 'Hours' ? { backgroundColor: '#3B82F6' } : {}}
+                style={cronType === 'Hours' ? { backgroundColor: '#C72030' } : {}}
                 className={cronType === 'Hours' ? 'text-white' : ''}
+                onClick={() => setCronType('Hours')}
               >
                 Hours
               </Button>
-              <Button 
+              <Button
                 variant={cronType === 'Day' ? 'default' : 'outline'}
-                onClick={() => setCronType('Day')}
-                style={cronType === 'Day' ? { backgroundColor: '#3B82F6' } : {}}
+                style={cronType === 'Day' ? { backgroundColor: '#C72030' } : {}}
                 className={cronType === 'Day' ? 'text-white' : ''}
+                onClick={() => setCronType('Day')}
               >
                 Day
               </Button>
-              <Button 
+              <Button
                 variant={cronType === 'Month' ? 'default' : 'outline'}
-                onClick={() => setCronType('Month')}
-                style={cronType === 'Month' ? { backgroundColor: '#3B82F6' } : {}}
+                style={cronType === 'Month' ? { backgroundColor: '#C72030' } : {}}
                 className={cronType === 'Month' ? 'text-white' : ''}
+                onClick={() => setCronType('Month')}
               >
                 Month
               </Button>
@@ -592,82 +658,92 @@ export const CopySchedulePage = () => {
 
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="specific-minute" 
-                  checked={specificMinute}
-                  onCheckedChange={(checked) => setSpecificMinute(checked === true)}
-                />
-                <Label htmlFor="specific-minute">Specific minute (choose one or many)</Label>
+                <input type="radio" name="cronOption" defaultChecked />
+                <Label>Specific minute (choose one or many)</Label>
               </div>
 
               {cronType === 'Minutes' && (
-                <div className="grid grid-cols-10 gap-2">
-                  {minuteOptions.map((minute) => (
-                    <div key={minute} className="flex items-center space-x-1">
-                      <Checkbox 
-                        id={`minute-${minute}`} 
-                        onCheckedChange={(checked) => console.log(`Minute ${minute}:`, checked)}
-                      />
-                      <Label htmlFor={`minute-${minute}`} className="text-xs">{minute}</Label>
-                    </div>
-                  ))}
+                <div className="space-y-2">
+                  <Label>Minutes</Label>
+                  {renderCronGrid('minutes', 60, selectedMinutes, handleMinuteToggle)}
                 </div>
               )}
 
-              <div className="space-y-2">
+              {cronType === 'Hours' && (
+                <div className="space-y-2">
+                  <Label>Hours</Label>
+                  {renderCronGrid('hours', 24, selectedHours, handleHourToggle)}
+                </div>
+              )}
+
+              {cronType === 'Day' && (
+                <div className="space-y-2">
+                  <Label>Day Of Month</Label>
+                  {renderCronGrid('days', 31, selectedDays, handleDayToggle)}
+                </div>
+              )}
+
+              {cronType === 'Month' && (
+                <div className="space-y-2">
+                  <Label>Month</Label>
+                  {renderCronGrid('months', 12, selectedMonths, handleMonthToggle)}
+                </div>
+              )}
+
+              <div className="flex items-center space-x-2 mt-4">
+                <input type="radio" name="cronOption" />
                 <Label>Every minute between minute</Label>
-                <div className="flex items-center gap-2">
-                  <Select defaultValue="00">
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {minuteOptions.map((minute) => (
-                        <SelectItem key={minute} value={minute}>{minute}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <span>and minute</span>
-                  <Select defaultValue="00">
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {minuteOptions.map((minute) => (
-                        <SelectItem key={minute} value={minute}>{minute}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Select value={betweenMinuteStart} onValueChange={setBetweenMinuteStart}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 60 }, (_, i) => (
+                      <SelectItem key={i} value={i.toString().padStart(2, '0')}>
+                        {i.toString().padStart(2, '0')}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Label>and minute</Label>
+                <Select value={betweenMinuteEnd} onValueChange={setBetweenMinuteEnd}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 60 }, (_, i) => (
+                      <SelectItem key={i} value={i.toString().padStart(2, '0')}>
+                        {i.toString().padStart(2, '0')}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+            </div>
 
-              <div className="bg-gray-50 p-4 rounded">
-                <div className="grid grid-cols-5 gap-4 text-center">
-                  <div>
-                    <Label className="font-medium">Minutes</Label>
-                    <div className="text-2xl font-bold">0</div>
-                  </div>
-                  <div>
-                    <Label className="font-medium">Hours</Label>
-                    <div className="text-2xl font-bold">0</div>
-                  </div>
-                  <div>
-                    <Label className="font-medium">Day Of Month</Label>
-                    <div className="text-2xl font-bold">*</div>
-                  </div>
-                  <div>
-                    <Label className="font-medium">Month</Label>
-                    <div className="text-2xl font-bold">*</div>
-                  </div>
-                  <div>
-                    <Label className="font-medium">Day Of Week</Label>
-                    <div className="text-2xl font-bold">*</div>
-                  </div>
+            <div className="mt-6">
+              <Label className="font-medium">Resulting Cron Expression: {cronExpression}</Label>
+              <div className="mt-4 grid grid-cols-5 gap-4 text-center">
+                <div>
+                  <Label className="font-medium">Minutes</Label>
+                  <div className="mt-1 text-2xl">0</div>
                 </div>
-              </div>
-
-              <div className="text-center">
-                <Label className="font-medium">Resulting Cron Expression: 0 0 * * *</Label>
+                <div>
+                  <Label className="font-medium">Hours</Label>
+                  <div className="mt-1 text-2xl">0</div>
+                </div>
+                <div>
+                  <Label className="font-medium">Day Of Month</Label>
+                  <div className="mt-1 text-2xl">?</div>
+                </div>
+                <div>
+                  <Label className="font-medium">Month</Label>
+                  <div className="mt-1 text-2xl">*</div>
+                </div>
+                <div>
+                  <Label className="font-medium">Day Of Week</Label>
+                  <div className="mt-1 text-2xl">*</div>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -687,7 +763,7 @@ export const CopySchedulePage = () => {
             style={{ backgroundColor: '#C72030' }}
             className="text-white hover:bg-[#C72030]/90 px-8"
           >
-            Create Schedule
+            Copy Schedule
           </Button>
         </div>
       </div>
