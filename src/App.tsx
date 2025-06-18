@@ -119,6 +119,7 @@ import { CreateRosterTemplateDashboard } from './pages/setup/CreateRosterTemplat
 // Import Employee pages
 import { EmployeesDashboard } from './pages/setup/EmployeesDashboard';
 import { AddEmployeeDashboard } from './pages/setup/AddEmployeeDashboard';
+import { EditEmployeePage } from './pages/setup/EditEmployeePage';
 
 // Import Check In Margin page
 import { CheckInMarginDashboard } from './pages/setup/CheckInMarginDashboard';
@@ -237,19 +238,9 @@ function App() {
               <Route path="/vas/space-management/setup/employees" element={<EmployeesDashboard />} />
               <Route path="/vas/space-management/setup/employees/add" element={<AddEmployeeDashboard />} />
               <Route path="/vas/space-management/setup/employees/details/:id" element={<EmployeeDetailsPage />} />
+              <Route path="/vas/space-management/setup/employees/edit/:id" element={<EditEmployeePage />} />
               <Route path="/vas/space-management/setup/check-in-margin" element={<CheckInMarginDashboard />} />
               <Route path="/vas/space-management/setup/export" element={<ExportDashboard />} />
-              
-              {/* Ticket Routes - Both singular and plural for flexibility */}
-              <Route path="/tickets" element={<TicketListDashboard />} />
-              <Route path="/tickets/add" element={<AddTicketDashboard />} />
-              <Route path="/maintenance/ticket" element={<TicketListDashboard />} />
-              <Route path="/maintenance/ticket/add" element={<AddTicketDashboard />} />
-              <Route path="/maintenance/ticket/:id" element={<TicketDetailsPage />} />
-              <Route path="/maintenance/ticket/:id/feeds" element={<TicketFeedsPage />} />
-              <Route path="/maintenance/ticket/:id/tag-vendor" element={<TicketTagVendorPage />} />
-              <Route path="/maintenance/tickets" element={<TicketListDashboard />} />
-              <Route path="/maintenance/tickets/add" element={<AddTicketDashboard />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
