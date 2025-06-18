@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { X } from 'lucide-react';
 
 interface UtilitySTPFilterDialogProps {
   isOpen: boolean;
@@ -41,9 +42,19 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg [&>button]:hidden">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
@@ -169,20 +180,22 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
         <div className="flex justify-center gap-4 pt-4">
           <Button 
             onClick={handleSubmit}
-            className="bg-[#8B4B8C] hover:bg-[#8B4B8C]/90 text-white px-8"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90 px-8"
           >
             Submit
           </Button>
           <Button 
             onClick={handleExport}
-            className="bg-[#8B4B8C] hover:bg-[#8B4B8C]/90 text-white px-8"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90 px-8"
           >
             Export
           </Button>
           <Button 
-            variant="outline"
             onClick={handleReset}
-            className="px-8"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90 px-8"
           >
             Reset
           </Button>

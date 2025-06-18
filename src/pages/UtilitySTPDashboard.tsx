@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus, Upload, RefreshCw, Download, QrCode, Filter, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -158,40 +157,40 @@ const UtilitySTPDashboard = () => {
           </Button>
           <Button 
             onClick={() => setIsImportOpen(true)}
-            variant="outline" 
-            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
           >
             <Upload className="w-4 h-4 mr-2" />
             Import
           </Button>
           <Button 
             onClick={() => setIsUpdateOpen(true)}
-            variant="outline" 
-            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Update
           </Button>
           <Button 
             onClick={handleExportAll}
-            variant="outline" 
-            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
           >
             <Download className="w-4 h-4 mr-2" />
             Export All
           </Button>
           <Button 
             onClick={handlePrintQR}
-            variant="outline" 
-            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
           >
             <QrCode className="w-4 h-4 mr-2" />
             Print QR
           </Button>
           <Button 
             onClick={handleInActiveAssets}
-            variant="outline" 
-            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
           >
             In-Active Assets
           </Button>
@@ -201,8 +200,8 @@ const UtilitySTPDashboard = () => {
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <Button 
             onClick={() => setIsFilterOpen(true)}
-            variant="outline" 
-            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
           >
             <Filter className="w-4 h-4 mr-2" />
             Filters
