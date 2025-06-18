@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -135,6 +134,9 @@ import { RosterCalendarDashboard } from './pages/setup/RosterCalendarDashboard';
 // Import Export page
 import { ExportDashboard } from './pages/setup/ExportDashboard';
 
+// Import Employee Details page
+import { EmployeeDetailsPage } from './pages/setup/EmployeeDetailsPage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -234,6 +236,7 @@ function App() {
               <Route path="/vas/space-management/setup/roster-calendar" element={<RosterCalendarDashboard />} />
               <Route path="/vas/space-management/setup/employees" element={<EmployeesDashboard />} />
               <Route path="/vas/space-management/setup/employees/add" element={<AddEmployeeDashboard />} />
+              <Route path="/vas/space-management/setup/employees/details/:id" element={<EmployeeDetailsPage />} />
               <Route path="/vas/space-management/setup/check-in-margin" element={<CheckInMarginDashboard />} />
               <Route path="/vas/space-management/setup/export" element={<ExportDashboard />} />
               

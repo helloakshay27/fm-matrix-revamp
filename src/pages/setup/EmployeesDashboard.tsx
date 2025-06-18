@@ -96,6 +96,10 @@ export const EmployeesDashboard = () => {
     navigate('/vas/space-management/setup/employees/add');
   };
 
+  const handleViewClick = (employee: EmployeeData) => {
+    navigate(`/vas/space-management/setup/employees/details/${employee.id}`);
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <div className="flex-1 p-6">
@@ -134,7 +138,12 @@ export const EmployeesDashboard = () => {
                 <TableRow key={employee.id} className="border-b">
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="ghost" className="p-1">
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="p-1"
+                        onClick={() => handleViewClick(employee)}
+                      >
                         <Eye className="w-4 h-4 text-blue-600" />
                       </Button>
                       <Button size="sm" variant="ghost" className="p-1">
