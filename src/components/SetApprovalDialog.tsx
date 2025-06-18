@@ -32,6 +32,10 @@ export const SetApprovalDialog = ({ open, onOpenChange }: SetApprovalDialogProps
     setSelectedUsers(prev => prev.filter(u => u !== user));
   };
 
+  const handleSendEmailsChange = (checked: boolean | "indeterminate") => {
+    setSendEmails(checked === true);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -97,7 +101,7 @@ export const SetApprovalDialog = ({ open, onOpenChange }: SetApprovalDialogProps
               <div className="flex items-center space-x-2">
                 <Checkbox 
                   checked={sendEmails} 
-                  onCheckedChange={setSendEmails}
+                  onCheckedChange={handleSendEmailsChange}
                 />
                 <Label>Send Emails</Label>
               </div>

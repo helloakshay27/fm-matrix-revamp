@@ -67,6 +67,18 @@ export const AddSchedulePage = () => {
     navigate('/maintenance/schedule');
   };
 
+  const handleMandatoryChange = (checked: boolean | "indeterminate") => {
+    setMandatory(checked === true);
+  };
+
+  const handleReadingChange = (checked: boolean | "indeterminate") => {
+    setReading(checked === true);
+  };
+
+  const handleHelpTextChange = (checked: boolean | "indeterminate") => {
+    setHelpText(checked === true);
+  };
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
       {/* Header */}
@@ -262,15 +274,15 @@ export const AddSchedulePage = () => {
               </div>
               <div className="space-y-2 flex items-center gap-4 pt-6">
                 <div className="flex items-center space-x-2">
-                  <Checkbox checked={mandatory} onCheckedChange={setMandatory} />
+                  <Checkbox checked={mandatory} onCheckedChange={handleMandatoryChange} />
                   <Label>Mandatory</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox checked={reading} onCheckedChange={setReading} />
+                  <Checkbox checked={reading} onCheckedChange={handleReadingChange} />
                   <Label>Reading</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox checked={helpText} onCheckedChange={setHelpText} />
+                  <Checkbox checked={helpText} onCheckedChange={handleHelpTextChange} />
                   <Label>Help Text</Label>
                 </div>
               </div>
