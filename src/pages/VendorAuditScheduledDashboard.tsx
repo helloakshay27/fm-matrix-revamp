@@ -2,9 +2,16 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus } from 'lucide-react';
+import { Plus, Copy } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const VendorAuditScheduledDashboard = () => {
+  const navigate = useNavigate();
+
+  const handleCopy = (id: string) => {
+    navigate('/maintenance/audit/vendor/scheduled/copy');
+  };
+
   const scheduleData = [
     {
       id: "11549",
@@ -57,10 +64,20 @@ export const VendorAuditScheduledDashboard = () => {
             {scheduleData.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                  <input 
-                    type="checkbox" 
-                    className="w-4 h-4 rounded border-gray-300" 
-                  />
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 rounded border-gray-300" 
+                    />
+                    <Button
+                      onClick={() => handleCopy(item.id)}
+                      size="sm"
+                      style={{ backgroundColor: '#C72030' }}
+                      className="text-white hover:opacity-90"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </TableCell>
                 <TableCell className="text-blue-600 font-medium">
                   {item.id}

@@ -1,4 +1,5 @@
 
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -161,6 +162,7 @@ import { OperationalAuditMasterChecklistsDashboard } from './pages/OperationalAu
 // Import Vendor Audit pages
 import { VendorAuditScheduledDashboard } from './pages/VendorAuditScheduledDashboard';
 import { VendorAuditConductedDashboard } from './pages/VendorAuditConductedDashboard';
+import { AddVendorAuditSchedulePage } from './pages/AddVendorAuditSchedulePage';
 
 // Import Master Checklist page
 import { AddMasterChecklistPage } from './pages/AddMasterChecklistPage';
@@ -216,6 +218,7 @@ function App() {
               
               {/* Vendor Audit Routes */}
               <Route path="/maintenance/audit/vendor/scheduled" element={<VendorAuditScheduledDashboard />} />
+              <Route path="/maintenance/audit/vendor/scheduled/copy" element={<AddVendorAuditSchedulePage />} />
               <Route path="/maintenance/audit/vendor/conducted" element={<VendorAuditConductedDashboard />} />
               
               {/* Maintenance Routes */}
