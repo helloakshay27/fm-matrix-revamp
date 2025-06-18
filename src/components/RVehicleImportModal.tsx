@@ -10,9 +10,22 @@ interface RVehicleImportModalProps {
 }
 
 export const RVehicleImportModal = ({ isOpen, onClose }: RVehicleImportModalProps) => {
+  const handleDownloadSample = () => {
+    console.log('Downloading sample format...');
+    // Mock sample download
+    alert('Sample format downloaded successfully!');
+  };
+
+  const handleImport = () => {
+    console.log('Importing file...');
+    // Mock import functionality
+    alert('File imported successfully!');
+    onClose();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md [&>button]:hidden">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-semibold">Bulk Upload</DialogTitle>
@@ -41,11 +54,18 @@ export const RVehicleImportModal = ({ isOpen, onClose }: RVehicleImportModalProp
           </div>
           
           <div className="flex gap-3">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
+            <Button 
+              onClick={handleDownloadSample}
+              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+            >
               <Download className="w-4 h-4" />
               Download Sample Format
             </Button>
-            <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+            <Button 
+              onClick={handleImport}
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:bg-[#C72030]/90 text-white"
+            >
               Import
             </Button>
           </div>

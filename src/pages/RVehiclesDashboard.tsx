@@ -273,7 +273,8 @@ export const RVehiclesDashboard = () => {
             <div className="flex gap-3">
               <Button 
                 onClick={() => setIsAddModalOpen(true)}
-                className="bg-[#8B5A3C] hover:bg-[#7A4D33] text-white px-4 py-2 rounded flex items-center gap-2"
+                style={{ backgroundColor: '#C72030' }}
+                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Add
@@ -308,7 +309,10 @@ export const RVehiclesDashboard = () => {
                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
-                <Button className="bg-[#8B5A3C] hover:bg-[#7A4D33] text-white px-6 py-2 rounded">
+                <Button 
+                  style={{ backgroundColor: '#C72030' }}
+                  className="hover:bg-[#C72030]/90 text-white px-6 py-2 rounded"
+                >
                   Go!
                 </Button>
               </div>
@@ -328,7 +332,7 @@ export const RVehiclesDashboard = () => {
                 }}
                 className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab
-                    ? 'border-[#8B5A3C] text-[#8B5A3C] bg-[#8B5A3C]/5'
+                    ? 'border-[#C72030] text-[#C72030] bg-[#C72030]/5'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
