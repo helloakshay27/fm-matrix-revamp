@@ -73,7 +73,7 @@ export const UtilityWaterDashboard = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
       {/* Breadcrumb */}
       <div className="text-sm text-gray-600">
         Assets &gt; Asset List
@@ -112,41 +112,41 @@ export const UtilityWaterDashboard = () => {
           Add
         </Button>
         <Button 
-          variant="outline"
           onClick={handleImport}
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:bg-[#C72030]/90"
         >
           <Import className="w-4 h-4 mr-2" />
           Import
         </Button>
         <Button 
-          variant="outline"
           onClick={handleUpdate}
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:bg-[#C72030]/90"
         >
           <RefreshCw className="w-4 h-4 mr-2" />
           Update
         </Button>
         <Button 
-          variant="outline"
           onClick={handleExportAll}
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:bg-[#C72030]/90"
         >
           <FileDown className="w-4 h-4 mr-2" />
           Export All
         </Button>
         <Button 
-          variant="outline"
           onClick={handlePrintQR}
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:bg-[#C72030]/90"
         >
           <Printer className="w-4 h-4 mr-2" />
           Print QR
         </Button>
         <Button 
-          variant="outline" 
           onClick={handleInActiveAssets}
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:bg-[#C72030]/90"
         >
           In-Active Assets
         </Button>
@@ -155,9 +155,9 @@ export const UtilityWaterDashboard = () => {
       {/* Search and Filter */}
       <div className="flex justify-between items-center">
         <Button 
-          variant="outline"
           onClick={() => setIsFilterOpen(true)}
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:bg-[#C72030]/90"
         >
           <Filter className="w-4 h-4 mr-2" />
           Filters
