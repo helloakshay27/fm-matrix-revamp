@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Switch } from "@/components/ui/switch";
 import { Edit, Plus } from "lucide-react";
 import { AddSeatTypeDialog } from "@/components/AddSeatTypeDialog";
+import { EditSeatTypeDialog } from "@/components/EditSeatTypeDialog";
 
 interface SeatType {
   id: number;
@@ -15,6 +16,8 @@ interface SeatType {
 
 export const SeatTypeDashboard = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingSeatType, setEditingSeatType] = useState<SeatType | null>(null);
   const [seatTypes, setSeatTypes] = useState<SeatType[]>([
     { id: 1, name: "Hotseat", active: true, createdOn: "19/03/2024" },
     { id: 2, name: "Cafe", active: true, createdOn: "05/05/2023" },
@@ -37,6 +40,22 @@ export const SeatTypeDashboard = () => {
     };
     setSeatTypes([...seatTypes, seatType]);
     console.log('Added seat type:', data);
+  };
+
+  const handleEditSeatType = (seatType: SeatType) => {
+    setEditingSeatType(seatType);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateSeatType = (data: { categoryName: string; file?: File }) => {
+    if (editingSeatType) {
+      setSeatTypes(seatTypes.map(seat =>
+        seat.id === editingSeatType.id 
+          ? { ...seat, name: data.categoryName }
+          : seat
+      ));
+      console.log('Updated seat type:', data);
+    }
   };
 
   const handleToggleActive = (id: number) => {
@@ -79,7 +98,12 @@ export const SeatTypeDashboard = () => {
               {seatTypes.map((seat) => (
                 <TableRow key={seat.id} className="border-b">
                   <TableCell>
-                    <Button size="sm" variant="ghost" className="p-1">
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="p-1"
+                      onClick={() => handleEditSeatType(seat)}
+                    >
                       <Edit className="w-4 h-4" />
                     </Button>
                   </TableCell>
@@ -102,6 +126,14 @@ export const SeatTypeDashboard = () => {
           open={isAddDialogOpen}
           onOpenChange={setIsAddDialogOpen}
           onSubmit={handleAddSeatType}
+        />
+
+        {/* Edit Seat Type Dialog */}
+        <EditSeatTypeDialog 
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          seatType={editingSeatType}
+          onSubmit={handleUpdateSeatType}
         />
       </div>
     </div>
