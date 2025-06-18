@@ -24,9 +24,9 @@ export const EditSchedulePage = () => {
 
   // Create Category Toggle state
   const [createTicket, setCreateTicket] = useState(true);
-  const [createCategory, setCreateCategory] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [weightage, setWeightage] = useState(false);
+  const [categoryLevel, setCategoryLevel] = useState('question-level');
 
   // Task state
   const [group, setGroup] = useState('');
@@ -34,6 +34,12 @@ export const EditSchedulePage = () => {
   const [tasks, setTasks] = useState([
     { task: 'Kwah', inputType: 'Numeric', mandatory: true, reading: true, helpText: false }
   ]);
+
+  // Cron Settings state
+  const [editTimings, setEditTimings] = useState(false);
+  const [cronTab, setCronTab] = useState('Minutes');
+  const [specificMinute, setSpecificMinute] = useState(true);
+  const [selectedMinutes, setSelectedMinutes] = useState(['00', '09']);
 
   // Schedule state
   const [asset, setAsset] = useState('Energy Meter 1[584931186764c2f8b565]');
@@ -78,15 +84,105 @@ export const EditSchedulePage = () => {
 
   const handleAddSection = () => {
     console.log('Add Section clicked');
+    // Add functionality to create a new section
+    const newSection = {
+      id: Date.now(),
+      name: 'New Section',
+      tasks: []
+    };
+    // You can implement section management state here
   };
 
   const handleAddQuestion = () => {
     console.log('Add Question clicked');
+    // Add functionality to create a new question/task
+    const newTask = {
+      task: 'New Task',
+      inputType: 'Text',
+      mandatory: false,
+      reading: false,
+      helpText: false
+    };
+    setTasks([...tasks, newTask]);
   };
 
   const handleSubmit = () => {
     console.log('Schedule updated successfully');
     navigate('/maintenance/schedule');
+  };
+
+  const renderCronMinutes = () => {
+    const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
+    
+    return (
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <input 
+              type="radio" 
+              id="specific-minute" 
+              name="minute-type" 
+              checked={specificMinute}
+              onChange={() => setSpecificMinute(true)}
+            />
+            <Label htmlFor="specific-minute">Specific minute (choose one or many)</Label>
+          </div>
+          
+          {specificMinute && (
+            <div className="grid grid-cols-10 gap-2 p-4 border rounded">
+              {minutes.map((minute) => (
+                <div key={minute} className="flex items-center space-x-1">
+                  <Checkbox 
+                    id={`minute-${minute}`}
+                    checked={selectedMinutes.includes(minute)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedMinutes([...selectedMinutes, minute]);
+                      } else {
+                        setSelectedMinutes(selectedMinutes.filter(m => m !== minute));
+                      }
+                    }}
+                  />
+                  <Label htmlFor={`minute-${minute}`} className="text-sm">{minute}</Label>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <input 
+            type="radio" 
+            id="every-minute" 
+            name="minute-type" 
+            checked={!specificMinute}
+            onChange={() => setSpecificMinute(false)}
+          />
+          <Label htmlFor="every-minute">Every minute between minute</Label>
+          <Select>
+            <SelectTrigger className="w-20">
+              <SelectValue placeholder="00" />
+            </SelectTrigger>
+            <SelectContent>
+              {minutes.map((minute) => (
+                <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span>and minute</span>
+          <Select>
+            <SelectTrigger className="w-20">
+              <SelectValue placeholder="00" />
+            </SelectTrigger>
+            <SelectContent>
+              {minutes.map((minute) => (
+                <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -120,42 +216,43 @@ export const EditSchedulePage = () => {
 
         {/* Category Selection when Create Ticket is toggled */}
         {createTicket && (
-          <div className="mb-4">
-            <div className="flex items-center gap-3 mb-3">
-              <Label htmlFor="create-category">Create Category</Label>
-              <Switch
-                id="create-category"
-                checked={createCategory}
-                onCheckedChange={setCreateCategory}
-                className="data-[state=checked]:bg-[#C72030]"
-              />
+          <div className="mb-4 space-y-3">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="radio" 
+                  id="checklist-level" 
+                  name="category-level" 
+                  checked={categoryLevel === 'checklist-level'}
+                  onChange={() => setCategoryLevel('checklist-level')}
+                />
+                <Label htmlFor="checklist-level">Checklist Level</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="radio" 
+                  id="question-level" 
+                  name="category-level" 
+                  checked={categoryLevel === 'question-level'}
+                  onChange={() => setCategoryLevel('question-level')}
+                />
+                <Label htmlFor="question-level">Question Level</Label>
+              </div>
             </div>
             
-            {createCategory && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center space-x-2">
-                    <input type="radio" id="checklist-level" name="category-level" />
-                    <Label htmlFor="checklist-level">Checklist Level</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input type="radio" id="question-level" name="category-level" defaultChecked />
-                    <Label htmlFor="question-level">Question Level</Label>
-                  </div>
-                </div>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="w-64">
-                    <SelectValue placeholder="Select Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="technical">Technical</SelectItem>
-                    <SelectItem value="non-technical">Non Technical</SelectItem>
-                    <SelectItem value="safety">Safety</SelectItem>
-                    <SelectItem value="maintenance">Maintenance</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            <div>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="technical">Technical</SelectItem>
+                  <SelectItem value="non-technical">Non Technical</SelectItem>
+                  <SelectItem value="safety">Safety</SelectItem>
+                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         )}
       </div>
@@ -565,11 +662,90 @@ export const EditSchedulePage = () => {
           </CardContent>
         </Card>
 
+        {/* Cron Settings */}
+        {editTimings && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-orange-600 flex items-center gap-2">
+                <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">4</span>
+                Cron Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-2 mb-4">
+                <Checkbox 
+                  id="edit-timings"
+                  checked={editTimings}
+                  onCheckedChange={(checked) => setEditTimings(checked === true)}
+                />
+                <Label htmlFor="edit-timings">Edit Timings</Label>
+              </div>
+              
+              <div className="text-sm text-gray-600 mb-4">
+                The Previous Cron was 0 9 * * *
+              </div>
+
+              <div className="border-b border-gray-200">
+                <div className="flex space-x-1">
+                  {['Minutes', 'Hours', 'Day', 'Month'].map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setCronTab(tab)}
+                      className={`px-4 py-2 font-medium text-sm rounded-t-lg ${
+                        cronTab === tab
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-4">
+                {cronTab === 'Minutes' && renderCronMinutes()}
+                {cronTab === 'Hours' && <div>Hours configuration will go here</div>}
+                {cronTab === 'Day' && <div>Day configuration will go here</div>}
+                {cronTab === 'Month' && <div>Month configuration will go here</div>}
+              </div>
+
+              <div className="mt-6 p-4 bg-gray-50 rounded">
+                <div className="text-sm font-medium mb-2">Resulting Cron Expression:</div>
+                <div className="font-mono text-lg">0,9 * ? * *</div>
+                
+                <div className="grid grid-cols-5 gap-4 mt-4 text-sm">
+                  <div>
+                    <div className="font-medium">Minutes</div>
+                    <div>0,9</div>
+                  </div>
+                  <div>
+                    <div className="font-medium">Hours</div>
+                    <div>*</div>
+                  </div>
+                  <div>
+                    <div className="font-medium">Day Of Month</div>
+                    <div>?</div>
+                  </div>
+                  <div>
+                    <div className="font-medium">Month</div>
+                    <div>*</div>
+                  </div>
+                  <div>
+                    <div className="font-medium">Day Of Week</div>
+                    <div>*</div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Associations */}
         <Card>
           <CardHeader>
             <CardTitle className="text-orange-600 flex items-center gap-2">
-              <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">4</span>
+              <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">5</span>
               Associations
             </CardTitle>
           </CardHeader>
@@ -605,7 +781,7 @@ export const EditSchedulePage = () => {
         <Card>
           <CardHeader>
             <CardTitle className="text-orange-600 flex items-center gap-2">
-              <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">5</span>
+              <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
               Email Trigger Rule
             </CardTitle>
           </CardHeader>
@@ -634,7 +810,7 @@ export const EditSchedulePage = () => {
         <Card>
           <CardHeader>
             <CardTitle className="text-orange-600 flex items-center gap-2">
-              <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
+              <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">7</span>
               Asset Mapping List
             </CardTitle>
           </CardHeader>
