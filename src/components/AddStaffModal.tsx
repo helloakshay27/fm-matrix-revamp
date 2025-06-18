@@ -64,7 +64,7 @@ export const AddStaffModal = ({ isOpen, onClose }: AddStaffModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl bg-white max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl bg-white max-h-[90vh] overflow-y-auto [&>button]:hidden">
         <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
           <div>
             <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
@@ -72,15 +72,16 @@ export const AddStaffModal = ({ isOpen, onClose }: AddStaffModalProps) => {
               <span>&gt;</span>
               <span>Society Staff</span>
             </div>
-            <DialogTitle className="text-lg font-semibold">SOCIETY STFF</DialogTitle>
+            <DialogTitle className="text-lg font-semibold">SOCIETY STAFF</DialogTitle>
           </div>
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
             onClick={onClose}
             className="h-6 w-6 p-0"
           >
             <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
           </Button>
         </DialogHeader>
         
@@ -375,7 +376,8 @@ export const AddStaffModal = ({ isOpen, onClose }: AddStaffModalProps) => {
           <div className="flex justify-center pt-4">
             <Button
               onClick={handleSubmit}
-              className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-8 py-2"
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:bg-[#C72030]/90 text-white px-8 py-2"
             >
               Submit
             </Button>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -326,28 +325,32 @@ export const StaffsDashboard = () => {
             <div className="flex gap-3 mb-4">
               <Button 
                 onClick={() => setIsAddModalOpen(true)}
-                className="bg-[#C72030] hover:bg-[#A61B2A] text-white px-4 py-2 rounded-md"
+                style={{ backgroundColor: '#C72030' }}
+                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add
               </Button>
               <Button 
                 onClick={() => setIsFilterModalOpen(true)}
-                className="bg-[#C72030] hover:bg-[#A61B2A] text-white px-4 py-2 rounded-md"
+                style={{ backgroundColor: '#C72030' }}
+                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md"
               >
                 <Filter className="w-4 h-4 mr-2" />
                 Filters
               </Button>
               <Button 
                 onClick={handlePrintQR}
-                className="bg-[#C72030] hover:bg-[#A61B2A] text-white px-4 py-2 rounded-md"
+                style={{ backgroundColor: '#C72030' }}
+                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md"
               >
                 <QrCode className="w-4 h-4 mr-2" />
                 Print QR
               </Button>
               <Button 
                 onClick={handlePrintAllQR}
-                className="bg-[#C72030] hover:bg-[#A61B2A] text-white px-4 py-2 rounded-md"
+                style={{ backgroundColor: '#C72030' }}
+                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md"
               >
                 <FileText className="w-4 h-4 mr-2" />
                 Print ALL QR
@@ -360,9 +363,10 @@ export const StaffsDashboard = () => {
                 onClick={() => setActiveTab('history')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === 'history' 
-                    ? 'bg-[#C72030] text-white shadow-sm' 
+                    ? 'text-white shadow-sm' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
                 }`}
+                style={activeTab === 'history' ? { backgroundColor: '#C72030' } : {}}
               >
                 History
               </Button>
@@ -370,9 +374,10 @@ export const StaffsDashboard = () => {
                 onClick={() => setActiveTab('all')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === 'all' 
-                    ? 'bg-[#C72030] text-white shadow-sm' 
+                    ? 'text-white shadow-sm' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
                 }`}
+                style={activeTab === 'all' ? { backgroundColor: '#C72030' } : {}}
               >
                 All
               </Button>
@@ -380,9 +385,10 @@ export const StaffsDashboard = () => {
                 onClick={() => setActiveTab('in')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === 'in' 
-                    ? 'bg-[#C72030] text-white shadow-sm' 
+                    ? 'text-white shadow-sm' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
                 }`}
+                style={activeTab === 'in' ? { backgroundColor: '#C72030' } : {}}
               >
                 In
               </Button>
@@ -390,9 +396,10 @@ export const StaffsDashboard = () => {
                 onClick={() => setActiveTab('out')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === 'out' 
-                    ? 'bg-[#C72030] text-white shadow-sm' 
+                    ? 'text-white shadow-sm' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
                 }`}
+                style={activeTab === 'out' ? { backgroundColor: '#C72030' } : {}}
               >
                 Out
               </Button>
@@ -417,7 +424,8 @@ export const StaffsDashboard = () => {
                 </div>
                 <Button 
                   onClick={handleSearch}
-                  className="bg-[#C72030] hover:bg-[#A61B2A] text-white px-4 py-2 rounded-md"
+                  style={{ backgroundColor: '#C72030' }}
+                  className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md"
                 >
                   Go!
                 </Button>
@@ -443,7 +451,8 @@ export const StaffsDashboard = () => {
                 </div>
                 <Button 
                   onClick={handleSearch}
-                  className="bg-[#C72030] hover:bg-[#A61B2A] text-white px-4 py-2 rounded-md"
+                  style={{ backgroundColor: '#C72030' }}
+                  className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md"
                 >
                   Go!
                 </Button>
