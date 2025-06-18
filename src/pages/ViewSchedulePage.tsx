@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -9,12 +10,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useParams, useNavigate } from 'react-router-dom';
-import { SetApprovalDialog } from '@/components/SetApprovalDialog';
 
 export const ViewSchedulePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [showSetApproval, setShowSetApproval] = useState(false);
 
   // Static data for viewing
   const scheduleData = {
@@ -79,14 +78,6 @@ export const ViewSchedulePage = () => {
     }
   ];
 
-  const handleViewPerformance = () => {
-    navigate(`/maintenance/schedule/performance/${id}`);
-  };
-
-  const handleSetApproval = () => {
-    setShowSetApproval(true);
-  };
-
   return (
     <div className="p-6 max-w-4xl mx-auto">
       {/* Header */}
@@ -99,18 +90,10 @@ export const ViewSchedulePage = () => {
           <Button variant="outline" className="border-[#C72030] text-[#C72030]">
             Weightage
           </Button>
-          <Button 
-            onClick={handleSetApproval}
-            style={{ backgroundColor: '#C72030' }} 
-            className="text-white"
-          >
+          <Button style={{ backgroundColor: '#C72030' }} className="text-white">
             Set Approval
           </Button>
-          <Button 
-            onClick={handleViewPerformance}
-            variant="outline" 
-            className="border-[#C72030] text-[#C72030]"
-          >
+          <Button variant="outline" className="border-[#C72030] text-[#C72030]">
             View Performance
           </Button>
         </div>
@@ -466,11 +449,6 @@ export const ViewSchedulePage = () => {
           </Button>
         </div>
       </div>
-
-      <SetApprovalDialog
-        open={showSetApproval}
-        onOpenChange={setShowSetApproval}
-      />
     </div>
   );
 };

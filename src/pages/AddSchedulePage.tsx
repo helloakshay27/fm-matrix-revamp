@@ -1,573 +1,942 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ArrowLeft, Plus, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+
+interface TaskSection {
+  id: string;
+  group: string;
+  subGroup: string;
+  task: string;
+  inputType: string;
+  mandatory: boolean;
+  reading: boolean;
+  helpText: string;
+  weightageValue: string;
+  failing: boolean;
+}
 
 export const AddSchedulePage = () => {
   const navigate = useNavigate();
-  const [createCategoryToggle, setCreateCategoryToggle] = useState(false);
+  const [createNew, setCreateNew] = useState(false);
+  const [createTicket, setCreateTicket] = useState(false);
+  const [weightage, setWeightage] = useState(false);
+  const [activeTab, setActiveTab] = useState('Minutes');
   
-  // Basic Info state
-  const [type, setType] = useState('PPM');
-  const [activityName, setActivityName] = useState('');
-  const [description, setDescription] = useState('');
-  const [scheduleFor, setScheduleFor] = useState('Asset');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  // Task sections state
+  const [taskSections, setTaskSections] = useState<TaskSection[]>([
+    {
+      id: '1',
+      group: '',
+      subGroup: '',
+      task: '',
+      inputType: '',
+      mandatory: false,
+      reading: false,
+      helpText: '',
+      weightageValue: '',
+      failing: false
+    }
+  ]);
+  
+  // Form states
+  const [formData, setFormData] = useState({
+    template: '',
+    ticketLevel: 'Question Level',
+    assignedTo: '',
+    ticketCategory: '',
+    activityName: '',
+    description: '',
+    checklistType: 'Individual',
+    asset: '',
+    assignTo: '',
+    scanType: '',
+    planDuration: '',
+    priority: '',
+    emailTriggerRule: '',
+    supervisors: '',
+    category: '',
+    submissionTime: '',
+    graceTime: '',
+    lockOverdueTask: '',
+    frequency: '',
+    startFrom: '',
+    endAt: ''
+  });
 
-  // Task state
-  const [group, setGroup] = useState('');
-  const [subGroup, setSubGroup] = useState('');
-  const [taskName, setTaskName] = useState('');
-  const [inputType, setInputType] = useState('');
-  const [mandatory, setMandatory] = useState(false);
-  const [reading, setReading] = useState(false);
-  const [helpText, setHelpText] = useState(false);
-
-  // Schedule state
-  const [checklistType, setChecklistType] = useState('Individual');
-  const [asset, setAsset] = useState('');
-  const [assignTo, setAssignTo] = useState('');
-  const [scanType, setScanType] = useState('');
-  const [planDuration, setPlanDuration] = useState('Day');
-  const [planValue, setPlanValue] = useState('');
-  const [priority, setPriority] = useState('');
-  const [emailTriggerRule, setEmailTriggerRule] = useState('');
-  const [supervisors, setSupervisors] = useState('');
-  const [category, setCategory] = useState('Technical');
-  const [submissionType, setSubmissionType] = useState('');
-  const [submissionTimeValue, setSubmissionTimeValue] = useState('');
-  const [graceTime, setGraceTime] = useState('Day');
-  const [graceTimeValue, setGraceTimeValue] = useState('');
-  const [lockOverdueTask, setLockOverdueTask] = useState('');
-  const [frequency, setFrequency] = useState('');
-  const [cronExpression, setCronExpression] = useState('0 0 * * *');
-  const [startTime, setStartTime] = useState('');
-  const [endAt, setEndAt] = useState('');
-  const [selectSupplier, setSelectSupplier] = useState('');
-
-  const handleAddSection = () => {
-    console.log('Add Section clicked');
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleAddQuestion = () => {
-    console.log('Add Question clicked');
+  const handleTaskSectionChange = (sectionId: string, field: keyof TaskSection, value: any) => {
+    setTaskSections(prev => 
+      prev.map(section => 
+        section.id === sectionId 
+          ? { ...section, [field]: value }
+          : section
+      )
+    );
+  };
+
+  const handleAddSection = () => {
+    const newSection: TaskSection = {
+      id: Date.now().toString(),
+      group: '',
+      subGroup: '',
+      task: '',
+      inputType: '',
+      mandatory: false,
+      reading: false,
+      helpText: '',
+      weightageValue: '',
+      failing: false
+    };
+    setTaskSections(prev => [...prev, newSection]);
+  };
+
+  const handleRemoveSection = (sectionId: string) => {
+    if (taskSections.length > 1) {
+      setTaskSections(prev => prev.filter(section => section.id !== sectionId));
+    }
   };
 
   const handleSubmit = () => {
-    console.log('Schedule created successfully');
+    console.log('Submitting schedule data:', { formData, taskSections });
+    // Handle form submission
     navigate('/maintenance/schedule');
   };
 
-  const handleMandatoryChange = (checked: boolean | "indeterminate") => {
-    setMandatory(checked === true);
-  };
-
-  const handleReadingChange = (checked: boolean | "indeterminate") => {
-    setReading(checked === true);
-  };
-
-  const handleHelpTextChange = (checked: boolean | "indeterminate") => {
-    setHelpText(checked === true);
-  };
-
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-          <span>Schedule</span>
-          <span>&gt;</span>
-          <span>Create Schedule</span>
+      <div className="flex items-center gap-4">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/maintenance/schedule')}
+          className="p-2"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <div>
+          <div className="text-sm text-gray-600 mb-1">Schedule</div>
+          <h1 className="text-2xl font-bold">Add Schedule</h1>
         </div>
-        <h1 className="text-2xl font-bold text-[#1a1a1a] mb-4">Create Schedule</h1>
+      </div>
+
+      {/* Toggles */}
+      <div className="flex gap-6">
+        <div className="flex items-center space-x-2">
+          <Switch 
+            checked={createNew} 
+            onCheckedChange={setCreateNew}
+            id="create-new"
+          />
+          <Label htmlFor="create-new">Create New</Label>
+        </div>
         
-        {/* Toggle Section */}
-        <div className="flex items-center gap-8 mb-4">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium">Create Category</label>
-            <div 
-              className={`w-12 h-6 rounded-full cursor-pointer transition-colors ${
-                createCategoryToggle ? 'bg-[#C72030]' : 'bg-gray-300'
-              }`}
-              onClick={() => setCreateCategoryToggle(!createCategoryToggle)}
-            >
-              <div 
-                className={`w-5 h-5 bg-white rounded-full transition-transform mt-0.5 ${
-                  createCategoryToggle ? 'translate-x-6' : 'translate-x-0.5'
-                }`}
-              />
+        <div className="flex items-center space-x-2">
+          <Switch 
+            checked={createTicket} 
+            onCheckedChange={setCreateTicket}
+            id="create-ticket"
+          />
+          <Label htmlFor="create-ticket">Create Ticket</Label>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <Switch 
+            checked={weightage} 
+            onCheckedChange={setWeightage}
+            id="weightage"
+          />
+          <Label htmlFor="weightage">Weightage</Label>
+        </div>
+      </div>
+
+      {/* Create New Toggle Section */}
+      {createNew && (
+        <Card>
+          <CardContent className="pt-6">
+            <div>
+              <Label htmlFor="template-select">Select from the existing Template</Label>
+              <Select value={formData.template} onValueChange={(value) => handleInputChange('template', value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select from the existing Template" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="template1">Template 1</SelectItem>
+                  <SelectItem value="template2">Template 2</SelectItem>
+                  <SelectItem value="template3">Template 3</SelectItem>
+                  <SelectItem value="custom">Custom Template</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Create Ticket Toggle Section */}
+      {createTicket && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center space-x-2">
+                  <input 
+                    type="radio" 
+                    id="checklist-level" 
+                    name="ticketLevel" 
+                    value="Checklist Level"
+                    checked={formData.ticketLevel === 'Checklist Level'}
+                    onChange={(e) => handleInputChange('ticketLevel', e.target.value)}
+                  />
+                  <Label htmlFor="checklist-level">Checklist Level</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input 
+                    type="radio" 
+                    id="question-level" 
+                    name="ticketLevel" 
+                    value="Question Level"
+                    checked={formData.ticketLevel === 'Question Level'}
+                    onChange={(e) => handleInputChange('ticketLevel', e.target.value)}
+                  />
+                  <Label htmlFor="question-level">Question Level</Label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Select Assigned To</Label>
+                  <Select value={formData.assignedTo} onValueChange={(value) => handleInputChange('assignedTo', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Assigned To" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="supervisor">Supervisor</SelectItem>
+                      <SelectItem value="technician">Technician</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Select Category</Label>
+                  <Select value={formData.ticketCategory} onValueChange={(value) => handleInputChange('ticketCategory', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="technical">Technical</SelectItem>
+                      <SelectItem value="non-technical">Non Technical</SelectItem>
+                      <SelectItem value="maintenance">Maintenance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Basic Info Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm">1</span>
+            Basic Info
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4 mb-4">
+            <Label>Type</Label>
+            <div className="flex gap-4">
+              <div className="flex items-center space-x-2">
+                <input type="radio" id="ppm" name="type" value="PPM" />
+                <Label htmlFor="ppm">PPM</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input type="radio" id="amc" name="type" value="AMC" />
+                <Label htmlFor="amc">AMC</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input type="radio" id="preparedness" name="type" value="Preparedness" />
+                <Label htmlFor="preparedness">Preparedness</Label>
+              </div>
             </div>
           </div>
-          
-          {createCategoryToggle && (
+
+          <div className="flex items-center gap-4 mb-4">
+            <Label>Schedule For</Label>
+            <div className="flex gap-4">
+              <div className="flex items-center space-x-2">
+                <input type="radio" id="asset" name="scheduleFor" value="Asset" />
+                <Label htmlFor="asset">Asset</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input type="radio" id="service" name="scheduleFor" value="Service" />
+                <Label htmlFor="service">Service</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input type="radio" id="vendor" name="scheduleFor" value="Vendor" />
+                <Label htmlFor="vendor">Vendor</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input type="radio" id="training" name="scheduleFor" value="Training" />
+                <Label htmlFor="training">Training</Label>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="activity-name">Activity Name*</Label>
+            <Input
+              id="activity-name"
+              placeholder="Enter Activity Name"
+              value={formData.activityName}
+              onChange={(e) => handleInputChange('activityName', e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              placeholder="Enter Description"
+              value={formData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Task Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-48">
+              <span className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm">2</span>
+              Task
+            </div>
+            <Button 
+              onClick={handleAddSection}
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Section
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {taskSections.map((section, index) => (
+            <div key={section.id} className="space-y-4 p-4 border rounded-lg relative">
+              {taskSections.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleRemoveSection(section.id)}
+                  className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Group</Label>
+                  <Select 
+                    value={section.group} 
+                    onValueChange={(value) => handleTaskSectionChange(section.id, 'group', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="group1">Group 1</SelectItem>
+                      <SelectItem value="group2">Group 2</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>SubGroup</Label>
+                  <Select 
+                    value={section.subGroup} 
+                    onValueChange={(value) => handleTaskSectionChange(section.id, 'subGroup', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Sub Group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="subgroup1">Sub Group 1</SelectItem>
+                      <SelectItem value="subgroup2">Sub Group 2</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label>Task</Label>
+                  <Input
+                    placeholder="Enter Task"
+                    value={section.task}
+                    onChange={(e) => handleTaskSectionChange(section.id, 'task', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Input Type</Label>
+                  <Select 
+                    value={section.inputType} 
+                    onValueChange={(value) => handleTaskSectionChange(section.id, 'inputType', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Input Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="text">Text</SelectItem>
+                      <SelectItem value="number">Number</SelectItem>
+                      <SelectItem value="dropdown">Dropdown</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-4 pt-6">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`mandatory-${section.id}`}
+                      checked={section.mandatory}
+                      onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'mandatory', checked)}
+                    />
+                    <Label htmlFor={`mandatory-${section.id}`}>Mandatory</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`reading-${section.id}`}
+                      checked={section.reading}
+                      onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'reading', checked)}
+                    />
+                    <Label htmlFor={`reading-${section.id}`}>Reading</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`help-text-${section.id}`}
+                      checked={!!section.helpText}
+                      onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'helpText', checked ? 'Help text' : '')}
+                    />
+                    <Label htmlFor={`help-text-${section.id}`}>Help Text</Label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Weightage option - only show when weightage toggle is on */}
+              {weightage && (
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <Label>Weightage</Label>
+                    <Input
+                      placeholder="Enter Weightage"
+                      value={section.weightageValue}
+                      onChange={(e) => handleTaskSectionChange(section.id, 'weightageValue', e.target.value)}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 pt-6">
+                    <Checkbox 
+                      id={`failing-${section.id}`}
+                      checked={section.failing}
+                      onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'failing', checked)}
+                    />
+                    <Label htmlFor={`failing-${section.id}`}>Failing</Label>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Schedule Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm">3</span>
+            Schedule
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4 mb-4">
+            <Label>Checklist Type</Label>
+            <div className="flex gap-4">
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="radio" 
+                  id="individual" 
+                  name="checklistType" 
+                  value="Individual" 
+                  checked={formData.checklistType === 'Individual'}
+                  onChange={(e) => handleInputChange('checklistType', e.target.value)}
+                />
+                <Label htmlFor="individual">Individual</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="radio" 
+                  id="asset-group" 
+                  name="checklistType" 
+                  value="Asset Group"
+                  checked={formData.checklistType === 'Asset Group'}
+                  onChange={(e) => handleInputChange('checklistType', e.target.value)}
+                />
+                <Label htmlFor="asset-group">Asset Group</Label>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label>Asset</Label>
+              <Select value={formData.asset} onValueChange={(value) => handleInputChange('asset', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Asset" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="asset1">Asset 1</SelectItem>
+                  <SelectItem value="asset2">Asset 2</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Assign To</Label>
+              <Select value={formData.assignTo} onValueChange={(value) => handleInputChange('assignTo', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Assign To" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user1">User 1</SelectItem>
+                  <SelectItem value="user2">User 2</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Scan Type</Label>
+              <Select value={formData.scanType} onValueChange={(value) => handleInputChange('scanType', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Scan Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="qr">QR Code</SelectItem>
+                  <SelectItem value="barcode">Barcode</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label>Plan Duration</Label>
+              <Select value={formData.planDuration} onValueChange={(value) => handleInputChange('planDuration', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Plan Duration" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1hour">1 Hour</SelectItem>
+                  <SelectItem value="2hours">2 Hours</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Priority</Label>
+              <Select value={formData.priority} onValueChange={(value) => handleInputChange('priority', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Email Trigger Rule</Label>
+              <Select value={formData.emailTriggerRule} onValueChange={(value) => handleInputChange('emailTriggerRule', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Email Trigger Rule" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="immediate">Immediate</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label>Supervisors</Label>
+              <Select value={formData.supervisors} onValueChange={(value) => handleInputChange('supervisors', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Supervisors" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="supervisor1">Supervisor 1</SelectItem>
+                  <SelectItem value="supervisor2">Supervisor 2</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Category</Label>
+              <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+                <SelectTrigger>
                   <SelectValue placeholder="Select Category" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="technical">Technical</SelectItem>
                   <SelectItem value="non-technical">Non Technical</SelectItem>
-                  <SelectItem value="safety">Safety</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        {/* Basic Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-orange-600 flex items-center gap-2">
-              <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
-              Basic Info
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Type</Label>
-                <RadioGroup value={type} onValueChange={setType} className="flex gap-4 flex-wrap">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="PPM" id="ppm" />
-                    <Label htmlFor="ppm">PPM</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="AMC" id="amc" />
-                    <Label htmlFor="amc">AMC</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Preparedness" id="preparedness" />
-                    <Label htmlFor="preparedness">Preparedness</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Hoto" id="hoto" />
-                    <Label htmlFor="hoto">Hoto</Label>
-                  </div>
-                  <div className="flex items-center space-x-2 mt-2">
-                    <RadioGroupItem value="Routine" id="routine" />
-                    <Label htmlFor="routine">Routine</Label>
-                  </div>
-                  <div className="flex items-center space-x-2 mt-2">
-                    <RadioGroupItem value="Audit" id="audit" />
-                    <Label htmlFor="audit">Audit</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-              <div className="space-y-2">
-                <Label>Schedule For</Label>
-                <RadioGroup value={scheduleFor} onValueChange={setScheduleFor} className="flex gap-4">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Asset" id="asset-schedule" />
-                    <Label htmlFor="asset-schedule">Asset</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Service" id="service" />
-                    <Label htmlFor="service">Service</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Vendor" id="vendor" />
-                    <Label htmlFor="vendor">Vendor</Label>
-                  </div>
-                </RadioGroup>
-              </div>
+            <div>
+              <Label>Submission Time</Label>
+              <Select value={formData.submissionTime} onValueChange={(value) => handleInputChange('submissionTime', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Submission Time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="24hours">24 Hours</SelectItem>
+                  <SelectItem value="48hours">48 Hours</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Activity Name*</Label>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label>Grace Time</Label>
+              <Select value={formData.graceTime} onValueChange={(value) => handleInputChange('graceTime', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Grace Time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1hour">1 Hour</SelectItem>
+                  <SelectItem value="2hours">2 Hours</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Lock Overdue Task</Label>
+              <Select value={formData.lockOverdueTask} onValueChange={(value) => handleInputChange('lockOverdueTask', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Lock Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="yes">Yes</SelectItem>
+                  <SelectItem value="no">No</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Frequency</Label>
+              <Select value={formData.frequency} onValueChange={(value) => handleInputChange('frequency', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Frequency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Start From</Label>
               <Input
-                value={activityName}
-                onChange={(e) => setActivityName(e.target.value)}
-                placeholder="Activity Name"
+                type="date"
+                value={formData.startFrom}
+                onChange={(e) => handleInputChange('startFrom', e.target.value)}
               />
             </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Enter Description"
-                className="min-h-[100px]"
+            <div>
+              <Label>End At</Label>
+              <Input
+                type="date"
+                value={formData.endAt}
+                onChange={(e) => handleInputChange('endAt', e.target.value)}
               />
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Task */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-orange-600 flex items-center gap-2">
-                <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
-                Task
-              </CardTitle>
-              <Button 
-                style={{ backgroundColor: '#C72030' }}
-                className="text-white"
-                onClick={handleAddSection}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Section
-              </Button>
+          <div>
+            <Label>Select Supplier</Label>
+            <Select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Supplier" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="supplier1">Supplier 1</SelectItem>
+                <SelectItem value="supplier2">Supplier 2</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Cron Form Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm">4</span>
+            Cron form
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex border rounded-lg overflow-hidden">
+              {['Minutes', 'Hours', 'Day', 'Month'].map((tab, index) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 flex-1 transition-colors ${
+                    activeTab === tab 
+                      ? 'text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  style={activeTab === tab ? { backgroundColor: '#C72030' } : {}}
+                >
+                  {tab}
+                </button>
+              ))}
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Group</Label>
-                <Select value={group} onValueChange={setGroup}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="group1">Group 1</SelectItem>
-                    <SelectItem value="group2">Group 2</SelectItem>
-                  </SelectContent>
-                </Select>
+
+            <div className="space-y-4">
+              {activeTab === 'Minutes' && (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="specific-minutes" name="minutes-option" defaultChecked />
+                    <Label htmlFor="specific-minutes">Specific minute (choose one or many)</Label>
+                  </div>
+
+                  <div className="grid grid-cols-12 gap-2 text-sm">
+                    {Array.from({ length: 60 }, (_, i) => (
+                      <div key={i} className="flex items-center space-x-1">
+                        <Checkbox id={`minute-${i}`} />
+                        <Label htmlFor={`minute-${i}`} className="text-xs">{i.toString().padStart(2, '0')}</Label>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="every-minute" name="minutes-option" />
+                    <Label htmlFor="every-minute">Every minute between minute</Label>
+                    <Select>
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="00" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 60 }, (_, i) => (
+                          <SelectItem key={i} value={i.toString()}>{i.toString().padStart(2, '0')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span>and minute</span>
+                    <Select>
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="59" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 60 }, (_, i) => (
+                          <SelectItem key={i} value={i.toString()}>{i.toString().padStart(2, '0')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'Hours' && (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="specific-hours" name="hours-option" defaultChecked />
+                    <Label htmlFor="specific-hours">Specific hour (choose one or many)</Label>
+                  </div>
+
+                  <div className="grid grid-cols-12 gap-2 text-sm">
+                    {Array.from({ length: 24 }, (_, i) => (
+                      <div key={i} className="flex items-center space-x-1">
+                        <Checkbox id={`hour-${i}`} />
+                        <Label htmlFor={`hour-${i}`} className="text-xs">{i.toString().padStart(2, '0')}</Label>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="every-hour" name="hours-option" />
+                    <Label htmlFor="every-hour">Every hour between hour</Label>
+                    <Select>
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="00" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <SelectItem key={i} value={i.toString()}>{i.toString().padStart(2, '0')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span>and hour</span>
+                    <Select>
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="23" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <SelectItem key={i} value={i.toString()}>{i.toString().padStart(2, '0')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'Day' && (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="specific-days" name="days-option" defaultChecked />
+                    <Label htmlFor="specific-days">Specific day (choose one or many)</Label>
+                  </div>
+
+                  <div className="grid grid-cols-8 gap-2 text-sm">
+                    {Array.from({ length: 31 }, (_, i) => (
+                      <div key={i} className="flex items-center space-x-1">
+                        <Checkbox id={`day-${i + 1}`} />
+                        <Label htmlFor={`day-${i + 1}`} className="text-xs">{(i + 1).toString()}</Label>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="every-day" name="days-option" />
+                    <Label htmlFor="every-day">Every day between day</Label>
+                    <Select>
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="01" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 31 }, (_, i) => (
+                          <SelectItem key={i} value={(i + 1).toString()}>{(i + 1).toString().padStart(2, '0')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span>and day</span>
+                    <Select>
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="31" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 31 }, (_, i) => (
+                          <SelectItem key={i} value={(i + 1).toString()}>{(i + 1).toString().padStart(2, '0')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'Month' && (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="specific-months" name="months-option" defaultChecked />
+                    <Label htmlFor="specific-months">Specific month (choose one or many)</Label>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2 text-sm">
+                    {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
+                      <div key={i} className="flex items-center space-x-1">
+                        <Checkbox id={`month-${i + 1}`} />
+                        <Label htmlFor={`month-${i + 1}`} className="text-xs">{month}</Label>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="every-month" name="months-option" />
+                    <Label htmlFor="every-month">Every month between month</Label>
+                    <Select>
+                      <SelectTrigger className="w-24">
+                        <SelectValue placeholder="Jan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
+                          <SelectItem key={i} value={(i + 1).toString()}>{month}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span>and month</span>
+                    <Select>
+                      <SelectTrigger className="w-24">
+                        <SelectValue placeholder="Dec" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
+                          <SelectItem key={i} value={(i + 1).toString()}>{month}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              <div className="bg-gray-50 p-4 rounded">
+                <Label className="text-sm font-medium">Resulting Cron Expression:</Label>
+                <div className="mt-2 font-mono text-sm">0 0 ? * *</div>
               </div>
-              <div className="space-y-2">
-                <Label>SubGroup</Label>
-                <Select value={subGroup} onValueChange={setSubGroup}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Sub Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="subgroup1">Sub Group 1</SelectItem>
-                    <SelectItem value="subgroup2">Sub Group 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Task</Label>
-                <Input
-                  value={taskName}
-                  onChange={(e) => setTaskName(e.target.value)}
-                  placeholder="Task Name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Input Type</Label>
-                <Select value={inputType} onValueChange={setInputType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Input Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="numeric">Numeric</SelectItem>
-                    <SelectItem value="text">Text</SelectItem>
-                    <SelectItem value="dropdown">Dropdown</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2 flex items-center gap-4 pt-6">
-                <div className="flex items-center space-x-2">
-                  <Checkbox checked={mandatory} onCheckedChange={handleMandatoryChange} />
-                  <Label>Mandatory</Label>
+
+              <div className="grid grid-cols-5 gap-4 mt-6">
+                <div className="text-center">
+                  <div className="font-medium mb-2">Minutes</div>
+                  <div className="text-sm">*</div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox checked={reading} onCheckedChange={handleReadingChange} />
-                  <Label>Reading</Label>
+                <div className="text-center">
+                  <div className="font-medium mb-2">Hours</div>
+                  <div className="text-sm">*</div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox checked={helpText} onCheckedChange={handleHelpTextChange} />
-                  <Label>Help Text</Label>
+                <div className="text-center">
+                  <div className="font-medium mb-2">Day Of Month</div>
+                  <div className="text-sm">*</div>
                 </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <Button 
-                variant="outline"
-                onClick={handleAddQuestion}
-                className="border-[#C72030] text-[#C72030]"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Question
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Schedule */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-orange-600 flex items-center gap-2">
-              <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
-              Schedule
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Checklist Type</Label>
-              <RadioGroup value={checklistType} onValueChange={setChecklistType} className="flex gap-4">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Individual" id="individual" />
-                  <Label htmlFor="individual">Individual</Label>
+                <div className="text-center">
+                  <div className="font-medium mb-2">Month</div>
+                  <div className="text-sm">*</div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Asset Group" id="asset-group" />
-                  <Label htmlFor="asset-group">Asset Group</Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Asset</Label>
-              <Select value={asset} onValueChange={setAsset}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Asset" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="energy-meter-1">Energy Meter 1[584931186764c2f8b565]</SelectItem>
-                  <SelectItem value="energy-meter-23">Energy Meter 23[03835269926136105d:1]</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Assign To</Label>
-                <Select value={assignTo} onValueChange={setAssignTo}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select User" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user1">User 1</SelectItem>
-                    <SelectItem value="user2">User 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Scan Type</Label>
-                <Select value={scanType} onValueChange={setScanType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Scan Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="qr">QR Code</SelectItem>
-                    <SelectItem value="barcode">Barcode</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Plan Duration</Label>
-                <div className="flex gap-2">
-                  <Select value={planDuration} onValueChange={setPlanDuration}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Day">Day</SelectItem>
-                      <SelectItem value="Hour">Hour</SelectItem>
-                      <SelectItem value="Week">Week</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    value={planValue}
-                    onChange={(e) => setPlanValue(e.target.value)}
-                    placeholder="Value"
-                    className="w-20"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Priority</Label>
-                <Select value={priority} onValueChange={setPriority}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Email Trigger Rule</Label>
-                <Select value={emailTriggerRule} onValueChange={setEmailTriggerRule}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Email Trigger Rule" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="rule1">Rule 1</SelectItem>
-                    <SelectItem value="rule2">Rule 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Supervisors</Label>
-                <Select value={supervisors} onValueChange={setSupervisors}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Supervisors" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="supervisor1">Supervisor 1</SelectItem>
-                    <SelectItem value="supervisor2">Supervisor 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Category</Label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Technical">Technical</SelectItem>
-                    <SelectItem value="Non Technical">Non Technical</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Submission Type</Label>
-                <Select value={submissionType} onValueChange={setSubmissionType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Submission Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="immediate">Immediate</SelectItem>
-                    <SelectItem value="delayed">Delayed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Submission Time Value</Label>
-                <Input
-                  value={submissionTimeValue}
-                  onChange={(e) => setSubmissionTimeValue(e.target.value)}
-                  placeholder="Value"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Grace Time</Label>
-                <div className="flex gap-2">
-                  <Select value={graceTime} onValueChange={setGraceTime}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Day">Day</SelectItem>
-                      <SelectItem value="Hour">Hour</SelectItem>
-                      <SelectItem value="Week">Week</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    value={graceTimeValue}
-                    onChange={(e) => setGraceTimeValue(e.target.value)}
-                    placeholder="Value"
-                    className="w-20"
-                  />
+                <div className="text-center">
+                  <div className="font-medium mb-2">Day Of Week</div>
+                  <div className="text-sm">*</div>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Lock Overdue Task</Label>
-                <Select value={lockOverdueTask} onValueChange={setLockOverdueTask}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Lock Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="yes">Yes</SelectItem>
-                    <SelectItem value="no">No</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Frequency</Label>
-                <Select value={frequency} onValueChange={setFrequency}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Frequency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Cron Expression</Label>
-                <Input
-                  value={cronExpression}
-                  onChange={(e) => setCronExpression(e.target.value)}
-                  placeholder="0 0 * * *"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Start Time</Label>
-                <Input
-                  type="date"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>End At</Label>
-                <Input
-                  type="date"
-                  value={endAt}
-                  onChange={(e) => setEndAt(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Select Supplier</Label>
-              <Select value={selectSupplier} onValueChange={setSelectSupplier}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Supplier" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="supplier1">Supplier 1</SelectItem>
-                  <SelectItem value="supplier2">Supplier 2</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3 pt-6">
-          <Button 
-            onClick={() => navigate('/maintenance/schedule')}
-            variant="outline"
-            className="px-8"
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSubmit}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90 px-8"
-          >
-            Create Schedule
-          </Button>
-        </div>
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-4">
+        <Button variant="outline" onClick={() => navigate('/maintenance/schedule')}>
+          Cancel
+        </Button>
+        <Button 
+          onClick={handleSubmit}
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white"
+        >
+          Save Schedule
+        </Button>
       </div>
     </div>
   );
