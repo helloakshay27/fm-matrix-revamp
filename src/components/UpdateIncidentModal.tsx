@@ -2,10 +2,9 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { X } from 'lucide-react';
 
 interface UpdateIncidentModalProps {
   isOpen: boolean;
@@ -13,12 +12,27 @@ interface UpdateIncidentModalProps {
   incidentId: string;
 }
 
-export const UpdateIncidentModal = ({ isOpen, onClose, incidentId }: UpdateIncidentModalProps) => {
-  const [status, setStatus] = useState('');
-  const [comment, setComment] = useState('');
+export const UpdateIncidentModal: React.FC<UpdateIncidentModalProps> = ({
+  isOpen,
+  onClose,
+  incidentId
+}) => {
+  const [updateData, setUpdateData] = useState({
+    status: '',
+    priority: '',
+    assignedTo: '',
+    comments: ''
+  });
 
-  const handleSubmit = () => {
-    console.log('Updating incident status:', { incidentId, status, comment });
+  const handleInputChange = (field: string, value: string) => {
+    setUpdateData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleUpdate = () => {
+    console.log('Updating incident:', incidentId, updateData);
     onClose();
   };
 
@@ -26,25 +40,18 @@ export const UpdateIncidentModal = ({ isOpen, onClose, incidentId }: UpdateIncid
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle>Update Status</DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="h-6 w-6"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle>Update Incident Status</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>Status</Label>
-            <Select value={status} onValueChange={setStatus}>
+            <Select 
+              value={updateData.status} 
+              onValueChange={(value) => handleInputChange('status', value)}
+            >
               <SelectTrigger>
-                <SelectValue placeholder="Select Status" />
+                <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="open">Open</SelectItem>
@@ -56,22 +63,60 @@ export const UpdateIncidentModal = ({ isOpen, onClose, incidentId }: UpdateIncid
           </div>
 
           <div className="space-y-2">
-            <Label>Comment</Label>
+            <Label>Priority</Label>
+            <Select 
+              value={updateData.priority} 
+              onValueChange={(value) => handleInputChange('priority', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="urgent">Urgent</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Assign To</Label>
+            <Select 
+              value={updateData.assignedTo} 
+              onValueChange={(value) => handleInputChange('assignedTo', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select assignee" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="john-doe">John Doe</SelectItem>
+                <SelectItem value="jane-smith">Jane Smith</SelectItem>
+                <SelectItem value="safety-team">Safety Team</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Comments</Label>
             <Textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder="Message"
-              className="min-h-[100px]"
+              value={updateData.comments}
+              onChange={(e) => handleInputChange('comments', e.target.value)}
+              placeholder="Add update comments..."
+              className="min-h-[80px]"
             />
           </div>
 
-          <div className="flex justify-center pt-4">
+          <div className="flex gap-3 pt-4">
+            <Button variant="outline" onClick={onClose} className="flex-1">
+              Cancel
+            </Button>
             <Button
-              onClick={handleSubmit}
+              onClick={handleUpdate}
               style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#C72030]/90 px-8"
+              className="text-white hover:opacity-90 flex-1"
             >
-              Submit
+              Update
             </Button>
           </div>
         </div>
