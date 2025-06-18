@@ -41,6 +41,15 @@ export const AddMasterChecklistPage = () => {
   const [createTask, setCreateTask] = useState(false);
   const [weightage, setWeightage] = useState(false);
 
+  // Handler functions for checkboxes
+  const handleCreateTaskChange = (checked: boolean | "indeterminate") => {
+    setCreateTask(checked === true);
+  };
+
+  const handleWeightageChange = (checked: boolean | "indeterminate") => {
+    setWeightage(checked === true);
+  };
+
   const addTaskSection = () => {
     const newSection = {
       id: Date.now(),
@@ -132,7 +141,7 @@ export const AddMasterChecklistPage = () => {
           <Checkbox 
             id="createTask" 
             checked={createTask}
-            onCheckedChange={setCreateTask}
+            onCheckedChange={handleCreateTaskChange}
           />
           <Label htmlFor="createTask">Create Task</Label>
         </div>
@@ -140,7 +149,7 @@ export const AddMasterChecklistPage = () => {
           <Checkbox 
             id="weightage" 
             checked={weightage}
-            onCheckedChange={setWeightage}
+            onCheckedChange={handleWeightageChange}
           />
           <Label htmlFor="weightage">Weightage</Label>
         </div>
@@ -323,21 +332,21 @@ export const AddMasterChecklistPage = () => {
                   <label className="flex items-center space-x-2">
                     <Checkbox
                       checked={task.mandatory}
-                      onCheckedChange={(checked) => updateTask(section.id, task.id, 'mandatory', checked)}
+                      onCheckedChange={(checked) => updateTask(section.id, task.id, 'mandatory', checked === true)}
                     />
                     <span>Mandatory</span>
                   </label>
                   <label className="flex items-center space-x-2">
                     <Checkbox
                       checked={task.reading}
-                      onCheckedChange={(checked) => updateTask(section.id, task.id, 'reading', checked)}
+                      onCheckedChange={(checked) => updateTask(section.id, task.id, 'reading', checked === true)}
                     />
                     <span>Reading</span>
                   </label>
                   <label className="flex items-center space-x-2">
                     <Checkbox
                       checked={task.helpText}
-                      onCheckedChange={(checked) => updateTask(section.id, task.id, 'helpText', checked)}
+                      onCheckedChange={(checked) => updateTask(section.id, task.id, 'helpText', checked === true)}
                     />
                     <span>Help Text</span>
                   </label>
