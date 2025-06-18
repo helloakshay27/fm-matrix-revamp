@@ -9,8 +9,8 @@ import { fetchRoles } from '../../../redux/slices/roleSlice';
 const Details = () => {
 
     const {
-        users: details
-    } = useSelector((state) => state.fetchInternalUserDetails.fetchInternalUserDetails);
+        fetchInternalUserDetails:details
+    } = useSelector((state) => state.fetchInternalUserDetails);
 
     const {
         fetchUsers: users
@@ -27,6 +27,7 @@ const Details = () => {
     const [role, setRole] = useState("");
     const [reportsTo, setReportsTo] = useState("");
     const [name, setName] = useState("");
+    const token = localStorage.getItem("token");
 
     useEffect(() => {
         dispatch(fetchInternalUserDetails({ token, id }));
@@ -54,10 +55,10 @@ const Details = () => {
         <div className="flex flex-col gap-5 p-10 m-10 text-[14px] bg-[#D9D9D933] h-full">
             <div className="flex justify-between gap-10">
                 <div className="flex justify-start gap-4 w-2/3">
-                    <span className="rounded-full bg-[#D5DBDB] w-[65px] h-[65px] flex justify-center items-center text-[25px]">{details?.firstname.charAt(0).toUpperCase()}{details?.lastname.charAt(0).toUpperCase()}</span>
+                    <span className="rounded-full bg-[#D5DBDB] w-[65px] h-[65px] flex justify-center items-center text-[25px]">{details?.firstname?.charAt(0).toUpperCase()}{details?.lastname?.charAt(0).toUpperCase()}</span>
                     <div className='flex flex-col gap-3'>
                         <span>
-                            {`${details?.firstname.charAt(0).toUpperCase()}${details?.firstname.slice(1)} ${details?.lastname.charAt(0).toUpperCase()}${details?.lastname.slice(1)}`}
+                            {`${details?.firstname?.charAt(0).toUpperCase()}${details?.firstname?.slice(1)} ${details?.lastname?.charAt(0).toUpperCase()}${details?.lastname?.slice(1)}`}
                         </span>
                         <div className="flex justify-between gap-10 text-[12px]">
                             <span>{`Email Id :${details?.email}`}</span>
