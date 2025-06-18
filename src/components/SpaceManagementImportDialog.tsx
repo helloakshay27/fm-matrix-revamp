@@ -88,7 +88,8 @@ export const SpaceManagementImportDialog: React.FC<SpaceManagementImportDialogPr
           <div className="flex flex-col gap-3">
             <Button 
               onClick={handleImport}
-              className="bg-[#8B4A9C] hover:bg-[#7A4089] text-white"
+              style={{ backgroundColor: '#C72030', color: 'white' }}
+              className="hover:opacity-90 border-0"
             >
               Import
             </Button>

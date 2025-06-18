@@ -74,7 +74,8 @@ export const SpaceManagementExportDialog: React.FC<SpaceManagementExportDialogPr
           <div className="pt-4">
             <Button 
               onClick={handleSubmit}
-              className="w-full bg-[#8B4A9C] hover:bg-[#7A4089] text-white h-12 rounded-md"
+              style={{ backgroundColor: '#C72030', color: 'white' }}
+              className="w-full hover:opacity-90 h-12 rounded-md border-0"
             >
               Submit
             </Button>

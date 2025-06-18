@@ -7,15 +7,23 @@ import { BookingsFilterDialog } from "@/components/BookingsFilterDialog";
 import { SpaceManagementImportDialog } from "@/components/SpaceManagementImportDialog";
 import { SpaceManagementRosterExportDialog } from "@/components/SpaceManagementRosterExportDialog";
 import { SpaceManagementExportDialog } from "@/components/SpaceManagementExportDialog";
+import { EditBookingDialog } from "@/components/EditBookingDialog";
 
 export const SpaceManagementBookingsDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isRosterExportOpen, setIsRosterExportOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
 
   const handleFilterApply = (filters: any) => {
     console.log('Applied filters:', filters);
+  };
+
+  const handleEditBooking = (booking: any) => {
+    setSelectedBooking(booking);
+    setIsEditOpen(true);
   };
 
   const bookingData = [
@@ -160,7 +168,12 @@ export const SpaceManagementBookingsDashboard = () => {
                 {bookingData.map((booking, index) => (
                   <TableRow key={booking.id}>
                     <TableCell>
-                      <Button size="sm" variant="ghost">
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => handleEditBooking(booking)}
+                        className="hover:bg-gray-100"
+                      >
                         <Eye className="w-4 h-4" />
                       </Button>
                     </TableCell>
@@ -218,6 +231,12 @@ export const SpaceManagementBookingsDashboard = () => {
         <SpaceManagementExportDialog 
           open={isExportOpen}
           onOpenChange={setIsExportOpen}
+        />
+
+        <EditBookingDialog 
+          open={isEditOpen}
+          onOpenChange={setIsEditOpen}
+          booking={selectedBooking}
         />
       </div>
     </div>
