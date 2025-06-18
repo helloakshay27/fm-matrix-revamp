@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { X } from 'lucide-react';
 
 interface UtilityFilterDialogProps {
   isOpen: boolean;
@@ -38,13 +39,23 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>FILTER BY</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>FILTER BY</DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </DialogHeader>
         
         <div className="space-y-6 py-4">
           {/* Asset Details */}
           <div>
-            <h3 className="text-sm font-medium text-orange-600 mb-3">Asset Details</h3>
+            <h3 className="text-sm font-medium text-[#C72030] mb-3">Asset Details</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="assetName" className="text-sm">Asset Name</Label>
@@ -93,7 +104,7 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
 
           {/* Location Details */}
           <div>
-            <h3 className="text-sm font-medium text-orange-600 mb-3">Location Details</h3>
+            <h3 className="text-sm font-medium text-[#C72030] mb-3">Location Details</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="building" className="text-sm">Building</Label>
@@ -164,13 +175,15 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
           <div className="flex gap-3 pt-4">
             <Button 
               onClick={handleSubmit}
-              className="bg-[#8B4513] hover:bg-[#8B4513]/90 text-white flex-1"
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:bg-[#C72030]/90 text-white flex-1"
             >
               Submit
             </Button>
             <Button 
               onClick={handleExport}
-              className="bg-[#8B4513] hover:bg-[#8B4513]/90 text-white flex-1"
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:bg-[#C72030]/90 text-white flex-1"
             >
               Export
             </Button>

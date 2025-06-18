@@ -72,7 +72,7 @@ export const UtilityDashboard = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-gray-50 min-h-screen">
       <div className="mb-6">
         <div>
           <p className="text-[#1a1a1a] opacity-70 mb-2">Assets &gt; Asset List</p>
@@ -106,7 +106,8 @@ export const UtilityDashboard = () => {
       <div className="flex flex-wrap gap-3 mb-6">
         <Button 
           onClick={handleAddClick}
-          className="bg-[#8B4513] hover:bg-[#8B4513]/90 text-white flex items-center gap-2"
+          style={{ backgroundColor: '#C72030' }}
+          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Add
@@ -115,7 +116,7 @@ export const UtilityDashboard = () => {
         <Button 
           variant="outline" 
           onClick={handleImport}
-          className="flex items-center gap-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
+          className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
         >
           <Download className="w-4 h-4" />
           Import
@@ -124,7 +125,7 @@ export const UtilityDashboard = () => {
         <Button 
           variant="outline" 
           onClick={handleUpdate}
-          className="flex items-center gap-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
+          className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
         >
           <Upload className="w-4 h-4" />
           Update
@@ -133,7 +134,7 @@ export const UtilityDashboard = () => {
         <Button 
           variant="outline" 
           onClick={handleExportAll}
-          className="flex items-center gap-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
+          className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
         >
           <Download className="w-4 h-4" />
           Export All
@@ -142,7 +143,7 @@ export const UtilityDashboard = () => {
         <Button 
           variant="outline" 
           onClick={handlePrintQR}
-          className="flex items-center gap-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
+          className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
         >
           <QrCode className="w-4 h-4" />
           Print QR
@@ -151,7 +152,7 @@ export const UtilityDashboard = () => {
         <Button 
           onClick={handleInActiveAssetsClick}
           variant="outline" 
-          className="flex items-center gap-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
+          className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
         >
           In-Active Assets
         </Button>
@@ -162,7 +163,7 @@ export const UtilityDashboard = () => {
         <Button 
           variant="outline" 
           onClick={handlePrintAllQR}
-          className="flex items-center gap-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
+          className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
         >
           <QrCode className="w-4 h-4" />
           Print All QR
@@ -171,7 +172,7 @@ export const UtilityDashboard = () => {
         <Button 
           onClick={() => setIsFilterOpen(true)}
           variant="outline" 
-          className="flex items-center gap-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
+          className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
         >
           <Filter className="w-4 h-4" />
           Filters
@@ -196,7 +197,8 @@ export const UtilityDashboard = () => {
             </div>
             <Button 
               onClick={handleSearch}
-              className="bg-[#8B4513] hover:bg-[#8B4513]/90 text-white"
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:bg-[#C72030]/90 text-white"
             >
               Go
             </Button>
