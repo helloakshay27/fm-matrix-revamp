@@ -236,9 +236,9 @@ export const TicketListDashboard = () => {
       </div>
 
       <TicketsFilterDialog 
-        open={isFilterOpen}
-        onOpenChange={setIsFilterOpen}
-        onApply={handleFilterApply}
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onApplyFilters={handleFilterApply}
       />
     </div>
   );
