@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Upload } from 'lucide-react';
+import { Plus, Upload, X } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 export const EditSchedulePage = () => {
@@ -32,10 +32,13 @@ export const EditSchedulePage = () => {
   const [group, setGroup] = useState('');
   const [subGroup, setSubGroup] = useState('');
   const [sections, setSections] = useState([
-    { id: 1, name: 'Section 1', tasks: [] }
-  ]);
-  const [tasks, setTasks] = useState([
-    { task: 'Kwah', inputType: 'Numeric', mandatory: true, reading: true, helpText: false }
+    { 
+      id: 1, 
+      name: 'Section 1', 
+      tasks: [
+        { id: 1, task: 'Kwah', inputType: 'Numeric', mandatory: true, reading: true, helpText: false }
+      ]
+    }
   ]);
 
   // Cron Settings state
@@ -101,16 +104,49 @@ export const EditSchedulePage = () => {
     setSections([...sections, newSection]);
   };
 
-  const handleAddQuestion = () => {
-    console.log('Add Question clicked');
+  const handleRemoveSection = (sectionId: number) => {
+    console.log('Remove Section clicked', sectionId);
+    setSections(sections.filter(section => section.id !== sectionId));
+  };
+
+  const handleAddQuestion = (sectionId: number) => {
+    console.log('Add Question clicked for section', sectionId);
     const newTask = {
+      id: Date.now(),
       task: 'New Task',
       inputType: 'Text',
       mandatory: false,
       reading: false,
       helpText: false
     };
-    setTasks([...tasks, newTask]);
+    
+    setSections(sections.map(section => 
+      section.id === sectionId 
+        ? { ...section, tasks: [...section.tasks, newTask] }
+        : section
+    ));
+  };
+
+  const handleRemoveQuestion = (sectionId: number, taskId: number) => {
+    console.log('Remove Question clicked', sectionId, taskId);
+    setSections(sections.map(section => 
+      section.id === sectionId 
+        ? { ...section, tasks: section.tasks.filter(task => task.id !== taskId) }
+        : section
+    ));
+  };
+
+  const handleUpdateTask = (sectionId: number, taskId: number, field: string, value: any) => {
+    setSections(sections.map(section => 
+      section.id === sectionId 
+        ? {
+            ...section,
+            tasks: section.tasks.map(task => 
+              task.id === taskId ? { ...task, [field]: value } : task
+            )
+          }
+        : section
+    ));
   };
 
   const handleSubmit = () => {
@@ -653,47 +689,117 @@ export const EditSchedulePage = () => {
               </div>
             </div>
             
-            {/* Tasks Table */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Tasks</Label>
-                <Button 
-                  variant="outline"
-                  onClick={handleAddQuestion}
-                  className="border-[#C72030] text-[#C72030]"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Question
-                </Button>
-              </div>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Task</TableHead>
-                    <TableHead>Input Type</TableHead>
-                    <TableHead>Mandatory</TableHead>
-                    <TableHead>Reading</TableHead>
-                    <TableHead>Help Text</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tasks.map((task, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{task.task}</TableCell>
-                      <TableCell>{task.inputType}</TableCell>
-                      <TableCell>
-                        <Checkbox checked={task.mandatory} />
-                      </TableCell>
-                      <TableCell>
-                        <Checkbox checked={task.reading} />
-                      </TableCell>
-                      <TableCell>
-                        <Checkbox checked={task.helpText} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            {/* Sections */}
+            <div className="space-y-4">
+              {sections.map((section) => (
+                <div key={section.id} className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={section.name}
+                        onChange={(e) => {
+                          setSections(sections.map(s => 
+                            s.id === section.id ? { ...s, name: e.target.value } : s
+                          ));
+                        }}
+                        className="font-medium"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="outline"
+                        onClick={() => handleAddQuestion(section.id)}
+                        className="border-[#C72030] text-[#C72030]"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Question
+                      </Button>
+                      {sections.length > 1 && (
+                        <Button 
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleRemoveSection(section.id)}
+                          className="border-red-500 text-red-500 hover:bg-red-50"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Tasks in this section */}
+                  {section.tasks.length > 0 && (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Task</TableHead>
+                          <TableHead>Input Type</TableHead>
+                          <TableHead>Mandatory</TableHead>
+                          <TableHead>Reading</TableHead>
+                          <TableHead>Help Text</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {section.tasks.map((task) => (
+                          <TableRow key={task.id}>
+                            <TableCell>
+                              <Input
+                                value={task.task}
+                                onChange={(e) => handleUpdateTask(section.id, task.id, 'task', e.target.value)}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Select 
+                                value={task.inputType} 
+                                onValueChange={(value) => handleUpdateTask(section.id, task.id, 'inputType', value)}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Text">Text</SelectItem>
+                                  <SelectItem value="Numeric">Numeric</SelectItem>
+                                  <SelectItem value="Date">Date</SelectItem>
+                                  <SelectItem value="Boolean">Boolean</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <Checkbox 
+                                checked={task.mandatory}
+                                onCheckedChange={(checked) => handleUpdateTask(section.id, task.id, 'mandatory', checked)}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Checkbox 
+                                checked={task.reading}
+                                onCheckedChange={(checked) => handleUpdateTask(section.id, task.id, 'reading', checked)}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Checkbox 
+                                checked={task.helpText}
+                                onCheckedChange={(checked) => handleUpdateTask(section.id, task.id, 'helpText', checked)}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Button 
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handleRemoveQuestion(section.id, task.id)}
+                                className="border-red-500 text-red-500 hover:bg-red-50"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
