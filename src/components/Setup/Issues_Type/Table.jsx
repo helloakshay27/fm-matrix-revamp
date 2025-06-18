@@ -10,11 +10,12 @@ import {
   getPaginationRowModel,
 } from '@tanstack/react-table';
 import { useDispatch, useSelector } from 'react-redux';
-import { deleteProjectType, fetchProjectTypes, updateProjectType } from '../../../redux/slices/projectSlice';
+import { deleteIssueType, fetchIssueType, updateIssueType } from '../../../redux/slices/IssueSlice';
 import Modal from './Modal';
 import toast from 'react-hot-toast';
 import { Type } from 'lucide-react';
 const TypesTable = () => {
+  const token= localStorage.getItem('token');
   const [openModal, setOpenModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedData, setSelectedData] = useState(null);
@@ -22,17 +23,17 @@ const TypesTable = () => {
   const [data, setData] = useState([]);
 
   const dispatch = useDispatch();
-  const { fetchProjectTypes: ProjectTypes } = useSelector((state) => state.fetchProjectTypes);
+  const { fetchIssueType: ProjectTypes } = useSelector((state) => state.fetchIssueType);
 
 
   // Initial fetch of project types
   useEffect(() => {
-    dispatch(fetchProjectTypes());
+    dispatch(fetchIssueType({token}));
   }, [dispatch]);
 
   // Update table data when ProjectTypes changes
   useEffect(() => {
-    if (ProjectTypes && ProjectTypes.length > 0) {
+    if (ProjectTypes) {
       setData(ProjectTypes);
     }
   }, [ProjectTypes]);
@@ -40,7 +41,7 @@ const TypesTable = () => {
   // Fetch data when modal closes to ensure table is refreshed
   useEffect(() => {
     if (!openModal) {
-      dispatch(fetchProjectTypes());
+      dispatch(fetchIssueType({token}));
     }
   }, [openModal, dispatch]);
 
@@ -52,18 +53,18 @@ const TypesTable = () => {
 
   const handleDeleteClick = async (id) => {
     try {
-      await dispatch(deleteProjectType(id)).unwrap(); // unwrap to handle async correctly
+      await dispatch(deleteIssueType({token,id})).unwrap(); // unwrap to handle async correctly
       toast.dismiss();
-      toast.success('Project Type deleted successfully',{
+      toast.success('Issue Type deleted successfully',{
         iconTheme: {
           primary: 'red', // This might directly change the color of the success icon
           secondary: 'white', // The circle background
         },
       });
-      dispatch(fetchProjectTypes()); // refetch data after successful delete
+       dispatch(fetchIssueType({token})); // refetch data after successful delete
     } catch (error) {
       console.error('Failed to delete:', error);
-      toast.error('Failed to delete Project Type.',{
+      toast.error('Failed to delete Issue Type.',{
         iconTheme: {
           primary: 'red', // This might directly change the color of the error icon
           secondary: 'white', // The circle background
@@ -73,31 +74,31 @@ const TypesTable = () => {
   };
 
 
-  const handleToggle = async (row) => {
-    const updatedValue = !row.original.active;
-    const payload = {
-      active: updatedValue,
-    };
+  // const handleToggle = async (row) => {
+  //   const updatedValue = !row.original.active;
+  //   const payload = {
+  //     active: updatedValue,
+  //   };
 
-    try {
-      await dispatch(updateProjectType({ id: row.original.id, data: payload })).unwrap();
-      toast.dismiss();
-      toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`,{
-        iconTheme: {
-          primary: 'red', // This might directly change the color of the success icon
-          secondary: 'white', // The circle background
-        },
-      });
-      dispatch(fetchProjectTypes());
-    } catch (error) {
-      console.error('Failed to update toggle:', error,{
-        iconTheme: {
-          primary: 'red', // This might directly change the color of the error icon
-          secondary: 'white', // The circle background
-        },
-      });
-    }
-  };
+  //   try {
+  //     await dispatch(updateIssueType({ token,id: row.original.id, data: payload })).unwrap();
+  //     toast.dismiss();
+  //     toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`,{
+  //       iconTheme: {
+  //         primary: 'red', // This might directly change the color of the success icon
+  //         secondary: 'white', // The circle background
+  //       },
+  //     });
+  //     dispatch(fetchIssueType({token}))
+  //   } catch (error) {
+  //     console.error('Failed to update toggle:', error,{
+  //       iconTheme: {
+  //         primary: 'red', // This might directly change the color of the error icon
+  //         secondary: 'white', // The circle background
+  //       },
+  //     });
+  //   }
+  // };
 
 
   const ActionIcons = ({ row }) => (
@@ -136,33 +137,33 @@ const TypesTable = () => {
       {
         accessorKey: 'name',
         header: 'Issues Type Name',
-        size: 450,
+        size: 350,
         cell: ({ row, getValue }) => {
           return row.original ? getValue() : null;
         },
       },
-      {
-        accessorKey: 'status',
-        header: 'Status',
-        size: 150,
-        cell: ({ row }) => {
-          const isActive = row.original.active;
+      // {
+      //   accessorKey: 'status',
+      //   header: 'Status',
+      //   size: 150,
+      //   cell: ({ row }) => {
+      //     const isActive = row.original.active;
 
-          return (
-            <div className="flex gap-4">
-              <span>Inactive</span>
-              <Switch
-                color={`${isActive ? 'success' : 'danger'}`}
+      //     return (
+      //       <div className="flex gap-4">
+      //         <span>Inactive</span>
+      //         <Switch
+      //           color={`${isActive ? 'success' : 'danger'}`}
 
-                checked={isActive}
-                onChange={() => handleToggle(row)} // toggle the row state
-              />
-              <span>Active</span>
+      //           checked={isActive}
+      //           onChange={() => handleToggle(row)} // toggle the row state
+      //         />
+      //         <span>Active</span>
 
-            </div>
-          );
-        },
-      },
+      //       </div>
+      //     );
+      //   },
+      // },
       {
         accessorKey: 'created_at',
         header: 'CreatedOn',
@@ -173,11 +174,11 @@ const TypesTable = () => {
         },
       },
       {
-        accessorKey: 'created_by',
-        header: 'Created By',
-        size: 150,
+        accessorKey: 'description',
+        header: 'Description',
+        size: 250,
         cell: ({ row, getValue }) => {
-          return row.original ? getValue() : null;
+          return row.original ? <span className='pl-2'>{getValue()}</span> : null;
         },
       },
       {
@@ -190,7 +191,7 @@ const TypesTable = () => {
         },
       },
     ],
-    []
+    [ProjectTypes]
   );
 
   const [pagination, setPagination] = useState({

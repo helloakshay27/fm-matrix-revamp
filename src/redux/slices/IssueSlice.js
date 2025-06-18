@@ -37,9 +37,9 @@ const createApiSlice = (name, fetchThunk) => createSlice({
     },
 });
 
-export const createIssue = createAsyncThunk("createIssue", async ({ token, data }) => {
+export const createIssue = createAsyncThunk("createIssue", async ({ token, payload }) => {
     try {
-        const response = await axios.post("https://api-tasks.lockated.com/issues.json", { issue: data }, {
+        const response = await axios.post("https://api-tasks.lockated.com/issues.json", { issue: payload }, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -87,12 +87,87 @@ export const updateIssue = createAsyncThunk("updateIssue", async ({ token, id, p
     }
 })
 
+export const fetchIssueType = createAsyncThunk("fetchIssueType", async ({ token }) => {
+    try {
+        const response = await axios.get("https://api-tasks.lockated.com/issue_types.json", {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+
+        });
+
+        return response.data;
+    }
+    catch (error) {
+        console.log(error);
+    }
+});
+
+export const createIssueType = createAsyncThunk("createIssueType", async ({ token, payload }) => {
+    try {
+        const response = await axios.post("https://api-tasks.lockated.com/issue_types.json", {
+            issue_type: payload
+        }, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+
+        });
+
+        return response.data;
+    }
+    catch (error) {
+        console.log(error);
+    }
+})
+
+export const updateIssueType= createAsyncThunk("updateIssueType", async ({ token, id, payload }) => {
+    try {
+        const response = await axios.put(`https://api-tasks.lockated.com/issue_types/${id}.json`, {
+            issue_type: payload
+        }, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+
+        });
+
+        return response.data;
+    }
+    catch (error) {
+        console.log(error);
+    }
+})
+
+export const deleteIssueType = createAsyncThunk("deleteIssueType", async ({ token, id }) => {
+    try {
+        const response = await axios.delete(`https://api-tasks.lockated.com/issue_types/${id}.json`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
+        return response.data;
+    }
+    catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
 export const createIssueSlice = createApiSlice('createIssue', createIssue);
 export const fetchIssueSlice = createApiSlice('fetchIssue', fetchIssue);
 export const updateIssueSlice = createApiSlice('updateIssue', updateIssue);
+export const fetchIssueTypeSlice = createApiSlice('fetchIssueType', fetchIssueType);
+export const createIssueTypeSlice = createApiSlice('createIssueType', createIssueType);
+export const updateIssueTypeSlice = createApiSlice('updateIssueType', updateIssueType);
+export const deleteIssueTypeSlice = createApiSlice('deleteIssueType', deleteIssueType);
 
 export const createIssueReducer = createIssueSlice.reducer;
 export const fetchIssueReducer = fetchIssueSlice.reducer;
 export const updateIssueReducer = updateIssueSlice.reducer;
+export const fetchIssueTypeReducer = fetchIssueTypeSlice.reducer;
+export const createIssueTypeReducer = createIssueTypeSlice.reducer;
+export const updateIssueTypeReducer = updateIssueTypeSlice.reducer;
+export const deleteIssueTypeReducer = deleteIssueTypeSlice.reducer;
 
 export const { resetIssueSuccess } = createIssueSlice.actions;
