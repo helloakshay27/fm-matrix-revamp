@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -155,101 +156,28 @@ export const CopySchedulePage = () => {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1a1a1a] mb-4">Copy Schedule</h1>
         
-        {/* Toggle Switches */}
-        <div className="space-y-4">
+        {/* Toggle Switches - Horizontal Layout */}
+        <div className="flex items-center gap-8 mb-6">
           {/* Create New Toggle */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <Label htmlFor="create-new">Create New</Label>
-              <Switch
-                id="create-new"
-                checked={createNew}
-                onCheckedChange={setCreateNew}
-                className="data-[state=checked]:bg-[#C72030]"
-              />
-            </div>
-            
-            {createNew && (
-              <div className="ml-6">
-                <Select>
-                  <SelectTrigger className="w-64">
-                    <SelectValue placeholder="Select from the existing Template" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="template1">Template 1</SelectItem>
-                    <SelectItem value="template2">Template 2</SelectItem>
-                    <SelectItem value="template3">Template 3</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+          <div className="flex items-center gap-3">
+            <Label htmlFor="create-new">Create New</Label>
+            <Switch
+              id="create-new"
+              checked={createNew}
+              onCheckedChange={setCreateNew}
+              className="data-[state=checked]:bg-[#C72030]"
+            />
           </div>
 
           {/* Create Ticket Toggle */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <Label htmlFor="create-ticket">Create Ticket</Label>
-              <Switch
-                id="create-ticket"
-                checked={createTicket}
-                onCheckedChange={setCreateTicket}
-                className="data-[state=checked]:bg-[#C72030]"
-              />
-            </div>
-            
-            {createTicket && (
-              <div className="ml-6 space-y-3">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center space-x-2">
-                    <input 
-                      type="radio" 
-                      id="checklist-level" 
-                      name="category-level" 
-                      checked={categoryLevel === 'checklist-level'}
-                      onChange={() => setCategoryLevel('checklist-level')}
-                    />
-                    <Label htmlFor="checklist-level">Checklist Level</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input 
-                      type="radio" 
-                      id="question-level" 
-                      name="category-level" 
-                      checked={categoryLevel === 'question-level'}
-                      onChange={() => setCategoryLevel('question-level')}
-                    />
-                    <Label htmlFor="question-level">Question Level</Label>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Select value={assignedTo} onValueChange={setAssignedTo}>
-                    <SelectTrigger className="w-64">
-                      <SelectValue placeholder="Select Assigned To" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="user1">User 1</SelectItem>
-                      <SelectItem value="user2">User 2</SelectItem>
-                      <SelectItem value="group1">Group 1</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className="w-64">
-                      <SelectValue placeholder="Select Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="technical">Technical</SelectItem>
-                      <SelectItem value="non-technical">Non Technical</SelectItem>
-                      <SelectItem value="safety">Safety</SelectItem>
-                      <SelectItem value="maintenance">Maintenance</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
+          <div className="flex items-center gap-3">
+            <Label htmlFor="create-ticket">Create Ticket</Label>
+            <Switch
+              id="create-ticket"
+              checked={createTicket}
+              onCheckedChange={setCreateTicket}
+              className="data-[state=checked]:bg-[#C72030]"
+            />
           </div>
 
           {/* Weightage Toggle */}
@@ -262,6 +190,80 @@ export const CopySchedulePage = () => {
               className="data-[state=checked]:bg-[#C72030]"
             />
           </div>
+        </div>
+
+        {/* Dropdown sections for each toggle */}
+        <div className="space-y-4">
+          {/* Create New Dropdown */}
+          {createNew && (
+            <div className="ml-6">
+              <Select>
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="Select from the existing Template" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="template1">Template 1</SelectItem>
+                  <SelectItem value="template2">Template 2</SelectItem>
+                  <SelectItem value="template3">Template 3</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Create Ticket Dropdown */}
+          {createTicket && (
+            <div className="ml-6 space-y-3">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center space-x-2">
+                  <input 
+                    type="radio" 
+                    id="checklist-level" 
+                    name="category-level" 
+                    checked={categoryLevel === 'checklist-level'}
+                    onChange={() => setCategoryLevel('checklist-level')}
+                  />
+                  <Label htmlFor="checklist-level">Checklist Level</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input 
+                    type="radio" 
+                    id="question-level" 
+                    name="category-level" 
+                    checked={categoryLevel === 'question-level'}
+                    onChange={() => setCategoryLevel('question-level')}
+                  />
+                  <Label htmlFor="question-level">Question Level</Label>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Select value={assignedTo} onValueChange={setAssignedTo}>
+                  <SelectTrigger className="w-64">
+                    <SelectValue placeholder="Select Assigned To" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user1">User 1</SelectItem>
+                    <SelectItem value="user2">User 2</SelectItem>
+                    <SelectItem value="group1">Group 1</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="w-64">
+                    <SelectValue placeholder="Select Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="technical">Technical</SelectItem>
+                    <SelectItem value="non-technical">Non Technical</SelectItem>
+                    <SelectItem value="safety">Safety</SelectItem>
+                    <SelectItem value="maintenance">Maintenance</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
