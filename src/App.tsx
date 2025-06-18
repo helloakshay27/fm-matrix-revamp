@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -54,7 +53,6 @@ import { TaskDetailsPage } from './pages/TaskDetailsPage';
 
 // Import Utility pages
 import { UtilityDashboard } from './pages/UtilityDashboard';
-import { UtilityAssetDetailsPage } from './pages/UtilityAssetDetailsPage';
 import { AddAssetDashboard } from './pages/AddAssetDashboard';
 import { AddEnergyAssetDashboard } from './pages/AddEnergyAssetDashboard';
 import { InActiveAssetsDashboard } from './pages/InActiveAssetsDashboard';
@@ -201,7 +199,6 @@ function App() {
               
               {/* Utility Routes */}
               <Route path="/utility/energy" element={<UtilityDashboard />} />
-              <Route path="/utility/energy/details/:id" element={<UtilityAssetDetailsPage />} />
               <Route path="/utility/energy/add-asset" element={<AddEnergyAssetDashboard />} />
               <Route path="/utility/inactive-assets" element={<InActiveAssetsDashboard />} />
               <Route path="/utility/water" element={<UtilityWaterDashboard />} />

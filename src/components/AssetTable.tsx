@@ -1,262 +1,230 @@
 
-import React from 'react';
+import React, { useState } from 'react';
+import { Eye, Download, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Eye, Edit, Trash2, Download } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Input } from '@/components/ui/input';
 
 export const AssetTable = () => {
-  const navigate = useNavigate();
-
-  const assetData = [
+  // Sample data matching the screenshot
+  const assets = [
     {
-      id: '202068',
-      assetName: 'Generator',
-      assetId: 'GEN001',
-      assetCode: 'GEN001',
-      assetNo: '001',
-      assetStatus: 'In Use',
-      equipmentId: 'EQ001',
-      site: 'Main Site',
-      building: 'Building A',
-      wing: 'East Wing',
-      floor: 'Ground Floor',
-      area: 'Utility Area',
-      room: 'Generator Room',
-      meterType: 'Energy',
-      assetType: 'Parent'
+      id: 1,
+      assetName: 'sdcdsc',
+      assetId: '203696',
+      assetCode: '026dd95aa50e420318ea',
+      assetNo: 'sdcdsc',
+      status: 'In Use',
+      equipmentId: '',
+      site: 'Located',
+      building: 'sebc',
+      wing: '',
+      floor: '',
+      area: '',
+      room: '',
+      meterType: '',
+      assetType: 'Comprehensive'
     },
     {
-      id: '202069',
-      assetName: 'Transformer',
-      assetId: 'TRF001',
-      assetCode: 'TRF001',
-      assetNo: '002',
-      assetStatus: 'In Use',
-      equipmentId: 'EQ002',
-      site: 'Main Site',
-      building: 'Building A',
-      wing: 'East Wing',
-      floor: 'Ground Floor',
-      area: 'Utility Area',
-      room: 'Transformer Room',
-      meterType: 'Energy',
-      assetType: 'Parent'
+      id: 2,
+      assetName: 'test',
+      assetId: '203606',
+      assetCode: 'e1a7f070ae8bd9933b',
+      assetNo: '011312',
+      status: 'In Use',
+      equipmentId: 'n8368838',
+      site: 'Located',
+      building: 'Hay',
+      wing: '',
+      floor: '',
+      area: '',
+      room: '',
+      meterType: '',
+      assetType: ''
     },
     {
-      id: '202070',
-      assetName: 'UPS System',
-      assetId: 'UPS001',
-      assetCode: 'UPS001',
-      assetNo: '003',
-      assetStatus: 'In Use',
-      equipmentId: 'EQ003',
-      site: 'Main Site',
-      building: 'Building B',
-      wing: 'West Wing',
-      floor: 'First Floor',
-      area: 'Server Room',
-      room: 'UPS Room',
-      meterType: 'Energy',
-      assetType: 'Sub'
+      id: 3,
+      assetName: 'asus zenbook',
+      assetId: '194409',
+      assetCode: '9d21472ea4186068d7944',
+      assetNo: '200200',
+      status: 'Breakdown',
+      equipmentId: '1345789397',
+      site: 'Located',
+      building: 'ktta',
+      wing: '',
+      floor: '',
+      area: '',
+      room: '',
+      meterType: '',
+      assetType: ''
     },
     {
-      id: '202071',
-      assetName: 'Solar Panel',
-      assetId: 'SOL001',
-      assetCode: 'SOL001',
-      assetNo: '004',
-      assetStatus: 'In Use',
-      equipmentId: 'EQ004',
-      site: 'Main Site',
-      building: 'Building C',
-      wing: 'North Wing',
-      floor: 'Rooftop',
-      area: 'Solar Farm',
-      room: 'Panel Area',
-      meterType: 'Renewable',
-      assetType: 'Parent'
+      id: 4,
+      assetName: 'Diesel Generator',
+      assetId: '166641',
+      assetCode: '19958688749Fee48c90',
+      assetNo: 'DG/03',
+      status: 'In Use',
+      equipmentId: '',
+      site: 'Located',
+      building: 'demo',
+      wing: '',
+      floor: '',
+      area: '',
+      room: '',
+      meterType: 'Parent Meter',
+      assetType: ''
     },
     {
-      id: '202072',
-      assetName: 'Emergency Generator',
-      assetId: 'EGEN001',
-      assetCode: 'EGEN001',
-      assetNo: '005',
-      assetStatus: 'Breakdown',
-      equipmentId: 'EQ005',
-      site: 'Main Site',
-      building: 'Building A',
-      wing: 'East Wing',
-      floor: 'Basement',
-      area: 'Emergency Area',
-      room: 'Generator Room',
-      meterType: 'Energy',
-      assetType: 'Parent'
+      id: 5,
+      assetName: 'A.c',
+      assetId: '168838',
+      assetCode: '4aa21058634cafa6408',
+      assetNo: '15326',
+      status: 'In Use',
+      equipmentId: 'sdfghdfghdrghrrdhgtu',
+      site: 'Located',
+      building: 'demo',
+      wing: '',
+      floor: '',
+      area: '',
+      room: '',
+      meterType: 'Parent Meter',
+      assetType: ''
+    },
+    {
+      id: 6,
+      assetName: 'A.c',
+      assetId: '144714',
+      assetCode: '29db16e7532558e7d568',
+      assetNo: '123456',
+      status: 'In Use',
+      equipmentId: '',
+      site: 'Located',
+      building: 'jyoti tower',
+      wing: '',
+      floor: '',
+      area: '',
+      room: '',
+      meterType: 'Parent Meter',
+      assetType: 'Comprehensive'
+    },
+    {
+      id: 7,
+      assetName: 'Energy Meter 23',
+      assetId: '53815',
+      assetCode: '0585526992561630f6c1',
+      assetNo: 'EM-23',
+      status: 'In Use',
+      equipmentId: '',
+      site: 'Located',
+      building: 'jyoti',
+      wing: '',
+      floor: '',
+      area: '',
+      room: '',
+      meterType: 'Parent Meter',
+      assetType: ''
     }
   ];
 
-  const handleViewDetails = (assetId: string) => {
-    navigate(`/utility/energy/details/${assetId}`);
-  };
-
-  const handleEdit = (assetId: string) => {
-    console.log('Edit asset:', assetId);
-  };
-
-  const handleDelete = (assetId: string) => {
-    console.log('Delete asset:', assetId);
-  };
-
-  const handleDownload = (assetId: string) => {
-    console.log('Download asset data:', assetId);
-  };
-
   const getStatusBadge = (status: string) => {
-    const baseClasses = "px-2 py-1 rounded-full text-xs font-medium";
     if (status === 'In Use') {
-      return `${baseClasses} bg-green-100 text-green-800`;
+      return <span className="bg-green-500 text-white px-2 py-1 rounded text-xs">{status}</span>;
     } else if (status === 'Breakdown') {
-      return `${baseClasses} bg-red-100 text-red-800`;
+      return <span className="bg-red-500 text-white px-2 py-1 rounded text-xs">{status}</span>;
     }
-    return `${baseClasses} bg-gray-100 text-gray-800`;
+    return <span className="bg-gray-500 text-white px-2 py-1 rounded text-xs">{status}</span>;
   };
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="bg-white rounded-xl shadow-sm border border-[#D5DbDB]">
+      {/* Table */}
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="w-full">
+          <thead className="bg-[#f6f4ee]">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left">
+                <input
+                  type="checkbox"
+                  className="rounded border-[#D5DbDB] text-[#C72030] focus:ring-[#C72030]"
+                />
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+                Actions
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
                 Asset Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
                 Asset ID
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
                 Asset Code
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
                 Asset No.
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
                 Asset Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
                 Equipment Id
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
                 Site
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
                 Building
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
                 Wing
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
                 Floor
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
                 Area
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
                 Room
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
                 Meter Type
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
                 Asset Type
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {assetData.map((asset) => (
+          <tbody className="bg-white divide-y divide-[#D5DbDB]">
+            {assets.map((asset) => (
               <tr key={asset.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {asset.assetName}
+                <td className="px-4 py-3">
+                  <input
+                    type="checkbox"
+                    className="rounded border-[#D5DbDB] text-[#C72030] focus:ring-[#C72030]"
+                  />
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {asset.assetId}
+                <td className="px-4 py-3">
+                  <Button variant="ghost" size="sm">
+                    <Eye className="w-4 h-4" />
+                  </Button>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {asset.assetCode}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {asset.assetNo}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={getStatusBadge(asset.assetStatus)}>
-                    {asset.assetStatus}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {asset.equipmentId}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {asset.site}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {asset.building}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {asset.wing}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {asset.floor}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {asset.area}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {asset.room}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {asset.meterType}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {asset.assetType}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div className="flex space-x-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleViewDetails(asset.id)}
-                      className="text-blue-600 hover:text-blue-900 hover:bg-blue-50"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleEdit(asset.id)}
-                      className="text-green-600 hover:text-green-900 hover:bg-green-50"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleDelete(asset.id)}
-                      className="text-red-600 hover:text-red-900 hover:bg-red-50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleDownload(asset.id)}
-                      className="text-purple-600 hover:text-purple-900 hover:bg-purple-50"
-                    >
-                      <Download className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </td>
+                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.assetName}</td>
+                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.assetId}</td>
+                <td className="px-4 py-3 text-sm text-[#1a1a1a] font-mono text-xs">{asset.assetCode}</td>
+                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.assetNo}</td>
+                <td className="px-4 py-3">{getStatusBadge(asset.status)}</td>
+                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.equipmentId}</td>
+                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.site}</td>
+                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.building}</td>
+                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.wing}</td>
+                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.floor}</td>
+                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.area}</td>
+                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.room}</td>
+                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.meterType}</td>
+                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.assetType}</td>
               </tr>
             ))}
           </tbody>
