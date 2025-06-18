@@ -48,6 +48,16 @@ export const RosterCalendarDashboard = () => {
     }
   };
 
+  const handleFilterApply = (filters: {
+    location: string;
+    floor: string;
+    startDate: string;
+    endDate: string;
+  }) => {
+    console.log('Applied roster calendar filters:', filters);
+    // Apply filter logic here
+  };
+
   const selectedDayEvents = rosterEvents.filter(event => 
     selectedDate && 
     event.date.toDateString() === selectedDate.toDateString()
@@ -186,6 +196,7 @@ export const RosterCalendarDashboard = () => {
         <RosterCalendarFilterDialog
           open={isFilterOpen}
           onOpenChange={setIsFilterOpen}
+          onApply={handleFilterApply}
         />
       </div>
     </div>
