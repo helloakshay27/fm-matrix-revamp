@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
 
 export const OperationalAuditConductedDashboard = () => {
@@ -23,6 +24,45 @@ export const OperationalAuditConductedDashboard = () => {
     { report: false, id: "44117794", auditName: "Short Audit Process Report 1", startDateTime: "17/10/2024, 03:58PM", conductedBy: "", status: "In Progress", site: "Lockated", duration: "", percentage: "" },
     { report: false, id: "44116014", auditName: "Short Audit Process Report 1", startDateTime: "16/10/2024, 04:07PM", conductedBy: "", status: "In Progress", site: "Lockated", duration: "", percentage: "" },
   ];
+
+  const handlePrintReport = (auditId: string, auditName: string) => {
+    // Create a printable content
+    const printContent = `
+      <html>
+        <head>
+          <title>Audit Report - ${auditId}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h1 { color: #C72030; }
+            .report-header { margin-bottom: 20px; }
+            .report-details { line-height: 1.6; }
+          </style>
+        </head>
+        <body>
+          <div class="report-header">
+            <h1>Operational Audit Report</h1>
+            <h2>Audit ID: ${auditId}</h2>
+            <h3>Audit Name: ${auditName}</h3>
+          </div>
+          <div class="report-details">
+            <p><strong>Generated on:</strong> ${new Date().toLocaleDateString()}</p>
+            <p><strong>Generated at:</strong> ${new Date().toLocaleTimeString()}</p>
+            <p>This is a system-generated audit report.</p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Open a new window for printing
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    }
+  };
 
   return (
     <div className="p-6">
@@ -54,7 +94,14 @@ export const OperationalAuditConductedDashboard = () => {
               <TableRow key={index}>
                 <TableCell>
                   {item.report && (
-                    <FileText className="w-4 h-4 text-blue-600" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handlePrintReport(item.id, item.auditName)}
+                      className="p-1 h-auto hover:bg-gray-100"
+                    >
+                      <FileText className="w-4 h-4 text-blue-600" />
+                    </Button>
                   )}
                 </TableCell>
                 <TableCell className="text-blue-600 font-medium">{item.id}</TableCell>
