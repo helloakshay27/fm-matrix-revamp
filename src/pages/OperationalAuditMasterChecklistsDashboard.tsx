@@ -26,6 +26,20 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
     }
   };
 
+  const handleDownloadSampleFormat = () => {
+    console.log('Downloading sample format...');
+    // Add download logic here
+  };
+
+  const handleImportQuestions = () => {
+    if (selectedFile) {
+      console.log('Importing questions from file:', selectedFile.name);
+      // Add import logic here
+    } else {
+      alert('Please select a file first');
+    }
+  };
+
   // Sample data - empty table as shown in image
   const masterChecklistData: any[] = [];
 
@@ -39,7 +53,10 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
       </div>
       
       <div className="mb-6">
-        <Button className="bg-[#8B4B8C] hover:bg-[#7a4179] text-white flex items-center gap-2">
+        <Button 
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:opacity-90 flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           Add
         </Button>
@@ -75,10 +92,18 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
         </div>
         
         <div className="flex flex-col gap-2">
-          <Button className="bg-[#8B4B8C] hover:bg-[#7a4179] text-white">
+          <Button 
+            onClick={handleDownloadSampleFormat}
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:opacity-90"
+          >
             Download Sample Format
           </Button>
-          <Button className="bg-[#8B4B8C] hover:bg-[#7a4179] text-white">
+          <Button 
+            onClick={handleImportQuestions}
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:opacity-90"
+          >
             Import Questions
           </Button>
         </div>

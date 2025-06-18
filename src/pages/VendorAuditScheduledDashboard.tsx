@@ -30,7 +30,10 @@ export const VendorAuditScheduledDashboard = () => {
 
       {/* Add Button */}
       <div className="mb-6">
-        <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+        <Button 
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:opacity-90"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>

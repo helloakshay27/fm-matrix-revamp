@@ -151,6 +151,15 @@ import { EmployeeDetailsPage } from './pages/setup/EmployeeDetailsPage';
 import { PermitListDashboard } from './pages/PermitListDashboard';
 import { AddPermitPage } from './pages/AddPermitPage';
 
+// Import Operational Audit pages
+import { OperationalAuditScheduledDashboard } from './pages/OperationalAuditScheduledDashboard';
+import { OperationalAuditConductedDashboard } from './pages/OperationalAuditConductedDashboard';
+import { OperationalAuditMasterChecklistsDashboard } from './pages/OperationalAuditMasterChecklistsDashboard';
+
+// Import Vendor Audit pages
+import { VendorAuditScheduledDashboard } from './pages/VendorAuditScheduledDashboard';
+import { VendorAuditConductedDashboard } from './pages/VendorAuditConductedDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -192,6 +201,15 @@ function App() {
               <Route path="/maintenance/incident/add" element={<AddIncidentPage />} />
               <Route path="/maintenance/incident/:id" element={<IncidentDetailsPage />} />
               <Route path="/maintenance/incident/edit/:id" element={<EditIncidentDetailsPage />} />
+              
+              {/* Operational Audit Routes */}
+              <Route path="/maintenance/audit/operational/scheduled" element={<OperationalAuditScheduledDashboard />} />
+              <Route path="/maintenance/audit/operational/conducted" element={<OperationalAuditConductedDashboard />} />
+              <Route path="/maintenance/audit/operational/master-checklists" element={<OperationalAuditMasterChecklistsDashboard />} />
+              
+              {/* Vendor Audit Routes */}
+              <Route path="/maintenance/audit/vendor/scheduled" element={<VendorAuditScheduledDashboard />} />
+              <Route path="/maintenance/audit/vendor/conducted" element={<VendorAuditConductedDashboard />} />
               
               {/* Maintenance Routes */}
               <Route path="/maintenance/asset" element={<AssetDashboard />} />
