@@ -1,15 +1,26 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, useParams } from 'react-router-dom';
+import { CirclePlus, CircleMinus } from 'lucide-react';
 
 interface SeatTypeConfig {
   name: string;
   totalSeats: string;
   reservedSeats: string;
+}
+
+interface Department {
+  name: string;
+  seats: number;
+}
+
+interface SeatTypeAssignment {
+  name: string;
+  assigned: number;
+  total: number;
 }
 
 interface SeatSetupData {
@@ -46,6 +57,74 @@ export const EditSeatSetupDashboard = () => {
     { name: "Cubical", totalSeats: "", reservedSeats: "" },
     { name: "Cafe", totalSeats: "", reservedSeats: "" },
     { name: "Hotseat", totalSeats: "", reservedSeats: "" }
+  ]);
+
+  // Department data
+  const [departments, setDepartments] = useState<Department[]>([
+    { name: "Sales", seats: 0 },
+    { name: "HR", seats: 0 },
+    { name: "Operations", seats: 0 },
+    { name: "IR", seats: 0 },
+    { name: "Tech", seats: 0 },
+    { name: "Accounts", seats: 0 },
+    { name: "RM", seats: 0 },
+    { name: "BMS", seats: 0 },
+    { name: "Electrical", seats: 0 },
+    { name: "IBMS", seats: 0 },
+    { name: "Housekeeping", seats: 0 },
+    { name: "kitchen", seats: 0 },
+    { name: "Finance", seats: 0 },
+    { name: "Marketing", seats: 0 },
+    { name: "IOS", seats: 0 },
+    { name: "staff", seats: 0 },
+    { name: "Cook", seats: 0 },
+    { name: "ACCOUNTS", seats: 0 },
+    { name: "Technician", seats: 0 },
+    { name: "Store Manager", seats: 0 },
+    { name: "Carpenting", seats: 0 },
+    { name: "Plumbing", seats: 0 },
+    { name: "Admin", seats: 0 },
+    { name: "CLUB HOUSE", seats: 0 },
+    { name: "Security A", seats: 0 },
+    { name: "Technical A", seats: 0 },
+    { name: "Housekeeping A", seats: 0 },
+    { name: "Staff", seats: 0 },
+    { name: "BB Admin", seats: 0 },
+    { name: "BB FM", seats: 0 },
+    { name: "BB FM Accounts", seats: 0 },
+    { name: "BB Electrical", seats: 0 },
+    { name: "BB HVAC", seats: 0 },
+    { name: "Operation", seats: 0 },
+    { name: "BB FM", seats: 0 },
+    { name: "UI/UX", seats: 0 },
+    { name: "Soft Service", seats: 0 },
+    { name: "admin", seats: 0 },
+    { name: "Function 1", seats: 0 },
+    { name: "Function 2", seats: 0 },
+    { name: "Function 3", seats: 0 },
+    { name: "Function 4", seats: 0 },
+    { name: "Frontend", seats: 0 },
+    { name: "Backend", seats: 0 },
+    { name: "DevOps", seats: 0 },
+    { name: "Support", seats: 0 }
+  ]);
+
+  // Seat type assignments for the right side
+  const [seatTypeAssignments, setSeatTypeAssignments] = useState<SeatTypeAssignment[]>([
+    { name: "Angular Ws", assigned: 0, total: 4 },
+    { name: "Flexi Desk", assigned: 0, total: 4 },
+    { name: "Cabin", assigned: 0, total: 4 },
+    { name: "Fixed Desk", assigned: 0, total: 0 },
+    { name: "IOS", assigned: 0, total: 0 },
+    { name: "cabin", assigned: 0, total: 0 },
+    { name: "circular", assigned: 0, total: 0 },
+    { name: "Rectangle", assigned: 0, total: 2 },
+    { name: "circularchair", assigned: 0, total: 0 },
+    { name: "Hot Desk", assigned: 0, total: 0 },
+    { name: "Fixed Angular Chair", assigned: 0, total: 0 },
+    { name: "Cubical", assigned: 0, total: 0 },
+    { name: "Cafe", assigned: 0, total: 0 },
+    { name: "Hotseat", assigned: 0, total: 0 }
   ]);
 
   // Mock data for existing seat setups
@@ -137,13 +216,35 @@ export const EditSeatSetupDashboard = () => {
     setSeatTypes(updated);
   };
 
+  const updateDepartmentSeats = (index: number, seats: number) => {
+    const updated = [...departments];
+    updated[index] = { ...updated[index], seats };
+    setDepartments(updated);
+  };
+
+  const updateSeatTypeAssignment = (index: number, change: number) => {
+    const updated = [...seatTypeAssignments];
+    const newAssigned = Math.max(0, Math.min(updated[index].total, updated[index].assigned + change));
+    updated[index] = { ...updated[index], assigned: newAssigned };
+    setSeatTypeAssignments(updated);
+  };
+
   const handleProceed = () => {
-    console.log("Updating seat setup...", { id, selectedLocation, selectedFloor, seatTypes });
+    console.log("Updating seat setup...", { id, selectedLocation, selectedFloor, seatTypes, departments, seatTypeAssignments });
     navigate('/vas/space-management/setup/seat-setup');
   };
 
   const handleCancel = () => {
     navigate('/vas/space-management/setup/seat-setup');
+  };
+
+  const handleSubmit = () => {
+    console.log("Submitting tag department configuration...", { departments, seatTypeAssignments });
+    // Handle submit logic here
+  };
+
+  const handleBack = () => {
+    setActiveTab("seat-configuration");
   };
 
   return (
@@ -190,13 +291,13 @@ export const EditSeatSetupDashboard = () => {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger 
               value="seat-configuration" 
-              className="data-[state=active]:bg-[#C72030] data-[state=active]:text-white"
+              className="data-[state=active]:bg-gray-200 data-[state=active]:text-gray-700"
             >
               Seat Configuration
             </TabsTrigger>
             <TabsTrigger 
               value="tag-department"
-              className="data-[state=active]:bg-gray-200 data-[state=active]:text-gray-700"
+              className="data-[state=active]:bg-[#C72030] data-[state=active]:text-white"
             >
               Tag Department
             </TabsTrigger>
@@ -307,8 +408,94 @@ export const EditSeatSetupDashboard = () => {
           </TabsContent>
 
           <TabsContent value="tag-department" className="mt-6">
-            <div className="bg-white rounded-lg border shadow-sm p-6">
-              <p className="text-gray-500">Tag Department configuration will be implemented here.</p>
+            <div className="flex gap-6">
+              {/* Left Side - Departments */}
+              <div className="flex-1 bg-white rounded-lg border shadow-sm">
+                <div className="p-4 border-b">
+                  <h3 className="text-lg font-semibold text-gray-800">Departments</h3>
+                </div>
+                <div className="p-4">
+                  <div className="grid grid-cols-2 gap-4 mb-4 font-semibold text-gray-700 border-b pb-2">
+                    <div>Departments</div>
+                    <div className="text-center">No. of Seats</div>
+                  </div>
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {departments.map((dept, index) => (
+                      <div key={index} className="grid grid-cols-2 gap-4 py-2 border-b border-gray-100">
+                        <div className="text-sm text-gray-700">{dept.name}</div>
+                        <div className="text-center">
+                          <Input
+                            type="number"
+                            value={dept.seats}
+                            onChange={(e) => updateDepartmentSeats(index, parseInt(e.target.value) || 0)}
+                            className="w-16 text-center mx-auto"
+                            min="0"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Side - Tag Department */}
+              <div className="w-96 bg-white rounded-lg border shadow-sm">
+                <div className="p-4 border-b bg-blue-50">
+                  <h3 className="text-lg font-semibold text-gray-800 text-center">Tag Department</h3>
+                </div>
+                <div className="p-4 space-y-4">
+                  {seatTypeAssignments.map((seatType, index) => (
+                    <div key={index} className="flex items-center justify-between py-2">
+                      <div className="text-sm font-medium text-gray-700 flex-1">
+                        {seatType.name}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 w-6 p-0 rounded-full"
+                          onClick={() => updateSeatTypeAssignment(index, 1)}
+                          disabled={seatType.assigned >= seatType.total}
+                        >
+                          <CirclePlus className="h-3 w-3" />
+                        </Button>
+                        <div className="w-8 text-center text-sm">
+                          {seatType.assigned}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 w-6 p-0 rounded-full text-red-600 hover:text-red-700"
+                          onClick={() => updateSeatTypeAssignment(index, -1)}
+                          disabled={seatType.assigned <= 0}
+                        >
+                          <CircleMinus className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <div className="text-xs text-red-600 ml-2">
+                        /{seatType.total}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-4 mt-6">
+              <Button 
+                onClick={handleSubmit}
+                className="bg-[#6B3FA0] hover:bg-[#6B3FA0]/90 text-white px-8"
+              >
+                Submit
+              </Button>
+              <Button 
+                onClick={handleBack}
+                variant="outline" 
+                className="border-gray-300 text-gray-700 px-8"
+              >
+                Back
+              </Button>
             </div>
           </TabsContent>
         </Tabs>
