@@ -315,7 +315,7 @@ const TaskTable = () => {
   useEffect(() => {
     if (isCreatingTask || isUpdatingTask) return;
     let newProcessedData = [];
-    if (filterTask && filterTask.length > 0) {
+    if (filterTask  && localStorage.getItem("taskFilters")) {
       newProcessedData = filterTask.map((task) =>
         processTaskData(task)
       );

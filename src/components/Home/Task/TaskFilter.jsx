@@ -272,7 +272,7 @@ const TaskFilter = ({ isModalOpen, setIsModalOpen }) => {
         handleApplyFilter({
             "q[milestone_id_eq]": mid
         });
-        dispatch(fetchTasks({ token }));
+        // dispatch(fetchTasks({ token }));
     };
 
 

@@ -333,7 +333,7 @@ const ProjectList = () => {
     }, [transformedData]);
 
     useEffect(() => {
-        if (Array.isArray(filteredProjects) && filteredProjects.length > 0) {
+        if (Array.isArray(filteredProjects) && localStorage.getItem("projectFilters")) {
             setIsFiltered(true);
         } else {
             setIsFiltered(false);

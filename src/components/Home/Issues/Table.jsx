@@ -718,7 +718,7 @@ useEffect(() => {
     );
   }
 
-  return <div className='project-list-wrapper p-4'>{pageContent}</div>
+  return <div className='project-list-wrapper p-2'>{pageContent}</div>
 };
 
 export default IssuesTable;
