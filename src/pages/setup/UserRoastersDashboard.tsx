@@ -103,10 +103,6 @@ export const UserRoastersDashboard = () => {
     navigate('/vas/space-management/setup/roaster/add');
   };
 
-  const handleViewClick = (roaster: RoasterData) => {
-    navigate(`/vas/space-management/setup/roaster/edit/${roaster.id}`);
-  };
-
   return (
     <div className="flex min-h-screen bg-gray-50">
       <div className="flex-1 p-6">
@@ -146,12 +142,7 @@ export const UserRoastersDashboard = () => {
               {roasters.map((roaster) => (
                 <TableRow key={roaster.id} className="border-b">
                   <TableCell>
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      className="p-1"
-                      onClick={() => handleViewClick(roaster)}
-                    >
+                    <Button size="sm" variant="ghost" className="p-1">
                       <Eye className="w-4 h-4" />
                     </Button>
                   </TableCell>
