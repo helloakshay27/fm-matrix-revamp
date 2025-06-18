@@ -25,7 +25,7 @@ export const RVehiclesHistoryFilterModal = ({ isOpen, onClose }: RVehiclesHistor
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg bg-white">
+      <DialogContent className="max-w-lg bg-white [&>button]:hidden">
         <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
           <DialogTitle className="text-lg font-semibold">FILTER</DialogTitle>
           <Button
@@ -64,7 +64,8 @@ export const RVehiclesHistoryFilterModal = ({ isOpen, onClose }: RVehiclesHistor
             </Button>
             <Button
               onClick={handleApply}
-              className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-6 py-2"
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:bg-[#C72030]/90 text-white px-6 py-2"
             >
               Apply
             </Button>
