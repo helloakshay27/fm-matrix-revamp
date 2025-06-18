@@ -9,6 +9,10 @@ import { SetupLayout } from './components/SetupLayout';
 import Index from './pages/Index';
 import NotFound from './pages/NotFound';
 
+// Import Snagging pages
+import { SnaggingDashboard } from './pages/SnaggingDashboard';
+import { SnaggingDetailsPage } from './pages/SnaggingDetailsPage';
+
 // Import Ticket pages
 import { TicketListDashboard } from './pages/TicketListDashboard';
 import { AddTicketDashboard } from './pages/AddTicketDashboard';
@@ -153,6 +157,10 @@ function App() {
           <Routes>
             <Route path="/" element={<Layout><div /></Layout>}>
               <Route index element={<Index />} />
+              
+              {/* Snagging Routes */}
+              <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
+              <Route path="/transitioning/snagging/details/:id" element={<SnaggingDetailsPage />} />
               
               {/* Design Insights Routes */}
               <Route path="/transitioning/design-insight" element={<DesignInsightsDashboard />} />
