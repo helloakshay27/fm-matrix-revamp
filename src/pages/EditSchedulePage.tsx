@@ -22,7 +22,7 @@ export const EditSchedulePage = () => {
   const [description, setDescription] = useState('');
   const [scheduleFor, setScheduleFor] = useState('Asset');
 
-  // Create Category Toggle state
+  // Create Ticket Toggle state
   const [createTicket, setCreateTicket] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [weightage, setWeightage] = useState(false);
@@ -31,6 +31,9 @@ export const EditSchedulePage = () => {
   // Task state
   const [group, setGroup] = useState('');
   const [subGroup, setSubGroup] = useState('');
+  const [sections, setSections] = useState([
+    { id: 1, name: 'Section 1', tasks: [] }
+  ]);
   const [tasks, setTasks] = useState([
     { task: 'Kwah', inputType: 'Numeric', mandatory: true, reading: true, helpText: false }
   ]);
@@ -84,18 +87,16 @@ export const EditSchedulePage = () => {
 
   const handleAddSection = () => {
     console.log('Add Section clicked');
-    // Add functionality to create a new section
     const newSection = {
       id: Date.now(),
-      name: 'New Section',
+      name: `Section ${sections.length + 1}`,
       tasks: []
     };
-    // You can implement section management state here
+    setSections([...sections, newSection]);
   };
 
   const handleAddQuestion = () => {
     console.log('Add Question clicked');
-    // Add functionality to create a new question/task
     const newTask = {
       task: 'New Task',
       inputType: 'Text',
@@ -266,11 +267,11 @@ export const EditSchedulePage = () => {
               Basic Info
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Type</Label>
-                <RadioGroup value={type} onValueChange={setType} className="flex gap-4">
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Type</Label>
+                <RadioGroup value={type} onValueChange={setType} className="flex gap-6 flex-wrap">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="PPM" id="ppm" />
                     <Label htmlFor="ppm">PPM</Label>
@@ -297,9 +298,10 @@ export const EditSchedulePage = () => {
                   </div>
                 </RadioGroup>
               </div>
-              <div className="space-y-2">
-                <Label>Schedule For</Label>
-                <RadioGroup value={scheduleFor} onValueChange={setScheduleFor} className="flex gap-4">
+              
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Schedule For</Label>
+                <RadioGroup value={scheduleFor} onValueChange={setScheduleFor} className="flex gap-6 flex-wrap">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="Asset" id="asset-schedule" />
                     <Label htmlFor="asset-schedule">Asset</Label>
@@ -319,6 +321,7 @@ export const EditSchedulePage = () => {
                 </RadioGroup>
               </div>
             </div>
+            
             <div className="space-y-2">
               <Label>Activity Name*</Label>
               <Input
