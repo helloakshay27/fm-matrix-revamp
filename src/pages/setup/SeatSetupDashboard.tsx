@@ -88,6 +88,10 @@ export const SeatSetupDashboard = () => {
     navigate('/vas/space-management/setup/seat-setup/add');
   };
 
+  const handleEditClick = (setupId: number) => {
+    navigate(`/vas/space-management/setup/seat-setup/edit/${setupId}`);
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <div className="flex-1 p-6">
@@ -154,7 +158,12 @@ export const SeatSetupDashboard = () => {
                     </TableCell>
                   ))}
                   <TableCell>
-                    <Button size="sm" variant="ghost" className="p-1">
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="p-1"
+                      onClick={() => handleEditClick(setup.id)}
+                    >
                       <Edit className="w-4 h-4" />
                     </Button>
                   </TableCell>
