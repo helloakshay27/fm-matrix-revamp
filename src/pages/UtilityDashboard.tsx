@@ -72,150 +72,153 @@ export const UtilityDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#C72030' }}>
-      <div className="p-6">
-        <div className="mb-6">
-          <div>
-            <p className="text-white opacity-70 mb-2">Assets &gt; Asset List</p>
-            <h1 className="text-2xl font-bold text-white">ASSET LIST</h1>
-          </div>
+    <div className="p-6">
+      <div className="mb-6">
+        <div>
+          <p className="text-[#1a1a1a] opacity-70 mb-2">Assets &gt; Asset List</p>
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">ASSET LIST</h1>
         </div>
-        
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <StatsCard
-            title="Total Asset"
-            value="5"
-            color="orange"
-            icon={<Package className="w-8 h-8" />}
-          />
-          <StatsCard
-            title="In Use"
-            value="4"
-            color="green"
-            icon={<CheckCircle className="w-8 h-8" />}
-          />
-          <StatsCard
-            title="Breakdown"
-            value="1"
-            color="red"
-            icon={<AlertTriangle className="w-8 h-8" />}
-          />
-        </div>
-        
-        {/* Action Buttons Row 1 */}
-        <div className="flex flex-wrap gap-3 mb-6">
-          <Button 
-            onClick={handleAddClick}
-            className="bg-white hover:bg-gray-100 text-[#C72030] border border-white flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add
-          </Button>
-          
-          <Button 
-            onClick={handleImport}
-            className="bg-white hover:bg-gray-100 text-[#C72030] border border-white flex items-center gap-2"
-          >
-            <Download className="w-4 h-4" />
-            Import
-          </Button>
-          
-          <Button 
-            onClick={handleUpdate}
-            className="bg-white hover:bg-gray-100 text-[#C72030] border border-white flex items-center gap-2"
-          >
-            <Upload className="w-4 h-4" />
-            Update
-          </Button>
-          
-          <Button 
-            onClick={handleExportAll}
-            className="bg-white hover:bg-gray-100 text-[#C72030] border border-white flex items-center gap-2"
-          >
-            <Download className="w-4 h-4" />
-            Export All
-          </Button>
-          
-          <Button 
-            onClick={handlePrintQR}
-            className="bg-white hover:bg-gray-100 text-[#C72030] border border-white flex items-center gap-2"
-          >
-            <QrCode className="w-4 h-4" />
-            Print QR
-          </Button>
-          
-          <Button 
-            onClick={handleInActiveAssetsClick}
-            className="bg-white hover:bg-gray-100 text-[#C72030] border border-white flex items-center gap-2"
-          >
-            In-Active Assets
-          </Button>
-        </div>
-
-        {/* Action Buttons Row 2 */}
-        <div className="flex flex-wrap gap-3 mb-6">
-          <Button 
-            onClick={handlePrintAllQR}
-            className="bg-white hover:bg-gray-100 text-[#C72030] border border-white flex items-center gap-2"
-          >
-            <QrCode className="w-4 h-4" />
-            Print All QR
-          </Button>
-          
-          <Button 
-            onClick={() => setIsFilterOpen(true)}
-            className="bg-white hover:bg-gray-100 text-[#C72030] border border-white flex items-center gap-2"
-          >
-            <Filter className="w-4 h-4" />
-            Filters
-          </Button>
-
-          {/* Search Bar - moved here from the separate section */}
-          <div className="flex items-center ml-auto">
-            <div className="flex items-center space-x-2">
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-                <Input
-                  placeholder="Search..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64 bg-white"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSearch();
-                    }
-                  }}
-                />
-              </div>
-              <Button 
-                onClick={handleSearch}
-                className="bg-white hover:bg-gray-100 text-[#C72030] border border-white"
-              >
-                Go
-              </Button>
-            </div>
-          </div>
-        </div>
-        
-        {/* Asset Table */}
-        <div className="bg-white rounded-lg">
-          <AssetTable />
-        </div>
-        
-        {/* Filter Dialog */}
-        <UtilityFilterDialog 
-          isOpen={isFilterOpen} 
-          onClose={() => setIsFilterOpen(false)} 
+      </div>
+      
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <StatsCard
+          title="Total Asset"
+          value="5"
+          color="orange"
+          icon={<Package className="w-8 h-8" />}
         />
-
-        {/* Bulk Upload Dialog */}
-        <BulkUploadDialog 
-          open={isBulkUploadOpen} 
-          onOpenChange={setIsBulkUploadOpen}
-          title={uploadType === 'import' ? 'Import Assets' : 'Update Assets'}
+        <StatsCard
+          title="In Use"
+          value="4"
+          color="green"
+          icon={<CheckCircle className="w-8 h-8" />}
+        />
+        <StatsCard
+          title="Breakdown"
+          value="1"
+          color="red"
+          icon={<AlertTriangle className="w-8 h-8" />}
         />
       </div>
+      
+      {/* Action Buttons Row 1 */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        <Button 
+          onClick={handleAddClick}
+          className="bg-[#8B4513] hover:bg-[#8B4513]/90 text-white flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Add
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          onClick={handleImport}
+          className="flex items-center gap-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
+        >
+          <Download className="w-4 h-4" />
+          Import
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          onClick={handleUpdate}
+          className="flex items-center gap-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
+        >
+          <Upload className="w-4 h-4" />
+          Update
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          onClick={handleExportAll}
+          className="flex items-center gap-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
+        >
+          <Download className="w-4 h-4" />
+          Export All
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          onClick={handlePrintQR}
+          className="flex items-center gap-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
+        >
+          <QrCode className="w-4 h-4" />
+          Print QR
+        </Button>
+        
+        <Button 
+          onClick={handleInActiveAssetsClick}
+          variant="outline" 
+          className="flex items-center gap-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
+        >
+          In-Active Assets
+        </Button>
+      </div>
+
+      {/* Action Buttons Row 2 */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        <Button 
+          variant="outline" 
+          onClick={handlePrintAllQR}
+          className="flex items-center gap-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
+        >
+          <QrCode className="w-4 h-4" />
+          Print All QR
+        </Button>
+        
+        <Button 
+          onClick={() => setIsFilterOpen(true)}
+          variant="outline" 
+          className="flex items-center gap-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-white"
+        >
+          <Filter className="w-4 h-4" />
+          Filters
+        </Button>
+
+        {/* Search Bar - moved here from the separate section */}
+        <div className="flex items-center ml-auto">
+          <div className="flex items-center space-x-2">
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+              <Input
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-64"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch();
+                  }
+                }}
+              />
+            </div>
+            <Button 
+              onClick={handleSearch}
+              className="bg-[#8B4513] hover:bg-[#8B4513]/90 text-white"
+            >
+              Go
+            </Button>
+          </div>
+        </div>
+      </div>
+      
+      {/* Asset Table */}
+      <AssetTable />
+      
+      {/* Filter Dialog */}
+      <UtilityFilterDialog 
+        isOpen={isFilterOpen} 
+        onClose={() => setIsFilterOpen(false)} 
+      />
+
+      {/* Bulk Upload Dialog */}
+      <BulkUploadDialog 
+        open={isBulkUploadOpen} 
+        onOpenChange={setIsBulkUploadOpen}
+        title={uploadType === 'import' ? 'Import Assets' : 'Update Assets'}
+      />
     </div>
   );
 };

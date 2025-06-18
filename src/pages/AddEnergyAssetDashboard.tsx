@@ -15,9 +15,9 @@ export const AddEnergyAssetDashboard = () => {
     asset: true,
     warranty: true,
     meterCategory: true,
-    consumption: true,
-    nonConsumption: true,
-    attachments: true
+    consumption: false,
+    nonConsumption: false,
+    attachments: false
   });
 
   const [consumptionMeasures, setConsumptionMeasures] = useState([
@@ -27,13 +27,6 @@ export const AddEnergyAssetDashboard = () => {
   const [nonConsumptionMeasures, setNonConsumptionMeasures] = useState([
     { name: '', unitType: '', min: '', max: '', alertBelow: '', alertAbove: '', multiplierFactor: '', checkPreviousReading: false }
   ]);
-
-  const [uploadedFiles, setUploadedFiles] = useState({
-    manual: null,
-    insurance: null,
-    invoice: null,
-    amc: null
-  });
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({
@@ -62,18 +55,6 @@ export const AddEnergyAssetDashboard = () => {
     setNonConsumptionMeasures(nonConsumptionMeasures.filter((_, i) => i !== index));
   };
 
-  const handleFileUpload = (type: string, event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setUploadedFiles(prev => ({ ...prev, [type]: file }));
-      console.log(`${type} file uploaded:`, file.name);
-    }
-  };
-
-  const removeFile = (type: string) => {
-    setUploadedFiles(prev => ({ ...prev, [type]: null }));
-  };
-
   const handleSaveAndShowDetails = () => {
     console.log('Saving asset and showing details...');
     navigate('/utility/energy');
@@ -82,11 +63,10 @@ export const AddEnergyAssetDashboard = () => {
   const handleSaveAndCreateNew = () => {
     console.log('Saving asset and creating new...');
     // Reset form or navigate to new form
-    window.location.reload();
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#C72030' }}>
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-6">
         <div className="flex justify-between items-center">
@@ -98,7 +78,6 @@ export const AddEnergyAssetDashboard = () => {
             variant="ghost"
             size="icon"
             onClick={() => navigate('/utility/energy')}
-            className="hover:bg-gray-100"
           >
             <X className="w-6 h-6" />
           </Button>
@@ -112,11 +91,11 @@ export const AddEnergyAssetDashboard = () => {
             className="flex items-center gap-3 mb-4 cursor-pointer"
             onClick={() => toggleSection('location')}
           >
-            <div className="w-8 h-8 bg-[#ff6b35] rounded-full flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
               1
             </div>
-            <h3 className="text-lg font-semibold text-[#ff6b35]">LOCATION DETAILS</h3>
-            {expandedSections.location ? <ChevronUp className="w-5 h-5 text-[#ff6b35]" /> : <ChevronDown className="w-5 h-5 text-[#ff6b35]" />}
+            <h3 className="text-lg font-semibold text-orange-500">LOCATION DETAILS</h3>
+            {expandedSections.location ? <ChevronUp className="w-5 h-5 text-orange-500" /> : <ChevronDown className="w-5 h-5 text-orange-500" />}
           </div>
           
           {expandedSections.location && (
@@ -207,11 +186,11 @@ export const AddEnergyAssetDashboard = () => {
             className="flex items-center gap-3 mb-4 cursor-pointer"
             onClick={() => toggleSection('asset')}
           >
-            <div className="w-8 h-8 bg-[#ff6b35] rounded-full flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
               2
             </div>
-            <h3 className="text-lg font-semibold text-[#ff6b35]">ASSET DETAILS</h3>
-            {expandedSections.asset ? <ChevronUp className="w-5 h-5 text-[#ff6b35]" /> : <ChevronDown className="w-5 h-5 text-[#ff6b35]" />}
+            <h3 className="text-lg font-semibold text-orange-500">ASSET DETAILS</h3>
+            {expandedSections.asset ? <ChevronUp className="w-5 h-5 text-orange-500" /> : <ChevronDown className="w-5 h-5 text-orange-500" />}
           </div>
           
           {expandedSections.asset && (
@@ -299,7 +278,7 @@ export const AddEnergyAssetDashboard = () => {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2">Manufacturer</Label>
-                  <Input placeholder="Select Date" />
+                  <Input type="date" />
                 </div>
               </div>
 
@@ -317,7 +296,7 @@ export const AddEnergyAssetDashboard = () => {
                       <span>Customer</span>
                     </label>
                     <label className="flex items-center">
-                      <input type="radio" name="locationType" value="na" className="mr-2" defaultChecked />
+                      <input type="radio" name="locationType" value="na" className="mr-2" />
                       <span>NA</span>
                     </label>
                   </div>
@@ -326,7 +305,7 @@ export const AddEnergyAssetDashboard = () => {
                   <Label className="text-sm font-medium text-gray-700 mb-3">Asset Type</Label>
                   <div className="flex gap-6">
                     <label className="flex items-center">
-                      <input type="radio" name="assetType" value="parent" className="mr-2" defaultChecked />
+                      <input type="radio" name="assetType" value="parent" className="mr-2" />
                       <span>Parent</span>
                     </label>
                     <label className="flex items-center">
@@ -342,7 +321,7 @@ export const AddEnergyAssetDashboard = () => {
                   <Label className="text-sm font-medium text-gray-700 mb-3">Status</Label>
                   <div className="flex gap-6">
                     <label className="flex items-center">
-                      <input type="radio" name="status" value="inUse" className="mr-2" defaultChecked />
+                      <input type="radio" name="status" value="inUse" className="mr-2" />
                       <span>In Use</span>
                     </label>
                     <label className="flex items-center">
@@ -359,7 +338,7 @@ export const AddEnergyAssetDashboard = () => {
                       <span>Yes</span>
                     </label>
                     <label className="flex items-center">
-                      <input type="radio" name="critical" value="no" className="mr-2" defaultChecked />
+                      <input type="radio" name="critical" value="no" className="mr-2" />
                       <span>No</span>
                     </label>
                   </div>
@@ -368,7 +347,7 @@ export const AddEnergyAssetDashboard = () => {
 
               <div className="mb-4">
                 <label className="flex items-center">
-                  <Checkbox className="mr-2" defaultChecked />
+                  <Checkbox className="mr-2" />
                   <span>Meter Applicable</span>
                 </label>
               </div>
@@ -382,11 +361,11 @@ export const AddEnergyAssetDashboard = () => {
             className="flex items-center gap-3 mb-4 cursor-pointer"
             onClick={() => toggleSection('warranty')}
           >
-            <div className="w-8 h-8 bg-[#ff6b35] rounded-full flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
               3
             </div>
-            <h3 className="text-lg font-semibold text-[#ff6b35]">Warranty Details</h3>
-            {expandedSections.warranty ? <ChevronUp className="w-5 h-5 text-[#ff6b35]" /> : <ChevronDown className="w-5 h-5 text-[#ff6b35]" />}
+            <h3 className="text-lg font-semibold text-orange-500">Warranty Details</h3>
+            {expandedSections.warranty ? <ChevronUp className="w-5 h-5 text-orange-500" /> : <ChevronDown className="w-5 h-5 text-orange-500" />}
           </div>
           
           {expandedSections.warranty && (
@@ -399,7 +378,7 @@ export const AddEnergyAssetDashboard = () => {
                     <span>Yes</span>
                   </label>
                   <label className="flex items-center">
-                    <input type="radio" name="underWarranty" value="no" className="mr-2" defaultChecked />
+                    <input type="radio" name="underWarranty" value="no" className="mr-2" />
                     <span>No</span>
                   </label>
                 </div>
@@ -429,42 +408,42 @@ export const AddEnergyAssetDashboard = () => {
             className="flex items-center gap-3 mb-4 cursor-pointer"
             onClick={() => toggleSection('meterCategory')}
           >
-            <div className="w-8 h-8 bg-[#ff6b35] rounded-full flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
               4
             </div>
-            <h3 className="text-lg font-semibold text-[#ff6b35]">Meter Category Type</h3>
-            {expandedSections.meterCategory ? <ChevronUp className="w-5 h-5 text-[#ff6b35]" /> : <ChevronDown className="w-5 h-5 text-[#ff6b35]" />}
+            <h3 className="text-lg font-semibold text-orange-500">Meter Category Type</h3>
+            {expandedSections.meterCategory ? <ChevronUp className="w-5 h-5 text-orange-500" /> : <ChevronDown className="w-5 h-5 text-orange-500" />}
           </div>
           
           {expandedSections.meterCategory && (
             <div className="bg-white p-6 rounded-lg border border-gray-200">
               <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-[#ff6b35] cursor-pointer transition-colors bg-purple-100">
+                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 cursor-pointer transition-colors bg-purple-100">
                   <input type="radio" name="meterCategory" value="board" className="mb-2" />
                   <span className="text-2xl mb-2">📋</span>
                   <span className="text-sm">Board</span>
                 </label>
-                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-[#ff6b35] cursor-pointer transition-colors bg-purple-100">
+                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 cursor-pointer transition-colors bg-purple-100">
                   <input type="radio" name="meterCategory" value="dg" className="mb-2" />
                   <span className="text-2xl mb-2">⚡</span>
                   <span className="text-sm">DG</span>
                 </label>
-                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-[#ff6b35] cursor-pointer transition-colors bg-purple-100">
+                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 cursor-pointer transition-colors bg-purple-100">
                   <input type="radio" name="meterCategory" value="renewable" className="mb-2" />
                   <span className="text-2xl mb-2">🔄</span>
                   <span className="text-sm">Renewable</span>
                 </label>
-                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-[#ff6b35] cursor-pointer transition-colors bg-purple-100">
+                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 cursor-pointer transition-colors bg-purple-100">
                   <input type="radio" name="meterCategory" value="freshWater" className="mb-2" />
                   <span className="text-2xl mb-2">💧</span>
                   <span className="text-sm">Fresh Water</span>
                 </label>
-                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-[#ff6b35] cursor-pointer transition-colors bg-purple-100">
+                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 cursor-pointer transition-colors bg-purple-100">
                   <input type="radio" name="meterCategory" value="recycled" className="mb-2" />
                   <span className="text-2xl mb-2">♻️</span>
                   <span className="text-sm">Recycled</span>
                 </label>
-                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-[#ff6b35] cursor-pointer transition-colors bg-purple-100">
+                <label className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 cursor-pointer transition-colors bg-purple-100">
                   <input type="radio" name="meterCategory" value="iexGdam" className="mb-2" />
                   <span className="text-2xl mb-2">🏭</span>
                   <span className="text-sm">IEX-GDAM</span>
@@ -480,11 +459,11 @@ export const AddEnergyAssetDashboard = () => {
             className="flex items-center gap-3 mb-4 cursor-pointer"
             onClick={() => toggleSection('consumption')}
           >
-            <div className="w-8 h-8 bg-[#ff6b35] rounded-full flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
               5+
             </div>
-            <h3 className="text-lg font-semibold text-[#ff6b35] flex-1">CONSUMPTION ASSET MEASURE</h3>
-            {expandedSections.consumption ? <ChevronUp className="w-5 h-5 text-[#ff6b35]" /> : <ChevronDown className="w-5 h-5 text-[#ff6b35]" />}
+            <h3 className="text-lg font-semibold text-orange-500 flex-1">CONSUMPTION ASSET MEASURE</h3>
+            {expandedSections.consumption ? <ChevronUp className="w-5 h-5 text-orange-500" /> : <ChevronDown className="w-5 h-5 text-orange-500" />}
           </div>
           
           {expandedSections.consumption && (
@@ -553,8 +532,7 @@ export const AddEnergyAssetDashboard = () => {
               <Button
                 variant="outline"
                 onClick={addConsumptionMeasure}
-                className="w-full border-dashed border-2 border-[#ff6b35] text-[#ff6b35] hover:bg-orange-50"
-                style={{ backgroundColor: '#8B4513', color: 'white', borderColor: '#8B4513' }}
+                className="w-full border-dashed border-2 border-orange-300 text-orange-600 hover:bg-orange-50"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add More
@@ -569,11 +547,11 @@ export const AddEnergyAssetDashboard = () => {
             className="flex items-center gap-3 mb-4 cursor-pointer"
             onClick={() => toggleSection('nonConsumption')}
           >
-            <div className="w-8 h-8 bg-[#ff6b35] rounded-full flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
               6+
             </div>
-            <h3 className="text-lg font-semibold text-[#ff6b35] flex-1">NON CONSUMPTION ASSET MEASURE</h3>
-            {expandedSections.nonConsumption ? <ChevronUp className="w-5 h-5 text-[#ff6b35]" /> : <ChevronDown className="w-5 h-5 text-[#ff6b35]" />}
+            <h3 className="text-lg font-semibold text-orange-500 flex-1">NON CONSUMPTION ASSET MEASURE</h3>
+            {expandedSections.nonConsumption ? <ChevronUp className="w-5 h-5 text-orange-500" /> : <ChevronDown className="w-5 h-5 text-orange-500" />}
           </div>
           
           {expandedSections.nonConsumption && (
@@ -642,8 +620,7 @@ export const AddEnergyAssetDashboard = () => {
               <Button
                 variant="outline"
                 onClick={addNonConsumptionMeasure}
-                className="w-full border-dashed border-2 border-[#ff6b35] text-[#ff6b35] hover:bg-orange-50"
-                style={{ backgroundColor: '#8B4513', color: 'white', borderColor: '#8B4513' }}
+                className="w-full border-dashed border-2 border-orange-300 text-orange-600 hover:bg-orange-50"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add More
@@ -658,166 +635,58 @@ export const AddEnergyAssetDashboard = () => {
             className="flex items-center gap-3 mb-4 cursor-pointer"
             onClick={() => toggleSection('attachments')}
           >
-            <div className="w-8 h-8 bg-[#ff6b35] rounded-full flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
               📎
             </div>
-            <h3 className="text-lg font-semibold text-[#ff6b35] flex-1">ATTACHMENTS</h3>
-            {expandedSections.attachments ? <ChevronUp className="w-5 h-5 text-[#ff6b35]" /> : <ChevronDown className="w-5 h-5 text-[#ff6b35]" />}
+            <h3 className="text-lg font-semibold text-orange-500 flex-1">ATTACHMENTS</h3>
+            {expandedSections.attachments ? <ChevronUp className="w-5 h-5 text-orange-500" /> : <ChevronDown className="w-5 h-5 text-orange-500" />}
           </div>
           
           {expandedSections.attachments && (
             <div className="bg-white p-6 rounded-lg border border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2">Manuals Upload</Label>
-                  <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center bg-orange-50">
-                    <input
-                      type="file"
-                      id="manual"
-                      className="hidden"
-                      onChange={(e) => handleFileUpload('manual', e)}
-                    />
-                    <label htmlFor="manual" className="cursor-pointer">
-                      <div className="text-orange-600 mb-2">Choose File</div>
-                      <div className="text-sm text-gray-400">
-                        {uploadedFiles.manual ? uploadedFiles.manual.name : 'No file chosen'}
-                      </div>
-                    </label>
-                    <div className="flex justify-center items-center gap-2 mt-2">
-                      {uploadedFiles.manual && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile('manual')}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      )}
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => document.getElementById('manual')?.click()}
-                        style={{ backgroundColor: '#C72030', color: 'white', borderColor: '#C72030' }}
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add
-                      </Button>
-                    </div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2">Manual Upload</Label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <div className="text-gray-500 mb-2">Choose File</div>
+                    <div className="text-sm text-gray-400">No file chosen</div>
+                    <Button variant="outline" className="mt-2">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add
+                    </Button>
                   </div>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2">Insurance Details</Label>
-                  <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center bg-orange-50">
-                    <input
-                      type="file"
-                      id="insurance"
-                      className="hidden"
-                      onChange={(e) => handleFileUpload('insurance', e)}
-                    />
-                    <label htmlFor="insurance" className="cursor-pointer">
-                      <div className="text-orange-600 mb-2">Choose File</div>
-                      <div className="text-sm text-gray-400">
-                        {uploadedFiles.insurance ? uploadedFiles.insurance.name : 'No file chosen'}
-                      </div>
-                    </label>
-                    <div className="flex justify-center items-center gap-2 mt-2">
-                      {uploadedFiles.insurance && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile('insurance')}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      )}
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => document.getElementById('insurance')?.click()}
-                        style={{ backgroundColor: '#C72030', color: 'white', borderColor: '#C72030' }}
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add
-                      </Button>
-                    </div>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <div className="text-gray-500 mb-2">Choose File</div>
+                    <div className="text-sm text-gray-400">No file chosen</div>
+                    <Button variant="outline" className="mt-2">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add
+                    </Button>
                   </div>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2">Purchase Invoice</Label>
-                  <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center bg-orange-50">
-                    <input
-                      type="file"
-                      id="invoice"
-                      className="hidden"
-                      onChange={(e) => handleFileUpload('invoice', e)}
-                    />
-                    <label htmlFor="invoice" className="cursor-pointer">
-                      <div className="text-orange-600 mb-2">Choose File</div>
-                      <div className="text-sm text-gray-400">
-                        {uploadedFiles.invoice ? uploadedFiles.invoice.name : 'No file chosen'}
-                      </div>
-                    </label>
-                    <div className="flex justify-center items-center gap-2 mt-2">
-                      {uploadedFiles.invoice && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile('invoice')}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      )}
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => document.getElementById('invoice')?.click()}
-                        style={{ backgroundColor: '#C72030', color: 'white', borderColor: '#C72030' }}
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add
-                      </Button>
-                    </div>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <div className="text-gray-500 mb-2">Choose File</div>
+                    <div className="text-sm text-gray-400">No file chosen</div>
+                    <Button variant="outline" className="mt-2">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add
+                    </Button>
                   </div>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2">AMC</Label>
-                  <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center bg-orange-50">
-                    <input
-                      type="file"
-                      id="amc"
-                      className="hidden"
-                      onChange={(e) => handleFileUpload('amc', e)}
-                    />
-                    <label htmlFor="amc" className="cursor-pointer">
-                      <div className="text-orange-600 mb-2">Choose File</div>
-                      <div className="text-sm text-gray-400">
-                        {uploadedFiles.amc ? uploadedFiles.amc.name : 'No file chosen'}
-                      </div>
-                    </label>
-                    <div className="flex justify-center items-center gap-2 mt-2">
-                      {uploadedFiles.amc && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile('amc')}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      )}
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => document.getElementById('amc')?.click()}
-                        style={{ backgroundColor: '#C72030', color: 'white', borderColor: '#C72030' }}
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add
-                      </Button>
-                    </div>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <div className="text-gray-500 mb-2">Choose File</div>
+                    <div className="text-sm text-gray-400">No file chosen</div>
+                    <Button variant="outline" className="mt-2">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -830,14 +699,13 @@ export const AddEnergyAssetDashboard = () => {
           <Button 
             variant="outline"
             onClick={handleSaveAndShowDetails}
-            className="px-8 py-3 bg-white text-[#C72030] border-white hover:bg-gray-100"
+            className="px-8 py-3"
           >
             Save & Show Details
           </Button>
           <Button 
             onClick={handleSaveAndCreateNew}
-            className="px-8 py-3 text-white"
-            style={{ backgroundColor: '#C72030' }}
+            className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white"
           >
             Save & Create New Asset
           </Button>
