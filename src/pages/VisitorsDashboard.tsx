@@ -73,10 +73,16 @@ export const VisitorsDashboard = () => {
 
         {/* Visitor Type Buttons */}
         <div className="flex gap-4 mb-6">
-          <Button className="px-8 py-3 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg">
+          <Button 
+            style={{ backgroundColor: '#C72030' }}
+            className="px-8 py-3 text-white hover:bg-[#C72030]/90 rounded-lg"
+          >
             Unexpected Visitor
           </Button>
-          <Button className="px-8 py-3 bg-[#C72030] hover:bg-[#B01E2A] text-white rounded-lg">
+          <Button 
+            style={{ backgroundColor: '#C72030' }}
+            className="px-8 py-3 text-white hover:bg-[#C72030]/90 rounded-lg"
+          >
             Expected Visitor
           </Button>
         </div>
@@ -92,7 +98,10 @@ export const VisitorsDashboard = () => {
 
         {/* Floating Add Button */}
         <div className="fixed bottom-8 right-8">
-          <Button className="w-12 h-12 rounded-full bg-[#C72030] hover:bg-[#B01E2A] text-white shadow-lg">
+          <Button 
+            style={{ backgroundColor: '#C72030' }}
+            className="w-12 h-12 rounded-full text-white hover:bg-[#C72030]/90 shadow-lg"
+          >
             <Plus className="w-6 h-6" />
           </Button>
         </div>

@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, RefreshCw, MapPin, User, Car, CreditCard } from 'lucide-react';
+import { Search, RefreshCw, MapPin, User, Car, CreditCard, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { VisitorsHistoryFilterModal } from '@/components/VisitorsHistoryFilterModal';
 
 const visitorsData = [
   {
@@ -55,6 +56,7 @@ const visitorsData = [
 export const VisitorsHistoryDashboard = () => {
   const [activeTab, setActiveTab] = useState('History');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleTabClick = (tab: string) => {
@@ -97,8 +99,19 @@ export const VisitorsHistoryDashboard = () => {
             ))}
           </div>
 
-          {/* Search Bar */}
+          {/* Action Buttons and Search Bar */}
           <div className="p-4 border-b border-gray-200">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-4">
+              <Button 
+                onClick={() => setIsFilterModalOpen(true)}
+                style={{ backgroundColor: '#C72030' }}
+                className="text-white hover:bg-[#C72030]/90"
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Filters
+              </Button>
+            </div>
+            
             <div className="flex items-center gap-2 max-w-md">
               <div className="relative flex-1">
                 <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
@@ -109,10 +122,18 @@ export const VisitorsHistoryDashboard = () => {
                   className="pl-10"
                 />
               </div>
-              <Button variant="outline" size="sm">
+              <Button 
+                style={{ backgroundColor: '#C72030' }}
+                className="text-white hover:bg-[#C72030]/90"
+                size="sm"
+              >
                 <Search className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="sm">
+              <Button 
+                style={{ backgroundColor: '#C72030' }}
+                className="text-white hover:bg-[#C72030]/90"
+                size="sm"
+              >
                 <RefreshCw className="w-4 h-4" />
               </Button>
             </div>
@@ -175,7 +196,11 @@ export const VisitorsHistoryDashboard = () => {
 
           {/* Pagination */}
           <div className="flex justify-center items-center gap-2 p-4 border-t border-gray-200">
-            <Button variant="outline" size="sm" className="bg-[#C72030] text-white border-[#C72030]">
+            <Button 
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:bg-[#C72030]/90"
+              size="sm"
+            >
               1
             </Button>
             <Button variant="outline" size="sm">2</Button>
@@ -188,6 +213,11 @@ export const VisitorsHistoryDashboard = () => {
           </div>
         </div>
       </div>
+
+      <VisitorsHistoryFilterModal 
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+      />
     </div>
   );
 };

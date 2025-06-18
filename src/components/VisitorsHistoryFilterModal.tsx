@@ -44,16 +44,18 @@ export const VisitorsHistoryFilterModal: React.FC<VisitorsHistoryFilterModalProp
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md [&>button]:hidden">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold">FILTER</DialogTitle>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onClose}
-            className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            className="h-6 w-6 p-0"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
-          </button>
+          </Button>
         </DialogHeader>
         
         <div className="space-y-4">
@@ -113,14 +115,15 @@ export const VisitorsHistoryFilterModal: React.FC<VisitorsHistoryFilterModalProp
         <div className="flex gap-3 pt-4">
           <Button
             onClick={handleApply}
-            className="flex-1 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+            style={{ backgroundColor: '#C72030' }}
+            className="flex-1 text-white hover:bg-[#C72030]/90"
           >
             Apply
           </Button>
           <Button
             onClick={handleReset}
-            variant="outline"
-            className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50"
+            style={{ backgroundColor: '#C72030' }}
+            className="flex-1 text-white hover:bg-[#C72030]/90"
           >
             Reset
           </Button>
