@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,10 +9,18 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useParams, useNavigate } from 'react-router-dom';
+import { SetApprovalModal } from '@/components/SetApprovalModal';
 
 export const ViewSchedulePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  // Modal states
+  const [showSetApprovalModal, setShowSetApprovalModal] = useState(false);
+
+  // Toggle states for Create Ticket and Weightage
+  const [createTicketEnabled, setCreateTicketEnabled] = useState(false);
+  const [weightageEnabled, setWeightageEnabled] = useState(false);
 
   // Static data for viewing
   const scheduleData = {
@@ -78,22 +85,56 @@ export const ViewSchedulePage = () => {
     }
   ];
 
+  const handleSetApproval = () => {
+    setShowSetApprovalModal(true);
+  };
+
+  const handleViewPerformance = () => {
+    navigate(`/maintenance/schedule/performance/${id}`);
+  };
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1a1a1a] mb-2">View Schedule</h1>
-        <div className="flex gap-3">
-          <Button style={{ backgroundColor: '#C72030' }} className="text-white">
-            Create Ticket
-          </Button>
-          <Button variant="outline" className="border-[#C72030] text-[#C72030]">
-            Weightage
-          </Button>
-          <Button style={{ backgroundColor: '#C72030' }} className="text-white">
+        <div className="flex gap-3 mb-6">
+          {/* Create Ticket Toggle */}
+          <div className="flex items-center space-x-2">
+            <input 
+              type="radio" 
+              id="create-ticket-toggle" 
+              name="create-ticket" 
+              checked={createTicketEnabled}
+              onChange={() => setCreateTicketEnabled(!createTicketEnabled)}
+            />
+            <Label htmlFor="create-ticket-toggle">Create Ticket</Label>
+          </div>
+
+          {/* Weightage Toggle */}
+          <div className="flex items-center space-x-2">
+            <input 
+              type="radio" 
+              id="weightage-toggle" 
+              name="weightage" 
+              checked={weightageEnabled}
+              onChange={() => setWeightageEnabled(!weightageEnabled)}
+            />
+            <Label htmlFor="weightage-toggle">Weightage</Label>
+          </div>
+
+          <Button 
+            onClick={handleSetApproval}
+            style={{ backgroundColor: '#C72030' }} 
+            className="text-white"
+          >
             Set Approval
           </Button>
-          <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+          <Button 
+            onClick={handleViewPerformance}
+            variant="outline" 
+            className="border-[#C72030] text-[#C72030]"
+          >
             View Performance
           </Button>
         </div>
@@ -449,6 +490,12 @@ export const ViewSchedulePage = () => {
           </Button>
         </div>
       </div>
+
+      {/* Set Approval Modal */}
+      <SetApprovalModal 
+        isOpen={showSetApprovalModal}
+        onClose={() => setShowSetApprovalModal(false)}
+      />
     </div>
   );
 };
