@@ -4,13 +4,31 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RefreshCw, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 
 export const VisitorsDashboard = () => {
   const [activeTab, setActiveTab] = useState('visitor-in');
+  const [selectedPerson, setSelectedPerson] = useState('');
+  const [isNewVisitorDialogOpen, setIsNewVisitorDialogOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleHistoryClick = () => {
     navigate('/security/visitor/history');
+  };
+
+  const handleRefresh = () => {
+    console.log('Refreshing person list...');
+    // Handle refresh logic here
+  };
+
+  const handleUnexpectedVisitor = () => {
+    console.log('Handling unexpected visitor...');
+    // Handle unexpected visitor logic here
+  };
+
+  const handleExpectedVisitor = () => {
+    console.log('Handling expected visitor...');
+    // Handle expected visitor logic here
   };
 
   return (
@@ -29,6 +47,7 @@ export const VisitorsDashboard = () => {
                 ? 'bg-white text-gray-900 shadow-sm' 
                 : 'bg-transparent text-gray-600 hover:text-gray-900'
             }`}
+            variant="ghost"
           >
             Visitor In
           </Button>
@@ -39,6 +58,7 @@ export const VisitorsDashboard = () => {
                 ? 'bg-white text-gray-900 shadow-sm' 
                 : 'bg-transparent text-gray-600 hover:text-gray-900'
             }`}
+            variant="ghost"
           >
             Visitor Out
           </Button>
@@ -49,6 +69,7 @@ export const VisitorsDashboard = () => {
                 ? 'bg-white text-gray-900 shadow-sm' 
                 : 'bg-transparent text-gray-600 hover:text-gray-900'
             }`}
+            variant="ghost"
           >
             History
           </Button>
@@ -56,17 +77,24 @@ export const VisitorsDashboard = () => {
 
         {/* Person Selection Dropdown */}
         <div className="mb-6">
-          <Select>
+          <Select value={selectedPerson} onValueChange={setSelectedPerson}>
             <SelectTrigger className="w-full max-w-md bg-white border border-gray-300">
               <SelectValue placeholder="Select Person To Meet" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="person1">Person 1</SelectItem>
-              <SelectItem value="person2">Person 2</SelectItem>
-              <SelectItem value="person3">Person 3</SelectItem>
+            <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+              <SelectItem value="person1">Abdul Ghaffar</SelectItem>
+              <SelectItem value="person2">Arun</SelectItem>
+              <SelectItem value="person3">Aryan</SelectItem>
+              <SelectItem value="person4">Vinayak Mane</SelectItem>
+              <SelectItem value="person5">Sohail Ansari</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="ghost" size="sm" className="ml-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="ml-2 hover:bg-gray-100"
+            onClick={handleRefresh}
+          >
             <RefreshCw className="w-4 h-4" />
           </Button>
         </div>
@@ -74,12 +102,14 @@ export const VisitorsDashboard = () => {
         {/* Visitor Type Buttons */}
         <div className="flex gap-4 mb-6">
           <Button 
+            onClick={handleUnexpectedVisitor}
             style={{ backgroundColor: '#C72030' }}
             className="px-8 py-3 text-white hover:bg-[#C72030]/90 rounded-lg"
           >
             Unexpected Visitor
           </Button>
           <Button 
+            onClick={handleExpectedVisitor}
             style={{ backgroundColor: '#C72030' }}
             className="px-8 py-3 text-white hover:bg-[#C72030]/90 rounded-lg"
           >
@@ -99,6 +129,7 @@ export const VisitorsDashboard = () => {
         {/* Floating Add Button */}
         <div className="fixed bottom-8 right-8">
           <Button 
+            onClick={() => setIsNewVisitorDialogOpen(true)}
             style={{ backgroundColor: '#C72030' }}
             className="w-12 h-12 rounded-full text-white hover:bg-[#C72030]/90 shadow-lg"
           >
@@ -106,6 +137,11 @@ export const VisitorsDashboard = () => {
           </Button>
         </div>
       </div>
+
+      <NewVisitorDialog 
+        isOpen={isNewVisitorDialogOpen}
+        onClose={() => setIsNewVisitorDialogOpen(false)}
+      />
     </div>
   );
 };
