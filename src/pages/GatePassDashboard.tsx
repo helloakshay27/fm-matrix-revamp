@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { GatePassInwardsDashboard } from './GatePassInwardsDashboard';
+import { GatePassOutwardsDashboard } from './GatePassOutwardsDashboard';
 
 export const GatePassDashboard = () => {
   const [activeTab, setActiveTab] = useState('inwards');
@@ -14,9 +15,9 @@ export const GatePassDashboard = () => {
           <span>Gate Pass</span>
         </div>
         
-        {/* Sub Navigation */}
+        {/* Sub Navigation Tabs */}
         <div className="flex gap-1 mb-6 bg-gray-200 p-1 rounded-lg w-fit">
-          <Button 
+          <button 
             onClick={() => setActiveTab('inwards')}
             className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
               activeTab === 'inwards' 
@@ -25,8 +26,8 @@ export const GatePassDashboard = () => {
             }`}
           >
             Inwards
-          </Button>
-          <Button 
+          </button>
+          <button 
             onClick={() => setActiveTab('outwards')}
             className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
               activeTab === 'outwards' 
@@ -35,22 +36,23 @@ export const GatePassDashboard = () => {
             }`}
           >
             Outwards
-          </Button>
+          </button>
         </div>
 
         {/* Content based on active tab */}
-        <div className="bg-white rounded-lg border border-gray-200 p-8 min-h-[400px] flex items-center justify-center">
-          <div className="text-center text-gray-500">
-            <h2 className="text-xl font-semibold mb-2">
-              {activeTab === 'inwards' ? 'Inwards Gate Pass' : 'Outwards Gate Pass'}
-            </h2>
-            <p>
-              {activeTab === 'inwards' 
-                ? 'Inwards gate pass content will be displayed here' 
-                : 'Outwards gate pass content will be displayed here'
-              }
-            </p>
-          </div>
+        <div>
+          {activeTab === 'inwards' && (
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-6">INWARDS GATE PASS</h1>
+              <GatePassInwardsDashboard />
+            </div>
+          )}
+          {activeTab === 'outwards' && (
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-6">OUTWARDS GATE PASS</h1>
+              <GatePassOutwardsDashboard />
+            </div>
+          )}
         </div>
       </div>
     </div>
