@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Switch } from '@/components/ui/switch';
 import { Plus, Upload } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 
@@ -21,6 +21,12 @@ export const EditSchedulePage = () => {
   const [activityName, setActivityName] = useState('meter reading');
   const [description, setDescription] = useState('');
   const [scheduleFor, setScheduleFor] = useState('Asset');
+
+  // Create Category Toggle state
+  const [createTicket, setCreateTicket] = useState(true);
+  const [createCategory, setCreateCategory] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [weightage, setWeightage] = useState(false);
 
   // Task state
   const [group, setGroup] = useState('');
@@ -87,15 +93,71 @@ export const EditSchedulePage = () => {
     <div className="p-6 max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#1a1a1a] mb-2">Edit Schedule</h1>
-        <div className="flex gap-3">
-          <Button style={{ backgroundColor: '#C72030' }} className="text-white">
-            Create Ticket
-          </Button>
-          <Button variant="outline" className="border-[#C72030] text-[#C72030]">
-            Weightage
-          </Button>
+        <h1 className="text-2xl font-bold text-[#1a1a1a] mb-4">Edit Schedule</h1>
+        
+        {/* Toggle Switches */}
+        <div className="flex items-center gap-8 mb-4">
+          <div className="flex items-center gap-3">
+            <Label htmlFor="create-ticket">Create Ticket</Label>
+            <Switch
+              id="create-ticket"
+              checked={createTicket}
+              onCheckedChange={setCreateTicket}
+              className="data-[state=checked]:bg-[#C72030]"
+            />
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Label htmlFor="weightage">Weightage</Label>
+            <Switch
+              id="weightage"
+              checked={weightage}
+              onCheckedChange={setWeightage}
+              className="data-[state=checked]:bg-[#C72030]"
+            />
+          </div>
         </div>
+
+        {/* Category Selection when Create Ticket is toggled */}
+        {createTicket && (
+          <div className="mb-4">
+            <div className="flex items-center gap-3 mb-3">
+              <Label htmlFor="create-category">Create Category</Label>
+              <Switch
+                id="create-category"
+                checked={createCategory}
+                onCheckedChange={setCreateCategory}
+                className="data-[state=checked]:bg-[#C72030]"
+              />
+            </div>
+            
+            {createCategory && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="checklist-level" name="category-level" />
+                    <Label htmlFor="checklist-level">Checklist Level</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="question-level" name="category-level" defaultChecked />
+                    <Label htmlFor="question-level">Question Level</Label>
+                  </div>
+                </div>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="w-64">
+                    <SelectValue placeholder="Select Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="technical">Technical</SelectItem>
+                    <SelectItem value="non-technical">Non Technical</SelectItem>
+                    <SelectItem value="safety">Safety</SelectItem>
+                    <SelectItem value="maintenance">Maintenance</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="space-y-6">
