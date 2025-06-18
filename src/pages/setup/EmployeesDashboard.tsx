@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -100,6 +99,10 @@ export const EmployeesDashboard = () => {
     navigate(`/vas/space-management/setup/employees/details/${employee.id}`);
   };
 
+  const handleEditClick = (employee: EmployeeData) => {
+    navigate(`/vas/space-management/setup/employees/edit/${employee.id}`);
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <div className="flex-1 p-6">
@@ -146,7 +149,12 @@ export const EmployeesDashboard = () => {
                       >
                         <Eye className="w-4 h-4 text-blue-600" />
                       </Button>
-                      <Button size="sm" variant="ghost" className="p-1">
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="p-1"
+                        onClick={() => handleEditClick(employee)}
+                      >
                         <Edit className="w-4 h-4 text-green-600" />
                       </Button>
                     </div>
