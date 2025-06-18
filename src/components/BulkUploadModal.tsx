@@ -49,12 +49,14 @@ export const BulkUploadModal = ({ isOpen, onClose }: BulkUploadModalProps) => {
 
           <div className="flex justify-between">
             <Button 
-              className="bg-[#8B5A5A] hover:bg-[#7A4949] text-white px-6"
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:bg-[#C72030]/90 text-white px-6"
             >
               Download Sample Format
             </Button>
             <Button 
-              className="bg-[#8B5A5A] hover:bg-[#7A4949] text-white px-6"
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:bg-[#C72030]/90 text-white px-6"
               onClick={onClose}
             >
               Import
