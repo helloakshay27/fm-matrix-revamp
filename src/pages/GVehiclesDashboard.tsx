@@ -179,7 +179,8 @@ export const GVehiclesDashboard = () => {
             <div className="flex gap-3">
               <Button 
                 onClick={() => setIsAddModalOpen(true)}
-                className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-4 py-2 rounded flex items-center gap-2"
+                style={{ backgroundColor: '#C72030' }}
+                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Add
@@ -188,8 +189,8 @@ export const GVehiclesDashboard = () => {
                 onClick={handleHistoryClick}
                 className={`px-6 py-2 rounded ${
                   activeTab === 'History' 
-                    ? 'bg-[#8B4B8C] hover:bg-[#7A4077] text-white' 
-                    : 'bg-[#8B4B8C] hover:bg-[#7A4077] text-white'
+                    ? 'bg-[#C72030] hover:bg-[#C72030]/90 text-white' 
+                    : 'bg-[#C72030] hover:bg-[#C72030]/90 text-white'
                 }`}
               >
                 History
@@ -198,8 +199,8 @@ export const GVehiclesDashboard = () => {
                 onClick={handleVehicleOutClick}
                 className={`px-6 py-2 rounded ${
                   activeTab === 'Vehicle Out' 
-                    ? 'bg-[#8B4B8C] hover:bg-[#7A4077] text-white' 
-                    : 'bg-[#8B4B8C] hover:bg-[#7A4077] text-white'
+                    ? 'bg-[#C72030] hover:bg-[#C72030]/90 text-white' 
+                    : 'bg-[#C72030] hover:bg-[#C72030]/90 text-white'
                 }`}
               >
                 Vehicle Out

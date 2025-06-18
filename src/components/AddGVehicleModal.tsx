@@ -33,7 +33,7 @@ export const AddGVehicleModal = ({ isOpen, onClose }: AddGVehicleModalProps) => 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-white">
+      <DialogContent className="max-w-2xl bg-white [&>button]:hidden">
         <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
           <DialogTitle className="text-lg font-semibold">Add Vehicle</DialogTitle>
           <Button
@@ -58,7 +58,7 @@ export const AddGVehicleModal = ({ isOpen, onClose }: AddGVehicleModalProps) => 
                   value="Occupants"
                   checked={type === 'Occupants'}
                   onChange={(e) => setType(e.target.value)}
-                  className="w-4 h-4 text-[#8B4B8C]"
+                  className="w-4 h-4 text-[#C72030]"
                 />
                 <span className="text-sm">Occupants</span>
               </label>
@@ -69,7 +69,7 @@ export const AddGVehicleModal = ({ isOpen, onClose }: AddGVehicleModalProps) => 
                   value="Guest"
                   checked={type === 'Guest'}
                   onChange={(e) => setType(e.target.value)}
-                  className="w-4 h-4 text-[#8B4B8C]"
+                  className="w-4 h-4 text-[#C72030]"
                 />
                 <span className="text-sm">Guest</span>
               </label>
@@ -149,7 +149,8 @@ export const AddGVehicleModal = ({ isOpen, onClose }: AddGVehicleModalProps) => 
           <div className="flex justify-end pt-4">
             <Button
               onClick={handleSubmit}
-              className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-8 py-2"
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:bg-[#C72030]/90 text-white px-8 py-2"
             >
               Submit
             </Button>

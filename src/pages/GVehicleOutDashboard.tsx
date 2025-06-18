@@ -74,11 +74,15 @@ export const GVehicleOutDashboard = ({ onHistoryClick }: GVehicleOutDashboardPro
             <div className="flex gap-3">
               <Button 
                 onClick={handleHistoryClick}
-                className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-6 py-2 rounded"
+                style={{ backgroundColor: '#C72030' }}
+                className="hover:bg-[#C72030]/90 text-white px-6 py-2 rounded"
               >
                 History
               </Button>
-              <Button className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-6 py-2 rounded">
+              <Button 
+                style={{ backgroundColor: '#C72030' }}
+                className="hover:bg-[#C72030]/90 text-white px-6 py-2 rounded"
+              >
                 Vehicle Out
               </Button>
             </div>
@@ -94,7 +98,10 @@ export const GVehicleOutDashboard = ({ onHistoryClick }: GVehicleOutDashboardPro
                   className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-80"
                 />
               </div>
-              <Button className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-6 py-2 rounded">
+              <Button 
+                style={{ backgroundColor: '#C72030' }}
+                className="hover:bg-[#C72030]/90 text-white px-6 py-2 rounded"
+              >
                 Go!
               </Button>
             </div>
