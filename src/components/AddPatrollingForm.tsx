@@ -195,7 +195,8 @@ export const AddPatrollingForm = ({ onClose }: AddPatrollingFormProps) => {
       {/* Submit Button */}
       <div className="flex justify-end pt-4">
         <Button 
-          className="bg-[#8B5A5A] hover:bg-[#7A4949] text-white px-8"
+          style={{ backgroundColor: '#C72030' }}
+          className="hover:bg-[#C72030]/90 text-white px-8"
           onClick={onClose}
         >
           Submit

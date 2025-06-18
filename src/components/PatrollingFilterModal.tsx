@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { X } from "lucide-react";
 
 interface PatrollingFilterModalProps {
   isOpen: boolean;
@@ -13,12 +14,20 @@ interface PatrollingFilterModalProps {
 export const PatrollingFilterModal = ({ isOpen, onClose }: PatrollingFilterModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent className="max-w-md bg-white [&>button]:hidden">
+        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
           <DialogTitle>FILTER BY</DialogTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-6 w-6 p-0"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </DialogHeader>
         
-        <div className="space-y-4">
+        <div className="p-6 space-y-4">
           <div>
             <Label className="text-sm font-medium text-orange-600">Location Details</Label>
           </div>
@@ -79,7 +88,8 @@ export const PatrollingFilterModal = ({ isOpen, onClose }: PatrollingFilterModal
 
           <div className="flex justify-between pt-6">
             <Button 
-              className="bg-[#8B5A5A] hover:bg-[#7A4949] text-white px-8"
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:bg-[#C72030]/90 text-white px-8"
               onClick={onClose}
             >
               Submit

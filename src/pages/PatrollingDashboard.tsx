@@ -28,7 +28,8 @@ export const PatrollingDashboard = () => {
         <div className="flex gap-3 mb-6">
           <Button 
             onClick={() => setIsAddModalOpen(true)}
-            className="bg-[#C72030] hover:bg-[#A61B2A] text-white px-4 py-2 rounded flex items-center gap-2"
+            style={{ backgroundColor: '#C72030' }}
+            className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             Add
