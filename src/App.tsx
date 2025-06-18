@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -205,6 +206,7 @@ function App() {
               
               {/* Operational Audit Routes */}
               <Route path="/maintenance/audit/operational/scheduled" element={<OperationalAuditScheduledDashboard />} />
+              <Route path="/maintenance/audit/operational/scheduled/add" element={<AddOperationalAuditSchedulePage />} />
               <Route path="/maintenance/audit/operational/conducted" element={<OperationalAuditConductedDashboard />} />
               <Route path="/maintenance/audit/operational/master-checklists" element={<OperationalAuditMasterChecklistsDashboard />} />
               
