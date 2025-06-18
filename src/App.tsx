@@ -218,7 +218,9 @@ function App() {
               
               {/* Vendor Audit Routes */}
               <Route path="/maintenance/audit/vendor/scheduled" element={<VendorAuditScheduledDashboard />} />
+              <Route path="/maintenance/audit/vendor/scheduled/add" element={<AddVendorAuditPage />} />
               <Route path="/maintenance/audit/vendor/scheduled/copy" element={<AddVendorAuditSchedulePage />} />
+              <Route path="/maintenance/audit/vendor/scheduled/view/:id" element={<ViewVendorAuditPage />} />
               <Route path="/maintenance/audit/vendor/conducted" element={<VendorAuditConductedDashboard />} />
               
               {/* Maintenance Routes */}

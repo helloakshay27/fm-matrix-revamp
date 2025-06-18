@@ -12,6 +12,14 @@ export const VendorAuditScheduledDashboard = () => {
     navigate('/maintenance/audit/vendor/scheduled/copy');
   };
 
+  const handleAdd = () => {
+    navigate('/maintenance/audit/vendor/scheduled/add');
+  };
+
+  const handleIdClick = (id: string) => {
+    navigate(`/maintenance/audit/vendor/scheduled/view/${id}`);
+  };
+
   const scheduleData = [
     {
       id: "11549",
@@ -38,6 +46,7 @@ export const VendorAuditScheduledDashboard = () => {
       {/* Add Button */}
       <div className="mb-6">
         <Button 
+          onClick={handleAdd}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:opacity-90"
         >
@@ -64,23 +73,22 @@ export const VendorAuditScheduledDashboard = () => {
             {scheduleData.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                  <div className="flex items-center gap-2">
-                    <input 
-                      type="checkbox" 
-                      className="w-4 h-4 rounded border-gray-300" 
-                    />
-                    <Button
-                      onClick={() => handleCopy(item.id)}
-                      size="sm"
-                      style={{ backgroundColor: '#C72030' }}
-                      className="text-white hover:opacity-90"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={() => handleCopy(item.id)}
+                    size="sm"
+                    style={{ backgroundColor: '#C72030' }}
+                    className="text-white hover:opacity-90"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
                 </TableCell>
                 <TableCell className="text-blue-600 font-medium">
-                  {item.id}
+                  <button
+                    onClick={() => handleIdClick(item.id)}
+                    className="text-blue-600 hover:underline font-medium"
+                  >
+                    {item.id}
+                  </button>
                 </TableCell>
                 <TableCell>{item.activityName}</TableCell>
                 <TableCell>{item.noOfAssociation}</TableCell>
