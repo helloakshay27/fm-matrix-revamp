@@ -219,18 +219,17 @@ useEffect(() => {
             endDate: issue.end_date ? new Date(issue.end_date).toLocaleDateString('en-CA') : null, // Ensure 'en-CA' format (YYYY-MM-DD) is compatible with date input
             priority: issue.priority || 'None',
             projectName: issue.project_management_name || 'Unassigned',
-            milestoneName: milestone.find(m => m.id === issue.milestone_id)?.title || 'Unassigned',
-            taskName: tasks.find(t => t.id === issue.task_management_id)?.title || 'Unassigned',
+            milestoneName: issue.milestone_name|| 'Unassigned',
+            taskName: issue.task_management_name|| 'Unassigned',
             comments: issue.comments && issue.comments.length > 0 && issue.comments[0]?.body ? issue.comments[0].body : '', // Robust comment handling
         }));
-        const sortedAsc = processedIssuess.sort((a, b) => a.id - b.id);
-        setData(sortedAsc);
+        setData(processedIssuess);
         setLocalError(null);
     } else if (allIssuesError) {
         setLocalError('Failed to load issues.');
         setData([]);
     }
-  }, [allIssuesFromStore, allIssuesError,parentId,milestone,tasks]);
+  }, [allIssuesFromStore, allIssuesError,parentId,milestoneOptions,taskOptions]);
 
 
   useEffect(() => {
@@ -248,6 +247,9 @@ useEffect(() => {
     setNewIssuesPriority('None');
     setNewIssuesComments('');
     setLocalError(null);
+    setNewIssuesProjectId(null);
+    setNewIssuesMilestoneId(null);
+    setNewIssuesTaskId(null);
     setValidator(false);
   }, []);
 
@@ -510,7 +512,7 @@ useEffect(() => {
         {localError && <div className="mb-4 px-3 text-red-700  text-sm">{localError}</div>}
         {/* Removed individual isSavingIssues message as it's covered by the main loader now */}
         <div className="project-table-container font-light mt-2"
-          style={{ height: `${desiredTableHeight}px`, minHeight: "200px" }}
+          style={{minHeight: "200px" }}
 
       >
          <div className="table-wrapper overflow-x-auto" >
@@ -716,7 +718,7 @@ useEffect(() => {
     );
   }
 
-  return pageContent
+  return <div className='project-list-wrapper p-4'>{pageContent}</div>
 };
 
 export default IssuesTable;
