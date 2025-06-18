@@ -22,7 +22,8 @@ import {
     fetchProjects,
     changeProjectStatus,
     createProject,
-    deleteProject
+    deleteProject,
+    fetchProjectTypes
 } from "../../../redux/slices/projectSlice";
 import { fetchUsers } from "../../../redux/slices/userSlice";
 import StatusBadge from "./statusBadge";
@@ -155,12 +156,10 @@ const ProgressBar = ({ progressString }) => {
 
 const globalStatusOptions = [
     "active",
-    "inactive",
     "in_progress",
     "overdue",
     "completed",
     "on_hold",
-    "abort",
 ];
 const globalProjectTypeOptions = [
     "Internal",
@@ -204,13 +203,20 @@ const ProjectList = () => {
         error: deleteProjectError
     }=useSelector((state) => state.deleteProject);
 
+    const {
+        fetchProjectTypes: projectTypes,
+        loading: fetchProjectTypesLoading,
+        error: fetchProjectTypesError,
+    } = useSelector((state) => state.fetchProjectTypes);
+
     const [isAddingNewProject, setIsAddingNewProject] = useState(false);
+    const [projectTypeOptions, setProjectTypeOptions] = useState([]);
     const [newProjectTitle, setNewProjectTitle] = useState("");
     const [newProjectStatus, setNewProjectStatus] = useState(
         globalStatusOptions[0]
     );
     const [newProjectType, setNewProjectType] = useState(
-        globalProjectTypeOptions[0]
+        projectTypeOptions.length > 0 ?projectTypeOptions[0]:""
     );
     const [newProjectManager, setNewProjectManager] = useState("");
     const [newProjectStartDate, setNewProjectStartDate] = useState("");
@@ -226,6 +232,18 @@ const ProjectList = () => {
 
     const [isFiltered, setIsFiltered] = useState(false);
     const [data, setData] = useState([]);
+
+    useEffect(() => {
+        if(!fetchProjectTypesLoading && !fetchProjectTypesError && (projectTypes.length==0 || !Array.isArray(projectTypes))){
+            dispatch(fetchProjectTypes({token})).unwrap();
+        }
+    },[fetchProjectTypesLoading, fetchProjectTypesError, projectTypes]);
+
+    useEffect(()=>{
+        if(Array.isArray(projectTypes) && projectTypes.length>0){
+            setProjectTypeOptions(projectTypes.map((projectType) => ({label:projectType.name, value:projectType.id})));
+        }
+    },[projectTypes]);
 
     const transformedData = useMemo(() => {
         // const projectsSource =
@@ -409,14 +427,14 @@ const ProjectList = () => {
     const resetNewProjectForm = useCallback(() => {
         setNewProjectTitle("");
         setNewProjectStatus(globalStatusOptions[0]);
-        setNewProjectType(globalProjectTypeOptions[0]);
+        setNewProjectType(projectTypeOptions[0]);
         setNewProjectManager("");
         setNewProjectStartDate("");
         setNewProjectEndDate("");
         setNewProjectPriority(globalPriorityOptionsForNew[0]);
         setLocalError(null);
         setValidator(false);
-    }, []);
+    }, [projectTypeOptions]);
 
     const handleShowNewProjectForm = useCallback(() => {
         resetNewProjectForm();
@@ -450,7 +468,7 @@ const ProjectList = () => {
             start_date: newProjectStartDate || null,
             end_date: newProjectEndDate || null,
             priority: newProjectPriority.toLowerCase(),
-            resource_type: newProjectType,
+            project_type_id: newProjectType,
             active: "true",
         };
 
@@ -682,13 +700,15 @@ const ProjectList = () => {
         usersFetchError ||
         anyFilterError ||
         statusChangeError ||
-        deleteProjectError
+        deleteProjectError ||
+        fetchProjectTypesError
     ) {
         const error =
             fetchProjectsError ||
             usersFetchError ||
             anyFilterError ||
             deleteProjectError ||
+            fetchProjectTypesError ||
             statusChangeError;
         content = (
             <div className="p-4 text-red-600">
@@ -822,10 +842,11 @@ const ProjectList = () => {
                                         />
                                     </td>
                                     <td className="p-1 border-r-2 align-middle">
-                                        <StatusBadge
-                                            statusOptions={globalProjectTypeOptions}
-                                            status={newProjectType}
-                                            onStatusChange={setNewProjectType}
+                                        <SelectBox
+                                            options={projectTypeOptions}
+                                            value={newProjectType}
+                                            onChange={(selected)=>setNewProjectType(selected)}
+                                            table={true}
                                         />
                                     </td>
                                     <td className="p-0 border-r-2 align-middle">

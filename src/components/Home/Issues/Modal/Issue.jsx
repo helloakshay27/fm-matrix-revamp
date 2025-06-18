@@ -1,8 +1,11 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import SelectBox from "../../../SelectBox";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector} from "react-redux";
 import { fetchUsers } from "../../../../redux/slices/userSlice";
 import { createIssue, fetchIssue } from "../../../../redux/slices/IssueSlice";
+import { fetchMilestone } from "../../../../redux/slices/milestoneSlice";
+import { fetchProjects } from "../../../../redux/slices/projectSlice";
+import { fetchTasks } from "../../../../redux/slices/taskSlice";
 import toast from "react-hot-toast";
 
 const globalTypesOptions = [
@@ -22,14 +25,19 @@ const globalPriorityOptions = [
 ];
 
 const Issues = ({ closeModal }) => {
-  const token = localStorage.getItem("token");
   const [title, setTitle] = useState("");
   const [responsiblePerson, setResponsiblePerson] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState("");
   const [type, setType] = useState("");
   const [priority, setPriority] = useState("");
   const [comments, setComments] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newIssuesProjectId, setNewIssuesProjectId] = useState("");
+  const [newIssuesMilestoneId, setNewIssuesMilestoneId] = useState("");
+  const [newIssuesTaskId, setNewIssuesTaskId] = useState("");
+  const token= localStorage.getItem("token");
+  const isSubmittingRef=useRef(false);
 
   const {
     fetchUsers: users,
@@ -37,16 +45,100 @@ const Issues = ({ closeModal }) => {
     error: usersFetchError
   } = useSelector((state) => state.fetchUsers || { users: [], loading: false, error: null });
 
+  const{
+    fetchProjects:projects,
+    loading:loadingProjects,
+    error:projectsFetchError
+  }=useSelector((state) => state.fetchProjects || { projects: [], loading: false, error: null });
+
+  const{
+    fetchMilestone:milestone,
+    loading:loadingMilestone,
+    error:milestoneFetchError
+  }=useSelector((state) => state.fetchMilestone || { milestone: [], loading: false, error: null });
+
+  const{
+    fetchTasks:tasks,
+    loading:loadingTasks,
+    error:tasksFetchError
+  }=useSelector((state) => state.fetchTasks || { tasks: [], loading: false, error: null });
+
+  const [projectOptions, setProjectOptions] = useState([]);
+  const [milestoneOptions, setMilestoneOptions] = useState([]);
+  const [taskOptions, setTaskOptions] = useState([]);
+
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(fetchUsers({ token }));
+    dispatch(fetchUsers({token}));
   }, [dispatch]);
+
+  useEffect(()=>{
+    if(!loadingMilestone && milestoneOptions.length > 0 && !milestoneFetchError && newIssuesMilestoneId){
+      dispatch(fetchTasks({id: newIssuesMilestoneId,token}));
+      setNewIssuesTaskId(null);
+      setTaskOptions([]);
+    }
+  },[dispatch, loadingMilestone, milestoneFetchError ,newIssuesMilestoneId, milestoneOptions]);
+  
+  useEffect(()=>{
+     if(!loadingTasks && !tasksFetchError && tasks.length > 0){
+         setTaskOptions(
+           tasks.map((t) => ({
+             value: t.id,
+             label: t.title,
+         })))
+     }
+  },[tasks, loadingTasks, tasksFetchError]);
+  
+
+   useEffect(() => {
+    if (
+      newIssuesProjectId &&
+      projectOptions.length > 0 &&
+      !loadingProjects &&
+      !projectsFetchError
+    ) {
+      dispatch(fetchMilestone({ id: newIssuesProjectId ,token})).unwrap();
+      setNewIssuesMilestoneId('');
+      setMilestoneOptions([]);
+      setNewIssuesTaskId('');
+      setTaskOptions([]);
+    }
+  }, [dispatch, newIssuesProjectId, projectOptions, loadingProjects, projectsFetchError]);
+  
+   useEffect(()=>{  
+     if(!loadingProjects && (!Array.isArray(projectOptions) || projectOptions.length === 0)){
+      dispatch(fetchProjects({token})).unwrap();
+      setProjectOptions(projects.map((project) => ({
+        value: project.id,
+        label: project.title
+      })))
+     }
+     
+   },[dispatch,loadingProjects,projectOptions]);
+
+   useEffect(() => {
+     if (!loadingMilestone && !milestoneFetchError && milestone.length > 0) {
+       setMilestoneOptions(
+         milestone.map((m) => ({
+           value: m.id,
+           label: m.title,
+         }))
+       );
+     }
+   }, [milestone, loadingMilestone, milestoneFetchError]);
+   
 
   const handleSubmit = useCallback(async (event) => {
     event.preventDefault();
-
+    toast.dismiss();
     // Form Validations
+    if(isSubmittingRef.current)return;
+    if(!newIssuesProjectId){
+      toast.error("Project is required");
+      return;
+    }
     if (!title.trim()) {
       toast.error("Title is required");
       return;
@@ -74,13 +166,16 @@ const Issues = ({ closeModal }) => {
     }
 
     setIsSubmitting(true);
+    isSubmittingRef.current=true;
 
     const data = {
       title: title.trim(),
       status: "open",
       responsible_person_id: responsiblePerson,
-      project_management_id: null,
-      start_date: new Date().toISOString(),
+      project_management_id: newIssuesProjectId || null,
+      milestone_id: newIssuesMilestoneId || null,
+      task_management_id: newIssuesTaskId || null,
+      start_date: startDate || null,
       end_date: endDate || null,
       priority: globalPriorityOptions.find((option) => option.value === priority)?.label || null,
       created_by_id: 158,
@@ -89,8 +184,8 @@ const Issues = ({ closeModal }) => {
     };
 
     try {
-      await dispatch(createIssue({ token, data })).unwrap();
-      dispatch(fetchIssue({ token }));
+      await dispatch(createIssue({token,payload:data})).unwrap();
+      dispatch(fetchIssue({token}));
       closeModal();
       toast.success("Issue created successfully!");
     } catch (error) {
@@ -104,6 +199,7 @@ const Issues = ({ closeModal }) => {
     title,
     responsiblePerson,
     endDate,
+    startDate,
     priority,
     comments,
     type,
@@ -116,6 +212,41 @@ const Issues = ({ closeModal }) => {
         id="addTask"
         className="max-w-[90%] mx-auto h-[calc(100%-4rem)] overflow-y-auto pr-3 text-[12px]"
       >
+        <div className="flex items-center justify-between gap-5">
+          <div className="w-1/2 flex flex-col justify-between">
+            <label className="block mb-2">
+              Project <span className="text-red-600">*</span>
+            </label>
+            <SelectBox
+             options={projectOptions}
+             value={newIssuesProjectId}
+              onChange={(selectedValue) => setNewIssuesProjectId(selectedValue)}
+              placeholder={"Select Project"}
+            />
+          </div>
+          <div className="w-1/2 flex flex-col justify-between">
+            <label className="block mb-2">
+              Milestone <span className="text-red-600">*</span>
+            </label>
+            <SelectBox
+             options={milestoneOptions}
+             value={newIssuesMilestoneId}
+              onChange={(selectedValue) => setNewIssuesMilestoneId(selectedValue)}
+              placeholder={"Select Milestone"}
+            />
+          </div>
+           <div className="w-1/2 flex flex-col justify-between">
+            <label className="block mb-2">
+              Task <span className="text-red-600">*</span>
+            </label>
+            <SelectBox
+             options={taskOptions}
+             value={newIssuesTaskId}
+              onChange={(selectedValue) => setNewIssuesTaskId(selectedValue)}
+              placeholder={"Select Task"}
+            />
+          </div>
+        </div>
         <div className="mt-4 space-y-2">
           <label className="block">
             Title <span className="text-red-600">*</span>
@@ -137,6 +268,7 @@ const Issues = ({ closeModal }) => {
               options={users ? users.map((user) => ({ value: user.id, label: `${user.firstname || ''} ${user.lastname || ''}`.trim() })) : []}
               value={responsiblePerson}
               onChange={(selectedValue) => setResponsiblePerson(selectedValue)}
+              placeholder={"Select Responsible Person"}
             />
           </div>
           <div className="w-1/2 flex flex-col justify-between">
@@ -147,10 +279,21 @@ const Issues = ({ closeModal }) => {
               options={globalTypesOptions}
               value={type}
               onChange={(selectedValue) => setType(selectedValue)}
+              placeholder={"Select Type"}
             />
           </div>
         </div>
         <div className="flex items-start gap-4 mt-4 text-[12px]">
+           <div className="w-1/2 space-y-2">
+            <label className="block">Start Date <span className="text-red-600">*</span></label>
+            <input
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              type="date"
+              className="w-full border outline-none border-gray-300 p-2 text-[12px]"
+              min={new Date().toISOString().split("T")[0]}
+            />
+          </div>
           <div className="w-1/2 space-y-2">
             <label className="block">End Date <span className="text-red-600">*</span></label>
             <input
@@ -158,6 +301,7 @@ const Issues = ({ closeModal }) => {
               onChange={(e) => setEndDate(e.target.value)}
               type="date"
               className="w-full border outline-none border-gray-300 p-2 text-[12px]"
+              min={startDate}
             />
           </div>
           <div className="w-1/2 flex flex-col justify-between">
@@ -168,6 +312,7 @@ const Issues = ({ closeModal }) => {
               options={globalPriorityOptions}
               value={priority}
               onChange={(selectedValue) => setPriority(selectedValue)}
+              placeholder={"Select Priority"}
             />
           </div>
         </div>
