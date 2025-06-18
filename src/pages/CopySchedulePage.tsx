@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,12 +7,23 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Upload } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Plus, Upload, X } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 export const CopySchedulePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  // Toggle states
+  const [createNew, setCreateNew] = useState(false);
+  const [createTicket, setCreateTicket] = useState(false);
+  const [weightage, setWeightage] = useState(false);
+
+  // Create Ticket state
+  const [categoryLevel, setCategoryLevel] = useState('question-level');
+  const [assignedTo, setAssignedTo] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
 
   // Basic Info state
   const [type, setType] = useState('PPM');
@@ -24,6 +34,24 @@ export const CopySchedulePage = () => {
   // Task state
   const [group, setGroup] = useState('');
   const [subGroup, setSubGroup] = useState('');
+  const [sections, setSections] = useState([
+    { 
+      id: 1, 
+      name: 'Section 1', 
+      tasks: [
+        { 
+          id: 1, 
+          task: 'Kwah', 
+          inputType: 'Numeric', 
+          mandatory: true, 
+          reading: true, 
+          helpText: false,
+          weightageValue: '',
+          rating: false
+        }
+      ]
+    }
+  ]);
 
   // Schedule state
   const [checklistType, setChecklistType] = useState('Individual');
@@ -57,10 +85,59 @@ export const CopySchedulePage = () => {
 
   const handleAddSection = () => {
     console.log('Add Section clicked');
+    const newSection = {
+      id: Date.now(),
+      name: `Section ${sections.length + 1}`,
+      tasks: []
+    };
+    setSections([...sections, newSection]);
   };
 
-  const handleAddQuestion = () => {
-    console.log('Add Question clicked');
+  const handleRemoveSection = (sectionId: number) => {
+    console.log('Remove Section clicked', sectionId);
+    setSections(sections.filter(section => section.id !== sectionId));
+  };
+
+  const handleAddQuestion = (sectionId: number) => {
+    console.log('Add Question clicked for section', sectionId);
+    const newTask = {
+      id: Date.now(),
+      task: 'New Task',
+      inputType: 'Text',
+      mandatory: false,
+      reading: false,
+      helpText: false,
+      weightageValue: '',
+      rating: false
+    };
+    
+    setSections(sections.map(section => 
+      section.id === sectionId 
+        ? { ...section, tasks: [...section.tasks, newTask] }
+        : section
+    ));
+  };
+
+  const handleRemoveQuestion = (sectionId: number, taskId: number) => {
+    console.log('Remove Question clicked', sectionId, taskId);
+    setSections(sections.map(section => 
+      section.id === sectionId 
+        ? { ...section, tasks: section.tasks.filter(task => task.id !== taskId) }
+        : section
+    ));
+  };
+
+  const handleUpdateTask = (sectionId: number, taskId: number, field: string, value: any) => {
+    setSections(sections.map(section => 
+      section.id === sectionId 
+        ? {
+            ...section,
+            tasks: section.tasks.map(task => 
+              task.id === taskId ? { ...task, [field]: value } : task
+            )
+          }
+        : section
+    ));
   };
 
   const handleSubmit = () => {
@@ -76,17 +153,115 @@ export const CopySchedulePage = () => {
     <div className="p-6 max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#1a1a1a] mb-2">Copy Schedule</h1>
-        <div className="flex gap-3">
-          <Button style={{ backgroundColor: '#C72030' }} className="text-white">
-            Create New
-          </Button>
-          <Button variant="outline" className="border-[#C72030] text-[#C72030]">
-            Create Ticket
-          </Button>
-          <Button variant="outline" className="border-[#C72030] text-[#C72030]">
-            Weightage
-          </Button>
+        <h1 className="text-2xl font-bold text-[#1a1a1a] mb-4">Copy Schedule</h1>
+        
+        {/* Toggle Switches */}
+        <div className="space-y-4">
+          {/* Create New Toggle */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Label htmlFor="create-new">Create New</Label>
+              <Switch
+                id="create-new"
+                checked={createNew}
+                onCheckedChange={setCreateNew}
+                className="data-[state=checked]:bg-[#C72030]"
+              />
+            </div>
+            
+            {createNew && (
+              <div className="ml-6">
+                <Select>
+                  <SelectTrigger className="w-64">
+                    <SelectValue placeholder="Select from the existing Template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="template1">Template 1</SelectItem>
+                    <SelectItem value="template2">Template 2</SelectItem>
+                    <SelectItem value="template3">Template 3</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          {/* Create Ticket Toggle */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Label htmlFor="create-ticket">Create Ticket</Label>
+              <Switch
+                id="create-ticket"
+                checked={createTicket}
+                onCheckedChange={setCreateTicket}
+                className="data-[state=checked]:bg-[#C72030]"
+              />
+            </div>
+            
+            {createTicket && (
+              <div className="ml-6 space-y-3">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center space-x-2">
+                    <input 
+                      type="radio" 
+                      id="checklist-level" 
+                      name="category-level" 
+                      checked={categoryLevel === 'checklist-level'}
+                      onChange={() => setCategoryLevel('checklist-level')}
+                    />
+                    <Label htmlFor="checklist-level">Checklist Level</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input 
+                      type="radio" 
+                      id="question-level" 
+                      name="category-level" 
+                      checked={categoryLevel === 'question-level'}
+                      onChange={() => setCategoryLevel('question-level')}
+                    />
+                    <Label htmlFor="question-level">Question Level</Label>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Select value={assignedTo} onValueChange={setAssignedTo}>
+                    <SelectTrigger className="w-64">
+                      <SelectValue placeholder="Select Assigned To" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user1">User 1</SelectItem>
+                      <SelectItem value="user2">User 2</SelectItem>
+                      <SelectItem value="group1">Group 1</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-64">
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="technical">Technical</SelectItem>
+                      <SelectItem value="non-technical">Non Technical</SelectItem>
+                      <SelectItem value="safety">Safety</SelectItem>
+                      <SelectItem value="maintenance">Maintenance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Weightage Toggle */}
+          <div className="flex items-center gap-3">
+            <Label htmlFor="weightage">Weightage</Label>
+            <Switch
+              id="weightage"
+              checked={weightage}
+              onCheckedChange={setWeightage}
+              className="data-[state=checked]:bg-[#C72030]"
+            />
+          </div>
         </div>
       </div>
 
@@ -99,11 +274,11 @@ export const CopySchedulePage = () => {
               Basic Info
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Type</Label>
-                <RadioGroup value={type} onValueChange={setType} className="flex gap-4">
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Type</Label>
+                <RadioGroup value={type} onValueChange={setType} className="flex gap-6 flex-wrap">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="PPM" id="ppm" />
                     <Label htmlFor="ppm">PPM</Label>
@@ -130,9 +305,10 @@ export const CopySchedulePage = () => {
                   </div>
                 </RadioGroup>
               </div>
-              <div className="space-y-2">
-                <Label>Schedule For</Label>
-                <RadioGroup value={scheduleFor} onValueChange={setScheduleFor} className="flex gap-4">
+              
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Schedule For</Label>
+                <RadioGroup value={scheduleFor} onValueChange={setScheduleFor} className="flex gap-6 flex-wrap">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="Asset" id="asset-schedule" />
                     <Label htmlFor="asset-schedule">Asset</Label>
@@ -152,6 +328,7 @@ export const CopySchedulePage = () => {
                 </RadioGroup>
               </div>
             </div>
+            
             <div className="space-y-2">
               <Label>Activity Name*</Label>
               <Input
@@ -218,60 +395,137 @@ export const CopySchedulePage = () => {
               </div>
             </div>
             
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Task</Label>
-                <Input value="Kwah" readOnly />
-              </div>
-              <div className="space-y-2">
-                <Label>Input Type</Label>
-                <Select defaultValue="Numeric">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Numeric">Numeric</SelectItem>
-                    <SelectItem value="Text">Text</SelectItem>
-                    <SelectItem value="Boolean">Boolean</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2 flex items-center gap-4 pt-6">
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="mandatory" 
-                    defaultChecked 
-                    onCheckedChange={(checked) => console.log('Mandatory:', checked)}
-                  />
-                  <Label htmlFor="mandatory">Mandatory</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="reading" 
-                    defaultChecked 
-                    onCheckedChange={(checked) => console.log('Reading:', checked)}
-                  />
-                  <Label htmlFor="reading">Reading</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="helptext" 
-                    onCheckedChange={(checked) => console.log('Help Text:', checked)}
-                  />
-                  <Label htmlFor="helptext">Help Text</Label>
-                </div>
-              </div>
-            </div>
+            {/* Sections */}
+            <div className="space-y-4">
+              {sections.map((section) => (
+                <div key={section.id} className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={section.name}
+                        onChange={(e) => {
+                          setSections(sections.map(s => 
+                            s.id === section.id ? { ...s, name: e.target.value } : s
+                          ));
+                        }}
+                        className="font-medium"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="outline"
+                        onClick={() => handleAddQuestion(section.id)}
+                        className="border-[#C72030] text-[#C72030]"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Question
+                      </Button>
+                      {sections.length > 1 && (
+                        <Button 
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleRemoveSection(section.id)}
+                          className="border-red-500 text-red-500 hover:bg-red-50"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Tasks in this section */}
+                  {section.tasks.map((task) => (
+                    <div key={task.id} className="space-y-4 border-t pt-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Task</Label>
+                          <Input
+                            value={task.task}
+                            onChange={(e) => handleUpdateTask(section.id, task.id, 'task', e.target.value)}
+                            placeholder="Enter Task"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Input Type</Label>
+                          <Select 
+                            value={task.inputType} 
+                            onValueChange={(value) => handleUpdateTask(section.id, task.id, 'inputType', value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select Input Type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Text">Text</SelectItem>
+                              <SelectItem value="Numeric">Numeric</SelectItem>
+                              <SelectItem value="Date">Date</SelectItem>
+                              <SelectItem value="Boolean">Boolean</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
 
-            <div className="flex justify-end">
-              <Button 
-                variant="outline"
-                onClick={handleAddQuestion}
-                className="border-[#C72030] text-[#C72030]"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Question
-              </Button>
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id={`mandatory-${task.id}`}
+                            checked={task.mandatory}
+                            onCheckedChange={(checked) => handleUpdateTask(section.id, task.id, 'mandatory', checked)}
+                          />
+                          <Label htmlFor={`mandatory-${task.id}`}>Mandatory</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id={`reading-${task.id}`}
+                            checked={task.reading}
+                            onCheckedChange={(checked) => handleUpdateTask(section.id, task.id, 'reading', checked)}
+                          />
+                          <Label htmlFor={`reading-${task.id}`}>Reading</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id={`helptext-${task.id}`}
+                            checked={task.helpText}
+                            onCheckedChange={(checked) => handleUpdateTask(section.id, task.id, 'helpText', checked)}
+                          />
+                          <Label htmlFor={`helptext-${task.id}`}>Help Text</Label>
+                        </div>
+                        <Button 
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleRemoveQuestion(section.id, task.id)}
+                          className="border-red-500 text-red-500 hover:bg-red-50"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+
+                      {/* Weightage section - only show if weightage toggle is on */}
+                      {weightage && (
+                        <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                          <div className="space-y-2">
+                            <Label>Weightage</Label>
+                            <Input
+                              value={task.weightageValue}
+                              onChange={(e) => handleUpdateTask(section.id, task.id, 'weightageValue', e.target.value)}
+                              placeholder="Enter Weightage"
+                            />
+                          </div>
+                          <div className="flex items-center gap-4 pt-6">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox 
+                                id={`rating-${task.id}`}
+                                checked={task.rating}
+                                onCheckedChange={(checked) => handleUpdateTask(section.id, task.id, 'rating', checked)}
+                              />
+                              <Label htmlFor={`rating-${task.id}`}>Rating</Label>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
