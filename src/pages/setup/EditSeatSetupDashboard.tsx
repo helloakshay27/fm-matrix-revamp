@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate, useParams } from 'react-router-dom';
 import { CirclePlus, CircleMinus, Plus, Minus } from 'lucide-react';
 
@@ -43,8 +42,24 @@ export const EditSeatSetupDashboard = () => {
   const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [selectedFloor, setSelectedFloor] = useState<string>("");
   const [activeTab, setActiveTab] = useState("seat-configuration");
-  const [openDialog, setOpenDialog] = useState<string | null>(null);
   
+  const [seatTypes, setSeatTypes] = useState<SeatTypeConfig[]>([
+    { name: "Angular Ws", totalSeats: "", reservedSeats: "" },
+    { name: "Flexi Desk", totalSeats: "", reservedSeats: "" },
+    { name: "Cabin", totalSeats: "", reservedSeats: "" },
+    { name: "Fixed Desk", totalSeats: "", reservedSeats: "" },
+    { name: "IOS", totalSeats: "", reservedSeats: "" },
+    { name: "cabin", totalSeats: "", reservedSeats: "" },
+    { name: "circular", totalSeats: "", reservedSeats: "" },
+    { name: "Rectangle", totalSeats: "", reservedSeats: "" },
+    { name: "circularchair", totalSeats: "", reservedSeats: "" },
+    { name: "Hot Desk", totalSeats: "", reservedSeats: "" },
+    { name: "Fixed Angular Chair", totalSeats: "", reservedSeats: "" },
+    { name: "Cubical", totalSeats: "", reservedSeats: "" },
+    { name: "Cafe", totalSeats: "", reservedSeats: "" },
+    { name: "Hotseat", totalSeats: "", reservedSeats: "" }
+  ]);
+
   // Department data
   const [departments, setDepartments] = useState<Department[]>([
     { name: "Sales", seats: 0 },
@@ -227,14 +242,6 @@ export const EditSeatSetupDashboard = () => {
     setExpandedSeatTypes(newExpanded);
   };
 
-  const openSeatDialog = (seatTypeName: string) => {
-    setOpenDialog(seatTypeName);
-  };
-
-  const closeSeatDialog = () => {
-    setOpenDialog(null);
-  };
-
   const generateSeatGrid = (seatType: SeatTypeAssignment) => {
     if (seatType.total === 0 || seatType.selectedSeats.length === 0) return null;
     
@@ -252,25 +259,6 @@ export const EditSeatSetupDashboard = () => {
             </Button>
           ))}
         </div>
-      </div>
-    );
-  };
-
-  const generateDialogSeatGrid = (seatType: SeatTypeAssignment) => {
-    if (seatType.total === 0 || seatType.selectedSeats.length === 0) return null;
-    
-    return (
-      <div className="grid grid-cols-4 gap-3 mt-4">
-        {seatType.selectedSeats.map((seat, idx) => (
-          <Button
-            key={idx}
-            variant="outline"
-            size="sm"
-            className="h-16 w-16 text-sm border-gray-300 hover:bg-blue-50 hover:border-blue-300"
-          >
-            {seat}
-          </Button>
-        ))}
       </div>
     );
   };
@@ -492,24 +480,18 @@ export const EditSeatSetupDashboard = () => {
                           </div>
                           
                           {seatType.total > 0 && (
-                            <div className="flex gap-1">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-6 w-6 p-0 hover:bg-green-100"
-                                onClick={() => openSeatDialog(seatType.name)}
-                              >
-                                <Plus className="h-4 w-4 text-green-500" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-6 w-6 p-0 hover:bg-red-100"
-                                onClick={closeSeatDialog}
-                              >
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 hover:bg-gray-100"
+                              onClick={() => toggleSeatTypeExpansion(seatType.name)}
+                            >
+                              {expandedSeatTypes.has(seatType.name) ? (
                                 <Minus className="h-4 w-4 text-red-500" />
-                              </Button>
-                            </div>
+                              ) : (
+                                <Plus className="h-4 w-4 text-red-500" />
+                              )}
+                            </Button>
                           )}
                         </div>
                       </div>
@@ -540,22 +522,6 @@ export const EditSeatSetupDashboard = () => {
             </div>
           </TabsContent>
         </Tabs>
-
-        {/* Seat Dialog */}
-        <Dialog open={openDialog !== null} onOpenChange={(open) => !open && closeSeatDialog()}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-center">
-                {openDialog && `${openDialog} Seats`}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="p-4">
-              {openDialog && seatTypeAssignments.find(s => s.name === openDialog) && 
-                generateDialogSeatGrid(seatTypeAssignments.find(s => s.name === openDialog)!)
-              }
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );
