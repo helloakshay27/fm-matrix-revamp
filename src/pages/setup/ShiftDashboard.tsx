@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -121,7 +122,7 @@ export const ShiftDashboard = () => {
             <h1 className="text-2xl font-bold text-gray-800">USER SHIFTS</h1>
             <Button 
               onClick={handleAddClick}
-              className="bg-[#8B4D6B] hover:bg-[#8B4D6B]/90 text-white flex items-center gap-2"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Add

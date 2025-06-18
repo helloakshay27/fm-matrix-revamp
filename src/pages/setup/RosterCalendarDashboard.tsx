@@ -1,205 +1,193 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Filter } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { CalendarDays, Users, Clock } from "lucide-react";
 import { RosterCalendarFilterDialog } from "@/components/RosterCalendarFilterDialog";
 
+interface RosterEvent {
+  id: string;
+  date: Date;
+  shift: string;
+  employees: string[];
+  status: 'scheduled' | 'in-progress' | 'completed';
+}
+
 export const RosterCalendarDashboard = () => {
-  const [selectedMonth] = useState('01 Jun 2025 - 30 Jun 2025');
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedView, setSelectedView] = useState('month');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  const shifts = [
-    '10:00 AM to 08:00 PM',
-    '03:15 AM to 11:15 PM', 
-    '01:00 AM to 11:00 PM',
-    '10:00 AM to 11:00 AM',
-    '10:30 AM to 06:30 PM',
-    '09:00 AM to 06:00 PM',
-    '10:00 AM to 07:00 PM',
-    '10:15 AM to 07:30 PM',
-    '02:00 AM to 06:00 AM',
-    '08:00 AM to 05:00 PM'
-  ];
+  // Mock roster data
+  const [rosterEvents] = useState<RosterEvent[]>([
+    {
+      id: '1',
+      date: new Date(),
+      shift: 'Morning (9:00 AM - 6:00 PM)',
+      employees: ['John Doe', 'Jane Smith', 'Mike Johnson'],
+      status: 'scheduled'
+    },
+    {
+      id: '2',
+      date: new Date(Date.now() + 86400000), // Tomorrow
+      shift: 'Evening (2:00 PM - 11:00 PM)',
+      employees: ['Sarah Wilson', 'Tom Brown'],
+      status: 'scheduled'
+    }
+  ]);
 
-  const seatTypes = [
-    'Angular Ws', 'Flexi Desk', 'Cabin', 'Fixed Desk', 'IOS',
-    'cabin', 'circular', 'Rectangle', 'circularchair',
-    'Hot Desk', 'Fixed Angular Chair', 'Cubical', 'Cafe', 'Hotseat'
-  ];
-
-  const occupancyColors = [
-    { range: '0%-25%', color: 'bg-green-200', selected: false },
-    { range: '25%-50%', color: 'bg-green-300', selected: false },
-    { range: '50%-75%', color: 'bg-blue-300', selected: false },
-    { range: '75%-99%', color: 'bg-orange-300', selected: false },
-    { range: '100%', color: 'bg-red-400', selected: true }
-  ];
-
-  // Generate calendar days (1-30)
-  const calendarDays = Array.from({ length: 30 }, (_, i) => {
-    const day = (i + 1).toString().padStart(2, '0');
-    return day;
-  });
-
-  const handleFilterApply = (filters: any) => {
-    console.log('Filters applied:', filters);
-    // Handle filter application logic here
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'scheduled': return 'bg-blue-100 text-blue-800';
+      case 'in-progress': return 'bg-yellow-100 text-yellow-800';
+      case 'completed': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
+  const selectedDayEvents = rosterEvents.filter(event => 
+    selectedDate && 
+    event.date.toDateString() === selectedDate.toDateString()
+  );
+
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <div className="flex-1 p-6">
+    <div className="min-h-screen bg-gray-50">
+      <div className="p-6">
         {/* Header */}
         <div className="mb-6">
           <div className="text-sm text-gray-500 mb-2">Space &gt; Roster Calendar</div>
-          <h1 className="text-2xl font-bold text-gray-800">ROSTER CALENDAR</h1>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-5 gap-4 mb-6">
-          <div className="bg-gradient-to-r from-red-400 to-red-500 text-white p-4 rounded-lg">
-            <div className="flex items-center">
-              <div className="text-2xl font-bold mr-3">📊</div>
-              <div>
-                <div className="text-2xl font-bold">5</div>
-                <div className="text-sm">Total No. of Seats</div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-r from-orange-400 to-orange-500 text-white p-4 rounded-lg">
-            <div className="flex items-center">
-              <div className="text-2xl font-bold mr-3">📊</div>
-              <div>
-                <div className="text-2xl font-bold">0</div>
-                <div className="text-sm">Employee Schedules</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-r from-orange-400 to-orange-500 text-white p-4 rounded-lg">
-            <div className="flex items-center">
-              <div className="text-2xl font-bold mr-3">📊</div>
-              <div>
-                <div className="text-2xl font-bold">0</div>
-                <div className="text-sm">Employee Check In</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-r from-orange-400 to-orange-500 text-white p-4 rounded-lg">
-            <div className="flex items-center">
-              <div className="text-2xl font-bold mr-3">📊</div>
-              <div>
-                <div className="text-2xl font-bold">0</div>
-                <div className="text-sm">No of Requests</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-r from-green-400 to-green-500 text-white p-4 rounded-lg">
-            <div className="flex items-center">
-              <div className="text-2xl font-bold mr-3">📊</div>
-              <div>
-                <div className="text-2xl font-bold">0</div>
-                <div className="text-sm">No. of Waiting List</div>
-              </div>
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-gray-800">ROSTER CALENDAR</h1>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsFilterOpen(true)}
+              >
+                Filter
+              </Button>
+              <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white">
+                <CalendarDays className="w-4 h-4 mr-2" />
+                Add Roster
+              </Button>
             </div>
           </div>
         </div>
 
-        {/* Filters Section */}
-        <div className="bg-white rounded-lg p-6 mb-6">
-          <Button 
-            variant="outline" 
-            className="mb-4"
-            onClick={() => setFilterOpen(true)}
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filters
-          </Button>
-
-          <div className="grid grid-cols-2 gap-8">
-            {/* Occupancy */}
-            <div>
-              <h3 className="font-semibold mb-3">Occupancy</h3>
-              <div className="flex flex-wrap gap-2">
-                {occupancyColors.map((item, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <div className={`w-4 h-4 ${item.color} border`}></div>
-                    <span className="text-sm">{item.range}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Seat Type */}
-            <div>
-              <h3 className="font-semibold mb-3">Seat Type</h3>
-              <div className="flex flex-wrap gap-2">
-                {seatTypes.map((type, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs"
-                  >
-                    {type}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Calendar */}
-        <div className="bg-white rounded-lg p-6">
-          <div className="text-center mb-6">
-            <h2 className="text-lg font-semibold">{selectedMonth}</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Calendar Section */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-[#C72030]">Calendar View</CardTitle>
+                  <Select value={selectedView} onValueChange={setSelectedView}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="month">Month</SelectItem>
+                      <SelectItem value="week">Week</SelectItem>
+                      <SelectItem value="day">Day</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  className="rounded-md border"
+                />
+              </CardContent>
+            </Card>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr>
-                  <th className="text-left p-2 font-medium">Shift</th>
-                  {calendarDays.map((day) => (
-                    <th key={day} className="text-center p-2 font-medium text-sm">
-                      {day}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {shifts.map((shift, shiftIndex) => (
-                  <tr key={shiftIndex} className="border-t">
-                    <td className="p-2 text-sm">{shift}</td>
-                    {calendarDays.map((day) => (
-                      <td key={day} className="p-1">
-                        <div className="w-8 h-8 bg-green-200 rounded border"></div>
-                      </td>
+          {/* Event Details Section */}
+          <div className="space-y-6">
+            {/* Selected Date Events */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-[#C72030] flex items-center gap-2">
+                  <Calendar className="w-5 h-5" />
+                  {selectedDate ? selectedDate.toLocaleDateString() : 'Select a date'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {selectedDayEvents.length > 0 ? (
+                  <div className="space-y-4">
+                    {selectedDayEvents.map((event) => (
+                      <div key={event.id} className="p-3 border rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-[#C72030]" />
+                            <span className="font-medium text-sm">{event.shift}</span>
+                          </div>
+                          <Badge className={getStatusColor(event.status)}>
+                            {event.status}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Users className="w-4 h-4" />
+                          <span>{event.employees.length} employees</span>
+                        </div>
+                        <div className="mt-2">
+                          <p className="text-xs text-gray-500">
+                            {event.employees.join(', ')}
+                          </p>
+                        </div>
+                      </div>
                     ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No roster events for this date</p>
+                )}
+              </CardContent>
+            </Card>
 
-          {/* Footer */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Powered by <span className="font-semibold">Physital.work</span>
-            </p>
+            {/* Quick Stats */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-[#C72030]">Quick Stats</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Total Events</span>
+                    <span className="font-medium">{rosterEvents.length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Scheduled</span>
+                    <span className="font-medium text-blue-600">
+                      {rosterEvents.filter(e => e.status === 'scheduled').length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">In Progress</span>
+                    <span className="font-medium text-yellow-600">
+                      {rosterEvents.filter(e => e.status === 'in-progress').length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Completed</span>
+                    <span className="font-medium text-green-600">
+                      {rosterEvents.filter(e => e.status === 'completed').length}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
-      </div>
 
-      {/* Filter Dialog */}
-      <RosterCalendarFilterDialog
-        open={filterOpen}
-        onOpenChange={setFilterOpen}
-        onApply={handleFilterApply}
-      />
+        <RosterCalendarFilterDialog
+          open={isFilterOpen}
+          onOpenChange={setIsFilterOpen}
+        />
+      </div>
     </div>
   );
 };
