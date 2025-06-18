@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -228,11 +227,14 @@ export const EditSeatSetupDashboard = () => {
     setDepartments(updated);
   };
 
-  const updateSeatTypeAssignment = (index: number, change: number) => {
+  const updateSeatTypeAssignment = (seatTypeName: string, change: number) => {
     const updated = [...seatTypeAssignments];
-    const newAssigned = Math.max(0, Math.min(updated[index].total, updated[index].assigned + change));
-    updated[index] = { ...updated[index], assigned: newAssigned };
-    setSeatTypeAssignments(updated);
+    const index = updated.findIndex(sta => sta.name === seatTypeName);
+    if (index !== -1) {
+      const newAssigned = Math.max(0, Math.min(updated[index].total, updated[index].assigned + change));
+      updated[index] = { ...updated[index], assigned: newAssigned };
+      setSeatTypeAssignments(updated);
+    }
   };
 
   const toggleSeatTypeExpansion = (seatTypeName: string) => {
@@ -562,29 +564,31 @@ export const EditSeatSetupDashboard = () => {
                         
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-1">
-                            <span className="font-medium text-lg">{seatType.assigned}</span>
-                            <span className="text-red-600 text-sm">/{seatType.total}</span>
-                          </div>
-                          
-                          {seatType.total > 0 && (
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-6 w-6 p-0 hover:bg-gray-100"
-                              onClick={() => toggleSeatTypeExpansion(seatType.name)}
+                              className="h-6 w-6 p-0 hover:bg-gray-100 rounded-full"
+                              onClick={() => updateSeatTypeAssignment(seatType.name, 1)}
+                              disabled={seatType.assigned >= seatType.total}
                             >
-                              {expandedSeatTypes.has(seatType.name) ? (
-                                <Minus className="h-4 w-4 text-red-500" />
-                              ) : (
-                                <Plus className="h-4 w-4 text-red-500" />
-                              )}
+                              <CirclePlus className="h-4 w-4 text-green-500" />
                             </Button>
-                          )}
+                            
+                            <span className="font-medium text-lg mx-2">{seatType.assigned}</span>
+                            <span className="text-red-600 text-sm">/{seatType.total}</span>
+                            
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 hover:bg-gray-100 rounded-full"
+                              onClick={() => updateSeatTypeAssignment(seatType.name, -1)}
+                              disabled={seatType.assigned <= 0}
+                            >
+                              <CircleMinus className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                      
-                      {/* Expandable seat layout */}
-                      {expandedSeatTypes.has(seatType.name) && generateSeatGrid(seatType)}
                     </div>
                   ))}
                 </div>
