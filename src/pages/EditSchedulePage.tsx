@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,6 +43,12 @@ export const EditSchedulePage = () => {
   const [cronTab, setCronTab] = useState('Minutes');
   const [specificMinute, setSpecificMinute] = useState(true);
   const [selectedMinutes, setSelectedMinutes] = useState(['00', '09']);
+  const [specificHour, setSpecificHour] = useState(true);
+  const [selectedHours, setSelectedHours] = useState(['09']);
+  const [specificDay, setSpecificDay] = useState(true);
+  const [selectedDays, setSelectedDays] = useState(['1']);
+  const [specificMonth, setSpecificMonth] = useState(true);
+  const [selectedMonths, setSelectedMonths] = useState(['1']);
 
   // Schedule state
   const [asset, setAsset] = useState('Energy Meter 1[584931186764c2f8b565]');
@@ -117,8 +122,8 @@ export const EditSchedulePage = () => {
     const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
     
     return (
-      <div className="space-y-4">
-        <div className="space-y-3">
+      <div className="space-y-6">
+        <div className="space-y-4">
           <div className="flex items-center space-x-2">
             <input 
               type="radio" 
@@ -128,62 +133,319 @@ export const EditSchedulePage = () => {
               onChange={() => setSpecificMinute(true)}
               className="text-blue-600"
             />
-            <Label htmlFor="specific-minute" className="font-medium">Specific minute (choose one or many)</Label>
+            <Label htmlFor="specific-minute" className="font-medium text-blue-600">Specific minute (choose one or many)</Label>
           </div>
           
           {specificMinute && (
-            <div className="grid grid-cols-10 gap-2 p-4 border border-gray-200 rounded-lg bg-gray-50">
-              {minutes.map((minute) => (
-                <div key={minute} className="flex items-center space-x-1">
-                  <Checkbox 
-                    id={`minute-${minute}`}
-                    checked={selectedMinutes.includes(minute)}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedMinutes([...selectedMinutes, minute]);
-                      } else {
-                        setSelectedMinutes(selectedMinutes.filter(m => m !== minute));
-                      }
-                    }}
-                  />
-                  <Label htmlFor={`minute-${minute}`} className="text-sm font-medium">{minute}</Label>
-                </div>
-              ))}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="grid grid-cols-10 gap-2">
+                {minutes.map((minute) => (
+                  <div key={minute} className="flex items-center space-x-1">
+                    <Checkbox 
+                      id={`minute-${minute}`}
+                      checked={selectedMinutes.includes(minute)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedMinutes([...selectedMinutes, minute]);
+                        } else {
+                          setSelectedMinutes(selectedMinutes.filter(m => m !== minute));
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`minute-${minute}`} className="text-sm font-medium">{minute}</Label>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
         
-        <div className="flex items-center space-x-2">
-          <input 
-            type="radio" 
-            id="every-minute" 
-            name="minute-type" 
-            checked={!specificMinute}
-            onChange={() => setSpecificMinute(false)}
-            className="text-blue-600"
-          />
-          <Label htmlFor="every-minute" className="font-medium">Every minute between minute</Label>
-          <Select>
-            <SelectTrigger className="w-20">
-              <SelectValue placeholder="00" />
-            </SelectTrigger>
-            <SelectContent>
-              {minutes.map((minute) => (
-                <SelectItem key={minute} value={minute}>{minute}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <span className="text-sm">and minute</span>
-          <Select>
-            <SelectTrigger className="w-20">
-              <SelectValue placeholder="00" />
-            </SelectTrigger>
-            <SelectContent>
-              {minutes.map((minute) => (
-                <SelectItem key={minute} value={minute}>{minute}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <input 
+              type="radio" 
+              id="every-minute" 
+              name="minute-type" 
+              checked={!specificMinute}
+              onChange={() => setSpecificMinute(false)}
+              className="text-blue-600"
+            />
+            <Label htmlFor="every-minute" className="font-medium">Every minute between minute</Label>
+            <Select>
+              <SelectTrigger className="w-20">
+                <SelectValue placeholder="00" />
+              </SelectTrigger>
+              <SelectContent>
+                {minutes.map((minute) => (
+                  <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-sm">and minute</span>
+            <Select>
+              <SelectTrigger className="w-20">
+                <SelectValue placeholder="00" />
+              </SelectTrigger>
+              <SelectContent>
+                {minutes.map((minute) => (
+                  <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderCronHours = () => {
+    const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+    
+    return (
+      <div className="space-y-6">
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <input 
+              type="radio" 
+              id="specific-hour" 
+              name="hour-type" 
+              checked={specificHour}
+              onChange={() => setSpecificHour(true)}
+              className="text-blue-600"
+            />
+            <Label htmlFor="specific-hour" className="font-medium text-blue-600">Specific hour (choose one or many)</Label>
+          </div>
+          
+          {specificHour && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="grid grid-cols-12 gap-2">
+                {hours.map((hour) => (
+                  <div key={hour} className="flex items-center space-x-1">
+                    <Checkbox 
+                      id={`hour-${hour}`}
+                      checked={selectedHours.includes(hour)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedHours([...selectedHours, hour]);
+                        } else {
+                          setSelectedHours(selectedHours.filter(h => h !== hour));
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`hour-${hour}`} className="text-sm font-medium">{hour}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <input 
+              type="radio" 
+              id="every-hour" 
+              name="hour-type" 
+              checked={!specificHour}
+              onChange={() => setSpecificHour(false)}
+              className="text-blue-600"
+            />
+            <Label htmlFor="every-hour" className="font-medium">Every hour between hour</Label>
+            <Select>
+              <SelectTrigger className="w-20">
+                <SelectValue placeholder="00" />
+              </SelectTrigger>
+              <SelectContent>
+                {hours.map((hour) => (
+                  <SelectItem key={hour} value={hour}>{hour}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-sm">and hour</span>
+            <Select>
+              <SelectTrigger className="w-20">
+                <SelectValue placeholder="23" />
+              </SelectTrigger>
+              <SelectContent>
+                {hours.map((hour) => (
+                  <SelectItem key={hour} value={hour}>{hour}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderCronDay = () => {
+    const days = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
+    
+    return (
+      <div className="space-y-6">
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <input 
+              type="radio" 
+              id="specific-day" 
+              name="day-type" 
+              checked={specificDay}
+              onChange={() => setSpecificDay(true)}
+              className="text-blue-600"
+            />
+            <Label htmlFor="specific-day" className="font-medium text-blue-600">Specific day (choose one or many)</Label>
+          </div>
+          
+          {specificDay && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="grid grid-cols-10 gap-2">
+                {days.map((day) => (
+                  <div key={day} className="flex items-center space-x-1">
+                    <Checkbox 
+                      id={`day-${day}`}
+                      checked={selectedDays.includes(day)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedDays([...selectedDays, day]);
+                        } else {
+                          setSelectedDays(selectedDays.filter(d => d !== day));
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`day-${day}`} className="text-sm font-medium">{day}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <input 
+              type="radio" 
+              id="every-day" 
+              name="day-type" 
+              checked={!specificDay}
+              onChange={() => setSpecificDay(false)}
+              className="text-blue-600"
+            />
+            <Label htmlFor="every-day" className="font-medium">Every day between day</Label>
+            <Select>
+              <SelectTrigger className="w-20">
+                <SelectValue placeholder="1" />
+              </SelectTrigger>
+              <SelectContent>
+                {days.map((day) => (
+                  <SelectItem key={day} value={day}>{day}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-sm">and day</span>
+            <Select>
+              <SelectTrigger className="w-20">
+                <SelectValue placeholder="31" />
+              </SelectTrigger>
+              <SelectContent>
+                {days.map((day) => (
+                  <SelectItem key={day} value={day}>{day}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderCronMonth = () => {
+    const months = [
+      { value: '1', label: 'January' },
+      { value: '2', label: 'February' },
+      { value: '3', label: 'March' },
+      { value: '4', label: 'April' },
+      { value: '5', label: 'May' },
+      { value: '6', label: 'June' },
+      { value: '7', label: 'July' },
+      { value: '8', label: 'August' },
+      { value: '9', label: 'September' },
+      { value: '10', label: 'October' },
+      { value: '11', label: 'November' },
+      { value: '12', label: 'December' }
+    ];
+    
+    return (
+      <div className="space-y-6">
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <input 
+              type="radio" 
+              id="specific-month" 
+              name="month-type" 
+              checked={specificMonth}
+              onChange={() => setSpecificMonth(true)}
+              className="text-blue-600"
+            />
+            <Label htmlFor="specific-month" className="font-medium text-blue-600">Specific month (choose one or many)</Label>
+          </div>
+          
+          {specificMonth && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="grid grid-cols-3 gap-2">
+                {months.map((month) => (
+                  <div key={month.value} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`month-${month.value}`}
+                      checked={selectedMonths.includes(month.value)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedMonths([...selectedMonths, month.value]);
+                        } else {
+                          setSelectedMonths(selectedMonths.filter(m => m !== month.value));
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`month-${month.value}`} className="text-sm font-medium">{month.label}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <input 
+              type="radio" 
+              id="every-month" 
+              name="month-type" 
+              checked={!specificMonth}
+              onChange={() => setSpecificMonth(false)}
+              className="text-blue-600"
+            />
+            <Label htmlFor="every-month" className="font-medium">Every month between month</Label>
+            <Select>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="January" />
+              </SelectTrigger>
+              <SelectContent>
+                {months.map((month) => (
+                  <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-sm">and month</span>
+            <Select>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="December" />
+              </SelectTrigger>
+              <SelectContent>
+                {months.map((month) => (
+                  <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
     );
@@ -665,28 +927,28 @@ export const EditSchedulePage = () => {
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Edit Timings Checkbox */}
-            <div className="flex items-center space-x-2 pt-4">
-              <Checkbox 
-                id="edit-timings"
-                checked={editTimings}
-                onCheckedChange={(checked) => setEditTimings(checked === true)}
-              />
-              <Label htmlFor="edit-timings" className="font-medium">Edit Timings</Label>
-            </div>
           </CardContent>
         </Card>
 
         {/* Cron Settings */}
-        {editTimings && (
-          <Card>
-            <CardHeader>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
               <CardTitle className="text-orange-600 flex items-center gap-2">
                 <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">4</span>
                 Cron Settings
               </CardTitle>
-            </CardHeader>
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="edit-timings" className="font-medium">Edit Timings</Label>
+                <Checkbox 
+                  id="edit-timings"
+                  checked={editTimings}
+                  onCheckedChange={(checked) => setEditTimings(checked === true)}
+                />
+              </div>
+            </div>
+          </CardHeader>
+          {editTimings && (
             <CardContent className="space-y-6">
               <div className="text-sm text-gray-600">
                 The Previous Cron was 0 9 * * *
@@ -712,9 +974,9 @@ export const EditSchedulePage = () => {
 
               <div className="pt-4">
                 {cronTab === 'Minutes' && renderCronMinutes()}
-                {cronTab === 'Hours' && <div className="text-gray-500">Hours configuration will go here</div>}
-                {cronTab === 'Day' && <div className="text-gray-500">Day configuration will go here</div>}
-                {cronTab === 'Month' && <div className="text-gray-500">Month configuration will go here</div>}
+                {cronTab === 'Hours' && renderCronHours()}
+                {cronTab === 'Day' && renderCronDay()}
+                {cronTab === 'Month' && renderCronMonth()}
               </div>
 
               <div className="mt-8 p-6 bg-gray-50 rounded-lg border">
@@ -744,8 +1006,8 @@ export const EditSchedulePage = () => {
                 </div>
               </div>
             </CardContent>
-          </Card>
-        )}
+          )}
+        </Card>
 
         {/* Associations */}
         <Card>
