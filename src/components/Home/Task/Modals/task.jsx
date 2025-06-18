@@ -27,7 +27,8 @@ const TaskForm = ({
   dispatch,
   milestoneStartDate,
   milestoneEndDate,
-  token
+  token,
+  allUsers
 }) => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -171,7 +172,7 @@ const TaskForm = ({
           <input
             type="text"
             value={
-              users.find((user) => user.id === formData.responsiblePerson)
+              allUsers.find((user) => user.id === formData.responsiblePerson)
                 ?.lock_role?.display_name || ""
             }
             className="text-[13px] border-2 border-grey-300 px-2 py-[6px] bg-gray-200"
@@ -478,6 +479,7 @@ const Tasks = ({ isEdit }) => {
             milestoneStartDate={milestone?.start_date}
             milestoneEndDate={milestone?.end_date}
             token={token}
+            allUsers={users}
           />
         ))}
         <TaskForm
@@ -497,6 +499,7 @@ const Tasks = ({ isEdit }) => {
           milestoneStartDate={milestone?.start_date}
           milestoneEndDate={milestone?.end_date}
           token={token}
+          allUsers={users}
         />
         {!isEdit && (
           <div className="relative">
