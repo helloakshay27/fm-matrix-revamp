@@ -29,18 +29,21 @@ export const IncidentDetailsPage = () => {
     supportRequired: 'Yes',
     assignedTo: '',
     currentStatus: 'Open',
-    reportedBy: 'John Doe',
+    reportedBy: 'Tejas Chaudhari',
     location: 'Building A, Floor 3',
     severity: 'Medium',
     injuryOccurred: 'No',
     propertyDamage: 'No',
     immediateAction: 'Area secured and cleaned',
     rootCause: 'Under investigation',
-    preventiveMeasures: 'To be determined'
+    preventiveMeasures: 'To be determined',
+    reportingTime: '29/01/2025 3:22 PM',
+    firstAidProvided: 'No',
+    medicalTreatment: 'No'
   };
 
   const handleEditDetails = () => {
-    navigate(`/maintenance/safety/incident/${id}/edit`);
+    navigate(`/maintenance/incident/edit/${id}`);
   };
 
   const handleDownloadReport = () => {
@@ -74,16 +77,13 @@ Reported By: ${incident.reportedBy}
       {/* Header */}
       <div className="mb-6">
         <nav className="flex items-center text-sm text-gray-600 mb-4">
-          <span>Safety</span>
+          <span>Incidents</span>
           <span className="mx-2">{'>'}</span>
-          <span>Incident</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Incident Details</span>
+          <span>Incidents Details</span>
         </nav>
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">INCIDENT DETAILS</h1>
-            <p className="text-gray-600">Incident {incident.id}</p>
+            <h1 className="text-2xl font-bold text-gray-900">Detail ({incident.id})</h1>
           </div>
           <div className="flex gap-3">
             <Button
@@ -95,9 +95,24 @@ Reported By: ${incident.reportedBy}
               Edit Details
             </Button>
             <Button
+              onClick={() => setShowUpdateModal(true)}
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:opacity-90"
+            >
+              Update Status
+            </Button>
+            <Button
+              onClick={() => setShowInjuryModal(true)}
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:opacity-90"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Injury
+            </Button>
+            <Button
               onClick={handleDownloadReport}
-              variant="outline"
-              className="border-[#C72030] text-[#C72030]"
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:opacity-90"
             >
               <Download className="w-4 h-4 mr-2" />
               Download Report
@@ -106,176 +121,118 @@ Reported By: ${incident.reportedBy}
         </div>
       </div>
 
-      <Tabs defaultValue="details" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="details">Incident Details</TabsTrigger>
-          <TabsTrigger value="injuries">Injuries</TabsTrigger>
-          <TabsTrigger value="attachments">Attachments</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="details" className="space-y-6">
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm text-gray-600">Incident ID</p>
-                  <p className="font-medium">{incident.id}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Date & Time</p>
-                  <p className="font-medium">{incident.incidentTime}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Location</p>
-                  <p className="font-medium">{incident.location}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Reported By</p>
-                  <p className="font-medium">{incident.reportedBy}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Status</p>
-                  <Badge className="bg-green-100 text-green-800">{incident.currentStatus}</Badge>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Severity</p>
-                  <Badge className="bg-yellow-100 text-yellow-800">{incident.severity}</Badge>
-                </div>
+      {/* Basic Details Section */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-orange-600 flex items-center">
+            <span className="mr-2">🔥</span>
+            BASIC DETAILS
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <span className="text-sm text-gray-600">Status</span>
+                <p className="font-medium">: {incident.currentStatus}</p>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Description */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Description</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>{incident.description}</p>
-            </CardContent>
-          </Card>
-
-          {/* Classification */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Classification</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm text-gray-600">Category</p>
-                  <p className="font-medium">{incident.category}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Sub Category</p>
-                  <p className="font-medium">{incident.subCategory}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Injury Occurred</p>
-                  <p className="font-medium">{incident.injuryOccurred}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Property Damage</p>
-                  <p className="font-medium">{incident.propertyDamage}</p>
-                </div>
+              <div>
+                <span className="text-sm text-gray-600">Incident Date and Time</span>
+                <p className="font-medium">: {incident.incidentTime}</p>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Investigation */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Investigation</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">Immediate Action Taken</p>
-                  <p>{incident.immediateAction}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">Root Cause</p>
-                  <p>{incident.rootCause}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">Preventive Measures</p>
-                  <p>{incident.preventiveMeasures}</p>
-                </div>
+              <div>
+                <span className="text-sm text-gray-600">Reporting Date and Time</span>
+                <p className="font-medium">: {incident.reportingTime}</p>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="injuries" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Injuries Reported</CardTitle>
-                <Button
-                  onClick={() => setShowInjuryModal(true)}
-                  style={{ backgroundColor: '#C72030' }}
-                  className="text-white hover:opacity-90"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Injury
-                </Button>
+              <div>
+                <span className="text-sm text-gray-600">Level</span>
+                <p className="font-medium">: {incident.level}</p>
               </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">No injuries reported for this incident.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="attachments" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Attachments</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">No attachments available.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="history" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Update History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="border-l-2 border-blue-200 pl-4">
-                  <p className="text-sm text-gray-600">29/01/2025 3:21 PM</p>
-                  <p className="font-medium">Incident created</p>
-                  <p className="text-sm text-gray-600">by John Doe</p>
-                </div>
+              <div>
+                <span className="text-sm text-gray-600">Support Required</span>
+                <p className="font-medium">: {incident.supportRequired}</p>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              <div>
+                <span className="text-sm text-gray-600">Sent for Medical Treatment</span>
+                <p className="font-medium">: {incident.medicalTreatment}</p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <span className="text-sm text-gray-600">Tower</span>
+                <p className="font-medium">: {incident.tower}</p>
+              </div>
+              <div>
+                <span className="text-sm text-gray-600">Incident Date and Time</span>
+                <p className="font-medium">: {incident.incidentTime}</p>
+              </div>
+              <div>
+                <span className="text-sm text-gray-600">Reported By</span>
+                <p className="font-medium">: {incident.reportedBy}</p>
+              </div>
+              <div>
+                <span className="text-sm text-gray-600">Primary Category</span>
+                <p className="font-medium">: {incident.category}</p>
+              </div>
+              <div>
+                <span className="text-sm text-gray-600">First Aid provided by Employees?</span>
+                <p className="font-medium">: {incident.firstAidProvided}</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Description Details */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-orange-600 flex items-center">
+            <span className="mr-2">🔥</span>
+            DESCRIPTION DETAILS
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div>
+            <span className="text-sm text-gray-600">Description</span>
+            <p className="font-medium">: {incident.description}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Injuries Section */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-orange-600 flex items-center">
+            <span className="mr-2">🩹</span>
+            INJURIES - 0
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-600">No injuries reported for this incident.</p>
+        </CardContent>
+      </Card>
+
+      {/* Attachments Section */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-orange-600 flex items-center">
+            <span className="mr-2">📎</span>
+            Attachments - 0
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-600">No attachments available.</p>
+        </CardContent>
+      </Card>
 
       {/* Action Buttons */}
       <div className="flex gap-3 pt-6">
         <Button
           variant="outline"
-          onClick={() => navigate('/maintenance/safety/incident')}
+          onClick={() => navigate('/maintenance/incident')}
           className="px-8"
         >
           Back to List
-        </Button>
-        <Button
-          onClick={() => setShowUpdateModal(true)}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:opacity-90 px-8"
-        >
-          Update Status
         </Button>
       </div>
 
