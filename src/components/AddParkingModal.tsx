@@ -78,7 +78,7 @@ export const AddParkingModal: React.FC<AddParkingModalProps> = ({ open, onOpenCh
             <div className="flex justify-center">
               <Button 
                 onClick={handleSubmit}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 border-0"
               >
                 Submit
               </Button>
@@ -136,7 +136,7 @@ export const AddParkingModal: React.FC<AddParkingModalProps> = ({ open, onOpenCh
           <div className="flex justify-center pt-4">
             <Button 
               onClick={handleSubmit}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 border-0"
             >
               Submit
             </Button>
