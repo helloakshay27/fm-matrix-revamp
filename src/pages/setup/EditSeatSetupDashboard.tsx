@@ -110,23 +110,18 @@ export const EditSeatSetupDashboard = () => {
     { name: "Support", seats: 0 }
   ]);
 
-  // Seat type assignments with visual layout support
+  // Seat type assignments for Tag Department
   const [seatTypeAssignments, setSeatTypeAssignments] = useState<SeatTypeAssignment[]>([
-    { name: "Angular Ws", assigned: 0, total: 4, selectedSeats: [] },
+    { name: "Angular Ws", assigned: 0, total: 0, selectedSeats: [] },
     { name: "Flexi Desk", assigned: 0, total: 4, selectedSeats: [] },
     { name: "Cabin", assigned: 0, total: 4, selectedSeats: ["S1", "S2", "S3", "S4"] },
     { name: "Fixed Desk", assigned: 0, total: 0, selectedSeats: [] },
     { name: "IOS", assigned: 0, total: 0, selectedSeats: [] },
     { name: "cabin", assigned: 0, total: 0, selectedSeats: [] },
-    { name: "circular", assigned: 0, total: 0, selectedSeats: [] },
-    { name: "Rectangle", assigned: 0, total: 2, selectedSeats: [] },
-    { name: "circularchair", assigned: 0, total: 0, selectedSeats: [] },
-    { name: "Hot Desk", assigned: 0, total: 0, selectedSeats: [] },
-    { name: "Fixed Angular Chair", assigned: 0, total: 0, selectedSeats: [] },
-    { name: "Cubical", assigned: 0, total: 0, selectedSeats: [] },
-    { name: "Cafe", assigned: 0, total: 0, selectedSeats: [] },
-    { name: "Hotseat", assigned: 0, total: 0, selectedSeats: [] }
+    { name: "circular", assigned: 0, total: 5, selectedSeats: [] }
   ]);
+
+  const [expandedSeatType, setExpandedSeatType] = useState<string | null>("Cabin");
 
   // Mock data for existing seat setups
   const existingSeatSetups: SeatSetupData[] = [
@@ -228,6 +223,10 @@ export const EditSeatSetupDashboard = () => {
     const newAssigned = Math.max(0, Math.min(updated[index].total, updated[index].assigned + change));
     updated[index] = { ...updated[index], assigned: newAssigned };
     setSeatTypeAssignments(updated);
+  };
+
+  const toggleSeatTypeExpansion = (seatTypeName: string) => {
+    setExpandedSeatType(expandedSeatType === seatTypeName ? null : seatTypeName);
   };
 
   const generateSeatGrid = (seatType: SeatTypeAssignment) => {
@@ -448,77 +447,71 @@ export const EditSeatSetupDashboard = () => {
           </TabsContent>
 
           <TabsContent value="tag-department" className="mt-6">
-            <div className="flex gap-6">
-              {/* Left Side - Departments */}
-              <div className="flex-1 bg-white rounded-lg border shadow-sm">
-                <div className="p-4 border-b">
-                  <h3 className="text-lg font-semibold text-gray-800">Departments</h3>
-                </div>
-                <div className="p-4">
-                  <div className="grid grid-cols-2 gap-4 mb-4 font-semibold text-gray-700 border-b pb-2">
-                    <div>Departments</div>
-                    <div className="text-center">No. of Seats</div>
-                  </div>
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {departments.map((dept, index) => (
-                      <div key={index} className="grid grid-cols-2 gap-4 py-2 border-b border-gray-100">
-                        <div className="text-sm text-gray-700">{dept.name}</div>
-                        <div className="text-center">
-                          <Input
-                            type="number"
-                            value={dept.seats}
-                            onChange={(e) => updateDepartmentSeats(index, parseInt(e.target.value) || 0)}
-                            className="w-16 text-center mx-auto"
-                            min="0"
-                          />
+            <div className="bg-white rounded-lg border shadow-sm p-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-6">Tag Department</h3>
+              
+              <div className="space-y-4">
+                {seatTypeAssignments.map((seatType, index) => (
+                  <div key={index}>
+                    <div 
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100"
+                      onClick={() => seatType.total > 0 && toggleSeatTypeExpansion(seatType.name)}
+                    >
+                      <div className="font-medium text-gray-800">{seatType.name}</div>
+                      
+                      <div className="flex items-center gap-3">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 w-8 p-0 rounded-full border-red-400 text-red-600 hover:bg-red-50"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            updateSeatTypeAssignment(index, -1);
+                          }}
+                          disabled={seatType.assigned <= 0 || seatType.total === 0}
+                        >
+                          <CircleMinus className="h-4 w-4" />
+                        </Button>
+                        
+                        <div className="flex items-center gap-1 min-w-[40px] justify-center">
+                          <span className="font-medium text-lg">{seatType.assigned}</span>
+                          <span className="text-red-600 text-sm">/{seatType.total}</span>
                         </div>
+                        
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 w-8 p-0 rounded-full border-red-400 text-red-600 hover:bg-red-50"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            updateSeatTypeAssignment(index, 1);
+                          }}
+                          disabled={seatType.assigned >= seatType.total || seatType.total === 0}
+                        >
+                          <CirclePlus className="h-4 w-4" />
+                        </Button>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Side - Visual Seat Layout */}
-              <div className="w-96 bg-white rounded-lg border shadow-sm overflow-hidden">
-                <div className="p-4 border-b bg-blue-50">
-                  <h3 className="text-lg font-semibold text-gray-800 text-center">Tag Department</h3>
-                </div>
-                <div className="p-4 space-y-6 max-h-96 overflow-y-auto">
-                  {seatTypeAssignments
-                    .filter(seatType => seatType.total > 0)
-                    .map((seatType, index) => (
-                    <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-sm font-semibold text-gray-800">{seatType.name}</h4>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-6 w-6 p-0 rounded-full border-red-400 text-red-600"
-                            onClick={() => updateSeatTypeAssignment(index, -1)}
-                            disabled={seatType.assigned <= 0}
-                          >
-                            <CircleMinus className="h-3 w-3" />
-                          </Button>
-                          <div className="flex items-center gap-1 text-sm">
-                            <span className="font-medium">{seatType.assigned}</span>
-                            <span className="text-red-600">/{seatType.total}</span>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-6 w-6 p-0 rounded-full border-red-400 text-red-600"
-                            onClick={() => updateSeatTypeAssignment(index, 1)}
-                            disabled={seatType.assigned >= seatType.total}
-                          >
-                            <CirclePlus className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                      {generateSeatGrid(seatType)}
                     </div>
-                  ))}
-                </div>
+                    
+                    {/* Expanded seat layout */}
+                    {expandedSeatType === seatType.name && seatType.selectedSeats.length > 0 && (
+                      <div className="mt-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="grid grid-cols-4 gap-2">
+                          {seatType.selectedSeats.map((seat, seatIndex) => (
+                            <Button
+                              key={seatIndex}
+                              variant="outline"
+                              size="sm"
+                              className="h-10 border-gray-300 bg-white hover:bg-gray-50"
+                            >
+                              {seat}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
 
