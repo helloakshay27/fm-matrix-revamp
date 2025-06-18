@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Edit } from "lucide-react";
 import { CreateShiftDialog } from "@/components/CreateShiftDialog";
+import { EditShiftDialog } from "@/components/EditShiftDialog";
 
 interface ShiftData {
   id: number;
@@ -16,6 +16,9 @@ interface ShiftData {
 
 export const ShiftDashboard = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedShift, setSelectedShift] = useState<ShiftData | null>(null);
+  
   const [shifts] = useState<ShiftData[]>([
     {
       id: 1,
@@ -103,6 +106,11 @@ export const ShiftDashboard = () => {
     setIsCreateDialogOpen(true);
   };
 
+  const handleEditClick = (shift: ShiftData) => {
+    setSelectedShift(shift);
+    setIsEditDialogOpen(true);
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <div className="flex-1 p-6">
@@ -138,7 +146,12 @@ export const ShiftDashboard = () => {
               {shifts.map((shift) => (
                 <TableRow key={shift.id} className="border-b">
                   <TableCell>
-                    <Button size="sm" variant="ghost" className="p-1">
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="p-1"
+                      onClick={() => handleEditClick(shift)}
+                    >
                       <Edit className="w-4 h-4" />
                     </Button>
                   </TableCell>
@@ -156,6 +169,12 @@ export const ShiftDashboard = () => {
         <CreateShiftDialog 
           open={isCreateDialogOpen} 
           onOpenChange={setIsCreateDialogOpen} 
+        />
+        
+        <EditShiftDialog 
+          open={isEditDialogOpen} 
+          onOpenChange={setIsEditDialogOpen} 
+          shift={selectedShift}
         />
       </div>
     </div>
