@@ -72,22 +72,17 @@ const TaskForm = ({
   };
 
   const calculateDuration = (startDateStr, endDateStr) => {
-    if (!startDateStr || !endDateStr) return "0d:0h:0m";
-    const startDate = new Date(startDateStr);
-    const endDate = new Date(endDateStr);
-    if (
-      isNaN(startDate.getTime()) ||
-      isNaN(endDate.getTime()) ||
-      endDate < startDate
-    )
-      return "0d:0h:0m";
-    let ms = endDate.getTime() - startDate.getTime();
-    const days = Math.floor(ms / (1000 * 60 * 60 * 24));
-    ms -= days * (1000 * 60 * 60 * 24);
-    const hours = Math.floor(ms / (1000 * 60 * 60));
-    ms -= hours * (1000 * 60 * 60);
-    const minutes = Math.floor(ms / (1000 * 60));
-    return `${days}d:${hours}h:${minutes}m`;
+    if (!startDateStr || !endDateStr) return "";
+    const start = new Date(startDateStr);
+    const end = new Date(endDateStr);
+    if (end < start) return "Invalid: End date before start date";
+
+    const ms = end - start;
+    const totalMinutes = Math.floor(ms / (1000 * 60));
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24)) + 1;
+    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+    const minutes = totalMinutes % 60;
+    return `${days}d : ${hours}h : ${minutes}m`;
   };
 
   return (
