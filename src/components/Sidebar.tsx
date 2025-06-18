@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -107,7 +106,15 @@ const modulesByPackage = {
     { name: 'STP', icon: Database, href: '/utility/stp' }
   ],
   'Security': [
-    { name: 'Gate Pass', icon: Shield, href: '/security/gate-pass' },
+    { 
+      name: 'Gate Pass', 
+      icon: Shield, 
+      href: '/security/gate-pass',
+      subItems: [
+        { name: 'Inwards', href: '/security/gate-pass/inwards', color: 'text-[#1a1a1a]' },
+        { name: 'Outwards', href: '/security/gate-pass/outwards', color: 'text-[#1a1a1a]' }
+      ]
+    },
     { name: 'Visitor', icon: Users, href: '/security/visitor' },
     { name: 'Staff', icon: UserCog, href: '/security/staff' },
     { 
