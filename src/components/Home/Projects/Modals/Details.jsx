@@ -10,6 +10,7 @@ import {
   fetchProjectTypes,
   fetchTemplates,
   removeTagFromProject,
+  resetProjectSuccess,
 } from '../../../../redux/slices/projectSlice';
 import { fetchUsers } from '../../../../redux/slices/userSlice';
 import { fetchActiveTags, fetchTags } from '../../../../redux/slices/tagsSlice';
@@ -212,6 +213,7 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
   useEffect(() => {
     if (success) {
       setTab('Milestone')
+      dispatch(resetProjectSuccess())
     }
   }, [success])
 

@@ -14,6 +14,9 @@ const createApiSlice = (name, fetchThunk) => createSlice({
     reducers: {
         resetSuccess: (state) => {
             state.success = false;
+        },
+        resetProjectSuccess: (state) => {
+            state.success = false;
         }
     },
     extraReducers: (builder) => {
@@ -502,3 +505,4 @@ export const deleteProjectTeamReducer = deleteProjectTeamSlice.reducer;
 export const deleteProjectGroupReducer = deleteProjectGroupSlice.reducer;
 
 export const { resetSuccess } = createProjectTeamSlice.actions;
+export const { resetProjectSuccess } = createProjectSlice.actions;

@@ -38,18 +38,61 @@ const mapDisplayToApiStatus = (displayStatus) => {
     return reverseStatusMap[displayStatus] || "open"; // Default to "open" if unknown
 };
 
-const calculateDuration = (start, end) => {
-    const startDate = new Date(start);
+// const calculateDuration = (start, end) => {
+//     const startDate = new Date(start);
+//     const endDate = new Date(end);
+//     const diffMs = endDate - startDate;
+//     if (diffMs <= 0) return "0 sec";
+//     const seconds = Math.floor(diffMs / 1000);
+//     const minutes = Math.floor(seconds / 60);
+//     const hours = Math.floor(minutes / 60);
+//     const remainingMinutes = minutes % 60;
+//     const remainingSeconds = seconds % 60;
+//     return `${hours > 0 ? hours + " hr " : ""}${remainingMinutes > 0 ? remainingMinutes + " mins " : ""}${remainingSeconds} sec`;
+// };
+
+
+const calculateDuration = (end) => {
+    const now = new Date();
     const endDate = new Date(end);
-    const diffMs = endDate - startDate;
-    if (diffMs <= 0) return "0 sec";
+
+    // Set target to the end of the day (11:59:59 PM)
+    endDate.setHours(23, 59, 59, 999);
+
+    const diffMs = endDate - now;
+    if (diffMs <= 0) return "0s";
+
     const seconds = Math.floor(diffMs / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    const remainingHours = hours % 24;
     const remainingMinutes = minutes % 60;
     const remainingSeconds = seconds % 60;
-    return `${hours > 0 ? hours + " hr " : ""}${remainingMinutes > 0 ? remainingMinutes + " mins " : ""}${remainingSeconds} sec`;
+
+    return `${days > 0 ? days + "d " : ""}${remainingHours > 0 ? remainingHours + "h " : ""}${remainingMinutes > 0 ? remainingMinutes + "m " : ""}${remainingSeconds}s`;
 };
+
+
+const CountdownTimer = ({ targetDate }) => {
+    const [countdown, setCountdown] = useState(calculateDuration(targetDate));
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCountdown(calculateDuration(targetDate));
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [targetDate]);
+
+    return (
+        <div className="text-left text-[#029464] text-[12px]">
+            {countdown}
+        </div>
+    );
+};
+
 
 function formatToDDMMYYYY_AMPM(dateString) {
     const date = new Date(dateString);
@@ -756,9 +799,7 @@ const TaskDetails = () => {
                                 <div className="flex items-center ml-36">
                                     <div className="w-1/2 flex items-center justify-start gap-3">
                                         <div className="text-right text-[12px] font-[500]">Duration:</div>
-                                        <div className="text-left text-[#029464] text-[12px]">
-                                            {calculateDuration(task.expected_start_date?.split("T")[0], task.target_date)}
-                                        </div>
+                                        <CountdownTimer targetDate={task.target_date} />
                                     </div>
                                     <div className="w-1/2 flex items-center justify-start gap-3">
                                         <div className="text-right text-[12px] font-semibold">Observer:</div>
