@@ -65,7 +65,15 @@ const modulesByPackage = {
             { name: 'Master Checklists', href: '/maintenance/audit/operational/master-checklists', color: 'text-[#1a1a1a]' }
           ]
         },
-        { name: 'Vendor', href: '/maintenance/audit/vendor', color: 'text-[#1a1a1a]' },
+        { 
+          name: 'Vendor', 
+          href: '/maintenance/audit/vendor', 
+          color: 'text-[#1a1a1a]',
+          subItems: [
+            { name: 'Scheduled', href: '/maintenance/audit/vendor/scheduled', color: 'text-[#1a1a1a]' },
+            { name: 'Conducted', href: '/maintenance/audit/vendor/conducted', color: 'text-[#1a1a1a]' }
+          ]
+        },
         { name: 'Assets', href: '/maintenance/audit/assets', color: 'text-[#1a1a1a]' },
         { name: 'Waste', href: '/maintenance/audit/waste', color: 'text-[#1a1a1a]' },
         { name: 'Survey', href: '/maintenance/audit/survey', color: 'text-[#1a1a1a]' }
