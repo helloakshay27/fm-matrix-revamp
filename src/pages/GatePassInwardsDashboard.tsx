@@ -1,9 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Download, SlidersHorizontal } from 'lucide-react';
+import { GatePassInwardsFilterModal } from '@/components/GatePassInwardsFilterModal';
 
 export const GatePassInwardsDashboard = () => {
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+
   return (
     <div className="bg-white rounded-lg border border-gray-200">
       {/* Action Buttons */}
@@ -26,6 +29,7 @@ export const GatePassInwardsDashboard = () => {
           <Button 
             variant="outline"
             className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded flex items-center gap-2"
+            onClick={() => setIsFilterModalOpen(true)}
           >
             <SlidersHorizontal className="w-4 h-4" />
             Filters
@@ -40,6 +44,11 @@ export const GatePassInwardsDashboard = () => {
           <p>Inwards gate pass records will be displayed here</p>
         </div>
       </div>
+
+      <GatePassInwardsFilterModal 
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+      />
     </div>
   );
 };
