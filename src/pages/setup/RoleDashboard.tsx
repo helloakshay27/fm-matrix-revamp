@@ -56,7 +56,7 @@ export const RoleDashboard = () => {
           <div className="flex justify-between items-center mb-6">
             <a 
               href="/setup/user-role/role/add"
-              className="inline-flex items-center px-4 py-2 bg-[#C72030] hover:bg-[#A01020] text-white rounded-md text-sm font-medium transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-sm font-medium transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Role

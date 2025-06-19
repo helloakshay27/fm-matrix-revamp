@@ -32,15 +32,15 @@ export const DepartmentDashboard = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [departmentName, setDepartmentName] = useState('');
   const [departments, setDepartments] = useState<Department[]>([
-    { id: 1, name: '1', status: true },
-    { id: 2, name: 'ABC', status: false },
-    { id: 3, name: 'abc', status: true },
-    { id: 4, name: 'Accounts', status: true },
-    { id: 5, name: 'Admin', status: true },
-    { id: 6, name: 'Aeronautics department', status: true },
-    { id: 7, name: 'BMC DEPARTMENT', status: true },
-    { id: 8, name: 'Chokidar', status: true },
-    { id: 9, name: 'DEMO DEPT', status: true },
+    { id: 1, name: 'Accounts', status: true },
+    { id: 2, name: 'ACCOUNTS', status: true },
+    { id: 3, name: 'Admin', status: true },
+    { id: 4, name: 'admin', status: true },
+    { id: 5, name: 'Backend', status: true },
+    { id: 6, name: 'BB Admin', status: true },
+    { id: 7, name: 'BB Electrical', status: true },
+    { id: 8, name: 'BB FM', status: true },
+    { id: 9, name: 'BB FM Accounts', status: true },
   ]);
 
   const handleSubmit = () => {
@@ -77,14 +77,14 @@ export const DepartmentDashboard = () => {
           <div className="flex justify-between items-center mb-6">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                <Button className="bg-purple-600 hover:bg-purple-700 text-white">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Department
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle className="bg-[#C72030] text-white p-3 -m-6 mb-4 rounded-t-lg">
+                  <DialogTitle className="bg-purple-600 text-white p-3 -m-6 mb-4 rounded-t-lg">
                     Add Department
                   </DialogTitle>
                 </DialogHeader>
