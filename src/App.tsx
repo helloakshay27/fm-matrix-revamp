@@ -187,6 +187,9 @@ import { AddMasterChecklistPage } from './pages/AddMasterChecklistPage';
 import { RVehiclesInDashboard } from './pages/RVehiclesInDashboard';
 import { RVehiclesOutDashboard } from './pages/RVehiclesOutDashboard';
 
+// Import Space Management booking details page
+import { SpaceManagementBookingDetailsPage } from './pages/SpaceManagementBookingDetailsPage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -327,6 +330,7 @@ function App() {
               
               {/* Space Management Routes */}
               <Route path="/vas/space-management/bookings" element={<SpaceManagementBookingsDashboard />} />
+              <Route path="/vas/space-management/bookings/details/:id" element={<SpaceManagementBookingDetailsPage />} />
               <Route path="/space-management/bookings" element={<SpaceManagementBookingsDashboard />} />
               <Route path="/space-management/seat-requests" element={<SpaceManagementSeatRequestsDashboard />} />
               

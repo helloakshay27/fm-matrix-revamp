@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useNavigate } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Filter, Download, Upload, FileText, Eye } from "lucide-react";
@@ -10,6 +9,7 @@ import { SpaceManagementExportDialog } from "@/components/SpaceManagementExportD
 import { EditBookingDialog } from "@/components/EditBookingDialog";
 
 export const SpaceManagementBookingsDashboard = () => {
+  const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isRosterExportOpen, setIsRosterExportOpen] = useState(false);
@@ -24,6 +24,10 @@ export const SpaceManagementBookingsDashboard = () => {
   const handleEditBooking = (booking: any) => {
     setSelectedBooking(booking);
     setIsEditOpen(true);
+  };
+
+  const handleViewBooking = (bookingId: string) => {
+    navigate(`/vas/space-management/bookings/details/${bookingId}`);
   };
 
   const bookingData = [
@@ -171,7 +175,7 @@ export const SpaceManagementBookingsDashboard = () => {
                       <Button 
                         size="sm" 
                         variant="ghost"
-                        onClick={() => handleEditBooking(booking)}
+                        onClick={() => handleViewBooking(booking.id)}
                         className="hover:bg-gray-100"
                       >
                         <Eye className="w-4 h-4" />
