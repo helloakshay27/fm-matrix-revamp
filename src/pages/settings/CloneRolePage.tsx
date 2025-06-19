@@ -20,7 +20,7 @@ export const CloneRolePage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-orange-500 text-white px-6 py-3">
+      <div className="bg-[#C72030] text-white px-6 py-3">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate('/settings/users')}
@@ -38,16 +38,16 @@ export const CloneRolePage = () => {
           <div className="flex gap-4 mb-8">
             <span className="text-gray-600">Home</span>
             <span className="text-gray-600">Dashboard</span>
-            <span className="bg-orange-500 text-white px-4 py-2 rounded">Setup</span>
+            <span className="bg-[#C72030] text-white px-4 py-2 rounded">Setup</span>
             <span className="text-gray-600">Executive Dashboard</span>
           </div>
 
           {/* Main Content */}
-          <div className="bg-white rounded-lg shadow-sm p-8">
-            <div className="grid grid-cols-2 gap-8">
+          <div className="bg-white rounded-lg shadow-sm border p-8">
+            <div className="grid grid-cols-2 gap-12">
               {/* Handover To Section */}
               <div className="text-center">
-                <div className="bg-blue-800 text-white py-3 px-6 rounded-lg mb-6">
+                <div className="bg-[#1e3a8a] text-white py-3 px-6 rounded-lg mb-6">
                   <h2 className="text-lg font-semibold">Handover To</h2>
                 </div>
                 
@@ -57,7 +57,7 @@ export const CloneRolePage = () => {
                       From User
                     </label>
                     <Select value={fromUser} onValueChange={setFromUser}>
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full border-gray-300">
                         <SelectValue placeholder="Select..." />
                       </SelectTrigger>
                       <SelectContent>
@@ -84,7 +84,7 @@ export const CloneRolePage = () => {
                       To User
                     </label>
                     <Select value={toUser} onValueChange={setToUser}>
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full border-gray-300">
                         <SelectValue placeholder="Select..." />
                       </SelectTrigger>
                       <SelectContent>
@@ -105,7 +105,7 @@ export const CloneRolePage = () => {
               <Button
                 onClick={handleSubmit}
                 disabled={!fromUser || !toUser}
-                className="bg-blue-800 hover:bg-blue-900 text-white px-8 py-2 disabled:bg-gray-300"
+                className="bg-[#1e3a8a] hover:bg-[#1d4ed8] text-white px-8 py-2 disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 Submit
               </Button>
