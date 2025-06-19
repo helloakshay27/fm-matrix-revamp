@@ -303,6 +303,15 @@ function App() {
               <Route path="/security/vehicle/r-vehicles/in" element={<RVehiclesInDashboard />} />
               <Route path="/security/vehicle/r-vehicles/out" element={<RVehiclesOutDashboard />} />
               
+              {/* Value Added Services Routes */}
+              <Route path="/vas/fnb" element={<FnBRestaurantDashboard />} />
+              <Route path="/vas/parking" element={<ParkingDashboard />} />
+              <Route path="/vas/parking/bookings" element={<ParkingBookingsDashboard />} />
+              
+              {/* Space Management Routes */}
+              <Route path="/space-management/bookings" element={<SpaceManagementBookingsDashboard />} />
+              <Route path="/space-management/seat-requests" element={<SpaceManagementSeatRequestsDashboard />} />
+              
               <Route path="*" element={<NotFound />} />
             </Route>
             
