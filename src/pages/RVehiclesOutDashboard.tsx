@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { RVehicleOutDialog } from '@/components/RVehicleOutDialog';
 
 const vehicleData = [
   {
@@ -94,6 +94,8 @@ const vehicleData = [
 export const RVehiclesOutDashboard = () => {
   const [activeTab, setActiveTab] = useState('Out');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const navigate = useNavigate();
 
   const filteredVehicles = vehicleData.filter(vehicle =>
@@ -110,6 +112,11 @@ export const RVehiclesOutDashboard = () => {
     } else if (tab === 'In') {
       navigate('/security/vehicle/r-vehicles/in');
     }
+  };
+
+  const handleOutButtonClick = (vehicleNumber: string) => {
+    setSelectedVehicle(vehicleNumber);
+    setIsDialogOpen(true);
   };
 
   return (
@@ -178,6 +185,7 @@ export const RVehiclesOutDashboard = () => {
                       </div>
                     </div>
                     <Button
+                      onClick={() => handleOutButtonClick(vehicle.vehicleNumber)}
                       style={{ backgroundColor: '#EF4444' }}
                       className="hover:opacity-90 text-white px-3 py-1 text-sm"
                     >
@@ -195,6 +203,12 @@ export const RVehiclesOutDashboard = () => {
           </div>
         </div>
       </div>
+
+      <RVehicleOutDialog 
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        vehicleNumber={selectedVehicle}
+      />
     </div>
   );
 };
