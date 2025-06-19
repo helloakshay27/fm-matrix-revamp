@@ -53,60 +53,53 @@ export const MaterialPRFilterDialog: React.FC<MaterialPRFilterDialogProps> = ({
         </DialogHeader>
         
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                PR Details
-              </Label>
-              <div className="space-y-3">
-                <div>
-                  <Label className="text-xs text-gray-600">Reference Number</Label>
-                  <Input
-                    placeholder="Search By PR Number"
-                    value={filters.referenceNumber}
-                    onChange={(e) => setFilters({ ...filters, referenceNumber: e.target.value })}
-                    className="text-sm"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-600">Supplier Name</Label>
-                  <Input
-                    placeholder="Supplier Name"
-                    value={filters.supplierName}
-                    onChange={(e) => setFilters({ ...filters, supplierName: e.target.value })}
-                    className="text-sm"
-                  />
-                </div>
+          <div>
+            <Label className="text-sm font-medium text-gray-700 mb-3 block">
+              PR Details
+            </Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs text-gray-600">Reference Number</Label>
+                <Input
+                  placeholder="Search By PR Number"
+                  value={filters.referenceNumber}
+                  onChange={(e) => setFilters({ ...filters, referenceNumber: e.target.value })}
+                  className="text-sm mt-1"
+                />
               </div>
-            </div>
-            
-            <div>
-              <div className="space-y-3 mt-6">
-                <div>
-                  <Label className="text-xs text-gray-600">PR Number</Label>
-                  <Input
-                    placeholder="Enter Reference Number"
-                    value={filters.prNumber}
-                    onChange={(e) => setFilters({ ...filters, prNumber: e.target.value })}
-                    className="text-sm"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-600">Approval Status</Label>
-                  <Select
-                    value={filters.approvalStatus}
-                    onValueChange={(value) => setFilters({ ...filters, approvalStatus: value })}
-                  >
-                    <SelectTrigger className="text-sm">
-                      <SelectValue placeholder="Select Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="approved">Approved</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <Label className="text-xs text-gray-600">PR Number</Label>
+                <Input
+                  placeholder="Enter Reference Number"
+                  value={filters.prNumber}
+                  onChange={(e) => setFilters({ ...filters, prNumber: e.target.value })}
+                  className="text-sm mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-gray-600">Supplier Name</Label>
+                <Input
+                  placeholder="Supplier Name"
+                  value={filters.supplierName}
+                  onChange={(e) => setFilters({ ...filters, supplierName: e.target.value })}
+                  className="text-sm mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-gray-600">Approval Status</Label>
+                <Select
+                  value={filters.approvalStatus}
+                  onValueChange={(value) => setFilters({ ...filters, approvalStatus: value })}
+                >
+                  <SelectTrigger className="text-sm mt-1">
+                    <SelectValue placeholder="Select Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -115,7 +108,8 @@ export const MaterialPRFilterDialog: React.FC<MaterialPRFilterDialogProps> = ({
         <div className="flex gap-3 pt-4">
           <Button 
             onClick={handleApply}
-            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+            className="flex-1 text-white"
+            style={{ backgroundColor: '#C72030' }}
           >
             Apply
           </Button>

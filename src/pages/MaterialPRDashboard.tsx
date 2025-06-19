@@ -1,13 +1,14 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useNavigate } from 'react-router-dom';
+import { MaterialPRFilterDialog } from '@/components/MaterialPRFilterDialog';
 
 export const MaterialPRDashboard = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
 
   const materialPRData = [
     {
@@ -111,7 +112,10 @@ export const MaterialPRDashboard = () => {
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
-          <Button variant="outline">
+          <Button 
+            variant="outline"
+            onClick={() => setFilterDialogOpen(true)}
+          >
             Filters
           </Button>
         </div>
@@ -204,6 +208,12 @@ export const MaterialPRDashboard = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Filter Dialog */}
+      <MaterialPRFilterDialog 
+        open={filterDialogOpen}
+        onOpenChange={setFilterDialogOpen}
+      />
     </div>
   );
 };
