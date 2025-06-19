@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -65,6 +64,10 @@ import { UtilityWaterDashboard } from './pages/UtilityWaterDashboard';
 import { AddWaterAssetDashboard } from './pages/AddWaterAssetDashboard';
 import UtilitySTPDashboard from './pages/UtilitySTPDashboard';
 import AddSTPAssetDashboard from './pages/AddSTPAssetDashboard';
+
+// Import Waste Generation pages
+import UtilityWasteGenerationDashboard from './pages/UtilityWasteGenerationDashboard';
+import UtilityWasteGenerationSetupDashboard from './pages/UtilityWasteGenerationSetupDashboard';
 
 // Import Schedule pages
 import { ScheduleListDashboard } from './pages/ScheduleListDashboard';
@@ -238,6 +241,10 @@ function App() {
               <Route path="/maintenance/audit/vendor/scheduled/copy" element={<AddVendorAuditSchedulePage />} />
               <Route path="/maintenance/audit/vendor/scheduled/view/:id" element={<ViewVendorAuditPage />} />
               <Route path="/maintenance/audit/vendor/conducted" element={<VendorAuditConductedDashboard />} />
+              
+              {/* Waste Generation Routes */}
+              <Route path="/maintenance/audit/waste/generation" element={<UtilityWasteGenerationDashboard />} />
+              <Route path="/maintenance/audit/waste/setup" element={<UtilityWasteGenerationSetupDashboard />} />
               
               {/* Maintenance Routes */}
               <Route path="/maintenance/asset" element={<AssetDashboard />} />

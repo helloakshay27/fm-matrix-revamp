@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -76,7 +75,15 @@ const modulesByPackage = {
           ]
         },
         { name: 'Assets', href: '/maintenance/audit/assets', color: 'text-[#1a1a1a]' },
-        { name: 'Waste', href: '/maintenance/audit/waste', color: 'text-[#1a1a1a]' },
+        { 
+          name: 'Waste', 
+          href: '/maintenance/audit/waste', 
+          color: 'text-[#1a1a1a]',
+          subItems: [
+            { name: 'Waste Generation', href: '/maintenance/audit/waste/generation', color: 'text-[#1a1a1a]' },
+            { name: 'Setup', href: '/maintenance/audit/waste/setup', color: 'text-[#1a1a1a]' }
+          ]
+        },
         { name: 'Survey', href: '/maintenance/audit/survey', color: 'text-[#1a1a1a]' }
       ]
     }

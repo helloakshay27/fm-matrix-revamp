@@ -5,21 +5,70 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 
 const UtilityWasteGenerationSetupDashboard = () => {
   const [commodityName, setCommodityName] = useState('');
+  const [categoryName, setCategoryName] = useState('');
+  const [operationalName, setOperationalName] = useState('');
 
-  const existingCommodities = [
+  // Sample data states
+  const [commodities, setCommodities] = useState([
     { id: 1, name: 'abc' },
     { id: 2, name: 'DRY' }
-  ];
+  ]);
+  const [categories, setCategories] = useState<Array<{id: number, name: string}>>([]);
+  const [operationalNames, setOperationalNames] = useState<Array<{id: number, name: string}>>([]);
 
   const handleAddCommodity = () => {
     if (commodityName.trim()) {
-      // Add commodity logic here
+      const newCommodity = {
+        id: commodities.length + 1,
+        name: commodityName.trim()
+      };
+      setCommodities([...commodities, newCommodity]);
       setCommodityName('');
+      console.log('Added commodity:', newCommodity);
     }
+  };
+
+  const handleAddCategory = () => {
+    if (categoryName.trim()) {
+      const newCategory = {
+        id: categories.length + 1,
+        name: categoryName.trim()
+      };
+      setCategories([...categories, newCategory]);
+      setCategoryName('');
+      console.log('Added category:', newCategory);
+    }
+  };
+
+  const handleAddOperational = () => {
+    if (operationalName.trim()) {
+      const newOperational = {
+        id: operationalNames.length + 1,
+        name: operationalName.trim()
+      };
+      setOperationalNames([...operationalNames, newOperational]);
+      setOperationalName('');
+      console.log('Added operational name:', newOperational);
+    }
+  };
+
+  const handleDeleteCommodity = (id: number) => {
+    setCommodities(commodities.filter(commodity => commodity.id !== id));
+    console.log('Deleted commodity with id:', id);
+  };
+
+  const handleDeleteCategory = (id: number) => {
+    setCategories(categories.filter(category => category.id !== id));
+    console.log('Deleted category with id:', id);
+  };
+
+  const handleDeleteOperational = (id: number) => {
+    setOperationalNames(operationalNames.filter(operational => operational.id !== id));
+    console.log('Deleted operational name with id:', id);
   };
 
   return (
@@ -60,10 +109,12 @@ const UtilityWasteGenerationSetupDashboard = () => {
                       onChange={(e) => setCommodityName(e.target.value)}
                       placeholder="Enter commodity name"
                       className="flex-1"
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddCommodity()}
                     />
                     <Button 
                       onClick={handleAddCommodity}
-                      className="bg-[#8B5A3C] hover:bg-[#7A4D33] text-white"
+                      style={{ backgroundColor: '#C72030' }}
+                      className="hover:bg-[#A01B26] text-white"
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       Add
@@ -75,9 +126,17 @@ const UtilityWasteGenerationSetupDashboard = () => {
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-medium text-center mb-4">Commodity</h3>
                     <div className="space-y-2">
-                      {existingCommodities.map((commodity) => (
-                        <div key={commodity.id} className="bg-white p-3 rounded border">
-                          {commodity.name}
+                      {commodities.map((commodity) => (
+                        <div key={commodity.id} className="bg-white p-3 rounded border flex justify-between items-center">
+                          <span>{commodity.name}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteCommodity(commodity.id)}
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       ))}
                     </div>
@@ -95,10 +154,17 @@ const UtilityWasteGenerationSetupDashboard = () => {
                   <div className="flex gap-2 mt-2">
                     <Input
                       id="category"
+                      value={categoryName}
+                      onChange={(e) => setCategoryName(e.target.value)}
                       placeholder="Enter category name"
                       className="flex-1"
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddCategory()}
                     />
-                    <Button className="bg-[#8B5A3C] hover:bg-[#7A4D33] text-white">
+                    <Button 
+                      onClick={handleAddCategory}
+                      style={{ backgroundColor: '#C72030' }}
+                      className="hover:bg-[#A01B26] text-white"
+                    >
                       <Plus className="mr-2 h-4 w-4" />
                       Add
                     </Button>
@@ -109,9 +175,25 @@ const UtilityWasteGenerationSetupDashboard = () => {
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-medium text-center mb-4">Category</h3>
                     <div className="space-y-2">
-                      <div className="text-center text-muted-foreground py-4">
-                        No categories added yet
-                      </div>
+                      {categories.length > 0 ? (
+                        categories.map((category) => (
+                          <div key={category.id} className="bg-white p-3 rounded border flex justify-between items-center">
+                            <span>{category.name}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteCategory(category.id)}
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center text-muted-foreground py-4">
+                          No categories added yet
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -127,10 +209,17 @@ const UtilityWasteGenerationSetupDashboard = () => {
                   <div className="flex gap-2 mt-2">
                     <Input
                       id="operational"
+                      value={operationalName}
+                      onChange={(e) => setOperationalName(e.target.value)}
                       placeholder="Enter operational name"
                       className="flex-1"
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddOperational()}
                     />
-                    <Button className="bg-[#8B5A3C] hover:bg-[#7A4D33] text-white">
+                    <Button 
+                      onClick={handleAddOperational}
+                      style={{ backgroundColor: '#C72030' }}
+                      className="hover:bg-[#A01B26] text-white"
+                    >
                       <Plus className="mr-2 h-4 w-4" />
                       Add
                     </Button>
@@ -141,9 +230,25 @@ const UtilityWasteGenerationSetupDashboard = () => {
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="font-medium text-center mb-4">Operational Name</h3>
                     <div className="space-y-2">
-                      <div className="text-center text-muted-foreground py-4">
-                        No operational names added yet
-                      </div>
+                      {operationalNames.length > 0 ? (
+                        operationalNames.map((operational) => (
+                          <div key={operational.id} className="bg-white p-3 rounded border flex justify-between items-center">
+                            <span>{operational.name}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteOperational(operational.id)}
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center text-muted-foreground py-4">
+                          No operational names added yet
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
