@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -199,6 +198,7 @@ import { AddServicePRDashboard } from './pages/AddServicePRDashboard';
 import { PODashboard } from './pages/PODashboard';
 import { WODashboard } from './pages/WODashboard';
 import { GRNDashboard } from './pages/GRNDashboard';
+import { AutoSavedPRDashboard } from './pages/AutoSavedPRDashboard';
 
 const queryClient = new QueryClient();
 
@@ -277,6 +277,7 @@ function App() {
               <Route path="/finance/po" element={<PODashboard />} />
               <Route path="/finance/wo" element={<WODashboard />} />
               <Route path="/finance/grn-srn" element={<GRNDashboard />} />
+              <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
               
               {/* Maintenance Routes */}
               <Route path="/maintenance/asset" element={<AssetDashboard />} />
