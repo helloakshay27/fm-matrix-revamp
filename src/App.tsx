@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -351,6 +352,7 @@ function App() {
               {/* Space Management Routes */}
               <Route path="/vas/space-management/bookings" element={<SpaceManagementBookingsDashboard />} />
               <Route path="/vas/space-management/bookings/details/:id" element={<SpaceManagementBookingDetailsPage />} />
+              <Route path="/vas/space-management/seat-requests" element={<SpaceManagementSeatRequestsDashboard />} />
               <Route path="/space-management/bookings" element={<SpaceManagementBookingsDashboard />} />
               <Route path="/space-management/seat-requests" element={<SpaceManagementSeatRequestsDashboard />} />
               
