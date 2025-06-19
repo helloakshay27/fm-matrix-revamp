@@ -19,7 +19,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
-import { Edit, Plus } from 'lucide-react';
+import { Edit, Plus, X } from 'lucide-react';
 
 interface Department {
   id: number;
@@ -29,7 +29,10 @@ interface Department {
 
 export const DepartmentDashboard = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [departmentName, setDepartmentName] = useState('');
+  const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
+  const [editDepartmentName, setEditDepartmentName] = useState('');
   const [departments, setDepartments] = useState<Department[]>([
     { id: 1, name: '1', status: true },
     { id: 2, name: 'ABC', status: false },
@@ -53,6 +56,25 @@ export const DepartmentDashboard = () => {
       setDepartmentName('');
       setIsDialogOpen(false);
     }
+  };
+
+  const handleEditSubmit = () => {
+    if (editDepartmentName.trim() && editingDepartment) {
+      setDepartments(departments.map(dept => 
+        dept.id === editingDepartment.id 
+          ? { ...dept, name: editDepartmentName }
+          : dept
+      ));
+      setEditDepartmentName('');
+      setEditingDepartment(null);
+      setIsEditDialogOpen(false);
+    }
+  };
+
+  const openEditDialog = (department: Department) => {
+    setEditingDepartment(department);
+    setEditDepartmentName(department.name);
+    setIsEditDialogOpen(true);
   };
 
   const toggleStatus = (id: number) => {
@@ -145,6 +167,7 @@ export const DepartmentDashboard = () => {
                     variant="ghost"
                     size="sm"
                     className="text-[#C72030] hover:text-[#A11D2A] hover:bg-[#C72030]/10"
+                    onClick={() => openEditDialog(department)}
                   >
                     <Edit className="w-4 h-4" />
                   </Button>
@@ -153,6 +176,42 @@ export const DepartmentDashboard = () => {
             ))}
           </TableBody>
         </Table>
+
+        {/* Edit Department Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader className="flex flex-row items-center justify-between pb-4">
+              <DialogTitle className="text-lg font-semibold">Edit Details</DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditDialogOpen(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="editDepartmentName">Department Name</Label>
+                <Input
+                  id="editDepartmentName"
+                  value={editDepartmentName}
+                  onChange={(e) => setEditDepartmentName(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button 
+                  onClick={handleEditSubmit}
+                  className="bg-[#C72030] hover:bg-[#A11D2A] text-white px-6"
+                >
+                  Submit
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
