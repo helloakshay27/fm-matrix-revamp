@@ -218,6 +218,9 @@ import { ApprovalMatrixDashboard } from './pages/settings/ApprovalMatrixDashboar
 import { AddApprovalMatrixDashboard } from './pages/settings/AddApprovalMatrixDashboard';
 import { EditApprovalMatrixDashboard } from './pages/settings/EditApprovalMatrixDashboard';
 
+// Import Department Dashboard
+import { DepartmentDashboard } from './pages/setup/DepartmentDashboard';
+
 // Import AddNewBillDashboard
 import { AddNewBillDashboard } from './pages/AddNewBillDashboard';
 
@@ -239,6 +242,7 @@ function App() {
               <Route path="/settings/approval-matrix" element={<ApprovalMatrixDashboard />} />
               <Route path="/settings/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
               <Route path="/settings/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
+              <Route path="/settings/roles/department" element={<DepartmentDashboard />} />
               
               {/* Snagging Routes */}
               <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
