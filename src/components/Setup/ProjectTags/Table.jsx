@@ -159,17 +159,10 @@ const TagsTable = () => {
     [handleEdit]
   );
 
-
-  const reversedTags = useMemo(() => {
-    return tags ? [...tags].reverse() : [];
-  }, [tags]);
-
-
-
   return (
     <>
       <CustomTable
-        data={reversedTags} // Ensure tags is defined
+        data={tags} // Ensure tags is defined
         columns={columns}
         title="Tags"
         buttonText="Add Tag"

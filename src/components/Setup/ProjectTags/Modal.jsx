@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import { useDispatch, useSelector } from 'react-redux';
-import { createTag, fetchTags, updateTag } from '../../../redux/slices/tagsSlice';
-import { set } from 'react-hook-form';
+import { createTag, fetchActiveTags, resetSuccess, updateTag } from '../../../redux/slices/tagsSlice';
 import { toast } from 'react-hot-toast';
 
 const Modal = ({ open, setOpenModal, editData }) => {
@@ -74,11 +73,12 @@ const Modal = ({ open, setOpenModal, editData }) => {
 
   useEffect(() => {
     if (createSuccess || updateSuccess) {
-      dispatch(fetchTags({ token }));
+      dispatch(fetchActiveTags({ token }));
       setName('');
       setType('');
       setWarningOpen(false);
       setOpenModal(false);
+      dispatch(resetSuccess())
     }
   }, [createSuccess, updateSuccess, dispatch, setOpenModal]);
 
