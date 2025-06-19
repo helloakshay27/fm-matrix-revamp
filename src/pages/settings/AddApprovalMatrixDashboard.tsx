@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -57,8 +56,8 @@ export const AddApprovalMatrixDashboard = () => {
   };
 
   return (
-    <Layout>
-      <div className="space-y-6 p-6">
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-6">
         <div className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="function" className="text-sm font-medium">Function</Label>
@@ -173,6 +172,6 @@ export const AddApprovalMatrixDashboard = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };

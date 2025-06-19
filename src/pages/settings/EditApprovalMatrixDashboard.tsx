@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -52,11 +51,11 @@ export const EditApprovalMatrixDashboard = () => {
   };
 
   return (
-    <Layout>
-      <div className="space-y-6">
-        <div className="space-y-4">
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-6">
+        <div className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="function">Function *</Label>
+            <Label htmlFor="function" className="text-sm font-medium">Function *</Label>
             <Select value={selectedFunction} onValueChange={setSelectedFunction}>
               <SelectTrigger className="w-64">
                 <SelectValue placeholder="Select Function" />
@@ -73,7 +72,7 @@ export const EditApprovalMatrixDashboard = () => {
 
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm">
+              <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
                 !
               </div>
               <h2 className="text-lg font-semibold text-orange-600">Approval Levels</h2>
@@ -83,29 +82,29 @@ export const EditApprovalMatrixDashboard = () => {
               {approvalLevels.map((level) => (
                 <div key={level.id} className="grid grid-cols-6 gap-4 items-end">
                   <div className="space-y-2">
-                    <Label>Order *</Label>
+                    <Label className="text-sm font-medium">Order *</Label>
                     <Input
                       value={level.order}
                       onChange={(e) => updateApprovalLevel(level.id, 'order', e.target.value)}
-                      className="w-full"
+                      className="w-full h-10"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Name of Level *</Label>
+                    <Label className="text-sm font-medium">Name of Level *</Label>
                     <Input
                       placeholder="Enter Name of Level"
                       value={level.nameOfLevel}
                       onChange={(e) => updateApprovalLevel(level.id, 'nameOfLevel', e.target.value)}
-                      className="w-full"
+                      className="w-full h-10"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Users *</Label>
+                    <Label className="text-sm font-medium">Users *</Label>
                     <Select
                       value={level.users}
                       onValueChange={(value) => updateApprovalLevel(level.id, 'users', value)}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full h-10">
                         <SelectValue placeholder="Select up to 15 Options..." />
                       </SelectTrigger>
                       <SelectContent>
@@ -115,7 +114,7 @@ export const EditApprovalMatrixDashboard = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 pt-8">
                     <Checkbox
                       id={`active-${level.id}`}
                       checked={level.active}
@@ -125,7 +124,7 @@ export const EditApprovalMatrixDashboard = () => {
                       Active
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 pt-8">
                     <Checkbox
                       id={`send-emails-${level.id}`}
                       checked={level.sendEmails}
@@ -135,13 +134,13 @@ export const EditApprovalMatrixDashboard = () => {
                       Send Emails
                     </Label>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 pt-8">
                     {approvalLevels.length > 1 && (
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => removeApprovalLevel(level.id)}
-                        className="h-8 w-8 text-red-600 hover:bg-red-50"
+                        className="h-8 w-8 text-red-600 hover:bg-red-50 border-red-300"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -154,22 +153,23 @@ export const EditApprovalMatrixDashboard = () => {
             <Button
               variant="outline"
               onClick={addApprovalLevel}
-              className="bg-[#C72030] text-white hover:bg-[#A01020]"
+              className="bg-[#C72030] text-white hover:bg-[#A01020] border-[#C72030] h-10 w-10"
+              size="icon"
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4" />
             </Button>
           </div>
 
           <div className="flex justify-center pt-6">
             <Button
               onClick={handleUpdate}
-              className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
+              className="bg-[#C72030] hover:bg-[#A01020] text-white px-8 h-10"
             >
               Update
             </Button>
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };

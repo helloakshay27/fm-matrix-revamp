@@ -38,7 +38,7 @@ export const ApprovalMatrixDashboard = () => {
         <div className="flex items-center justify-between mb-4">
           <Button 
             onClick={handleAddClick}
-            className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 text-sm"
+            className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 text-sm"
           >
             + Add
           </Button>
