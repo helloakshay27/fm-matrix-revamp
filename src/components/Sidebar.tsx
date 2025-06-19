@@ -220,7 +220,15 @@ const modulesByPackage = {
     { name: 'General', icon: Settings, href: '/settings/general' },
     { name: 'Account', icon: UserCog, href: '/settings/account' },
     { name: 'Users', icon: Users, href: '/settings/users' },
-    { name: 'Roles (RACI)', icon: UserCheck, href: '/settings/roles' },
+    { 
+      name: 'Roles (RACI)', 
+      icon: UserCheck, 
+      href: '/settings/roles',
+      subItems: [
+        { name: 'Department', href: '/settings/roles/department', color: 'text-[#1a1a1a]' },
+        { name: 'Role', href: '/settings/roles/role', color: 'text-[#1a1a1a]' }
+      ]
+    },
     { name: 'Approval Matrix', icon: CheckSquare, href: '/settings/approval-matrix' },
     { 
       name: 'Module 1', 
@@ -258,6 +266,8 @@ export const Sidebar = () => {
   const location = useLocation();
   const { currentSection, setCurrentSection } = useLayout();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [selectedDepartment, setSelectedRole] = useState('');
+  const [selectedRole, setSelectedDepartment] = useState('');
 
   const toggleExpanded = (itemName: string) => {
     setExpandedItems(prev => 
@@ -300,6 +310,7 @@ export const Sidebar = () => {
   const renderMenuItem = (item: any, level: number = 0) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isExpanded = expandedItems.includes(item.name);
+    const showDropdowns = item.hasDropdowns && location.pathname === item.href;
     
     if (hasSubItems) {
       return (
@@ -378,15 +389,52 @@ export const Sidebar = () => {
           {level === 0 && <item.icon className="w-5 h-5" />}
           {item.name}
         </button>
+        
+        {/* Show dropdowns for Roles (RACI) when on that page */}
+        {showDropdowns && (
+          <div className="mt-4 space-y-3 px-3">
+            <div>
+              <label className="text-xs font-medium text-[#1a1a1a] mb-1 block">Department</label>
+              <select
+                value={selectedDepartment}
+                onChange={(e) => setSelectedDepartment(e.target.value)}
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030]"
+              >
+                <option value="">Select Department</option>
+                <option value="engineering">Engineering</option>
+                <option value="facilities">Facilities</option>
+                <option value="security">Security</option>
+                <option value="finance">Finance</option>
+                <option value="hr">Human Resources</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="text-xs font-medium text-[#1a1a1a] mb-1 block">Role</label>
+              <select
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030]"
+              >
+                <option value="">Select Role</option>
+                <option value="manager">Manager</option>
+                <option value="supervisor">Supervisor</option>
+                <option value="technician">Technician</option>
+                <option value="coordinator">Coordinator</option>
+                <option value="analyst">Analyst</option>
+              </select>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
 
   return (
     <div
-  className="w-64 bg-[#f6f4ee] border-r border-[#1a1a1a] fixed left-0 top-0 overflow-y-auto"
-  style={{ top: '10vh', height: '90vh' }}
->
+      className="w-64 bg-[#f6f4ee] border-r border-[#1a1a1a] fixed left-0 top-0 overflow-y-auto"
+      style={{ top: '10vh', height: '90vh' }}
+    >
       <div className="p-6">
         <div className="flex items-center gap-2 mb-8">
           <div className="w-8 h-8 bg-[#C72030] rounded-lg flex items-center justify-center">

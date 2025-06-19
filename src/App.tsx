@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -201,6 +202,11 @@ import { PODetailsPage } from './pages/PODetailsPage';
 import { POFeedsPage } from './pages/POFeedsPage';
 import { WODashboard } from './pages/WODashboard';
 import { AutoSavedPRDashboard } from './pages/AutoSavedPRDashboard';
+import { GRNSRNDashboard } from './pages/GRNSRNDashboard';
+import { InvoicesDashboard } from './pages/InvoicesDashboard';
+import { InvoicesSESDashboard } from './pages/InvoicesSESDashboard';
+import { BillBookingDashboard } from './pages/BillBookingDashboard';
+import { PendingApprovalsDashboard } from './pages/PendingApprovalsDashboard';
 
 // Import Settings pages
 import { FMUsersDashboard } from './pages/settings/FMUsersDashboard';
@@ -211,6 +217,9 @@ import { AccountDashboard } from './pages/settings/AccountDashboard';
 import { ApprovalMatrixDashboard } from './pages/settings/ApprovalMatrixDashboard';
 import { AddApprovalMatrixDashboard } from './pages/settings/AddApprovalMatrixDashboard';
 import { EditApprovalMatrixDashboard } from './pages/settings/EditApprovalMatrixDashboard';
+
+// Import AddNewBillDashboard
+import { AddNewBillDashboard } from './pages/AddNewBillDashboard';
 
 const queryClient = new QueryClient();
 
@@ -300,6 +309,11 @@ function App() {
               <Route path="/finance/po/feeds/:id" element={<POFeedsPage />} />
               <Route path="/finance/wo" element={<WODashboard />} />
               <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
+              <Route path="/finance/grn-srn" element={<GRNSRNDashboard />} />
+              <Route path="/finance/invoices" element={<InvoicesSESDashboard />} />
+              <Route path="/finance/bill-booking" element={<BillBookingDashboard />} />
+              <Route path="/finance/bill-booking/add" element={<AddNewBillDashboard />} />
+              <Route path="/finance/pending-approvals" element={<PendingApprovalsDashboard />} />
               
               {/* Maintenance Routes */}
               <Route path="/maintenance/asset" element={<AssetDashboard />} />
@@ -376,6 +390,22 @@ function App() {
               <Route path="/space-management/bookings" element={<SpaceManagementBookingsDashboard />} />
               <Route path="/space-management/seat-requests" element={<SpaceManagementSeatRequestsDashboard />} />
               
+              {/* VAS Space Management Setup Routes - moved inside main layout */}
+              <Route path="/vas/space-management/setup/seat-type" element={<SeatTypeDashboard />} />
+              <Route path="/vas/space-management/setup/seat-setup" element={<SeatSetupDashboard />} />
+              <Route path="/vas/space-management/setup/seat-setup/add" element={<AddSeatSetupDashboard />} />
+              <Route path="/vas/space-management/setup/seat-setup/edit/:id" element={<EditSeatSetupDashboard />} />
+              <Route path="/vas/space-management/setup/shift" element={<ShiftDashboard />} />
+              <Route path="/vas/space-management/setup/roster" element={<UserRoastersDashboard />} />
+              <Route path="/vas/space-management/setup/roster/create" element={<CreateRosterTemplateDashboard />} />
+              <Route path="/vas/space-management/setup/employees" element={<EmployeesDashboard />} />
+              <Route path="/vas/space-management/setup/employees/add" element={<AddEmployeeDashboard />} />
+              <Route path="/vas/space-management/setup/employees/edit/:id" element={<EditEmployeePage />} />
+              <Route path="/vas/space-management/setup/employees/details/:id" element={<EmployeeDetailsPage />} />
+              <Route path="/vas/space-management/setup/check-in-margin" element={<CheckInMarginDashboard />} />
+              <Route path="/vas/space-management/setup/roster-calendar" element={<RosterCalendarDashboard />} />
+              <Route path="/vas/space-management/setup/export" element={<ExportDashboard />} />
+              
               <Route path="*" element={<NotFound />} />
             </Route>
             
@@ -411,21 +441,6 @@ function App() {
               <Route path="/setup/tag" element={<div>Tag</div>} />
               <Route path="/setup/export" element={<ExportDashboard />} />
             </Route>
-            
-            {/* VAS Routes that need to be outside the main layout */}
-            <Route path="/vas/space-management/setup/seat-type" element={<Layout><SeatTypeDashboard /></Layout>} />
-            <Route path="/vas/space-management/setup/seat-setup" element={<Layout><SeatSetupDashboard /></Layout>} />
-            <Route path="/vas/space-management/setup/seat-setup/add" element={<Layout><AddSeatSetupDashboard /></Layout>} />
-            <Route path="/vas/space-management/setup/seat-setup/edit/:id" element={<Layout><EditSeatSetupDashboard /></Layout>} />
-            <Route path="/vas/space-management/setup/shift" element={<Layout><ShiftDashboard /></Layout>} />
-            <Route path="/vas/space-management/setup/roster" element={<Layout><UserRoastersDashboard /></Layout>} />
-            <Route path="/vas/space-management/setup/roster/create" element={<Layout><CreateRosterTemplateDashboard /></Layout>} />
-            <Route path="/vas/space-management/setup/employees" element={<Layout><EmployeesDashboard /></Layout>} />
-            <Route path="/vas/space-management/setup/employees/add" element={<Layout><AddEmployeeDashboard /></Layout>} />
-            <Route path="/vas/space-management/setup/employees/edit/:id" element={<Layout><EditEmployeePage /></Layout>} />
-            <Route path="/vas/space-management/setup/check-in-margin" element={<Layout><CheckInMarginDashboard /></Layout>} />
-            <Route path="/vas/space-management/setup/roster-calendar" element={<Layout><RosterCalendarDashboard /></Layout>} />
-            <Route path="/vas/space-management/setup/export" element={<Layout><ExportDashboard /></Layout>} />
           </Routes>
           <Toaster />
         </Router>
