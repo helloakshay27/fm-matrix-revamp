@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Download, SlidersHorizontal, Edit, Search } from 'lucide-react';
@@ -148,21 +149,24 @@ export const RVehiclesDashboard = () => {
           <div className="flex items-center gap-3 p-4 border-b border-gray-200">
             <Button 
               onClick={() => setIsAddModalOpen(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded flex items-center gap-2"
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Add
             </Button>
             <Button 
               onClick={() => setIsImportModalOpen(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded flex items-center gap-2"
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
               Import
             </Button>
             <Button 
               onClick={() => setIsFilterModalOpen(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded flex items-center gap-2"
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
             >
               <SlidersHorizontal className="w-4 h-4" />
               Filters
@@ -182,9 +186,10 @@ export const RVehiclesDashboard = () => {
                 }}
                 className={`px-6 py-3 text-sm font-medium transition-colors ${
                   activeTab === tab
-                    ? 'bg-purple-600 text-white'
+                    ? 'text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
+                style={activeTab === tab ? { backgroundColor: '#C72030' } : {}}
               >
                 {tab}
               </button>
