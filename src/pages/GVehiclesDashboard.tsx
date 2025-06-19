@@ -1,148 +1,177 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Download, SlidersHorizontal, Edit } from 'lucide-react';
+import { SlidersHorizontal, Plus, Filter } from 'lucide-react';
 import { AddGVehicleModal } from '@/components/AddGVehicleModal';
-import { GVehicleImportModal } from '@/components/GVehicleImportModal';
 import { GVehicleFilterModal } from '@/components/GVehicleFilterModal';
-import { useNavigate } from 'react-router-dom';
+import { GVehicleOutDashboard } from './GVehicleOutDashboard';
 
-const vehicleData = [
+const gVehicleData = [
   {
     id: 1,
-    vehicleNumber: '5000',
-    parkingSlot: '',
-    vehicleCategory: '4 Wheeler',
-    vehicleType: 'Hatchback',
-    stickerNumber: '',
-    category: 'Owned',
-    registrationNumber: '',
-    activeInactive: true,
-    insuranceNumber: '',
-    insuranceValidTill: '22/02/2023',
-    staffName: '',
-    status: 'Active',
-    qrCode: '🔲'
+    type: 'Host',
+    name: 'Vinayak Mane',
+    vehicleNumber: '3131',
+    mobileNumber: '8898447639',
+    purpose: '',
+    inDate: '',
+    inTime: '',
+    outDate: '09/12/2024',
+    outTime: '12:21 PM'
   },
   {
     id: 2,
-    vehicleNumber: '2341',
-    parkingSlot: '12',
-    vehicleCategory: '2 Wheeler',
-    vehicleType: '',
-    stickerNumber: '11',
-    category: 'Staff',
-    registrationNumber: '',
-    activeInactive: true,
-    insuranceNumber: '55555555',
-    insuranceValidTill: '20/02/2023',
-    staffName: 'demo demo',
-    status: 'Active',
-    qrCode: '🔲'
+    type: 'Host',
+    name: 'Vinayak Mane',
+    vehicleNumber: '5551',
+    mobileNumber: '8898447639',
+    purpose: '',
+    inDate: '',
+    inTime: '',
+    outDate: '09/12/2024',
+    outTime: '12:21 PM'
   },
   {
     id: 3,
-    vehicleNumber: '4321',
-    parkingSlot: '',
-    vehicleCategory: '4 Wheeler',
-    vehicleType: 'SUV',
-    stickerNumber: '',
-    category: 'Owned',
-    registrationNumber: '',
-    activeInactive: false,
-    insuranceNumber: '',
-    insuranceValidTill: '19/02/2023',
-    staffName: '',
-    status: 'Inactive',
-    qrCode: '🔲'
+    type: 'Host',
+    name: 'Vinayak Mane',
+    vehicleNumber: '2346',
+    mobileNumber: '8898447639',
+    purpose: '',
+    inDate: '',
+    inTime: '',
+    outDate: '09/12/2024',
+    outTime: '12:21 PM'
   },
   {
     id: 4,
-    vehicleNumber: '4564',
-    parkingSlot: '',
-    vehicleCategory: '4 Wheeler',
-    vehicleType: 'Sedan',
-    stickerNumber: '65464',
-    category: 'Staff',
-    registrationNumber: '5646456',
-    activeInactive: true,
-    insuranceNumber: '64565464',
-    insuranceValidTill: '30/10/2020',
-    staffName: 'clone stage',
-    status: 'Active',
-    qrCode: '🔲'
+    type: 'Host',
+    name: 'Vinayak Mane',
+    vehicleNumber: '2434',
+    mobileNumber: '8898447639',
+    purpose: '',
+    inDate: '',
+    inTime: '',
+    outDate: '09/12/2024',
+    outTime: '12:19 PM'
   },
   {
     id: 5,
-    vehicleNumber: '464564645',
-    parkingSlot: '903',
-    vehicleCategory: '4 Wheeler',
-    vehicleType: 'Hatchback',
-    stickerNumber: '4466',
-    category: 'Staff',
-    registrationNumber: '456464',
-    activeInactive: true,
-    insuranceNumber: '46464',
-    insuranceValidTill: '31/10/2020',
-    staffName: 'check Major',
-    status: 'Active',
-    qrCode: '🔲'
+    type: 'Host',
+    name: 'Vinayak Mane',
+    vehicleNumber: '3134',
+    mobileNumber: '8898447639',
+    purpose: '',
+    inDate: '',
+    inTime: '',
+    outDate: '30/08/2024',
+    outTime: '11:09 AM'
   },
   {
     id: 6,
-    vehicleNumber: '7777',
-    parkingSlot: '902',
-    vehicleCategory: '4 Wheeler',
-    vehicleType: 'Scooter',
-    stickerNumber: '454',
-    category: 'Owned',
-    registrationNumber: '354353gdd',
-    activeInactive: true,
-    insuranceNumber: '3454354fg',
-    insuranceValidTill: '31/10/2020',
-    staffName: '',
-    status: 'Active',
-    qrCode: '🔲'
+    type: 'Host',
+    name: 'Vinayak Mane',
+    vehicleNumber: '9090',
+    mobileNumber: '8898447639',
+    purpose: '',
+    inDate: '11/04/2024',
+    inTime: '04:02 PM',
+    outDate: '11/04/2024',
+    outTime: '04:10 PM'
   },
   {
     id: 7,
-    vehicleNumber: '7890',
-    parkingSlot: '901',
-    vehicleCategory: '4 Wheeler',
-    vehicleType: 'Truck',
-    stickerNumber: '9001',
-    category: 'Workshop',
-    registrationNumber: '12345',
-    activeInactive: true,
-    insuranceNumber: '34567',
-    insuranceValidTill: '31/10/2020',
-    staffName: 'V O',
-    status: 'Active',
-    qrCode: '🔲'
+    type: 'Host',
+    name: 'Vinayak Mane',
+    vehicleNumber: 'MH8BJ9090',
+    mobileNumber: '8898447639',
+    purpose: '',
+    inDate: '11/04/2024',
+    inTime: '04:00 PM',
+    outDate: '09/12/2024',
+    outTime: '12:20 PM'
+  },
+  {
+    id: 8,
+    type: 'Host',
+    name: 'Vinayak Mane',
+    vehicleNumber: 'MH55R5555',
+    mobileNumber: '8898447639',
+    purpose: '',
+    inDate: '10/04/2024',
+    inTime: '05:38 PM',
+    outDate: '09/12/2024',
+    outTime: '12:20 PM'
+  },
+  {
+    id: 9,
+    type: 'Host',
+    name: 'Vinayak Mane',
+    vehicleNumber: 'mh0101',
+    mobileNumber: '8898447639',
+    purpose: '',
+    inDate: '06/04/2024',
+    inTime: '02:24 PM',
+    outDate: '09/12/2024',
+    outTime: '12:20 PM'
+  },
+  {
+    id: 10,
+    type: 'Host',
+    name: 'Vinayak Mane',
+    vehicleNumber: 'bp2234',
+    mobileNumber: '8898447639',
+    purpose: '',
+    inDate: '06/04/2024',
+    inTime: '02:15 PM',
+    outDate: '09/12/2024',
+    outTime: '12:20 PM'
+  },
+  {
+    id: 11,
+    type: 'Host',
+    name: 'Vinayak Mane',
+    vehicleNumber: 'MH09Q8090',
+    mobileNumber: '8898447639',
+    purpose: '',
+    inDate: '05/04/2024',
+    inTime: '05:16 PM',
+    outDate: '09/12/2024',
+    outTime: '12:20 PM'
   }
 ];
 
 export const GVehiclesDashboard = () => {
-  const [activeTab, setActiveTab] = useState('All');
+  const [activeTab, setActiveTab] = useState('History');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const navigate = useNavigate();
+  const [currentView, setCurrentView] = useState('history'); // 'history' or 'vehicle-out'
 
   const handleHistoryClick = () => {
-    navigate('/security/vehicle/g-vehicles/history');
+    setCurrentView('history');
+    setActiveTab('History');
   };
+
+  const handleVehicleOutClick = () => {
+    setCurrentView('vehicle-out');
+    setActiveTab('Vehicle Out');
+  };
+
+  // If Vehicle Out view is active, render the Vehicle Out component
+  if (currentView === 'vehicle-out') {
+    return <GVehicleOutDashboard onHistoryClick={handleHistoryClick} />;
+  }
 
   return (
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <span>vehicle parkings</span>
+          <span>G Vehicles</span>
           <span>&gt;</span>
-          <span>Vehicle Parkings</span>
+          <span>G Vehicles List</span>
         </div>
         
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">VEHICLE PARKINGS</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">G VEHICLES LIST</h1>
         
         <div className="bg-white rounded-lg border border-gray-200">
           {/* Action Buttons */}
@@ -150,18 +179,31 @@ export const GVehiclesDashboard = () => {
             <div className="flex gap-3">
               <Button 
                 onClick={() => setIsAddModalOpen(true)}
-                className="bg-[#8B4A9C] hover:bg-[#7A4089] text-white px-4 py-2 rounded flex items-center gap-2"
+                style={{ backgroundColor: '#C72030' }}
+                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Add
               </Button>
               <Button 
-                onClick={() => setIsImportModalOpen(true)}
-                variant="outline"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded flex items-center gap-2"
+                onClick={handleHistoryClick}
+                className={`px-6 py-2 rounded ${
+                  activeTab === 'History' 
+                    ? 'bg-[#C72030] hover:bg-[#C72030]/90 text-white' 
+                    : 'bg-[#C72030] hover:bg-[#C72030]/90 text-white'
+                }`}
               >
-                <Download className="w-4 h-4" />
-                Import
+                History
+              </Button>
+              <Button 
+                onClick={handleVehicleOutClick}
+                className={`px-6 py-2 rounded ${
+                  activeTab === 'Vehicle Out' 
+                    ? 'bg-[#C72030] hover:bg-[#C72030]/90 text-white' 
+                    : 'bg-[#C72030] hover:bg-[#C72030]/90 text-white'
+                }`}
+              >
+                Vehicle Out
               </Button>
               <Button 
                 onClick={() => setIsFilterModalOpen(true)}
@@ -174,103 +216,34 @@ export const GVehiclesDashboard = () => {
             </div>
           </div>
 
-          {/* Tab Navigation */}
-          <div className="flex border-b border-gray-200">
-            <button
-              onClick={handleHistoryClick}
-              className="px-6 py-3 text-sm font-medium border-b-2 transition-colors border-transparent text-gray-500 hover:text-gray-700"
-            >
-              History
-            </button>
-            <button
-              onClick={() => setActiveTab('All')}
-              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'All'
-                  ? 'border-[#8B4A9C] text-[#8B4A9C] bg-[#8B4A9C]/5'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setActiveTab('In')}
-              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'In'
-                  ? 'border-[#198754] text-[#198754] bg-[#198754]/5'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              In
-            </button>
-            <button
-              onClick={() => setActiveTab('Out')}
-              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'Out'
-                  ? 'border-[#8B4A9C] text-[#8B4A9C] bg-[#8B4A9C]/5'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Out
-            </button>
-          </div>
-
           {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">Actions</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">Vehicle Number</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">Parking Slot</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">Vehicle Category</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">Vehicle Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">Sticker Number</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">Category</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">Registration Number</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">Active/Inactive</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">Insurance Number</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">Insurance Valid Till</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">Staff Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qr Code</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle Number</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile Number</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purpose</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">In Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">In Time</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Out Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Out Time</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {vehicleData.map((vehicle) => (
+                {gVehicleData.map((vehicle) => (
                   <tr key={vehicle.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap border-r">
-                      <button className="text-gray-400 hover:text-gray-600">
-                        <Edit className="w-4 h-4" />
-                      </button>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600 font-medium border-r">{vehicle.vehicleNumber}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 border-r">{vehicle.parkingSlot}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600 border-r">{vehicle.vehicleCategory}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 border-r">{vehicle.vehicleType}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 border-r">{vehicle.stickerNumber}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 border-r">{vehicle.category}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 border-r">{vehicle.registrationNumber}</td>
-                    <td className="px-4 py-4 whitespace-nowrap border-r">
-                      <input 
-                        type="checkbox" 
-                        checked={vehicle.activeInactive} 
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" 
-                        readOnly
-                      />
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 border-r">{vehicle.insuranceNumber}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 border-r">{vehicle.insuranceValidTill}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 border-r">{vehicle.staffName}</td>
-                    <td className="px-4 py-4 whitespace-nowrap border-r">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        vehicle.status === 'Active' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {vehicle.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.qrCode}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.type}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.name}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600">{vehicle.vehicleNumber}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600">{vehicle.mobileNumber}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.purpose}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.inDate}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600">{vehicle.inTime}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.outDate}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600">{vehicle.outTime}</td>
                   </tr>
                 ))}
               </tbody>
@@ -280,18 +253,13 @@ export const GVehiclesDashboard = () => {
       </div>
 
       <AddGVehicleModal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
-      />
-      
-      <GVehicleImportModal 
-        isOpen={isImportModalOpen} 
-        onClose={() => setIsImportModalOpen(false)} 
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
       />
       
       <GVehicleFilterModal 
-        isOpen={isFilterModalOpen} 
-        onClose={() => setIsFilterModalOpen(false)} 
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
       />
     </div>
   );

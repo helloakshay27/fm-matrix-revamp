@@ -283,12 +283,6 @@ function App() {
               <Route path="/security/staff/details/:id" element={<StaffDetailsPage />} />
               <Route path="/security/staff/edit/:id" element={<EditStaffPage />} />
               
-              {/* Vehicle Routes */}
-              <Route path="/security/vehicle/r-vehicles" element={<RVehiclesDashboard />} />
-              <Route path="/security/vehicle/r-vehicles/history" element={<RVehiclesHistoryDashboard />} />
-              <Route path="/security/vehicle/g-vehicles" element={<GVehiclesDashboard />} />
-              <Route path="/security/vehicle/g-vehicles/history" element={<GVehicleOutDashboard />} />
-              
               <Route path="*" element={<NotFound />} />
             </Route>
             
