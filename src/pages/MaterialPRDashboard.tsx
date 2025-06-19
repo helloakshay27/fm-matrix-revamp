@@ -179,12 +179,7 @@ export const MaterialPRDashboard = () => {
                   </Button>
                 </TableCell>
                 <TableCell>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="p-1"
-                    onClick={() => navigate(`/finance/material-pr/details/${item.id}`)}
-                  >
+                  <Button size="sm" variant="ghost" className="p-1">
                     <Eye className="w-4 h-4" />
                   </Button>
                 </TableCell>
