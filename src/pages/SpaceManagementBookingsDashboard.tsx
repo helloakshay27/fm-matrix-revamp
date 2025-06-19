@@ -1,4 +1,6 @@
-import React, { useState, useNavigate } from 'react';
+
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Filter, Download, Upload, FileText, Eye } from "lucide-react";
