@@ -483,18 +483,14 @@ const TaskTable = () => {
       setLocalError(null);
       try {
         if (fieldName === "status") {
-          dispatch(changeTaskStatus({ token, id: taskId, payload })) // Using changeTaskStatus as per import
+          await dispatch(changeTaskStatus({ token, id: taskId, payload })) // Using changeTaskStatus as per import
             .unwrap()
-            .then(() => {
-              return dispatch(fetchTasks({ token, id: mid })).unwrap();
-            })
+            dispatch(fetchTasks({ token, id: mid })).unwrap();
         }
         else {
-          dispatch(updateTask({ token, id: taskId, payload }))
+          await dispatch(updateTask({ token, id: taskId, payload }))
             .unwrap()
-            .then(() => {
               return dispatch(fetchTasks({ token, id: mid })).unwrap();
-            })
         }
       } catch (error) {
         console.error(

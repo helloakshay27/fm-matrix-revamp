@@ -97,14 +97,15 @@ const TaskActions = ({
 
     const handleStatusSelect = useCallback(({status}) => {
         let filters = {};
+        const formattedStatus=status.toLowerCase().replace(" ","_");
 
 if (addType === "Project") {
   if (status !== "All") {
-    filters["q[status_eq]"] = status;
+    filters["q[status_eq]"] = formattedStatus;
   }
 } else {
   if (status !== "All") {
-    filters["q[status_eq]"] = status;
+    filters["q[status_eq]"] = formattedStatus;
   }
     filters["q[milestone_id_eq]"] = mid;
   
