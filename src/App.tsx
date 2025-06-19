@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -351,7 +352,7 @@ function App() {
               <Route path="/finance/po/feeds/:id" element={<POFeedsPage />} />
               <Route path="/finance/wo" element={<WODashboard />} />
               <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
-              <Route path="/finance/grn-srn" element={<GRNDashboard />} />
+              <Route path="/finance/grn-srn" element={<GRNSRNDashboard />} />
               <Route path="/finance/invoices" element={<InvoicesSESDashboard />} />
               <Route path="/finance/bill-booking" element={<BillBookingDashboard />} />
               <Route path="/finance/bill-booking/add" element={<AddNewBillDashboard />} />
