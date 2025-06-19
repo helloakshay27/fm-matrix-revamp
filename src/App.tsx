@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -220,6 +221,9 @@ import { EditApprovalMatrixDashboard } from './pages/settings/EditApprovalMatrix
 // Import Department Dashboard for Settings
 import { DepartmentDashboard } from './pages/settings/DepartmentDashboard';
 
+// Import Role Dashboard for Settings
+import { RoleDashboard } from './pages/settings/RoleDashboard';
+
 // Import Department Dashboard for Setup
 import { DepartmentDashboard as SetupDepartmentDashboard } from './pages/setup/DepartmentDashboard';
 
@@ -245,6 +249,7 @@ function App() {
               <Route path="/settings/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
               <Route path="/settings/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
               <Route path="/settings/roles/department" element={<DepartmentDashboard />} />
+              <Route path="/settings/roles/role" element={<RoleDashboard />} />
               
               {/* Snagging Routes */}
               <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
