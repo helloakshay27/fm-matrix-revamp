@@ -392,6 +392,9 @@ function App() {
               <Route path="/setup/tag" element={<div>Tag</div>} />
               <Route path="/setup/export" element={<ExportDashboard />} />
             </Route>
+            
+            {/* VAS Routes that need to be outside the main layout */}
+            <Route path="/vas/space-management/setup/seat-type" element={<Layout><SeatTypeDashboard /></Layout>} />
           </Routes>
           <Toaster />
         </Router>
