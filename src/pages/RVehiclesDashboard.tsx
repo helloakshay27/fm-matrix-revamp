@@ -1,13 +1,30 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Download, SlidersHorizontal, Edit, Search } from 'lucide-react';
 import { AddVehicleParkingModal } from '@/components/AddVehicleParkingModal';
 import { RVehicleImportModal } from '@/components/RVehicleImportModal';
 import { RVehicleFilterModal } from '@/components/RVehicleFilterModal';
+import { EditVehicleDialog } from '@/components/EditVehicleDialog';
 import { useNavigate } from 'react-router-dom';
 
-const vehicleData = [
+interface Vehicle {
+  id: number;
+  vehicleNumber: string;
+  parkingSlot: string;
+  vehicleCategory: string;
+  vehicleType: string;
+  stickerNumber: string;
+  category: string;
+  registrationNumber: string;
+  activeInactive: boolean;
+  insuranceNumber: string;
+  insuranceValidTill: string;
+  staffName: string;
+  statusCode: string;
+  qrCode: string;
+}
+
+const initialVehicleData: Vehicle[] = [
   {
     id: 1,
     vehicleNumber: '5000',
@@ -127,6 +144,9 @@ export const RVehiclesDashboard = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [vehicleData, setVehicleData] = useState(initialVehicleData);
   const navigate = useNavigate();
 
   const handleHistoryClick = () => {
@@ -142,6 +162,20 @@ export const RVehiclesDashboard = () => {
     } else if (tab === 'Out') {
       navigate('/security/vehicle/r-vehicles/out');
     }
+  };
+
+  const handleEditClick = (vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveVehicle = (updatedVehicle: Vehicle) => {
+    setVehicleData(prevData => 
+      prevData.map(vehicle => 
+        vehicle.id === updatedVehicle.id ? updatedVehicle : vehicle
+      )
+    );
+    console.log('Vehicle updated:', updatedVehicle);
   };
 
   return (
@@ -227,7 +261,10 @@ export const RVehiclesDashboard = () => {
                 {vehicleData.map((vehicle) => (
                   <tr key={vehicle.id} className="hover:bg-gray-50">
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <button className="text-gray-400 hover:text-gray-600">
+                      <button 
+                        onClick={() => handleEditClick(vehicle)}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
                         <Edit className="w-4 h-4" />
                       </button>
                     </td>
@@ -280,6 +317,13 @@ export const RVehiclesDashboard = () => {
       <RVehicleFilterModal 
         isOpen={isFilterModalOpen} 
         onClose={() => setIsFilterModalOpen(false)} 
+      />
+      
+      <EditVehicleDialog 
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        vehicle={selectedVehicle}
+        onSave={handleSaveVehicle}
       />
     </div>
   );
