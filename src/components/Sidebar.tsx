@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -14,12 +13,6 @@ import {
   HandHeart, Briefcase, BookOpen, FileSpreadsheet, Target,
   Layers, Archive, UserCog, TreePine, FlaskConical
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const modulesByPackage = {
   'Transitioning': [
@@ -265,8 +258,6 @@ export const Sidebar = () => {
   const location = useLocation();
   const { currentSection, setCurrentSection } = useLayout();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-  const [selectedDepartment, setSelectedDepartment] = useState('');
-  const [selectedRole, setSelectedRole] = useState('');
 
   const toggleExpanded = (itemName: string) => {
     setExpandedItems(prev => 
@@ -305,27 +296,6 @@ export const Sidebar = () => {
   }, [location.pathname, setCurrentSection]);
 
   const currentModules = modulesByPackage[currentSection] || [];
-
-  // Check if we're on the roles page
-  const isOnRolesPage = location.pathname === '/settings/roles' || location.pathname.startsWith('/setup/user-role/role');
-
-  const departments = [
-    'Human Resources',
-    'Information Technology',
-    'Finance',
-    'Operations',
-    'Security',
-    'Maintenance'
-  ];
-
-  const roles = [
-    'Admin',
-    'Manager',
-    'Supervisor',
-    'Executive',
-    'Staff',
-    'Intern'
-  ];
 
   const renderMenuItem = (item: any, level: number = 0) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
@@ -430,51 +400,6 @@ export const Sidebar = () => {
             <h3 className="text-sm font-medium text-[#1a1a1a] opacity-70 uppercase tracking-wide">
               {currentSection}
             </h3>
-          </div>
-        )}
-
-        {/* Department and Role Dropdowns - Only show on Roles page */}
-        {isOnRolesPage && (
-          <div className="mb-6 space-y-3">
-            <div>
-              <DropdownMenu>
-                <DropdownMenuTrigger className="w-full bg-[#4A1A4C] text-white px-3 py-2 rounded text-sm font-medium text-left flex items-center justify-between hover:bg-[#5A2A5C] transition-colors">
-                  {selectedDepartment || 'Department'}
-                  <ChevronDown className="w-4 h-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-white border border-gray-200 shadow-lg z-50">
-                  {departments.map((dept) => (
-                    <DropdownMenuItem
-                      key={dept}
-                      onClick={() => setSelectedDepartment(dept)}
-                      className="cursor-pointer hover:bg-gray-100"
-                    >
-                      {dept}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            
-            <div>
-              <DropdownMenu>
-                <DropdownMenuTrigger className="w-full bg-[#4A1A4C] text-white px-3 py-2 rounded text-sm font-medium text-left flex items-center justify-between hover:bg-[#5A2A5C] transition-colors">
-                  {selectedRole || 'Role'}
-                  <ChevronDown className="w-4 h-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-white border border-gray-200 shadow-lg z-50">
-                  {roles.map((role) => (
-                    <DropdownMenuItem
-                      key={role}
-                      onClick={() => setSelectedRole(role)}
-                      className="cursor-pointer hover:bg-gray-100"
-                    >
-                      {role}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
           </div>
         )}
         
