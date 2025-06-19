@@ -2,103 +2,119 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Download, SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
 import { GatePassInwardsFilterModal } from '@/components/GatePassInwardsFilterModal';
 
 export const GatePassInwardsDashboard = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
-  // Sample data based on the screenshot
-  const gatePassData = [
+  // Data matching the screenshot
+  const inwardData = [
     {
-      id: "GP001",
-      type: "Visitor",
-      category: "Guest",
-      personName: "John Smith",
+      id: "4102",
+      type: "",
+      category: "Visitor",
+      personName: "Aniket",
       profileImage: "/placeholder.svg",
-      passNo: "VP2024001",
-      modeOfTransport: "Car",
-      lrNo: "LR001",
-      tripId: "T001",
-      gateEntry: "Gate A",
-      itemDetails: "Laptop, Documents"
+      passNo: "",
+      modeOfTransport: "",
+      lrNo: "",
+      tripId: "",
+      gateEntry: "7-10027",
+      itemDetails: "- Drill machine serials 1244 -"
     },
     {
-      id: "GP002",
-      type: "Vendor",
-      category: "Delivery",
-      personName: "Sarah Johnson",
+      id: "1083",
+      type: "Faulty",
+      category: "Vendor",
+      personName: "Haven infoline",
       profileImage: "/placeholder.svg",
-      passNo: "VP2024002",
-      modeOfTransport: "Truck",
-      lrNo: "LR002",
-      tripId: "T002",
-      gateEntry: "Gate B",
-      itemDetails: "Office Supplies"
+      passNo: "143",
+      modeOfTransport: "By Hand",
+      lrNo: "Bbvbb",
+      tripId: "0",
+      gateEntry: "7-10026",
+      itemDetails: "RAN - 1 - MW - -"
     },
     {
-      id: "GP003",
-      type: "Employee",
+      id: "864",
+      type: "SRN",
+      category: "Visitor",
+      personName: "Yash",
+      profileImage: "/placeholder.svg",
+      passNo: "",
+      modeOfTransport: "By Hand",
+      lrNo: "",
+      tripId: "",
+      gateEntry: "7-10025",
+      itemDetails: "Transmission - - MW - -"
+    },
+    {
+      id: "863",
+      type: "SRN",
       category: "Staff",
-      personName: "Mike Davis",
+      personName: "demo demo",
       profileImage: "/placeholder.svg",
-      passNo: "EP2024001",
-      modeOfTransport: "Bike",
-      lrNo: "LR003",
-      tripId: "T003",
-      gateEntry: "Gate A",
-      itemDetails: "Personal Items"
+      passNo: "",
+      modeOfTransport: "By Hand",
+      lrNo: "",
+      tripId: "",
+      gateEntry: "7-10024",
+      itemDetails: "Transmission - - 5 Transmission - -"
     },
     {
-      id: "GP004",
-      type: "Contractor",
-      category: "Maintenance",
-      personName: "Lisa Wilson",
+      id: "862",
+      type: "Fresh",
+      category: "Visitor",
+      personName: "Prashant",
       profileImage: "/placeholder.svg",
-      passNo: "CP2024001",
-      modeOfTransport: "Van",
-      lrNo: "LR004",
-      tripId: "T004",
-      gateEntry: "Gate C",
-      itemDetails: "Tools, Equipment"
+      passNo: "",
+      modeOfTransport: "By Hand",
+      lrNo: "",
+      tripId: "",
+      gateEntry: "7-10023",
+      itemDetails: "Transmission - - Transmission - - Transmission - -"
+    },
+    {
+      id: "861",
+      type: "SRN",
+      category: "Visitor",
+      personName: "bilal",
+      profileImage: "/placeholder.svg",
+      passNo: "",
+      modeOfTransport: "By Hand",
+      lrNo: "",
+      tripId: "",
+      gateEntry: "7-10022",
+      itemDetails: "MW - - Transmission - - Transmission - -"
+    },
+    {
+      id: "860",
+      type: "Faulty",
+      category: "Visitor",
+      personName: "Saurabh",
+      profileImage: "/placeholder.svg",
+      passNo: "",
+      modeOfTransport: "By Hand",
+      lrNo: "",
+      tripId: "",
+      gateEntry: "7-10021",
+      itemDetails: "MW - - Transmission - -"
     }
   ];
 
   const handleViewDetails = (id: string) => {
     console.log('View details for:', id);
-    // This could navigate to a details page or open a modal
-  };
-
-  const handleExport = () => {
-    console.log('Exporting gate pass data...');
-    // Export functionality would be implemented here
-  };
-
-  const handleAddInwardsPass = () => {
-    console.log('Adding new inwards pass...');
-    // Add new pass functionality would be implemented here
   };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg border border-gray-200">
-        {/* Action Buttons */}
-        <div className="flex items-center gap-3 p-4 border-b border-gray-200">
-          <Button 
-            onClick={handleAddInwardsPass}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add Inwards Pass
-          </Button>
-          <Button 
-            variant="outline"
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded flex items-center gap-2"
-            onClick={handleExport}
-          >
-            <Download className="w-4 h-4" />
-            Export
-          </Button>
+        {/* Header */}
+        <div className="p-4 border-b border-gray-200">
+          <h1 className="text-xl font-semibold text-gray-900 mb-4">Inward List</h1>
+          
+          {/* Filters Button */}
           <Button 
             variant="outline"
             className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded flex items-center gap-2"
@@ -128,7 +144,7 @@ export const GatePassInwardsDashboard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {gatePassData.map((entry) => (
+              {inwardData.map((entry) => (
                 <TableRow key={entry.id} className="hover:bg-gray-50">
                   <TableCell className="font-medium text-blue-600">
                     <button
@@ -153,26 +169,11 @@ export const GatePassInwardsDashboard = () => {
                   <TableCell>{entry.lrNo}</TableCell>
                   <TableCell>{entry.tripId}</TableCell>
                   <TableCell>{entry.gateEntry}</TableCell>
-                  <TableCell className="max-w-xs truncate">{entry.itemDetails}</TableCell>
+                  <TableCell className="max-w-xs">{entry.itemDetails}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </div>
-
-        {/* Pagination */}
-        <div className="p-4 border-t border-gray-200 flex justify-between items-center">
-          <span className="text-sm text-gray-600">
-            Showing {gatePassData.length} entries
-          </span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled>
-              Previous
-            </Button>
-            <Button variant="outline" size="sm" disabled>
-              Next
-            </Button>
-          </div>
         </div>
       </div>
 
