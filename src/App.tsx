@@ -236,6 +236,9 @@ import { EditFMUserDetailsPage } from './pages/settings/EditFMUserDetailsPage';
 import { EnergyAssetDetailsPage } from './pages/EnergyAssetDetailsPage';
 import { EditEnergyAssetPage } from './pages/EditEnergyAssetPage';
 
+// Import Water Asset Details Route
+import { WaterAssetDetailsPage } from './pages/WaterAssetDetailsPage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -379,6 +382,9 @@ function App() {
               {/* Energy Asset Routes */}
               <Route path="/utility/energy/details/:id" element={<EnergyAssetDetailsPage />} />
               <Route path="/utility/energy/edit/:id" element={<EditEnergyAssetPage />} />
+              
+              {/* Water Asset Details Route */}
+              <Route path="/utility/water/details/:id" element={<WaterAssetDetailsPage />} />
               
               {/* Security/Visitors Routes */}
               <Route path="/security/gate-pass" element={<GatePassDashboard />} />

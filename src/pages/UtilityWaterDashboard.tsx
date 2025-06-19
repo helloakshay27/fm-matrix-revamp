@@ -3,12 +3,11 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Search, Plus, Import, RefreshCw, FileDown, Printer, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { WaterFilterDialog } from '../components/WaterFilterDialog';
 import { BulkUploadDialog } from '../components/BulkUploadDialog';
+import { WaterAssetTable } from '../components/WaterAssetTable';
 
 export const UtilityWaterDashboard = () => {
   const navigate = useNavigate();
@@ -18,15 +17,9 @@ export const UtilityWaterDashboard = () => {
   const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
 
   const stats = [
-    { title: 'Total Asset', value: '0', color: 'bg-red-500' },
-    { title: 'In Use', value: '0', color: 'bg-green-500' },
+    { title: 'Total Asset', value: '2', color: 'bg-red-500' },
+    { title: 'In Use', value: '2', color: 'bg-green-500' },
     { title: 'Breakdown', value: '0', color: 'bg-red-600' }
-  ];
-
-  const tableHeaders = [
-    'Actions', 'Asset Name', 'Asset ID', 'Asset Code', 'Asset No.', 
-    'Asset Status', 'Equipment Id', 'Site', 'Building', 'Wing', 
-    'Floor', 'Area', 'Room', 'Meter Type', 'Asset Type'
   ];
 
   const handleAdd = () => {
@@ -46,8 +39,9 @@ export const UtilityWaterDashboard = () => {
   const handleExportAll = () => {
     // Create and download CSV file
     const csvContent = "data:text/csv;charset=utf-8," + 
-      tableHeaders.join(",") + "\n" +
-      "No data available in table";
+      "Asset Name,Asset ID,Asset Code,Asset No.,Asset Status,Equipment Id,Site,Building,Wing,Floor,Area,Room,Meter Type,Asset Type\n" +
+      "Borewell,53619,83898732f107c5df0121,505,In Use,,Located Site 1,Sarova,SW1,FW1,AW1,,Sub Meter,Comprehensive\n" +
+      "Tanker,53615,c302fd076e1a78a9116,502,In Use,,Located Site 1,Twin Tower,,,,,Sub Meter,Non-Comprehensive";
     
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -190,27 +184,7 @@ export const UtilityWaterDashboard = () => {
       {/* Data Table */}
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">
-                  <Checkbox />
-                </TableHead>
-                {tableHeaders.map((header, index) => (
-                  <TableHead key={index} className="min-w-32">
-                    {header}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell colSpan={tableHeaders.length + 1} className="text-center py-8 text-gray-500">
-                  No data available
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+          <WaterAssetTable />
         </CardContent>
       </Card>
 
