@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus, Eye, Edit, Search, Filter, Download } from "lucide-react";
+import { Plus, Eye, Search, Filter, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { GRNFilterDialog } from "@/components/GRNFilterDialog";
 import { useNavigate } from 'react-router-dom';
@@ -259,9 +258,6 @@ export const GRNDashboard = () => {
                       onClick={() => navigate(`/finance/grn-srn/details/${item.id}`)}
                     >
                       <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost" className="p-1">
-                      <Edit className="w-4 h-4" />
                     </Button>
                   </div>
                 </TableCell>

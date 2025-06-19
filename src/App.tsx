@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -201,6 +200,7 @@ import { WODashboard } from './pages/WODashboard';
 import { GRNDashboard } from './pages/GRNDashboard';
 import { AddGRNDashboard } from './pages/AddGRNDashboard';
 import { GRNDetailsPage } from './pages/GRNDetailsPage';
+import { GRNFeedsPage } from './pages/GRNFeedsPage';
 import { AutoSavedPRDashboard } from './pages/AutoSavedPRDashboard';
 import { InvoicesSESDashboard } from './pages/InvoicesSESDashboard';
 import { OtherBillsDashboard } from './pages/OtherBillsDashboard';
@@ -294,6 +294,7 @@ function App() {
               <Route path="/finance/grn-srn" element={<GRNDashboard />} />
               <Route path="/finance/grn-srn/add" element={<AddGRNDashboard />} />
               <Route path="/finance/grn-srn/details/:id" element={<GRNDetailsPage />} />
+              <Route path="/finance/grn-srn/feeds/:id" element={<GRNFeedsPage />} />
               <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
               <Route path="/finance/invoices" element={<InvoicesSESDashboard />} />
               <Route path="/finance/bill-booking" element={<OtherBillsDashboard />} />

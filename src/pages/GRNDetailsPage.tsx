@@ -7,6 +7,10 @@ export const GRNDetailsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  const handleFeedsClick = () => {
+    navigate(`/finance/grn-srn/feeds/${id}`);
+  };
+
   const grnData = {
     id: "6703",
     supplier: "ABC",
@@ -92,7 +96,10 @@ export const GRNDetailsPage = () => {
           <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
             Print
           </Button>
-          <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+          <Button 
+            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            onClick={handleFeedsClick}
+          >
             Feeds
           </Button>
         </div>
