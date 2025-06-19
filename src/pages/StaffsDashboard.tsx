@@ -147,8 +147,7 @@ export const StaffsDashboard = () => {
   };
 
   const handleEditStaff = (staffId: string) => {
-    console.log('Edit staff:', staffId);
-    // Navigate to edit page or open edit modal
+    navigate(`/security/staff/edit/${staffId}`);
   };
 
   const filteredData = () => {

@@ -84,6 +84,9 @@ import { StaffsDashboard } from './pages/StaffsDashboard';
 // Import Staff Details page
 import { StaffDetailsPage } from './pages/StaffDetailsPage';
 
+// Import Edit Staff page
+import { EditStaffPage } from './pages/EditStaffPage';
+
 // Import Value Added Services pages
 import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
 import ParkingDashboard from './pages/ParkingDashboard';
@@ -278,6 +281,7 @@ function App() {
               <Route path="/security/visitor/history" element={<VisitorsHistoryDashboard />} />
               <Route path="/security/staff" element={<StaffsDashboard />} />
               <Route path="/security/staff/details/:id" element={<StaffDetailsPage />} />
+              <Route path="/security/staff/edit/:id" element={<EditStaffPage />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
