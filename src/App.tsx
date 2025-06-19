@@ -193,6 +193,7 @@ import { SpaceManagementBookingDetailsPage } from './pages/SpaceManagementBookin
 
 // Import Finance pages
 import { MaterialPRDashboard } from './pages/MaterialPRDashboard';
+import { MaterialPRDetailsPage } from './pages/MaterialPRDetailsPage';
 import { ServicePRDashboard } from './pages/ServicePRDashboard';
 import { AddMaterialPRDashboard } from './pages/AddMaterialPRDashboard';
 import { AddServicePRDashboard } from './pages/AddServicePRDashboard';
@@ -328,6 +329,7 @@ function App() {
               <Route path="/finance/material-pr" element={<MaterialPRDashboard />} />
               <Route path="/finance/material-pr/add" element={<AddMaterialPRDashboard />} />
               <Route path="/finance/material-pr/edit/:id" element={<EditMaterialPRDashboard />} />
+              <Route path="/finance/material-pr/details/:id" element={<MaterialPRDetailsPage />} />
               <Route path="/finance/service-pr" element={<ServicePRDashboard />} />
               <Route path="/finance/service-pr/add" element={<AddServicePRDashboard />} />
               <Route path="/finance/po" element={<PODashboard />} />
