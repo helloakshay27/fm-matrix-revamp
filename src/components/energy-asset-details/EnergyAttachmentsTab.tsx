@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 
 export const EnergyAttachmentsTab = () => {
   const attachmentTypes = [
-    { name: 'Manual Uploads', count: 0, active: true },
-    { name: 'Insurance Details', count: 0, active: false },
-    { name: 'Purchase Invoice', count: 0, active: false },
-    { name: 'Other Uploads', count: 0, active: false }
+    { name: 'Manual Uploads', count: 1, active: true },
+    { name: 'Insurance Details', count: 1, active: false },
+    { name: 'Purchase Invoice', count: 1, active: false },
+    { name: 'Other Uploads', count: 1, active: false }
   ];
 
   return (
@@ -27,8 +27,13 @@ export const EnergyAttachmentsTab = () => {
         ))}
       </div>
 
-      <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
-        <p className="text-gray-500 text-lg">No attachments</p>
+      <div className="space-y-4">
+        <div className="flex items-center">
+          <div className="w-8 h-8 bg-gray-200 rounded mr-3"></div>
+          <div className="flex-1">
+            <div className="text-blue-600 underline cursor-pointer">Download</div>
+          </div>
+        </div>
       </div>
     </div>
   );

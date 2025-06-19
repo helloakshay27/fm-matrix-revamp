@@ -1,28 +1,47 @@
 
 import React from 'react';
+import { Eye } from 'lucide-react';
 
 export const EnergyAMCDetailsTab = () => {
   return (
-    <div className="flex flex-col items-center justify-center py-20">
+    <div className="space-y-6">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
           <span className="text-white text-xs">✕</span>
         </div>
-        <h3 className="text-xl font-semibold text-[#C72030] uppercase">AMC Details</h3>
+        <h3 className="text-lg font-semibold text-[#C72030] uppercase">AMC Details</h3>
       </div>
-      
-      <div className="relative mb-6">
-        <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-          <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center">
-            <div className="w-12 h-8 bg-gray-300 rounded"></div>
-          </div>
-        </div>
-        <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center">
-          <span className="text-white text-lg">🔍</span>
-        </div>
+
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Sr.No</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Supplier</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Start Date</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">End Date</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">First Service</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Created On</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Action</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            <tr>
+              <td className="px-4 py-3 text-sm text-gray-900">1</td>
+              <td className="px-4 py-3 text-sm text-gray-900">Schneider</td>
+              <td className="px-4 py-3 text-sm text-gray-900">12/25/2024</td>
+              <td className="px-4 py-3 text-sm text-gray-900">01/05/2025</td>
+              <td className="px-4 py-3 text-sm text-gray-900">17/02/2025</td>
+              <td className="px-4 py-3 text-sm text-gray-900">04/02/2025</td>
+              <td className="px-4 py-3">
+                <button className="text-gray-500 hover:text-gray-700">
+                  <Eye className="w-4 h-4" />
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      
-      <h2 className="text-2xl font-semibold text-gray-800 mb-2">No AMC available</h2>
     </div>
   );
 };

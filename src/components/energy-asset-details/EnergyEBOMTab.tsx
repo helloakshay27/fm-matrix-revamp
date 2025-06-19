@@ -36,8 +36,27 @@ export const EnergyEBOMTab = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Expiry Date</th>
               </tr>
             </thead>
-            <tbody>
-              {/* Empty table */}
+            <tbody className="bg-white divide-y divide-gray-200">
+              <tr>
+                <td className="px-4 py-3 text-sm text-gray-900">Diesel</td>
+                <td className="px-4 py-3 text-sm text-gray-900">95905</td>
+                <td className="px-4 py-3 text-sm text-gray-900">Consumable</td>
+                <td className="px-4 py-3 text-sm text-gray-900">Electrical System</td>
+                <td className="px-4 py-3 text-sm text-gray-900">DG Set</td>
+                <td className="px-4 py-3 text-sm text-gray-900">Non Technical</td>
+                <td className="px-4 py-3 text-sm text-gray-900">Non-Critical</td>
+                <td className="px-4 py-3 text-sm text-gray-900">5.0</td>
+                <td className="px-4 py-3 text-sm text-gray-900">Litre</td>
+                <td className="px-4 py-3 text-sm text-gray-900">660.0</td>
+                <td className="px-4 py-3 text-sm text-gray-900"></td>
+                <td className="px-4 py-3 text-sm text-gray-900">2</td>
+                <td className="px-4 py-3 text-sm text-gray-900">7</td>
+                <td className="px-4 py-3 text-sm text-blue-600">DIESEL GENERATOR</td>
+                <td className="px-4 py-3">
+                  <div className="w-6 h-3 bg-red-500 rounded-full"></div>
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-900">09/05/2025</td>
+              </tr>
             </tbody>
           </table>
         </div>
