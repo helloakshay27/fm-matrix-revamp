@@ -142,6 +142,15 @@ export const StaffsDashboard = () => {
     // Search functionality is already implemented via filteredData
   };
 
+  const handleViewStaff = (staffId: string) => {
+    window.location.href = `/security/staff/details/${staffId}`;
+  };
+
+  const handleEditStaff = (staffId: string) => {
+    console.log('Edit staff:', staffId);
+    // Navigate to edit page or open edit modal
+  };
+
   const filteredData = () => {
     if (activeTab === 'history') {
       return historyData.filter(staff =>
@@ -196,12 +205,20 @@ export const StaffsDashboard = () => {
                   <input type="checkbox" className="rounded" />
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleViewStaff(staff.id)}
+                  >
                     <Eye className="w-4 h-4 text-blue-600" />
                   </Button>
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleEditStaff(staff.id)}
+                  >
                     <Edit className="w-4 h-4 text-green-600" />
                   </Button>
                 </TableCell>
@@ -333,7 +350,7 @@ export const StaffsDashboard = () => {
               </Button>
               <Button 
                 onClick={() => setIsFilterModalOpen(true)}
-                style={{ backgroundColor: '#C72030' }}
+                style={{ backgroundColor: '#C772030' }}
                 className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md"
               >
                 <Filter className="w-4 h-4 mr-2" />

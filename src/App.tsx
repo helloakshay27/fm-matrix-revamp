@@ -81,6 +81,9 @@ import { PatrollingDashboard } from './pages/PatrollingDashboard';
 // Import Staff pages
 import { StaffsDashboard } from './pages/StaffsDashboard';
 
+// Import Staff Details page
+import { StaffDetailsPage } from './pages/StaffDetailsPage';
+
 // Import Value Added Services pages
 import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
 import ParkingDashboard from './pages/ParkingDashboard';
@@ -274,40 +277,7 @@ function App() {
               <Route path="/security/visitor" element={<VisitorsDashboard />} />
               <Route path="/security/visitor/history" element={<VisitorsHistoryDashboard />} />
               <Route path="/security/staff" element={<StaffsDashboard />} />
-              <Route path="/security/vehicle" element={<VehicleParkingDashboard />} />
-              <Route path="/security/vehicle/r-vehicles" element={<RVehiclesDashboard />} />
-              <Route path="/security/vehicle/r-vehicles/history" element={<RVehiclesHistoryDashboard />} />
-              <Route path="/security/vehicle/g-vehicles" element={<GVehiclesDashboard />} />
-              <Route path="/security/vehicle/g-vehicles/out" element={<GVehicleOutDashboard />} />
-              <Route path="/security/patrolling" element={<PatrollingDashboard />} />
-              
-              {/* Value Added Services Routes */}
-              <Route path="/vas/fnb" element={<FnBRestaurantDashboard />} />
-              <Route path="/vas/parking" element={<ParkingDashboard />} />
-              <Route path="/property/parking/bookings" element={<ParkingBookingsDashboard />} />
-              
-              {/* Space Management Routes */}
-              <Route path="/vas/space-management/bookings" element={<SpaceManagementBookingsDashboard />} />
-              <Route path="/vas/space-management/seat-requests" element={<SpaceManagementSeatRequestsDashboard />} />
-              <Route path="/vas/space-management/setup/seat-type" element={<SeatTypeDashboard />} />
-              <Route path="/vas/space-management/setup/seat-setup" element={<SeatSetupDashboard />} />
-              <Route path="/vas/space-management/setup/seat-setup/add" element={<AddSeatSetupDashboard />} />
-              <Route path="/vas/space-management/setup/seat-setup/edit/:id" element={<EditSeatSetupDashboard />} />
-              <Route path="/vas/space-management/setup/shift" element={<ShiftDashboard />} />
-              <Route path="/vas/space-management/setup/roaster" element={<UserRoastersDashboard />} />
-              <Route path="/vas/space-management/setup/roaster/add" element={<CreateRosterTemplateDashboard />} />
-              <Route path="/vas/space-management/setup/roaster/calendar" element={<RosterCalendarDashboard />} />
-              <Route path="/vas/space-management/setup/roster-calendar" element={<RosterCalendarDashboard />} />
-              <Route path="/vas/space-management/setup/employees" element={<EmployeesDashboard />} />
-              <Route path="/vas/space-management/setup/employees/add" element={<AddEmployeeDashboard />} />
-              <Route path="/vas/space-management/setup/employees/details/:id" element={<EmployeeDetailsPage />} />
-              <Route path="/vas/space-management/setup/employees/edit/:id" element={<EditEmployeePage />} />
-              <Route path="/vas/space-management/setup/check-in-margin" element={<CheckInMarginDashboard />} />
-              <Route path="/vas/space-management/setup/export" element={<ExportDashboard />} />
-              
-              {/* Permit Routes */}
-              <Route path="/maintenance/permit" element={<PermitListDashboard />} />
-              <Route path="/maintenance/permit/add" element={<AddPermitPage />} />
+              <Route path="/security/staff/details/:id" element={<StaffDetailsPage />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
