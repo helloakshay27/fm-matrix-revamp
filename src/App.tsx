@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -205,6 +204,10 @@ import { OtherBillsDashboard } from './pages/OtherBillsDashboard';
 import { PendingApprovalsDashboard } from './pages/PendingApprovalsDashboard';
 import { AddNewBillDashboard } from './pages/AddNewBillDashboard';
 
+// Import Settings pages
+import { FMUsersDashboard } from './pages/settings/FMUsersDashboard';
+import { CloneRolePage } from './pages/settings/CloneRolePage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -215,6 +218,10 @@ function App() {
           <Routes>
             <Route path="/" element={<Layout><div /></Layout>}>
               <Route index element={<Index />} />
+              
+              {/* Settings Routes */}
+              <Route path="/settings/users" element={<FMUsersDashboard />} />
+              <Route path="/settings/users/clone-role" element={<CloneRolePage />} />
               
               {/* Snagging Routes */}
               <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
