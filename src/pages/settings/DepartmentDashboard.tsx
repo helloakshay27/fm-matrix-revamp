@@ -19,7 +19,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
-import { Edit, Plus, X } from 'lucide-react';
+import { Edit, Plus } from 'lucide-react';
 
 interface Department {
   id: number;
@@ -33,6 +33,7 @@ export const DepartmentDashboard = () => {
   const [departmentName, setDepartmentName] = useState('');
   const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
   const [editDepartmentName, setEditDepartmentName] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [departments, setDepartments] = useState<Department[]>([
     { id: 1, name: '1', status: true },
     { id: 2, name: 'ABC', status: false },
@@ -82,6 +83,11 @@ export const DepartmentDashboard = () => {
       dept.id === id ? { ...dept, status: !dept.status } : dept
     ));
   };
+
+  // Filter departments based on search term
+  const filteredDepartments = departments.filter(department =>
+    department.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -139,6 +145,8 @@ export const DepartmentDashboard = () => {
         <div className="mb-4">
           <Input
             placeholder="Search"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-xs"
           />
         </div>
@@ -153,7 +161,7 @@ export const DepartmentDashboard = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {departments.map((department) => (
+            {filteredDepartments.map((department) => (
               <TableRow key={department.id} className="hover:bg-gray-50">
                 <TableCell>{department.name}</TableCell>
                 <TableCell>
@@ -180,16 +188,8 @@ export const DepartmentDashboard = () => {
         {/* Edit Department Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-md">
-            <DialogHeader className="flex flex-row items-center justify-between pb-4">
+            <DialogHeader>
               <DialogTitle className="text-lg font-semibold">Edit Details</DialogTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsEditDialogOpen(false)}
-                className="h-6 w-6 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
             </DialogHeader>
             <div className="space-y-4">
               <div>
