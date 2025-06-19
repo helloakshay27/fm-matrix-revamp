@@ -216,6 +216,9 @@ import { ApprovalMatrixDashboard } from './pages/settings/ApprovalMatrixDashboar
 import { AddApprovalMatrixDashboard } from './pages/settings/AddApprovalMatrixDashboard';
 import { EditApprovalMatrixDashboard } from './pages/settings/EditApprovalMatrixDashboard';
 
+// Import AddNewBillDashboard
+import { AddNewBillDashboard } from './pages/AddNewBillDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -307,6 +310,7 @@ function App() {
               <Route path="/finance/grn-srn" element={<GRNSRNDashboard />} />
               <Route path="/finance/invoices" element={<InvoicesDashboard />} />
               <Route path="/finance/bill-booking" element={<BillBookingDashboard />} />
+              <Route path="/finance/bill-booking/add" element={<AddNewBillDashboard />} />
               <Route path="/finance/pending-approvals" element={<PendingApprovalsDashboard />} />
               
               {/* Maintenance Routes */}
