@@ -11,74 +11,65 @@ export const GRNDetailsPage = () => {
     navigate(`/finance/grn-srn/feeds/${id}`);
   };
 
+  const handlePrintClick = () => {
+    window.print();
+  };
+
   const grnData = {
-    id: "6703",
-    supplier: "ABC",
-    phone: "7239013238",
-    email: "stylorssamenayyo146@gmail.com",
-    pan: "BGGBF770796",
-    invoiceNumber: "123",
-    invoiceDate: "22-04-25",
-    postingDate: "22-04-25",
+    id: "6407",
+    supplier: "Saturn",
+    phone: "9876543210",
+    email: "saturn@email.com",
+    pan: "AD1212",
+    fax: "9876543210",
+    gst: "6767",
+    address: "Saturn, POR Road",
+    invoiceNumber: "",
+    invoiceDate: "27-03-25",
+    postingDate: "27-03-25",
     retentionAmount: "0.0",
     tdsAmount: "0.0",
     poReferenceNumber: "",
-    grnAmount: "1800.0",
+    grnAmount: "100.0",
     paymentMode: "",
-    payableAmount: "2124.0",
+    payableAmount: "100.0",
     relatedTo: "",
     physicalInvoiceSentTo: "",
-    grossAmount: "2124.0",
+    grossAmount: "100.0",
     notes: "",
-    jyoti: {
-      fax: "178788guy#65r65",
-      gst: "7jqfy8N76657",
-      address: "demo world"
-    },
     grn: {
       referenceNo: "",
-      id: "6703",
-      supplierName: "ABC",
-      poNumber: "121249",
+      id: "6407",
+      supplierName: "Check",
+      poNumber: "110517",
       qcAmount: "0.0",
-      totalTaxes: "324.0",
-      poAmount: "2720.0",
-      invoiceAmount: "2720.0",
-      grnAmount: "1800.0",
+      totalTaxes: "0.0",
+      poAmount: "100.0",
+      invoiceAmount: "100.0",
+      grnAmount: "100.0",
       physicalInvoiceReceived: ""
     }
   };
 
   const inventoryData = [
     {
-      inventory: "Carpet Brush",
+      inventory: "A4 Size Papers",
       expectedQuantity: "10.0",
-      receivedQuantity: "9",
-      unit: "70.0",
-      rate: "9.0",
+      receivedQuantity: "10",
+      unit: "10.0",
+      rate: "10.0",
       approvedQty: "0.0",
       rejectedQty: "0.0",
-      cgstRate: "9.0",
-      cgstAmount: "56.7",
-      sgstRate: "9.0",
-      sgstAmount: "56.7",
+      cgstRate: "NA",
+      cgstAmount: "0.0",
+      sgstRate: "NA",
+      sgstAmount: "0.0",
       igstRate: "NA",
-      igstAmount: "0.0"
-    },
-    {
-      inventory: "Cruet Set",
-      expectedQuantity: "10.0",
-      receivedQuantity: "9",
-      unit: "130.0",
-      rate: "9.0",
-      approvedQty: "0.0",
-      rejectedQty: "0.0",
-      cgstRate: "9.0",
-      cgstAmount: "105.3",
-      sgstRate: "9.0",
-      sgstAmount: "105.3",
-      igstRate: "NA",
-      igstAmount: "0.0"
+      igstAmount: "0.0",
+      tcsRate: "NA",
+      tcsAmount: "0.0",
+      totalTaxes: "0.0",
+      totalAmount: "100.0"
     }
   ];
 
@@ -93,7 +84,10 @@ export const GRNDetailsPage = () => {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">GRN DETAILS</h1>
         <div className="flex gap-2">
-          <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+          <Button 
+            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            onClick={handlePrintClick}
+          >
             Print
           </Button>
           <Button 
@@ -105,14 +99,14 @@ export const GRNDetailsPage = () => {
         </div>
       </div>
 
-      {/* Approval Status */}
+      {/* Quality Officer Approval */}
       <div className="mb-6">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Level 1 Approval:</span>
+          <span className="text-sm font-medium">Quality Officer Approval:</span>
           <span className="bg-green-500 text-white px-3 py-1 rounded text-sm">Approved</span>
         </div>
         <div className="text-sm text-gray-600 mt-1">
-          Sony Bhosle - 22/04/2025
+          Psir 1 - 27/03/2025
         </div>
       </div>
 
@@ -122,9 +116,9 @@ export const GRNDetailsPage = () => {
           {/* Supplier Info */}
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">jyoti</h3>
+              <h3 className="text-lg font-semibold">{grnData.supplier}</h3>
               <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
-                <span className="text-xs text-gray-500">image</span>
+                <span className="text-xs text-gray-500">LOGO</span>
               </div>
             </div>
 
@@ -135,7 +129,7 @@ export const GRNDetailsPage = () => {
               </div>
               <div>
                 <span className="text-gray-600">Fax:</span>
-                <span className="ml-2">{grnData.jyoti.fax}</span>
+                <span className="ml-2">{grnData.fax}</span>
               </div>
               <div>
                 <span className="text-gray-600">Email:</span>
@@ -143,7 +137,7 @@ export const GRNDetailsPage = () => {
               </div>
               <div>
                 <span className="text-gray-600">GST:</span>
-                <span className="ml-2">{grnData.jyoti.gst}</span>
+                <span className="ml-2">{grnData.gst}</span>
               </div>
               <div>
                 <span className="text-gray-600">PAN:</span>
@@ -151,19 +145,21 @@ export const GRNDetailsPage = () => {
               </div>
               <div>
                 <span className="text-gray-600">Address:</span>
-                <span className="ml-2">{grnData.jyoti.address}</span>
+                <span className="ml-2">{grnData.address}</span>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* GRN Details */}
+        {/* Right Column - GRN Details */}
+        <div className="space-y-6">
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-semibold mb-4">GRN</h3>
             
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-gray-600">Invoice Number:</span>
-                <span className="ml-2">{grnData.invoiceNumber}</span>
+                <span className="ml-2">{grnData.invoiceNumber || '-'}</span>
               </div>
               <div>
                 <span className="text-gray-600">Reference No.:</span>
@@ -256,11 +252,6 @@ export const GRNDetailsPage = () => {
             </div>
           </div>
         </div>
-
-        {/* Right Column would contain additional details */}
-        <div className="space-y-6">
-          {/* Placeholder for additional content */}
-        </div>
       </div>
 
       {/* Inventory Table */}
@@ -281,6 +272,10 @@ export const GRNDetailsPage = () => {
               <TableHead>SGST Amount</TableHead>
               <TableHead>IGST Rate</TableHead>
               <TableHead>IGST Amount</TableHead>
+              <TableHead>TCS Rate</TableHead>
+              <TableHead>TCS Amount</TableHead>
+              <TableHead>Total Taxes</TableHead>
+              <TableHead>Total Amount</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -299,6 +294,10 @@ export const GRNDetailsPage = () => {
                 <TableCell>{item.sgstAmount}</TableCell>
                 <TableCell>{item.igstRate}</TableCell>
                 <TableCell>{item.igstAmount}</TableCell>
+                <TableCell>{item.tcsRate}</TableCell>
+                <TableCell>{item.tcsAmount}</TableCell>
+                <TableCell>{item.totalTaxes}</TableCell>
+                <TableCell>{item.totalAmount}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -325,12 +324,18 @@ export const GRNDetailsPage = () => {
           <div className="w-16 h-16 bg-orange-200 rounded flex items-center justify-center">
             <span className="text-xs">📄</span>
           </div>
-          <span className="text-sm">brick.jpg</span>
+          <span className="text-sm">a4.jpg</span>
+        </div>
+        <div className="flex items-center gap-4 mt-2">
+          <div className="w-16 h-16 bg-orange-200 rounded flex items-center justify-center">
+            <span className="text-xs">📄</span>
+          </div>
+          <span className="text-sm">a4.jpg</span>
         </div>
         
         <div className="mt-4">
           <h4 className="font-medium mb-2">Attachments</h4>
-          <span className="text-sm text-gray-600">no attachment</span>
+          <span className="text-sm text-gray-600">No attachments</span>
         </div>
       </div>
 
