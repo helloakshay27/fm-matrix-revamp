@@ -286,6 +286,7 @@ function App() {
               <Route path="/security/staff" element={<StaffsDashboard />} />
               <Route path="/security/staff/details/:id" element={<StaffDetailsPage />} />
               <Route path="/security/staff/edit/:id" element={<EditStaffPage />} />
+              <Route path="/security/patrolling" element={<PatrollingDashboard />} />
               
               {/* Security Vehicle Routes */}
               <Route path="/security/vehicle/r-vehicles" element={<RVehiclesDashboard />} />
