@@ -4,6 +4,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { Layout } from './components/Layout';
 import { SetupLayout } from './components/SetupLayout';
+import { SettingsLayout } from './components/SettingsLayout';
 
 // Import existing pages
 import Index from './pages/Index';
@@ -227,13 +228,15 @@ function App() {
             <Route path="/" element={<Layout><div /></Layout>}>
               <Route index element={<Index />} />
               
-              {/* Settings Routes */}
-              <Route path="/settings/users" element={<FMUsersDashboard />} />
-              <Route path="/settings/users/clone-role" element={<CloneRolePage />} />
-              <Route path="/settings/account" element={<AccountDashboard />} />
-              <Route path="/settings/approval-matrix" element={<ApprovalMatrixDashboard />} />
-              <Route path="/settings/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
-              <Route path="/settings/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
+              {/* Settings Routes with dedicated layout */}
+              <Route path="/settings" element={<SettingsLayout />}>
+                <Route path="/settings/users" element={<FMUsersDashboard />} />
+                <Route path="/settings/users/clone-role" element={<CloneRolePage />} />
+                <Route path="/settings/account" element={<AccountDashboard />} />
+                <Route path="/settings/approval-matrix" element={<ApprovalMatrixDashboard />} />
+                <Route path="/settings/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
+                <Route path="/settings/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
+              </Route>
               
               {/* Snagging Routes */}
               <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
