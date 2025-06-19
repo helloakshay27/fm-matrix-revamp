@@ -46,12 +46,14 @@ export const AddApprovalMatrixDashboard = () => {
 
   const handleCreate = () => {
     console.log('Creating approval matrix:', { selectedFunction, approvalLevels });
-    // Handle form submission logic here
+    window.location.href = '/setup/approval-matrix';
   };
 
   const handleSaveAndCreateNew = () => {
     console.log('Saving and creating new:', { selectedFunction, approvalLevels });
-    // Handle save and create new logic here
+    // Reset form for new entry
+    setSelectedFunction('');
+    setApprovalLevels([{ id: 1, order: '1', nameOfLevel: '', users: '', sendEmails: false }]);
   };
 
   return (
@@ -147,7 +149,7 @@ export const AddApprovalMatrixDashboard = () => {
             <Button
               variant="outline"
               onClick={addApprovalLevel}
-              className="bg-purple-700 text-white hover:bg-purple-800"
+              className="bg-[#C72030] text-white hover:bg-[#A01020]"
             >
               <Plus className="h-4 w-4 mr-2" />
             </Button>
@@ -156,7 +158,7 @@ export const AddApprovalMatrixDashboard = () => {
           <div className="flex justify-center gap-4 pt-6">
             <Button
               onClick={handleCreate}
-              className="bg-purple-700 hover:bg-purple-800 text-white px-8"
+              className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
             >
               Create
             </Button>

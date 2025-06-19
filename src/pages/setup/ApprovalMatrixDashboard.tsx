@@ -7,13 +7,22 @@ import { Search, Grid3X3, FileDown } from 'lucide-react';
 
 export const ApprovalMatrixDashboard = () => {
   const approvals = [
-    { id: 198, function: 'Custom Form 11372', createdOn: '08/10/2024', createdBy: 'Vinayak Mane' },
-    { id: 173, function: 'Gdn', createdOn: '10/04/2024', createdBy: 'Vinayak Mane' },
-    { id: 172, function: 'Work Order', createdOn: '10/04/2024', createdBy: 'Robert Day2' },
-    { id: 108, function: 'Grn', createdOn: '01/08/2023', createdBy: 'Robert Day2' },
-    { id: 34, function: 'Work Order Invoice', createdOn: '23/11/2022', createdBy: 'Robert Day2' },
-    { id: 33, function: 'Purchase Order', createdOn: '15/11/2022', createdBy: 'Robert Day2' }
+    { id: 171, function: 'Gdn', createdOn: '29/03/2024', createdBy: 'demo demo' },
+    { id: 162, function: 'Supplier', createdOn: '14/12/2023', createdBy: 'demo demo' },
+    { id: 161, function: 'Permit Closure', createdOn: '12/12/2023', createdBy: 'demo demo' },
+    { id: 115, function: 'Permit Extend', createdOn: '25/09/2023', createdBy: 'demo demo' },
+    { id: 113, function: 'Vendor Audit', createdOn: '15/09/2023', createdBy: 'Navin Lead Admin' },
+    { id: 109, function: 'Permit', createdOn: '11/09/2023', createdBy: 'Navin Lead Admin' },
+    { id: 5, function: 'Work Order Invoice', createdOn: '31/12/2021', createdBy: 'Navin Lead Admin' },
+    { id: 4, function: 'Work Order', createdOn: '30/12/2021', createdBy: 'Navin Lead Admin' },
+    { id: 3, function: 'Grn', createdOn: '30/12/2021', createdBy: 'Navin Lead Admin' },
+    { id: 2, function: 'Bill', createdOn: '24/12/2021', createdBy: 'Navin Lead Admin' },
+    { id: 1, function: 'Purchase Order', createdOn: '24/12/2021', createdBy: 'Navin Lead Admin' }
   ];
+
+  const handleAddClick = () => {
+    window.location.href = '/setup/approval-matrix/add';
+  };
 
   return (
     <SetupLayout>
@@ -39,8 +48,8 @@ export const ApprovalMatrixDashboard = () => {
 
         <div className="flex justify-start">
           <Button 
-            className="bg-purple-700 hover:bg-purple-800 text-white"
-            onClick={() => window.location.href = '/setup/approval-matrix/add'}
+            onClick={handleAddClick}
+            className="bg-[#C72030] hover:bg-[#A01020] text-white"
           >
             + Add
           </Button>
@@ -62,7 +71,7 @@ export const ApprovalMatrixDashboard = () => {
                 {approvals.map((approval) => (
                   <tr key={approval.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
                         ✏️
                       </Button>
                     </td>

@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -208,6 +207,10 @@ import { FMUsersDashboard } from './pages/settings/FMUsersDashboard';
 import { CloneRolePage } from './pages/settings/CloneRolePage';
 import { AccountDashboard } from './pages/settings/AccountDashboard';
 
+// Import Approval Matrix pages
+import { ApprovalMatrixDashboard } from './pages/setup/ApprovalMatrixDashboard';
+import { AddApprovalMatrixDashboard } from './pages/setup/AddApprovalMatrixDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -392,7 +395,8 @@ function App() {
               <Route path="/setup/ticket/escalation" element={<div>Ticket Escalation</div>} />
               <Route path="/setup/ticket/cost-approval" element={<div>Ticket Cost Approval</div>} />
               <Route path="/setup/task-escalation" element={<div>Task Escalation</div>} />
-              <Route path="/setup/approval-matrix" element={<div>Approval Matrix</div>} />
+              <Route path="/setup/approval-matrix" element={<ApprovalMatrixDashboard />} />
+              <Route path="/setup/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
               <Route path="/setup/patrolling-approval" element={<div>Patrolling Approval</div>} />
               <Route path="/setup/email-rule" element={<div>Email Rule</div>} />
               <Route path="/setup/fm-group" element={<div>FM Group</div>} />
