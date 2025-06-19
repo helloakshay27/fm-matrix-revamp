@@ -33,7 +33,7 @@ interface AddRoleDialogProps {
   onSubmit: (roleName: string, permissions: Permission[]) => void;
 }
 
-const allPermissions: Permission[] = [
+const allFunctionsPermissions: Permission[] = [
   { name: 'Broadcast', all: false, add: false, view: false, edit: false, disable: false },
   { name: 'Asset', all: false, add: false, view: false, edit: false, disable: false },
   { name: 'Documents', all: false, add: false, view: false, edit: false, disable: false },
@@ -128,65 +128,178 @@ const allPermissions: Permission[] = [
   { name: 'Parking Setup', all: false, add: false, view: false, edit: false, disable: false },
 ];
 
+const inventoryPermissions: Permission[] = [
+  { name: 'Inventory', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'GRN', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'SRNS', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Accounts', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Consumption', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Update Partial Inventory', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Update All Inventory', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Clone Inventory', all: false, add: false, view: false, edit: false, disable: false },
+];
+
+const setupPermissions: Permission[] = [
+  { name: 'Account', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'User & Roles', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Meter Types', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Asset Groups', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Ticket', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Email Rule', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'FM Groups', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Export', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'SAC/HSN Setup', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Addresses', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Master Checklist', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Occupant Users', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Approval Matrix', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Patrolling Approval Matrix', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Email Rule', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Fm Group', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Sac Hsn', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Address', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Export', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Task Escalation', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Ticket Setup', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Checklist Group', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Asset Group', all: false, add: false, view: false, edit: false, disable: false },
+];
+
+const quickgatePermissions: Permission[] = [
+  { name: 'Visitors', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'R Vehicles', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'G Vehicles', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Staffs', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Goods In Out', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Patrolling', all: false, add: false, view: false, edit: false, disable: false },
+];
+
+const permissionsByTab = {
+  'All Functions': allFunctionsPermissions,
+  'Inventory': inventoryPermissions,
+  'Setup': setupPermissions,
+  'Quickgate': quickgatePermissions,
+};
+
 export const AddRoleDialog = ({ open, onOpenChange, onSubmit }: AddRoleDialogProps) => {
   const [roleTitle, setRoleTitle] = useState('');
-  const [permissions, setPermissions] = useState<Permission[]>(allPermissions);
+  const [activeTab, setActiveTab] = useState('All Functions');
+  const [allFunctionsEnabled, setAllFunctionsEnabled] = useState(false);
+  const [inventoryEnabled, setInventoryEnabled] = useState(false);
+  const [setupEnabled, setSetupEnabled] = useState(false);
+  const [quickgateEnabled, setQuickgateEnabled] = useState(false);
+  const [permissions, setPermissions] = useState<{ [key: string]: Permission[] }>({
+    'All Functions': [...allFunctionsPermissions],
+    'Inventory': [...inventoryPermissions],
+    'Setup': [...setupPermissions],
+    'Quickgate': [...quickgatePermissions],
+  });
 
-  const handlePermissionChange = (permissionName: string, field: keyof Permission, value: boolean) => {
-    setPermissions(permissions.map(permission => {
-      if (permission.name === permissionName) {
-        const updatedPermission = { ...permission, [field]: value };
-        
-        // If "All" is checked, check all other permissions
-        if (field === 'all' && value) {
-          updatedPermission.add = true;
-          updatedPermission.view = true;
-          updatedPermission.edit = true;
-          updatedPermission.disable = true;
-        }
-        // If "All" is unchecked, uncheck all other permissions
-        else if (field === 'all' && !value) {
-          updatedPermission.add = false;
-          updatedPermission.view = false;
-          updatedPermission.edit = false;
-          updatedPermission.disable = false;
-        }
-        // If any individual permission is unchecked, uncheck "All"
-        else if (!value && field !== 'all') {
-          updatedPermission.all = false;
-        }
-        // If all individual permissions are checked, check "All"
-        else if (value && field !== 'all') {
-          const allIndividualChecked = updatedPermission.add && updatedPermission.view && updatedPermission.edit && updatedPermission.disable;
-          if (allIndividualChecked) {
-            updatedPermission.all = true;
+  const tabs = ['All Functions', 'Inventory', 'Setup', 'Quickgate'] as const;
+
+  const handleTabOverallChange = (tab: string, enabled: boolean) => {
+    if (tab === 'All Functions') setAllFunctionsEnabled(enabled);
+    if (tab === 'Inventory') setInventoryEnabled(enabled);
+    if (tab === 'Setup') setSetupEnabled(enabled);
+    if (tab === 'Quickgate') setQuickgateEnabled(enabled);
+
+    setPermissions(prev => ({
+      ...prev,
+      [tab]: prev[tab].map(permission => ({
+        ...permission,
+        all: enabled,
+        add: enabled,
+        view: enabled,
+        edit: enabled,
+        disable: enabled,
+      }))
+    }));
+  };
+
+  const handlePermissionChange = (tab: string, permissionName: string, field: keyof Permission, value: boolean) => {
+    setPermissions(prev => ({
+      ...prev,
+      [tab]: prev[tab].map(permission => {
+        if (permission.name === permissionName) {
+          const updatedPermission = { ...permission, [field]: value };
+          
+          // If "All" is checked, check all other permissions
+          if (field === 'all' && value) {
+            updatedPermission.add = true;
+            updatedPermission.view = true;
+            updatedPermission.edit = true;
+            updatedPermission.disable = true;
           }
+          // If "All" is unchecked, uncheck all other permissions
+          else if (field === 'all' && !value) {
+            updatedPermission.add = false;
+            updatedPermission.view = false;
+            updatedPermission.edit = false;
+            updatedPermission.disable = false;
+          }
+          // If any individual permission is unchecked, uncheck "All"
+          else if (!value && field !== 'all') {
+            updatedPermission.all = false;
+          }
+          // If all individual permissions are checked, check "All"
+          else if (value && field !== 'all') {
+            const allIndividualChecked = updatedPermission.add && updatedPermission.view && updatedPermission.edit && updatedPermission.disable;
+            if (allIndividualChecked) {
+              updatedPermission.all = true;
+            }
+          }
+          
+          return updatedPermission;
         }
-        
-        return updatedPermission;
-      }
-      return permission;
+        return permission;
+      })
     }));
   };
 
   const handleSubmit = () => {
     if (roleTitle.trim()) {
-      onSubmit(roleTitle, permissions);
+      onSubmit(roleTitle, permissions['All Functions']);
       setRoleTitle('');
-      setPermissions(allPermissions);
+      setPermissions({
+        'All Functions': [...allFunctionsPermissions],
+        'Inventory': [...inventoryPermissions],
+        'Setup': [...setupPermissions],
+        'Quickgate': [...quickgatePermissions],
+      });
+      setAllFunctionsEnabled(false);
+      setInventoryEnabled(false);
+      setSetupEnabled(false);
+      setQuickgateEnabled(false);
       onOpenChange(false);
     }
   };
 
   const handleBack = () => {
     setRoleTitle('');
-    setPermissions(allPermissions);
+    setPermissions({
+      'All Functions': [...allFunctionsPermissions],
+      'Inventory': [...inventoryPermissions],
+      'Setup': [...setupPermissions],
+      'Quickgate': [...quickgatePermissions],
+    });
+    setAllFunctionsEnabled(false);
+    setInventoryEnabled(false);
+    setSetupEnabled(false);
+    setQuickgateEnabled(false);
     onOpenChange(false);
+  };
+
+  const getTabEnabled = (tab: string) => {
+    if (tab === 'All Functions') return allFunctionsEnabled;
+    if (tab === 'Inventory') return inventoryEnabled;
+    if (tab === 'Setup') return setupEnabled;
+    if (tab === 'Quickgate') return quickgateEnabled;
+    return false;
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">Add New Role</DialogTitle>
         </DialogHeader>
@@ -206,69 +319,100 @@ export const AddRoleDialog = ({ open, onOpenChange, onSubmit }: AddRoleDialogPro
             />
           </div>
 
-          {/* Permissions Table */}
-          <div className="flex-1 overflow-hidden">
-            <div className="border rounded-lg overflow-hidden h-full flex flex-col">
-              <div className="overflow-auto flex-1">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-white z-10">
-                    <TableRow className="bg-gray-50">
-                      <TableHead className="font-semibold text-gray-700 w-48">Function</TableHead>
-                      <TableHead className="font-semibold text-gray-700 text-center">All</TableHead>
-                      <TableHead className="font-semibold text-gray-700 text-center">Add</TableHead>
-                      <TableHead className="font-semibold text-gray-700 text-center">View</TableHead>
-                      <TableHead className="font-semibold text-gray-700 text-center">Edit</TableHead>
-                      <TableHead className="font-semibold text-gray-700 text-center">Disable</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {permissions.map((permission) => (
-                      <TableRow key={permission.name} className="hover:bg-gray-50">
-                        <TableCell className="font-medium">{permission.name}</TableCell>
-                        <TableCell className="text-center">
-                          <Checkbox
-                            checked={permission.all}
-                            onCheckedChange={(checked) => 
-                              handlePermissionChange(permission.name, 'all', checked as boolean)
-                            }
-                          />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Checkbox
-                            checked={permission.add}
-                            onCheckedChange={(checked) => 
-                              handlePermissionChange(permission.name, 'add', checked as boolean)
-                            }
-                          />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Checkbox
-                            checked={permission.view}
-                            onCheckedChange={(checked) => 
-                              handlePermissionChange(permission.name, 'view', checked as boolean)
-                            }
-                          />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Checkbox
-                            checked={permission.edit}
-                            onCheckedChange={(checked) => 
-                              handlePermissionChange(permission.name, 'edit', checked as boolean)
-                            }
-                          />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Checkbox
-                            checked={permission.disable}
-                            onCheckedChange={(checked) => 
-                              handlePermissionChange(permission.name, 'disable', checked as boolean)
-                            }
-                          />
-                        </TableCell>
+          {/* Content Layout with Sidebar and Main Content */}
+          <div className="flex gap-6 flex-1 overflow-hidden">
+            {/* Left Sidebar with Tab Checkboxes */}
+            <div className="w-80 bg-gray-50 rounded-lg p-4">
+              <div className="space-y-3">
+                {tabs.map((tab) => (
+                  <div key={tab} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={tab}
+                      checked={getTabEnabled(tab)}
+                      onCheckedChange={(checked) => handleTabOverallChange(tab, checked as boolean)}
+                    />
+                    <label
+                      htmlFor={tab}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      onClick={() => setActiveTab(tab)}
+                    >
+                      {tab}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right Content Area */}
+            <div className="flex-1 overflow-hidden">
+              {/* Active Tab Header */}
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold">{activeTab}</h3>
+              </div>
+
+              {/* Permissions Table */}
+              <div className="border rounded-lg overflow-hidden h-full flex flex-col">
+                <div className="overflow-auto flex-1">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-white z-10">
+                      <TableRow className="bg-gray-50">
+                        <TableHead className="font-semibold text-gray-700 w-48">Function</TableHead>
+                        <TableHead className="font-semibold text-gray-700 text-center">All</TableHead>
+                        <TableHead className="font-semibold text-gray-700 text-center">Add</TableHead>
+                        <TableHead className="font-semibold text-gray-700 text-center">View</TableHead>
+                        <TableHead className="font-semibold text-gray-700 text-center">Edit</TableHead>
+                        <TableHead className="font-semibold text-gray-700 text-center">Disable</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {permissions[activeTab]?.map((permission) => (
+                        <TableRow key={permission.name} className="hover:bg-gray-50">
+                          <TableCell className="font-medium">{permission.name}</TableCell>
+                          <TableCell className="text-center">
+                            <Checkbox
+                              checked={permission.all}
+                              onCheckedChange={(checked) => 
+                                handlePermissionChange(activeTab, permission.name, 'all', checked as boolean)
+                              }
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Checkbox
+                              checked={permission.add}
+                              onCheckedChange={(checked) => 
+                                handlePermissionChange(activeTab, permission.name, 'add', checked as boolean)
+                              }
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Checkbox
+                              checked={permission.view}
+                              onCheckedChange={(checked) => 
+                                handlePermissionChange(activeTab, permission.name, 'view', checked as boolean)
+                              }
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Checkbox
+                              checked={permission.edit}
+                              onCheckedChange={(checked) => 
+                                handlePermissionChange(activeTab, permission.name, 'edit', checked as boolean)
+                              }
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Checkbox
+                              checked={permission.disable}
+                              onCheckedChange={(checked) => 
+                                handlePermissionChange(activeTab, permission.name, 'disable', checked as boolean)
+                              }
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </div>
           </div>
