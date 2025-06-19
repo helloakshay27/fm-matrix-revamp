@@ -6,11 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Upload, X } from 'lucide-react';
+import { Plus, Search, Upload, X, Edit } from 'lucide-react';
 import { AddCountryDialog } from '@/components/AddCountryDialog';
 import { AddRegionDialog } from '@/components/AddRegionDialog';
 import { AddZoneDialog } from '@/components/AddZoneDialog';
 import { EditZoneDialog } from '@/components/EditZoneDialog';
+import { AddEntityDialog } from '@/components/AddEntityDialog';
 import { toast } from 'sonner';
 
 export const AccountDashboard = () => {
@@ -20,10 +21,12 @@ export const AccountDashboard = () => {
   const [isAddRegionOpen, setIsAddRegionOpen] = useState(false);
   const [isAddZoneOpen, setIsAddZoneOpen] = useState(false);
   const [isEditZoneOpen, setIsEditZoneOpen] = useState(false);
+  const [isAddEntityOpen, setIsAddEntityOpen] = useState(false);
   const [companyName, setCompanyName] = useState('Sanket Enterprise');
   const [removeLogo, setRemoveLogo] = useState(false);
   const [dailyReport, setDailyReport] = useState(false);
   const [entriesPerPage, setEntriesPerPage] = useState('25');
+  const [entityName, setEntityName] = useState('');
 
   // Sample data
   const countries = [
@@ -64,6 +67,20 @@ export const AccountDashboard = () => {
     { country: 'India', region: 'Mumbai', zone: 'West Zone', site: 'Lockated Site 1', latitude: '18.5509109', longitude: '73.8910294', status: false, qrCode: '/lovable-uploads/placeholder.svg' },
   ];
 
+  const entities = [
+    { entity: 'demo', status: true },
+    { entity: 'Haven Infoline', status: true },
+    { entity: 'Demo', status: false },
+    { entity: 'HDFC Bank', status: true },
+    { entity: 'Mastercard', status: true },
+    { entity: 'Tata Consultancy', status: true },
+    { entity: 'Deutsche bank', status: true },
+    { entity: 'Coca Cola', status: true },
+    { entity: 'Infinity', status: true },
+    { entity: 'HSBC', status: true },
+    { entity: 'Awfis', status: true },
+  ];
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -73,6 +90,23 @@ export const AccountDashboard = () => {
 
   const handleSubmitCompany = () => {
     toast.success('Company details updated successfully');
+  };
+
+  const handleSubmitEntity = () => {
+    if (!entityName.trim()) {
+      toast.error('Please enter an entity name');
+      return;
+    }
+    toast.success('Entity added successfully');
+    setEntityName('');
+  };
+
+  const handleImportEntity = () => {
+    toast.success('Entity import functionality triggered');
+  };
+
+  const handleSampleFormat = () => {
+    toast.info('Sample format downloaded');
   };
 
   return (
@@ -168,7 +202,7 @@ export const AccountDashboard = () => {
               <div className="flex justify-center">
                 <Button
                   onClick={handleSubmitCompany}
-                  className="bg-purple-700 hover:bg-purple-800 text-white px-8"
+                  className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
                 >
                   Submit
                 </Button>
@@ -181,7 +215,7 @@ export const AccountDashboard = () => {
           <div className="flex items-center justify-between mb-4">
             <Button
               onClick={() => setIsAddCountryOpen(true)}
-              className="bg-purple-700 hover:bg-purple-800 text-white"
+              className="bg-[#C72030] hover:bg-[#A01020] text-white"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Countries
@@ -203,7 +237,7 @@ export const AccountDashboard = () => {
                   placeholder="Search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="border border-gray-300 rounded px-3 py-1 text-sm w-40"
+                  className="border border-gray-300 rounded px-3 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                 />
                 <Button size="sm" variant="outline">Search</Button>
               </div>
@@ -259,7 +293,7 @@ export const AccountDashboard = () => {
                   placeholder="Search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="border border-gray-300 rounded px-3 py-1 text-sm w-40"
+                  className="border border-gray-300 rounded px-3 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                 />
                 <Button size="sm" variant="outline">Search</Button>
               </div>
@@ -303,7 +337,7 @@ export const AccountDashboard = () => {
               </Button>
               <Button
                 onClick={() => setIsEditZoneOpen(true)}
-                className="bg-purple-700 hover:bg-purple-800 text-white"
+                className="bg-[#C72030] hover:bg-[#A01020] text-white"
               >
                 Edit Zone
               </Button>
@@ -325,7 +359,7 @@ export const AccountDashboard = () => {
                   placeholder="Search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="border border-gray-300 rounded px-3 py-1 text-sm w-40"
+                  className="border border-gray-300 rounded px-3 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                 />
                 <Button size="sm" variant="outline">Search</Button>
               </div>
@@ -412,9 +446,79 @@ export const AccountDashboard = () => {
         </TabsContent>
 
         <TabsContent value="entity" className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <Button
+              onClick={() => setIsAddEntityOpen(true)}
+              className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Entity
+            </Button>
+          </div>
+
           <Card>
-            <CardContent className="p-6">
-              <p className="text-gray-600 text-center">Entity management content will be displayed here.</p>
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-4">
+                <input
+                  type="text"
+                  placeholder="Enter Entity Name"
+                  value={entityName}
+                  onChange={(e) => setEntityName(e.target.value)}
+                  className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                />
+                <Button
+                  onClick={handleSubmitEntity}
+                  className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                >
+                  Submit
+                </Button>
+                <Button
+                  onClick={handleSampleFormat}
+                  variant="outline"
+                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                >
+                  Sample Format
+                </Button>
+                <Button
+                  onClick={handleImportEntity}
+                  className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                >
+                  Import
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold">Actions</TableHead>
+                    <TableHead className="font-semibold">Active/Inactive</TableHead>
+                    <TableHead className="font-semibold">Entity</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {entities.map((entity, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-[#C72030] hover:bg-[#C72030] hover:text-white p-1"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        <Switch checked={entity.status} />
+                      </TableCell>
+                      <TableCell>{entity.entity}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </TabsContent>
@@ -435,6 +539,10 @@ export const AccountDashboard = () => {
       <EditZoneDialog 
         open={isEditZoneOpen}
         onOpenChange={setIsEditZoneOpen}
+      />
+      <AddEntityDialog 
+        open={isAddEntityOpen}
+        onOpenChange={setIsAddEntityOpen}
       />
     </div>
   );

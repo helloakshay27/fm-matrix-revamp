@@ -44,7 +44,7 @@ export const AddRegionDialog = ({ open, onOpenChange }: AddRegionDialogProps) =>
               Select Country
             </label>
             <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-              <SelectTrigger>
+              <SelectTrigger className="focus:ring-[#C72030] focus:border-[#C72030]">
                 <SelectValue placeholder="Select Country" />
               </SelectTrigger>
               <SelectContent>
@@ -63,13 +63,14 @@ export const AddRegionDialog = ({ open, onOpenChange }: AddRegionDialogProps) =>
               placeholder="Enter Region Name"
               value={regionName}
               onChange={(e) => setRegionName(e.target.value)}
+              className="focus:ring-[#C72030] focus:border-[#C72030]"
             />
           </div>
 
           <div className="flex justify-end">
             <Button
               onClick={handleSubmit}
-              className="bg-purple-700 hover:bg-purple-800 text-white"
+              className="bg-[#C72030] hover:bg-[#A01020] text-white"
             >
               Submit
             </Button>

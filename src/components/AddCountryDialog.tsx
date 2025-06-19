@@ -28,7 +28,7 @@ export const AddCountryDialog = ({ open, onOpenChange }: AddCountryDialogProps) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>ADD ZONE</DialogTitle>
+          <DialogTitle>ADD COUNTRY</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
@@ -37,7 +37,7 @@ export const AddCountryDialog = ({ open, onOpenChange }: AddCountryDialogProps) 
               Select Country
             </label>
             <Select>
-              <SelectTrigger>
+              <SelectTrigger className="focus:ring-[#C72030] focus:border-[#C72030]">
                 <SelectValue placeholder="Select Countries" />
               </SelectTrigger>
               <SelectContent>
@@ -53,7 +53,7 @@ export const AddCountryDialog = ({ open, onOpenChange }: AddCountryDialogProps) 
           <div className="flex justify-end">
             <Button
               onClick={handleSubmit}
-              className="bg-purple-700 hover:bg-purple-800 text-white"
+              className="bg-[#C72030] hover:bg-[#A01020] text-white"
             >
               Submit
             </Button>

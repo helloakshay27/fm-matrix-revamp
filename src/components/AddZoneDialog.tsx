@@ -57,7 +57,7 @@ export const AddZoneDialog = ({ open, onOpenChange }: AddZoneDialogProps) => {
               Select Country
             </label>
             <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-              <SelectTrigger>
+              <SelectTrigger className="focus:ring-[#C72030] focus:border-[#C72030]">
                 <SelectValue placeholder="Select Country" />
               </SelectTrigger>
               <SelectContent>
@@ -73,7 +73,7 @@ export const AddZoneDialog = ({ open, onOpenChange }: AddZoneDialogProps) => {
               Select Region
             </label>
             <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-              <SelectTrigger>
+              <SelectTrigger className="focus:ring-[#C72030] focus:border-[#C72030]">
                 <SelectValue placeholder="Select Region" />
               </SelectTrigger>
               <SelectContent>
@@ -93,6 +93,7 @@ export const AddZoneDialog = ({ open, onOpenChange }: AddZoneDialogProps) => {
               placeholder="Enter Zone"
               value={zoneName}
               onChange={(e) => setZoneName(e.target.value)}
+              className="focus:ring-[#C72030] focus:border-[#C72030]"
             />
           </div>
 
@@ -103,12 +104,12 @@ export const AddZoneDialog = ({ open, onOpenChange }: AddZoneDialogProps) => {
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                className="flex-1"
+                className="flex-1 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
                 onClick={() => document.getElementById('zone-file-upload')?.click()}
               >
                 Choose File
               </Button>
-              <span className="flex items-center text-sm text-gray-600">N...sen</span>
+              <span className="flex items-center text-sm text-gray-600">No file chosen</span>
             </div>
             <input
               id="zone-file-upload"
@@ -122,7 +123,7 @@ export const AddZoneDialog = ({ open, onOpenChange }: AddZoneDialogProps) => {
           <div className="flex justify-end">
             <Button
               onClick={handleSubmit}
-              className="bg-purple-700 hover:bg-purple-800 text-white"
+              className="bg-[#C72030] hover:bg-[#A01020] text-white"
             >
               Submit
             </Button>
