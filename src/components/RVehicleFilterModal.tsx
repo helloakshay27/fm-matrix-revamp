@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
 
 interface RVehicleFilterModalProps {
@@ -15,7 +14,8 @@ export const RVehicleFilterModal = ({ isOpen, onClose }: RVehicleFilterModalProp
   const [vehicleNumber, setVehicleNumber] = useState('');
 
   const handleApply = () => {
-    console.log('Filter applied:', { vehicleNumber });
+    console.log('Apply filter:', { vehicleNumber });
+    // Handle filter application
     onClose();
   };
 
@@ -25,7 +25,7 @@ export const RVehicleFilterModal = ({ isOpen, onClose }: RVehicleFilterModalProp
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg bg-white [&>button]:hidden">
+      <DialogContent className="max-w-md bg-white [&>button]:hidden">
         <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
           <DialogTitle className="text-lg font-semibold">FILTER</DialogTitle>
           <Button
@@ -39,13 +39,12 @@ export const RVehicleFilterModal = ({ isOpen, onClose }: RVehicleFilterModalProp
         </DialogHeader>
         
         <div className="p-6 space-y-6">
-          {/* Vehicle Number */}
+          {/* Vehicle Number Filter */}
           <div className="space-y-2">
-            <Label htmlFor="vehicleNumber" className="text-sm font-medium">
+            <label className="text-sm font-medium text-gray-700">
               Vehicle Number
-            </Label>
+            </label>
             <Input
-              id="vehicleNumber"
               placeholder="Vehicle no."
               value={vehicleNumber}
               onChange={(e) => setVehicleNumber(e.target.value)}
@@ -54,7 +53,7 @@ export const RVehicleFilterModal = ({ isOpen, onClose }: RVehicleFilterModalProp
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-4">
+          <div className="flex justify-end gap-3">
             <Button
               onClick={handleReset}
               variant="outline"
@@ -64,8 +63,8 @@ export const RVehicleFilterModal = ({ isOpen, onClose }: RVehicleFilterModalProp
             </Button>
             <Button
               onClick={handleApply}
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:bg-[#C72030]/90 text-white px-6 py-2"
+              style={{ backgroundColor: '#6B46C1' }}
+              className="hover:bg-purple-700 text-white px-6 py-2"
             >
               Apply
             </Button>
