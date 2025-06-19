@@ -361,6 +361,8 @@ function App() {
               <Route path="/finance/grn-srn" element={<GRNSRNDashboard />} />
               <Route path="/finance/grn-srn/add" element={<AddGRNDashboard />} />
               <Route path="/finance/grn-srn/edit/:id" element={<EditGRNDashboard />} />
+              <Route path="/finance/grn-srn/details/:id" element={<GRNDetailsPage />} />
+              <Route path="/finance/grn-srn/feeds/:id" element={<GRNFeedsPage />} />
               <Route path="/finance/invoices" element={<InvoicesSESDashboard />} />
               <Route path="/finance/bill-booking" element={<BillBookingDashboard />} />
               <Route path="/finance/bill-booking/add" element={<AddNewBillDashboard />} />
