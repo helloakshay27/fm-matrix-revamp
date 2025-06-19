@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -174,6 +173,10 @@ import { ViewVendorAuditPage } from './pages/ViewVendorAuditPage';
 // Import Master Checklist page
 import { AddMasterChecklistPage } from './pages/AddMasterChecklistPage';
 
+// Import RVehiclesInDashboard and RVehiclesOutDashboard
+import { RVehiclesInDashboard } from './pages/RVehiclesInDashboard';
+import { RVehiclesOutDashboard } from './pages/RVehiclesOutDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -288,6 +291,9 @@ function App() {
               <Route path="/security/vehicle/r-vehicles" element={<RVehiclesDashboard />} />
               <Route path="/security/vehicle/r-vehicles/history" element={<RVehiclesHistoryDashboard />} />
               <Route path="/security/vehicle/g-vehicles" element={<GVehiclesDashboard />} />
+              
+              <Route path="/security/vehicle/r-vehicles/in" element={<RVehiclesInDashboard />} />
+              <Route path="/security/vehicle/r-vehicles/out" element={<RVehiclesOutDashboard />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
