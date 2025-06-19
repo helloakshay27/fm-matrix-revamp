@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { SlidersHorizontal } from 'lucide-react';
@@ -172,15 +173,16 @@ export const RVehiclesHistoryDashboard = () => {
             <div className="flex gap-3">
               <Button 
                 onClick={() => setIsFilterModalOpen(true)}
-                variant="outline"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded flex items-center gap-2"
+                style={{ backgroundColor: '#C72030' }}
+                className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
               >
                 <SlidersHorizontal className="w-4 h-4" />
                 Filters
               </Button>
               <Button 
                 onClick={handleAllVehiclesClick}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded"
+                style={{ backgroundColor: '#C72030' }}
+                className="hover:opacity-90 text-white px-6 py-2 rounded"
               >
                 All Vehicles
               </Button>
