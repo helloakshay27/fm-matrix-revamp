@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,8 +49,35 @@ export const EditGRNDashboard = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   // Mock data for demonstration - in real app, this would come from API
-  const mockGRNData = {
-    6407: {
+  const mockGRNData: Record<string, {
+    purchaseOrder: string;
+    supplier: string;
+    invoiceNumber: string;
+    relatedTo: string;
+    invoiceAmount: string;
+    paymentMode: string;
+    invoiceDate: string;
+    postingDate: string;
+    otherExpense: string;
+    loadingExpense: string;
+    adjustmentAmount: string;
+    notes: string;
+    inventoryType: string;
+    expectedQuantity: string;
+    receivedQuantity: string;
+    approvedQuantity: string;
+    rejectedQuantity: string;
+    rate: string;
+    cgstRate: string;
+    cgstAmount: string;
+    sgstRate: string;
+    sgstAmount: string;
+    igstRate: string;
+    igstAmount: string;
+    tcsRate: string;
+    tcsAmount: string;
+  }> = {
+    '6407': {
       purchaseOrder: 'PO001',
       supplier: 'Check',
       invoiceNumber: 'NA',
@@ -79,7 +105,7 @@ export const EditGRNDashboard = () => {
       tcsRate: '0.00',
       tcsAmount: '0.00'
     },
-    6406: {
+    '6406': {
       purchaseOrder: 'PO002',
       supplier: 'Check',
       invoiceNumber: 'NA',
@@ -111,8 +137,8 @@ export const EditGRNDashboard = () => {
 
   // Load existing data when component mounts
   useEffect(() => {
-    if (id && mockGRNData[id as keyof typeof mockGRNData]) {
-      const data = mockGRNData[id as keyof typeof mockGRNData];
+    if (id && mockGRNData[id]) {
+      const data = mockGRNData[id];
       setGrnDetails({
         purchaseOrder: data.purchaseOrder,
         supplier: data.supplier,
