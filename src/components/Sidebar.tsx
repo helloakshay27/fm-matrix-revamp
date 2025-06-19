@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -112,7 +113,15 @@ const modulesByPackage = {
             { name: 'Service PR', href: '/finance/service-pr', color: 'text-[#1a1a1a]' }
           ]
         },
-        { name: 'PO/WO', href: '/finance/po-wo', color: 'text-[#1a1a1a]' },
+        { 
+          name: 'PO/WO', 
+          href: '/finance/po-wo', 
+          color: 'text-[#1a1a1a]',
+          subItems: [
+            { name: 'PO', href: '/finance/po', color: 'text-[#1a1a1a]' },
+            { name: 'WO', href: '/finance/wo', color: 'text-[#1a1a1a]' }
+          ]
+        },
         { name: 'GRN/ SRN', href: '/finance/grn-srn', color: 'text-[#1a1a1a]' },
         { name: 'Auto Saved PR', href: '/finance/auto-saved-pr', color: 'text-[#1a1a1a]' }
       ]

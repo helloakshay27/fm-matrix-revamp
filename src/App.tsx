@@ -195,6 +195,8 @@ import { MaterialPRDashboard } from './pages/MaterialPRDashboard';
 import { ServicePRDashboard } from './pages/ServicePRDashboard';
 import { AddMaterialPRDashboard } from './pages/AddMaterialPRDashboard';
 import { AddServicePRDashboard } from './pages/AddServicePRDashboard';
+import { PODashboard } from './pages/PODashboard';
+import { WODashboard } from './pages/WODashboard';
 
 const queryClient = new QueryClient();
 
@@ -270,6 +272,8 @@ function App() {
               <Route path="/finance/material-pr/add" element={<AddMaterialPRDashboard />} />
               <Route path="/finance/service-pr" element={<ServicePRDashboard />} />
               <Route path="/finance/service-pr/add" element={<AddServicePRDashboard />} />
+              <Route path="/finance/po" element={<PODashboard />} />
+              <Route path="/finance/wo" element={<WODashboard />} />
               
               {/* Maintenance Routes */}
               <Route path="/maintenance/asset" element={<AssetDashboard />} />

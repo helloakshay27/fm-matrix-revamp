@@ -1,31 +1,40 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Plus, Eye, Edit, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { WOFilterDialog } from "@/components/WOFilterDialog";
+import { useNavigate } from 'react-router-dom';
 
 export const WODashboard = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
-  const [appliedFilters, setAppliedFilters] = useState({
-    referenceNumber: '',
-    woNumber: '',
-    supplierName: ''
-  });
 
   const woData = [
     {
-      id: 9175,
-      woNumber: "NA",
-      referenceNo: "10009",
-      createdOn: "10/04/2024",
-      supplier: "MODWIN NETWORKS PVT.LTD",
-      approvedStatus: "Pending",
-      paymentTenure: "",
-      advanceAmount: "",
-      totalAmount: "1000.00",
-      tdsAmount: ""
+      id: 1175,
+      action: "Edit",
+      woNo: "NA",
+      referenceNo: "100/05/2025",
+      createdBy: "MORDEN LIFESCIENCES PVT LTD",
+      createdOn: "Pending",
+      supplier: "",
+      approvalStatus: "Pending",
+      paymentTenureInDays: "10000.00",
+      woAmount: "0.0",
+      totalAmtCritNAmount: "0.0",
+      generatedBy: "0.0",
+      retentionPercent: "0.0",
+      retentionOutstanding: "0.0",
+      qcAmount: "0.0",
+      noOfItems: "10000.00",
+      totalAmountPaid: "No",
+      outstanding: "Sun Engineering",
+      debtCollectionNoteRaised: "19/05/2025",
+      createdBy2: "",
+      uploadedBy: "",
+      updatedOn: ""
     }
   ];
 
@@ -42,24 +51,10 @@ export const WODashboard = () => {
     }
   };
 
-  const handleFilterApply = (filters: typeof appliedFilters) => {
-    setAppliedFilters(filters);
-    console.log('Applied filters:', filters);
-  };
-
-  const filteredData = woData.filter(item => {
-    const matchesSearch = 
-      item.referenceNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.supplier.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.woNumber.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesFilters = 
-      (!appliedFilters.referenceNumber || item.referenceNo.toLowerCase().includes(appliedFilters.referenceNumber.toLowerCase())) &&
-      (!appliedFilters.woNumber || item.woNumber.toLowerCase().includes(appliedFilters.woNumber.toLowerCase())) &&
-      (!appliedFilters.supplierName || item.supplier.toLowerCase().includes(appliedFilters.supplierName.toLowerCase()));
-
-    return matchesSearch && matchesFilters;
-  });
+  const filteredData = woData.filter(item =>
+    item.referenceNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.createdBy.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="p-6">
@@ -74,6 +69,13 @@ export const WODashboard = () => {
       {/* Action Buttons */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex gap-3">
+          <Button 
+            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            onClick={() => navigate('/finance/wo/add')}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
           <Button 
             variant="outline"
             onClick={() => setIsFilterDialogOpen(true)}
@@ -90,23 +92,18 @@ export const WODashboard = () => {
               placeholder="Search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent w-64"
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent w-64"
             />
           </div>
-          <Button variant="outline" className="px-4">
+          <Button 
+            className="bg-[#C72030] hover:bg-[#A01020] text-white px-4"
+          >
             Go!
           </Button>
           <Button 
             variant="outline" 
             className="px-4"
-            onClick={() => {
-              setSearchQuery('');
-              setAppliedFilters({
-                referenceNumber: '',
-                woNumber: '',
-                supplierName: ''
-              });
-            }}
+            onClick={() => setSearchQuery('')}
           >
             Reset
           </Button>
@@ -119,17 +116,28 @@ export const WODashboard = () => {
           <TableHeader>
             <TableRow className="bg-gray-50">
               <TableHead className="font-semibold">Action</TableHead>
-              <TableHead className="font-semibold">View</TableHead>
               <TableHead className="font-semibold">ID</TableHead>
               <TableHead className="font-semibold">WO No.</TableHead>
               <TableHead className="font-semibold">Reference No.</TableHead>
-              <TableHead className="font-semibold">Created On</TableHead>
+              <TableHead className="font-semibold">Created by</TableHead>
               <TableHead className="font-semibold">Supplier</TableHead>
-              <TableHead className="font-semibold">Approved Status</TableHead>
-              <TableHead className="font-semibold">Payment Tenure(in Days)</TableHead>
+              <TableHead className="font-semibold">Approval Status</TableHead>
+              <TableHead className="font-semibold">Payment Tenure (in Days)</TableHead>
               <TableHead className="font-semibold">Advance Amount</TableHead>
               <TableHead className="font-semibold">Total Amount</TableHead>
-              <TableHead className="font-semibold">TDS Amount</TableHead>
+              <TableHead className="font-semibold">WO Amount</TableHead>
+              <TableHead className="font-semibold">Total Amt Crit N Amount</TableHead>
+              <TableHead className="font-semibold">Generated By</TableHead>
+              <TableHead className="font-semibold">Retention (%)</TableHead>
+              <TableHead className="font-semibold">Retention Outstanding</TableHead>
+              <TableHead className="font-semibold">QC Amount</TableHead>
+              <TableHead className="font-semibold">No of Items</TableHead>
+              <TableHead className="font-semibold">Total Amount Paid</TableHead>
+              <TableHead className="font-semibold">Outstanding</TableHead>
+              <TableHead className="font-semibold">Debt Collection Note Raised</TableHead>
+              <TableHead className="font-semibold">Created by</TableHead>
+              <TableHead className="font-semibold">Uploaded by</TableHead>
+              <TableHead className="font-semibold">Updated On</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -137,30 +145,37 @@ export const WODashboard = () => {
               <TableRow key={item.id}>
                 <TableCell>
                   <Button size="sm" variant="ghost" className="p-1">
-                    ✏️
-                  </Button>
-                </TableCell>
-                <TableCell>
-                  <Button size="sm" variant="ghost" className="p-1">
-                    👁️
+                    <Edit className="w-4 h-4" />
                   </Button>
                 </TableCell>
                 <TableCell className="font-medium">{item.id}</TableCell>
-                <TableCell>{item.woNumber}</TableCell>
+                <TableCell>{item.woNo}</TableCell>
                 <TableCell className="text-blue-600 hover:underline cursor-pointer">
                   {item.referenceNo}
                 </TableCell>
-                <TableCell>{item.createdOn}</TableCell>
+                <TableCell>{item.createdBy}</TableCell>
                 <TableCell>{item.supplier}</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(item.approvedStatus)}`}>
-                    {item.approvedStatus}
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(item.approvalStatus)}`}>
+                    {item.approvalStatus}
                   </span>
                 </TableCell>
-                <TableCell>{item.paymentTenure}</TableCell>
-                <TableCell>{item.advanceAmount}</TableCell>
-                <TableCell className="font-medium">{item.totalAmount}</TableCell>
-                <TableCell>{item.tdsAmount}</TableCell>
+                <TableCell>{item.paymentTenureInDays}</TableCell>
+                <TableCell className="font-medium">{item.woAmount}</TableCell>
+                <TableCell>{item.totalAmtCritNAmount}</TableCell>
+                <TableCell>{item.woAmount}</TableCell>
+                <TableCell>{item.totalAmtCritNAmount}</TableCell>
+                <TableCell>{item.generatedBy}</TableCell>
+                <TableCell>{item.retentionPercent}</TableCell>
+                <TableCell>{item.retentionOutstanding}</TableCell>
+                <TableCell>{item.qcAmount}</TableCell>
+                <TableCell>{item.noOfItems}</TableCell>
+                <TableCell>{item.totalAmountPaid}</TableCell>
+                <TableCell>{item.outstanding}</TableCell>
+                <TableCell>{item.debtCollectionNoteRaised}</TableCell>
+                <TableCell>{item.createdBy2}</TableCell>
+                <TableCell>{item.uploadedBy}</TableCell>
+                <TableCell>{item.updatedOn}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -170,7 +185,6 @@ export const WODashboard = () => {
       <WOFilterDialog 
         open={isFilterDialogOpen}
         onOpenChange={setIsFilterDialogOpen}
-        onApply={handleFilterApply}
       />
     </div>
   );
