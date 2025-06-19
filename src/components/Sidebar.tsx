@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -145,8 +146,6 @@ const modulesByPackage = {
           color: 'text-[#1a1a1a]',
           subItems: [
             { name: 'All', href: '/security/vehicle/r-vehicles', color: 'text-[#1a1a1a]' },
-            { name: 'In', href: '/security/vehicle/r-vehicles/in', color: 'text-[#1a1a1a]' },
-            { name: 'Out', href: '/security/vehicle/r-vehicles/out', color: 'text-[#1a1a1a]' },
             { name: 'History', href: '/security/vehicle/r-vehicles/history', color: 'text-[#1a1a1a]' }
           ]
         },

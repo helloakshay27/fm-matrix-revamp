@@ -133,17 +133,6 @@ export const RVehiclesDashboard = () => {
     navigate('/security/vehicle/r-vehicles/history');
   };
 
-  const handleTabClick = (tab: string) => {
-    setActiveTab(tab);
-    if (tab === 'History') {
-      handleHistoryClick();
-    } else if (tab === 'In') {
-      navigate('/security/vehicle/r-vehicles/in');
-    } else if (tab === 'Out') {
-      navigate('/security/vehicle/r-vehicles/out');
-    }
-  };
-
   return (
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
       <div className="mb-6">
@@ -189,7 +178,12 @@ export const RVehiclesDashboard = () => {
             {['History', 'All', 'In', 'Out'].map((tab) => (
               <button
                 key={tab}
-                onClick={() => handleTabClick(tab)}
+                onClick={() => {
+                  setActiveTab(tab);
+                  if (tab === 'History') {
+                    handleHistoryClick();
+                  }
+                }}
                 className={`px-6 py-3 text-sm font-medium transition-colors ${
                   activeTab === tab
                     ? 'text-white'
