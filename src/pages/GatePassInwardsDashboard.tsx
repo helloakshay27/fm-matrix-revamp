@@ -74,35 +74,38 @@ export const GatePassInwardsDashboard = () => {
     // Export functionality would be implemented here
   };
 
+  const handleAddInwardsPass = () => {
+    console.log('Adding new inwards pass...');
+    // Add new pass functionality would be implemented here
+  };
+
   return (
     <div className="bg-white rounded-lg border border-gray-200">
-      {/* Action Buttons */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <div className="flex gap-3">
-          <Button 
-            style={{ backgroundColor: '#C72030' }}
-            className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add Inwards Pass
-          </Button>
-          <Button 
-            variant="outline"
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded flex items-center gap-2"
-            onClick={handleExport}
-          >
-            <Download className="w-4 h-4" />
-            Export
-          </Button>
-          <Button 
-            variant="outline"
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded flex items-center gap-2"
-            onClick={() => setIsFilterModalOpen(true)}
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            Filters
-          </Button>
-        </div>
+      {/* Action Buttons - Updated styling to match the image */}
+      <div className="flex items-center gap-3 p-4 border-b border-gray-200">
+        <Button 
+          onClick={handleAddInwardsPass}
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Add Inwards Pass
+        </Button>
+        <Button 
+          variant="outline"
+          className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded flex items-center gap-2"
+          onClick={handleExport}
+        >
+          <Download className="w-4 h-4" />
+          Export
+        </Button>
+        <Button 
+          variant="outline"
+          className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded flex items-center gap-2"
+          onClick={() => setIsFilterModalOpen(true)}
+        >
+          <SlidersHorizontal className="w-4 h-4" />
+          Filters
+        </Button>
       </div>
 
       {/* Data Table */}
@@ -168,7 +171,7 @@ export const GatePassInwardsDashboard = () => {
         </Table>
       </div>
 
-      {/* Pagination or Load More could be added here */}
+      {/* Pagination */}
       <div className="p-4 border-t border-gray-200 flex justify-between items-center">
         <span className="text-sm text-gray-600">
           Showing {gatePassData.length} entries

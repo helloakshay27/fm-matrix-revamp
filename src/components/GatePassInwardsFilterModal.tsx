@@ -16,11 +16,13 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose }: GatePassInwardsF
 
   const handleApply = () => {
     console.log('Filter applied:', { searchByNameOrId });
+    // Here you would implement the actual filter logic
     onClose();
   };
 
   const handleReset = () => {
     setSearchByNameOrId('');
+    console.log('Filters reset');
   };
 
   return (
