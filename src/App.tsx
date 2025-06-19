@@ -78,6 +78,7 @@ import { ViewSchedulePage } from './pages/ViewSchedulePage';
 import { VisitorsDashboard } from './pages/VisitorsDashboard';
 import { VisitorsHistoryDashboard } from './pages/VisitorsHistoryDashboard';
 import { PatrollingDashboard } from './pages/PatrollingDashboard';
+import { PatrollingDetailsPage } from './pages/PatrollingDetailsPage';
 
 // Import Staff pages
 import { StaffsDashboard } from './pages/StaffsDashboard';
@@ -292,6 +293,7 @@ function App() {
               <Route path="/security/staff/details/:id" element={<StaffDetailsPage />} />
               <Route path="/security/staff/edit/:id" element={<EditStaffPage />} />
               <Route path="/security/patrolling" element={<PatrollingDashboard />} />
+              <Route path="/security/patrolling/details/:id" element={<PatrollingDetailsPage />} />
               
               {/* Security Vehicle Routes */}
               <Route path="/security/vehicle/r-vehicles" element={<RVehiclesDashboard />} />

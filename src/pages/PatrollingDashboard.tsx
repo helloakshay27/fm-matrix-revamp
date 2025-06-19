@@ -1,12 +1,15 @@
 
 import React, { useState } from 'react';
 import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BulkUploadModal } from '@/components/BulkUploadModal';
 import { ExportModal } from '@/components/ExportModal';
 import { PatrollingFilterModal } from '@/components/PatrollingFilterModal';
 import { AddPatrollingModal } from '@/components/AddPatrollingModal';
+import { EditPatrollingModal } from '@/components/EditPatrollingModal';
+import { DeletePatrollingModal } from '@/components/DeletePatrollingModal';
 
 const patrollingData = [
   {
@@ -44,10 +47,14 @@ const patrollingData = [
 ];
 
 export const PatrollingDashboard = () => {
+  const navigate = useNavigate();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedPatrollingId, setSelectedPatrollingId] = useState<number | null>(null);
 
   const handlePrintQR = () => {
     console.log('Print QR clicked');
@@ -61,14 +68,24 @@ export const PatrollingDashboard = () => {
 
   const handleView = (id: number) => {
     console.log('View patrolling:', id);
+    navigate(`/security/patrolling/details/${id}`);
   };
 
   const handleEdit = (id: number) => {
     console.log('Edit patrolling:', id);
+    setSelectedPatrollingId(id);
+    setIsEditModalOpen(true);
   };
 
   const handleDelete = (id: number) => {
     console.log('Delete patrolling:', id);
+    setSelectedPatrollingId(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    console.log('Confirmed delete for patrolling:', selectedPatrollingId);
+    // Here you would typically make an API call to delete the record
   };
 
   return (
@@ -237,6 +254,29 @@ export const PatrollingDashboard = () => {
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
       />
+
+      {selectedPatrollingId && (
+        <EditPatrollingModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedPatrollingId(null);
+          }}
+          patrollingId={selectedPatrollingId}
+        />
+      )}
+
+      {selectedPatrollingId && (
+        <DeletePatrollingModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setSelectedPatrollingId(null);
+          }}
+          onConfirm={handleDeleteConfirm}
+          patrollingId={selectedPatrollingId}
+        />
+      )}
     </div>
   );
 };
