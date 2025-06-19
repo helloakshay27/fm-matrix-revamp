@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -218,8 +217,11 @@ import { ApprovalMatrixDashboard } from './pages/settings/ApprovalMatrixDashboar
 import { AddApprovalMatrixDashboard } from './pages/settings/AddApprovalMatrixDashboard';
 import { EditApprovalMatrixDashboard } from './pages/settings/EditApprovalMatrixDashboard';
 
-// Import Department Dashboard
-import { DepartmentDashboard } from './pages/setup/DepartmentDashboard';
+// Import Department Dashboard for Settings
+import { DepartmentDashboard } from './pages/settings/DepartmentDashboard';
+
+// Import Department Dashboard for Setup
+import { DepartmentDashboard as SetupDepartmentDashboard } from './pages/setup/DepartmentDashboard';
 
 // Import AddNewBillDashboard
 import { AddNewBillDashboard } from './pages/AddNewBillDashboard';
@@ -422,7 +424,7 @@ function App() {
               <Route path="/setup/location/floor" element={<div>Location Floor</div>} />
               <Route path="/setup/location/unit" element={<div>Location Unit</div>} />
               <Route path="/setup/location/room" element={<div>Location Room</div>} />
-              <Route path="/setup/user-role/department" element={<div>User Role Department</div>} />
+              <Route path="/setup/user-role/department" element={<SetupDepartmentDashboard />} />
               <Route path="/setup/user-role/role" element={<div>User Role Role</div>} />
               <Route path="/setup/fm-user" element={<div>FM User</div>} />
               <Route path="/setup/occupant-users" element={<div>Occupant Users</div>} />
