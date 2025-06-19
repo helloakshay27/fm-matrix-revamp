@@ -211,6 +211,7 @@ import { POFeedsPage } from './pages/POFeedsPage';
 import { WODashboard } from './pages/WODashboard';
 import { AutoSavedPRDashboard } from './pages/AutoSavedPRDashboard';
 import { GRNSRNDashboard } from './pages/GRNSRNDashboard';
+import { AddGRNDashboard } from './pages/AddGRNDashboard';
 import { InvoicesDashboard } from './pages/InvoicesDashboard';
 import { InvoicesSESDashboard } from './pages/InvoicesSESDashboard';
 import { BillBookingDashboard } from './pages/BillBookingDashboard';
