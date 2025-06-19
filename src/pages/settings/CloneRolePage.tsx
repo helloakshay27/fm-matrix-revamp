@@ -34,14 +34,6 @@ export const CloneRolePage = () => {
 
       <div className="p-6">
         <div className="max-w-4xl mx-auto">
-          {/* Navigation Tabs */}
-          <div className="flex gap-4 mb-8">
-            <span className="text-gray-600">Home</span>
-            <span className="text-gray-600">Dashboard</span>
-            <span className="bg-[#C72030] text-white px-4 py-2 rounded">Setup</span>
-            <span className="text-gray-600">Executive Dashboard</span>
-          </div>
-
           {/* Main Content */}
           <div className="bg-white rounded-lg shadow-sm border p-8">
             <div className="grid grid-cols-2 gap-12">
