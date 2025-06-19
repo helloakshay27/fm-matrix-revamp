@@ -1,11 +1,46 @@
 
 import React, { useState } from 'react';
-import { Plus, Download, Filter, Upload, Printer, QrCode } from 'lucide-react';
+import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BulkUploadModal } from '@/components/BulkUploadModal';
 import { ExportModal } from '@/components/ExportModal';
 import { PatrollingFilterModal } from '@/components/PatrollingFilterModal';
 import { AddPatrollingModal } from '@/components/AddPatrollingModal';
+
+const patrollingData = [
+  {
+    id: 1,
+    site: 'Site - Localized Site 1',
+    building: 'Building - HDFC Ergo Bharti',
+    wing: 'Wing - Wing 1',
+    floor: 'Floor - Floor 1',
+    room: 'Room - Room 1',
+    location: 'Site - Localized Site 1 / Building - HDFC Ergo Bharti / Wing - Wing 1 / Floor - Floor 1 / Room - Room 1',
+    scheduledTime: '8:00 AM, 11:00 AM, 2:00 PM, 5:00 PM, 8:00 PM, 11:00 PM',
+    createdOn: '15/04/2024',
+    startDate: '15/04/2024',
+    endDate: '30/04/2024',
+    graceTime: '',
+    activeInactive: true,
+    qrCode: '1234567890'
+  },
+  {
+    id: 2,
+    site: 'Site - Localized Site 1',
+    building: 'Building - HDFC Ergo Bharti',
+    wing: 'Wing - Wing 1',
+    floor: 'Floor - Floor 1',
+    room: 'Room - NA',
+    location: 'Site - Localized Site 1 / Building - HDFC Ergo Bharti / Wing - Wing 1 / Floor - Floor 1 / Room - NA',
+    scheduledTime: '8:00 AM, 11:00 AM, 2:00 PM, 5:00 PM, 8:00 PM, 11:00 PM',
+    createdOn: '22/02/2024',
+    startDate: '22/02/2024',
+    endDate: '',
+    graceTime: '',
+    activeInactive: true,
+    qrCode: '0987654321'
+  }
+];
 
 export const PatrollingDashboard = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -25,6 +60,18 @@ export const PatrollingDashboard = () => {
     window.print();
   };
 
+  const handleView = (id: number) => {
+    console.log('View patrolling:', id);
+  };
+
+  const handleEdit = (id: number) => {
+    console.log('Edit patrolling:', id);
+  };
+
+  const handleDelete = (id: number) => {
+    console.log('Delete patrolling:', id);
+  };
+
   return (
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
       <div className="mb-6">
@@ -34,7 +81,7 @@ export const PatrollingDashboard = () => {
           <span>Patrolling</span>
         </div>
         
-        <h1 className="text-2xl font-bold text-[#1a1a1a] mb-6 uppercase">PATROLLING</h1>
+        <h1 className="text-2xl font-bold text-[#1a1a1a] mb-6 uppercase">PATROLLING LIST</h1>
         
         {/* Action Buttons */}
         <div className="flex gap-3 mb-6">
@@ -88,22 +135,79 @@ export const PatrollingDashboard = () => {
             <table className="w-full">
               <thead className="bg-[#f6f4ee]">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">Actions</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">Patrol ID</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">Date</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">Time</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">Guard Name</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">
+                    <input type="checkbox" className="mr-2" />
+                    Actions
+                  </th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">Location</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">Status</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a]">Notes</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">Scheduled Time</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">Created On</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">Start Date</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">End Date</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">Grace Time(Hours)</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] border-r border-gray-200">Active/Inactive</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[#1a1a1a]">Qr Code</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
-                    No patrolling records found
-                  </td>
-                </tr>
+                {patrollingData.map((patrol) => (
+                  <tr key={patrol.id} className="border-b border-gray-200 hover:bg-gray-50">
+                    <td className="px-4 py-3 border-r border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <input type="checkbox" />
+                        <button 
+                          onClick={() => handleView(patrol.id)}
+                          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleEdit(patrol.id)}
+                          className="p-1 text-green-600 hover:bg-green-50 rounded"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(patrol.id)}
+                          className="p-1 text-red-600 hover:bg-red-50 rounded"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">
+                      {patrol.location}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">
+                      {patrol.scheduledTime}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">
+                      {patrol.createdOn}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">
+                      {patrol.startDate}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">
+                      {patrol.endDate}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">
+                      {patrol.graceTime}
+                    </td>
+                    <td className="px-4 py-3 text-sm border-r border-gray-200">
+                      <input 
+                        type="checkbox" 
+                        checked={patrol.activeInactive}
+                        className="text-blue-600"
+                        readOnly
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                        {patrol.qrCode}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
