@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { SetupLayout } from '@/components/SetupLayout';
 import { Button } from '@/components/ui/button';
@@ -48,7 +47,7 @@ export const EditApprovalMatrixDashboard = () => {
 
   const handleUpdate = () => {
     console.log('Updating approval matrix:', { id, selectedFunction, approvalLevels });
-    window.location.href = '/setup/approval-matrix';
+    window.location.href = '/settings/approval-matrix';
   };
 
   return (

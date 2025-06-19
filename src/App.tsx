@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -227,6 +228,9 @@ function App() {
               <Route path="/settings/users" element={<FMUsersDashboard />} />
               <Route path="/settings/users/clone-role" element={<CloneRolePage />} />
               <Route path="/settings/account" element={<AccountDashboard />} />
+              <Route path="/settings/approval-matrix" element={<ApprovalMatrixDashboard />} />
+              <Route path="/settings/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
+              <Route path="/settings/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
               
               {/* Snagging Routes */}
               <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />

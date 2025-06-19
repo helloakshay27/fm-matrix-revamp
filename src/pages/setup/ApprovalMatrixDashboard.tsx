@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { SetupLayout } from '@/components/SetupLayout';
 import { Button } from '@/components/ui/button';
@@ -21,11 +20,11 @@ export const ApprovalMatrixDashboard = () => {
   ];
 
   const handleAddClick = () => {
-    window.location.href = '/setup/approval-matrix/add';
+    window.location.href = '/settings/approval-matrix/add';
   };
 
   const handleEditClick = (id: number) => {
-    window.location.href = `/setup/approval-matrix/edit/${id}`;
+    window.location.href = `/settings/approval-matrix/edit/${id}`;
   };
 
   return (

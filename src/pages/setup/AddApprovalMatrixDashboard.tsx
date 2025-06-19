@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { SetupLayout } from '@/components/SetupLayout';
 import { Button } from '@/components/ui/button';
@@ -46,7 +45,7 @@ export const AddApprovalMatrixDashboard = () => {
 
   const handleCreate = () => {
     console.log('Creating approval matrix:', { selectedFunction, approvalLevels });
-    window.location.href = '/setup/approval-matrix';
+    window.location.href = '/settings/approval-matrix';
   };
 
   const handleSaveAndCreateNew = () => {
