@@ -40,8 +40,8 @@ export const OtherBillsDashboard = () => {
       {/* Add Button */}
       <div className="mb-6">
         <Button 
-          className="bg-[#C72030] hover:bg-[#A01020] text-white"
-          onClick={() => navigate('/finance/bill-booking/add')}
+          className="bg-purple-600 hover:bg-purple-700 text-white"
+          onClick={() => navigate('/finance/other-bills/add')}
         >
           + Add
         </Button>

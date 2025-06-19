@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -202,11 +203,6 @@ import { AutoSavedPRDashboard } from './pages/AutoSavedPRDashboard';
 import { InvoicesSESDashboard } from './pages/InvoicesSESDashboard';
 import { OtherBillsDashboard } from './pages/OtherBillsDashboard';
 import { PendingApprovalsDashboard } from './pages/PendingApprovalsDashboard';
-import { AddNewBillDashboard } from './pages/AddNewBillDashboard';
-
-// Import Settings pages
-import { FMUsersDashboard } from './pages/settings/FMUsersDashboard';
-import { CloneRolePage } from './pages/settings/CloneRolePage';
 
 const queryClient = new QueryClient();
 
@@ -218,10 +214,6 @@ function App() {
           <Routes>
             <Route path="/" element={<Layout><div /></Layout>}>
               <Route index element={<Index />} />
-              
-              {/* Settings Routes */}
-              <Route path="/settings/users" element={<FMUsersDashboard />} />
-              <Route path="/settings/users/clone-role" element={<CloneRolePage />} />
               
               {/* Snagging Routes */}
               <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
@@ -292,7 +284,6 @@ function App() {
               <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
               <Route path="/finance/invoices" element={<InvoicesSESDashboard />} />
               <Route path="/finance/bill-booking" element={<OtherBillsDashboard />} />
-              <Route path="/finance/bill-booking/add" element={<AddNewBillDashboard />} />
               <Route path="/finance/pending-approvals" element={<PendingApprovalsDashboard />} />
               
               {/* Maintenance Routes */}

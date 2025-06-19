@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
 
 interface AddFMUserModalProps {
@@ -19,17 +19,17 @@ export const AddFMUserModal = ({ isOpen, onClose }: AddFMUserModalProps) => {
     mobileNumber: '',
     emailAddress: '',
     gender: '',
-    entity: '',
+    selectEntity: '',
     supplier: '',
     employeeId: '',
     baseSite: '',
-    baseUnit: '',
-    department: '',
-    emailPreference: '',
+    selectBaseUnit: '',
+    selectDepartment: '',
+    selectEmailPreference: '',
     designation: '',
-    userType: '',
-    role: '',
-    accessLevel: ''
+    selectUserType: '',
+    selectRole: '',
+    selectAccessLevel: ''
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -37,13 +37,13 @@ export const AddFMUserModal = ({ isOpen, onClose }: AddFMUserModalProps) => {
   };
 
   const handleSubmit = () => {
-    console.log('Adding FM User:', formData);
+    console.log('FM User data:', formData);
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl bg-white max-h-[90vh] overflow-y-auto">
         <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
           <DialogTitle className="text-lg font-semibold">ADD FM USER</DialogTitle>
           <Button
@@ -56,8 +56,8 @@ export const AddFMUserModal = ({ isOpen, onClose }: AddFMUserModalProps) => {
           </Button>
         </DialogHeader>
         
-        <div className="p-6 space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label className="text-sm font-medium">
                 First Name <span className="text-red-500">*</span>
@@ -93,9 +93,7 @@ export const AddFMUserModal = ({ isOpen, onClose }: AddFMUserModalProps) => {
                 className="border-gray-300"
               />
             </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
+            
             <div className="space-y-2">
               <Label className="text-sm font-medium">
                 Email Address <span className="text-red-500">*</span>
@@ -125,7 +123,7 @@ export const AddFMUserModal = ({ isOpen, onClose }: AddFMUserModalProps) => {
             
             <div className="space-y-2">
               <Label className="text-sm font-medium">Select Entity</Label>
-              <Select value={formData.entity} onValueChange={(value) => handleInputChange('entity', value)}>
+              <Select value={formData.selectEntity} onValueChange={(value) => handleInputChange('selectEntity', value)}>
                 <SelectTrigger className="border-gray-300">
                   <SelectValue placeholder="Select Entity" />
                 </SelectTrigger>
@@ -135,9 +133,7 @@ export const AddFMUserModal = ({ isOpen, onClose }: AddFMUserModalProps) => {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
+            
             <div className="space-y-2">
               <Label className="text-sm font-medium">Supplier</Label>
               <Select value={formData.supplier} onValueChange={(value) => handleInputChange('supplier', value)}>
@@ -172,14 +168,11 @@ export const AddFMUserModal = ({ isOpen, onClose }: AddFMUserModalProps) => {
                   <SelectItem value="site2">Site 2</SelectItem>
                 </SelectContent>
               </Select>
-              <div className="text-red-500 text-xs">Select Base Site</div>
             </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
+            
             <div className="space-y-2">
               <Label className="text-sm font-medium">Select Base Unit</Label>
-              <Select value={formData.baseUnit} onValueChange={(value) => handleInputChange('baseUnit', value)}>
+              <Select value={formData.selectBaseUnit} onValueChange={(value) => handleInputChange('selectBaseUnit', value)}>
                 <SelectTrigger className="border-gray-300">
                   <SelectValue placeholder="Select Base Unit" />
                 </SelectTrigger>
@@ -192,34 +185,30 @@ export const AddFMUserModal = ({ isOpen, onClose }: AddFMUserModalProps) => {
             
             <div className="space-y-2">
               <Label className="text-sm font-medium">Select Department</Label>
-              <Select value={formData.department} onValueChange={(value) => handleInputChange('department', value)}>
+              <Select value={formData.selectDepartment} onValueChange={(value) => handleInputChange('selectDepartment', value)}>
                 <SelectTrigger className="border-gray-300">
                   <SelectValue placeholder="Select Department" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="it">IT</SelectItem>
-                  <SelectItem value="hr">HR</SelectItem>
-                  <SelectItem value="finance">Finance</SelectItem>
+                  <SelectItem value="dept1">Department 1</SelectItem>
+                  <SelectItem value="dept2">Department 2</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <div className="space-y-2">
               <Label className="text-sm font-medium">Select Email Preference</Label>
-              <Select value={formData.emailPreference} onValueChange={(value) => handleInputChange('emailPreference', value)}>
+              <Select value={formData.selectEmailPreference} onValueChange={(value) => handleInputChange('selectEmailPreference', value)}>
                 <SelectTrigger className="border-gray-300">
                   <SelectValue placeholder="Select Email Preference" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Emails</SelectItem>
-                  <SelectItem value="important">Important Only</SelectItem>
-                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
+            
             <div className="space-y-2">
               <Label className="text-sm font-medium">Designation</Label>
               <Input
@@ -234,14 +223,13 @@ export const AddFMUserModal = ({ isOpen, onClose }: AddFMUserModalProps) => {
               <Label className="text-sm font-medium">
                 Select User Type <span className="text-red-500">*</span>
               </Label>
-              <Select value={formData.userType} onValueChange={(value) => handleInputChange('userType', value)}>
+              <Select value={formData.selectUserType} onValueChange={(value) => handleInputChange('selectUserType', value)}>
                 <SelectTrigger className="border-gray-300">
                   <SelectValue placeholder="Select User Type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="viewer">Viewer</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -250,41 +238,37 @@ export const AddFMUserModal = ({ isOpen, onClose }: AddFMUserModalProps) => {
               <Label className="text-sm font-medium">
                 Select Role <span className="text-red-500">*</span>
               </Label>
-              <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value)}>
+              <Select value={formData.selectRole} onValueChange={(value) => handleInputChange('selectRole', value)}>
                 <SelectTrigger className="border-gray-300">
                   <SelectValue placeholder="Select Role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="manager">Manager</SelectItem>
-                  <SelectItem value="employee">Employee</SelectItem>
+                  <SelectItem value="staff">Staff</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">
+                Select Access Level <span className="text-red-500">*</span>
+              </Label>
+              <Select value={formData.selectAccessLevel} onValueChange={(value) => handleInputChange('selectAccessLevel', value)}>
+                <SelectTrigger className="border-gray-300">
+                  <SelectValue placeholder="Select Access Level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full">Full Access</SelectItem>
+                  <SelectItem value="limited">Limited Access</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">
-                Select Access Level <span className="text-red-500">*</span>
-              </Label>
-              <Select value={formData.accessLevel} onValueChange={(value) => handleInputChange('accessLevel', value)}>
-                <SelectTrigger className="border-gray-300">
-                  <SelectValue placeholder="Select Access Level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="site">Site</SelectItem>
-                  <SelectItem value="company">Company</SelectItem>
-                  <SelectItem value="country">Country</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-center pt-4">
             <Button
               onClick={handleSubmit}
-              className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
+              className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-2"
             >
               Submit
             </Button>
