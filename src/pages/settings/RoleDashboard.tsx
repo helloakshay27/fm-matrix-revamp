@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Plus, Search } from 'lucide-react';
+import { AddRoleDialog } from '@/components/AddRoleDialog';
 
 interface Permission {
   name: string;
@@ -163,6 +163,7 @@ export const RoleDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('All Functions');
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [isAddRoleOpen, setIsAddRoleOpen] = useState(false);
   const [roles, setRoles] = useState<Role[]>([
     { 
       id: 1, 
@@ -281,8 +282,27 @@ export const RoleDashboard = () => {
   };
 
   const handleAddRole = () => {
-    console.log('Adding new role...');
-    // Here you would typically open a modal or navigate to add role page
+    console.log('Opening Add Role dialog...');
+    setIsAddRoleOpen(true);
+  };
+
+  const handleAddRoleSubmit = (roleName: string, permissions: any[]) => {
+    console.log('Adding new role:', roleName);
+    console.log('Permissions:', permissions);
+    
+    const newRole: Role = {
+      id: Math.max(...roles.map(r => r.id)) + 1,
+      name: roleName,
+      permissions: {
+        'All Functions': [...permissions],
+        'Inventory': [...inventoryPermissions],
+        'Setup': [...setupPermissions],
+        'Quickgate': [...quickgatePermissions]
+      }
+    };
+    
+    setRoles([...roles, newRole]);
+    alert(`Role "${roleName}" has been successfully added!`);
   };
 
   const handleSearchRole = () => {
@@ -500,6 +520,13 @@ export const RoleDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Add Role Dialog */}
+      <AddRoleDialog 
+        open={isAddRoleOpen}
+        onOpenChange={setIsAddRoleOpen}
+        onSubmit={handleAddRoleSubmit}
+      />
     </div>
   );
 };
