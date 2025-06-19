@@ -156,7 +156,12 @@ export const ServicePRDashboard = () => {
                   </Button>
                 </TableCell>
                 <TableCell>
-                  <Button size="sm" variant="ghost" className="p-1">
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    className="p-1"
+                    onClick={() => navigate(`/finance/service-pr/details/${item.id}`)}
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
                 </TableCell>
