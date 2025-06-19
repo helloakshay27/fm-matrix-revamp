@@ -14,13 +14,17 @@ export const AddApprovalMatrixDashboard = () => {
   ]);
 
   const functionOptions = [
-    'Select Function',
-    'Custom Form',
-    'Gdn',
+    'Purchase Order',
+    'GRN',
     'Work Order',
-    'Grn',
     'Work Order Invoice',
-    'Purchase Order'
+    'Bill',
+    'Vendor Evaluation',
+    'Permit',
+    'Permit Extend',
+    'Permit Closure',
+    'Supplier',
+    'GDN'
   ];
 
   const addApprovalLevel = () => {
@@ -60,14 +64,18 @@ export const AddApprovalMatrixDashboard = () => {
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-6">
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="function" className="text-sm font-medium">Function</Label>
+            <Label htmlFor="function" className="text-sm font-medium">Function *</Label>
             <Select value={selectedFunction} onValueChange={setSelectedFunction}>
               <SelectTrigger className="w-64">
                 <SelectValue placeholder="Select Function" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white border border-gray-300 shadow-lg z-50">
                 {functionOptions.map((option) => (
-                  <SelectItem key={option} value={option}>
+                  <SelectItem 
+                    key={option} 
+                    value={option}
+                    className="hover:bg-blue-500 hover:text-white cursor-pointer px-3 py-2"
+                  >
                     {option}
                   </SelectItem>
                 ))}
@@ -112,7 +120,7 @@ export const AddApprovalMatrixDashboard = () => {
                       <SelectTrigger className="w-full h-10">
                         <SelectValue placeholder="Select up to 15 Options..." />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white border border-gray-300 shadow-lg z-50">
                         <SelectItem value="option1">Option 1</SelectItem>
                         <SelectItem value="option2">Option 2</SelectItem>
                         <SelectItem value="option3">Option 3</SelectItem>
