@@ -1,4 +1,6 @@
+
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
@@ -98,6 +100,7 @@ const historyData = [
 ];
 
 export const StaffsDashboard = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -143,7 +146,7 @@ export const StaffsDashboard = () => {
   };
 
   const handleViewStaff = (staffId: string) => {
-    window.location.href = `/security/staff/details/${staffId}`;
+    navigate(`/security/staff/details/${staffId}`);
   };
 
   const handleEditStaff = (staffId: string) => {
