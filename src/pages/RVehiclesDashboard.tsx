@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Download, SlidersHorizontal, Edit, Search } from 'lucide-react';
@@ -149,24 +148,21 @@ export const RVehiclesDashboard = () => {
           <div className="flex items-center gap-3 p-4 border-b border-gray-200">
             <Button 
               onClick={() => setIsAddModalOpen(true)}
-              style={{ backgroundColor: '#6B46C1' }}
-              className="hover:bg-purple-700 text-white px-4 py-2 rounded flex items-center gap-2"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Add
             </Button>
             <Button 
               onClick={() => setIsImportModalOpen(true)}
-              style={{ backgroundColor: '#6B46C1' }}
-              className="hover:bg-purple-700 text-white px-4 py-2 rounded flex items-center gap-2"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
               Import
             </Button>
             <Button 
               onClick={() => setIsFilterModalOpen(true)}
-              style={{ backgroundColor: '#6B46C1' }}
-              className="hover:bg-purple-700 text-white px-4 py-2 rounded flex items-center gap-2"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded flex items-center gap-2"
             >
               <SlidersHorizontal className="w-4 h-4" />
               Filters

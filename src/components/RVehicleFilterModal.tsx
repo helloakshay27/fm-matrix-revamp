@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -63,8 +62,7 @@ export const RVehicleFilterModal = ({ isOpen, onClose }: RVehicleFilterModalProp
             </Button>
             <Button
               onClick={handleApply}
-              style={{ backgroundColor: '#6B46C1' }}
-              className="hover:bg-purple-700 text-white px-6 py-2"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2"
             >
               Apply
             </Button>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -73,8 +72,7 @@ export const RVehicleImportModal = ({ isOpen, onClose }: RVehicleImportModalProp
             </Button>
             <Button
               onClick={handleImport}
-              style={{ backgroundColor: '#6B46C1' }}
-              className="hover:bg-purple-700 text-white px-6 py-2"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2"
             >
               Import
             </Button>

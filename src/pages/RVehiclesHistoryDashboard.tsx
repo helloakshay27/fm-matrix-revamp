@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { SlidersHorizontal } from 'lucide-react';
@@ -181,8 +180,7 @@ export const RVehiclesHistoryDashboard = () => {
               </Button>
               <Button 
                 onClick={handleAllVehiclesClick}
-                style={{ backgroundColor: '#6B46C1' }}
-                className="hover:bg-purple-700 text-white px-6 py-2 rounded"
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded"
               >
                 All Vehicles
               </Button>
