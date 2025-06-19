@@ -1,14 +1,13 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MaterialPRFilterDialog } from "@/components/MaterialPRFilterDialog";
 import { useNavigate } from 'react-router-dom';
 
 export const MaterialPRDashboard = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
 
   const materialPRData = [
     {
@@ -18,7 +17,7 @@ export const MaterialPRDashboard = () => {
       supplierName: "ABC",
       createdBy: "Abhishek Sharma",
       createdOn: "15/05/2025",
-      lastApprovedBy: "Sony Bhosle",
+      lastApprovedBy: "",
       approvedStatus: "Pending",
       prAmount: "₹ 3,560",
       activeInactive: true
@@ -70,66 +69,6 @@ export const MaterialPRDashboard = () => {
       approvedStatus: "Rejected",
       prAmount: "₹ 3,02,600",
       activeInactive: true
-    },
-    {
-      id: 10407,
-      prNumber: "121245",
-      referenceNo: "121245",
-      supplierName: "Godrej",
-      createdBy: "Sony B Bhosle",
-      createdOn: "26/03/2025",
-      lastApprovedBy: "Sony B Bhosle",
-      approvedStatus: "Approved",
-      prAmount: "₹ 1,300",
-      activeInactive: true
-    },
-    {
-      id: 10406,
-      prNumber: "121244",
-      referenceNo: "121244",
-      supplierName: "ABC",
-      createdBy: "Abhishek Sharma",
-      createdOn: "26/03/2025",
-      lastApprovedBy: "Sony B Bhosle",
-      approvedStatus: "Approved",
-      prAmount: "₹ 1,560",
-      activeInactive: true
-    },
-    {
-      id: 10392,
-      prNumber: "121241",
-      referenceNo: "121241",
-      supplierName: "Mohammad Sageer",
-      createdBy: "Sony B Bhosle",
-      createdOn: "26/03/2025",
-      lastApprovedBy: "",
-      approvedStatus: "Pending",
-      prAmount: "₹ 1,300",
-      activeInactive: true
-    },
-    {
-      id: 10390,
-      prNumber: "121240",
-      referenceNo: "121240",
-      supplierName: "ACHLA CORPORATION",
-      createdBy: "Sony B Bhosle",
-      createdOn: "26/03/2025",
-      lastApprovedBy: "",
-      approvedStatus: "Pending",
-      prAmount: "₹ 1,300",
-      activeInactive: true
-    },
-    {
-      id: 10389,
-      prNumber: "121239",
-      referenceNo: "121239",
-      supplierName: "ACHLA CORPORATION",
-      createdBy: "Sony B Bhosle",
-      createdOn: "26/03/2025",
-      lastApprovedBy: "",
-      approvedStatus: "Pending",
-      prAmount: "₹ 260",
-      activeInactive: true
     }
   ];
 
@@ -166,16 +105,13 @@ export const MaterialPRDashboard = () => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex gap-3">
           <Button 
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+            className="bg-[#C72030] hover:bg-[#A01020] text-white"
             onClick={() => navigate('/finance/material-pr/add')}
           >
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
-          <Button 
-            variant="outline"
-            onClick={() => setIsFilterDialogOpen(true)}
-          >
+          <Button variant="outline">
             Filters
           </Button>
         </div>
@@ -188,10 +124,12 @@ export const MaterialPRDashboard = () => {
               placeholder="Search By PR Number"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent w-64"
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent w-64"
             />
           </div>
-          <Button variant="outline" className="px-4">
+          <Button 
+            className="bg-[#C72030] hover:bg-[#A01020] text-white px-4"
+          >
             Go!
           </Button>
           <Button 
@@ -266,11 +204,6 @@ export const MaterialPRDashboard = () => {
           </TableBody>
         </Table>
       </div>
-
-      <MaterialPRFilterDialog 
-        open={isFilterDialogOpen}
-        onOpenChange={setIsFilterDialogOpen}
-      />
     </div>
   );
 };

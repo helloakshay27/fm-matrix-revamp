@@ -190,6 +190,12 @@ import { RVehiclesOutDashboard } from './pages/RVehiclesOutDashboard';
 // Import Space Management booking details page
 import { SpaceManagementBookingDetailsPage } from './pages/SpaceManagementBookingDetailsPage';
 
+// Import Finance pages
+import { MaterialPRDashboard } from './pages/MaterialPRDashboard';
+import { ServicePRDashboard } from './pages/ServicePRDashboard';
+import { AddMaterialPRDashboard } from './pages/AddMaterialPRDashboard';
+import { AddServicePRDashboard } from './pages/AddServicePRDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -258,6 +264,12 @@ function App() {
               <Route path="/maintenance/audit/survey/list" element={<SurveyListDashboard />} />
               <Route path="/maintenance/audit/survey/mapping" element={<SurveyMappingDashboard />} />
               <Route path="/maintenance/audit/survey/response" element={<SurveyResponseDashboard />} />
+              
+              {/* Finance Routes */}
+              <Route path="/finance/material-pr" element={<MaterialPRDashboard />} />
+              <Route path="/finance/material-pr/add" element={<AddMaterialPRDashboard />} />
+              <Route path="/finance/service-pr" element={<ServicePRDashboard />} />
+              <Route path="/finance/service-pr/add" element={<AddServicePRDashboard />} />
               
               {/* Maintenance Routes */}
               <Route path="/maintenance/asset" element={<AssetDashboard />} />

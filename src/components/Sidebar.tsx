@@ -103,7 +103,15 @@ const modulesByPackage = {
       icon: Briefcase, 
       href: '/finance/procurement',
       subItems: [
-        { name: 'PR/ SR', href: '/finance/pr-sr', color: 'text-[#1a1a1a]' },
+        { 
+          name: 'PR/ SR', 
+          href: '/finance/pr-sr', 
+          color: 'text-[#1a1a1a]',
+          subItems: [
+            { name: 'Material PR', href: '/finance/material-pr', color: 'text-[#1a1a1a]' },
+            { name: 'Service PR', href: '/finance/service-pr', color: 'text-[#1a1a1a]' }
+          ]
+        },
         { name: 'PO/WO', href: '/finance/po-wo', color: 'text-[#1a1a1a]' },
         { name: 'GRN/ SRN', href: '/finance/grn-srn', color: 'text-[#1a1a1a]' },
         { name: 'Auto Saved PR', href: '/finance/auto-saved-pr', color: 'text-[#1a1a1a]' }
