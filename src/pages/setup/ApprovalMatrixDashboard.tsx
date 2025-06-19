@@ -24,6 +24,10 @@ export const ApprovalMatrixDashboard = () => {
     window.location.href = '/setup/approval-matrix/add';
   };
 
+  const handleEditClick = (id: number) => {
+    window.location.href = `/setup/approval-matrix/edit/${id}`;
+  };
+
   return (
     <SetupLayout>
       <div className="space-y-6">
@@ -71,7 +75,12 @@ export const ApprovalMatrixDashboard = () => {
                 {approvals.map((approval) => (
                   <tr key={approval.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-gray-600 hover:text-gray-900"
+                        onClick={() => handleEditClick(approval.id)}
+                      >
                         ✏️
                       </Button>
                     </td>

@@ -210,6 +210,7 @@ import { AccountDashboard } from './pages/settings/AccountDashboard';
 // Import Approval Matrix pages
 import { ApprovalMatrixDashboard } from './pages/setup/ApprovalMatrixDashboard';
 import { AddApprovalMatrixDashboard } from './pages/setup/AddApprovalMatrixDashboard';
+import { EditApprovalMatrixDashboard } from './pages/setup/EditApprovalMatrixDashboard';
 
 const queryClient = new QueryClient();
 
@@ -397,6 +398,7 @@ function App() {
               <Route path="/setup/task-escalation" element={<div>Task Escalation</div>} />
               <Route path="/setup/approval-matrix" element={<ApprovalMatrixDashboard />} />
               <Route path="/setup/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
+              <Route path="/setup/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
               <Route path="/setup/patrolling-approval" element={<div>Patrolling Approval</div>} />
               <Route path="/setup/email-rule" element={<div>Email Rule</div>} />
               <Route path="/setup/fm-group" element={<div>FM Group</div>} />
