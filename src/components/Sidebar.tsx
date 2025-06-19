@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -139,7 +140,15 @@ const modulesByPackage = {
       icon: Car, 
       href: '/security/vehicle',
       subItems: [
-        { name: 'R Vehicles', href: '/security/vehicle/r-vehicles', color: 'text-[#1a1a1a]' },
+        { 
+          name: 'R Vehicles', 
+          href: '/security/vehicle/r-vehicles', 
+          color: 'text-[#1a1a1a]',
+          subItems: [
+            { name: 'All', href: '/security/vehicle/r-vehicles', color: 'text-[#1a1a1a]' },
+            { name: 'History', href: '/security/vehicle/r-vehicles/history', color: 'text-[#1a1a1a]' }
+          ]
+        },
         { name: 'G Vehicles', href: '/security/vehicle/g-vehicles', color: 'text-[#1a1a1a]' }
       ]
     },
