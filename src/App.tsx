@@ -316,6 +316,7 @@ function App() {
               <Route path="/vas/parking/bookings" element={<ParkingBookingsDashboard />} />
               
               {/* Space Management Routes */}
+              <Route path="/vas/space-management/bookings" element={<SpaceManagementBookingsDashboard />} />
               <Route path="/space-management/bookings" element={<SpaceManagementBookingsDashboard />} />
               <Route path="/space-management/seat-requests" element={<SpaceManagementSeatRequestsDashboard />} />
               
