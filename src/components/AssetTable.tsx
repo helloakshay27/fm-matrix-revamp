@@ -1,10 +1,15 @@
-
 import React, { useState } from 'react';
-import { Eye, Download, Filter } from 'lucide-react';
+import { Eye, Download, Filter, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useNavigate } from 'react-router-dom';
+import { EditStatusModal } from '@/components/EditStatusModal';
 
 export const AssetTable = () => {
+  const navigate = useNavigate();
+  const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
+  const [selectedAssetId, setSelectedAssetId] = useState<string>('');
+
   // Sample data matching the screenshot
   const assets = [
     {
@@ -137,6 +142,15 @@ export const AssetTable = () => {
     return <span className="bg-gray-500 text-white px-2 py-1 rounded text-xs">{status}</span>;
   };
 
+  const handleEyeClick = (assetId: string) => {
+    navigate(`/utility/energy/details/${assetId}`);
+  };
+
+  const handleEditClick = (assetId: string) => {
+    setSelectedAssetId(assetId);
+    setIsEditStatusOpen(true);
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-[#D5DbDB]">
       {/* Table */}
@@ -207,9 +221,22 @@ export const AssetTable = () => {
                   />
                 </td>
                 <td className="px-4 py-3">
-                  <Button variant="ghost" size="sm">
-                    <Eye className="w-4 h-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEyeClick(asset.assetId)}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEditClick(asset.assetId)}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.assetName}</td>
                 <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.assetId}</td>
@@ -230,6 +257,12 @@ export const AssetTable = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Edit Status Modal */}
+      <EditStatusModal 
+        isOpen={isEditStatusOpen}
+        onClose={() => setIsEditStatusOpen(false)}
+      />
     </div>
   );
 };

@@ -232,6 +232,10 @@ import { AddNewBillDashboard } from './pages/AddNewBillDashboard';
 // Import Edit FM User Details page
 import { EditFMUserDetailsPage } from './pages/settings/EditFMUserDetailsPage';
 
+// Import Energy Asset Routes
+import { EnergyAssetDetailsPage } from './pages/EnergyAssetDetailsPage';
+import { EditEnergyAssetPage } from './pages/EditEnergyAssetPage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -371,6 +375,10 @@ function App() {
               <Route path="/utility/stp" element={<UtilitySTPDashboard />} />
               <Route path="/utility/stp/add-asset" element={<AddSTPAssetDashboard />} />
               <Route path="/utility/add-asset" element={<AddAssetDashboard />} />
+              
+              {/* Energy Asset Routes */}
+              <Route path="/utility/energy/details/:id" element={<EnergyAssetDetailsPage />} />
+              <Route path="/utility/energy/edit/:id" element={<EditEnergyAssetPage />} />
               
               {/* Security/Visitors Routes */}
               <Route path="/security/gate-pass" element={<GatePassDashboard />} />
