@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Download, SlidersHorizontal, Eye } from 'lucide-react';
+import { Plus, Download, SlidersHorizontal } from 'lucide-react';
 import { GatePassInwardsFilterModal } from '@/components/GatePassInwardsFilterModal';
 
 export const GatePassInwardsDashboard = () => {
@@ -124,7 +124,6 @@ export const GatePassInwardsDashboard = () => {
               <TableHead className="text-left font-semibold">Trip ID</TableHead>
               <TableHead className="text-left font-semibold">Gate Entry</TableHead>
               <TableHead className="text-left font-semibold">Item Details</TableHead>
-              <TableHead className="text-left font-semibold">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -154,17 +153,6 @@ export const GatePassInwardsDashboard = () => {
                 <TableCell>{entry.tripId}</TableCell>
                 <TableCell>{entry.gateEntry}</TableCell>
                 <TableCell className="max-w-xs truncate">{entry.itemDetails}</TableCell>
-                <TableCell>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleViewDetails(entry.id)}
-                    className="flex items-center gap-1"
-                  >
-                    <Eye className="w-4 h-4" />
-                    View
-                  </Button>
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>
