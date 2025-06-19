@@ -70,14 +70,14 @@ export const DepartmentDashboard = () => {
         <div className="flex justify-between items-center mb-6">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+              <Button className="bg-[#C72030] hover:bg-[#A11D2A] text-white">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Department
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle className="bg-purple-600 text-white p-3 -m-6 mb-4 rounded-t-lg">
+                <DialogTitle className="bg-[#C72030] text-white p-3 -m-6 mb-4 rounded-t-lg">
                   Add Department
                 </DialogTitle>
               </DialogHeader>
@@ -144,7 +144,7 @@ export const DepartmentDashboard = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-blue-600 hover:text-blue-800"
+                    className="text-[#C72030] hover:text-[#A11D2A] hover:bg-[#C72030]/10"
                   >
                     <Edit className="w-4 h-4" />
                   </Button>
