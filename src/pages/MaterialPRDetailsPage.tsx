@@ -56,6 +56,199 @@ export const MaterialPRDetailsPage = () => {
     }
   };
 
+  const handleClone = () => {
+    navigate(`/finance/material-pr/clone/${id}`);
+  };
+
+  const handleFeeds = () => {
+    navigate(`/finance/material-pr/feeds/${id}`);
+  };
+
+  const handlePrint = () => {
+    // Create a print-friendly version of the page
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Material PR Details - ${prData.prNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .company-name { font-size: 24px; font-weight: bold; }
+            .title { font-size: 18px; margin: 10px 0; }
+            .approval-status { background: green; color: white; padding: 5px 10px; border-radius: 3px; }
+            .section { margin: 20px 0; }
+            .section-title { font-weight: bold; margin-bottom: 10px; }
+            .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+            .detail-row { display: flex; margin: 5px 0; }
+            .detail-label { width: 200px; font-weight: bold; }
+            .detail-value { flex: 1; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            th, td { border: 1px solid #ccc; padding: 8px; text-align: left; font-size: 12px; }
+            th { background-color: #f5f5f5; }
+            .totals { text-align: right; margin: 20px 0; }
+            @media print { body { margin: 0; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-name">NEPTUNE</div>
+            <div class="title">MATERIAL PR</div>
+            <div>Page 1 - ${prData.date}</div>
+            <div class="approval-status">admin Approval: ${prData.adminApproval}</div>
+          </div>
+          
+          <div class="details-grid">
+            <div>
+              <div class="detail-row">
+                <span class="detail-label">Phone:</span>
+                <span class="detail-value">NA</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Email:</span>
+                <span class="detail-value">${prData.email}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">PAN:</span>
+                <span class="detail-value">NA</span>
+              </div>
+            </div>
+            <div>
+              <div class="detail-row">
+                <span class="detail-label">Fax:</span>
+                <span class="detail-value">NA</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">GST:</span>
+                <span class="detail-value">NA</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Address:</span>
+                <span class="detail-value">NA</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Material PR</div>
+            <div class="details-grid">
+              <div>
+                <div class="detail-row">
+                  <span class="detail-label">MPR No.:</span>
+                  <span class="detail-value">${prData.prNumber}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">MPR Date:</span>
+                  <span class="detail-value">${prData.date}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Plant Detail:</span>
+                  <span class="detail-value">${prData.plantDetail}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Address:</span>
+                  <span class="detail-value">${prData.address}</span>
+                </div>
+              </div>
+              <div>
+                <div class="detail-row">
+                  <span class="detail-label">Reference No.:</span>
+                  <span class="detail-value">${prData.referenceNo}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">ID:</span>
+                  <span class="detail-value">10435</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Supplier:</span>
+                  <span class="detail-value">${prData.supplier}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Email:</span>
+                  <span class="detail-value">${prData.email}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>S No.</th>
+                <th>Item</th>
+                <th>Availability</th>
+                <th>SAC/HSN Code</th>
+                <th>Expected Date</th>
+                <th>Product Description</th>
+                <th>Quantity</th>
+                <th>Unit</th>
+                <th>Moving Avg Rate</th>
+                <th>Rate</th>
+                <th>Amount</th>
+                <th>Approved Qty</th>
+                <th>Transfer Qty</th>
+                <th>Wbs Code</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${prData.items.map(item => `
+                <tr>
+                  <td>${item.sNo}</td>
+                  <td>${item.item}</td>
+                  <td>${item.availability}</td>
+                  <td>${item.sacHsnCode}</td>
+                  <td>${item.expectedDate}</td>
+                  <td>${item.productDescription}</td>
+                  <td>${item.quantity}</td>
+                  <td>${item.unit}</td>
+                  <td>${item.movingAvgRate}</td>
+                  <td>${item.rate}</td>
+                  <td>${item.amount}</td>
+                  <td>${item.approvedQty}</td>
+                  <td>${item.transferQty}</td>
+                  <td>${item.wbsCode}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div class="totals">
+            <div><strong>Net Amount(INR):</strong> ${prData.netAmount}</div>
+            <div><strong>Amount In Words:</strong> ${prData.amountInWords}</div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Attachments</div>
+            <div>${prData.attachments}</div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Terms & Conditions:</div>
+            <ol>
+              ${prData.termsConditions.map(term => `<li>${term}</li>`).join('')}
+            </ol>
+          </div>
+
+          <div class="section">
+            <div class="section-title">SAP Response</div>
+            <div><strong>Code:</strong> ${prData.sapResponse.code}</div>
+            <div><strong>Message:</strong> ${prData.sapResponse.message}</div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+      }, 250);
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Breadcrumb */}
@@ -76,19 +269,19 @@ export const MaterialPRDetailsPage = () => {
         <div className="flex items-center gap-3">
           <Button 
             className="bg-[#C72030] hover:bg-[#A01020] text-white"
-            onClick={() => navigate(`/finance/material-pr/clone/${id}`)}
+            onClick={handleClone}
           >
             Clone
           </Button>
           <Button 
             className="bg-[#C72030] hover:bg-[#A01020] text-white"
-            onClick={() => navigate(`/finance/material-pr/feeds/${id}`)}
+            onClick={handleFeeds}
           >
             Feeds
           </Button>
           <Button 
             className="bg-[#C72030] hover:bg-[#A01020] text-white"
-            onClick={() => window.open(`/finance/material-pr/print/${id}`, '_blank')}
+            onClick={handlePrint}
           >
             Print
           </Button>
