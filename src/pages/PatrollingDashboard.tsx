@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Plus, Download, Filter, Upload } from 'lucide-react';
+import { Plus, Download, Filter, Upload, Printer, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BulkUploadModal } from '@/components/BulkUploadModal';
 import { ExportModal } from '@/components/ExportModal';
@@ -12,6 +12,18 @@ export const PatrollingDashboard = () => {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  const handlePrintQR = () => {
+    console.log('Print QR clicked');
+    // Add QR printing logic here
+    window.print();
+  };
+
+  const handlePrintAllQR = () => {
+    console.log('Print All QR clicked');
+    // Add print all QR logic here
+    window.print();
+  };
 
   return (
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
@@ -46,6 +58,20 @@ export const PatrollingDashboard = () => {
           >
             <Download className="w-4 h-4" />
             Export
+          </Button>
+          <Button 
+            onClick={handlePrintQR}
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded flex items-center gap-2 border-0"
+          >
+            <QrCode className="w-4 h-4" />
+            Print QR
+          </Button>
+          <Button 
+            onClick={handlePrintAllQR}
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded flex items-center gap-2 border-0"
+          >
+            <Printer className="w-4 h-4" />
+            Print All QR
           </Button>
           <Button 
             onClick={() => setIsFilterOpen(true)}
