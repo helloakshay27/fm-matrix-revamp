@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,10 +5,12 @@ import { Search, Plus, Filter, Eye, Edit } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
+import { GRNFilterDialog } from "@/components/GRNFilterDialog";
 
 export const GRNSRNDashboard = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
 
   const grnData = [
     {
@@ -182,7 +183,7 @@ export const GRNSRNDashboard = () => {
   };
 
   const handleFilter = () => {
-    toast.info('Filter functionality to be implemented');
+    setIsFilterDialogOpen(true);
   };
 
   const handleView = (id: number) => {
@@ -331,6 +332,11 @@ export const GRNSRNDashboard = () => {
           <Button variant="outline" size="sm">Last ≫</Button>
         </div>
       </div>
+
+      <GRNFilterDialog 
+        open={isFilterDialogOpen}
+        onOpenChange={setIsFilterDialogOpen}
+      />
     </div>
   );
 };
