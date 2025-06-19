@@ -23,14 +23,15 @@ import {
     changeProjectStatus,
     createProject,
     deleteProject,
-    fetchProjectTypes
+    fetchProjectTypes,
+    resetProjectSuccess
 } from "../../../redux/slices/projectSlice";
 import { fetchUsers } from "../../../redux/slices/userSlice";
 import StatusBadge from "./statusBadge";
 import "./Table.css";
 import Loader from "../../Loader";
 import SelectBox from "../../SelectBox";
-import {toast} from "react-hot-toast";
+import { toast } from "react-hot-toast";
 
 const NewProjectTextField = ({
     value,
@@ -92,11 +93,11 @@ const NewProjectDateEditor = ({
 
 const ActionIcons = ({ row }) => {
     const dispatch = useDispatch();
-    const handleDelete = async(id) => {
-        const formatId= id.split('-')[1];
+    const handleDelete = async (id) => {
+        const formatId = id.split('-')[1];
         console.log(formatId);
-        await dispatch(deleteProject({id:formatId,token: localStorage.getItem('token')})).unwrap();
-        await dispatch(fetchProjects({token: localStorage.getItem('token')})).unwrap();
+        await dispatch(deleteProject({ id: formatId, token: localStorage.getItem('token') })).unwrap();
+        await dispatch(fetchProjects({ token: localStorage.getItem('token') })).unwrap();
         toast.dismiss();
         toast.success("Project deleted successfully", {
             iconTheme: {
@@ -106,33 +107,33 @@ const ActionIcons = ({ row }) => {
         })
     }
     return (
-    <div className="action-icons flex justify-around items-center">
-        <button
-            onClick={() => alert(`Viewing/Editing Project ID: ${row.original.id}`)}
-            title="View/Edit Details"
-        >
-            <OpenInFullIcon sx={{ fontSize: "1.2em" }} />
-        </button>
-        <button
-            onClick={() => alert(`Some other action for: ${row.original.title}`)}
-            title="Other Action"
-        >
-            <LoginTwoToneIcon sx={{ fontSize: "1.2em" }} />
-        </button>
-        <button
-            onClick={() => alert(`Archiving: ${row.original.title}`)}
-            title="Archive"
-        >
-            <ArchiveOutlinedIcon sx={{ fontSize: "1.2em" }} />
-        </button>
-        <button
-            onClick={() => handleDelete(row.original.id)}
-            title="Delete"
-        >
-            <DeleteOutlineOutlinedIcon sx={{ fontSize: "1.2em" }}  />
-        </button>
-    </div>
-)
+        <div className="action-icons flex justify-around items-center">
+            <button
+                onClick={() => alert(`Viewing/Editing Project ID: ${row.original.id}`)}
+                title="View/Edit Details"
+            >
+                <OpenInFullIcon sx={{ fontSize: "1.2em" }} />
+            </button>
+            <button
+                onClick={() => alert(`Some other action for: ${row.original.title}`)}
+                title="Other Action"
+            >
+                <LoginTwoToneIcon sx={{ fontSize: "1.2em" }} />
+            </button>
+            <button
+                onClick={() => alert(`Archiving: ${row.original.title}`)}
+                title="Archive"
+            >
+                <ArchiveOutlinedIcon sx={{ fontSize: "1.2em" }} />
+            </button>
+            <button
+                onClick={() => handleDelete(row.original.id)}
+                title="Delete"
+            >
+                <DeleteOutlineOutlinedIcon sx={{ fontSize: "1.2em" }} />
+            </button>
+        </div>
+    )
 };
 
 const ProgressBar = ({ progressString }) => {
@@ -157,17 +158,11 @@ const ProgressBar = ({ progressString }) => {
 const globalStatusOptions = [
     "active",
     "in_progress",
-    "overdue",
-    "completed",
     "on_hold",
+    "completed",
+    "overdue",
 ];
-const globalProjectTypeOptions = [
-    "Internal",
-    "External",
-    "R&D",
-    "Service",
-    "Product",
-];
+
 const globalPriorityOptionsForNew = ["Low", "Medium", "High", "Urgent"];
 
 const ProjectList = () => {
@@ -183,12 +178,15 @@ const ProjectList = () => {
 
     const {
         filterProjects: filteredProjects,
+        success: filterProjectsSuccess,
         loading: filterProjectsLoadingRedux,
         error: filterProjectsErrorRedux,
     } = useSelector((state) => state.filterProjects);
 
     const { loading: statusChangeLoading, error: statusChangeError } =
         useSelector((state) => state.changeProjectStatus);
+
+    const { success } = useSelector(state => state.createProject)
 
     const {
         fetchUsers: users,
@@ -201,7 +199,7 @@ const ProjectList = () => {
     const {
         loading: deleteProjectLoading,
         error: deleteProjectError
-    }=useSelector((state) => state.deleteProject);
+    } = useSelector((state) => state.deleteProject);
 
     const {
         fetchProjectTypes: projectTypes,
@@ -216,7 +214,7 @@ const ProjectList = () => {
         globalStatusOptions[0]
     );
     const [newProjectType, setNewProjectType] = useState(
-        projectTypeOptions.length > 0 ?projectTypeOptions[0]:""
+        projectTypeOptions.length > 0 ? projectTypeOptions[0] : ""
     );
     const [newProjectManager, setNewProjectManager] = useState("");
     const [newProjectStartDate, setNewProjectStartDate] = useState("");
@@ -234,33 +232,28 @@ const ProjectList = () => {
     const [data, setData] = useState([]);
 
     useEffect(() => {
-        if(!fetchProjectTypesLoading && !fetchProjectTypesError && (projectTypes.length==0 || !Array.isArray(projectTypes))){
-            dispatch(fetchProjectTypes({token})).unwrap();
+        if (!fetchProjectTypesLoading && !fetchProjectTypesError && (projectTypes.length == 0 || !Array.isArray(projectTypes))) {
+            dispatch(fetchProjectTypes({ token })).unwrap();
         }
-    },[fetchProjectTypesLoading, fetchProjectTypesError, projectTypes]);
+    }, [fetchProjectTypesLoading, fetchProjectTypesError, projectTypes]);
 
-    useEffect(()=>{
-        if(Array.isArray(projectTypes) && projectTypes.length>0){
-            setProjectTypeOptions(projectTypes.map((projectType) => ({label:projectType.name, value:projectType.id})));
+    useEffect(() => {
+        if (Array.isArray(projectTypes) && projectTypes.length > 0) {
+            setProjectTypeOptions(projectTypes.map((projectType) => ({ label: projectType.name, value: projectType.id })));
         }
-    },[projectTypes]);
+    }, [projectTypes]);
+
+    useEffect(() => {
+        filterProjectsSuccess ? setIsFiltered(true) : setIsFiltered(false)
+    }, [filteredProjects]);
 
     const transformedData = useMemo(() => {
-        // const projectsSource =
-        //     isFiltered &&
-        //         Array.isArray(filteredProjects) &&
-        //         filteredProjects.length > 0
-        //         ? filteredProjects
-        //         : initialProjects;
-
         const projectsSource =
-            isFiltered && Array.isArray(filteredProjects)
+            isFiltered
                 ? filteredProjects.length > 0
                     ? filteredProjects
                     : []
                 : initialProjects;
-
-
 
         if (!projectsSource) return [];
         if (!Array.isArray(projectsSource)) {
@@ -331,14 +324,6 @@ const ProjectList = () => {
     useEffect(() => {
         setData(transformedData);
     }, [transformedData]);
-
-    useEffect(() => {
-        if (Array.isArray(filteredProjects) && localStorage.getItem("projectFilters")) {
-            setIsFiltered(true);
-        } else {
-            setIsFiltered(false);
-        }
-    }, [filteredProjects]);
 
     const handleStatusChange = useCallback(
         async ({ id: rowId, name, payload: newValue }) => {
@@ -505,6 +490,12 @@ const ProjectList = () => {
             newProjectTitleInputRef.current.focus();
         }
     }, [isAddingNewProject]);
+
+    useEffect(() => {
+        if (success) {
+            dispatch(resetProjectSuccess())
+        }
+    }, [success, dispatch])
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -678,22 +669,16 @@ const ProjectList = () => {
 
     if (
         fetchProjectsLoading ||
-        loadingUsers ||
         anyFilterLoading ||
-        statusChangeLoading ||
         isSavingNewProject
     ) {
         const loadingMessage = isSavingNewProject
             ? "Saving Project..."
             : fetchProjectsLoading
                 ? "Loading Projects..."
-                : loadingUsers
-                    ? "Loading Users..."
-                    : anyFilterLoading
-                        ? "Applying Filters...":
-                         deleteProjectLoading?
-                        "Deleting Project..."
-                        : "Updating Status...";
+                : anyFilterLoading
+                    ? "Applying Filters..."
+                    : "Updating Status...";
         content = <Loader message={loadingMessage} />;
     } else if (
         fetchProjectsError ||
@@ -703,20 +688,7 @@ const ProjectList = () => {
         deleteProjectError ||
         fetchProjectTypesError
     ) {
-        const error =
-            fetchProjectsError ||
-            usersFetchError ||
-            anyFilterError ||
-            deleteProjectError ||
-            fetchProjectTypesError ||
-            statusChangeError;
-        content = (
-            <div className="p-4 text-red-600">
-                <p>
-                    Error: {typeof error === "string" ? error : JSON.stringify(error)}
-                </p>
-            </div>
-        );
+        toast.error("Internal Server Error, Refresh Once");
     } else {
         content = (
             <div
@@ -845,7 +817,7 @@ const ProjectList = () => {
                                         <SelectBox
                                             options={projectTypeOptions}
                                             value={newProjectType}
-                                            onChange={(selected)=>setNewProjectType(selected)}
+                                            onChange={(selected) => setNewProjectType(selected)}
                                             table={true}
                                         />
                                     </td>

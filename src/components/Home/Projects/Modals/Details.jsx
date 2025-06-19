@@ -267,7 +267,7 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
         </div>
 
         <div className="flex items-start gap-4 mt-3">
-          <div className="w-1/2">
+          <div className="w-full">
             <label className="block mb-2">Project Owner <span className="text-red-600">*</span></label>
             <SelectBox
               options={users.map(user => ({
@@ -277,11 +277,10 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
               value={formData.projectOwner}
               onChange={value => handleSelectChange("projectOwner", value)}
               placeholder="Select Owner"
-              style={{ border: "1px solid #b3b2b2" }}
             />
           </div>
 
-          <div className="w-1/2">
+          {/* <div className="w-1/2">
             <label className="block mb-2">Template</label>
             <SelectBox
               options={templates.map(template => ({
@@ -293,7 +292,7 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
               placeholder="Select Template"
               style={{ border: "1px solid #b3b2b2" }}
             />
-          </div>
+          </div> */}
         </div>
 
         <div className="flex gap-2 mt-4 text-[12px]">
@@ -358,7 +357,6 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
                 value={formData.projectType}
                 onChange={value => handleSelectChange("projectType", value)}
                 placeholder="Select Type"
-                style={{ border: "1px solid #b3b2b2" }}
               />
             </div>
             <div className="w-1/2">
@@ -372,7 +370,6 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
                 value={formData.priority}
                 onChange={value => handleSelectChange("priority", value)}
                 placeholder="Select Priority"
-                style={{ border: "1px solid #b3b2b2" }}
               />
             </div>
           </div>

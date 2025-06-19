@@ -15,6 +15,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 import { fetchUsers } from "../../redux/slices/userSlice";
 import { MentionsInput, Mention } from "react-mentions";
 import { fetchStatus } from "../../redux/slices/statusSlice";
+import { fetchActiveTags } from "../../redux/slices/tagsSlice";
 
 const mapStatusToDisplay = (rawStatus) => {
     const statusMap = {
@@ -37,20 +38,6 @@ const mapDisplayToApiStatus = (displayStatus) => {
     };
     return reverseStatusMap[displayStatus] || "open"; // Default to "open" if unknown
 };
-
-// const calculateDuration = (start, end) => {
-//     const startDate = new Date(start);
-//     const endDate = new Date(end);
-//     const diffMs = endDate - startDate;
-//     if (diffMs <= 0) return "0 sec";
-//     const seconds = Math.floor(diffMs / 1000);
-//     const minutes = Math.floor(seconds / 60);
-//     const hours = Math.floor(minutes / 60);
-//     const remainingMinutes = minutes % 60;
-//     const remainingSeconds = seconds % 60;
-//     return `${hours > 0 ? hours + " hr " : ""}${remainingMinutes > 0 ? remainingMinutes + " mins " : ""}${remainingSeconds} sec`;
-// };
-
 
 const calculateDuration = (end) => {
     const now = new Date();
@@ -286,15 +273,24 @@ const Comments = ({ comments }) => {
     const { loading, success } = useSelector((state) => state.createTaskComment);
     const { loading: editLoading, success: editSuccess } = useSelector((state) => state.editTaskComment);
     const { fetchUsers: name } = useSelector((state) => state.fetchUsers);
+    const { fetchActiveTags: tags } = useSelector((state) => state.fetchActiveTags);
 
     useEffect(() => {
         dispatch(fetchUsers({ token }));
+        dispatch(fetchActiveTags({ token }));
     }, [])
 
     const mentionData = name
         ? name.map((user) => ({
             id: user.id.toString(),
             display: user.firstname + " " + user.lastname || "Unknown User",
+        }))
+        : [];
+
+    const tagData = tags
+        ? tags.map((tag) => ({
+            id: tag.id.toString(),
+            display: tag.name,
         }))
         : [];
 
@@ -407,6 +403,13 @@ const Comments = ({ comments }) => {
                         displayTransform={(id, display) => `@${display}`}
                         appendSpaceOnAdd
                     />
+                    <Mention
+                        trigger="#"
+                        data={tagData}
+                        markup="#[__display__](__id__)"
+                        displayTransform={(id, display) => `#${display}`}
+                        appendSpaceOnAdd
+                    />
                 </MentionsInput>
             </div>
             <div className="flex justify-end">
@@ -432,7 +435,9 @@ const Comments = ({ comments }) => {
                     </div>
                     <div className="flex flex-col gap-2 w-full border-b-[2px] pb-3 border-[rgba(190, 190, 190, 1)]">
                         <h1 className="font-bold">{comment.commentor_full_name}</h1>
-                        <span>{comment.body.replace(/@\[(.*?)\]\(\d+\)/g, '@$1')}</span>
+                        {comment.body
+                            .replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
+                            .replace(/#\[(.*?)\]\(\d+\)/g, '#$1')}
                         <div className="flex gap-2 text-[10px]">
                             <span>{formatToDDMMYYYY_AMPM(comment.created_at)}</span>
                             <span className="cursor-pointer" onClick={() => handleEdit(comment)}>
