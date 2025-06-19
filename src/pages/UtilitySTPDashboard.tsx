@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Plus, Upload, RefreshCw, Download, QrCode, Filter, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -23,42 +24,8 @@ const UtilitySTPDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const navigate = useNavigate();
 
-  const mockData = [
-    {
-      id: 1,
-      assetName: "STP Unit 1",
-      assetId: "STP001",
-      assetCode: "STP-001",
-      assetNo: "001",
-      status: "In Use",
-      equipmentId: "EQ001",
-      site: "Main Site",
-      building: "Building A",
-      wing: "East Wing",
-      floor: "Ground",
-      area: "Treatment Area",
-      room: "Room 101",
-      meterType: "Flow Meter",
-      assetType: "STP Equipment"
-    },
-    {
-      id: 2,
-      assetName: "STP Unit 2",
-      assetId: "STP002",
-      assetCode: "STP-002",
-      assetNo: "002",
-      status: "Breakdown",
-      equipmentId: "EQ002",
-      site: "Main Site",
-      building: "Building B",
-      wing: "West Wing",
-      floor: "Ground",
-      area: "Treatment Area",
-      room: "Room 102",
-      meterType: "Pressure Meter",
-      assetType: "STP Equipment"
-    }
-  ];
+  // Empty data array
+  const mockData: any[] = [];
 
   const handleAdd = () => {
     navigate('/utility/stp/add-asset');
@@ -71,10 +38,7 @@ const UtilitySTPDashboard = () => {
   const handleExportAll = () => {
     // Create and download CSV file
     const csvContent = "data:text/csv;charset=utf-8," + 
-      "Asset Name,Asset ID,Asset Code,Asset No.,Asset Status,Equipment Id,Site,Building,Wing,Floor,Area,Room,Meter Type,Asset Type\n" +
-      mockData.map(item => 
-        `${item.assetName},${item.assetId},${item.assetCode},${item.assetNo},${item.status},${item.equipmentId},${item.site},${item.building},${item.wing},${item.floor},${item.area},${item.room},${item.meterType},${item.assetType}`
-      ).join('\n');
+      "Asset Name,Asset ID,Asset Code,Asset No.,Asset Status,Equipment Id,Site,Building,Wing,Floor,Area,Room,Meter Type,Asset Type\n";
     
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -258,39 +222,47 @@ const UtilitySTPDashboard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockData.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <Checkbox />
+              {mockData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={16} className="text-center py-8 text-gray-500">
+                    No data available
                   </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm" className="text-blue-600">
-                      Actions
-                    </Button>
-                  </TableCell>
-                  <TableCell className="font-medium">{item.assetName}</TableCell>
-                  <TableCell>{item.assetId}</TableCell>
-                  <TableCell>{item.assetCode}</TableCell>
-                  <TableCell>{item.assetNo}</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={item.status === 'In Use' ? 'default' : 'destructive'}
-                      className={item.status === 'In Use' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
-                    >
-                      {item.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{item.equipmentId}</TableCell>
-                  <TableCell>{item.site}</TableCell>
-                  <TableCell>{item.building}</TableCell>
-                  <TableCell>{item.wing}</TableCell>
-                  <TableCell>{item.floor}</TableCell>
-                  <TableCell>{item.area}</TableCell>
-                  <TableCell>{item.room}</TableCell>
-                  <TableCell>{item.meterType}</TableCell>
-                  <TableCell>{item.assetType}</TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                mockData.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <Checkbox />
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="sm" className="text-blue-600">
+                        Actions
+                      </Button>
+                    </TableCell>
+                    <TableCell className="font-medium">{item.assetName}</TableCell>
+                    <TableCell>{item.assetId}</TableCell>
+                    <TableCell>{item.assetCode}</TableCell>
+                    <TableCell>{item.assetNo}</TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={item.status === 'In Use' ? 'default' : 'destructive'}
+                        className={item.status === 'In Use' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
+                      >
+                        {item.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{item.equipmentId}</TableCell>
+                    <TableCell>{item.site}</TableCell>
+                    <TableCell>{item.building}</TableCell>
+                    <TableCell>{item.wing}</TableCell>
+                    <TableCell>{item.floor}</TableCell>
+                    <TableCell>{item.area}</TableCell>
+                    <TableCell>{item.room}</TableCell>
+                    <TableCell>{item.meterType}</TableCell>
+                    <TableCell>{item.assetType}</TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
