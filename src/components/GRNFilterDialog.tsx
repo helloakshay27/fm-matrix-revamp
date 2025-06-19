@@ -1,10 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { X } from "lucide-react";
 
 interface GRNFilterDialogProps {
   open: boolean;
@@ -15,75 +15,83 @@ export const GRNFilterDialog: React.FC<GRNFilterDialogProps> = ({
   open,
   onOpenChange,
 }) => {
+  const [filters, setFilters] = useState({
+    inventoryName: '',
+    supplierName: '',
+    invoiceNumber: ''
+  });
+
+  const handleApply = () => {
+    console.log('Applying filters:', filters);
+    onOpenChange(false);
+  };
+
+  const handleReset = () => {
+    setFilters({
+      inventoryName: '',
+      supplierName: '',
+      invoiceNumber: ''
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Filter GRN/SRN</DialogTitle>
+      <DialogContent className="max-w-4xl bg-white">
+        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
+          <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onOpenChange(false)}
+            className="h-6 w-6 p-0"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </DialogHeader>
         
-        <div className="space-y-4">
-          <div>
-            <Label>Supplier Name</Label>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Supplier" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="abc">ABC</SelectItem>
-                <SelectItem value="xyz">XYZ Corporation</SelectItem>
-                <SelectItem value="achla">ACHLA Corporation</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Inventory Name</Label>
+              <Input
+                placeholder="Inventory Name"
+                value={filters.inventoryName}
+                onChange={(e) => setFilters({...filters, inventoryName: e.target.value})}
+              />
+            </div>
+            
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Supplier Name</Label>
+              <Input
+                placeholder="Supplier Name"
+                value={filters.supplierName}
+                onChange={(e) => setFilters({...filters, supplierName: e.target.value})}
+              />
+            </div>
+            
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Invoice Number</Label>
+              <Input
+                placeholder="Invoice Number"
+                value={filters.invoiceNumber}
+                onChange={(e) => setFilters({...filters, invoiceNumber: e.target.value})}
+              />
+            </div>
           </div>
           
-          <div>
-            <Label>PO Number</Label>
-            <Input placeholder="Enter PO Number" />
-          </div>
-          
-          <div>
-            <Label>GRN Number</Label>
-            <Input placeholder="Enter GRN Number" />
-          </div>
-          
-          <div>
-            <Label>Status</Label>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <Label>Date From</Label>
-            <Input type="date" />
-          </div>
-          
-          <div>
-            <Label>Date To</Label>
-            <Input type="date" />
-          </div>
-          
-          <div className="flex gap-2 pt-4">
-            <Button 
-              className="flex-1 bg-[#C72030] hover:bg-[#A01020] text-white"
-              onClick={() => onOpenChange(false)}
+          <div className="flex gap-3 justify-end pt-4">
+            <Button
+              onClick={handleApply}
+              className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
             >
-              Apply Filter
+              Apply
             </Button>
-            <Button 
-              variant="outline" 
-              className="flex-1"
-              onClick={() => onOpenChange(false)}
+            <Button
+              onClick={handleReset}
+              variant="outline"
+              className="px-8"
             >
-              Cancel
+              Reset
             </Button>
           </div>
         </div>

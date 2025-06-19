@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from 'react-router-dom';
+import { toast } from "sonner";
 
 export const AddGRNDashboard = () => {
   const navigate = useNavigate();
@@ -18,8 +19,8 @@ export const AddGRNDashboard = () => {
     relatedTo: '',
     invoiceAmount: '',
     paymentMode: '',
-    invoiceDate: '14/06/2025',
-    postingDate: '14/06/2025',
+    invoiceDate: '19/06/2025',
+    postingDate: '19/06/2025',
     otherExpense: '',
     lodingExpense: '',
     adjustmentAmount: '',
@@ -46,11 +47,38 @@ export const AddGRNDashboard = () => {
     totalAmount: ''
   });
 
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setSelectedFiles(prev => [...prev, ...files]);
+    toast.success(`${files.length} file(s) uploaded`);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files);
+    setSelectedFiles(prev => [...prev, ...files]);
+    toast.success(`${files.length} file(s) uploaded`);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!grnDetails.purchaseOrder || !grnDetails.supplier || !grnDetails.invoiceNumber) {
+      toast.error('Please fill all required fields');
+      return;
+    }
+
     console.log('GRN Details:', grnDetails);
     console.log('Inventory Details:', inventoryDetails);
-    // Handle form submission logic here
+    console.log('Attachments:', selectedFiles);
+    toast.success('GRN submitted successfully!');
+    navigate('/finance/grn-srn');
   };
 
   return (
@@ -68,7 +96,7 @@ export const AddGRNDashboard = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-2 mb-6">
             <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm">⚡</span>
+              <span className="text-white text-sm">1</span>
             </div>
             <h2 className="text-lg font-semibold text-orange-600">GRN DETAILS</h2>
           </div>
@@ -81,8 +109,9 @@ export const AddGRNDashboard = () => {
                   <SelectValue placeholder="Select Purchase Order" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="po1">Purchase Order 1</SelectItem>
-                  <SelectItem value="po2">Purchase Order 2</SelectItem>
+                  <SelectItem value="PO001">PO001 - ABC Supplier</SelectItem>
+                  <SelectItem value="PO002">PO002 - XYZ Corporation</SelectItem>
+                  <SelectItem value="PO003">PO003 - ACHLA Corporation</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -94,8 +123,9 @@ export const AddGRNDashboard = () => {
                   <SelectValue placeholder="Select Supplier" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="supplier1">Supplier 1</SelectItem>
-                  <SelectItem value="supplier2">Supplier 2</SelectItem>
+                  <SelectItem value="ABC">ABC</SelectItem>
+                  <SelectItem value="XYZ Corporation">XYZ Corporation</SelectItem>
+                  <SelectItem value="ACHLA Corporation">ACHLA Corporation</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -137,6 +167,7 @@ export const AddGRNDashboard = () => {
                   <SelectItem value="cash">Cash</SelectItem>
                   <SelectItem value="cheque">Cheque</SelectItem>
                   <SelectItem value="bank">Bank Transfer</SelectItem>
+                  <SelectItem value="card">Card</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -144,7 +175,7 @@ export const AddGRNDashboard = () => {
             <div>
               <Label className="text-sm font-medium">Invoice Date*</Label>
               <Input
-                placeholder="Enter Date"
+                type="date"
                 value={grnDetails.invoiceDate}
                 onChange={(e) => setGrnDetails({...grnDetails, invoiceDate: e.target.value})}
               />
@@ -153,6 +184,7 @@ export const AddGRNDashboard = () => {
             <div>
               <Label className="text-sm font-medium">Posting Date*</Label>
               <Input
+                type="date"
                 value={grnDetails.postingDate}
                 onChange={(e) => setGrnDetails({...grnDetails, postingDate: e.target.value})}
               />
@@ -168,7 +200,7 @@ export const AddGRNDashboard = () => {
             </div>
 
             <div>
-              <Label className="text-sm font-medium">Loding Expense</Label>
+              <Label className="text-sm font-medium">Loading Expense</Label>
               <Input
                 placeholder="Enter Number"
                 value={grnDetails.lodingExpense}
@@ -201,7 +233,7 @@ export const AddGRNDashboard = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-2 mb-6">
             <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm">📦</span>
+              <span className="text-white text-sm">2</span>
             </div>
             <h2 className="text-lg font-semibold text-orange-600">INVENTORY DETAILS</h2>
           </div>
@@ -215,7 +247,9 @@ export const AddGRNDashboard = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="12V / 5 Amp Power Supply SM...">12V / 5 Amp Power Supply SM...</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="Carpet Brush">Carpet Brush</SelectItem>
+                  <SelectItem value="Cruet Set">Cruet Set</SelectItem>
+                  <SelectItem value="Laptop">Laptop</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -379,28 +413,53 @@ export const AddGRNDashboard = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-2 mb-6">
             <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm">📎</span>
+              <span className="text-white text-sm">3</span>
             </div>
             <h2 className="text-lg font-semibold text-orange-600">ATTACHMENTS*</h2>
           </div>
 
-          <div className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center">
+          <div 
+            className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center cursor-pointer hover:border-orange-400 transition-colors"
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onClick={() => document.getElementById('file-upload')?.click()}
+          >
             <p className="text-gray-600 mb-2">
               <span className="font-medium">Drag & Drop</span> or{" "}
               <button type="button" className="text-orange-600 underline">Choose Files</button>
             </p>
-            <p className="text-sm text-gray-500">No file chosen</p>
+            <p className="text-sm text-gray-500">
+              {selectedFiles.length === 0 ? 'No file chosen' : `${selectedFiles.length} file(s) selected`}
+            </p>
+            {selectedFiles.length > 0 && (
+              <div className="mt-3">
+                {selectedFiles.map((file, index) => (
+                  <div key={index} className="text-sm text-gray-700">
+                    {file.name}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
+
+          <input
+            id="file-upload"
+            type="file"
+            multiple
+            className="hidden"
+            onChange={handleFileUpload}
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+          />
         </div>
 
         {/* Total Amount and Submit */}
         <div className="flex justify-end items-center gap-4">
-          <div className="bg-purple-600 text-white px-4 py-2 rounded">
+          <div className="bg-[#C72030] text-white px-4 py-2 rounded">
             Total Amount:- {totalAmount}
           </div>
           <Button 
             type="submit"
-            className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+            className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
           >
             Submit
           </Button>

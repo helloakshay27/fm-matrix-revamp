@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -198,6 +199,8 @@ import { AddServicePRDashboard } from './pages/AddServicePRDashboard';
 import { PODashboard } from './pages/PODashboard';
 import { WODashboard } from './pages/WODashboard';
 import { GRNDashboard } from './pages/GRNDashboard';
+import { AddGRNDashboard } from './pages/AddGRNDashboard';
+import { GRNDetailsPage } from './pages/GRNDetailsPage';
 import { AutoSavedPRDashboard } from './pages/AutoSavedPRDashboard';
 import { InvoicesSESDashboard } from './pages/InvoicesSESDashboard';
 import { OtherBillsDashboard } from './pages/OtherBillsDashboard';

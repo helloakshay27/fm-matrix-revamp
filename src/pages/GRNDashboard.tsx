@@ -5,11 +5,13 @@ import { Plus, Eye, Edit, Search, Filter, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { GRNFilterDialog } from "@/components/GRNFilterDialog";
 import { useNavigate } from 'react-router-dom';
+import { toast } from "sonner";
 
 export const GRNDashboard = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
 
   const grnData = [
     {
@@ -87,6 +89,62 @@ export const GRNDashboard = () => {
     item.grnNumber.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleRowSelect = (id: number) => {
+    setSelectedRows(prev => 
+      prev.includes(id) 
+        ? prev.filter(rowId => rowId !== id)
+        : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedRows.length === filteredData.length) {
+      setSelectedRows([]);
+    } else {
+      setSelectedRows(filteredData.map(item => item.id));
+    }
+  };
+
+  const handleExport = () => {
+    const dataToExport = selectedRows.length > 0 
+      ? filteredData.filter(item => selectedRows.includes(item.id))
+      : filteredData;
+
+    // Convert to CSV
+    const headers = ['Supplier', 'PO Number', 'PO Date', 'PO Delivery Date', 'PO Sent Date', 'PO Qty', 'PO Rate', 'PO Amount', 'GRN Number', 'GRN Date', 'GRN Qty', 'GRN Rate', 'GRN Amount', 'Status', 'Remarks'];
+    const csvData = [
+      headers.join(','),
+      ...dataToExport.map(item => [
+        item.supplier,
+        item.poNumber,
+        item.poDate,
+        item.poDeliveryDate,
+        item.poSentDate,
+        item.poQty,
+        item.poRate,
+        item.poAmount,
+        item.grnNumber,
+        item.grnDate,
+        item.grnQty,
+        item.grnRate,
+        item.grnAmount,
+        item.grnStatus,
+        item.remarks
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvData], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `grn_data_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+
+    toast.success(`Exported ${dataToExport.length} records successfully`);
+    setSelectedRows([]);
+  };
+
   return (
     <div className="p-6">
       {/* Breadcrumb */}
@@ -117,6 +175,7 @@ export const GRNDashboard = () => {
           <Button 
             variant="outline"
             className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            onClick={handleExport}
           >
             <Download className="w-4 h-4 mr-2" />
             Export
@@ -154,6 +213,14 @@ export const GRNDashboard = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
+              <TableHead className="w-12">
+                <input
+                  type="checkbox"
+                  checked={selectedRows.length === filteredData.length && filteredData.length > 0}
+                  onChange={handleSelectAll}
+                  className="rounded"
+                />
+              </TableHead>
               <TableHead className="font-semibold">Actions</TableHead>
               <TableHead className="font-semibold">Supplier</TableHead>
               <TableHead className="font-semibold">PO Number</TableHead>
@@ -176,8 +243,21 @@ export const GRNDashboard = () => {
             {filteredData.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
+                  <input
+                    type="checkbox"
+                    checked={selectedRows.includes(item.id)}
+                    onChange={() => handleRowSelect(item.id)}
+                    className="rounded"
+                  />
+                </TableCell>
+                <TableCell>
                   <div className="flex gap-1">
-                    <Button size="sm" variant="ghost" className="p-1">
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="p-1"
+                      onClick={() => navigate(`/finance/grn-srn/details/${item.id}`)}
+                    >
                       <Eye className="w-4 h-4" />
                     </Button>
                     <Button size="sm" variant="ghost" className="p-1">
@@ -218,6 +298,11 @@ export const GRNDashboard = () => {
       <div className="flex items-center justify-between mt-6">
         <div className="text-sm text-gray-600">
           Showing {filteredData.length} of {grnData.length} entries
+          {selectedRows.length > 0 && (
+            <span className="ml-4 text-[#C72030]">
+              {selectedRows.length} selected
+            </span>
+          )}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm">Previous</Button>
