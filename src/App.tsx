@@ -210,6 +210,7 @@ import { AddNewBillDashboard } from './pages/AddNewBillDashboard';
 // Import Settings pages
 import { FMUsersDashboard } from './pages/settings/FMUsersDashboard';
 import { CloneRolePage } from './pages/settings/CloneRolePage';
+import { AccountDashboard } from './pages/settings/AccountDashboard';
 
 const queryClient = new QueryClient();
 
@@ -225,6 +226,7 @@ function App() {
               {/* Settings Routes */}
               <Route path="/settings/users" element={<FMUsersDashboard />} />
               <Route path="/settings/users/clone-role" element={<CloneRolePage />} />
+              <Route path="/settings/account" element={<AccountDashboard />} />
               
               {/* Snagging Routes */}
               <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
