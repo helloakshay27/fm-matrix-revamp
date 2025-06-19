@@ -6,8 +6,8 @@ import { Layout } from './components/Layout';
 import { Toaster } from './components/ui/toaster';
 
 // Import existing pages
-import { Index } from './pages/Index';
-import { NotFound } from './pages/NotFound';
+import Index from './pages/Index';
+import NotFound from './pages/NotFound';
 
 // Settings pages
 import { DepartmentDashboard } from './pages/setup/DepartmentDashboard';
