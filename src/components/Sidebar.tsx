@@ -84,7 +84,16 @@ const modulesByPackage = {
             { name: 'Setup', href: '/maintenance/audit/waste/setup', color: 'text-[#1a1a1a]' }
           ]
         },
-        { name: 'Survey', href: '/maintenance/audit/survey', color: 'text-[#1a1a1a]' }
+        { 
+          name: 'Survey', 
+          href: '/maintenance/audit/survey', 
+          color: 'text-[#1a1a1a]',
+          subItems: [
+            { name: 'Survey List', href: '/maintenance/audit/survey/list', color: 'text-[#1a1a1a]' },
+            { name: 'Mapping', href: '/maintenance/audit/survey/mapping', color: 'text-[#1a1a1a]' },
+            { name: 'Response', href: '/maintenance/audit/survey/response', color: 'text-[#1a1a1a]' }
+          ]
+        }
       ]
     }
   ],

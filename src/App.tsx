@@ -69,6 +69,11 @@ import AddSTPAssetDashboard from './pages/AddSTPAssetDashboard';
 import UtilityWasteGenerationDashboard from './pages/UtilityWasteGenerationDashboard';
 import UtilityWasteGenerationSetupDashboard from './pages/UtilityWasteGenerationSetupDashboard';
 
+// Import Survey pages
+import { SurveyListDashboard } from './pages/SurveyListDashboard';
+import { SurveyMappingDashboard } from './pages/SurveyMappingDashboard';
+import { SurveyResponseDashboard } from './pages/SurveyResponseDashboard';
+
 // Import Schedule pages
 import { ScheduleListDashboard } from './pages/ScheduleListDashboard';
 import { AddSchedulePage } from './pages/AddSchedulePage';
@@ -245,6 +250,11 @@ function App() {
               {/* Waste Generation Routes */}
               <Route path="/maintenance/audit/waste/generation" element={<UtilityWasteGenerationDashboard />} />
               <Route path="/maintenance/audit/waste/setup" element={<UtilityWasteGenerationSetupDashboard />} />
+              
+              {/* Survey Routes */}
+              <Route path="/maintenance/audit/survey/list" element={<SurveyListDashboard />} />
+              <Route path="/maintenance/audit/survey/mapping" element={<SurveyMappingDashboard />} />
+              <Route path="/maintenance/audit/survey/response" element={<SurveyResponseDashboard />} />
               
               {/* Maintenance Routes */}
               <Route path="/maintenance/asset" element={<AssetDashboard />} />

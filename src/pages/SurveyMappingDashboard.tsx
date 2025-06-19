@@ -4,11 +4,13 @@ import { SurveyMappingTable } from '../components/SurveyMappingTable';
 
 export const SurveyMappingDashboard = () => {
   return (
-    <div className="p-6">
-      <div className="mb-6">
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      <div className="flex items-center justify-between space-y-2">
         <div>
-          <p className="text-[#1a1a1a] opacity-70 mb-2">Survey &gt; Survey Mappings</p>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">SURVEY MAPPING LIST</h1>
+          <h2 className="text-3xl font-bold tracking-tight">Survey Mapping List</h2>
+          <p className="text-muted-foreground">
+            Survey &gt; Survey Mappings
+          </p>
         </div>
       </div>
       
