@@ -252,6 +252,9 @@ import { WaterAssetDetailsPage } from './pages/WaterAssetDetailsPage';
 import { EditMaterialPRDashboard } from './pages/EditMaterialPRDashboard';
 import { GRNDashboard } from './pages/GRNDashboard';
 
+// Import Edit GRN page
+import { EditGRNDashboard } from './pages/EditGRNDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -354,6 +357,7 @@ function App() {
               <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
               <Route path="/finance/grn-srn" element={<GRNSRNDashboard />} />
               <Route path="/finance/grn-srn/add" element={<AddGRNDashboard />} />
+              <Route path="/finance/grn-srn/edit/:id" element={<EditGRNDashboard />} />
               <Route path="/finance/invoices" element={<InvoicesSESDashboard />} />
               <Route path="/finance/bill-booking" element={<BillBookingDashboard />} />
               <Route path="/finance/bill-booking/add" element={<AddNewBillDashboard />} />
