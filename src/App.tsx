@@ -333,6 +333,8 @@ function App() {
               <Route path="/finance/material-pr/add" element={<AddMaterialPRDashboard />} />
               <Route path="/finance/material-pr/edit/:id" element={<EditMaterialPRDashboard />} />
               <Route path="/finance/material-pr/details/:id" element={<MaterialPRDetailsPage />} />
+              <Route path="/finance/material-pr/clone/:id" element={<CloneMaterialPRPage />} />
+              <Route path="/finance/material-pr/feeds/:id" element={<MaterialPRFeedsPage />} />
               <Route path="/finance/service-pr" element={<ServicePRDashboard />} />
               <Route path="/finance/service-pr/add" element={<AddServicePRDashboard />} />
               <Route path="/finance/po" element={<PODashboard />} />
