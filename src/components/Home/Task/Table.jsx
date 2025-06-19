@@ -229,6 +229,7 @@ const TaskTable = () => {
     filterTask,
     loading: loadingFilterTasks,
     error: filterTasksError,
+    success:filterSuccess
   } = useSelector(
     (state) => state.filterTask
   )
@@ -247,6 +248,7 @@ const TaskTable = () => {
   const [newTaskEndDate, setNewTaskEndDate] = useState("");
   const [newTaskPriority, setNewTaskPriority] = useState("None");
   const [validator, setValidator] = useState(false);
+  const [isFiltered, setIsFiltered] = useState(false);
 
   const newTaskTitleInputRef = useRef(null);
   const newTaskFormRowRef = useRef(null);
@@ -276,6 +278,23 @@ const TaskTable = () => {
     }),
     []
   );
+
+  useEffect(() => {
+        const handleBeforeUnload = () => {
+            localStorage.removeItem("taskFilters");
+        };
+
+        window.addEventListener("beforeunload", handleBeforeUnload); console.log("Resetting filters at", new Date().toISOString());
+
+
+        return () => {
+            window.removeEventListener("beforeunload", handleBeforeUnload);
+        };
+    }, []);
+   
+    useEffect(() => {
+      filterSuccess? setIsFiltered(true) : setIsFiltered(false);  
+    },[filterSuccess,filterTask]);
 
   useEffect(() => {
     if (
@@ -315,8 +334,8 @@ const TaskTable = () => {
   useEffect(() => {
     if (isCreatingTask || isUpdatingTask) return;
     let newProcessedData = [];
-    if (filterTask  && localStorage.getItem("taskFilters")) {
-      newProcessedData = filterTask.map((task) =>
+    if (filterSuccess && Array.isArray(filterTask)) {
+      newProcessedData = filterTask?.map((task) =>
         processTaskData(task)
       );
       setData(newProcessedData);
@@ -338,7 +357,7 @@ const TaskTable = () => {
     if (isAddingNewTask && newTaskTitleInputRef.current) {
       newTaskTitleInputRef.current.focus();
     }
-  }, [isAddingNewTask, filterTask, tasksFromStore]);
+  }, [isAddingNewTask, filterTask, tasksFromStore,isFiltered]);
 
   const resetNewTaskForm = useCallback(() => {
     const defaults = createNewTaskDefaults();
@@ -718,6 +737,7 @@ const TaskTable = () => {
     let loadingMessage = "Loading tasks...";
     if (isCreatingTask) loadingMessage = "Creating task...";
     if (isUpdatingTask) loadingMessage = "Updating task...";
+    if(loadingFilterTasks) loadingMessage = "Filtering tasks..."
     content = (
       <Loader message={loadingMessage} error={tasksError} />
     )
@@ -757,20 +777,22 @@ const TaskTable = () => {
             {" "}
             <tbody className="bg-white">
               {" "}
-              {actualDataRows.length === 0 &&
+              {                data.length==0 &&
                 !isAddingNewTask &&
                 !showTopLevelAddTaskButton &&
                 !loadingTasks &&
                 !isCreatingTask &&
-                !isUpdatingTask && (
-                  <tr style={{ height: `${ROW_HEIGHT * 2}px` }}>
-                    <td
-                      colSpan={mainTableColumns.length}
-                      className="text-center text-gray-500 p-4"
-                    >
-                      No tasks available.
-                    </td>
-                  </tr>
+                !isUpdatingTask && !loadingFilterTasks && (
+                    <tr style={{ height: `${ROW_HEIGHT * 2}px` }}>
+                      <td
+                        colSpan={mainTableColumns.length}
+                        className="text-center text-gray-500 p-4"
+                      >
+                        {isFiltered ? "Try adjusting Filters":""
+                        }
+                        "No tasks available"
+                      </td>
+                    </tr>
                 )}
               {" "}
               {table.getRowModel().rows.map((row) => ( // Use table.getRowModel().rows for paginated rows

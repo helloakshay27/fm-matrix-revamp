@@ -14,6 +14,10 @@ import AddMilestoneModal from "../../Milestone/AddMilestoneModal";
 import AddProjectTemplate from "./Projects/AddProjectTempelateModal";
 import ProjectFilterModal from "./Projects/ProjectFilterModel";
 import AddIssueModal from "./Issues/AddIssueModal";
+import { filterProjects } from "../../redux/slices/projectSlice";
+import { filterTask } from "../../redux/slices/taskSlice";
+import { useSelector, useDispatch } from "react-redux";
+import { useParams } from "react-router-dom";
 
 const TYPE_OPTIONS = [
     { key: "Kanban", icon: <ChartNoAxesColumn size={18} className="rotate-180 text-[#C72030]" />, label: "Kanban" },
@@ -26,6 +30,7 @@ const SPRINT_TYPE_OPTIONS = [
 ];
 
 const STATUS_OPTIONS = [
+    "All",
     "On Hold",
     "Completed"
 ];
@@ -39,6 +44,7 @@ const TaskActions = ({
     filters,
     context
 }) => {
+    const { id, mid } = useParams();
     const [isTypeOpen, setIsTypeOpen] = useState(false);
     const [isStatusOpen, setIsStatusOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,11 +53,13 @@ const TaskActions = ({
     const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
     const [isAddMilestoneModalOpen, setIsAddMilestoneModalOpen] = useState(false);
     const [isAddIssueModalOpen, setIsAddIssueModalOpen] = useState(false);
-    const [selectedStatus, setSelectedStatus] = useState("Status");
+    const [selectedStatus, setSelectedStatus] = useState(STATUS_OPTIONS[0]);
     const [isProjectFilter, setIsProjectFilter] = useState(false);
+    const token=localStorage.getItem("token");
 
     const typeDropdownRef = useRef(null);
     const statusDropdownRef = useRef(null);
+    const dispatch = useDispatch();
 
     const filter = useMemo(() =>
         localStorage.getItem("projectFilters") || localStorage.getItem("taskFilters"),
@@ -87,9 +95,28 @@ const TaskActions = ({
         if (type === "Kanban") setIsSidebarOpen(false);
     }, [setSelectedType, setIsSidebarOpen]);
 
-    const handleStatusSelect = useCallback((status) => {
+    const handleStatusSelect = useCallback(({status}) => {
+        let filters = {};
+
+if (addType === "Project") {
+  if (status !== "All") {
+    filters["q[status_eq]"] = status;
+  }
+} else {
+  if (status !== "All") {
+    filters["q[status_eq]"] = status;
+  }
+    filters["q[milestone_id_eq]"] = mid;
+  
+}
+
+        if(addType=="Project"){
+          dispatch(filterProjects({ token, filters })).unwrap();
+        }else {
+          dispatch(filterTask({ token, filter:filters })).unwrap();
+        }
         setSelectedStatus(status);
-        setIsStatusOpen(false);
+        setIsStatusOpen(false); 
     }, []);
 
     const handleAddClick = useCallback(() => {
@@ -205,7 +232,7 @@ const TaskActions = ({
                             <li key={status}>
                                 <button
                                     className="w-full text-left px-4 py-2 text-[13px] hover:bg-gray-100"
-                                    onClick={() => handleStatusSelect(status)}
+                                    onClick={() => handleStatusSelect({status})}
                                 >
                                     {status}
                                 </button>

@@ -6,6 +6,7 @@ import clsx from "clsx";
 import { useSelector, useDispatch } from "react-redux";
 import { filterTask, fetchTasks } from "../../../redux/slices/taskSlice";
 import { useParams } from "react-router-dom";
+import qs from "qs";
 
 const colorOptions = [
     { label: "Open", color: "bg-[#c85e68]", value: "open" },
@@ -158,15 +159,17 @@ const TaskFilter = ({ isModalOpen, setIsModalOpen }) => {
         console.log(dates);
         try {
             const newFilter = {
-                "q[status_eq]": selectedStatuses.length > 0 ? selectedStatuses : [],
+                "q[status_in][]": selectedStatuses.length > 0 ? selectedStatuses : [],
                 "q[created_by_id_eq]": selectedCreators.length > 0 ? selectedCreators : [],
                 "q[start_date_eq]": dates["Start Date"],
                 "q[end_date_eq]": dates["End Date"],
-                "q[responsible_person_id_eq]": selectedResponsible.length > 0 ? selectedResponsible : [],
+                "q[responsible_person_id_in][]": selectedResponsible.length > 0 ? selectedResponsible : [],
                 "q[milestone_id_eq]": mid
             }
             if (newFilter) {
-                dispatch(filterTask({ token, filter: overideFilters ? overideFilters : newFilter }));
+                        const queryString = qs.stringify(newFilter, { arrayFormat: 'repeat' });
+                
+                dispatch(filterTask({ token, filter: overideFilters ? overideFilters : queryString }));
                 setIsModalOpen(false);
             }
         } catch (e) {

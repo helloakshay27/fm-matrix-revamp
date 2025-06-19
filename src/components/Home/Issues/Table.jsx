@@ -19,7 +19,7 @@ import SelectBox from '../../SelectBox';
 
 // Redux Thunks
 import { fetchUsers } from '../../../redux/slices/userSlice';
-import { fetchIssue ,createIssue, updateIssue } from '../../../redux/slices/IssueSlice';
+import { fetchIssue ,createIssue, updateIssue,fetchIssueType } from '../../../redux/slices/IssueSlice';
 import {fetchProjects} from '../../../redux/slices/projectSlice';
 import {fetchMilestone} from '../../../redux/slices/milestoneSlice';
 import {fetchTasks} from '../../../redux/slices/taskSlice';
@@ -90,6 +90,12 @@ const IssuesTable = () => {
     loading: loadingTasks,
     error: tasksFetchError
   }=useSelector((state) => state.fetchTasks || { tasks: [], loading: false, error: null });
+
+    const{
+      fetchIssueType:issueType,
+      loading:loadingIssueType,
+      error:issueTypeFetchError
+    }=useSelector((state) => state.fetchIssueType || { issueType: [], loading: false, error: null });
   
 
   const [data, setData] = useState([]);
@@ -108,6 +114,7 @@ const IssuesTable = () => {
   const [projectOptions, setProjectOptions] = useState([]);
   const [milestoneOptions, setMilestoneOptions] = useState([]);
   const [taskOptions, setTaskOptions] = useState([]);
+  const [issueTypeOptions, setIssueTypeOptions] = useState([]);
 
   const [isSavingIssues, setIsSavingIssues] = useState(false);
   const [isUpdatingIssue, setIsUpdatingIssue] = useState(false); // Added state for tracking updates
@@ -118,6 +125,32 @@ const IssuesTable = () => {
   const newIssueFormRowRef = useRef(null);
   const userFetchInitiatedRef = useRef(false);
   const allIssuesFetchInitiatedRef = useRef(false);
+
+
+  
+    useEffect(()=>{
+      if(!loadingIssueType && (!issueType.length > 0 && !issueTypeFetchError)){
+      dispatch(fetchIssueType({token}));
+      }
+    },[dispatch,loadingIssueType,issueType,issueTypeFetchError]);
+  
+    useEffect(()=>{
+      if(!loadingIssueType && issueType.length > 0 && !issueTypeFetchError){
+      setIssueTypeOptions(
+        issueType.map((i) => (i.name)));
+        console.log(issueType);
+        console.log(issueType.map((i) => (i.name)));
+      };
+      }
+,[issueType,loadingIssueType,issueTypeFetchError,setIssueTypeOptions]);
+
+useEffect(() => {
+  console.log(issueTypeOptions);
+  issueTypeOptions.forEach((opt, index) => {
+  console.log(index, opt, typeof opt);
+});
+
+},[issueTypeOptions]);
 
   useEffect(() => {
     if (!loadingAllIssues && (!allIssuesFromStore || !Array.isArray(allIssuesFromStore) || allIssuesFromStore.length === 0) && !allIssuesError && !allIssuesFetchInitiatedRef.current) {
@@ -447,7 +480,7 @@ useEffect(() => {
          accessorKey: 'issueType', header: 'Type', size: 100,
          cell: ({row})=>{
            return (
-             <StatusBadge status={row.original.issueType} statusOptions={globalTypesOptions} onStatusChange={(newStatus) => handleUpdateIssues(row.original.id, "issue_type", newStatus)}/>
+             <StatusBadge status={row.original.issueType} statusOptions={issueTypeOptions} onStatusChange={(newStatus) => handleUpdateIssues(row.original.id, "issue_type", newStatus)}/>
            )
          }
       },
@@ -485,7 +518,7 @@ useEffect(() => {
         )
       },
     ],
-    [handleDeleteExistingIssues, handleUpdateIssues, userOptionsForSelectBox]
+    [handleDeleteExistingIssues, handleUpdateIssues, userOptionsForSelectBox,issueTypeOptions]
   );
 
   const table = useReactTable({

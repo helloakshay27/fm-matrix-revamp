@@ -79,7 +79,8 @@ const StatusBadge = ({ status: initialStatus, statusOptions, onStatusChange }) =
             zIndex: 1000,
           }}
         >
-          {statusOptions.map((option) => (
+          {console.log(statusOptions)}
+          {statusOptions && statusOptions?.map((option) => (
             <span
               key={option}
               onClick={() => handleStatusSelect(option)}

@@ -2,10 +2,11 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import SelectBox from "../../../SelectBox";
 import { useDispatch, useSelector} from "react-redux";
 import { fetchUsers } from "../../../../redux/slices/userSlice";
-import { createIssue, fetchIssue } from "../../../../redux/slices/IssueSlice";
+import { createIssue, fetchIssue ,fetchIssueType} from "../../../../redux/slices/IssueSlice";
 import { fetchMilestone } from "../../../../redux/slices/milestoneSlice";
 import { fetchProjects } from "../../../../redux/slices/projectSlice";
 import { fetchTasks } from "../../../../redux/slices/taskSlice";
+
 import toast from "react-hot-toast";
 
 const globalTypesOptions = [
@@ -63,8 +64,15 @@ const Issues = ({ closeModal }) => {
     error:tasksFetchError
   }=useSelector((state) => state.fetchTasks || { tasks: [], loading: false, error: null });
 
+  const{
+    fetchIssueType:issueType,
+    loading:loadingIssueType,
+    error:issueTypeFetchError
+  }=useSelector((state) => state.fetchIssueType || { issueType: [], loading: false, error: null });
+
   const [projectOptions, setProjectOptions] = useState([]);
   const [milestoneOptions, setMilestoneOptions] = useState([]);
+  const [issueTypeOptions, setIssueTypeOptions] = useState([]);
   const [taskOptions, setTaskOptions] = useState([]);
 
   const dispatch = useDispatch();
@@ -72,6 +80,22 @@ const Issues = ({ closeModal }) => {
   useEffect(() => {
     dispatch(fetchUsers({token}));
   }, [dispatch]);
+
+  useEffect(()=>{
+    if(!loadingIssueType && (!issueType.length > 0 && !issueTypeFetchError)){
+    dispatch(fetchIssueType({token}));
+    }
+  },[dispatch,loadingIssueType,issueType,issueTypeFetchError]);
+
+  useEffect(()=>{
+    if(!loadingIssueType && issueType.length > 0 && !issueTypeFetchError){
+    setIssueTypeOptions(
+      issueType.map((i) => ({
+        value: i.id,
+        label: i.name,
+    })))
+    }
+  },[issueType,loadingIssueType,issueTypeFetchError]);
 
   useEffect(()=>{
     if(!loadingMilestone && milestoneOptions.length > 0 && !milestoneFetchError && newIssuesMilestoneId){
@@ -180,7 +204,7 @@ const Issues = ({ closeModal }) => {
       priority: globalPriorityOptions.find((option) => option.value === priority)?.label || null,
       created_by_id: 158,
       comment: comments,
-      issue_type: globalTypesOptions.find((option) => option.value === type)?.label || null,
+      issue_type: issueTypeOptions.find((option) => option.value === type)?.label || null,
     };
 
     try {
@@ -276,7 +300,7 @@ const Issues = ({ closeModal }) => {
               Type <span className="text-red-600">*</span>
             </label>
             <SelectBox
-              options={globalTypesOptions}
+              options={issueTypeOptions}
               value={type}
               onChange={(selectedValue) => setType(selectedValue)}
               placeholder={"Select Type"}
