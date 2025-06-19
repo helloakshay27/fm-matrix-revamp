@@ -226,8 +226,6 @@ function App() {
               <Route path="/settings/users" element={<FMUsersDashboard />} />
               <Route path="/settings/users/clone-role" element={<CloneRolePage />} />
               <Route path="/settings/account" element={<AccountDashboard />} />
-              <Route path="/settings/approval-matrix" element={<ApprovalMatrixDashboard />} />
-              <Route path="/settings/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
               
               {/* Snagging Routes */}
               <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
