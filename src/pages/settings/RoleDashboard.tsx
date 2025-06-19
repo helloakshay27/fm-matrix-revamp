@@ -25,10 +25,12 @@ interface Permission {
 interface Role {
   id: number;
   name: string;
-  permissions: Permission[];
+  permissions: {
+    [key: string]: Permission[];
+  };
 }
 
-const defaultPermissions: Permission[] = [
+const allFunctionsPermissions: Permission[] = [
   { name: 'Broadcast', all: false, add: false, view: false, edit: false, disable: false },
   { name: 'Asset', all: false, add: false, view: false, edit: false, disable: false },
   { name: 'Documents', all: false, add: false, view: false, edit: false, disable: false },
@@ -123,21 +125,145 @@ const defaultPermissions: Permission[] = [
   { name: 'Parking Setup', all: false, add: false, view: false, edit: false, disable: false },
 ];
 
+const inventoryPermissions: Permission[] = [
+  { name: 'Inventory', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'GRN', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'SRNS', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Accounts', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Consumption', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Update Partial Inventory', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Update All Inventory', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Clone Inventory', all: false, add: false, view: false, edit: false, disable: false },
+];
+
+const setupPermissions: Permission[] = [
+  { name: 'Account', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'User & Roles', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Meter Types', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Asset Groups', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Ticket', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Email Rule', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'FM Groups', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Export', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'SAC/HSN Setup', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Addresses', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Master Checklist', all: false, add: false, view: false, edit: false, disable: false },
+];
+
+const quickgatePermissions: Permission[] = [
+  { name: 'Visitors', all: true, add: false, view: true, edit: false, disable: false },
+  { name: 'R Vehicles', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'G Vehicles', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Staffs', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Goods In Out', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Patrolling', all: false, add: false, view: false, edit: false, disable: false },
+];
+
 export const RoleDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('All Functions');
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [roles, setRoles] = useState<Role[]>([
-    { id: 1, name: 'Account Manager', permissions: [...defaultPermissions] },
-    { id: 21, name: 'Executive', permissions: [...defaultPermissions] },
-    { id: 22, name: 'Process Manager', permissions: [...defaultPermissions] },
-    { id: 23, name: 'Manager', permissions: [...defaultPermissions] },
-    { id: 34, name: 'Lcoated Role Test', permissions: [...defaultPermissions] },
-    { id: 36, name: 'Manager', permissions: [...defaultPermissions] },
-    { id: 41, name: 'Technician', permissions: [...defaultPermissions] },
-    { id: 49, name: 'Admin', permissions: [...defaultPermissions] },
-    { id: 108, name: 'Inventory Role', permissions: [...defaultPermissions] },
-    { id: 202, name: 'Admin', permissions: [...defaultPermissions] },
+    { 
+      id: 1, 
+      name: 'Account Manager', 
+      permissions: {
+        'All Functions': [...allFunctionsPermissions],
+        'Inventory': [...inventoryPermissions],
+        'Setup': [...setupPermissions],
+        'Quickgate': [...quickgatePermissions]
+      }
+    },
+    { 
+      id: 21, 
+      name: 'Executive', 
+      permissions: {
+        'All Functions': [...allFunctionsPermissions],
+        'Inventory': [...inventoryPermissions],
+        'Setup': [...setupPermissions],
+        'Quickgate': [...quickgatePermissions]
+      }
+    },
+    { 
+      id: 22, 
+      name: 'Process Manager', 
+      permissions: {
+        'All Functions': [...allFunctionsPermissions],
+        'Inventory': [...inventoryPermissions],
+        'Setup': [...setupPermissions],
+        'Quickgate': [...quickgatePermissions]
+      }
+    },
+    { 
+      id: 23, 
+      name: 'Manager', 
+      permissions: {
+        'All Functions': [...allFunctionsPermissions],
+        'Inventory': [...inventoryPermissions],
+        'Setup': [...setupPermissions],
+        'Quickgate': [...quickgatePermissions]
+      }
+    },
+    { 
+      id: 34, 
+      name: 'Lcoated Role Test', 
+      permissions: {
+        'All Functions': [...allFunctionsPermissions],
+        'Inventory': [...inventoryPermissions],
+        'Setup': [...setupPermissions],
+        'Quickgate': [...quickgatePermissions]
+      }
+    },
+    { 
+      id: 36, 
+      name: 'Manager', 
+      permissions: {
+        'All Functions': [...allFunctionsPermissions],
+        'Inventory': [...inventoryPermissions],
+        'Setup': [...setupPermissions],
+        'Quickgate': [...quickgatePermissions]
+      }
+    },
+    { 
+      id: 41, 
+      name: 'Technician', 
+      permissions: {
+        'All Functions': [...allFunctionsPermissions],
+        'Inventory': [...inventoryPermissions],
+        'Setup': [...setupPermissions],
+        'Quickgate': [...quickgatePermissions]
+      }
+    },
+    { 
+      id: 49, 
+      name: 'Admin', 
+      permissions: {
+        'All Functions': [...allFunctionsPermissions],
+        'Inventory': [...inventoryPermissions],
+        'Setup': [...setupPermissions],
+        'Quickgate': [...quickgatePermissions]
+      }
+    },
+    { 
+      id: 108, 
+      name: 'Inventory Role', 
+      permissions: {
+        'All Functions': [...allFunctionsPermissions],
+        'Inventory': [...inventoryPermissions],
+        'Setup': [...setupPermissions],
+        'Quickgate': [...quickgatePermissions]
+      }
+    },
+    { 
+      id: 202, 
+      name: 'Admin', 
+      permissions: {
+        'All Functions': [...allFunctionsPermissions],
+        'Inventory': [...inventoryPermissions],
+        'Setup': [...setupPermissions],
+        'Quickgate': [...quickgatePermissions]
+      }
+    },
   ]);
 
   const tabs = ['All Functions', 'Inventory', 'Setup', 'Quickgate'];
@@ -148,16 +274,27 @@ export const RoleDashboard = () => {
 
   // Get permissions for the selected role, default to first role if none selected
   const currentRole = selectedRole || roles[0];
-  const currentPermissions = currentRole?.permissions || defaultPermissions;
+  const currentPermissions = currentRole?.permissions[activeTab] || [];
 
   const handleRoleClick = (role: Role) => {
     setSelectedRole(role);
   };
 
+  const handleAddRole = () => {
+    console.log('Adding new role...');
+    // Here you would typically open a modal or navigate to add role page
+  };
+
+  const handleSearchRole = () => {
+    console.log('Searching roles with term:', searchTerm);
+    // Search functionality is already handled by filteredRoles
+  };
+
   const handlePermissionChange = (roleId: number, permissionName: string, field: keyof Permission, value: boolean) => {
     setRoles(roles.map(role => {
       if (role.id === roleId) {
-        const updatedPermissions = role.permissions.map(permission => {
+        const updatedPermissions = { ...role.permissions };
+        updatedPermissions[activeTab] = role.permissions[activeTab].map(permission => {
           if (permission.name === permissionName) {
             const updatedPermission = { ...permission, [field]: value };
             
@@ -207,6 +344,9 @@ export const RoleDashboard = () => {
 
   const handleUpdatePermissions = () => {
     console.log('Updating permissions for role:', currentRole);
+    console.log('Active tab:', activeTab);
+    console.log('Permissions:', currentPermissions);
+    alert(`Permissions updated for ${currentRole.name} in ${activeTab} tab`);
     // Here you would typically save to backend
   };
 
@@ -217,7 +357,10 @@ export const RoleDashboard = () => {
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         {/* Header with Add Role button */}
         <div className="flex justify-between items-center mb-6">
-          <Button className="bg-[#C72030] hover:bg-[#A11D2A] text-white">
+          <Button 
+            onClick={handleAddRole}
+            className="bg-[#C72030] hover:bg-[#A11D2A] text-white"
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add Role
           </Button>
@@ -231,7 +374,10 @@ export const RoleDashboard = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-xs"
           />
-          <Button className="bg-[#C72030] hover:bg-[#A11D2A] text-white">
+          <Button 
+            onClick={handleSearchRole}
+            className="bg-[#C72030] hover:bg-[#A11D2A] text-white"
+          >
             <Search className="w-4 h-4 mr-2" />
             Search Role
           </Button>
