@@ -240,6 +240,9 @@ import { EditEnergyAssetPage } from './pages/EditEnergyAssetPage';
 // Import Water Asset Details Route
 import { WaterAssetDetailsPage } from './pages/WaterAssetDetailsPage';
 
+// Import Edit Material PR page
+import { EditMaterialPRDashboard } from './pages/EditMaterialPRDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -324,6 +327,7 @@ function App() {
               {/* Finance Routes */}
               <Route path="/finance/material-pr" element={<MaterialPRDashboard />} />
               <Route path="/finance/material-pr/add" element={<AddMaterialPRDashboard />} />
+              <Route path="/finance/material-pr/edit/:id" element={<EditMaterialPRDashboard />} />
               <Route path="/finance/service-pr" element={<ServicePRDashboard />} />
               <Route path="/finance/service-pr/add" element={<AddServicePRDashboard />} />
               <Route path="/finance/po" element={<PODashboard />} />

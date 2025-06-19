@@ -169,7 +169,12 @@ export const MaterialPRDashboard = () => {
             {filteredData.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                  <Button size="sm" variant="ghost" className="p-1">
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    className="p-1"
+                    onClick={() => navigate(`/finance/material-pr/edit/${item.id}`)}
+                  >
                     <Edit className="w-4 h-4" />
                   </Button>
                 </TableCell>
