@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -193,6 +194,9 @@ import { SpaceManagementBookingDetailsPage } from './pages/SpaceManagementBookin
 
 // Import Finance pages
 import { MaterialPRDashboard } from './pages/MaterialPRDashboard';
+import { MaterialPRDetailsPage } from './pages/MaterialPRDetailsPage';
+import { CloneMaterialPRPage } from './pages/CloneMaterialPRPage';
+import { MaterialPRFeedsPage } from './pages/MaterialPRFeedsPage';
 import { ServicePRDashboard } from './pages/ServicePRDashboard';
 import { AddMaterialPRDashboard } from './pages/AddMaterialPRDashboard';
 import { AddServicePRDashboard } from './pages/AddServicePRDashboard';
