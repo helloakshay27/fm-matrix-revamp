@@ -40,11 +40,93 @@ const defaultPermissions: Permission[] = [
   { name: 'AMC', all: false, add: false, view: false, edit: false, disable: false },
   { name: 'Schedule', all: false, add: false, view: false, edit: false, disable: false },
   { name: 'Materials', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'PO', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'WO', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Report', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Attendance', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Business Directory', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'PO Approval', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Dashboard', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Tracing', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'BI Reports', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Restaurants', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'My Ledgers', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Letter Of Indent', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Wo Invoices', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Bill', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Engineering Reports', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Events', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Customers', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'QuickGate Report', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Task Management', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'CEO Dashboard', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Operational Audit', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Mom Details', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Pms Design Inputs', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Vendor Audit', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Permits', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Pending Approvals', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Accounts', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Customer Bills', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'My Bills', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Water', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'STP', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Daily Readings', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Utility Consumption', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Utility Request', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Space', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Project Management', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Pms Incidents', all: true, add: true, view: true, edit: true, disable: true },
+  { name: 'Site Dashboard', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Steppstone Dashboard', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Transport', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Waste Generation', all: true, add: true, view: true, edit: true, disable: true },
+  { name: 'GDN', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Parking', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'GDN Dispatch', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'EV Consumption', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Msafe', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Permit Extend', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Local Travel Module', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'KRCC', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Training', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Approve Krcc', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Vi Register User', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Vi DeRegister User', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Line Manager Check', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Senior Management Tour', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Solar Generator', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Customer Permit', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Customer Parkings', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Customer Wallet', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Site Banners', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Testimonials', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Group And Channel Config', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Shared Content Config', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Site And Facility Config', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Occupant Users', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Clear SnagAnswers', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Non Re Users', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Download Msafe Report', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Download Msafe Detailed Report', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'training_list', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Vi Miles', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Krcc List', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Vi MSafe Dashboard', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Vi Miles Dashboard', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Resume Permit', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Permit Checklist', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Send To Sap', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Community Module', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Facility Setup', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Mail Room', all: false, add: false, view: false, edit: false, disable: false },
+  { name: 'Parking Setup', all: false, add: false, view: false, edit: false, disable: false },
 ];
 
 export const RoleDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('All Functions');
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [roles, setRoles] = useState<Role[]>([
     { id: 1, name: 'Account Manager', permissions: [...defaultPermissions] },
     { id: 21, name: 'Executive', permissions: [...defaultPermissions] },
@@ -63,6 +145,14 @@ export const RoleDashboard = () => {
   const filteredRoles = roles.filter(role =>
     role.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Get permissions for the selected role, default to first role if none selected
+  const currentRole = selectedRole || roles[0];
+  const currentPermissions = currentRole?.permissions || defaultPermissions;
+
+  const handleRoleClick = (role: Role) => {
+    setSelectedRole(role);
+  };
 
   const handlePermissionChange = (roleId: number, permissionName: string, field: keyof Permission, value: boolean) => {
     setRoles(roles.map(role => {
@@ -102,10 +192,22 @@ export const RoleDashboard = () => {
           return permission;
         });
         
-        return { ...role, permissions: updatedPermissions };
+        const updatedRole = { ...role, permissions: updatedPermissions };
+        
+        // Update selected role if it's the one being modified
+        if (selectedRole && selectedRole.id === roleId) {
+          setSelectedRole(updatedRole);
+        }
+        
+        return updatedRole;
       }
       return role;
     }));
+  };
+
+  const handleUpdatePermissions = () => {
+    console.log('Updating permissions for role:', currentRole);
+    // Here you would typically save to backend
   };
 
   return (
@@ -143,9 +245,14 @@ export const RoleDashboard = () => {
               {filteredRoles.map((role) => (
                 <div
                   key={role.id}
-                  className="p-3 bg-white rounded border hover:bg-gray-50 cursor-pointer"
+                  onClick={() => handleRoleClick(role)}
+                  className={`p-3 rounded border cursor-pointer transition-colors ${
+                    currentRole?.id === role.id 
+                      ? 'bg-[#C72030] text-white border-[#C72030]' 
+                      : 'bg-white hover:bg-gray-50 border-gray-200'
+                  }`}
                 >
-                  <div className="text-sm font-medium text-[#1a1a1a]">
+                  <div className="text-sm font-medium">
                     {role.id} - {role.name}
                   </div>
                 </div>
@@ -173,11 +280,11 @@ export const RoleDashboard = () => {
             </div>
 
             {/* Permissions Table */}
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border rounded-lg overflow-hidden max-h-96 overflow-y-auto">
               <Table>
-                <TableHeader>
+                <TableHeader className="sticky top-0 bg-white z-10">
                   <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold text-gray-700 w-32"></TableHead>
+                    <TableHead className="font-semibold text-gray-700 w-48"></TableHead>
                     <TableHead className="font-semibold text-gray-700 text-center">All</TableHead>
                     <TableHead className="font-semibold text-gray-700 text-center">Add</TableHead>
                     <TableHead className="font-semibold text-gray-700 text-center">View</TableHead>
@@ -186,14 +293,14 @@ export const RoleDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {defaultPermissions.map((permission) => (
+                  {currentPermissions.map((permission) => (
                     <TableRow key={permission.name} className="hover:bg-gray-50">
                       <TableCell className="font-medium">{permission.name}</TableCell>
                       <TableCell className="text-center">
                         <Checkbox
                           checked={permission.all}
                           onCheckedChange={(checked) => 
-                            handlePermissionChange(1, permission.name, 'all', checked as boolean)
+                            handlePermissionChange(currentRole.id, permission.name, 'all', checked as boolean)
                           }
                         />
                       </TableCell>
@@ -201,7 +308,7 @@ export const RoleDashboard = () => {
                         <Checkbox
                           checked={permission.add}
                           onCheckedChange={(checked) => 
-                            handlePermissionChange(1, permission.name, 'add', checked as boolean)
+                            handlePermissionChange(currentRole.id, permission.name, 'add', checked as boolean)
                           }
                         />
                       </TableCell>
@@ -209,7 +316,7 @@ export const RoleDashboard = () => {
                         <Checkbox
                           checked={permission.view}
                           onCheckedChange={(checked) => 
-                            handlePermissionChange(1, permission.name, 'view', checked as boolean)
+                            handlePermissionChange(currentRole.id, permission.name, 'view', checked as boolean)
                           }
                         />
                       </TableCell>
@@ -217,7 +324,7 @@ export const RoleDashboard = () => {
                         <Checkbox
                           checked={permission.edit}
                           onCheckedChange={(checked) => 
-                            handlePermissionChange(1, permission.name, 'edit', checked as boolean)
+                            handlePermissionChange(currentRole.id, permission.name, 'edit', checked as boolean)
                           }
                         />
                       </TableCell>
@@ -225,7 +332,7 @@ export const RoleDashboard = () => {
                         <Checkbox
                           checked={permission.disable}
                           onCheckedChange={(checked) => 
-                            handlePermissionChange(1, permission.name, 'disable', checked as boolean)
+                            handlePermissionChange(currentRole.id, permission.name, 'disable', checked as boolean)
                           }
                         />
                       </TableCell>
@@ -233,6 +340,16 @@ export const RoleDashboard = () => {
                   ))}
                 </TableBody>
               </Table>
+            </div>
+
+            {/* Update Button */}
+            <div className="mt-4 flex justify-end">
+              <Button 
+                onClick={handleUpdatePermissions}
+                className="bg-[#C72030] hover:bg-[#A11D2A] text-white"
+              >
+                Update
+              </Button>
             </div>
           </div>
         </div>
