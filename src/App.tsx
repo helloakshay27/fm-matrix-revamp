@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -211,6 +210,10 @@ import { AddNewBillDashboard } from './pages/AddNewBillDashboard';
 import { FMUsersDashboard } from './pages/settings/FMUsersDashboard';
 import { CloneRolePage } from './pages/settings/CloneRolePage';
 
+// Import Setup pages
+import { DepartmentDashboard } from './pages/setup/DepartmentDashboard';
+import { RoleDashboard } from './pages/setup/RoleDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -388,8 +391,8 @@ function App() {
               <Route path="/setup/location/floor" element={<div>Location Floor</div>} />
               <Route path="/setup/location/unit" element={<div>Location Unit</div>} />
               <Route path="/setup/location/room" element={<div>Location Room</div>} />
-              <Route path="/setup/user-role/department" element={<div>User Role Department</div>} />
-              <Route path="/setup/user-role/role" element={<div>User Role Role</div>} />
+              <Route path="/setup/user-role/department" element={<DepartmentDashboard />} />
+              <Route path="/setup/user-role/role" element={<RoleDashboard />} />
               <Route path="/setup/fm-user" element={<div>FM User</div>} />
               <Route path="/setup/occupant-users" element={<div>Occupant Users</div>} />
               <Route path="/setup/meter-type" element={<div>Meter Type</div>} />

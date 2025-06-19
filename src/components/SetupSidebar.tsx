@@ -93,7 +93,7 @@ export const SetupSidebar = () => {
             >
               <div className="flex items-center gap-3">
                 <Users className="w-5 h-5" />
-                User Role
+                Roles (RACI)
               </div>
               {isUserRoleOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
             </button>
