@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import { useDispatch, useSelector } from 'react-redux';
-import { createTag, fetchTags, updateTag } from '../../../redux/slices/tagsSlice';
+import { createTag, fetchTags, resetSuccess, updateTag } from '../../../redux/slices/tagsSlice';
 import { set } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 
@@ -79,6 +79,7 @@ const Modal = ({ open, setOpenModal, editData }) => {
       setType('');
       setWarningOpen(false);
       setOpenModal(false);
+      dispatch(resetSuccess())
     }
   }, [createSuccess, updateSuccess, dispatch, setOpenModal]);
 
