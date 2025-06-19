@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -282,6 +283,11 @@ function App() {
               <Route path="/security/staff" element={<StaffsDashboard />} />
               <Route path="/security/staff/details/:id" element={<StaffDetailsPage />} />
               <Route path="/security/staff/edit/:id" element={<EditStaffPage />} />
+              
+              {/* Security Vehicle Routes */}
+              <Route path="/security/vehicle/r-vehicles" element={<RVehiclesDashboard />} />
+              <Route path="/security/vehicle/r-vehicles/history" element={<RVehiclesHistoryDashboard />} />
+              <Route path="/security/vehicle/g-vehicles" element={<GVehiclesDashboard />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
