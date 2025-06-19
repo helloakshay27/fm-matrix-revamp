@@ -1,152 +1,229 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
+import { GVehicleFilterModal } from '@/components/GVehicleFilterModal';
+import { useNavigate } from 'react-router-dom';
 
-const vehicleOutData = [
+const vehicleHistoryData = [
   {
     id: 1,
-    vehicleNumber: '3253',
-    name: 'Kshitij Rasal',
-    status: 'G',
-    badgeColor: 'bg-yellow-500'
+    vehicleNumber: 'DD55GG5555',
+    category: '',
+    staffName: '',
+    inDate: '13/04/2020',
+    inTime: '12:08 PM',
+    outDate: '05/10/2020',
+    outTime: '1:16 PM'
   },
   {
     id: 2,
-    vehicleNumber: '233223',
-    name: 'dinesh',
-    status: 'G',
-    badgeColor: 'bg-blue-500'
+    vehicleNumber: 'DD55GG5555',
+    category: '',
+    staffName: '',
+    inDate: '13/04/2020',
+    inTime: '12:08 PM',
+    outDate: '05/10/2020',
+    outTime: '1:16 PM'
   },
   {
     id: 3,
-    vehicleNumber: '',
-    name: 'Pune Sam',
-    status: 'G',
-    badgeColor: 'bg-blue-500'
+    vehicleNumber: 'DD55GG5555',
+    category: '',
+    staffName: '',
+    inDate: '13/04/2020',
+    inTime: '12:38 PM',
+    outDate: '',
+    outTime: ''
   },
   {
     id: 4,
-    vehicleNumber: '3452',
-    name: 'Sahil',
-    status: 'G',
-    badgeColor: 'bg-blue-500'
+    vehicleNumber: 'GG55GG5555',
+    category: '',
+    staffName: '',
+    inDate: '13/04/2020',
+    inTime: '12:45 PM',
+    outDate: '',
+    outTime: ''
+  },
+  {
+    id: 5,
+    vehicleNumber: 'GG55GG5555',
+    category: '',
+    staffName: '',
+    inDate: '13/04/2020',
+    inTime: '12:45 PM',
+    outDate: '',
+    outTime: ''
+  },
+  {
+    id: 6,
+    vehicleNumber: 'GG55GG5555',
+    category: '',
+    staffName: '',
+    inDate: '13/04/2020',
+    inTime: '12:45 PM',
+    outDate: '',
+    outTime: ''
+  },
+  {
+    id: 7,
+    vehicleNumber: '123456',
+    category: 'Owned',
+    staffName: '',
+    inDate: '05/10/2020',
+    inTime: '4:25 PM',
+    outDate: '05/10/2020',
+    outTime: '5:14 PM'
+  },
+  {
+    id: 8,
+    vehicleNumber: '8888',
+    category: 'Owned',
+    staffName: '',
+    inDate: '05/10/2020',
+    inTime: '4:57 PM',
+    outDate: '05/10/2020',
+    outTime: '5:14 PM'
+  },
+  {
+    id: 9,
+    vehicleNumber: '9999',
+    category: 'Owned',
+    staffName: '',
+    inDate: '05/10/2020',
+    inTime: '5:18 PM',
+    outDate: '05/10/2020',
+    outTime: '5:19 PM'
+  },
+  {
+    id: 10,
+    vehicleNumber: '7878',
+    category: 'Staff',
+    staffName: 'Nupuraa Admin',
+    inDate: '05/10/2020',
+    inTime: '6:51 PM',
+    outDate: '05/10/2020',
+    outTime: '6:52 PM'
+  },
+  {
+    id: 11,
+    vehicleNumber: '9999',
+    category: 'Owned',
+    staffName: '',
+    inDate: '05/10/2020',
+    inTime: '6:59 PM',
+    outDate: '05/10/2020',
+    outTime: '6:59 PM'
+  },
+  {
+    id: 12,
+    vehicleNumber: 'RJ02G7356',
+    category: 'Staff',
+    staffName: 'Akash G',
+    inDate: '05/10/2020',
+    inTime: '6:59 PM',
+    outDate: '05/10/2020',
+    outTime: '7:01 PM'
+  },
+  {
+    id: 13,
+    vehicleNumber: '9999',
+    category: 'Owned',
+    staffName: '',
+    inDate: '05/10/2020',
+    inTime: '7:00 PM',
+    outDate: '06/10/2020',
+    outTime: '5:11 PM'
+  },
+  {
+    id: 14,
+    vehicleNumber: '123456',
+    category: 'Owned',
+    staffName: '',
+    inDate: '06/10/2020',
+    inTime: '10:39 AM',
+    outDate: '06/10/2020',
+    outTime: '5:11 PM'
   }
 ];
 
-interface GVehicleOutDashboardProps {
-  onHistoryClick?: () => void;
-}
+export const GVehicleOutDashboard = () => {
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const navigate = useNavigate();
 
-export const GVehicleOutDashboard = ({ onHistoryClick }: GVehicleOutDashboardProps) => {
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const handleHistoryClick = () => {
-    if (onHistoryClick) {
-      onHistoryClick();
-    }
+  const handleAllVehiclesClick = () => {
+    navigate('/security/vehicle/g-vehicles');
   };
-
-  const handleOut = (vehicleId: number) => {
-    console.log('Vehicle out:', vehicleId);
-    // Handle vehicle out logic
-  };
-
-  const filteredVehicles = vehicleOutData.filter(vehicle =>
-    vehicle.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vehicle.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <span>Visitor</span>
+          <span>vehicles</span>
           <span>&gt;</span>
-          <span>Visitor Vehicle Out</span>
+          <span>Vehicle History</span>
         </div>
         
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Visitor Vehicle Out</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">VEHICLE HISTORY</h1>
         
         <div className="bg-white rounded-lg border border-gray-200">
           {/* Action Buttons */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <div className="flex gap-3">
               <Button 
-                onClick={handleHistoryClick}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-6 py-2 rounded"
+                onClick={() => setIsFilterModalOpen(true)}
+                variant="outline"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded flex items-center gap-2"
               >
-                History
+                <SlidersHorizontal className="w-4 h-4" />
+                Filters
               </Button>
               <Button 
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-6 py-2 rounded"
+                onClick={handleAllVehiclesClick}
+                className="bg-[#8B4A9C] hover:bg-[#7A4089] text-white px-6 py-2 rounded"
               >
-                Vehicle Out
-              </Button>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Search using Vehicle number"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-80"
-                />
-              </div>
-              <Button 
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-6 py-2 rounded"
-              >
-                Go!
+                All Vehicles
               </Button>
             </div>
           </div>
 
-          {/* Vehicle Cards */}
-          <div className="p-6 space-y-4">
-            {filteredVehicles.map((vehicle) => (
-              <div key={vehicle.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-white">
-                <div className="flex items-center gap-4">
-                  {/* Vehicle Icon */}
-                  <div className="w-16 h-12 bg-blue-500 rounded flex items-center justify-center">
-                    <svg className="w-8 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
-                    </svg>
-                  </div>
-
-                  {/* Vehicle Info */}
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-semibold text-blue-600">
-                        {vehicle.vehicleNumber || vehicle.name}
-                      </span>
-                      <span className={`w-6 h-6 ${vehicle.badgeColor} text-white rounded-full flex items-center justify-center text-sm font-bold`}>
-                        {vehicle.status}
-                      </span>
-                    </div>
-                    {vehicle.vehicleNumber && (
-                      <span className="text-gray-600">{vehicle.name}</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Out Button */}
-                <Button
-                  onClick={() => handleOut(vehicle.id)}
-                  className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded"
-                >
-                  Out
-                </Button>
-              </div>
-            ))}
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle Number</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">In Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">In Time</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Out Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Out Time</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {vehicleHistoryData.map((vehicle) => (
+                  <tr key={vehicle.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{vehicle.vehicleNumber}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.category}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600">{vehicle.staffName}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.inDate}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600">{vehicle.inTime}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.outDate}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600">{vehicle.outTime}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
+
+      <GVehicleFilterModal 
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+      />
     </div>
   );
 };

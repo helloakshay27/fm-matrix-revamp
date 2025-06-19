@@ -13,20 +13,44 @@ interface AddGVehicleModalProps {
 }
 
 export const AddGVehicleModal = ({ isOpen, onClose }: AddGVehicleModalProps) => {
-  const [type, setType] = useState('Occupants');
-  const [occupantUser, setOccupantUser] = useState('');
-  const [vehicleNumber, setVehicleNumber] = useState('');
-  const [parkingSlot, setParkingSlot] = useState('');
-  const [entryGate, setEntryGate] = useState('');
+  const [formData, setFormData] = useState({
+    slotNumber: '',
+    vehicleCategory: '',
+    vehicleType: '',
+    stickerNumber: '',
+    registrationNumber: '',
+    insuranceNumber: '',
+    insuranceValidTill: '',
+    category: '',
+    vehicleNumber: '',
+    unit: ''
+  });
 
-  const handleSubmit = () => {
-    // Handle form submission
-    console.log('Form submitted:', {
-      type,
-      occupantUser,
-      vehicleNumber,
-      parkingSlot,
-      entryGate
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSave = () => {
+    console.log('Saving vehicle data:', formData);
+    // Handle save logic here
+    onClose();
+  };
+
+  const handleClose = () => {
+    setFormData({
+      slotNumber: '',
+      vehicleCategory: '',
+      vehicleType: '',
+      stickerNumber: '',
+      registrationNumber: '',
+      insuranceNumber: '',
+      insuranceValidTill: '',
+      category: '',
+      vehicleNumber: '',
+      unit: ''
     });
     onClose();
   };
@@ -35,11 +59,11 @@ export const AddGVehicleModal = ({ isOpen, onClose }: AddGVehicleModalProps) => 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl bg-white [&>button]:hidden">
         <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
-          <DialogTitle className="text-lg font-semibold">Add Vehicle</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">Add</DialogTitle>
           <Button
             variant="ghost"
             size="icon"
-            onClick={onClose}
+            onClick={handleClose}
             className="h-6 w-6 p-0"
           >
             <X className="h-4 w-4" />
@@ -47,49 +71,122 @@ export const AddGVehicleModal = ({ isOpen, onClose }: AddGVehicleModalProps) => 
         </DialogHeader>
         
         <div className="p-6 space-y-6">
-          {/* Type Selection */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Type</Label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="type"
-                  value="Occupants"
-                  checked={type === 'Occupants'}
-                  onChange={(e) => setType(e.target.value)}
-                  className="w-4 h-4 text-[#C72030]"
-                />
-                <span className="text-sm">Occupants</span>
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="type"
-                  value="Guest"
-                  checked={type === 'Guest'}
-                  onChange={(e) => setType(e.target.value)}
-                  className="w-4 h-4 text-[#C72030]"
-                />
-                <span className="text-sm">Guest</span>
-              </label>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Occupant User */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Slot Number */}
             <div className="space-y-2">
-              <Label htmlFor="occupantUser" className="text-sm font-medium">
-                Occupant User
+              <Label htmlFor="slotNumber" className="text-sm font-medium">
+                Slot Number
               </Label>
-              <Select value={occupantUser} onValueChange={setOccupantUser}>
+              <Input
+                id="slotNumber"
+                value={formData.slotNumber}
+                onChange={(e) => handleInputChange('slotNumber', e.target.value)}
+                className="border-gray-300"
+              />
+            </div>
+
+            {/* Vehicle Category */}
+            <div className="space-y-2">
+              <Label htmlFor="vehicleCategory" className="text-sm font-medium">
+                Vehicle Category
+              </Label>
+              <Select value={formData.vehicleCategory} onValueChange={(value) => handleInputChange('vehicleCategory', value)}>
                 <SelectTrigger className="border-gray-300">
-                  <SelectValue placeholder="Select Name" className="text-red-500" />
+                  <SelectValue placeholder="Select Vehicle Category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user1">User 1</SelectItem>
-                  <SelectItem value="user2">User 2</SelectItem>
-                  <SelectItem value="user3">User 3</SelectItem>
+                  <SelectItem value="2 Wheeler">2 Wheeler</SelectItem>
+                  <SelectItem value="4 Wheeler">4 Wheeler</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Vehicle Type */}
+            <div className="space-y-2">
+              <Label htmlFor="vehicleType" className="text-sm font-medium">
+                Vehicle Type
+              </Label>
+              <Select value={formData.vehicleType} onValueChange={(value) => handleInputChange('vehicleType', value)}>
+                <SelectTrigger className="border-gray-300">
+                  <SelectValue placeholder="Select Vehicle Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Sedan">Sedan</SelectItem>
+                  <SelectItem value="SUV">SUV</SelectItem>
+                  <SelectItem value="Hatchback">Hatchback</SelectItem>
+                  <SelectItem value="Truck">Truck</SelectItem>
+                  <SelectItem value="Scooter">Scooter</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Sticker Number */}
+            <div className="space-y-2">
+              <Label htmlFor="stickerNumber" className="text-sm font-medium">
+                Sticker Number
+              </Label>
+              <Input
+                id="stickerNumber"
+                value={formData.stickerNumber}
+                onChange={(e) => handleInputChange('stickerNumber', e.target.value)}
+                className="border-gray-300"
+              />
+            </div>
+
+            {/* Registration Number */}
+            <div className="space-y-2">
+              <Label htmlFor="registrationNumber" className="text-sm font-medium">
+                Registration Number
+              </Label>
+              <Input
+                id="registrationNumber"
+                value={formData.registrationNumber}
+                onChange={(e) => handleInputChange('registrationNumber', e.target.value)}
+                className="border-gray-300"
+              />
+            </div>
+
+            {/* Insurance Number */}
+            <div className="space-y-2">
+              <Label htmlFor="insuranceNumber" className="text-sm font-medium">
+                Insurance Number
+              </Label>
+              <Input
+                id="insuranceNumber"
+                value={formData.insuranceNumber}
+                onChange={(e) => handleInputChange('insuranceNumber', e.target.value)}
+                className="border-gray-300"
+              />
+            </div>
+
+            {/* Insurance Valid Till */}
+            <div className="space-y-2">
+              <Label htmlFor="insuranceValidTill" className="text-sm font-medium">
+                Insurance Valid Till
+              </Label>
+              <Input
+                id="insuranceValidTill"
+                type="date"
+                value={formData.insuranceValidTill}
+                onChange={(e) => handleInputChange('insuranceValidTill', e.target.value)}
+                className="border-gray-300"
+              />
+            </div>
+
+            {/* Category */}
+            <div className="space-y-2">
+              <Label htmlFor="category" className="text-sm font-medium">
+                Category
+              </Label>
+              <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+                <SelectTrigger className="border-gray-300">
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Owned">Owned</SelectItem>
+                  <SelectItem value="Staff">Staff</SelectItem>
+                  <SelectItem value="Leased">Leased</SelectItem>
+                  <SelectItem value="Workshop">Workshop</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -101,58 +198,43 @@ export const AddGVehicleModal = ({ isOpen, onClose }: AddGVehicleModalProps) => 
               </Label>
               <Input
                 id="vehicleNumber"
-                placeholder="Vehicle Number"
-                value={vehicleNumber}
-                onChange={(e) => setVehicleNumber(e.target.value)}
+                value={formData.vehicleNumber}
+                onChange={(e) => handleInputChange('vehicleNumber', e.target.value)}
                 className="border-gray-300"
               />
             </div>
 
-            {/* Parking Slot */}
+            {/* Unit */}
             <div className="space-y-2">
-              <Label htmlFor="parkingSlot" className="text-sm font-medium">
-                Parking Slot
+              <Label htmlFor="unit" className="text-sm font-medium">
+                Unit
               </Label>
-              <Select value={parkingSlot} onValueChange={setParkingSlot}>
+              <Select value={formData.unit} onValueChange={(value) => handleInputChange('unit', value)}>
                 <SelectTrigger className="border-gray-300">
-                  <SelectValue placeholder="Select Parking Slot" className="text-red-500" />
+                  <SelectValue placeholder="Select unit" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="slot1">Slot 1</SelectItem>
-                  <SelectItem value="slot2">Slot 2</SelectItem>
-                  <SelectItem value="slot3">Slot 3</SelectItem>
+                  <SelectItem value="Unit 1">Unit 1</SelectItem>
+                  <SelectItem value="Unit 2">Unit 2</SelectItem>
+                  <SelectItem value="Unit 3">Unit 3</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          {/* Entry Gate */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="entryGate" className="text-sm font-medium">
-                Entry Gate
-              </Label>
-              <Select value={entryGate} onValueChange={setEntryGate}>
-                <SelectTrigger className="border-gray-300">
-                  <SelectValue placeholder="Select Entry Gate" className="text-red-500" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="gate1">Gate 1</SelectItem>
-                  <SelectItem value="gate2">Gate 2</SelectItem>
-                  <SelectItem value="gate3">Gate 3</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <div className="flex justify-end pt-4">
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 pt-4">
             <Button
-              onClick={handleSubmit}
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:bg-[#C72030]/90 text-white px-8 py-2"
+              onClick={handleClose}
+              className="bg-red-500 hover:bg-red-600 text-white px-6 py-2"
             >
-              Submit
+              Close
+            </Button>
+            <Button
+              onClick={handleSave}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
+            >
+              Save
             </Button>
           </div>
         </div>

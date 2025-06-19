@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
 
 interface GVehicleFilterModalProps {
@@ -11,25 +12,22 @@ interface GVehicleFilterModalProps {
 }
 
 export const GVehicleFilterModal = ({ isOpen, onClose }: GVehicleFilterModalProps) => {
-  const [personToMeet, setPersonToMeet] = useState('');
-  const [inDate, setInDate] = useState('');
+  const [vehicleNumber, setVehicleNumber] = useState('');
 
   const handleApply = () => {
-    // Handle filter application
-    console.log('Apply filters:', { personToMeet, inDate });
+    console.log('Filter applied:', { vehicleNumber });
     onClose();
   };
 
   const handleReset = () => {
-    setPersonToMeet('');
-    setInDate('');
+    setVehicleNumber('');
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl bg-white [&>button]:hidden">
         <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
-          <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">FILTER</DialogTitle>
           <Button
             variant="ghost"
             size="icon"
@@ -41,41 +39,18 @@ export const GVehicleFilterModal = ({ isOpen, onClose }: GVehicleFilterModalProp
         </DialogHeader>
         
         <div className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Select Person To Meet */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                Select Person To Meet
-              </label>
-              <Select value={personToMeet} onValueChange={setPersonToMeet}>
-                <SelectTrigger className="border-gray-300">
-                  <SelectValue placeholder="Select Person To Meet" className="text-gray-400" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="person1">Person 1</SelectItem>
-                  <SelectItem value="person2">Person 2</SelectItem>
-                  <SelectItem value="person3">Person 3</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* In Date */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                In Date
-              </label>
-              <Select value={inDate} onValueChange={setInDate}>
-                <SelectTrigger className="border-gray-300">
-                  <SelectValue placeholder="Select Created Date" className="text-gray-400" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="yesterday">Yesterday</SelectItem>
-                  <SelectItem value="last7days">Last 7 Days</SelectItem>
-                  <SelectItem value="last30days">Last 30 Days</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Vehicle Number */}
+          <div className="space-y-2">
+            <Label htmlFor="vehicleNumber" className="text-sm font-medium">
+              Vehicle Number
+            </Label>
+            <Input
+              id="vehicleNumber"
+              placeholder="Vehicle no."
+              value={vehicleNumber}
+              onChange={(e) => setVehicleNumber(e.target.value)}
+              className="border-gray-300"
+            />
           </div>
 
           {/* Action Buttons */}
@@ -89,8 +64,7 @@ export const GVehicleFilterModal = ({ isOpen, onClose }: GVehicleFilterModalProp
             </Button>
             <Button
               onClick={handleApply}
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:bg-[#C72030]/90 text-white px-8 py-2"
+              className="bg-[#8B4A9C] hover:bg-[#7A4089] text-white px-8 py-2"
             >
               Apply
             </Button>
