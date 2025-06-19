@@ -80,97 +80,99 @@ export const GatePassInwardsDashboard = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200">
-      {/* Action Buttons - Updated styling to match the image */}
-      <div className="flex items-center gap-3 p-4 border-b border-gray-200">
-        <Button 
-          onClick={handleAddInwardsPass}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add Inwards Pass
-        </Button>
-        <Button 
-          variant="outline"
-          className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded flex items-center gap-2"
-          onClick={handleExport}
-        >
-          <Download className="w-4 h-4" />
-          Export
-        </Button>
-        <Button 
-          variant="outline"
-          className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded flex items-center gap-2"
-          onClick={() => setIsFilterModalOpen(true)}
-        >
-          <SlidersHorizontal className="w-4 h-4" />
-          Filters
-        </Button>
-      </div>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="bg-white rounded-lg border border-gray-200">
+        {/* Action Buttons */}
+        <div className="flex items-center gap-3 p-4 border-b border-gray-200">
+          <Button 
+            onClick={handleAddInwardsPass}
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Inwards Pass
+          </Button>
+          <Button 
+            variant="outline"
+            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded flex items-center gap-2"
+            onClick={handleExport}
+          >
+            <Download className="w-4 h-4" />
+            Export
+          </Button>
+          <Button 
+            variant="outline"
+            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded flex items-center gap-2"
+            onClick={() => setIsFilterModalOpen(true)}
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            Filters
+          </Button>
+        </div>
 
-      {/* Data Table */}
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="text-left font-semibold">ID</TableHead>
-              <TableHead className="text-left font-semibold">Type</TableHead>
-              <TableHead className="text-left font-semibold">Category</TableHead>
-              <TableHead className="text-left font-semibold">Person Name</TableHead>
-              <TableHead className="text-left font-semibold">Profile Image</TableHead>
-              <TableHead className="text-left font-semibold">Pass No.</TableHead>
-              <TableHead className="text-left font-semibold">Mode of Transport</TableHead>
-              <TableHead className="text-left font-semibold">LR No.</TableHead>
-              <TableHead className="text-left font-semibold">Trip ID</TableHead>
-              <TableHead className="text-left font-semibold">Gate Entry</TableHead>
-              <TableHead className="text-left font-semibold">Item Details</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {gatePassData.map((entry) => (
-              <TableRow key={entry.id} className="hover:bg-gray-50">
-                <TableCell className="font-medium text-blue-600">
-                  <button
-                    onClick={() => handleViewDetails(entry.id)}
-                    className="text-blue-600 hover:underline"
-                  >
-                    {entry.id}
-                  </button>
-                </TableCell>
-                <TableCell>{entry.type}</TableCell>
-                <TableCell>{entry.category}</TableCell>
-                <TableCell className="font-medium">{entry.personName}</TableCell>
-                <TableCell>
-                  <img 
-                    src={entry.profileImage} 
-                    alt={`${entry.personName} profile`}
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                </TableCell>
-                <TableCell>{entry.passNo}</TableCell>
-                <TableCell>{entry.modeOfTransport}</TableCell>
-                <TableCell>{entry.lrNo}</TableCell>
-                <TableCell>{entry.tripId}</TableCell>
-                <TableCell>{entry.gateEntry}</TableCell>
-                <TableCell className="max-w-xs truncate">{entry.itemDetails}</TableCell>
+        {/* Data Table */}
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50">
+                <TableHead className="text-left font-semibold">ID</TableHead>
+                <TableHead className="text-left font-semibold">Type</TableHead>
+                <TableHead className="text-left font-semibold">Category</TableHead>
+                <TableHead className="text-left font-semibold">Person Name</TableHead>
+                <TableHead className="text-left font-semibold">Profile Image</TableHead>
+                <TableHead className="text-left font-semibold">Pass No.</TableHead>
+                <TableHead className="text-left font-semibold">Mode of Transport</TableHead>
+                <TableHead className="text-left font-semibold">LR No.</TableHead>
+                <TableHead className="text-left font-semibold">Trip ID</TableHead>
+                <TableHead className="text-left font-semibold">Gate Entry</TableHead>
+                <TableHead className="text-left font-semibold">Item Details</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {gatePassData.map((entry) => (
+                <TableRow key={entry.id} className="hover:bg-gray-50">
+                  <TableCell className="font-medium text-blue-600">
+                    <button
+                      onClick={() => handleViewDetails(entry.id)}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {entry.id}
+                    </button>
+                  </TableCell>
+                  <TableCell>{entry.type}</TableCell>
+                  <TableCell>{entry.category}</TableCell>
+                  <TableCell className="font-medium">{entry.personName}</TableCell>
+                  <TableCell>
+                    <img 
+                      src={entry.profileImage} 
+                      alt={`${entry.personName} profile`}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  </TableCell>
+                  <TableCell>{entry.passNo}</TableCell>
+                  <TableCell>{entry.modeOfTransport}</TableCell>
+                  <TableCell>{entry.lrNo}</TableCell>
+                  <TableCell>{entry.tripId}</TableCell>
+                  <TableCell>{entry.gateEntry}</TableCell>
+                  <TableCell className="max-w-xs truncate">{entry.itemDetails}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
 
-      {/* Pagination */}
-      <div className="p-4 border-t border-gray-200 flex justify-between items-center">
-        <span className="text-sm text-gray-600">
-          Showing {gatePassData.length} entries
-        </span>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" disabled>
-            Previous
-          </Button>
-          <Button variant="outline" size="sm" disabled>
-            Next
-          </Button>
+        {/* Pagination */}
+        <div className="p-4 border-t border-gray-200 flex justify-between items-center">
+          <span className="text-sm text-gray-600">
+            Showing {gatePassData.length} entries
+          </span>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled>
+              Previous
+            </Button>
+            <Button variant="outline" size="sm" disabled>
+              Next
+            </Button>
+          </div>
         </div>
       </div>
 

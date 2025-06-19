@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { X } from 'lucide-react';
 
 interface GatePassInwardsFilterModalProps {
   isOpen: boolean;
@@ -28,16 +27,8 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose }: GatePassInwardsF
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md bg-white">
-        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
+        <DialogHeader>
           <DialogTitle className="text-lg font-semibold">FILTER</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-6 w-6 p-0"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
         
         <div className="p-6 space-y-6">
