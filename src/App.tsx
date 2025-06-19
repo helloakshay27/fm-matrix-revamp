@@ -201,6 +201,10 @@ import { PODetailsPage } from './pages/PODetailsPage';
 import { POFeedsPage } from './pages/POFeedsPage';
 import { WODashboard } from './pages/WODashboard';
 import { AutoSavedPRDashboard } from './pages/AutoSavedPRDashboard';
+import { GRNSRNDashboard } from './pages/GRNSRNDashboard';
+import { InvoicesDashboard } from './pages/InvoicesDashboard';
+import { BillBookingDashboard } from './pages/BillBookingDashboard';
+import { PendingApprovalsDashboard } from './pages/PendingApprovalsDashboard';
 
 // Import Settings pages
 import { FMUsersDashboard } from './pages/settings/FMUsersDashboard';
@@ -300,6 +304,10 @@ function App() {
               <Route path="/finance/po/feeds/:id" element={<POFeedsPage />} />
               <Route path="/finance/wo" element={<WODashboard />} />
               <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
+              <Route path="/finance/grn-srn" element={<GRNSRNDashboard />} />
+              <Route path="/finance/invoices" element={<InvoicesDashboard />} />
+              <Route path="/finance/bill-booking" element={<BillBookingDashboard />} />
+              <Route path="/finance/pending-approvals" element={<PendingApprovalsDashboard />} />
               
               {/* Maintenance Routes */}
               <Route path="/maintenance/asset" element={<AssetDashboard />} />
