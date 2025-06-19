@@ -203,6 +203,7 @@ import { WODashboard } from './pages/WODashboard';
 import { AutoSavedPRDashboard } from './pages/AutoSavedPRDashboard';
 import { GRNSRNDashboard } from './pages/GRNSRNDashboard';
 import { InvoicesDashboard } from './pages/InvoicesDashboard';
+import { InvoicesSESDashboard } from './pages/InvoicesSESDashboard';
 import { BillBookingDashboard } from './pages/BillBookingDashboard';
 import { PendingApprovalsDashboard } from './pages/PendingApprovalsDashboard';
 
@@ -308,7 +309,7 @@ function App() {
               <Route path="/finance/wo" element={<WODashboard />} />
               <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
               <Route path="/finance/grn-srn" element={<GRNSRNDashboard />} />
-              <Route path="/finance/invoices" element={<InvoicesDashboard />} />
+              <Route path="/finance/invoices" element={<InvoicesSESDashboard />} />
               <Route path="/finance/bill-booking" element={<BillBookingDashboard />} />
               <Route path="/finance/bill-booking/add" element={<AddNewBillDashboard />} />
               <Route path="/finance/pending-approvals" element={<PendingApprovalsDashboard />} />
