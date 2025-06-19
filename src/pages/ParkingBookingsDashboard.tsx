@@ -47,24 +47,24 @@ const ParkingBookingsDashboard = () => {
         <div className="flex gap-4 mb-6">
           <Button 
             onClick={() => setIsAddModalOpen(true)}
-            style={{ backgroundColor: '#C72030', color: 'white' }}
-            className="hover:opacity-90 px-4 py-2 rounded flex items-center gap-2 border-0"
+            style={{ backgroundColor: '#C72030' }}
+            className="hover:bg-[#A01B26] text-white px-4 py-2 rounded flex items-center gap-2 border-0"
           >
             <Plus className="w-4 h-4" />
             Add
           </Button>
           <Button 
             onClick={handleImport}
-            style={{ backgroundColor: '#C72030', color: 'white' }}
-            className="hover:opacity-90 px-4 py-2 rounded flex items-center gap-2 border-0"
+            style={{ backgroundColor: '#C72030' }}
+            className="hover:bg-[#A01B26] text-white px-4 py-2 rounded flex items-center gap-2 border-0"
           >
             <Upload className="w-4 h-4" />
             Import
           </Button>
           <Button 
             onClick={handleViewBookings}
-            style={{ backgroundColor: '#C72030', color: 'white' }}
-            className="hover:opacity-90 px-4 py-2 rounded flex items-center gap-2 border-0"
+            style={{ backgroundColor: '#C72030' }}
+            className="hover:bg-[#A01B26] text-white px-4 py-2 rounded flex items-center gap-2 border-0"
           >
             View Bookings
           </Button>
@@ -160,8 +160,8 @@ const ParkingBookingsDashboard = () => {
             <div className="flex justify-center">
               <Button 
                 onClick={handleSubmit}
-                style={{ backgroundColor: '#C72030', color: 'white' }}
-                className="hover:opacity-90 px-8 border-0"
+                style={{ backgroundColor: '#C72030' }}
+                className="hover:bg-[#A01B26] text-white px-8 border-0"
               >
                 Submit
               </Button>
