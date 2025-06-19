@@ -8,98 +8,147 @@ import { useNavigate } from 'react-router-dom';
 const vehicleHistoryData = [
   {
     id: 1,
-    vehicleNumber: 'MH 02 ET 7179',
-    category: 'Staff',
-    staffName: 'Abdul G',
-    inDate: '09/08/2021',
-    inTime: '6:04 PM',
-    outDate: '20/08/2021',
-    outTime: '11:21 AM'
+    vehicleNumber: 'DD55GG5555',
+    category: '',
+    staffName: '',
+    inDate: '13/04/2020',
+    inTime: '12:08 PM',
+    outDate: '05/10/2020',
+    outTime: '1:16 PM'
   },
   {
     id: 2,
-    vehicleNumber: 'MH 02 ET 7179',
-    category: 'Staff',
-    staffName: 'Abdul G',
-    inDate: '12/10/2021',
-    inTime: '4:12 PM',
-    outDate: '02/04/2022',
-    outTime: '3:35 PM'
+    vehicleNumber: 'DD55GG5555',
+    category: '',
+    staffName: '',
+    inDate: '13/04/2020',
+    inTime: '',
+    outDate: '05/10/2020',
+    outTime: '1:16 PM'
   },
   {
     id: 3,
-    vehicleNumber: 'MH 02 ET 7179',
-    category: 'Staff',
-    staffName: 'Abdul G',
-    inDate: '04/04/2022',
-    inTime: '2:59 PM',
-    outDate: '02/05/2022',
-    outTime: '4:37 PM'
+    vehicleNumber: 'DD55GG5555',
+    category: '',
+    staffName: '',
+    inDate: '13/04/2020',
+    inTime: '12:38 PM',
+    outDate: '',
+    outTime: ''
   },
   {
     id: 4,
-    vehicleNumber: 'GA02G7984',
-    category: 'Owned',
+    vehicleNumber: 'GG55GG5555',
+    category: '',
     staffName: '',
-    inDate: '22/09/2022',
-    inTime: '11:31 PM',
-    outDate: '22/09/2022',
-    outTime: '11:32 PM'
+    inDate: '13/04/2020',
+    inTime: '12:45 PM',
+    outDate: '',
+    outTime: ''
   },
   {
     id: 5,
-    vehicleNumber: 'GJ02G7398',
-    category: 'Workshop',
+    vehicleNumber: 'GG55GG5555',
+    category: '',
     staffName: '',
-    inDate: '22/09/2022',
-    inTime: '11:32 PM',
+    inDate: '13/04/2020',
+    inTime: '12:45 PM',
     outDate: '',
     outTime: ''
   },
   {
     id: 6,
-    vehicleNumber: 'RJ02G7403',
-    category: 'Leased',
+    vehicleNumber: 'GG55GG5555',
+    category: '',
     staffName: '',
-    inDate: '22/09/2022',
-    inTime: '11:32 PM',
+    inDate: '13/04/2020',
+    inTime: '12:45 PM',
     outDate: '',
     outTime: ''
   },
   {
     id: 7,
-    vehicleNumber: 'DL03Q4756',
-    category: 'Warehouse',
+    vehicleNumber: '123456',
+    category: 'Owned',
     staffName: '',
-    inDate: '22/09/2022',
-    inTime: '11:32 PM',
-    outDate: '23/02/2023',
-    outTime: '10:45 AM'
+    inDate: '05/10/2020',
+    inTime: '4:25 PM',
+    outDate: '05/10/2020',
+    outTime: '5:14 PM'
   },
   {
     id: 8,
-    vehicleNumber: 'MH 41 PQ 7861',
+    vehicleNumber: '8888',
     category: 'Owned',
     staffName: '',
-    inDate: '22/09/2022',
-    inTime: '11:32 PM',
-    outDate: '29/02/2024',
-    outTime: '5:47 PM'
+    inDate: '05/10/2020',
+    inTime: '4:57 PM',
+    outDate: '05/10/2020',
+    outTime: '5:14 PM'
   },
   {
     id: 9,
-    vehicleNumber: 'MH 02 ET 7179',
+    vehicleNumber: '9999',
+    category: 'Owned',
+    staffName: '',
+    inDate: '05/10/2020',
+    inTime: '5:18 PM',
+    outDate: '05/10/2020',
+    outTime: '5:19 PM'
+  },
+  {
+    id: 10,
+    vehicleNumber: '7878',
     category: 'Staff',
-    staffName: 'Abdul G',
-    inDate: '22/09/2022',
-    inTime: '11:32 PM',
-    outDate: '23/02/2023',
-    outTime: '10:45 AM'
+    staffName: 'Nupuraa Admin',
+    inDate: '05/10/2020',
+    inTime: '6:51 PM',
+    outDate: '05/10/2020',
+    outTime: '6:52 PM'
+  },
+  {
+    id: 11,
+    vehicleNumber: '9999',
+    category: 'Owned',
+    staffName: '',
+    inDate: '05/10/2020',
+    inTime: '6:59 PM',
+    outDate: '05/10/2020',
+    outTime: '6:59 PM'
+  },
+  {
+    id: 12,
+    vehicleNumber: 'RJ02G7356',
+    category: 'Staff',
+    staffName: 'Akash G',
+    inDate: '05/10/2020',
+    inTime: '6:59 PM',
+    outDate: '05/10/2020',
+    outTime: '7:01 PM'
+  },
+  {
+    id: 13,
+    vehicleNumber: '9999',
+    category: 'Owned',
+    staffName: '',
+    inDate: '05/10/2020',
+    inTime: '7:00 PM',
+    outDate: '06/10/2020',
+    outTime: '5:11 PM'
+  },
+  {
+    id: 14,
+    vehicleNumber: '123456',
+    category: 'Owned',
+    staffName: '',
+    inDate: '06/10/2020',
+    inTime: '10:39 AM',
+    outDate: '06/10/2020',
+    outTime: '5:11 PM'
   }
 ];
 
 export const RVehiclesHistoryDashboard = () => {
-  const [activeTab, setActiveTab] = useState('All Vehicles');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -132,8 +181,8 @@ export const RVehiclesHistoryDashboard = () => {
               </Button>
               <Button 
                 onClick={handleAllVehiclesClick}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-6 py-2 rounded"
+                style={{ backgroundColor: '#6B46C1' }}
+                className="hover:bg-purple-700 text-white px-6 py-2 rounded"
               >
                 All Vehicles
               </Button>
@@ -159,7 +208,7 @@ export const RVehiclesHistoryDashboard = () => {
                   <tr key={vehicle.id} className="hover:bg-gray-50">
                     <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{vehicle.vehicleNumber}</td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.category}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.staffName}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600">{vehicle.staffName}</td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.inDate}</td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600">{vehicle.inTime}</td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.outDate}</td>
