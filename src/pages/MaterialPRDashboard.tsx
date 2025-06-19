@@ -3,13 +3,11 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MaterialPRFilterDialog } from "@/components/MaterialPRFilterDialog";
 import { useNavigate } from 'react-router-dom';
 
 export const MaterialPRDashboard = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
 
   const materialPRData = [
     {
@@ -93,14 +91,6 @@ export const MaterialPRDashboard = () => {
     item.createdBy.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleEdit = (id: number) => {
-    navigate(`/finance/material-pr/edit/${id}`);
-  };
-
-  const handleView = (id: number) => {
-    navigate(`/finance/material-pr/details/${id}`);
-  };
-
   return (
     <div className="p-6">
       {/* Breadcrumb */}
@@ -115,17 +105,13 @@ export const MaterialPRDashboard = () => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex gap-3">
           <Button 
-            className="text-white"
-            style={{ backgroundColor: '#C72030' }}
+            className="bg-[#C72030] hover:bg-[#A01020] text-white"
             onClick={() => navigate('/finance/material-pr/add')}
           >
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
-          <Button 
-            variant="outline"
-            onClick={() => setIsFilterDialogOpen(true)}
-          >
+          <Button variant="outline">
             Filters
           </Button>
         </div>
@@ -142,8 +128,7 @@ export const MaterialPRDashboard = () => {
             />
           </div>
           <Button 
-            className="text-white px-4"
-            style={{ backgroundColor: '#C72030' }}
+            className="bg-[#C72030] hover:bg-[#A01020] text-white px-4"
           >
             Go!
           </Button>
@@ -180,22 +165,12 @@ export const MaterialPRDashboard = () => {
             {filteredData.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="p-1"
-                    onClick={() => handleEdit(item.id)}
-                  >
+                  <Button size="sm" variant="ghost" className="p-1">
                     <Edit className="w-4 h-4" />
                   </Button>
                 </TableCell>
                 <TableCell>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="p-1"
-                    onClick={() => handleView(item.id)}
-                  >
+                  <Button size="sm" variant="ghost" className="p-1">
                     <Eye className="w-4 h-4" />
                   </Button>
                 </TableCell>
@@ -229,11 +204,6 @@ export const MaterialPRDashboard = () => {
           </TableBody>
         </Table>
       </div>
-
-      <MaterialPRFilterDialog 
-        open={isFilterDialogOpen}
-        onOpenChange={setIsFilterDialogOpen}
-      />
     </div>
   );
 };
