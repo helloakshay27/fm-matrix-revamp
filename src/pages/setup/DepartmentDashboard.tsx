@@ -20,7 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
-import { Edit, Plus, X } from 'lucide-react';
+import { Edit, Plus } from 'lucide-react';
 
 interface Department {
   id: number;
@@ -29,23 +29,21 @@ interface Department {
 }
 
 export const DepartmentDashboard = () => {
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [departmentName, setDepartmentName] = useState('');
-  const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
   const [departments, setDepartments] = useState<Department[]>([
-    { id: 1, name: '1', status: true },
-    { id: 2, name: 'ABC', status: false },
-    { id: 3, name: 'abc', status: true },
-    { id: 4, name: 'Accounts', status: true },
-    { id: 5, name: 'Admin', status: true },
-    { id: 6, name: 'Aeronautics department', status: true },
-    { id: 7, name: 'BMC DEPARTMENT', status: true },
-    { id: 8, name: 'Chokidar', status: true },
-    { id: 9, name: 'DEMO DEPT', status: true },
+    { id: 1, name: 'Accounts', status: true },
+    { id: 2, name: 'ACCOUNTS', status: true },
+    { id: 3, name: 'Admin', status: true },
+    { id: 4, name: 'admin', status: true },
+    { id: 5, name: 'Backend', status: true },
+    { id: 6, name: 'BB Admin', status: true },
+    { id: 7, name: 'BB Electrical', status: true },
+    { id: 8, name: 'BB FM', status: true },
+    { id: 9, name: 'BB FM Accounts', status: true },
   ]);
 
-  const handleAddSubmit = () => {
+  const handleSubmit = () => {
     if (departmentName.trim()) {
       const newDepartment: Department = {
         id: departments.length + 1,
@@ -54,23 +52,8 @@ export const DepartmentDashboard = () => {
       };
       setDepartments([...departments, newDepartment]);
       setDepartmentName('');
-      setIsAddDialogOpen(false);
+      setIsDialogOpen(false);
     }
-  };
-
-  const handleEditSubmit = () => {
-    if (editingDepartment && editingDepartment.name.trim()) {
-      setDepartments(departments.map(dept => 
-        dept.id === editingDepartment.id ? editingDepartment : dept
-      ));
-      setEditingDepartment(null);
-      setIsEditDialogOpen(false);
-    }
-  };
-
-  const openEditDialog = (department: Department) => {
-    setEditingDepartment({ ...department });
-    setIsEditDialogOpen(true);
   };
 
   const toggleStatus = (id: number) => {
@@ -82,12 +65,17 @@ export const DepartmentDashboard = () => {
   return (
     <SetupLayout>
       <div className="space-y-6">
+        {/* Breadcrumb */}
+        <div className="text-sm text-gray-600">
+          Account &gt; Department
+        </div>
+        
         <h1 className="text-2xl font-bold text-[#1a1a1a]">DEPARTMENT</h1>
         
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           {/* Header with Add Department button */}
           <div className="flex justify-between items-center mb-6">
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-purple-600 hover:bg-purple-700 text-white">
                   <Plus className="w-4 h-4 mr-2" />
@@ -113,7 +101,7 @@ export const DepartmentDashboard = () => {
                   </div>
                   <div className="flex justify-end">
                     <Button 
-                      onClick={handleAddSubmit}
+                      onClick={handleSubmit}
                       className="bg-green-600 hover:bg-green-700 text-white px-6"
                     >
                       Submit
@@ -164,7 +152,6 @@ export const DepartmentDashboard = () => {
                       variant="ghost"
                       size="sm"
                       className="text-blue-600 hover:text-blue-800"
-                      onClick={() => openEditDialog(department)}
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -174,49 +161,6 @@ export const DepartmentDashboard = () => {
             </TableBody>
           </Table>
         </div>
-
-        {/* Edit Department Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-md [&>button]:hidden">
-            <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-              <DialogTitle className="text-lg font-semibold">Edit Details</DialogTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsEditDialogOpen(false)}
-                className="h-6 w-6 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="editDepartmentName" className="text-sm font-medium text-gray-700">
-                  Department Name
-                </Label>
-                <Input
-                  id="editDepartmentName"
-                  value={editingDepartment?.name || ''}
-                  onChange={(e) => setEditingDepartment(prev => 
-                    prev ? { ...prev, name: e.target.value } : null
-                  )}
-                  className="mt-1"
-                />
-              </div>
-
-              <div className="pt-4">
-                <Button 
-                  onClick={handleEditSubmit}
-                  className="w-full h-10 text-white"
-                  style={{ backgroundColor: '#7c3aed' }}
-                >
-                  Submit
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </SetupLayout>
   );
