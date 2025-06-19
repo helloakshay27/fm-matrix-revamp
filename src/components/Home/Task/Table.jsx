@@ -728,6 +728,7 @@ const TaskTable = () => {
   if (
     isCreatingTask ||
     isUpdatingTask ||
+    loadingFilterTasks ||
     (loadingTasks && !data.length && !isAddingNewTask)
   ) {
     let loadingMessage = "Loading tasks...";
