@@ -1,12 +1,11 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, X } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
@@ -25,6 +24,15 @@ interface Question {
 export const AddVendorAuditSchedulePage = () => {
   const navigate = useNavigate();
   
+  // Top level controls
+  const [createNew, setCreateNew] = useState(false);
+  const [createTicket, setCreateTicket] = useState(false);
+  const [weightage, setWeightage] = useState(false);
+  const [templateSelection, setTemplateSelection] = useState('');
+  const [ticketLevel, setTicketLevel] = useState('question');
+  const [assignedTo, setAssignedTo] = useState('');
+  const [ticketCategory, setTicketCategory] = useState('');
+
   // Basic Info State
   const [basicInfo, setBasicInfo] = useState({
     type: 'Asset',
@@ -72,14 +80,19 @@ export const AddVendorAuditSchedulePage = () => {
   // Cron State
   const [cronSettings, setCronSettings] = useState({
     activeTab: 'Minutes',
-    cronExpression: '0 0 * * *',
-    customMinutes: '',
-    customHours: ''
+    selectedMinutes: [] as number[],
+    selectedHours: [] as number[],
+    selectedDays: [] as number[],
+    selectedMonths: [] as number[],
+    minuteRange: { start: 0, end: 0 },
+    hourRange: { start: 0, end: 0 },
+    dayRange: { start: 1, end: 1 },
+    monthRange: { start: 1, end: 1 },
+    minuteOption: 'specific',
+    hourOption: 'specific',
+    dayOption: 'specific',
+    monthOption: 'specific'
   });
-
-  // Top level controls
-  const [createTicket, setCreateTicket] = useState(false);
-  const [weightage, setWeightage] = useState(false);
 
   const addNewQuestion = () => {
     const newQuestion: Question = {
@@ -142,8 +155,229 @@ export const AddVendorAuditSchedulePage = () => {
     ));
   };
 
+  const toggleMinute = (minute: number) => {
+    setCronSettings(prev => ({
+      ...prev,
+      selectedMinutes: prev.selectedMinutes.includes(minute)
+        ? prev.selectedMinutes.filter(m => m !== minute)
+        : [...prev.selectedMinutes, minute]
+    }));
+  };
+
+  const toggleHour = (hour: number) => {
+    setCronSettings(prev => ({
+      ...prev,
+      selectedHours: prev.selectedHours.includes(hour)
+        ? prev.selectedHours.filter(h => h !== hour)
+        : [...prev.selectedHours, hour]
+    }));
+  };
+
+  const toggleDay = (day: number) => {
+    setCronSettings(prev => ({
+      ...prev,
+      selectedDays: prev.selectedDays.includes(day)
+        ? prev.selectedDays.filter(d => d !== day)
+        : [...prev.selectedDays, day]
+    }));
+  };
+
+  const toggleMonth = (month: number) => {
+    setCronSettings(prev => ({
+      ...prev,
+      selectedMonths: prev.selectedMonths.includes(month)
+        ? prev.selectedMonths.filter(m => m !== month)
+        : [...prev.selectedMonths, month]
+    }));
+  };
+
+  const generateCronExpression = () => {
+    const { selectedMinutes, selectedHours, selectedDays, selectedMonths, activeTab } = cronSettings;
+    
+    let minutes = '*';
+    let hours = '*';
+    let days = '*';
+    let months = '*';
+    
+    if (selectedMinutes.length > 0) {
+      minutes = selectedMinutes.sort((a, b) => a - b).join(',');
+    }
+    if (selectedHours.length > 0) {
+      hours = selectedHours.sort((a, b) => a - b).join(',');
+    }
+    if (selectedDays.length > 0) {
+      days = selectedDays.sort((a, b) => a - b).join(',');
+    }
+    if (selectedMonths.length > 0) {
+      months = selectedMonths.sort((a, b) => a - b).join(',');
+    }
+    
+    return `${minutes} ${hours} ${days} ${months} *`;
+  };
+
+  const renderCronTabContent = () => {
+    const { activeTab } = cronSettings;
+    
+    switch (activeTab) {
+      case 'Minutes':
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-700">Specify minute (choose one or more)</p>
+            <div className="grid grid-cols-10 gap-2">
+              {Array.from({ length: 60 }, (_, i) => (
+                <Button
+                  key={i}
+                  variant={cronSettings.selectedMinutes.includes(i) ? "default" : "outline"}
+                  size="sm"
+                  className={`text-xs h-8 w-8 ${
+                    cronSettings.selectedMinutes.includes(i) 
+                      ? "bg-[#C72030] text-white hover:bg-[#A01A28]" 
+                      : ""
+                  }`}
+                  onClick={() => toggleMinute(i)}
+                >
+                  {i.toString().padStart(2, '0')}
+                </Button>
+              ))}
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="radio" 
+                  id="every-minute" 
+                  name="minute-option" 
+                  checked={cronSettings.minuteOption === 'range'}
+                  onChange={() => setCronSettings(prev => ({...prev, minuteOption: 'range'}))}
+                />
+                <Label htmlFor="every-minute">Every minute between minute</Label>
+              </div>
+              <Select 
+                value={cronSettings.minuteRange.start.toString().padStart(2, '0')} 
+                onValueChange={(value) => setCronSettings(prev => ({
+                  ...prev, 
+                  minuteRange: { ...prev.minuteRange, start: parseInt(value) }
+                }))}
+              >
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 60 }, (_, i) => (
+                    <SelectItem key={i} value={i.toString().padStart(2, '0')}>
+                      {i.toString().padStart(2, '0')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span>and minute</span>
+              <Select 
+                value={cronSettings.minuteRange.end.toString().padStart(2, '0')} 
+                onValueChange={(value) => setCronSettings(prev => ({
+                  ...prev, 
+                  minuteRange: { ...prev.minuteRange, end: parseInt(value) }
+                }))}
+              >
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 60 }, (_, i) => (
+                    <SelectItem key={i} value={i.toString().padStart(2, '0')}>
+                      {i.toString().padStart(2, '0')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+      
+      case 'Hours':
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-700">Specify hour (choose one or more)</p>
+            <div className="grid grid-cols-12 gap-2">
+              {Array.from({ length: 24 }, (_, i) => (
+                <Button
+                  key={i}
+                  variant={cronSettings.selectedHours.includes(i) ? "default" : "outline"}
+                  size="sm"
+                  className={`text-xs h-8 w-8 ${
+                    cronSettings.selectedHours.includes(i) 
+                      ? "bg-[#C72030] text-white hover:bg-[#A01A28]" 
+                      : ""
+                  }`}
+                  onClick={() => toggleHour(i)}
+                >
+                  {i.toString().padStart(2, '0')}
+                </Button>
+              ))}
+            </div>
+          </div>
+        );
+      
+      case 'Day':
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-700">Specify day of month (choose one or more)</p>
+            <div className="grid grid-cols-10 gap-2">
+              {Array.from({ length: 31 }, (_, i) => (
+                <Button
+                  key={i + 1}
+                  variant={cronSettings.selectedDays.includes(i + 1) ? "default" : "outline"}
+                  size="sm"
+                  className={`text-xs h-8 ${
+                    cronSettings.selectedDays.includes(i + 1) 
+                      ? "bg-[#C72030] text-white hover:bg-[#A01A28]" 
+                      : ""
+                  }`}
+                  onClick={() => toggleDay(i + 1)}
+                >
+                  {(i + 1).toString().padStart(2, '0')}
+                </Button>
+              ))}
+            </div>
+          </div>
+        );
+      
+      case 'Month':
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-700">Specify month (choose one or more)</p>
+            <div className="grid grid-cols-6 gap-2">
+              {Array.from({ length: 12 }, (_, i) => (
+                <Button
+                  key={i + 1}
+                  variant={cronSettings.selectedMonths.includes(i + 1) ? "default" : "outline"}
+                  size="sm"
+                  className={`text-xs h-8 ${
+                    cronSettings.selectedMonths.includes(i + 1) 
+                      ? "bg-[#C72030] text-white hover:bg-[#A01A28]" 
+                      : ""
+                  }`}
+                  onClick={() => toggleMonth(i + 1)}
+                >
+                  {monthNames[i]}
+                </Button>
+              ))}
+            </div>
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
+
   const handleSubmit = () => {
-    console.log('Submitting audit schedule:', { basicInfo, tasks, scheduleInfo, cronSettings });
+    console.log('Submitting audit schedule:', { 
+      basicInfo, 
+      tasks, 
+      scheduleInfo, 
+      cronSettings,
+      topControls: { createNew, createTicket, weightage, templateSelection, ticketLevel, assignedTo, ticketCategory }
+    });
     toast.success('Vendor audit schedule created successfully!');
     navigate('/maintenance/audit/vendor/scheduled');
   };
@@ -167,24 +401,91 @@ export const AddVendorAuditSchedulePage = () => {
       </div>
 
       {/* Top Controls */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-6">
+      <div className="flex items-center gap-8 mb-6 p-4 bg-gray-50 rounded-lg">
+        {/* Create New */}
+        <div className="flex items-center gap-4">
           <div className="flex items-center space-x-2">
-            <Checkbox 
+            <Label htmlFor="createNew" className="text-sm font-medium">Create New</Label>
+            <Switch 
+              id="createNew" 
+              checked={createNew}
+              onCheckedChange={(checked) => setCreateNew(checked)}
+            />
+          </div>
+          {createNew && (
+            <Select value={templateSelection} onValueChange={setTemplateSelection}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Select from the existing Template" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="template1">Template 1</SelectItem>
+                <SelectItem value="template2">Template 2</SelectItem>
+                <SelectItem value="template3">Template 3</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+
+        {/* Create Ticket */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="createTicket" className="text-sm font-medium">Create Ticket</Label>
+            <Switch 
               id="createTicket" 
               checked={createTicket}
-              onCheckedChange={(checked) => setCreateTicket(checked as boolean)}
+              onCheckedChange={(checked) => setCreateTicket(checked)}
             />
-            <Label htmlFor="createTicket">Create Ticket</Label>
           </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="weightage" 
-              checked={weightage}
-              onCheckedChange={(checked) => setWeightage(checked as boolean)}
-            />
-            <Label htmlFor="weightage">Weightage</Label>
-          </div>
+          {createTicket && (
+            <div className="flex items-center gap-4">
+              <RadioGroup 
+                value={ticketLevel} 
+                onValueChange={setTicketLevel}
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="checklist" id="checklist-level" />
+                  <Label htmlFor="checklist-level" className="text-sm">Checklist Level</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="question" id="question-level" />
+                  <Label htmlFor="question-level" className="text-sm">Question Level</Label>
+                </div>
+              </RadioGroup>
+              
+              <Select value={assignedTo} onValueChange={setAssignedTo}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Select Assigned To" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user1">User 1</SelectItem>
+                  <SelectItem value="user2">User 2</SelectItem>
+                  <SelectItem value="user3">User 3</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select value={ticketCategory} onValueChange={setTicketCategory}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="category1">Category 1</SelectItem>
+                  <SelectItem value="category2">Category 2</SelectItem>
+                  <SelectItem value="category3">Category 3</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+
+        {/* Weightage */}
+        <div className="flex items-center space-x-2">
+          <Label htmlFor="weightage" className="text-sm font-medium">Weightage</Label>
+          <Switch 
+            id="weightage" 
+            checked={weightage}
+            onCheckedChange={(checked) => setWeightage(checked)}
+          />
         </div>
       </div>
 
@@ -341,7 +642,7 @@ export const AddVendorAuditSchedulePage = () => {
 
                   <div className="flex items-end gap-4">
                     <div className="flex items-center space-x-2">
-                      <Checkbox 
+                      <Switch 
                         id={`mandatory-${task.id}`}
                         checked={task.mandatory}
                         onCheckedChange={(checked) => updateQuestion(task.id, 'mandatory', checked)}
@@ -350,7 +651,7 @@ export const AddVendorAuditSchedulePage = () => {
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <Checkbox 
+                      <Switch 
                         id={`reading-${task.id}`}
                         checked={task.reading}
                         onCheckedChange={(checked) => updateQuestion(task.id, 'reading', checked)}
@@ -359,7 +660,7 @@ export const AddVendorAuditSchedulePage = () => {
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <Checkbox 
+                      <Switch 
                         id={`helpText-${task.id}`}
                         checked={task.helpText}
                         onCheckedChange={(checked) => updateQuestion(task.id, 'helpText', checked)}
@@ -691,7 +992,7 @@ export const AddVendorAuditSchedulePage = () => {
                   variant={cronSettings.activeTab === tab ? "default" : "outline"}
                   onClick={() => setCronSettings(prev => ({...prev, activeTab: tab}))}
                   style={cronSettings.activeTab === tab ? { backgroundColor: '#C72030' } : {}}
-                  className={cronSettings.activeTab === tab ? "text-white" : ""}
+                  className={cronSettings.activeTab === tab ? "text-white hover:bg-[#A01A28]" : ""}
                 >
                   {tab}
                 </Button>
@@ -699,79 +1000,40 @@ export const AddVendorAuditSchedulePage = () => {
             </div>
 
             <div className="bg-blue-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-700 mb-4">
-                Specify minute (choose one or more)
-              </p>
-              
-              <div className="grid grid-cols-10 gap-2 mb-4">
-                {Array.from({ length: 60 }, (_, i) => (
-                  <Button
-                    key={i}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs h-8 w-8"
-                  >
-                    {i.toString().padStart(2, '0')}
-                  </Button>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="flex items-center space-x-2">
-                  <input type="radio" id="every-minute" name="minute-option" />
-                  <Label htmlFor="every-minute">Every minute between minute</Label>
-                </div>
-                <Select value={cronSettings.customMinutes} onValueChange={(value) => setCronSettings(prev => ({...prev, customMinutes: value}))}>
-                  <SelectTrigger className="w-20">
-                    <SelectValue placeholder="00" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 60 }, (_, i) => (
-                      <SelectItem key={i} value={i.toString().padStart(2, '0')}>
-                        {i.toString().padStart(2, '0')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <span>and minute</span>
-                <Select>
-                  <SelectTrigger className="w-20">
-                    <SelectValue placeholder="00" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 60 }, (_, i) => (
-                      <SelectItem key={i} value={i.toString().padStart(2, '0')}>
-                        {i.toString().padStart(2, '0')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {renderCronTabContent()}
             </div>
 
             <div className="mt-6">
               <Label className="text-sm font-medium">Resulting Cron Expression:</Label>
               <div className="mt-2 p-3 bg-gray-100 rounded border text-lg font-mono">
-                {cronSettings.cronExpression}
+                {generateCronExpression()}
               </div>
             </div>
 
             <div className="grid grid-cols-5 gap-4 text-center">
               <div>
                 <Label className="text-sm font-medium">Minutes</Label>
-                <div className="mt-1 text-lg">*</div>
+                <div className="mt-1 text-lg">
+                  {cronSettings.selectedMinutes.length > 0 ? cronSettings.selectedMinutes.join(',') : '*'}
+                </div>
               </div>
               <div>
                 <Label className="text-sm font-medium">Hours</Label>
-                <div className="mt-1 text-lg">0</div>
+                <div className="mt-1 text-lg">
+                  {cronSettings.selectedHours.length > 0 ? cronSettings.selectedHours.join(',') : '*'}
+                </div>
               </div>
               <div>
                 <Label className="text-sm font-medium">Day Of Month</Label>
-                <div className="mt-1 text-lg">*</div>
+                <div className="mt-1 text-lg">
+                  {cronSettings.selectedDays.length > 0 ? cronSettings.selectedDays.join(',') : '*'}
+                </div>
               </div>
               <div>
                 <Label className="text-sm font-medium">Month</Label>
-                <div className="mt-1 text-lg">*</div>
+                <div className="mt-1 text-lg">
+                  {cronSettings.selectedMonths.length > 0 ? cronSettings.selectedMonths.join(',') : '*'}
+                </div>
               </div>
               <div>
                 <Label className="text-sm font-medium">Day Of Week</Label>
