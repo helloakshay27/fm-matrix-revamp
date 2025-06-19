@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Clone, Print } from 'lucide-react';
+import { ArrowLeft, Edit, Copy, Printer } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { EditStatusDialog } from '@/components/EditStatusDialog';
 
@@ -116,7 +116,7 @@ export const ServicePRDetailsPage = () => {
               onClick={handlePrintClick}
               className="bg-[#C72030] hover:bg-[#A01020] text-white"
             >
-              <Print className="w-4 h-4 mr-2" />
+              <Printer className="w-4 h-4 mr-2" />
               Print
             </Button>
             <Button 
