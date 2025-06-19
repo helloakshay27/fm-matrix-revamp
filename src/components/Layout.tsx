@@ -6,7 +6,7 @@ import { DynamicHeader } from './DynamicHeader';
 import { Header } from './Header';
 
 interface LayoutProps {
-  children?: React.ReactNode;
+  children: React.ReactNode;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
@@ -17,7 +17,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <DynamicHeader />
       
       <main className="ml-64 pt-28">
-        {children || <Outlet />}
+        <Outlet />
       </main>
     </div>
   );
