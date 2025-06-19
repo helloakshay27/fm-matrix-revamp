@@ -228,6 +228,7 @@ function App() {
               {/* Settings Routes */}
               <Route path="/settings/users" element={<FMUsersDashboard />} />
               <Route path="/settings/users/clone-role" element={<CloneRolePage />} />
+              <Route path="/settings/roles" element={<RoleDashboard />} />
               
               {/* Snagging Routes */}
               <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />

@@ -220,7 +220,15 @@ const modulesByPackage = {
     { name: 'General', icon: Settings, href: '/settings/general' },
     { name: 'Account', icon: UserCog, href: '/settings/account' },
     { name: 'Users', icon: Users, href: '/settings/users' },
-    { name: 'Roles (RACI)', icon: UserCheck, href: '/settings/roles' },
+    { 
+      name: 'Roles (RACI)', 
+      icon: UserCheck, 
+      href: '/setup/user-role',
+      subItems: [
+        { name: 'Department', href: '/setup/user-role/department', color: 'text-[#1a1a1a]' },
+        { name: 'Role', href: '/setup/user-role/role', color: 'text-[#1a1a1a]' }
+      ]
+    },
     { name: 'Approval Matrix', icon: CheckSquare, href: '/settings/approval-matrix' },
     { 
       name: 'Module 1', 
