@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -200,6 +201,7 @@ import { AddPODashboard } from './pages/AddPODashboard';
 import { PODetailsPage } from './pages/PODetailsPage';
 import { POFeedsPage } from './pages/POFeedsPage';
 import { WODashboard } from './pages/WODashboard';
+import { AutoSavedPRDashboard } from './pages/AutoSavedPRDashboard';
 
 // Import Settings pages
 import { FMUsersDashboard } from './pages/settings/FMUsersDashboard';
@@ -286,22 +288,16 @@ function App() {
               <Route path="/finance/service-pr" element={<ServicePRDashboard />} />
               <Route path="/finance/service-pr/add" element={<AddServicePRDashboard />} />
               <Route path="/finance/po" element={<PODashboard />} />
+              <Route path="/finance/po/add" element={<AddPODashboard />} />
+              <Route path="/finance/po/details/:id" element={<PODetailsPage />} />
+              <Route path="/finance/po/feeds/:id" element={<POFeedsPage />} />
               <Route path="/finance/wo" element={<WODashboard />} />
-              <Route path="/finance/grn-srn" element={<GRNDashboard />} />
-              <Route path="/finance/grn-srn/add" element={<AddGRNDashboard />} />
-              <Route path="/finance/grn-srn/details/:id" element={<GRNDetailsPage />} />
-              <Route path="/finance/grn-srn/feeds/:id" element={<GRNFeedsPage />} />
               <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
-              <Route path="/finance/invoices" element={<InvoicesSESDashboard />} />
-              <Route path="/finance/bill-booking" element={<OtherBillsDashboard />} />
-              <Route path="/finance/bill-booking/add" element={<AddNewBillDashboard />} />
-              <Route path="/finance/pending-approvals" element={<PendingApprovalsDashboard />} />
               
               {/* Maintenance Routes */}
               <Route path="/maintenance/asset" element={<AssetDashboard />} />
               <Route path="/maintenance/asset/details/:id" element={<AssetDetailsPage />} />
               <Route path="/maintenance/asset/add" element={<AddAssetPage />} />
-              <Route path="/maintenance/asset/inactive" element={<InActiveAssetsDashboard />} />
               <Route path="/maintenance/amc" element={<AMCDashboard />} />
               <Route path="/maintenance/amc/add" element={<AddAMCPage />} />
               <Route path="/maintenance/amc/details/:id" element={<AMCDetailsPage />} />
