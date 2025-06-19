@@ -68,6 +68,7 @@ import AddSTPAssetDashboard from './pages/AddSTPAssetDashboard';
 // Import Waste Generation pages
 import UtilityWasteGenerationDashboard from './pages/UtilityWasteGenerationDashboard';
 import UtilityWasteGenerationSetupDashboard from './pages/UtilityWasteGenerationSetupDashboard';
+import AddWasteGenerationPage from './pages/AddWasteGenerationPage';
 
 // Import Survey pages
 import { SurveyListDashboard } from './pages/SurveyListDashboard';
@@ -313,6 +314,7 @@ function App() {
               {/* Waste Generation Routes */}
               <Route path="/maintenance/audit/waste/generation" element={<UtilityWasteGenerationDashboard />} />
               <Route path="/maintenance/audit/waste/setup" element={<UtilityWasteGenerationSetupDashboard />} />
+              <Route path="/maintenance/audit/waste/generation/add" element={<AddWasteGenerationPage />} />
               
               {/* Survey Routes */}
               <Route path="/maintenance/audit/survey/list" element={<SurveyListDashboard />} />
