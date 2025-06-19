@@ -196,16 +196,10 @@ import { ServicePRDashboard } from './pages/ServicePRDashboard';
 import { AddMaterialPRDashboard } from './pages/AddMaterialPRDashboard';
 import { AddServicePRDashboard } from './pages/AddServicePRDashboard';
 import { PODashboard } from './pages/PODashboard';
+import { AddPODashboard } from './pages/AddPODashboard';
+import { PODetailsPage } from './pages/PODetailsPage';
+import { POFeedsPage } from './pages/POFeedsPage';
 import { WODashboard } from './pages/WODashboard';
-import { GRNDashboard } from './pages/GRNDashboard';
-import { AddGRNDashboard } from './pages/AddGRNDashboard';
-import { GRNDetailsPage } from './pages/GRNDetailsPage';
-import { GRNFeedsPage } from './pages/GRNFeedsPage';
-import { AutoSavedPRDashboard } from './pages/AutoSavedPRDashboard';
-import { InvoicesSESDashboard } from './pages/InvoicesSESDashboard';
-import { OtherBillsDashboard } from './pages/OtherBillsDashboard';
-import { PendingApprovalsDashboard } from './pages/PendingApprovalsDashboard';
-import { AddNewBillDashboard } from './pages/AddNewBillDashboard';
 
 // Import Settings pages
 import { FMUsersDashboard } from './pages/settings/FMUsersDashboard';

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export const AddPODashboard = () => {
   const navigate = useNavigate();
@@ -27,10 +28,36 @@ export const AddPODashboard = () => {
     attachment: null as File | null
   });
 
+  const [items, setItems] = useState([
+    {
+      id: 1,
+      description: 'Carpet Brush',
+      sacHsnCode: 'NA',
+      expectedDate: '23/04/25',
+      quantity: '10.0',
+      unit: '',
+      rate: '70.00',
+      wbsCode: '',
+      gstRate: '9.00',
+      amount: '63.00',
+      sgstRate: '9.00',
+      sgstAmount: '63.00',
+      igstRate: '0.00',
+      igstAmount: '0.00',
+      ugstRate: '0.00',
+      ugstAmount: '0.00',
+      tdsRate: '0.00',
+      tdsAmount: '0.00',
+      taxAmount: '',
+      totalAmount: '826.00'
+    }
+  ]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Form submitted:', formData);
-    // Handle form submission logic here
+    toast.success('Purchase Order created successfully');
+    navigate('/finance/po');
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,11 +65,37 @@ export const AddPODashboard = () => {
     setFormData({ ...formData, attachment: file });
   };
 
+  const addItem = () => {
+    const newItem = {
+      id: items.length + 1,
+      description: '',
+      sacHsnCode: '',
+      expectedDate: '',
+      quantity: '',
+      unit: '',
+      rate: '',
+      wbsCode: '',
+      gstRate: '',
+      amount: '',
+      sgstRate: '',
+      sgstAmount: '',
+      igstRate: '',
+      igstAmount: '',
+      ugstRate: '',
+      ugstAmount: '',
+      tdsRate: '',
+      tdsAmount: '',
+      taxAmount: '',
+      totalAmount: ''
+    };
+    setItems([...items, newItem]);
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Breadcrumb */}
       <div className="mb-4 text-sm text-gray-600">
-        PO
+        Finance
       </div>
 
       {/* Page Title */}
@@ -121,7 +174,7 @@ export const AddPODashboard = () => {
                 type="date"
                 value={formData.poDate}
                 onChange={(e) => setFormData({ ...formData, poDate: e.target.value })}
-                placeholder="mm/dd/yyyy"
+                placeholder="dd-mm-yyyy"
               />
             </div>
 
@@ -203,7 +256,7 @@ export const AddPODashboard = () => {
 
             <div>
               <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                Payment Tenure(in Days)
+                Payment Tenure(In Days)
               </Label>
               <Input
                 value={formData.paymentTenure}
@@ -246,14 +299,79 @@ export const AddPODashboard = () => {
 
           <Button 
             type="button"
-            className="bg-blue-600 hover:bg-blue-700 text-white mb-4"
+            onClick={addItem}
+            className="bg-[#C72030] hover:bg-[#A01020] text-white mb-4"
           >
             Add Item
           </Button>
 
-          {/* Items table would go here - simplified for now */}
-          <div className="border rounded-lg p-4 text-center text-gray-500">
-            Items will be displayed here after adding
+          <div className="overflow-x-auto">
+            <table className="w-full border border-gray-300">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="border border-gray-300 px-2 py-2 text-xs">S.No.</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs">Item Details</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs">SAC/HSN Code</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs">Expected Date</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs">Quantity</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs">Unit</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs">Rate</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs">WBS Code</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs">CGST Rate(%)</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs">CGST Amount</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs">SGST Rate(%)</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs">SGST Amount</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs">IGST Rate(%)</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs">IGST Amount</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs">TDS Rate(%)</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs">TDS Amount</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs">Tax Amount</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs">Total Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item, index) => (
+                  <tr key={item.id}>
+                    <td className="border border-gray-300 px-2 py-2 text-center">{index + 1}</td>
+                    <td className="border border-gray-300 px-2 py-2">{item.description}</td>
+                    <td className="border border-gray-300 px-2 py-2">{item.sacHsnCode}</td>
+                    <td className="border border-gray-300 px-2 py-2">{item.expectedDate}</td>
+                    <td className="border border-gray-300 px-2 py-2">{item.quantity}</td>
+                    <td className="border border-gray-300 px-2 py-2">{item.unit}</td>
+                    <td className="border border-gray-300 px-2 py-2">{item.rate}</td>
+                    <td className="border border-gray-300 px-2 py-2">{item.wbsCode}</td>
+                    <td className="border border-gray-300 px-2 py-2">{item.gstRate}</td>
+                    <td className="border border-gray-300 px-2 py-2">{item.amount}</td>
+                    <td className="border border-gray-300 px-2 py-2">{item.sgstRate}</td>
+                    <td className="border border-gray-300 px-2 py-2">{item.sgstAmount}</td>
+                    <td className="border border-gray-300 px-2 py-2">{item.igstRate}</td>
+                    <td className="border border-gray-300 px-2 py-2">{item.igstAmount}</td>
+                    <td className="border border-gray-300 px-2 py-2">{item.tdsRate}</td>
+                    <td className="border border-gray-300 px-2 py-2">{item.tdsAmount}</td>
+                    <td className="border border-gray-300 px-2 py-2">{item.taxAmount}</td>
+                    <td className="border border-gray-300 px-2 py-2 font-medium">{item.totalAmount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 grid grid-cols-4 gap-4 text-right">
+            <div></div>
+            <div></div>
+            <div className="text-sm font-medium">
+              <div>Net Amount(INR):</div>
+              <div>Gross Amount:</div>
+              <div>Taxes:</div>
+              <div>Net Invoice Amount:</div>
+              <div className="mt-2">Amount In Words: Two Thousand, Three Hundred, Sixty Rupees Only</div>
+            </div>
+            <div className="text-sm">
+              <div>2360.00</div>
+              <div>2360.00</div>
+              <div>0.00</div>
+              <div className="font-medium">2360.00</div>
+            </div>
           </div>
         </div>
 
@@ -287,7 +405,7 @@ export const AddPODashboard = () => {
         <div className="flex justify-center">
           <Button 
             type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2"
+            className="bg-[#C72030] hover:bg-[#A01020] text-white px-8 py-2"
           >
             Submit
           </Button>

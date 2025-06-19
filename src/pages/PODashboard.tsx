@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus, Eye, Edit, Search } from "lucide-react";
+import { Plus, Eye, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { POFilterDialog } from "@/components/POFilterDialog";
 import { useNavigate } from 'react-router-dom';
@@ -87,6 +87,10 @@ export const PODashboard = () => {
     item.createdBy.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleViewPO = (id: number) => {
+    navigate(`/finance/po/details/${id}`);
+  };
+
   return (
     <div className="p-6">
       {/* Breadcrumb */}
@@ -169,7 +173,12 @@ export const PODashboard = () => {
             {filteredData.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                  <Button size="sm" variant="ghost" className="p-1">
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    className="p-1"
+                    onClick={() => handleViewPO(item.id)}
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
                 </TableCell>
