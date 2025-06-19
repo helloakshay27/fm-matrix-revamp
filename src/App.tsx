@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -209,9 +208,9 @@ import { CloneRolePage } from './pages/settings/CloneRolePage';
 import { AccountDashboard } from './pages/settings/AccountDashboard';
 
 // Import Approval Matrix pages
-import { ApprovalMatrixDashboard } from './pages/setup/ApprovalMatrixDashboard';
-import { AddApprovalMatrixDashboard } from './pages/setup/AddApprovalMatrixDashboard';
-import { EditApprovalMatrixDashboard } from './pages/setup/EditApprovalMatrixDashboard';
+import { ApprovalMatrixDashboard } from './pages/settings/ApprovalMatrixDashboard';
+import { AddApprovalMatrixDashboard } from './pages/settings/AddApprovalMatrixDashboard';
+import { EditApprovalMatrixDashboard } from './pages/settings/EditApprovalMatrixDashboard';
 
 const queryClient = new QueryClient();
 

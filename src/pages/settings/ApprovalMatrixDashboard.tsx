@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { SetupLayout } from '@/components/SetupLayout';
+import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Grid3X3, FileDown } from 'lucide-react';
@@ -28,7 +29,7 @@ export const ApprovalMatrixDashboard = () => {
   };
 
   return (
-    <SetupLayout>
+    <Layout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold text-gray-900">INVOICE APPROVALS</h1>
@@ -102,6 +103,6 @@ export const ApprovalMatrixDashboard = () => {
           </div>
         </div>
       </div>
-    </SetupLayout>
+    </Layout>
   );
 };

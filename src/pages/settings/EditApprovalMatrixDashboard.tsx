@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { SetupLayout } from '@/components/SetupLayout';
+import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -51,7 +52,7 @@ export const EditApprovalMatrixDashboard = () => {
   };
 
   return (
-    <SetupLayout>
+    <Layout>
       <div className="space-y-6">
         <div className="space-y-4">
           <div className="space-y-2">
@@ -169,6 +170,6 @@ export const EditApprovalMatrixDashboard = () => {
           </div>
         </div>
       </div>
-    </SetupLayout>
+    </Layout>
   );
 };
