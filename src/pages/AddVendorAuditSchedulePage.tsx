@@ -2,662 +2,480 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, X } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { toast } from "sonner";
+
+interface Question {
+  id: number;
+  text: string;
+  inputType: string;
+  mandatory: boolean;
+  reading: boolean;
+  helpText: boolean;
+  options: Array<{ id: number; text: string; value: string }>;
+}
 
 export const AddVendorAuditSchedulePage = () => {
   const navigate = useNavigate();
   
-  // Toggle states
-  const [createNew, setCreateNew] = useState(false);
-  const [createTask, setCreateTask] = useState(false);
-  const [weightage, setWeightage] = useState(false);
+  // Basic Info State
+  const [basicInfo, setBasicInfo] = useState({
+    type: 'Asset',
+    scheduleFor: 'Asset',
+    activityName: 'Engineering Audit Checklist 2',
+    description: ''
+  });
 
-  // Basic Info state
-  const [type, setType] = useState('');
-  const [scheduleFor, setScheduleFor] = useState('asset');
-  const [activityName, setActivityName] = useState('Engineering Audit Checklist 2');
-  const [description, setDescription] = useState('Enter Description');
-  
-  // Task sections state
-  const [taskSections, setTaskSections] = useState([
+  // Task State
+  const [tasks, setTasks] = useState<Question[]>([
     {
       id: 1,
-      group: 'Quality Assurance Log',
-      subGroup: 'E-Book MZT',
-      tasks: [
-        {
-          id: 1,
-          taskName: 'Question 1',
-          inputType: 'Radio Button',
-          mandatory: false,
-          reading: false,
-          helpText: false,
-          options: [
-            { id: 1, value: 'Yes', points: '' },
-            { id: 2, value: 'No', points: '' }
-          ]
-        }
+      text: 'Question 1',
+      inputType: 'Radio Button',
+      mandatory: false,
+      reading: false,
+      helpText: false,
+      options: [
+        { id: 1, text: 'Yes', value: 'yes' },
+        { id: 2, text: 'No', value: 'no' }
       ]
     }
   ]);
 
-  // Schedule state
-  const [checklistType, setChecklistType] = useState('individual');
-  const [asset, setAsset] = useState('');
-  const [assignTo, setAssignTo] = useState('');
-  const [scanType, setScanType] = useState('');
-  const [planDuration, setPlanDuration] = useState('');
-  const [priority, setPriority] = useState('');
-  const [emailTriggerRule, setEmailTriggerRule] = useState('');
-  const [supervision, setSupervision] = useState('');
-  const [category, setCategory] = useState('');
-  const [submissionTime, setSubmissionTime] = useState('');
-  const [graceTime, setGraceTime] = useState('');
-  const [lockOverdueTask, setLockOverdueTask] = useState('');
-  const [frequency, setFrequency] = useState('');
-  const [startFrom, setStartFrom] = useState('');
-  const [endAt, setEndAt] = useState('');
-  const [selectSupplier, setSelectSupplier] = useState('');
+  // Schedule State
+  const [scheduleInfo, setScheduleInfo] = useState({
+    checklistType: 'Individual',
+    asset: '',
+    assignTo: '',
+    scanType: '',
+    planDuration: '',
+    priority: '',
+    emailTriggerRule: '',
+    supervision: '',
+    category: '',
+    submissionTime: '',
+    graceTime: '',
+    lockOverdueTask: '',
+    frequency: '',
+    startFrom: '',
+    endAt: '',
+    selectSupplier: ''
+  });
 
-  // Cron form state
-  const [cronType, setCronType] = useState('Minutes');
-  const [cronExpression, setCronExpression] = useState('0 0 * * *');
+  // Cron State
+  const [cronSettings, setCronSettings] = useState({
+    activeTab: 'Minutes',
+    cronExpression: '0 0 * * *',
+    customMinutes: '',
+    customHours: ''
+  });
 
-  // Handler functions for checkboxes
-  const handleCreateNewChange = (checked: boolean | "indeterminate") => {
-    setCreateNew(checked === true);
-  };
+  // Top level controls
+  const [createTicket, setCreateTicket] = useState(false);
+  const [weightage, setWeightage] = useState(false);
 
-  const handleCreateTaskChange = (checked: boolean | "indeterminate") => {
-    setCreateTask(checked === true);
-  };
-
-  const handleWeightageChange = (checked: boolean | "indeterminate") => {
-    setWeightage(checked === true);
-  };
-
-  const addTaskSection = () => {
-    const newSection = {
+  const addNewQuestion = () => {
+    const newQuestion: Question = {
       id: Date.now(),
-      group: '',
-      subGroup: '',
-      tasks: [
-        {
-          id: 1,
-          taskName: '',
-          inputType: '',
-          mandatory: false,
-          reading: false,
-          helpText: false,
-          options: [
-            { id: 1, value: '', points: '' }
-          ]
-        }
-      ]
+      text: '',
+      inputType: '',
+      mandatory: false,
+      reading: false,
+      helpText: false,
+      options: []
     };
-    setTaskSections([...taskSections, newSection]);
+    setTasks(prev => [...prev, newQuestion]);
   };
 
-  const removeTaskSection = (sectionId: number) => {
-    setTaskSections(taskSections.filter(section => section.id !== sectionId));
+  const removeQuestion = (id: number) => {
+    if (tasks.length > 1) {
+      setTasks(prev => prev.filter(q => q.id !== id));
+    }
   };
 
-  const updateTaskSection = (sectionId: number, field: string, value: string) => {
-    setTaskSections(taskSections.map(section => 
-      section.id === sectionId ? { ...section, [field]: value } : section
+  const updateQuestion = (id: number, field: keyof Question, value: any) => {
+    setTasks(prev => prev.map(q => 
+      q.id === id ? { ...q, [field]: value } : q
     ));
   };
 
-  const addQuestion = (sectionId: number) => {
-    setTaskSections(taskSections.map(section => {
-      if (section.id === sectionId) {
-        const newTask = {
-          id: Date.now(),
-          taskName: '',
-          inputType: '',
-          mandatory: false,
-          reading: false,
-          helpText: false,
-          options: [
-            { id: 1, value: '', points: '' }
-          ]
-        };
-        return { ...section, tasks: [...section.tasks, newTask] };
-      }
-      return section;
-    }));
+  const addOption = (questionId: number) => {
+    setTasks(prev => prev.map(q => 
+      q.id === questionId 
+        ? { 
+            ...q, 
+            options: [...q.options, { 
+              id: Date.now(), 
+              text: '', 
+              value: '' 
+            }] 
+          }
+        : q
+    ));
   };
 
-  const updateTask = (sectionId: number, taskId: number, field: string, value: any) => {
-    setTaskSections(taskSections.map(section => {
-      if (section.id === sectionId) {
-        return {
-          ...section,
-          tasks: section.tasks.map(task => 
-            task.id === taskId ? { ...task, [field]: value } : task
-          )
-        };
-      }
-      return section;
-    }));
+  const removeOption = (questionId: number, optionId: number) => {
+    setTasks(prev => prev.map(q => 
+      q.id === questionId 
+        ? { ...q, options: q.options.filter(opt => opt.id !== optionId) }
+        : q
+    ));
   };
 
-  const addOption = (sectionId: number, taskId: number) => {
-    setTaskSections(taskSections.map(section => {
-      if (section.id === sectionId) {
-        return {
-          ...section,
-          tasks: section.tasks.map(task => {
-            if (task.id === taskId) {
-              const newOption = {
-                id: Date.now(),
-                value: '',
-                points: ''
-              };
-              return { ...task, options: [...task.options, newOption] };
-            }
-            return task;
-          })
-        };
-      }
-      return section;
-    }));
+  const updateOption = (questionId: number, optionId: number, field: string, value: string) => {
+    setTasks(prev => prev.map(q => 
+      q.id === questionId 
+        ? { 
+            ...q, 
+            options: q.options.map(opt => 
+              opt.id === optionId ? { ...opt, [field]: value } : opt
+            ) 
+          }
+        : q
+    ));
   };
 
-  const removeOption = (sectionId: number, taskId: number, optionId: number) => {
-    setTaskSections(taskSections.map(section => {
-      if (section.id === sectionId) {
-        return {
-          ...section,
-          tasks: section.tasks.map(task => {
-            if (task.id === taskId) {
-              return { ...task, options: task.options.filter(option => option.id !== optionId) };
-            }
-            return task;
-          })
-        };
-      }
-      return section;
-    }));
-  };
-
-  const updateOption = (sectionId: number, taskId: number, optionId: number, field: string, value: string) => {
-    setTaskSections(taskSections.map(section => {
-      if (section.id === sectionId) {
-        return {
-          ...section,
-          tasks: section.tasks.map(task => {
-            if (task.id === taskId) {
-              return {
-                ...task,
-                options: task.options.map(option =>
-                  option.id === optionId ? { ...option, [field]: value } : option
-                )
-              };
-            }
-            return task;
-          })
-        };
-      }
-      return section;
-    }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Form submitted with data:', {
-      createNew,
-      createTask,
-      weightage,
-      type,
-      scheduleFor,
-      activityName,
-      description,
-      taskSections,
-      checklistType,
-      asset,
-      assignTo,
-      scanType,
-      planDuration,
-      priority,
-      emailTriggerRule,
-      supervision,
-      category,
-      submissionTime,
-      graceTime,
-      lockOverdueTask,
-      frequency,
-      startFrom,
-      endAt,
-      selectSupplier,
-      cronType,
-      cronExpression
-    });
-    alert('Vendor audit schedule copied successfully!');
+  const handleSubmit = () => {
+    console.log('Submitting audit schedule:', { basicInfo, tasks, scheduleInfo, cronSettings });
+    toast.success('Vendor audit schedule created successfully!');
     navigate('/maintenance/audit/vendor/scheduled');
   };
 
   return (
-    <div className="p-6">
+    <div className="flex-1 p-6 bg-white min-h-screen">
+      {/* Breadcrumb */}
       <div className="mb-6">
-        <div>
-          <p className="text-[#1a1a1a] opacity-70 mb-2">Schedule &gt; Add Schedule</p>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">ADD SCHEDULE</h1>
+        <nav className="flex items-center text-sm text-gray-600 mb-4">
+          <span>Maintenance</span>
+          <span className="mx-2">{'>'}</span>
+          <span>Audit</span>
+          <span className="mx-2">{'>'}</span>
+          <span>Vendor</span>
+          <span className="mx-2">{'>'}</span>
+          <span>Scheduled</span>
+          <span className="mx-2">{'>'}</span>
+          <span>Copy</span>
+        </nav>
+        <h1 className="text-2xl font-bold text-gray-900">COPY VENDOR AUDIT SCHEDULE</h1>
+      </div>
+
+      {/* Top Controls */}
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="createTicket" 
+              checked={createTicket}
+              onCheckedChange={(checked) => setCreateTicket(checked as boolean)}
+            />
+            <Label htmlFor="createTicket">Create Ticket</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="weightage" 
+              checked={weightage}
+              onCheckedChange={(checked) => setWeightage(checked as boolean)}
+            />
+            <Label htmlFor="weightage">Weightage</Label>
+          </div>
         </div>
       </div>
 
-      {/* Toggle Buttons */}
-      <div className="mb-6 flex gap-4">
-        <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="createNew" 
-            checked={createNew}
-            onCheckedChange={handleCreateNewChange}
-          />
-          <Label htmlFor="createNew">Create New</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="createTask" 
-            checked={createTask}
-            onCheckedChange={handleCreateTaskChange}
-          />
-          <Label htmlFor="createTask">Create Task</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="weightage" 
-            checked={weightage}
-            onCheckedChange={handleWeightageChange}
-          />
-          <Label htmlFor="weightage">Weightage</Label>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="space-y-6">
         {/* Basic Info Section */}
-        <div className="bg-white rounded-lg border p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">1</div>
-            <h2 className="text-lg font-semibold">Basic Info</h2>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <Label htmlFor="type" className="text-sm font-medium mb-2 block">Type</Label>
-              <div className="flex gap-4">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="type"
-                    value="PPM"
-                    checked={type === 'PPM'}
-                    onChange={(e) => setType(e.target.value)}
-                    className="text-blue-600"
-                  />
-                  <span>PPM</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="type"
-                    value="AMC"
-                    checked={type === 'AMC'}
-                    onChange={(e) => setType(e.target.value)}
-                    className="text-blue-600"
-                  />
-                  <span>AMC</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="type"
-                    value="Preparedness"
-                    checked={type === 'Preparedness'}
-                    onChange={(e) => setType(e.target.value)}
-                    className="text-blue-600"
-                  />
-                  <span>Preparedness</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="type"
-                    value="HOTO"
-                    checked={type === 'HOTO'}
-                    onChange={(e) => setType(e.target.value)}
-                    className="text-blue-600"
-                  />
-                  <span>HOTO</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="type"
-                    value="Routine"
-                    checked={type === 'Routine'}
-                    onChange={(e) => setType(e.target.value)}
-                    className="text-blue-600"
-                  />
-                  <span>Routine</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="type"
-                    value="Audit"
-                    checked={type === 'Audit'}
-                    onChange={(e) => setType(e.target.value)}
-                    className="text-blue-600"
-                  />
-                  <span>Audit</span>
-                </label>
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="scheduleFor" className="text-sm font-medium mb-2 block">Schedule For</Label>
-              <div className="flex gap-4">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="scheduleFor"
-                    value="asset"
-                    checked={scheduleFor === 'asset'}
-                    onChange={(e) => setScheduleFor(e.target.value)}
-                    className="text-blue-600"
-                  />
-                  <span>Asset</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="scheduleFor"
-                    value="service"
-                    checked={scheduleFor === 'service'}
-                    onChange={(e) => setScheduleFor(e.target.value)}
-                    className="text-blue-600"
-                  />
-                  <span>Service</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="scheduleFor"
-                    value="vendor"
-                    checked={scheduleFor === 'vendor'}
-                    onChange={(e) => setScheduleFor(e.target.value)}
-                    className="text-blue-600"
-                  />
-                  <span>Vendor</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="scheduleFor"
-                    value="training"
-                    checked={scheduleFor === 'training'}
-                    onChange={(e) => setScheduleFor(e.target.value)}
-                    className="text-blue-600"
-                  />
-                  <span>Training</span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="activityName" className="text-sm font-medium mb-2 block">
-                Activity Name <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="activityName"
-                placeholder="Enter Activity Name"
-                value={activityName}
-                onChange={(e) => setActivityName(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="description" className="text-sm font-medium mb-2 block">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Enter Description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="min-h-[40px]"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Task Sections */}
-        {taskSections.map((section, sectionIndex) => (
-          <div key={section.id} className="bg-white rounded-lg border p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">2</div>
-                <h2 className="text-lg font-semibold">Task</h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  onClick={() => addTaskSection()}
-                  style={{ backgroundColor: '#C72030' }}
-                  className="text-white hover:opacity-90 text-sm"
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-[#C72030]">
+              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+              Basic Info
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-2 gap-8">
+              {/* Type Section */}
+              <div>
+                <Label className="text-sm font-medium mb-3 block">Type</Label>
+                <RadioGroup 
+                  value={basicInfo.type} 
+                  onValueChange={(value) => setBasicInfo(prev => ({...prev, type: value}))}
+                  className="flex flex-wrap gap-4"
                 >
-                  + Add Section
-                </Button>
-                {taskSections.length > 1 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeTaskSection(section.id)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                )}
+                  {['PPM', 'AMC', 'Preparedness', 'HOTO', 'Routine', 'Audit'].map((type) => (
+                    <div key={type} className="flex items-center space-x-2">
+                      <RadioGroupItem value={type} id={type.toLowerCase()} />
+                      <Label htmlFor={type.toLowerCase()}>{type}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              {/* Schedule For Section */}
+              <div>
+                <Label className="text-sm font-medium mb-3 block">Schedule For</Label>
+                <RadioGroup 
+                  value={basicInfo.scheduleFor} 
+                  onValueChange={(value) => setBasicInfo(prev => ({...prev, scheduleFor: value}))}
+                  className="flex flex-wrap gap-4"
+                >
+                  {['Asset', 'Service', 'Vendor', 'Training'].map((schedule) => (
+                    <div key={schedule} className="flex items-center space-x-2">
+                      <RadioGroupItem value={schedule} id={schedule.toLowerCase()} />
+                      <Label htmlFor={schedule.toLowerCase()}>{schedule}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-2 gap-6">
               <div>
-                <Label className="text-sm font-medium mb-2 block">Select Group</Label>
-                <Select value={section.group} onValueChange={(value) => updateTaskSection(section.id, 'group', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Quality Assurance Log">Quality Assurance Log</SelectItem>
-                    <SelectItem value="mechanical">Mechanical</SelectItem>
-                    <SelectItem value="safety">Safety</SelectItem>
-                    <SelectItem value="maintenance">Maintenance</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="activityName" className="text-sm font-medium">
+                  Activity Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="activityName"
+                  value={basicInfo.activityName}
+                  onChange={(e) => setBasicInfo(prev => ({...prev, activityName: e.target.value}))}
+                  className="mt-1"
+                />
               </div>
+
               <div>
-                <Label className="text-sm font-medium mb-2 block">Select Sub Group</Label>
-                <Select value={section.subGroup} onValueChange={(value) => updateTaskSection(section.id, 'subGroup', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Sub Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="E-Book MZT">E-Book MZT</SelectItem>
-                    <SelectItem value="power">Power</SelectItem>
-                    <SelectItem value="ventilation">Ventilation</SelectItem>
-                    <SelectItem value="cleaning">Cleaning</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="description" className="text-sm font-medium">Description</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Enter Description"
+                  value={basicInfo.description}
+                  onChange={(e) => setBasicInfo(prev => ({...prev, description: e.target.value}))}
+                  className="mt-1"
+                  rows={3}
+                />
               </div>
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Tasks */}
-            {section.tasks.map((task, taskIndex) => (
-              <div key={task.id} className="border rounded p-4 mb-4">
-                <div className="grid grid-cols-2 gap-4 mb-4">
+        {/* Task Section */}
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle className="flex items-center gap-2 text-[#C72030]">
+                <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
+                Task
+              </CardTitle>
+              <Button 
+                onClick={addNewQuestion}
+                style={{ backgroundColor: '#C72030' }}
+                className="text-white hover:opacity-90"
+              >
+                + Add Section
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {tasks.map((task, index) => (
+              <div key={task.id} className="space-y-4 border-b pb-6 last:border-b-0">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-sm font-medium mb-2 block">
-                      Task <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      placeholder="Enter Task"
-                      value={task.taskName}
-                      onChange={(e) => updateTask(section.id, task.id, 'taskName', e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium mb-2 block">
-                      Input Type <span className="text-red-500">*</span>
-                    </Label>
-                    <Select value={task.inputType} onValueChange={(value) => updateTask(section.id, task.id, 'inputType', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Input Type" />
+                    <Label className="text-sm font-medium">Select Group</Label>
+                    <Select>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Daily Calculation Log" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Radio Button">Radio Button</SelectItem>
-                        <SelectItem value="text">Text</SelectItem>
-                        <SelectItem value="number">Number</SelectItem>
-                        <SelectItem value="checkbox">Checkbox</SelectItem>
-                        <SelectItem value="dropdown">Dropdown</SelectItem>
-                        <SelectItem value="date">Date</SelectItem>
+                        <SelectItem value="daily-calc">Daily Calculation Log</SelectItem>
+                        <SelectItem value="weekly-report">Weekly Report</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium">Select Sub-Group</Label>
+                    <Select>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="IT Block MLT" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="it-block-mlt">IT Block MLT</SelectItem>
+                        <SelectItem value="main-block">Main Block</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
-                
-                <div className="flex gap-6 mb-4">
-                  <label className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={task.mandatory}
-                      onCheckedChange={(checked) => updateTask(section.id, task.id, 'mandatory', checked === true)}
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">Task</Label>
+                    <Input 
+                      placeholder="Question 1"
+                      value={task.text}
+                      onChange={(e) => updateQuestion(task.id, 'text', e.target.value)}
+                      className="mt-1"
                     />
-                    <span>Mandatory</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={task.reading}
-                      onCheckedChange={(checked) => updateTask(section.id, task.id, 'reading', checked === true)}
-                    />
-                    <span>Reading</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={task.helpText}
-                      onCheckedChange={(checked) => updateTask(section.id, task.id, 'helpText', checked === true)}
-                    />
-                    <span>Help Text</span>
-                  </label>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium">Input Type</Label>
+                    <Select 
+                      value={task.inputType} 
+                      onValueChange={(value) => updateQuestion(task.id, 'inputType', value)}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Radio Button" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Radio Button">Radio Button</SelectItem>
+                        <SelectItem value="Checkbox">Checkbox</SelectItem>
+                        <SelectItem value="Text">Text</SelectItem>
+                        <SelectItem value="Number">Number</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-end gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`mandatory-${task.id}`}
+                        checked={task.mandatory}
+                        onCheckedChange={(checked) => updateQuestion(task.id, 'mandatory', checked)}
+                      />
+                      <Label htmlFor={`mandatory-${task.id}`}>Mandatory</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`reading-${task.id}`}
+                        checked={task.reading}
+                        onCheckedChange={(checked) => updateQuestion(task.id, 'reading', checked)}
+                      />
+                      <Label htmlFor={`reading-${task.id}`}>Reading</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`helpText-${task.id}`}
+                        checked={task.helpText}
+                        onCheckedChange={(checked) => updateQuestion(task.id, 'helpText', checked)}
+                      />
+                      <Label htmlFor={`helpText-${task.id}`}>Help Text</Label>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Options */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm font-medium">Options</Label>
+                {/* Options Section */}
+                {task.inputType === 'Radio Button' && (
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-sm font-medium">Selected Enter Value</Label>
+                      <Button
+                        onClick={() => addOption(task.id)}
+                        size="sm"
+                        style={{ backgroundColor: '#C72030' }}
+                        className="text-white hover:opacity-90"
+                      >
+                        Add Option
+                      </Button>
+                    </div>
+                    
+                    {task.options.map((option, optIndex) => (
+                      <div key={option.id} className="flex items-center gap-4">
+                        <div className="w-4">
+                          <input type="radio" name={`task-${task.id}`} />
+                        </div>
+                        <Input
+                          placeholder="Option text"
+                          value={option.text}
+                          onChange={(e) => updateOption(task.id, option.id, 'text', e.target.value)}
+                          className="flex-1"
+                        />
+                        <Input
+                          placeholder="Value"
+                          value={option.value}
+                          onChange={(e) => updateOption(task.id, option.id, 'value', e.target.value)}
+                          className="w-20"
+                        />
+                        {task.options.length > 1 && (
+                          <Button
+                            onClick={() => removeOption(task.id, option.id)}
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {tasks.length > 1 && (
+                  <div className="flex justify-end">
                     <Button
-                      type="button"
-                      onClick={() => addOption(section.id, task.id)}
-                      style={{ backgroundColor: '#C72030' }}
-                      className="text-white hover:opacity-90 text-sm"
+                      onClick={() => removeQuestion(task.id)}
                       size="sm"
+                      variant="ghost"
+                      className="text-red-500 hover:text-red-700"
                     >
-                      Add Option
+                      <X className="w-4 h-4 mr-2" />
+                      Remove Question
                     </Button>
                   </div>
-                  {task.options.map((option) => (
-                    <div key={option.id} className="flex items-center gap-2">
-                      <Input
-                        placeholder="Enter Value"
-                        value={option.value}
-                        onChange={(e) => updateOption(section.id, task.id, option.id, 'value', e.target.value)}
-                        className="flex-1"
-                      />
-                      <Input
-                        placeholder="Points"
-                        value={option.points}
-                        onChange={(e) => updateOption(section.id, task.id, option.id, 'points', e.target.value)}
-                        className="w-20"
-                      />
-                      {task.options.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeOption(section.id, task.id, option.id)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                )}
               </div>
             ))}
 
-            <div className="flex justify-end">
-              <Button
-                type="button"
-                onClick={() => addQuestion(section.id)}
+            <div className="flex justify-end gap-4">
+              <Button 
+                onClick={addNewQuestion}
                 style={{ backgroundColor: '#C72030' }}
-                className="text-white hover:opacity-90 flex items-center gap-2"
+                className="text-white hover:opacity-90"
               >
                 + Add Question
               </Button>
             </div>
-          </div>
-        ))}
+          </CardContent>
+        </Card>
 
         {/* Schedule Section */}
-        <div className="bg-white rounded-lg border p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">3</div>
-            <h2 className="text-lg font-semibold">Schedule</h2>
-          </div>
-
-          <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-[#C72030]">
+              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
+              Schedule
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div>
-              <Label className="text-sm font-medium mb-2 block">Checklist Type</Label>
-              <div className="flex gap-4">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="checklistType"
-                    value="individual"
-                    checked={checklistType === 'individual'}
-                    onChange={(e) => setChecklistType(e.target.value)}
-                    className="text-blue-600"
-                  />
-                  <span>Individual</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="checklistType"
-                    value="asset-audit-group"
-                    checked={checklistType === 'asset-audit-group'}
-                    onChange={(e) => setChecklistType(e.target.value)}
-                    className="text-blue-600"
-                  />
-                  <span>Asset Audit Group</span>
-                </label>
-              </div>
+              <Label className="text-sm font-medium mb-3 block">Checklist Type</Label>
+              <RadioGroup 
+                value={scheduleInfo.checklistType} 
+                onValueChange={(value) => setScheduleInfo(prev => ({...prev, checklistType: value}))}
+                className="flex gap-6"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Individual" id="individual" />
+                  <Label htmlFor="individual">Individual</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Asset Asset Group" id="asset-group" />
+                  <Label htmlFor="asset-group">Asset Asset Group</Label>
+                </div>
+              </RadioGroup>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label className="text-sm font-medium mb-2 block">Asset</Label>
-                <Select value={asset} onValueChange={setAsset}>
-                  <SelectTrigger>
+                <Label className="text-sm font-medium">Asset</Label>
+                <Select value={scheduleInfo.asset} onValueChange={(value) => setScheduleInfo(prev => ({...prev, asset: value}))}>
+                  <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select Asset" />
                   </SelectTrigger>
                   <SelectContent>
@@ -666,11 +484,11 @@ export const AddVendorAuditSchedulePage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
-                <Label className="text-sm font-medium mb-2 block">Assign To</Label>
-                <Select value={assignTo} onValueChange={setAssignTo}>
-                  <SelectTrigger>
+                <Label className="text-sm font-medium">Assign To</Label>
+                <Select value={scheduleInfo.assignTo} onValueChange={(value) => setScheduleInfo(prev => ({...prev, assignTo: value}))}>
+                  <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select Assign To" />
                   </SelectTrigger>
                   <SelectContent>
@@ -679,11 +497,11 @@ export const AddVendorAuditSchedulePage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
-                <Label className="text-sm font-medium mb-2 block">Scan Type</Label>
-                <Select value={scanType} onValueChange={setScanType}>
-                  <SelectTrigger>
+                <Label className="text-sm font-medium">Scan Type</Label>
+                <Select value={scheduleInfo.scanType} onValueChange={(value) => setScheduleInfo(prev => ({...prev, scanType: value}))}>
+                  <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select Scan Type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -696,22 +514,23 @@ export const AddVendorAuditSchedulePage = () => {
 
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label className="text-sm font-medium mb-2 block">Plan Duration</Label>
-                <Select value={planDuration} onValueChange={setPlanDuration}>
-                  <SelectTrigger>
+                <Label className="text-sm font-medium">Plan Duration</Label>
+                <Select value={scheduleInfo.planDuration} onValueChange={(value) => setScheduleInfo(prev => ({...prev, planDuration: value}))}>
+                  <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select Plan Duration" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="30min">30 Minutes</SelectItem>
                     <SelectItem value="1hour">1 Hour</SelectItem>
                     <SelectItem value="2hours">2 Hours</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
-                <Label className="text-sm font-medium mb-2 block">Priority</Label>
-                <Select value={priority} onValueChange={setPriority}>
-                  <SelectTrigger>
+                <Label className="text-sm font-medium">Priority</Label>
+                <Select value={scheduleInfo.priority} onValueChange={(value) => setScheduleInfo(prev => ({...prev, priority: value}))}>
+                  <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select Priority" />
                   </SelectTrigger>
                   <SelectContent>
@@ -721,11 +540,11 @@ export const AddVendorAuditSchedulePage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
-                <Label className="text-sm font-medium mb-2 block">Email Trigger Rule</Label>
-                <Select value={emailTriggerRule} onValueChange={setEmailTriggerRule}>
-                  <SelectTrigger>
+                <Label className="text-sm font-medium">Email Trigger Rule</Label>
+                <Select value={scheduleInfo.emailTriggerRule} onValueChange={(value) => setScheduleInfo(prev => ({...prev, emailTriggerRule: value}))}>
+                  <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select Email Trigger Rule" />
                   </SelectTrigger>
                   <SelectContent>
@@ -738,22 +557,22 @@ export const AddVendorAuditSchedulePage = () => {
 
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label className="text-sm font-medium mb-2 block">Supervision</Label>
-                <Select value={supervision} onValueChange={setSupervision}>
-                  <SelectTrigger>
+                <Label className="text-sm font-medium">Supervision</Label>
+                <Select value={scheduleInfo.supervision} onValueChange={(value) => setScheduleInfo(prev => ({...prev, supervision: value}))}>
+                  <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select Supervision" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="required">Required</SelectItem>
-                    <SelectItem value="optional">Optional</SelectItem>
+                    <SelectItem value="supervisor1">Supervisor 1</SelectItem>
+                    <SelectItem value="supervisor2">Supervisor 2</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
-                <Label className="text-sm font-medium mb-2 block">Category</Label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger>
+                <Label className="text-sm font-medium">Category</Label>
+                <Select value={scheduleInfo.category} onValueChange={(value) => setScheduleInfo(prev => ({...prev, category: value}))}>
+                  <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select Category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -762,26 +581,26 @@ export const AddVendorAuditSchedulePage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
-                <Label className="text-sm font-medium mb-2 block">Submission Time</Label>
-                <Select value={submissionTime} onValueChange={setSubmissionTime}>
-                  <SelectTrigger>
+                <Label className="text-sm font-medium">Submission Time</Label>
+                <Select value={scheduleInfo.submissionTime} onValueChange={(value) => setScheduleInfo(prev => ({...prev, submissionTime: value}))}>
+                  <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select Submission Time" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="anytime">Anytime</SelectItem>
-                    <SelectItem value="specific">Specific Time</SelectItem>
+                    <SelectItem value="09:00">09:00 AM</SelectItem>
+                    <SelectItem value="17:00">05:00 PM</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               <div>
-                <Label className="text-sm font-medium mb-2 block">Grace Time</Label>
-                <Select value={graceTime} onValueChange={setGraceTime}>
-                  <SelectTrigger>
+                <Label className="text-sm font-medium">Grace Time</Label>
+                <Select value={scheduleInfo.graceTime} onValueChange={(value) => setScheduleInfo(prev => ({...prev, graceTime: value}))}>
+                  <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select Grace Time" />
                   </SelectTrigger>
                   <SelectContent>
@@ -790,12 +609,12 @@ export const AddVendorAuditSchedulePage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
-                <Label className="text-sm font-medium mb-2 block">Lock Overdue Task</Label>
-                <Select value={lockOverdueTask} onValueChange={setLockOverdueTask}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Lock Menu" />
+                <Label className="text-sm font-medium">Lock Overdue Task</Label>
+                <Select value={scheduleInfo.lockOverdueTask} onValueChange={(value) => setScheduleInfo(prev => ({...prev, lockOverdueTask: value}))}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select Lock Status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="yes">Yes</SelectItem>
@@ -803,11 +622,11 @@ export const AddVendorAuditSchedulePage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
-                <Label className="text-sm font-medium mb-2 block">Frequency</Label>
-                <Select value={frequency} onValueChange={setFrequency}>
-                  <SelectTrigger>
+                <Label className="text-sm font-medium">Frequency</Label>
+                <Select value={scheduleInfo.frequency} onValueChange={(value) => setScheduleInfo(prev => ({...prev, frequency: value}))}>
+                  <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select Frequency" />
                   </SelectTrigger>
                   <SelectContent>
@@ -817,129 +636,163 @@ export const AddVendorAuditSchedulePage = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div>
+                <Label className="text-sm font-medium">Start From</Label>
+                <Input
+                  type="date"
+                  value={scheduleInfo.startFrom}
+                  onChange={(e) => setScheduleInfo(prev => ({...prev, startFrom: e.target.value}))}
+                  className="mt-1"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-sm font-medium mb-2 block">Start From</Label>
+                <Label className="text-sm font-medium">End At</Label>
                 <Input
                   type="date"
-                  value={startFrom}
-                  onChange={(e) => setStartFrom(e.target.value)}
+                  value={scheduleInfo.endAt}
+                  onChange={(e) => setScheduleInfo(prev => ({...prev, endAt: e.target.value}))}
+                  className="mt-1"
                 />
               </div>
-              
-              <div>
-                <Label className="text-sm font-medium mb-2 block">End At</Label>
-                <Input
-                  type="date"
-                  value={endAt}
-                  onChange={(e) => setEndAt(e.target.value)}
-                />
-              </div>
-            </div>
 
-            <div>
-              <Label className="text-sm font-medium mb-2 block">Select Supplier</Label>
-              <Select value={selectSupplier} onValueChange={setSelectSupplier}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Supplier" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="supplier1">Supplier 1</SelectItem>
-                  <SelectItem value="supplier2">Supplier 2</SelectItem>
-                </SelectContent>
-              </Select>
+              <div>
+                <Label className="text-sm font-medium">Select Supplier</Label>
+                <Select value={scheduleInfo.selectSupplier} onValueChange={(value) => setScheduleInfo(prev => ({...prev, selectSupplier: value}))}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select Supplier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="supplier1">Supplier 1</SelectItem>
+                    <SelectItem value="supplier2">Supplier 2</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Cron Form Section */}
-        <div className="bg-white rounded-lg border p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">4</div>
-            <h2 className="text-lg font-semibold">Cron Form</h2>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex gap-4">
-              <Button
-                type="button"
-                onClick={() => setCronType('Minutes')}
-                className={`${cronType === 'Minutes' ? 'bg-[#C72030] text-white' : 'bg-gray-200 text-gray-700'} hover:opacity-90`}
-              >
-                Minutes
-              </Button>
-              <Button
-                type="button"
-                onClick={() => setCronType('Hours')}
-                className={`${cronType === 'Hours' ? 'bg-[#C72030] text-white' : 'bg-gray-200 text-gray-700'} hover:opacity-90`}
-              >
-                Hours
-              </Button>
-              <Button
-                type="button"
-                onClick={() => setCronType('Day')}
-                className={`${cronType === 'Day' ? 'bg-[#C72030] text-white' : 'bg-gray-200 text-gray-700'} hover:opacity-90`}
-              >
-                Day
-              </Button>
-              <Button
-                type="button"
-                onClick={() => setCronType('Month')}
-                className={`${cronType === 'Month' ? 'bg-[#C72030] text-white' : 'bg-gray-200 text-gray-700'} hover:opacity-90`}
-              >
-                Month
-              </Button>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-[#C72030]">
+              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">4</span>
+              Cron form
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-4 mb-4">
+              {['Minutes', 'Hours', 'Day', 'Month'].map((tab) => (
+                <Button
+                  key={tab}
+                  variant={cronSettings.activeTab === tab ? "default" : "outline"}
+                  onClick={() => setCronSettings(prev => ({...prev, activeTab: tab}))}
+                  style={cronSettings.activeTab === tab ? { backgroundColor: '#C72030' } : {}}
+                  className={cronSettings.activeTab === tab ? "text-white" : ""}
+                >
+                  {tab}
+                </Button>
+              ))}
             </div>
 
-            <div className="bg-blue-50 p-4 rounded">
-              <p className="text-sm text-gray-600 mb-2">Specifically run on 00:00 on 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59 of every month.</p>
-              <div className="mt-4">
-                <Label className="text-sm font-medium mb-2 block">Resulting Cron Expression:</Label>
-                <Input
-                  value={cronExpression}
-                  onChange={(e) => setCronExpression(e.target.value)}
-                  className="font-mono"
-                />
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <p className="text-sm text-gray-700 mb-4">
+                Specify minute (choose one or more)
+              </p>
+              
+              <div className="grid grid-cols-10 gap-2 mb-4">
+                {Array.from({ length: 60 }, (_, i) => (
+                  <Button
+                    key={i}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-8 w-8"
+                  >
+                    {i.toString().padStart(2, '0')}
+                  </Button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex items-center space-x-2">
+                  <input type="radio" id="every-minute" name="minute-option" />
+                  <Label htmlFor="every-minute">Every minute between minute</Label>
+                </div>
+                <Select value={cronSettings.customMinutes} onValueChange={(value) => setCronSettings(prev => ({...prev, customMinutes: value}))}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue placeholder="00" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 60 }, (_, i) => (
+                      <SelectItem key={i} value={i.toString().padStart(2, '0')}>
+                        {i.toString().padStart(2, '0')}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span>and minute</span>
+                <Select>
+                  <SelectTrigger className="w-20">
+                    <SelectValue placeholder="00" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 60 }, (_, i) => (
+                      <SelectItem key={i} value={i.toString().padStart(2, '0')}>
+                        {i.toString().padStart(2, '0')}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
-            <div className="grid grid-cols-5 gap-4 text-center text-sm">
-              <div>
-                <Label className="font-medium">Minutes</Label>
-                <div className="text-2xl font-bold">0</div>
-              </div>
-              <div>
-                <Label className="font-medium">Hours</Label>
-                <div className="text-2xl font-bold">0</div>
-              </div>
-              <div>
-                <Label className="font-medium">Day Of Month</Label>
-                <div className="text-2xl font-bold">*</div>
-              </div>
-              <div>
-                <Label className="font-medium">Month</Label>
-                <div className="text-2xl font-bold">*</div>
-              </div>
-              <div>
-                <Label className="font-medium">Day Of Week</Label>
-                <div className="text-2xl font-bold">*</div>
+            <div className="mt-6">
+              <Label className="text-sm font-medium">Resulting Cron Expression:</Label>
+              <div className="mt-2 p-3 bg-gray-100 rounded border text-lg font-mono">
+                {cronSettings.cronExpression}
               </div>
             </div>
-          </div>
-        </div>
 
-        <div className="flex justify-end">
-          <Button
-            type="submit"
+            <div className="grid grid-cols-5 gap-4 text-center">
+              <div>
+                <Label className="text-sm font-medium">Minutes</Label>
+                <div className="mt-1 text-lg">*</div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Hours</Label>
+                <div className="mt-1 text-lg">0</div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Day Of Month</Label>
+                <div className="mt-1 text-lg">*</div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Month</Label>
+                <div className="mt-1 text-lg">*</div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Day Of Week</Label>
+                <div className="mt-1 text-lg">*</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Submit Button */}
+        <div className="flex justify-center pt-6">
+          <Button 
+            onClick={handleSubmit}
             style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:opacity-90 px-8"
+            className="text-white hover:opacity-90 px-8 py-3"
+            size="lg"
           >
             Submit
           </Button>
         </div>
-      </form>
+      </div>
     </div>
   );
 };
