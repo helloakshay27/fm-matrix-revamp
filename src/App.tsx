@@ -200,6 +200,7 @@ import { MaterialPRFeedsPage } from './pages/MaterialPRFeedsPage';
 import { ServicePRDashboard } from './pages/ServicePRDashboard';
 import { AddMaterialPRDashboard } from './pages/AddMaterialPRDashboard';
 import { AddServicePRDashboard } from './pages/AddServicePRDashboard';
+import { EditServicePRPage } from './pages/EditServicePRPage';
 import { PODashboard } from './pages/PODashboard';
 import { AddPODashboard } from './pages/AddPODashboard';
 import { PODetailsPage } from './pages/PODetailsPage';

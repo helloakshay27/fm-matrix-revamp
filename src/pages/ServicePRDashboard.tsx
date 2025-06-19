@@ -83,7 +83,7 @@ export const ServicePRDashboard = () => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex gap-3">
           <Button 
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+            className="bg-[#C72030] hover:bg-[#A01020] text-white"
             onClick={() => navigate('/finance/service-pr/add')}
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -105,10 +105,12 @@ export const ServicePRDashboard = () => {
               placeholder="Search By PR Number"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent w-64"
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent w-64"
             />
           </div>
-          <Button variant="outline" className="px-4">
+          <Button 
+            className="bg-[#C72030] hover:bg-[#A01020] text-white px-4"
+          >
             Go!
           </Button>
           <Button 
@@ -144,7 +146,12 @@ export const ServicePRDashboard = () => {
             {filteredData.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                  <Button size="sm" variant="ghost" className="p-1">
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    className="p-1"
+                    onClick={() => navigate(`/finance/service-pr/edit/${item.id}`)}
+                  >
                     <Edit className="w-4 h-4" />
                   </Button>
                 </TableCell>
