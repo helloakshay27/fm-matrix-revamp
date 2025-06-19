@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -203,6 +202,146 @@ import { AutoSavedPRDashboard } from './pages/AutoSavedPRDashboard';
 import { InvoicesSESDashboard } from './pages/InvoicesSESDashboard';
 import { OtherBillsDashboard } from './pages/OtherBillsDashboard';
 import { PendingApprovalsDashboard } from './pages/PendingApprovalsDashboard';
+import { AddNewBillDashboard } from './pages/AddNewBillDashboard';
+
+// Import Waste Generation pages
+import UtilityWasteGenerationDashboard from './pages/UtilityWasteGenerationDashboard';
+import UtilityWasteGenerationSetupDashboard from './pages/UtilityWasteGenerationSetupDashboard';
+
+// Import Survey pages
+import { SurveyListDashboard } from './pages/SurveyListDashboard';
+import { SurveyMappingDashboard } from './pages/SurveyMappingDashboard';
+import { SurveyResponseDashboard } from './pages/SurveyResponseDashboard';
+
+// Import Schedule pages
+import { ScheduleListDashboard } from './pages/ScheduleListDashboard';
+import { AddSchedulePage } from './pages/AddSchedulePage';
+import { ScheduleExportPage } from './pages/ScheduleExportPage';
+import { EditSchedulePage } from './pages/EditSchedulePage';
+import { CopySchedulePage } from './pages/CopySchedulePage';
+import { ViewSchedulePage } from './pages/ViewSchedulePage';
+
+// Import Visitors pages
+import { VisitorsDashboard } from './pages/VisitorsDashboard';
+import { VisitorsHistoryDashboard } from './pages/VisitorsHistoryDashboard';
+import { PatrollingDashboard } from './pages/PatrollingDashboard';
+import { PatrollingDetailsPage } from './pages/PatrollingDetailsPage';
+
+// Import Staff pages
+import { StaffsDashboard } from './pages/StaffsDashboard';
+
+// Import Staff Details page
+import { StaffDetailsPage } from './pages/StaffDetailsPage';
+
+// Import Edit Staff page
+import { EditStaffPage } from './pages/EditStaffPage';
+
+// Import Value Added Services pages
+import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
+import ParkingDashboard from './pages/ParkingDashboard';
+import ParkingBookingsDashboard from './pages/ParkingBookingsDashboard';
+
+// Import Design Insights pages
+import { DesignInsightsDashboard } from './pages/DesignInsightsDashboard';
+import { AddDesignInsightDashboard } from './pages/AddDesignInsightDashboard';
+import { DesignInsightDetailsDashboard } from './pages/DesignInsightDetailsDashboard';
+import { EditDesignInsightDashboard } from './pages/EditDesignInsightDashboard';
+
+// Import Security pages  
+import { VehicleParkingDashboard } from './pages/VehicleParkingDashboard';
+import { RVehiclesDashboard } from './pages/RVehiclesDashboard';
+import { RVehiclesHistoryDashboard } from './pages/RVehiclesHistoryDashboard';
+
+// Import GVehiclesDashboard
+import { GVehiclesDashboard } from './pages/GVehiclesDashboard';
+
+// Import GVehicleOutDashboard
+import { GVehicleOutDashboard } from './pages/GVehicleOutDashboard';
+
+// Import Gate Pass pages
+import { GatePassDashboard } from './pages/GatePassDashboard';
+import { GatePassInwardsDashboard } from './pages/GatePassInwardsDashboard';
+import { GatePassOutwardsDashboard } from './pages/GatePassOutwardsDashboard';
+
+// Import Space Management pages
+import { SpaceManagementBookingsDashboard } from './pages/SpaceManagementBookingsDashboard';
+import { SpaceManagementSeatRequestsDashboard } from './pages/SpaceManagementSeatRequestsDashboard';
+
+// Import Seat Setup pages
+import { SeatSetupDashboard } from './pages/setup/SeatSetupDashboard';
+import { AddSeatSetupDashboard } from './pages/setup/AddSeatSetupDashboard';
+import { EditSeatSetupDashboard } from './pages/setup/EditSeatSetupDashboard';
+import { SeatTypeDashboard } from './pages/SeatTypeDashboard';
+
+// Import Shift page
+import { ShiftDashboard } from './pages/setup/ShiftDashboard';
+
+// Import User Roasters pages
+import { UserRoastersDashboard } from './pages/setup/UserRoastersDashboard';
+import { CreateRosterTemplateDashboard } from './pages/setup/CreateRosterTemplateDashboard';
+
+// Import Employee pages
+import { EmployeesDashboard } from './pages/setup/EmployeesDashboard';
+import { AddEmployeeDashboard } from './pages/setup/AddEmployeeDashboard';
+import { EditEmployeePage } from './pages/setup/EditEmployeePage';
+
+// Import Check In Margin page
+import { CheckInMarginDashboard } from './pages/setup/CheckInMarginDashboard';
+
+// Import AMC pages
+import { AddAMCPage } from './pages/AddAMCPage';
+import { AMCDetailsPage } from './pages/AMCDetailsPage';
+import { EditAMCPage } from './pages/EditAMCPage';
+
+// Import Roster Calendar page
+import { RosterCalendarDashboard } from './pages/setup/RosterCalendarDashboard';
+
+// Import Export page
+import { ExportDashboard } from './pages/setup/ExportDashboard';
+
+// Import Employee Details page
+import { EmployeeDetailsPage } from './pages/setup/EmployeeDetailsPage';
+
+// Import Permit pages
+import { PermitListDashboard } from './pages/PermitListDashboard';
+import { AddPermitPage } from './pages/AddPermitPage';
+
+// Import Operational Audit pages
+import { OperationalAuditScheduledDashboard } from './pages/OperationalAuditScheduledDashboard';
+import { AddOperationalAuditSchedulePage } from './pages/AddOperationalAuditSchedulePage';
+import { OperationalAuditConductedDashboard } from './pages/OperationalAuditConductedDashboard';
+import { OperationalAuditMasterChecklistsDashboard } from './pages/OperationalAuditMasterChecklistsDashboard';
+
+// Import Vendor Audit pages
+import { VendorAuditScheduledDashboard } from './pages/VendorAuditScheduledDashboard';
+import { VendorAuditConductedDashboard } from './pages/VendorAuditConductedDashboard';
+import { AddVendorAuditSchedulePage } from './pages/AddVendorAuditSchedulePage';
+import { AddVendorAuditPage } from './pages/AddVendorAuditPage';
+import { ViewVendorAuditPage } from './pages/ViewVendorAuditPage';
+
+// Import Master Checklist page
+import { AddMasterChecklistPage } from './pages/AddMasterChecklistPage';
+
+// Import RVehiclesInDashboard and RVehiclesOutDashboard
+import { RVehiclesInDashboard } from './pages/RVehiclesInDashboard';
+import { RVehiclesOutDashboard } from './pages/RVehiclesOutDashboard';
+
+// Import Space Management booking details page
+import { SpaceManagementBookingDetailsPage } from './pages/SpaceManagementBookingDetailsPage';
+
+// Import Finance pages
+import { MaterialPRDashboard } from './pages/MaterialPRDashboard';
+import { ServicePRDashboard } from './pages/ServicePRDashboard';
+import { AddMaterialPRDashboard } from './pages/AddMaterialPRDashboard';
+import { AddServicePRDashboard } from './pages/AddServicePRDashboard';
+import { PODashboard } from './pages/PODashboard';
+import { WODashboard } from './pages/WODashboard';
+import { GRNDashboard } from './pages/GRNDashboard';
+import { AutoSavedPRDashboard } from './pages/AutoSavedPRDashboard';
+import { InvoicesSESDashboard } from './pages/InvoicesSESDashboard';
+import { OtherBillsDashboard } from './pages/OtherBillsDashboard';
+import { PendingApprovalsDashboard } from './pages/PendingApprovalsDashboard';
+import { AddNewBillDashboard } from './pages/AddNewBillDashboard';
 
 const queryClient = new QueryClient();
 
@@ -284,6 +423,7 @@ function App() {
               <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
               <Route path="/finance/invoices" element={<InvoicesSESDashboard />} />
               <Route path="/finance/bill-booking" element={<OtherBillsDashboard />} />
+              <Route path="/finance/bill-booking/add" element={<AddNewBillDashboard />} />
               <Route path="/finance/pending-approvals" element={<PendingApprovalsDashboard />} />
               
               {/* Maintenance Routes */}
