@@ -174,13 +174,6 @@ const quickgatePermissions: Permission[] = [
   { name: 'Patrolling', all: false, add: false, view: false, edit: false, disable: false },
 ];
 
-const permissionsByTab = {
-  'All Functions': allFunctionsPermissions,
-  'Inventory': inventoryPermissions,
-  'Setup': setupPermissions,
-  'Quickgate': quickgatePermissions,
-};
-
 export const AddRoleDialog = ({ open, onOpenChange, onSubmit }: AddRoleDialogProps) => {
   const [roleTitle, setRoleTitle] = useState('');
   const [activeTab, setActiveTab] = useState('All Functions');
