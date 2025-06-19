@@ -98,7 +98,7 @@ export const AddGRNDashboard = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Basic validation
+    // Validation
     if (!grnDetails.purchaseOrder) {
       toast.error('Please select a Purchase Order');
       return;
@@ -111,7 +111,24 @@ export const AddGRNDashboard = () => {
       toast.error('Please enter Invoice Number');
       return;
     }
+    if (!inventoryDetails.expectedQuantity) {
+      toast.error('Please enter Expected Quantity');
+      return;
+    }
+    if (!inventoryDetails.receivedQuantity) {
+      toast.error('Please enter Received Quantity');
+      return;
+    }
+    if (!inventoryDetails.approvedQuantity) {
+      toast.error('Please enter Approved Quantity');
+      return;
+    }
+    if (selectedFiles.length === 0) {
+      toast.error('Please upload at least one attachment');
+      return;
+    }
 
+    // Log form data for debugging
     console.log('GRN Details:', grnDetails);
     console.log('Inventory Details:', inventoryDetails);
     console.log('Attachments:', selectedFiles.map(file => ({ name: file.name, size: file.size, type: file.type })));
@@ -124,20 +141,20 @@ export const AddGRNDashboard = () => {
     <div className="p-6">
       {/* Breadcrumb */}
       <div className="mb-4 text-sm text-gray-600">
-        GRN &gt; New GRN
+        Finance &gt; GRN / SRN &gt; Add New GRN
       </div>
 
       {/* Page Title */}
-      <h1 className="text-2xl font-bold mb-6">GRN</h1>
+      <h1 className="text-2xl font-bold mb-6">Add New GRN</h1>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* GRN Details Section */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-2 mb-6">
-            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
+            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
               <span className="text-white text-sm">1</span>
             </div>
-            <h2 className="text-lg font-semibold text-[#C72030]">GRN DETAILS</h2>
+            <h2 className="text-lg font-semibold text-orange-600">GRN DETAILS</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -148,7 +165,7 @@ export const AddGRNDashboard = () => {
                   <SelectValue placeholder="Select Purchase Order" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="PO001">Select Purchase Order</SelectItem>
+                  <SelectItem value="PO001">PO001 - ABC Supplier</SelectItem>
                   <SelectItem value="PO002">PO002 - XYZ Corporation</SelectItem>
                   <SelectItem value="PO003">PO003 - ACHLA Corporation</SelectItem>
                 </SelectContent>
@@ -162,7 +179,7 @@ export const AddGRNDashboard = () => {
                   <SelectValue placeholder="Select Supplier" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ABC">Select Supplier</SelectItem>
+                  <SelectItem value="ABC">ABC Supplier</SelectItem>
                   <SelectItem value="XYZ Corporation">XYZ Corporation</SelectItem>
                   <SelectItem value="ACHLA Corporation">ACHLA Corporation</SelectItem>
                 </SelectContent>
@@ -172,7 +189,7 @@ export const AddGRNDashboard = () => {
             <div>
               <Label className="text-sm font-medium">Invoice Number*</Label>
               <Input
-                placeholder="Enter Number"
+                placeholder="Enter Invoice Number"
                 value={grnDetails.invoiceNumber}
                 onChange={(e) => setGrnDetails({...grnDetails, invoiceNumber: e.target.value})}
               />
@@ -181,7 +198,7 @@ export const AddGRNDashboard = () => {
             <div>
               <Label className="text-sm font-medium">Related To</Label>
               <Input
-                placeholder="Enter Text"
+                placeholder="Enter Related To"
                 value={grnDetails.relatedTo}
                 onChange={(e) => setGrnDetails({...grnDetails, relatedTo: e.target.value})}
               />
@@ -191,7 +208,7 @@ export const AddGRNDashboard = () => {
               <Label className="text-sm font-medium">Invoice Amount</Label>
               <Input
                 type="number"
-                placeholder="Enter Number"
+                placeholder="Enter Invoice Amount"
                 value={grnDetails.invoiceAmount}
                 onChange={(e) => setGrnDetails({...grnDetails, invoiceAmount: e.target.value})}
               />
@@ -217,7 +234,6 @@ export const AddGRNDashboard = () => {
               <Label className="text-sm font-medium">Invoice Date*</Label>
               <Input
                 type="date"
-                placeholder="Enter Date"
                 value={grnDetails.invoiceDate}
                 onChange={(e) => setGrnDetails({...grnDetails, invoiceDate: e.target.value})}
               />
@@ -227,7 +243,6 @@ export const AddGRNDashboard = () => {
               <Label className="text-sm font-medium">Posting Date*</Label>
               <Input
                 type="date"
-                placeholder="20/06/2025"
                 value={grnDetails.postingDate}
                 onChange={(e) => setGrnDetails({...grnDetails, postingDate: e.target.value})}
               />
@@ -237,7 +252,7 @@ export const AddGRNDashboard = () => {
               <Label className="text-sm font-medium">Other Expense</Label>
               <Input
                 type="number"
-                placeholder="Other Expense"
+                placeholder="Enter Other Expense"
                 value={grnDetails.otherExpense}
                 onChange={(e) => setGrnDetails({...grnDetails, otherExpense: e.target.value})}
               />
@@ -247,7 +262,7 @@ export const AddGRNDashboard = () => {
               <Label className="text-sm font-medium">Loading Expense</Label>
               <Input
                 type="number"
-                placeholder="Enter Number"
+                placeholder="Enter Loading Expense"
                 value={grnDetails.loadingExpense}
                 onChange={(e) => setGrnDetails({...grnDetails, loadingExpense: e.target.value})}
               />
@@ -257,7 +272,7 @@ export const AddGRNDashboard = () => {
               <Label className="text-sm font-medium">Adjustment Amount</Label>
               <Input
                 type="number"
-                placeholder="Enter Number"
+                placeholder="Enter Adjustment Amount"
                 value={grnDetails.adjustmentAmount}
                 onChange={(e) => setGrnDetails({...grnDetails, adjustmentAmount: e.target.value})}
               />
@@ -279,10 +294,10 @@ export const AddGRNDashboard = () => {
         {/* Inventory Details Section */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-2 mb-6">
-            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
+            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
               <span className="text-white text-sm">2</span>
             </div>
-            <h2 className="text-lg font-semibold text-[#C72030]">INVENTORY DETAILS</h2>
+            <h2 className="text-lg font-semibold text-orange-600">INVENTORY DETAILS</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -290,7 +305,7 @@ export const AddGRNDashboard = () => {
               <Label className="text-sm font-medium">Inventory Type</Label>
               <Select value={inventoryDetails.inventoryType} onValueChange={(value) => setInventoryDetails({...inventoryDetails, inventoryType: value})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder="Select Inventory Type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="power-supply">12V / 5 Amp Power Supply SM...</SelectItem>
@@ -347,18 +362,18 @@ export const AddGRNDashboard = () => {
               <Input
                 type="number"
                 step="0.01"
-                placeholder="Enter Number"
+                placeholder="Enter Rate"
                 value={inventoryDetails.rate}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, rate: e.target.value})}
               />
             </div>
 
             <div>
-              <Label className="text-sm font-medium">CGST Rate</Label>
+              <Label className="text-sm font-medium">CGST Rate (%)</Label>
               <Input
                 type="number"
                 step="0.01"
-                placeholder="Enter Number"
+                placeholder="Enter CGST Rate"
                 value={inventoryDetails.cgstRate}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, cgstRate: e.target.value})}
               />
@@ -369,18 +384,18 @@ export const AddGRNDashboard = () => {
               <Input
                 type="number"
                 step="0.01"
-                placeholder="Enter Number"
+                placeholder="Enter CGST Amount"
                 value={inventoryDetails.cgstAmount}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, cgstAmount: e.target.value})}
               />
             </div>
 
             <div>
-              <Label className="text-sm font-medium">SGST Rate</Label>
+              <Label className="text-sm font-medium">SGST Rate (%)</Label>
               <Input
                 type="number"
                 step="0.01"
-                placeholder="Enter Number"
+                placeholder="Enter SGST Rate"
                 value={inventoryDetails.sgstRate}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, sgstRate: e.target.value})}
               />
@@ -391,18 +406,18 @@ export const AddGRNDashboard = () => {
               <Input
                 type="number"
                 step="0.01"
-                placeholder="Enter Number"
+                placeholder="Enter SGST Amount"
                 value={inventoryDetails.sgstAmount}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, sgstAmount: e.target.value})}
               />
             </div>
 
             <div>
-              <Label className="text-sm font-medium">IGST Rate</Label>
+              <Label className="text-sm font-medium">IGST Rate (%)</Label>
               <Input
                 type="number"
                 step="0.01"
-                placeholder="Enter Number"
+                placeholder="Enter IGST Rate"
                 value={inventoryDetails.igstRate}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, igstRate: e.target.value})}
               />
@@ -413,18 +428,18 @@ export const AddGRNDashboard = () => {
               <Input
                 type="number"
                 step="0.01"
-                placeholder="Enter Number"
+                placeholder="Enter IGST Amount"
                 value={inventoryDetails.igstAmount}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, igstAmount: e.target.value})}
               />
             </div>
 
             <div>
-              <Label className="text-sm font-medium">TCS Rate</Label>
+              <Label className="text-sm font-medium">TCS Rate (%)</Label>
               <Input
                 type="number"
                 step="0.01"
-                placeholder="Enter Number"
+                placeholder="Enter TCS Rate"
                 value={inventoryDetails.tcsRate}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, tcsRate: e.target.value})}
               />
@@ -435,7 +450,7 @@ export const AddGRNDashboard = () => {
               <Input
                 type="number"
                 step="0.01"
-                placeholder="Enter Number"
+                placeholder="Enter TCS Amount"
                 value={inventoryDetails.tcsAmount}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, tcsAmount: e.target.value})}
               />
@@ -446,7 +461,7 @@ export const AddGRNDashboard = () => {
               <Input
                 type="number"
                 step="0.01"
-                placeholder="Total Amount"
+                placeholder="Auto-calculated"
                 value={inventoryDetails.totalTaxes}
                 readOnly
                 className="bg-gray-50"
@@ -458,7 +473,7 @@ export const AddGRNDashboard = () => {
               <Input
                 type="number"
                 step="0.01"
-                placeholder="Enter Number"
+                placeholder="Auto-calculated"
                 value={inventoryDetails.amount}
                 readOnly
                 className="bg-gray-50"
@@ -470,7 +485,7 @@ export const AddGRNDashboard = () => {
               <Input
                 type="number"
                 step="0.01"
-                placeholder="Total Amount"
+                placeholder="Auto-calculated"
                 value={inventoryDetails.totalAmount}
                 readOnly
                 className="bg-gray-50"
@@ -491,10 +506,10 @@ export const AddGRNDashboard = () => {
         {/* Attachments Section */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-2 mb-6">
-            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
+            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
               <span className="text-white text-sm">3</span>
             </div>
-            <h2 className="text-lg font-semibold text-[#C72030]">ATTACHMENTS*</h2>
+            <h2 className="text-lg font-semibold text-orange-600">ATTACHMENTS*</h2>
           </div>
 
           <div 
@@ -505,10 +520,10 @@ export const AddGRNDashboard = () => {
           >
             <p className="text-gray-600 mb-2">
               <span className="font-medium">Drag & Drop</span> or{" "}
-              <button type="button" className="text-[#C72030] underline">Choose Files</button>
+              <button type="button" className="text-orange-600 underline">Choose Files</button>
             </p>
             <p className="text-sm text-gray-500">
-              No file chosen
+              Supported formats: PDF, DOC, DOCX, JPG, JPEG, PNG (Max 5MB each)
             </p>
           </div>
 
@@ -550,13 +565,13 @@ export const AddGRNDashboard = () => {
         {/* Total Amount and Submit */}
         <div className="flex justify-end items-center gap-4">
           <div className="bg-[#C72030] text-white px-4 py-2 rounded">
-            Total Amount: 0.00
+            Total Amount: ₹{inventoryDetails.totalAmount || '0.00'}
           </div>
           <Button 
             type="submit"
             className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
           >
-            Submit
+            Submit GRN
           </Button>
         </div>
       </form>
