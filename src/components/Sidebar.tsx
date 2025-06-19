@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -225,7 +224,10 @@ const modulesByPackage = {
       name: 'Roles (RACI)', 
       icon: UserCheck, 
       href: '/settings/roles',
-      hasDropdowns: true
+      subItems: [
+        { name: 'Department', href: '/settings/roles/department', color: 'text-[#1a1a1a]' },
+        { name: 'Role', href: '/settings/roles/role', color: 'text-[#1a1a1a]' }
+      ]
     },
     { name: 'Approval Matrix', icon: CheckSquare, href: '/settings/approval-matrix' },
     { 
@@ -264,8 +266,8 @@ export const Sidebar = () => {
   const location = useLocation();
   const { currentSection, setCurrentSection } = useLayout();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-  const [selectedDepartment, setSelectedDepartment] = useState('');
-  const [selectedRole, setSelectedRole] = useState('');
+  const [selectedDepartment, setSelectedRole] = useState('');
+  const [selectedRole, setSelectedDepartment] = useState('');
 
   const toggleExpanded = (itemName: string) => {
     setExpandedItems(prev => 
