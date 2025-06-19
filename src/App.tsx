@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -197,6 +198,7 @@ import { AddMaterialPRDashboard } from './pages/AddMaterialPRDashboard';
 import { AddServicePRDashboard } from './pages/AddServicePRDashboard';
 import { PODashboard } from './pages/PODashboard';
 import { WODashboard } from './pages/WODashboard';
+import { GRNDashboard } from './pages/GRNDashboard';
 
 const queryClient = new QueryClient();
 
@@ -274,6 +276,7 @@ function App() {
               <Route path="/finance/service-pr/add" element={<AddServicePRDashboard />} />
               <Route path="/finance/po" element={<PODashboard />} />
               <Route path="/finance/wo" element={<WODashboard />} />
+              <Route path="/finance/grn-srn" element={<GRNDashboard />} />
               
               {/* Maintenance Routes */}
               <Route path="/maintenance/asset" element={<AssetDashboard />} />

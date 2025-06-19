@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Plus, Eye, Edit, Search, Filter, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { GRNFilterDialog } from "@/components/GRNFilterDialog";
 import { useNavigate } from 'react-router-dom';
@@ -10,136 +10,88 @@ export const GRNDashboard = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
-  const [appliedFilters, setAppliedFilters] = useState({
-    inventoryName: '',
-    supplierName: '',
-    invoiceNumber: ''
-  });
 
   const grnData = [
     {
-      id: 6703,
-      inventory: "Carpet ...",
+      id: 1,
       supplier: "ABC",
-      invoiceNumber: "123",
-      referenceNo: "NA",
-      poReferenceNumber: "121249",
-      approvedStatus: "Approved",
-      lastApprovedBy: "Sony Bhosle",
-      poAmount: "2720.0",
-      totalCost: ""
+      poNumber: "121240",
+      poDate: "22/04/2025",
+      poDeliveryDate: "25/04/2025",
+      poSentDate: "23/04/2025",
+      poQty: "100",
+      poRate: "50.00",
+      poAmount: "5000.00",
+      grnNumber: "GRN001",
+      grnDate: "24/04/2025",
+      grnQty: "95",
+      grnRate: "50.00",
+      grnAmount: "4750.00",
+      grnStatus: "Completed",
+      remarks: "Good condition"
     },
     {
-      id: 6560,
-      inventory: "Carpet ...",
-      supplier: "ABC",
-      invoiceNumber: "abc10",
-      referenceNo: "NA",
-      poReferenceNumber: "121248",
-      approvedStatus: "Approved",
-      lastApprovedBy: "Sony Bhosle",
-      poAmount: "7000.0",
-      totalCost: ""
+      id: 2,
+      supplier: "XYZ Corporation",
+      poNumber: "121241",
+      poDate: "23/04/2025",
+      poDeliveryDate: "26/04/2025",
+      poSentDate: "24/04/2025",
+      poQty: "200",
+      poRate: "75.00",
+      poAmount: "15000.00",
+      grnNumber: "GRN002",
+      grnDate: "25/04/2025",
+      grnQty: "180",
+      grnRate: "75.00",
+      grnAmount: "13500.00",
+      grnStatus: "Pending",
+      remarks: "Partial delivery"
     },
     {
-      id: 6487,
-      inventory: "Cruet Set",
-      supplier: "Godrej",
-      invoiceNumber: "",
-      referenceNo: "NA",
-      poReferenceNumber: "121236",
-      approvedStatus: "Approved",
-      lastApprovedBy: "Sony Bhosle",
-      poAmount: "130.0",
-      totalCost: ""
-    },
-    {
-      id: 6466,
-      inventory: "Cruet Set",
-      supplier: "Godrej",
-      invoiceNumber: "",
-      referenceNo: "NA",
-      poReferenceNumber: "121236",
-      approvedStatus: "Approved",
-      lastApprovedBy: "Sony Bhosle",
-      poAmount: "130.0",
-      totalCost: ""
-    },
-    {
-      id: 6465,
-      inventory: "Laptop",
-      supplier: "Godrej",
-      invoiceNumber: "1232r23re",
-      referenceNo: "NA",
-      poReferenceNumber: "121236",
-      approvedStatus: "Approved",
-      lastApprovedBy: "Abhishek Sharma",
-      poAmount: "130.0",
-      totalCost: ""
-    },
-    {
-      id: 6464,
-      inventory: "Cruet Set",
-      supplier: "Godrej",
-      invoiceNumber: "tst101",
-      referenceNo: "NA",
-      poReferenceNumber: "121236",
-      approvedStatus: "Approved",
-      lastApprovedBy: "Sony Bhosle",
-      poAmount: "130.0",
-      totalCost: ""
-    },
-    {
-      id: 6463,
-      inventory: "Cruet Set",
-      supplier: "Godrej",
-      invoiceNumber: "12efe31",
-      referenceNo: "NA",
-      poReferenceNumber: "121236",
-      approvedStatus: "Approved",
-      lastApprovedBy: "Sony Bhosle",
-      poAmount: "130.0",
-      totalCost: ""
+      id: 3,
+      supplier: "ACHLA CORPORATION",
+      poNumber: "121242",
+      poDate: "24/04/2025",
+      poDeliveryDate: "27/04/2025",
+      poSentDate: "25/04/2025",
+      poQty: "150",
+      poRate: "30.00",
+      poAmount: "4500.00",
+      grnNumber: "GRN003",
+      grnDate: "26/04/2025",
+      grnQty: "150",
+      grnRate: "30.00",
+      grnAmount: "4500.00",
+      grnStatus: "Completed",
+      remarks: "All items received"
     }
   ];
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'approved':
+      case 'completed':
         return 'bg-green-500 text-white';
-      case 'rejected':
-        return 'bg-red-500 text-white';
       case 'pending':
         return 'bg-yellow-500 text-black';
+      case 'cancelled':
+        return 'bg-red-500 text-white';
       default:
         return 'bg-gray-500 text-white';
     }
   };
 
-  const handleFilterApply = (filters: typeof appliedFilters) => {
-    setAppliedFilters(filters);
-    console.log('Applied filters:', filters);
-  };
-
-  const filteredData = grnData.filter(item => {
-    const matchesSearch = 
-      item.inventory.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.supplier.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesFilters = 
-      (!appliedFilters.inventoryName || item.inventory.toLowerCase().includes(appliedFilters.inventoryName.toLowerCase())) &&
-      (!appliedFilters.supplierName || item.supplier.toLowerCase().includes(appliedFilters.supplierName.toLowerCase())) &&
-      (!appliedFilters.invoiceNumber || item.invoiceNumber.toLowerCase().includes(appliedFilters.invoiceNumber.toLowerCase()));
-
-    return matchesSearch && matchesFilters;
-  });
+  const filteredData = grnData.filter(item =>
+    item.supplier.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.poNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.grnNumber.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="p-6">
       {/* Breadcrumb */}
       <div className="mb-4 text-sm text-gray-600">
-        GRN
+        GRN / SRN
       </div>
 
       {/* Page Title */}
@@ -149,16 +101,25 @@ export const GRNDashboard = () => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex gap-3">
           <Button 
-            className="bg-purple-600 hover:bg-purple-700 text-white"
-            onClick={() => navigate('/finance/grn/add')}
+            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            onClick={() => navigate('/finance/grn-srn/add')}
           >
-            + Add
+            <Plus className="w-4 h-4 mr-2" />
+            Add New
           </Button>
           <Button 
             variant="outline"
             onClick={() => setIsFilterDialogOpen(true)}
           >
-            🏷️ Filters
+            <Filter className="w-4 h-4 mr-2" />
+            Filters
+          </Button>
+          <Button 
+            variant="outline"
+            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export
           </Button>
         </div>
 
@@ -167,28 +128,21 @@ export const GRNDashboard = () => {
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by Inventory Name"
+              placeholder="Search by Supplier, PO Number, or GRN Number"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent w-64"
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent w-80"
             />
           </div>
           <Button 
-            className="bg-purple-600 hover:bg-purple-700 text-white px-6"
+            className="bg-[#C72030] hover:bg-[#A01020] text-white px-4"
           >
-            Go!
+            Search
           </Button>
           <Button 
             variant="outline" 
             className="px-4"
-            onClick={() => {
-              setSearchQuery('');
-              setAppliedFilters({
-                inventoryName: '',
-                supplierName: '',
-                invoiceNumber: ''
-              });
-            }}
+            onClick={() => setSearchQuery('')}
           >
             Reset
           </Button>
@@ -200,59 +154,83 @@ export const GRNDashboard = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold">Action</TableHead>
-              <TableHead className="font-semibold">View</TableHead>
-              <TableHead className="font-semibold">ID</TableHead>
-              <TableHead className="font-semibold">Inventory</TableHead>
+              <TableHead className="font-semibold">Actions</TableHead>
               <TableHead className="font-semibold">Supplier</TableHead>
-              <TableHead className="font-semibold">Invoice Number</TableHead>
-              <TableHead className="font-semibold">Reference No.</TableHead>
-              <TableHead className="font-semibold">P.O Reference Number</TableHead>
-              <TableHead className="font-semibold">Approved Status</TableHead>
-              <TableHead className="font-semibold">Last Approved By</TableHead>
+              <TableHead className="font-semibold">PO Number</TableHead>
+              <TableHead className="font-semibold">PO Date</TableHead>
+              <TableHead className="font-semibold">PO Delivery Date</TableHead>
+              <TableHead className="font-semibold">PO Sent Date</TableHead>
+              <TableHead className="font-semibold">PO Qty</TableHead>
+              <TableHead className="font-semibold">PO Rate</TableHead>
               <TableHead className="font-semibold">PO Amount</TableHead>
-              <TableHead className="font-semibold">Total Cost</TableHead>
+              <TableHead className="font-semibold">GRN Number</TableHead>
+              <TableHead className="font-semibold">GRN Date</TableHead>
+              <TableHead className="font-semibold">GRN Qty</TableHead>
+              <TableHead className="font-semibold">GRN Rate</TableHead>
+              <TableHead className="font-semibold">GRN Amount</TableHead>
+              <TableHead className="font-semibold">Status</TableHead>
+              <TableHead className="font-semibold">Remarks</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredData.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                  <Button size="sm" variant="ghost" className="p-1">
-                    👁️
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button size="sm" variant="ghost" className="p-1">
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" className="p-1">
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </TableCell>
-                <TableCell>
-                  <Button size="sm" variant="ghost" className="p-1">
-                    👁️
-                  </Button>
-                </TableCell>
-                <TableCell className="font-medium">{item.id}</TableCell>
+                <TableCell className="font-medium">{item.supplier}</TableCell>
                 <TableCell className="text-blue-600 hover:underline cursor-pointer">
-                  {item.inventory}
+                  {item.poNumber}
                 </TableCell>
-                <TableCell>{item.supplier}</TableCell>
-                <TableCell>{item.invoiceNumber}</TableCell>
-                <TableCell>{item.referenceNo}</TableCell>
-                <TableCell className="text-blue-600">{item.poReferenceNumber}</TableCell>
+                <TableCell>{item.poDate}</TableCell>
+                <TableCell>{item.poDeliveryDate}</TableCell>
+                <TableCell>{item.poSentDate}</TableCell>
+                <TableCell>{item.poQty}</TableCell>
+                <TableCell>₹{item.poRate}</TableCell>
+                <TableCell className="font-medium">₹{item.poAmount}</TableCell>
+                <TableCell className="text-blue-600 hover:underline cursor-pointer">
+                  {item.grnNumber}
+                </TableCell>
+                <TableCell>{item.grnDate}</TableCell>
+                <TableCell>{item.grnQty}</TableCell>
+                <TableCell>₹{item.grnRate}</TableCell>
+                <TableCell className="font-medium">₹{item.grnAmount}</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(item.approvedStatus)}`}>
-                    {item.approvedStatus}
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(item.grnStatus)}`}>
+                    {item.grnStatus}
                   </span>
                 </TableCell>
-                <TableCell>{item.lastApprovedBy}</TableCell>
-                <TableCell className="font-medium">{item.poAmount}</TableCell>
-                <TableCell>{item.totalCost}</TableCell>
+                <TableCell>{item.remarks}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
 
+      {/* Pagination */}
+      <div className="flex items-center justify-between mt-6">
+        <div className="text-sm text-gray-600">
+          Showing {filteredData.length} of {grnData.length} entries
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm">Previous</Button>
+          <Button variant="outline" size="sm" className="bg-[#C72030] text-white">1</Button>
+          <Button variant="outline" size="sm">2</Button>
+          <Button variant="outline" size="sm">3</Button>
+          <Button variant="outline" size="sm">Next</Button>
+        </div>
+      </div>
+
       <GRNFilterDialog 
         open={isFilterDialogOpen}
         onOpenChange={setIsFilterDialogOpen}
-        onApply={handleFilterApply}
       />
     </div>
   );

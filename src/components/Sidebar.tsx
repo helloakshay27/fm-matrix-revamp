@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -275,7 +274,6 @@ export const Sidebar = () => {
     navigate(href);
   };
 
-  // Determine current section from route if not already set
   React.useEffect(() => {
     const path = location.pathname;
     if (path.startsWith('/utility')) {
