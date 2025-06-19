@@ -401,91 +401,93 @@ export const AddVendorAuditSchedulePage = () => {
       </div>
 
       {/* Top Controls */}
-      <div className="flex items-center gap-8 mb-6 p-4 bg-gray-50 rounded-lg">
-        {/* Create New */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="createNew" className="text-sm font-medium">Create New</Label>
-            <Switch 
-              id="createNew" 
-              checked={createNew}
-              onCheckedChange={(checked) => setCreateNew(checked)}
-            />
-          </div>
-          {createNew && (
-            <Select value={templateSelection} onValueChange={setTemplateSelection}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Select from the existing Template" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="template1">Template 1</SelectItem>
-                <SelectItem value="template2">Template 2</SelectItem>
-                <SelectItem value="template3">Template 3</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-
-        {/* Create Ticket */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="createTicket" className="text-sm font-medium">Create Ticket</Label>
-            <Switch 
-              id="createTicket" 
-              checked={createTicket}
-              onCheckedChange={(checked) => setCreateTicket(checked)}
-            />
-          </div>
-          {createTicket && (
-            <div className="flex items-center gap-4">
-              <RadioGroup 
-                value={ticketLevel} 
-                onValueChange={setTicketLevel}
-                className="flex gap-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="checklist" id="checklist-level" />
-                  <Label htmlFor="checklist-level" className="text-sm">Checklist Level</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="question" id="question-level" />
-                  <Label htmlFor="question-level" className="text-sm">Question Level</Label>
-                </div>
-              </RadioGroup>
-              
-              <Select value={assignedTo} onValueChange={setAssignedTo}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Select Assigned To" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="user1">User 1</SelectItem>
-                  <SelectItem value="user2">User 2</SelectItem>
-                  <SelectItem value="user3">User 3</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Select value={ticketCategory} onValueChange={setTicketCategory}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Select Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="category1">Category 1</SelectItem>
-                  <SelectItem value="category2">Category 2</SelectItem>
-                  <SelectItem value="category3">Category 3</SelectItem>
-                </SelectContent>
-              </Select>
+      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+        <div className="flex items-center gap-8 flex-wrap">
+          {/* Create New */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="createNew" className="text-sm font-medium">Create New</Label>
+              <Switch 
+                id="createNew" 
+                checked={createNew}
+                onCheckedChange={(checked) => setCreateNew(checked)}
+              />
             </div>
-          )}
-        </div>
+            {createNew && (
+              <Select value={templateSelection} onValueChange={setTemplateSelection}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Select from the existing Template" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="template1">Template 1</SelectItem>
+                  <SelectItem value="template2">Template 2</SelectItem>
+                  <SelectItem value="template3">Template 3</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
 
-        {/* Weightage */}
-        <div className="flex items-center space-x-2">
-          <Label htmlFor="weightage" className="text-sm font-medium">Weightage</Label>
-          <Switch 
-            id="weightage" 
-            checked={weightage}
-            onCheckedChange={(checked) => setWeightage(checked)}
-          />
+          {/* Create Ticket */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="createTicket" className="text-sm font-medium">Create Ticket</Label>
+              <Switch 
+                id="createTicket" 
+                checked={createTicket}
+                onCheckedChange={(checked) => setCreateTicket(checked)}
+              />
+            </div>
+            {createTicket && (
+              <div className="flex items-center gap-4">
+                <RadioGroup 
+                  value={ticketLevel} 
+                  onValueChange={setTicketLevel}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="checklist" id="checklist-level" />
+                    <Label htmlFor="checklist-level" className="text-sm">Checklist Level</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="question" id="question-level" />
+                    <Label htmlFor="question-level" className="text-sm">Question Level</Label>
+                  </div>
+                </RadioGroup>
+                
+                <Select value={assignedTo} onValueChange={setAssignedTo}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Select Assigned To" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user1">User 1</SelectItem>
+                    <SelectItem value="user2">User 2</SelectItem>
+                    <SelectItem value="user3">User 3</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Select value={ticketCategory} onValueChange={setTicketCategory}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Select Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="category1">Category 1</SelectItem>
+                    <SelectItem value="category2">Category 2</SelectItem>
+                    <SelectItem value="category3">Category 3</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          {/* Weightage */}
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="weightage" className="text-sm font-medium">Weightage</Label>
+            <Switch 
+              id="weightage" 
+              checked={weightage}
+              onCheckedChange={(checked) => setWeightage(checked)}
+            />
+          </div>
         </div>
       </div>
 
