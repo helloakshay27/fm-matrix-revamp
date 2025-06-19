@@ -209,7 +209,8 @@ import { PODetailsPage } from './pages/PODetailsPage';
 import { POFeedsPage } from './pages/POFeedsPage';
 import { WODashboard } from './pages/WODashboard';
 import { AutoSavedPRDashboard } from './pages/AutoSavedPRDashboard';
-import { GRNSRNDashboard } from './pages/GRNSRNDashboard';
+import { GRNDashboard } from './pages/GRNDashboard';
+import { AddGRNDashboard } from './pages/AddGRNDashboard';
 import { InvoicesDashboard } from './pages/InvoicesDashboard';
 import { InvoicesSESDashboard } from './pages/InvoicesSESDashboard';
 import { BillBookingDashboard } from './pages/BillBookingDashboard';
@@ -352,6 +353,7 @@ function App() {
               <Route path="/finance/wo" element={<WODashboard />} />
               <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
               <Route path="/finance/grn-srn" element={<GRNDashboard />} />
+              <Route path="/finance/grn-srn/add" element={<AddGRNDashboard />} />
               <Route path="/finance/invoices" element={<InvoicesSESDashboard />} />
               <Route path="/finance/bill-booking" element={<BillBookingDashboard />} />
               <Route path="/finance/bill-booking/add" element={<AddNewBillDashboard />} />

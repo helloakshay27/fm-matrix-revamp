@@ -36,7 +36,7 @@ export const GRNFilterDialog: React.FC<GRNFilterDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl bg-white">
+      <DialogContent className="max-w-lg bg-white">
         <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
           <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
           <Button
@@ -49,8 +49,8 @@ export const GRNFilterDialog: React.FC<GRNFilterDialogProps> = ({
           </Button>
         </DialogHeader>
         
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="p-4 space-y-4">
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <Label className="text-sm font-medium mb-2 block">Inventory Name</Label>
               <Input
