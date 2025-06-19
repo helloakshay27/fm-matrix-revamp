@@ -32,15 +32,15 @@ export const DepartmentDashboard = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [departmentName, setDepartmentName] = useState('');
   const [departments, setDepartments] = useState<Department[]>([
-    { id: 1, name: 'Accounts', status: true },
-    { id: 2, name: 'ACCOUNTS', status: true },
-    { id: 3, name: 'Admin', status: true },
-    { id: 4, name: 'admin', status: true },
-    { id: 5, name: 'Backend', status: true },
-    { id: 6, name: 'BB Admin', status: true },
-    { id: 7, name: 'BB Electrical', status: true },
-    { id: 8, name: 'BB FM', status: true },
-    { id: 9, name: 'BB FM Accounts', status: true },
+    { id: 1, name: '1', status: true },
+    { id: 2, name: 'ABC', status: false },
+    { id: 3, name: 'abc', status: true },
+    { id: 4, name: 'Accounts', status: true },
+    { id: 5, name: 'Admin', status: true },
+    { id: 6, name: 'Aeronautics department', status: true },
+    { id: 7, name: 'BMC DEPARTMENT', status: true },
+    { id: 8, name: 'Chokidar', status: true },
+    { id: 9, name: 'DEMO DEPT', status: true },
   ]);
 
   const handleSubmit = () => {
@@ -65,11 +65,6 @@ export const DepartmentDashboard = () => {
   return (
     <SetupLayout>
       <div className="space-y-6">
-        {/* Breadcrumb */}
-        <div className="text-sm text-gray-600">
-          Account &gt; Department
-        </div>
-        
         <h1 className="text-2xl font-bold text-[#1a1a1a]">DEPARTMENT</h1>
         
         <div className="bg-white rounded-lg border border-gray-200 p-6">
