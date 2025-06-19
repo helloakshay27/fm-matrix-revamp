@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { X } from "lucide-react";
 
 interface WasteGenerationFilterDialogProps {
   isOpen: boolean;
@@ -47,17 +46,7 @@ export const WasteGenerationFilterDialog = ({ isOpen, onClose }: WasteGeneration
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle>FILTER BY</DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-6 w-6 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle>FILTER BY</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6">

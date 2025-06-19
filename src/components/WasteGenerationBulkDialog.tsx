@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X } from "lucide-react";
 
 interface WasteGenerationBulkDialogProps {
   isOpen: boolean;
@@ -52,17 +51,7 @@ export const WasteGenerationBulkDialog = ({ isOpen, onClose, type }: WasteGenera
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle>Bulk {type === 'import' ? 'Upload' : 'Update'}</DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-6 w-6 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle>Bulk {type === 'import' ? 'Upload' : 'Update'}</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6">
