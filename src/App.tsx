@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -230,6 +229,9 @@ import { DepartmentDashboard as SetupDepartmentDashboard } from './pages/setup/D
 // Import AddNewBillDashboard
 import { AddNewBillDashboard } from './pages/AddNewBillDashboard';
 
+// Import Edit FM User Details page
+import { EditFMUserDetailsPage } from './pages/settings/EditFMUserDetailsPage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -243,6 +245,7 @@ function App() {
               
               {/* Settings Routes */}
               <Route path="/settings/users" element={<FMUsersDashboard />} />
+              <Route path="/settings/users/edit-details/:id" element={<EditFMUserDetailsPage />} />
               <Route path="/settings/users/clone-role" element={<CloneRolePage />} />
               <Route path="/settings/account" element={<AccountDashboard />} />
               <Route path="/settings/approval-matrix" element={<ApprovalMatrixDashboard />} />

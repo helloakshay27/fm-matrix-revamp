@@ -215,6 +215,10 @@ export const FMUsersDashboard = () => {
     navigate('/settings/users/clone-role');
   };
 
+  const handleViewDetails = (userId: string) => {
+    navigate(`/settings/users/edit-details/${userId}`);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -286,7 +290,11 @@ export const FMUsersDashboard = () => {
             {users.map((user) => (
               <TableRow key={user.id} className="hover:bg-gray-50">
                 <TableCell>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleViewDetails(user.id)}
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
                 </TableCell>
