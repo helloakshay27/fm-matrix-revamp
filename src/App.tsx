@@ -210,7 +210,6 @@ import { AddNewBillDashboard } from './pages/AddNewBillDashboard';
 // Import Settings pages
 import { FMUsersDashboard } from './pages/settings/FMUsersDashboard';
 import { CloneRolePage } from './pages/settings/CloneRolePage';
-import { RoleDashboard } from './pages/setup/RoleDashboard';
 
 const queryClient = new QueryClient();
 
@@ -226,7 +225,6 @@ function App() {
               {/* Settings Routes */}
               <Route path="/settings/users" element={<FMUsersDashboard />} />
               <Route path="/settings/users/clone-role" element={<CloneRolePage />} />
-              <Route path="/settings/roles" element={<RoleDashboard />} />
               
               {/* Snagging Routes */}
               <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
@@ -294,8 +292,6 @@ function App() {
               <Route path="/finance/po" element={<PODashboard />} />
               <Route path="/finance/wo" element={<WODashboard />} />
               <Route path="/finance/grn-srn" element={<GRNDashboard />} />
-              <Route path="/finance/grn-srn/add" element={<AddGRNDashboard />} />
-              <Route path="/finance/grn-srn/details/:id" element={<GRNDetailsPage />} />
               <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
               <Route path="/finance/invoices" element={<InvoicesSESDashboard />} />
               <Route path="/finance/bill-booking" element={<OtherBillsDashboard />} />
