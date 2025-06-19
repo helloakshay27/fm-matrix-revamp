@@ -338,6 +338,7 @@ function App() {
               <Route path="/finance/material-pr/feeds/:id" element={<MaterialPRFeedsPage />} />
               <Route path="/finance/service-pr" element={<ServicePRDashboard />} />
               <Route path="/finance/service-pr/add" element={<AddServicePRDashboard />} />
+              <Route path="/finance/service-pr/edit/:id" element={<EditServicePRPage />} />
               <Route path="/finance/po" element={<PODashboard />} />
               <Route path="/finance/po/add" element={<AddPODashboard />} />
               <Route path="/finance/po/details/:id" element={<PODetailsPage />} />
