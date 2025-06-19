@@ -10,7 +10,6 @@ import { toast } from "sonner";
 
 export const AddGRNDashboard = () => {
   const navigate = useNavigate();
-  const [totalAmount, setTotalAmount] = useState("0.00");
 
   const [grnDetails, setGrnDetails] = useState({
     purchaseOrder: '',
@@ -19,16 +18,16 @@ export const AddGRNDashboard = () => {
     relatedTo: '',
     invoiceAmount: '',
     paymentMode: '',
-    invoiceDate: '19/06/2025',
-    postingDate: '19/06/2025',
+    invoiceDate: '',
+    postingDate: '',
     otherExpense: '',
-    lodingExpense: '',
+    loadingExpense: '',
     adjustmentAmount: '',
     notes: ''
   });
 
   const [inventoryDetails, setInventoryDetails] = useState({
-    inventoryType: '12V / 5 Amp Power Supply SM...',
+    inventoryType: '',
     expectedQuantity: '',
     receivedQuantity: '',
     approvedQuantity: '',
@@ -49,10 +48,35 @@ export const AddGRNDashboard = () => {
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
+  // Calculate amounts automatically
+  const calculateAmounts = () => {
+    const rate = parseFloat(inventoryDetails.rate) || 0;
+    const approvedQty = parseFloat(inventoryDetails.approvedQuantity) || 0;
+    const cgstAmount = parseFloat(inventoryDetails.cgstAmount) || 0;
+    const sgstAmount = parseFloat(inventoryDetails.sgstAmount) || 0;
+    const igstAmount = parseFloat(inventoryDetails.igstAmount) || 0;
+    const tcsAmount = parseFloat(inventoryDetails.tcsAmount) || 0;
+    
+    const amount = rate * approvedQty;
+    const totalTaxes = cgstAmount + sgstAmount + igstAmount + tcsAmount;
+    const totalAmount = amount + totalTaxes;
+    
+    setInventoryDetails(prev => ({
+      ...prev,
+      amount: amount.toFixed(2),
+      totalTaxes: totalTaxes.toFixed(2),
+      totalAmount: totalAmount.toFixed(2)
+    }));
+  };
+
+  React.useEffect(() => {
+    calculateAmounts();
+  }, [inventoryDetails.rate, inventoryDetails.approvedQuantity, inventoryDetails.cgstAmount, inventoryDetails.sgstAmount, inventoryDetails.igstAmount, inventoryDetails.tcsAmount]);
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setSelectedFiles(prev => [...prev, ...files]);
-    toast.success(`${files.length} file(s) uploaded`);
+    toast.success(`${files.length} file(s) uploaded successfully`);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -63,20 +87,52 @@ export const AddGRNDashboard = () => {
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files);
     setSelectedFiles(prev => [...prev, ...files]);
-    toast.success(`${files.length} file(s) uploaded`);
+    toast.success(`${files.length} file(s) uploaded via drag & drop`);
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    toast.success('File removed successfully');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!grnDetails.purchaseOrder || !grnDetails.supplier || !grnDetails.invoiceNumber) {
-      toast.error('Please fill all required fields');
+    // Validation
+    if (!grnDetails.purchaseOrder) {
+      toast.error('Please select a Purchase Order');
+      return;
+    }
+    if (!grnDetails.supplier) {
+      toast.error('Please select a Supplier');
+      return;
+    }
+    if (!grnDetails.invoiceNumber) {
+      toast.error('Please enter Invoice Number');
+      return;
+    }
+    if (!inventoryDetails.expectedQuantity) {
+      toast.error('Please enter Expected Quantity');
+      return;
+    }
+    if (!inventoryDetails.receivedQuantity) {
+      toast.error('Please enter Received Quantity');
+      return;
+    }
+    if (!inventoryDetails.approvedQuantity) {
+      toast.error('Please enter Approved Quantity');
+      return;
+    }
+    if (selectedFiles.length === 0) {
+      toast.error('Please upload at least one attachment');
       return;
     }
 
+    // Log form data for debugging
     console.log('GRN Details:', grnDetails);
     console.log('Inventory Details:', inventoryDetails);
-    console.log('Attachments:', selectedFiles);
+    console.log('Attachments:', selectedFiles.map(file => ({ name: file.name, size: file.size, type: file.type })));
+    
     toast.success('GRN submitted successfully!');
     navigate('/finance/grn-srn');
   };
@@ -85,11 +141,11 @@ export const AddGRNDashboard = () => {
     <div className="p-6">
       {/* Breadcrumb */}
       <div className="mb-4 text-sm text-gray-600">
-        GRN &gt; New GRN
+        Finance &gt; GRN / SRN &gt; Add New GRN
       </div>
 
       {/* Page Title */}
-      <h1 className="text-2xl font-bold mb-6">GRN</h1>
+      <h1 className="text-2xl font-bold mb-6">Add New GRN</h1>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* GRN Details Section */}
@@ -123,7 +179,7 @@ export const AddGRNDashboard = () => {
                   <SelectValue placeholder="Select Supplier" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ABC">ABC</SelectItem>
+                  <SelectItem value="ABC">ABC Supplier</SelectItem>
                   <SelectItem value="XYZ Corporation">XYZ Corporation</SelectItem>
                   <SelectItem value="ACHLA Corporation">ACHLA Corporation</SelectItem>
                 </SelectContent>
@@ -133,7 +189,7 @@ export const AddGRNDashboard = () => {
             <div>
               <Label className="text-sm font-medium">Invoice Number*</Label>
               <Input
-                placeholder="Enter Number"
+                placeholder="Enter Invoice Number"
                 value={grnDetails.invoiceNumber}
                 onChange={(e) => setGrnDetails({...grnDetails, invoiceNumber: e.target.value})}
               />
@@ -142,7 +198,7 @@ export const AddGRNDashboard = () => {
             <div>
               <Label className="text-sm font-medium">Related To</Label>
               <Input
-                placeholder="Enter Text"
+                placeholder="Enter Related To"
                 value={grnDetails.relatedTo}
                 onChange={(e) => setGrnDetails({...grnDetails, relatedTo: e.target.value})}
               />
@@ -151,7 +207,8 @@ export const AddGRNDashboard = () => {
             <div>
               <Label className="text-sm font-medium">Invoice Amount</Label>
               <Input
-                placeholder="Enter Number"
+                type="number"
+                placeholder="Enter Invoice Amount"
                 value={grnDetails.invoiceAmount}
                 onChange={(e) => setGrnDetails({...grnDetails, invoiceAmount: e.target.value})}
               />
@@ -166,8 +223,9 @@ export const AddGRNDashboard = () => {
                 <SelectContent>
                   <SelectItem value="cash">Cash</SelectItem>
                   <SelectItem value="cheque">Cheque</SelectItem>
-                  <SelectItem value="bank">Bank Transfer</SelectItem>
+                  <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
                   <SelectItem value="card">Card</SelectItem>
+                  <SelectItem value="upi">UPI</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -193,7 +251,8 @@ export const AddGRNDashboard = () => {
             <div>
               <Label className="text-sm font-medium">Other Expense</Label>
               <Input
-                placeholder="Other Expense"
+                type="number"
+                placeholder="Enter Other Expense"
                 value={grnDetails.otherExpense}
                 onChange={(e) => setGrnDetails({...grnDetails, otherExpense: e.target.value})}
               />
@@ -202,16 +261,18 @@ export const AddGRNDashboard = () => {
             <div>
               <Label className="text-sm font-medium">Loading Expense</Label>
               <Input
-                placeholder="Enter Number"
-                value={grnDetails.lodingExpense}
-                onChange={(e) => setGrnDetails({...grnDetails, lodingExpense: e.target.value})}
+                type="number"
+                placeholder="Enter Loading Expense"
+                value={grnDetails.loadingExpense}
+                onChange={(e) => setGrnDetails({...grnDetails, loadingExpense: e.target.value})}
               />
             </div>
 
             <div>
               <Label className="text-sm font-medium">Adjustment Amount</Label>
               <Input
-                placeholder="Enter Number"
+                type="number"
+                placeholder="Enter Adjustment Amount"
                 value={grnDetails.adjustmentAmount}
                 onChange={(e) => setGrnDetails({...grnDetails, adjustmentAmount: e.target.value})}
               />
@@ -223,6 +284,7 @@ export const AddGRNDashboard = () => {
             <Textarea
               className="mt-2"
               rows={4}
+              placeholder="Enter any additional notes..."
               value={grnDetails.notes}
               onChange={(e) => setGrnDetails({...grnDetails, notes: e.target.value})}
             />
@@ -243,13 +305,14 @@ export const AddGRNDashboard = () => {
               <Label className="text-sm font-medium">Inventory Type</Label>
               <Select value={inventoryDetails.inventoryType} onValueChange={(value) => setInventoryDetails({...inventoryDetails, inventoryType: value})}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select Inventory Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="12V / 5 Amp Power Supply SM...">12V / 5 Amp Power Supply SM...</SelectItem>
-                  <SelectItem value="Carpet Brush">Carpet Brush</SelectItem>
-                  <SelectItem value="Cruet Set">Cruet Set</SelectItem>
-                  <SelectItem value="Laptop">Laptop</SelectItem>
+                  <SelectItem value="power-supply">12V / 5 Amp Power Supply SM...</SelectItem>
+                  <SelectItem value="carpet-brush">Carpet Brush</SelectItem>
+                  <SelectItem value="cruet-set">Cruet Set</SelectItem>
+                  <SelectItem value="laptop">Laptop</SelectItem>
+                  <SelectItem value="office-supplies">Office Supplies</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -257,6 +320,7 @@ export const AddGRNDashboard = () => {
             <div>
               <Label className="text-sm font-medium">Expected Quantity*</Label>
               <Input
+                type="number"
                 placeholder="Expected Quantity"
                 value={inventoryDetails.expectedQuantity}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, expectedQuantity: e.target.value})}
@@ -266,6 +330,7 @@ export const AddGRNDashboard = () => {
             <div>
               <Label className="text-sm font-medium">Received Quantity*</Label>
               <Input
+                type="number"
                 placeholder="Received Quantity"
                 value={inventoryDetails.receivedQuantity}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, receivedQuantity: e.target.value})}
@@ -275,6 +340,7 @@ export const AddGRNDashboard = () => {
             <div>
               <Label className="text-sm font-medium">Approved Quantity*</Label>
               <Input
+                type="number"
                 placeholder="Approved Quantity"
                 value={inventoryDetails.approvedQuantity}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, approvedQuantity: e.target.value})}
@@ -284,6 +350,7 @@ export const AddGRNDashboard = () => {
             <div>
               <Label className="text-sm font-medium">Rejected Quantity</Label>
               <Input
+                type="number"
                 placeholder="Rejected Quantity"
                 value={inventoryDetails.rejectedQuantity}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, rejectedQuantity: e.target.value})}
@@ -293,16 +360,20 @@ export const AddGRNDashboard = () => {
             <div>
               <Label className="text-sm font-medium">Rate</Label>
               <Input
-                placeholder="Enter Number"
+                type="number"
+                step="0.01"
+                placeholder="Enter Rate"
                 value={inventoryDetails.rate}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, rate: e.target.value})}
               />
             </div>
 
             <div>
-              <Label className="text-sm font-medium">CGST Rate</Label>
+              <Label className="text-sm font-medium">CGST Rate (%)</Label>
               <Input
-                placeholder="Enter Number"
+                type="number"
+                step="0.01"
+                placeholder="Enter CGST Rate"
                 value={inventoryDetails.cgstRate}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, cgstRate: e.target.value})}
               />
@@ -311,16 +382,20 @@ export const AddGRNDashboard = () => {
             <div>
               <Label className="text-sm font-medium">CGST Amount</Label>
               <Input
-                placeholder="Enter Number"
+                type="number"
+                step="0.01"
+                placeholder="Enter CGST Amount"
                 value={inventoryDetails.cgstAmount}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, cgstAmount: e.target.value})}
               />
             </div>
 
             <div>
-              <Label className="text-sm font-medium">SGST Rate</Label>
+              <Label className="text-sm font-medium">SGST Rate (%)</Label>
               <Input
-                placeholder="Enter Number"
+                type="number"
+                step="0.01"
+                placeholder="Enter SGST Rate"
                 value={inventoryDetails.sgstRate}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, sgstRate: e.target.value})}
               />
@@ -329,16 +404,20 @@ export const AddGRNDashboard = () => {
             <div>
               <Label className="text-sm font-medium">SGST Amount</Label>
               <Input
-                placeholder="Enter Number"
+                type="number"
+                step="0.01"
+                placeholder="Enter SGST Amount"
                 value={inventoryDetails.sgstAmount}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, sgstAmount: e.target.value})}
               />
             </div>
 
             <div>
-              <Label className="text-sm font-medium">IGST Rate</Label>
+              <Label className="text-sm font-medium">IGST Rate (%)</Label>
               <Input
-                placeholder="Enter Number"
+                type="number"
+                step="0.01"
+                placeholder="Enter IGST Rate"
                 value={inventoryDetails.igstRate}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, igstRate: e.target.value})}
               />
@@ -347,16 +426,20 @@ export const AddGRNDashboard = () => {
             <div>
               <Label className="text-sm font-medium">IGST Amount</Label>
               <Input
-                placeholder="Enter Number"
+                type="number"
+                step="0.01"
+                placeholder="Enter IGST Amount"
                 value={inventoryDetails.igstAmount}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, igstAmount: e.target.value})}
               />
             </div>
 
             <div>
-              <Label className="text-sm font-medium">TCS Rate</Label>
+              <Label className="text-sm font-medium">TCS Rate (%)</Label>
               <Input
-                placeholder="Enter Number"
+                type="number"
+                step="0.01"
+                placeholder="Enter TCS Rate"
                 value={inventoryDetails.tcsRate}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, tcsRate: e.target.value})}
               />
@@ -365,7 +448,9 @@ export const AddGRNDashboard = () => {
             <div>
               <Label className="text-sm font-medium">TCS Amount</Label>
               <Input
-                placeholder="Enter Number"
+                type="number"
+                step="0.01"
+                placeholder="Enter TCS Amount"
                 value={inventoryDetails.tcsAmount}
                 onChange={(e) => setInventoryDetails({...inventoryDetails, tcsAmount: e.target.value})}
               />
@@ -374,27 +459,36 @@ export const AddGRNDashboard = () => {
             <div>
               <Label className="text-sm font-medium">Total Taxes</Label>
               <Input
-                placeholder="Enter Number"
+                type="number"
+                step="0.01"
+                placeholder="Auto-calculated"
                 value={inventoryDetails.totalTaxes}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, totalTaxes: e.target.value})}
+                readOnly
+                className="bg-gray-50"
               />
             </div>
 
             <div>
               <Label className="text-sm font-medium">Amount</Label>
               <Input
-                placeholder="Enter Number"
+                type="number"
+                step="0.01"
+                placeholder="Auto-calculated"
                 value={inventoryDetails.amount}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, amount: e.target.value})}
+                readOnly
+                className="bg-gray-50"
               />
             </div>
 
             <div>
               <Label className="text-sm font-medium">Total Amount</Label>
               <Input
-                placeholder="Total Amount"
+                type="number"
+                step="0.01"
+                placeholder="Auto-calculated"
                 value={inventoryDetails.totalAmount}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, totalAmount: e.target.value})}
+                readOnly
+                className="bg-gray-50"
               />
             </div>
           </div>
@@ -429,17 +523,8 @@ export const AddGRNDashboard = () => {
               <button type="button" className="text-orange-600 underline">Choose Files</button>
             </p>
             <p className="text-sm text-gray-500">
-              {selectedFiles.length === 0 ? 'No file chosen' : `${selectedFiles.length} file(s) selected`}
+              Supported formats: PDF, DOC, DOCX, JPG, JPEG, PNG (Max 5MB each)
             </p>
-            {selectedFiles.length > 0 && (
-              <div className="mt-3">
-                {selectedFiles.map((file, index) => (
-                  <div key={index} className="text-sm text-gray-700">
-                    {file.name}
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           <input
@@ -450,18 +535,43 @@ export const AddGRNDashboard = () => {
             onChange={handleFileUpload}
             accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
           />
+
+          {selectedFiles.length > 0 && (
+            <div className="mt-4">
+              <h4 className="text-sm font-medium mb-2">Uploaded Files:</h4>
+              <div className="space-y-2">
+                {selectedFiles.map((file, index) => (
+                  <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-700">{file.name}</span>
+                      <span className="text-xs text-gray-500">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFile(index)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Total Amount and Submit */}
         <div className="flex justify-end items-center gap-4">
           <div className="bg-[#C72030] text-white px-4 py-2 rounded">
-            Total Amount:- {totalAmount}
+            Total Amount: ₹{inventoryDetails.totalAmount || '0.00'}
           </div>
           <Button 
             type="submit"
             className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
           >
-            Submit
+            Submit GRN
           </Button>
         </div>
       </form>

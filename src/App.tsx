@@ -292,6 +292,8 @@ function App() {
               <Route path="/finance/po" element={<PODashboard />} />
               <Route path="/finance/wo" element={<WODashboard />} />
               <Route path="/finance/grn-srn" element={<GRNDashboard />} />
+              <Route path="/finance/grn-srn/add" element={<AddGRNDashboard />} />
+              <Route path="/finance/grn-srn/details/:id" element={<GRNDetailsPage />} />
               <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
               <Route path="/finance/invoices" element={<InvoicesSESDashboard />} />
               <Route path="/finance/bill-booking" element={<OtherBillsDashboard />} />
