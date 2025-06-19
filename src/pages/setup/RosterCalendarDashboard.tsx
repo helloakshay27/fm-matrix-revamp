@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,9 +8,9 @@ import { RosterCalendarFilterDialog } from "@/components/RosterCalendarFilterDia
 export const RosterCalendarDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Statistics data
+  // Statistics data with corrected colors
   const stats = [
-    { title: 'Total No. of Seats', value: '73', color: 'bg-purple-500' },
+    { title: 'Total No. of Seats', value: '73', color: 'bg-[#C72030]' },
     { title: 'Employee Schedules', value: '12', color: 'bg-orange-400' },
     { title: 'Employee Check In', value: '0', color: 'bg-orange-500' },
     { title: 'No of Requests', value: '0', color: 'bg-gray-600' },

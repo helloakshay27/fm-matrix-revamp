@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X } from "lucide-react";
 
 interface RosterCalendarFilterDialogProps {
   open: boolean;
@@ -47,16 +46,8 @@ export const RosterCalendarFilterDialog: React.FC<RosterCalendarFilterDialogProp
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+        <DialogHeader className="space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold">Filter</DialogTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onOpenChange(false)}
-            className="h-6 w-6 p-0"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
         
         <div className="space-y-4">
@@ -123,7 +114,7 @@ export const RosterCalendarFilterDialog: React.FC<RosterCalendarFilterDialogProp
           </Button>
           <Button 
             onClick={handleApply}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+            className="flex-1 bg-[#C72030] hover:bg-[#A01020] text-white"
           >
             Apply
           </Button>
