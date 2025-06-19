@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -200,6 +199,8 @@ import { PODashboard } from './pages/PODashboard';
 import { WODashboard } from './pages/WODashboard';
 import { GRNDashboard } from './pages/GRNDashboard';
 import { AutoSavedPRDashboard } from './pages/AutoSavedPRDashboard';
+import { InvoicesSESDashboard } from './pages/InvoicesSESDashboard';
+import { OtherBillsDashboard } from './pages/OtherBillsDashboard';
 
 const queryClient = new QueryClient();
 
@@ -279,6 +280,8 @@ function App() {
               <Route path="/finance/wo" element={<WODashboard />} />
               <Route path="/finance/grn-srn" element={<GRNDashboard />} />
               <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
+              <Route path="/finance/invoices" element={<InvoicesSESDashboard />} />
+              <Route path="/finance/bill-booking" element={<OtherBillsDashboard />} />
               
               {/* Maintenance Routes */}
               <Route path="/maintenance/asset" element={<AssetDashboard />} />
