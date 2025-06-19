@@ -25,12 +25,13 @@ export const ApprovalMatrixDashboard = () => {
   };
 
   const handleEditClick = (id: number) => {
-    window.location.href = `/settings/approval-matrix/edit/${id}`;
+    console.log('Edit approval matrix with id:', id);
+    // Add edit functionality here
   };
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-6 p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold text-gray-900">INVOICE APPROVALS</h1>
           <div className="flex items-center gap-3">
