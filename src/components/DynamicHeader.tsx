@@ -17,7 +17,7 @@ export const DynamicHeader = () => {
   const { currentSection, setCurrentSection } = useLayout();
 
   return (
-    <div className="h-12 bg-blue-800 border-b border-blue-700 fixed top-16 right-0 left-64 z-20">
+    <div className="h-12 bg-white border-b border-[#D5DbDB] fixed top-16 right-0 left-64 z-20">
       <div className="flex items-center h-full px-6">
         <div className="flex items-center gap-6">
           {packages.map((packageName) => (
@@ -26,8 +26,8 @@ export const DynamicHeader = () => {
               onClick={() => setCurrentSection(packageName)}
               className={`pb-3 transition-colors text-sm ${
                 currentSection === packageName
-                  ? 'text-white border-b-2 border-white font-medium'
-                  : 'text-blue-200 hover:text-white'
+                  ? 'text-[#C72030] border-b-2 border-[#C72030] font-medium'
+                  : 'text-[#1a1a1a] opacity-70 hover:opacity-100'
               }`}
             >
               {packageName}
