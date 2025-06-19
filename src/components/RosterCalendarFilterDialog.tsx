@@ -23,8 +23,8 @@ export const RosterCalendarFilterDialog: React.FC<RosterCalendarFilterDialogProp
   onApply,
 }) => {
   const [filters, setFilters] = useState({
-    location: 'Jyoti Tower',
-    floor: 'Ground Floor - - Jyoti',
+    location: 'HDFC Ergo Bhandup',
+    floor: 'Floor 1 - Wing 1 - HDFC',
     startDate: '01/06/2025',
     endDate: '30/06/2025'
   });
@@ -46,7 +46,7 @@ export const RosterCalendarFilterDialog: React.FC<RosterCalendarFilterDialogProp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold">Filter</DialogTitle>
           <Button
@@ -68,9 +68,9 @@ export const RosterCalendarFilterDialog: React.FC<RosterCalendarFilterDialogProp
                   <SelectValue placeholder="Select Location" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Jyoti Tower">Jyoti Tower</SelectItem>
-                  <SelectItem value="Main Building">Main Building</SelectItem>
-                  <SelectItem value="Annex Building">Annex Building</SelectItem>
+                  <SelectItem value="HDFC Ergo Bhandup">HDFC Ergo Bhandup</SelectItem>
+                  <SelectItem value="Main Office">Main Office</SelectItem>
+                  <SelectItem value="Branch Office">Branch Office</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -82,10 +82,9 @@ export const RosterCalendarFilterDialog: React.FC<RosterCalendarFilterDialogProp
                   <SelectValue placeholder="Select Floor" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Ground Floor - - Jyoti">Ground Floor - - Jyoti</SelectItem>
-                  <SelectItem value="1st Floor - - Jyoti">1st Floor - - Jyoti</SelectItem>
-                  <SelectItem value="2nd Floor - - Jyoti">2nd Floor - - Jyoti</SelectItem>
-                  <SelectItem value="3rd Floor - - Jyoti">3rd Floor - - Jyoti</SelectItem>
+                  <SelectItem value="Floor 1 - Wing 1 - HDFC">Floor 1 - Wing 1 - HDFC</SelectItem>
+                  <SelectItem value="Floor 2 - Wing 1 - HDFC">Floor 2 - Wing 1 - HDFC</SelectItem>
+                  <SelectItem value="Floor 3 - Wing 1 - HDFC">Floor 3 - Wing 1 - HDFC</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -95,9 +94,9 @@ export const RosterCalendarFilterDialog: React.FC<RosterCalendarFilterDialogProp
             <div>
               <label className="text-sm font-medium mb-2 block">Start Date</label>
               <Input
-                type="date"
                 value={filters.startDate}
                 onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+                placeholder="dd/mm/yyyy"
                 className="text-sm"
               />
             </div>
@@ -105,9 +104,9 @@ export const RosterCalendarFilterDialog: React.FC<RosterCalendarFilterDialogProp
             <div>
               <label className="text-sm font-medium mb-2 block">End Date</label>
               <Input
-                type="date"
                 value={filters.endDate}
                 onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+                placeholder="dd/mm/yyyy"
                 className="text-sm"
               />
             </div>
@@ -124,7 +123,7 @@ export const RosterCalendarFilterDialog: React.FC<RosterCalendarFilterDialogProp
           </Button>
           <Button 
             onClick={handleApply}
-            className="flex-1 bg-[#007BFF] hover:bg-[#0056b3] text-white"
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
           >
             Apply
           </Button>
