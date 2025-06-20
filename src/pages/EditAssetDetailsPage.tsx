@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -22,6 +21,15 @@ export const EditAssetDetailsPage = () => {
   const [nonConsumptionExpanded, setNonConsumptionExpanded] = useState(true);
   const [attachmentsExpanded, setAttachmentsExpanded] = useState(true);
   
+  const [locationData, setLocationData] = useState({
+    site: 'Lockated',
+    building: 'sebc',
+    wing: '',
+    area: '',
+    floor: '',
+    room: ''
+  });
+
   const [formData, setFormData] = useState({
     assetName: 'sdcsdc',
     assetNo: 'sdcsdc',
@@ -49,6 +57,14 @@ export const EditAssetDetailsPage = () => {
   });
 
   const [selectedMeterTypes, setSelectedMeterTypes] = useState<string[]>([]);
+  const [consumptionMeasures, setConsumptionMeasures] = useState<any[]>([]);
+  const [nonConsumptionMeasures, setNonConsumptionMeasures] = useState<any[]>([]);
+  const [attachments, setAttachments] = useState({
+    manuals: [],
+    insurance: [],
+    invoice: [],
+    amc: []
+  });
 
   const meterTypes = [
     { id: 'board', label: 'Board' },
@@ -58,6 +74,10 @@ export const EditAssetDetailsPage = () => {
     { id: 'recycled', label: 'Recycled' },
     { id: 'iex-gdam', label: 'IEX-GDAM' }
   ];
+
+  const handleLocationChange = (field: string, value: string) => {
+    setLocationData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -71,13 +91,55 @@ export const EditAssetDetailsPage = () => {
     );
   };
 
+  const handleAddConsumptionMeasure = () => {
+    const newMeasure = {
+      id: Date.now(),
+      name: '',
+      unit: '',
+      description: ''
+    };
+    setConsumptionMeasures(prev => [...prev, newMeasure]);
+  };
+
+  const handleAddNonConsumptionMeasure = () => {
+    const newMeasure = {
+      id: Date.now(),
+      name: '',
+      unit: '',
+      description: ''
+    };
+    setNonConsumptionMeasures(prev => [...prev, newMeasure]);
+  };
+
+  const handleFileUpload = (category: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      console.log(`Uploading files for ${category}:`, Array.from(files));
+      // In a real app, you would handle the file upload here
+    }
+  };
+
   const handleSaveAndShowDetails = () => {
-    console.log('Saving and showing details:', formData);
+    console.log('Saving and showing details:', {
+      locationData,
+      formData,
+      selectedMeterTypes,
+      consumptionMeasures,
+      nonConsumptionMeasures,
+      attachments
+    });
     navigate(`/maintenance/asset/details/${id}`);
   };
 
   const handleSaveAndCreateNew = () => {
-    console.log('Saving and creating new:', formData);
+    console.log('Saving and creating new:', {
+      locationData,
+      formData,
+      selectedMeterTypes,
+      consumptionMeasures,
+      nonConsumptionMeasures,
+      attachments
+    });
     navigate('/maintenance/asset/add');
   };
 
@@ -117,9 +179,96 @@ export const EditAssetDetailsPage = () => {
           </button>
           
           {locationDetailsExpanded && (
-            <div className="p-6 pt-0">
-              <div className="text-center text-gray-500 py-8">
-                Location details content
+            <div className="p-6 pt-0 space-y-6">
+              {/* First Row */}
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="site" className="text-sm font-medium">Site*</Label>
+                  <Select value={locationData.site} onValueChange={(value) => handleLocationChange('site', value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Lockated">Lockated</SelectItem>
+                      <SelectItem value="Other Site">Other Site</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="building" className="text-sm font-medium">Building</Label>
+                  <Select value={locationData.building} onValueChange={(value) => handleLocationChange('building', value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sebc">sebc</SelectItem>
+                      <SelectItem value="Building A">Building A</SelectItem>
+                      <SelectItem value="Building B">Building B</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="wing" className="text-sm font-medium">Wing</Label>
+                  <Select value={locationData.wing} onValueChange={(value) => handleLocationChange('wing', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Wing" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="North Wing">North Wing</SelectItem>
+                      <SelectItem value="South Wing">South Wing</SelectItem>
+                      <SelectItem value="East Wing">East Wing</SelectItem>
+                      <SelectItem value="West Wing">West Wing</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="area" className="text-sm font-medium">Area</Label>
+                  <Select value={locationData.area} onValueChange={(value) => handleLocationChange('area', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Area" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Area 1">Area 1</SelectItem>
+                      <SelectItem value="Area 2">Area 2</SelectItem>
+                      <SelectItem value="Area 3">Area 3</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="floor" className="text-sm font-medium">Floor</Label>
+                  <Select value={locationData.floor} onValueChange={(value) => handleLocationChange('floor', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Floor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Ground Floor">Ground Floor</SelectItem>
+                      <SelectItem value="1st Floor">1st Floor</SelectItem>
+                      <SelectItem value="2nd Floor">2nd Floor</SelectItem>
+                      <SelectItem value="3rd Floor">3rd Floor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Second Row */}
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="room" className="text-sm font-medium">Room</Label>
+                  <Select value={locationData.room} onValueChange={(value) => handleLocationChange('room', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Room" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Room 101">Room 101</SelectItem>
+                      <SelectItem value="Room 102">Room 102</SelectItem>
+                      <SelectItem value="Room 103">Room 103</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           )}
@@ -354,7 +503,7 @@ export const EditAssetDetailsPage = () => {
                   <Checkbox 
                     id="meter-applicable" 
                     checked={formData.meterApplicable}
-                    onCheckedChange={(checked) => handleInputChange('meterApplicable', checked)}
+                    onCheckedChange={(checked) => handleInputChange('meterApplicable', checked === true)}
                   />
                   <Label htmlFor="meter-applicable">Meter Applicable</Label>
                 </div>
@@ -491,10 +640,55 @@ export const EditAssetDetailsPage = () => {
           </button>
           
           {consumptionExpanded && (
-            <div className="p-6 pt-0">
-              <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white">
+            <div className="p-6 pt-0 space-y-4">
+              <Button 
+                onClick={handleAddConsumptionMeasure}
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+              >
                 <Plus className="w-4 h-4 mr-2" />
+                Add Consumption Measure
               </Button>
+              
+              {consumptionMeasures.map((measure, index) => (
+                <div key={measure.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Measure Name</Label>
+                    <Input
+                      placeholder="Enter measure name"
+                      value={measure.name}
+                      onChange={(e) => {
+                        const updated = [...consumptionMeasures];
+                        updated[index].name = e.target.value;
+                        setConsumptionMeasures(updated);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Unit</Label>
+                    <Input
+                      placeholder="Enter unit"
+                      value={measure.unit}
+                      onChange={(e) => {
+                        const updated = [...consumptionMeasures];
+                        updated[index].unit = e.target.value;
+                        setConsumptionMeasures(updated);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Description</Label>
+                    <Input
+                      placeholder="Enter description"
+                      value={measure.description}
+                      onChange={(e) => {
+                        const updated = [...consumptionMeasures];
+                        updated[index].description = e.target.value;
+                        setConsumptionMeasures(updated);
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -515,10 +709,55 @@ export const EditAssetDetailsPage = () => {
           </button>
           
           {nonConsumptionExpanded && (
-            <div className="p-6 pt-0">
-              <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white">
+            <div className="p-6 pt-0 space-y-4">
+              <Button 
+                onClick={handleAddNonConsumptionMeasure}
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+              >
                 <Plus className="w-4 h-4 mr-2" />
+                Add Non-Consumption Measure
               </Button>
+              
+              {nonConsumptionMeasures.map((measure, index) => (
+                <div key={measure.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Measure Name</Label>
+                    <Input
+                      placeholder="Enter measure name"
+                      value={measure.name}
+                      onChange={(e) => {
+                        const updated = [...nonConsumptionMeasures];
+                        updated[index].name = e.target.value;
+                        setNonConsumptionMeasures(updated);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Unit</Label>
+                    <Input
+                      placeholder="Enter unit"
+                      value={measure.unit}
+                      onChange={(e) => {
+                        const updated = [...nonConsumptionMeasures];
+                        updated[index].unit = e.target.value;
+                        setNonConsumptionMeasures(updated);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Description</Label>
+                    <Input
+                      placeholder="Enter description"
+                      value={measure.description}
+                      onChange={(e) => {
+                        const updated = [...nonConsumptionMeasures];
+                        updated[index].description = e.target.value;
+                        setNonConsumptionMeasures(updated);
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -544,29 +783,65 @@ export const EditAssetDetailsPage = () => {
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Manuals Upload</Label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-500">Click to upload files</p>
+                    <input
+                      type="file"
+                      multiple
+                      onChange={(e) => handleFileUpload('manuals', e)}
+                      className="hidden"
+                      id="manuals-upload"
+                    />
+                    <label htmlFor="manuals-upload" className="cursor-pointer">
+                      <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm text-gray-500">Click to upload files</p>
+                    </label>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Insurance Details</Label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-500">Click to upload files</p>
+                    <input
+                      type="file"
+                      multiple
+                      onChange={(e) => handleFileUpload('insurance', e)}
+                      className="hidden"
+                      id="insurance-upload"
+                    />
+                    <label htmlFor="insurance-upload" className="cursor-pointer">
+                      <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm text-gray-500">Click to upload files</p>
+                    </label>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Purchase Invoice</Label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-500">Click to upload files</p>
+                    <input
+                      type="file"
+                      multiple
+                      onChange={(e) => handleFileUpload('invoice', e)}
+                      className="hidden"
+                      id="invoice-upload"
+                    />
+                    <label htmlFor="invoice-upload" className="cursor-pointer">
+                      <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm text-gray-500">Click to upload files</p>
+                    </label>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">AMC</Label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-500">Click to upload files</p>
+                    <input
+                      type="file"
+                      multiple
+                      onChange={(e) => handleFileUpload('amc', e)}
+                      className="hidden"
+                      id="amc-upload"
+                    />
+                    <label htmlFor="amc-upload" className="cursor-pointer">
+                      <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm text-gray-500">Click to upload files</p>
+                    </label>
                   </div>
                 </div>
               </div>

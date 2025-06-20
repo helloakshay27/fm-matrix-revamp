@@ -50,8 +50,8 @@ export const AssetDetailsPage = () => {
 
   const handleSwitchChange = (checked: boolean) => {
     setIsInUse(checked);
-    if (!checked) {
-      // When switched to breakdown, show repair/replace modal
+    if (checked) {
+      // When switched to breakdown (checked = true means breakdown), show repair/replace modal
       setIsRepairReplaceOpen(true);
     }
   };
@@ -104,7 +104,7 @@ export const AssetDetailsPage = () => {
             
             <Button 
               onClick={handleCreateChecklist}
-              className="bg-[#C72030] hover:bg-[#A61B2A] text-white"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
             >
               Create a Checklist
             </Button>
