@@ -8,19 +8,40 @@ import { Input } from "@/components/ui/input";
 interface AddCategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (category: { category: string; timings: string }) => void;
+  onSubmit: (category: { category: string; timings?: string; amount?: string }) => void;
+  showTimings?: boolean;
+  showAmount?: boolean;
 }
 
-export const AddCategoryModal = ({ isOpen, onClose, onSubmit }: AddCategoryModalProps) => {
+export const AddCategoryModal = ({ 
+  isOpen, 
+  onClose, 
+  onSubmit, 
+  showTimings = true, 
+  showAmount = false 
+}: AddCategoryModalProps) => {
   const [formData, setFormData] = useState({
     category: "",
-    timings: ""
+    timings: "",
+    amount: ""
   });
 
   const handleSubmit = () => {
     if (formData.category.trim()) {
-      onSubmit(formData);
-      setFormData({ category: "", timings: "" });
+      const submitData: { category: string; timings?: string; amount?: string } = {
+        category: formData.category
+      };
+      
+      if (showTimings) {
+        submitData.timings = formData.timings;
+      }
+      
+      if (showAmount) {
+        submitData.amount = formData.amount;
+      }
+      
+      onSubmit(submitData);
+      setFormData({ category: "", timings: "", amount: "" });
       onClose();
     }
   };
@@ -46,18 +67,35 @@ export const AddCategoryModal = ({ isOpen, onClose, onSubmit }: AddCategoryModal
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="timings" className="text-sm">
-              Timings
-            </Label>
-            <Input
-              id="timings"
-              placeholder="Enter Timings"
-              value={formData.timings}
-              onChange={(e) => setFormData(prev => ({ ...prev, timings: e.target.value }))}
-              className="w-full"
-            />
-          </div>
+          {showTimings && (
+            <div className="space-y-2">
+              <Label htmlFor="timings" className="text-sm">
+                Timings
+              </Label>
+              <Input
+                id="timings"
+                placeholder="Enter Timings"
+                value={formData.timings}
+                onChange={(e) => setFormData(prev => ({ ...prev, timings: e.target.value }))}
+                className="w-full"
+              />
+            </div>
+          )}
+
+          {showAmount && (
+            <div className="space-y-2">
+              <Label htmlFor="amount" className="text-sm">
+                Amount
+              </Label>
+              <Input
+                id="amount"
+                placeholder="Enter Amount"
+                value={formData.amount}
+                onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+                className="w-full"
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex justify-center pt-4">

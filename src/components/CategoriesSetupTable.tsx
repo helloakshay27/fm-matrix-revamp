@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -27,11 +26,11 @@ export const CategoriesSetupTable = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
-  const handleAddCategory = (categoryData: { category: string; timings: string }) => {
+  const handleAddCategory = (categoryData: { category: string; timings?: string }) => {
     const newCategory: Category = {
       id: Math.max(...categories.map(c => c.id), 0) + 1,
       category: categoryData.category,
-      timings: categoryData.timings,
+      timings: categoryData.timings || '',
       active: true
     };
     setCategories([...categories, newCategory]);

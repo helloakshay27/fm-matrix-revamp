@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Edit } from "lucide-react";
@@ -54,11 +53,11 @@ export const FitoutSetupDashboard = () => {
 
   const tabs = ['Category', 'Status', 'Fitout Guide', 'Deviation Status'];
 
-  const handleAddCategory = (newCategory: { category: string; amount: string }) => {
+  const handleAddCategory = (newCategory: { category: string; amount?: string }) => {
     const category: Category = {
       id: categories.length + 1,
       category: newCategory.category,
-      amount: newCategory.amount,
+      amount: newCategory.amount || '',
       active: true
     };
     setCategories([...categories, category]);
@@ -413,6 +412,8 @@ export const FitoutSetupDashboard = () => {
         isOpen={isAddCategoryOpen}
         onClose={() => setIsAddCategoryOpen(false)}
         onSubmit={handleAddCategory}
+        showTimings={false}
+        showAmount={true}
       />
       
       <EditCategoryModal 
@@ -420,6 +421,8 @@ export const FitoutSetupDashboard = () => {
         onClose={() => setIsEditCategoryOpen(false)}
         category={editingCategory}
         onSubmit={handleUpdateCategory}
+        showTimings={false}
+        showAmount={true}
       />
       
       <AddDeviationStatusModal 

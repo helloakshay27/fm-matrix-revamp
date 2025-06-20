@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,11 +59,11 @@ export const AddProjectDashboard = () => {
     navigate('/transitioning/fitout/request');
   };
 
-  const handleAddCategory = (categoryData: { category: string; amount: string }) => {
+  const handleAddCategory = (categoryData: { category: string; amount?: string }) => {
     const newCategory: Category = {
       id: Date.now(),
       category: categoryData.category,
-      amount: categoryData.amount,
+      amount: categoryData.amount || '',
       active: true
     };
     setCategories(prev => [...prev, newCategory]);
@@ -321,6 +320,8 @@ export const AddProjectDashboard = () => {
         isOpen={showAddCategoryModal}
         onClose={() => setShowAddCategoryModal(false)}
         onSubmit={handleAddCategory}
+        showTimings={false}
+        showAmount={true}
       />
     </div>
   );
