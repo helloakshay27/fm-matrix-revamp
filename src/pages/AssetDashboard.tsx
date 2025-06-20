@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,7 @@ const assetData = [
     assetNo: 'sdcsdc',
     status: 'In Use',
     equipmentId: '',
-    site: 'Loccated',
+    site: 'Located',
     building: 'sebc',
     wing: '',
     floor: '',
@@ -33,7 +32,7 @@ const assetData = [
     assetNo: 'f3212',
     status: 'Breakdown',
     equipmentId: 'r34f6S',
-    site: 'Loccated',
+    site: 'Located',
     building: 'jyoti tower',
     wing: '',
     floor: '',
@@ -41,8 +40,7 @@ const assetData = [
     room: '',
     meterType: '',
     assetType: 'Parent Meter'
-  },
-  // Add more sample data as needed
+  }
 ];
 
 export const AssetDashboard = () => {
@@ -77,7 +75,6 @@ export const AssetDashboard = () => {
       ? filteredAssets.filter(asset => selectedAssets.includes(asset.id))
       : filteredAssets;
 
-    // Create CSV content
     const headers = "Asset Name,Asset ID,Asset Code,Asset No.,Asset Status,Equipment Id,Site,Building,Wing,Floor,Area,Room,Meter Type,Asset Type\n";
     const csvContent = assetsToExport.map(asset => 
       `"${asset.name}","${asset.id}","${asset.code}","${asset.assetNo}","${asset.status}","${asset.equipmentId}","${asset.site}","${asset.building}","${asset.wing}","${asset.floor}","${asset.area}","${asset.room}","${asset.meterType}","${asset.assetType}"`
@@ -103,7 +100,6 @@ export const AssetDashboard = () => {
       return;
     }
 
-    // Create a new window for printing QR codes
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
@@ -138,7 +134,6 @@ export const AssetDashboard = () => {
   };
 
   const handlePrintAllQR = () => {
-    // Print QR codes for all assets
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
@@ -218,10 +213,10 @@ export const AssetDashboard = () => {
   };
 
   return (
-    <div className="p-6 bg-[#f6f4ee] min-h-screen">
+    <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
           <span>Assets</span>
           <span>&gt;</span>
           <span>Asset List</span>
@@ -231,175 +226,180 @@ export const AssetDashboard = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-3 gap-6 mb-6">
-        <div className="bg-orange-500 text-white p-4 rounded-lg shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-              <span className="text-xl font-bold">315</span>
+        <div className="bg-orange-500 text-white p-6 rounded-lg shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-3xl font-bold mb-1">315</div>
+              <div className="text-sm font-medium">Total Asset</div>
             </div>
-            <span className="font-medium">Total Asset</span>
           </div>
         </div>
-        <div className="bg-green-500 text-white p-4 rounded-lg shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-              <span className="text-xl font-bold">298</span>
+        <div className="bg-green-500 text-white p-6 rounded-lg shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-3xl font-bold mb-1">298</div>
+              <div className="text-sm font-medium">In Use</div>
             </div>
-            <span className="font-medium">In Use</span>
           </div>
         </div>
-        <div className="bg-red-500 text-white p-4 rounded-lg shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-              <span className="text-xl font-bold">27</span>
+        <div className="bg-red-500 text-white p-6 rounded-lg shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-3xl font-bold mb-1">27</div>
+              <div className="text-sm font-medium">Breakdown</div>
             </div>
-            <span className="font-medium">Breakdown</span>
           </div>
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex items-center gap-3 mb-6">
-        <Button 
-          onClick={handleAddAsset}
-          className="bg-[#C72030] hover:bg-[#A61B2A] text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add
-        </Button>
-        <Button 
-          onClick={handleImport}
-          variant="outline" 
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
-        >
-          <Upload className="w-4 h-4 mr-2" />
-          Import
-        </Button>
-        <Button 
-          onClick={handleUpdate}
-          variant="outline" 
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Update
-        </Button>
-        <Button 
-          onClick={handleExportAll}
-          variant="outline" 
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Export All
-        </Button>
-        <Button 
-          onClick={handlePrintQR}
-          variant="outline" 
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
-        >
-          <FileText className="w-4 h-4 mr-2" />
-          Print QR
-        </Button>
-        <Button 
-          onClick={handleInActiveAssets}
-          variant="outline" 
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
-        >
-          In Active Assets
-        </Button>
-        <Button 
-          onClick={handlePrintAllQR}
-          variant="outline" 
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
-        >
-          <FileText className="w-4 h-4 mr-2" />
-          Print All QR
-        </Button>
-        <Button 
-          onClick={() => setIsFilterOpen(true)}
-          variant="outline" 
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
-        >
-          <Filter className="w-4 h-4 mr-2" />
-          Filters
-        </Button>
-        <div className="ml-auto">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search assets..."
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10 w-64 bg-white"
-            />
-          </div>
+      {/* Action Buttons Row */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <Button 
+            onClick={handleAddAsset}
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+          <Button 
+            onClick={handleImport}
+            variant="outline" 
+            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Import
+          </Button>
+          <Button 
+            onClick={handleUpdate}
+            variant="outline" 
+            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Update
+          </Button>
+          <Button 
+            onClick={handleExportAll}
+            variant="outline" 
+            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export All
+          </Button>
+          <Button 
+            onClick={handlePrintQR}
+            variant="outline" 
+            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Print QR
+          </Button>
+          <Button 
+            onClick={handleInActiveAssets}
+            variant="outline" 
+            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4"
+          >
+            In Active Assets
+          </Button>
+          <Button 
+            onClick={handlePrintAllQR}
+            variant="outline" 
+            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Print All QR
+          </Button>
+          <Button 
+            onClick={() => setIsFilterOpen(true)}
+            variant="outline" 
+            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4"
+          >
+            <Filter className="w-4 h-4 mr-2" />
+            Filters
+          </Button>
+        </div>
+        
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Search assets..."
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-10 w-64 bg-white border-gray-300"
+          />
         </div>
       </div>
 
       {/* Asset Table */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-[#f6f4ee]">
-              <TableHead className="w-12">
+            <TableRow className="bg-gray-50 border-b border-gray-200">
+              <TableHead className="w-12 px-4 py-3">
                 <input 
                   type="checkbox" 
                   onChange={(e) => handleSelectAll(e.target.checked)}
                   checked={selectedAssets.length === filteredAssets.length && filteredAssets.length > 0}
+                  className="rounded border-gray-300"
                 />
               </TableHead>
-              <TableHead>Actions</TableHead>
-              <TableHead>Asset Name</TableHead>
-              <TableHead>Asset ID</TableHead>
-              <TableHead>Asset Code</TableHead>
-              <TableHead>Asset No.</TableHead>
-              <TableHead>Asset Status</TableHead>
-              <TableHead>Equipment Id</TableHead>
-              <TableHead>Site</TableHead>
-              <TableHead>Building</TableHead>
-              <TableHead>Wing</TableHead>
-              <TableHead>Floor</TableHead>
-              <TableHead>Area</TableHead>
-              <TableHead>Room</TableHead>
-              <TableHead>Meter Type</TableHead>
-              <TableHead>Asset Type</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Name</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset ID</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Code</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset No.</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Status</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Equipment Id</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Site</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Building</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Wing</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Floor</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Area</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Room</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Meter Type</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Type</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredAssets.map((asset) => (
-              <TableRow key={asset.id}>
-                <TableCell>
+              <TableRow key={asset.id} className="border-b border-gray-100 hover:bg-gray-50">
+                <TableCell className="px-4 py-3">
                   <input 
                     type="checkbox" 
                     checked={selectedAssets.includes(asset.id)}
                     onChange={(e) => handleSelectAsset(asset.id, e.target.checked)}
+                    className="rounded border-gray-300"
                   />
                 </TableCell>
-                <TableCell>
+                <TableCell className="px-4 py-3">
                   <Button 
                     variant="ghost" 
                     size="sm"
                     onClick={() => handleViewAsset(asset.id)}
+                    className="p-1 h-8 w-8"
                   >
                     <Eye className="w-4 h-4" />
                   </Button>
                 </TableCell>
-                <TableCell className="font-medium">{asset.name}</TableCell>
-                <TableCell>{asset.id}</TableCell>
-                <TableCell>{asset.code}</TableCell>
-                <TableCell>{asset.assetNo}</TableCell>
-                <TableCell>
-                  <Badge className={getStatusColor(asset.status)}>
+                <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{asset.name}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.id}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-600 font-mono">{asset.code}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.assetNo}</TableCell>
+                <TableCell className="px-4 py-3">
+                  <Badge className={`${getStatusColor(asset.status)} text-xs px-2 py-1 rounded-full`}>
                     {asset.status}
                   </Badge>
                 </TableCell>
-                <TableCell>{asset.equipmentId}</TableCell>
-                <TableCell>{asset.site}</TableCell>
-                <TableCell>{asset.building}</TableCell>
-                <TableCell>{asset.wing}</TableCell>
-                <TableCell>{asset.floor}</TableCell>
-                <TableCell>{asset.area}</TableCell>
-                <TableCell>{asset.room}</TableCell>
-                <TableCell>{asset.meterType}</TableCell>
-                <TableCell>{asset.assetType}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.equipmentId}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.site}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.building}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.wing}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.floor}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.area}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.room}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.meterType}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.assetType}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -408,17 +408,24 @@ export const AssetDashboard = () => {
 
       {/* Pagination */}
       <div className="flex items-center justify-center gap-2 mt-6">
-        {[1, 2, 3, 4, 5, 6, 7, 8].map((page) => (
+        <Button
+          variant="default"
+          size="sm"
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-3 py-2"
+        >
+          1
+        </Button>
+        {[2, 3, 4, 5, 6, 7, 8].map((page) => (
           <Button
             key={page}
-            variant={page === 1 ? "default" : "outline"}
+            variant="outline"
             size="sm"
-            className={page === 1 ? "bg-[#C72030] hover:bg-[#A61B2A] text-white" : "bg-white hover:bg-gray-50"}
+            className="bg-white hover:bg-gray-50 border-gray-300 px-3 py-2"
           >
             {page}
           </Button>
         ))}
-        <Button variant="outline" size="sm" className="bg-white hover:bg-gray-50">Last »</Button>
+        <Button variant="outline" size="sm" className="bg-white hover:bg-gray-50 border-gray-300 px-3 py-2">Last »</Button>
       </div>
 
       {/* Modals */}
