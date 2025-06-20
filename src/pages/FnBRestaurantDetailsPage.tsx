@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -183,7 +182,7 @@ export const FnBRestaurantDetailsPage = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="restaurant" className="w-full">
-        <TabsList className="grid w-full grid-cols-6 bg-gray-100">
+        <TabsList className="grid w-full grid-cols-7 bg-gray-100">
           <TabsTrigger value="restaurant" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
             Restaurant
           </TabsTrigger>
@@ -192,6 +191,7 @@ export const FnBRestaurantDetailsPage = () => {
           <TabsTrigger value="sub-categories-setup">Sub Categories Setup</TabsTrigger>
           <TabsTrigger value="restaurant-menu">Restaurant Menu</TabsTrigger>
           <TabsTrigger value="restaurant-bookings">Restaurant Bookings</TabsTrigger>
+          <TabsTrigger value="restaurant-order">Restaurant Order</TabsTrigger>
         </TabsList>
 
         <TabsContent value="restaurant" className="mt-6">
@@ -536,6 +536,12 @@ export const FnBRestaurantDetailsPage = () => {
         <TabsContent value="restaurant-bookings">
           <div className="p-8 text-center text-gray-500">
             Restaurant Bookings content would be implemented here
+          </div>
+        </TabsContent>
+
+        <TabsContent value="restaurant-order">
+          <div className="p-8 text-center text-gray-500">
+            Restaurant Order content would be implemented here
           </div>
         </TabsContent>
       </Tabs>
