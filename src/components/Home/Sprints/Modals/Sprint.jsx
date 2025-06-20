@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import SelectBox from "../../../SelectBox";
 import { useDispatch, useSelector } from "react-redux";
@@ -154,9 +154,9 @@ const Sprints = ({ closeModal }) => {
     priority: "",
   });
   const [savedSprints, setSavedSprints] = useState([]);
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
   const dispatch = useDispatch();
-  const { fetchUsers: users = [] } = useSelector((state) => state.fetchUsers);
 
   useEffect(() => {
     dispatch(fetchUsers({ token }));
@@ -227,10 +227,15 @@ const Sprints = ({ closeModal }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmittingRef.current) return;
+
     if (!formData.title || !formData.ownerId || !formData.startDate || !formData.endDate || !formData.priority) {
       toast.error("Please fill all required fields.");
       return;
     }
+
+    setIsSubmitting(true);
+    isSubmittingRef.current = true;
 
     const payload = createSprintPayload(formData);
 
@@ -246,6 +251,8 @@ const Sprints = ({ closeModal }) => {
     } catch (error) {
       console.error("Error submitting sprint:", error);
       toast.error("Error submitting sprint.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -279,6 +286,7 @@ const Sprints = ({ closeModal }) => {
             type="button"
             onClick={handleAddSprints}
             className="absolute text-[12px] text-[red] right-2 -top-[30px] cursor-pointer mt-1"
+
           >
             Add Sprints
           </button>
@@ -287,6 +295,7 @@ const Sprints = ({ closeModal }) => {
           <button
             type="submit"
             className="flex items-center justify-center border-2 text-[black] border-[red] px-4 py-2 w-[100px]"
+            disabled={isSubmitting}
           >
             Submit
           </button>

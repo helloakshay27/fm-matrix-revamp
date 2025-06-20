@@ -151,7 +151,6 @@ const InternalTable = () => {
         size: 150,
         cell: ({ row, getValue }) => {
           let value = users.find((user) => user.id === getValue());
-          console.log(value);
           return <span className="pl-2">{value?.firstname} {value?.lastname}</span>;
         }
       },

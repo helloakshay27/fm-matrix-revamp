@@ -10,7 +10,7 @@ import SelectBox from "../../SelectBox.jsx";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers } from "../../../redux/slices/userSlice.js";
 import MultiSelectBox from "../../MultiSelectBox.jsx";
-import { createProjectTeam, fetchProjectTeams, resetSuccess } from "../../../redux/slices/projectSlice.js";
+import { createProjectTeam, fetchProjectTeams, resetProjectCreateResponse, resetSuccess } from "../../../redux/slices/projectSlice.js";
 
 const CreateNewTeam = ({ setOpenModal }) => {
   const token = localStorage.getItem("token");
@@ -135,6 +135,7 @@ const CreateNewTeam = ({ setOpenModal }) => {
 }
 
 const AddProjectModal = ({ isModalOpen, setIsModalOpen, projectname = "New Project", endText = "Next", isEdit, editData, templateDetails }) => {
+  const dispatch = useDispatch();
   const addTaskModalRef = useRef(null);
   const [tab, setTab] = useState("Details");
   const [openTagModal, setOpenTagModal] = useState(false);
@@ -157,6 +158,7 @@ const AddProjectModal = ({ isModalOpen, setIsModalOpen, projectname = "New Proje
       ease: "power3.in",
       onComplete: () => setIsModalOpen(false),
     });
+    dispatch(resetProjectCreateResponse())
   };
 
   return (

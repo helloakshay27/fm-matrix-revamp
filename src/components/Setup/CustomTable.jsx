@@ -54,7 +54,6 @@ const CustomTable = ({
         pageIndex: 0,
         pageSize: fixedRowsPerPage,
     });
-    console.log(data);
     const [isAddingInlineItem, setIsAddingInlineItem] = useState(false);
     const [newInlineItemTitle, setNewInlineItemTitle] = useState('');
     const [newInlineItemStatus, setNewInlineItemStatus] = useState(globalStatusOptionsForInlineAdd[0]);
@@ -168,7 +167,6 @@ const CustomTable = ({
         const handleEscape = (event) => {
             if (!isAddingInlineItem) return;
             if (event.key === "Escape") {
-                console.log("Escape key pressed!");
                 handleCancelInlineItem();
             }
         };

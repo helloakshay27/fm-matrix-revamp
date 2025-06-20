@@ -91,7 +91,6 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
             } else {
                 response = await dispatch(createInternalUser({ token, payload })).unwrap();
             }
-            console.log(response);
             if (!response.user_exists && !response.error) {
                 toast.success(`User ${isEditMode ? 'updated' : 'created'} successfully`, {
                     iconTheme: {
@@ -166,7 +165,7 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                         </label>
                         <input
                             type="number"
-                            placeholder="Enter mobile here"
+                            placeholder="Enter mobile number here"
                             className="border border-[#C0C0C0] w-full py-2 px-3 text-[#1B1B1B] text-[13px] focus:outline-none"
                             value={formData.mobile}
                             onChange={(e) => {

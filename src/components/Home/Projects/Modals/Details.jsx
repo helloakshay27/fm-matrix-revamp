@@ -6,10 +6,12 @@ import {
   createProject,
   editProject,
   fetchActiveProjectTypes,
+  fetchProjectDetails,
   fetchProjectTeams,
   fetchProjectTypes,
   fetchTemplates,
   removeTagFromProject,
+  resetEditSuccess,
   resetProjectSuccess,
 } from '../../../../redux/slices/projectSlice';
 import { fetchUsers } from '../../../../redux/slices/userSlice';
@@ -42,6 +44,9 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
     fetchProjectTeams: state.fetchProjectTeams.fetchProjectTeams
   }));
 
+  const { createProject: project = {} } = useSelector((state) => state.createProject);
+
+  const [isEditAllowed, setIsEditAllowed] = useState(false)
   const [formData, setFormData] = useState({
     projectTitle: "",
     description: "",
@@ -63,6 +68,12 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
     (id) => tags.find((t) => t.id === id)?.name || "",
     [tags]
   );
+
+  useEffect(() => {
+    if (isEdit) {
+      setIsEditAllowed(true);
+    }
+  }, [isEdit])
 
   useEffect(() => {
     dispatch(fetchUsers({ token }));
@@ -98,7 +109,14 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
   }, [templateDetails])
 
   useEffect(() => {
-    if (isEdit && editData?.id) {
+    if (!Array.isArray(project) && !isEdit) {
+      dispatch(fetchProjectDetails({ token, id: project.id }));
+      setIsEditAllowed(true);
+    }
+  }, [project])
+
+  useEffect(() => {
+    if ((isEdit && editData?.id) || project && project.id) {
       const mappedTags = editData.project_tags?.map((tag) => ({
         value: tag?.company_tag?.id, // used for MultiSelectBox
         label: getTagName(tag?.company_tag?.id),
@@ -203,8 +221,9 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
       task_tag_ids: formData.tags.map((tag) => tag.value),
     };
 
-    if (isEdit) {
-      dispatch(editProject({ token, id, payload }));
+    console.log(isEditAllowed)
+    if (isEdit || isEditAllowed) {
+      dispatch(editProject({ token, id: id || project.id, payload }));
     } else {
       dispatch(createProject({ token, payload }));
     }
@@ -219,7 +238,12 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
 
   useEffect(() => {
     if (editsuccess) {
-      window.location.reload();
+      if (isEdit) {
+        window.location.reload();
+      } else {
+        setTab('Milestone');
+        dispatch(resetEditSuccess());
+      }
     }
   }, [editsuccess]);
 
