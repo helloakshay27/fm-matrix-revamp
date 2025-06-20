@@ -1,20 +1,30 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 
 export const EBOMTab = () => {
+  const navigate = useNavigate();
+  
   const tableHeaders = [
     'Name', 'ID', 'Type', 'Group', 'Sub Group', 'Category', 'Criticality', 
     'Quantity', 'Unit', 'Cost', 'SAC/HSN Code', 'Min. Stock Level', 
     'Min.Order Level', 'Asset', 'Status', 'Expiry Date'
   ];
 
+  const handleAddClick = () => {
+    navigate('/maintenance/inventory/add');
+  };
+
   return (
     <div className="space-y-6">
       {/* Add Button */}
       <div>
-        <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+        <Button 
+          onClick={handleAddClick}
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>

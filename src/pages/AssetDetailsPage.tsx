@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Edit, Download } from 'lucide-react';
+import { ArrowLeft, Edit } from 'lucide-react';
 import { AssetInfoTab } from '@/components/asset-details/AssetInfoTab';
 import { AMCDetailsTab } from '@/components/asset-details/AMCDetailsTab';
 import { PPMTab } from '@/components/asset-details/PPMTab';
@@ -14,11 +14,15 @@ import { ReadingsTab } from '@/components/asset-details/ReadingsTab';
 import { LogsTab } from '@/components/asset-details/LogsTab';
 import { HistoryCardTab } from '@/components/asset-details/HistoryCardTab';
 import { CostOfOwnershipTab } from '@/components/asset-details/CostOfOwnershipTab';
+import { RepairReplaceModal } from '@/components/RepairReplaceModal';
+import { EditStatusModal } from '@/components/EditStatusModal';
 
 export const AssetDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isInUse, setIsInUse] = useState(true);
+  const [isRepairReplaceOpen, setIsRepairReplaceOpen] = useState(false);
+  const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
 
   // Mock asset data - in real app, this would come from API
   const asset = {
@@ -32,14 +36,24 @@ export const AssetDetailsPage = () => {
     navigate('/maintenance/asset');
   };
 
+  const handleEditClick = () => {
+    setIsEditStatusOpen(true);
+  };
+
   const handleEditDetails = () => {
-    // Handle edit functionality
-    console.log('Edit Details clicked');
+    navigate(`/maintenance/asset/edit/${asset.id}`);
   };
 
   const handleCreateChecklist = () => {
-    // Handle create checklist functionality
     console.log('Create Checklist clicked');
+  };
+
+  const handleSwitchChange = (checked: boolean) => {
+    setIsInUse(checked);
+    if (!checked) {
+      // When switched to breakdown, show repair/replace modal
+      setIsRepairReplaceOpen(true);
+    }
   };
 
   return (
@@ -57,7 +71,7 @@ export const AssetDetailsPage = () => {
         
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">
-            {asset.name} (#{asset.id})
+            {asset.name.toUpperCase()} (#{asset.id})
           </h1>
           
           <div className="flex items-center gap-4">
@@ -65,11 +79,19 @@ export const AssetDetailsPage = () => {
               <span className="text-sm text-gray-600">Breakdown</span>
               <Switch
                 checked={isInUse}
-                onCheckedChange={setIsInUse}
+                onCheckedChange={handleSwitchChange}
                 className="data-[state=checked]:bg-green-500"
               />
               <span className="text-sm text-gray-600">In Use</span>
             </div>
+            
+            <Button 
+              onClick={handleEditClick}
+              variant="outline"
+              className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+            >
+              <Edit className="w-4 h-4 mr-2" />
+            </Button>
             
             <Button 
               onClick={handleEditDetails}
@@ -142,6 +164,17 @@ export const AssetDetailsPage = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Modals */}
+      <RepairReplaceModal 
+        isOpen={isRepairReplaceOpen}
+        onClose={() => setIsRepairReplaceOpen(false)}
+      />
+
+      <EditStatusModal 
+        isOpen={isEditStatusOpen}
+        onClose={() => setIsEditStatusOpen(false)}
+      />
     </div>
   );
 };

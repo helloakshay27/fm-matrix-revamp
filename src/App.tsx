@@ -249,6 +249,8 @@ import { GRNDashboard } from './pages/GRNDashboard';
 
 // Import Edit GRN page
 import { EditGRNDashboard } from './pages/EditGRNDashboard';
+import { AddInventoryPage } from './pages/AddInventoryPage';
+import { EditAssetDetailsPage } from './pages/EditAssetDetailsPage';
 
 const queryClient = new QueryClient();
 
@@ -363,8 +365,15 @@ function App() {
               {/* Maintenance Routes */}
               <Route path="/maintenance/asset" element={<AssetDashboard />} />
               <Route path="/maintenance/asset/details/:id" element={<AssetDetailsPage />} />
+              <Route path="/maintenance/asset/edit/:id" element={<EditAssetDetailsPage />} />
               <Route path="/maintenance/asset/add" element={<AddAssetPage />} />
               <Route path="/maintenance/asset/inactive" element={<InActiveAssetsDashboard />} />
+              
+              {/* Inventory Routes */}
+              <Route path="/maintenance/inventory" element={<InventoryDashboard />} />
+              <Route path="/maintenance/inventory/add" element={<AddInventoryPage />} />
+              <Route path="/maintenance/inventory/details/:id" element={<InventoryDetailsPage />} />
+              <Route path="/maintenance/inventory/feeds/:id" element={<InventoryFeedsPage />} />
               
               {/* Task Routes */}
               <Route path="/maintenance/task" element={<TaskDashboard />} />
