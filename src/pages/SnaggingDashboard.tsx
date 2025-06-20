@@ -1,11 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Eye, ChevronDown } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Eye } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface SnaggingItem {
   id: number;
@@ -33,6 +32,17 @@ export const SnaggingDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeView, setActiveView] = useState('User Snag');
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const view = searchParams.get('view');
+    if (view === 'my') {
+      setActiveView('My Snags');
+    } else {
+      setActiveView('User Snag');
+    }
+  }, [location.search]);
 
   const filteredData = mockData.filter(item =>
     item.checklistName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -52,38 +62,7 @@ export const SnaggingDashboard = () => {
   return (
     <div className="p-6 bg-white">
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">SNAG LIST</h1>
-          
-          {/* Dropdown Navigation */}
-          <div className="flex gap-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  className="flex items-center gap-2"
-                >
-                  {activeView}
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-white border shadow-lg">
-                <DropdownMenuItem 
-                  onClick={() => setActiveView('User Snag')}
-                  className="cursor-pointer hover:bg-gray-100"
-                >
-                  User Snag
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => setActiveView('My Snags')}
-                  className="cursor-pointer hover:bg-gray-100"
-                >
-                  My Snags
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
+        <h1 className="text-2xl font-bold mb-4">SNAG LIST</h1>
         
         {/* Search Section */}
         <div className="flex gap-3 mb-6">

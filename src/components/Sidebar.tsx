@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -18,7 +17,15 @@ import {
 const modulesByPackage = {
   'Transitioning': [
     { name: 'HOTO', icon: HandHeart, href: '/transitioning/hoto' },
-    { name: 'Snagging', icon: CheckSquare, href: '/transitioning/snagging' },
+    { 
+      name: 'Snagging', 
+      icon: CheckSquare, 
+      href: '/transitioning/snagging',
+      subItems: [
+        { name: 'User Snag', href: '/transitioning/snagging?view=user', color: 'text-[#1a1a1a]' },
+        { name: 'My Snags', href: '/transitioning/snagging?view=my', color: 'text-[#1a1a1a]' }
+      ]
+    },
     { name: 'Design Insight', icon: BarChart3, href: '/transitioning/design-insight' },
     { 
       name: 'Fitout', 
