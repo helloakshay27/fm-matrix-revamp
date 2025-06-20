@@ -14,12 +14,6 @@ interface SubCategory {
   active: boolean;
 }
 
-interface EditSubCategoryData {
-  category: string;
-  subCategory: string;
-  id: number;
-}
-
 const mockSubCategoriesData: SubCategory[] = [
   {
     id: 1,
@@ -64,7 +58,7 @@ export const SubCategoriesSetupTable = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleUpdateSubCategory = (updatedSubCategory: EditSubCategoryData) => {
+  const handleUpdateSubCategory = (updatedSubCategory: { category: string; subCategory: string; id: number }) => {
     setSubCategories(subCategories.map(subCat => 
       subCat.id === updatedSubCategory.id ? { ...subCat, category: updatedSubCategory.category, subCategory: updatedSubCategory.subCategory } : subCat
     ));

@@ -14,12 +14,6 @@ interface Category {
   active: boolean;
 }
 
-interface EditCategoryData {
-  category: string;
-  timings: string;
-  id: number;
-}
-
 const mockCategoriesData: Category[] = [
   {
     id: 1,
@@ -64,7 +58,7 @@ export const CategoriesSetupTable = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleUpdateCategory = (updatedCategory: EditCategoryData) => {
+  const handleUpdateCategory = (updatedCategory: { category: string; timings: string; id: number }) => {
     setCategories(categories.map(cat => 
       cat.id === updatedCategory.id ? { ...cat, category: updatedCategory.category, timings: updatedCategory.timings } : cat
     ));
