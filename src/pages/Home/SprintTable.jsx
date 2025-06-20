@@ -136,7 +136,7 @@ const SprintTable = (setIsSidebarOpen) => {
                 ),
             },
             {
-                accessorKey: "Sprint Owner",
+                accessorKey: "sprint_owner_name",
                 header: "Sprint Owner",
                 size: 150,
             },
@@ -164,13 +164,17 @@ const SprintTable = (setIsSidebarOpen) => {
                 },
             },
             {
-                accessorKey: "Priority",
+                accessorKey: "priority",
                 header: "Priority",
                 size: 100,
+                cell: ({ getValue }) => {
+                    const value = getValue();
+                    return value ? value.charAt(0).toUpperCase() + value.slice(1) : "";
+                },
             },
             {
                 accessorKey: "No Of Projects",
-                header: "No Of Projects",
+                header: "Number Of Projects",
                 size: 120,
             },
         ],

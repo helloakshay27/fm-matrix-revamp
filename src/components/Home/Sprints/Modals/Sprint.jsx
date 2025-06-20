@@ -84,7 +84,7 @@ const AddSprintsModal = ({ id, deleteSprint, formData, setFormData, isReadOnly =
 
       <div className="flex items-start gap-4 mt-1 text-[12px]">
         <div className="w-1/3 space-y-2">
-          <label className="block">Start Date</label>
+          <label className="block">Start Date <span className="text-red-600">*</span></label>
           <input
             type="date"
             name="startDate"
@@ -97,7 +97,7 @@ const AddSprintsModal = ({ id, deleteSprint, formData, setFormData, isReadOnly =
         </div>
 
         <div className="w-1/3 space-y-2">
-          <label className="block">End Date</label>
+          <label className="block">End Date <span className="text-red-600">*</span></label>
           <input
             type="date"
             name="endDate"
@@ -124,7 +124,7 @@ const AddSprintsModal = ({ id, deleteSprint, formData, setFormData, isReadOnly =
       <div className="flex items-start gap-4 mt-1">
         <div className="w-1/2 flex flex-col justify-between">
           <label className="block mb-2">
-            Priority<span className="text-red-600">*</span>
+            Priority <span className="text-red-600">*</span>
           </label>
           <SelectBox
             options={[
@@ -195,6 +195,7 @@ const Sprints = ({ closeModal }) => {
   const handleAddSprints = async (e) => {
     e.preventDefault();
     if (!formData.title || !formData.ownerId || !formData.startDate || !formData.endDate || !formData.priority) {
+      toast.dismiss()
       toast.error("Please fill all required fields.");
       return;
     }
@@ -239,7 +240,6 @@ const Sprints = ({ closeModal }) => {
         toast.success("Sprint created successfully.");
         dispatch(fetchSpirints({ token }));
         closeModal();
-        window.location.reload();
       } else {
         toast.error("Sprint creation failed.");
       }
@@ -268,9 +268,9 @@ const Sprints = ({ closeModal }) => {
         ))}
         <AddSprintsModal
           id={nextId}
-          deleteSprint={() => { }}
           formData={formData}
           setFormData={setFormData}
+          deleteSprint={handleDeleteSprint}
           isReadOnly={false}
           hasSavedSprints={savedSprints.length > 0}
         />
