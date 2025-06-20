@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -36,6 +35,14 @@ export const AddInventoryPage = () => {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleEcoFriendlyChange = (checked: boolean | "indeterminate") => {
+    setEcoFriendly(checked === true);
+  };
+
+  const handleTaxApplicableChange = (checked: boolean | "indeterminate") => {
+    setTaxApplicable(checked === true);
   };
 
   const handleSubmit = () => {
@@ -121,7 +128,7 @@ export const AddInventoryPage = () => {
                 <Checkbox 
                   id="eco-friendly" 
                   checked={ecoFriendly}
-                  onCheckedChange={setEcoFriendly}
+                  onCheckedChange={handleEcoFriendlyChange}
                 />
                 <Label htmlFor="eco-friendly">Eco-friendly Inventory</Label>
               </div>
@@ -301,7 +308,7 @@ export const AddInventoryPage = () => {
                 <Checkbox 
                   id="tax-applicable" 
                   checked={taxApplicable}
-                  onCheckedChange={setTaxApplicable}
+                  onCheckedChange={handleTaxApplicableChange}
                 />
                 <Label htmlFor="tax-applicable">Tax Applicable</Label>
               </div>
