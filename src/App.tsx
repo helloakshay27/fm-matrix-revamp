@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -144,6 +145,7 @@ import { EditEmployeePage } from './pages/setup/EditEmployeePage';
 import { CheckInMarginDashboard } from './pages/setup/CheckInMarginDashboard';
 
 // Import AMC pages
+import { AMCDashboard } from './pages/AMCDashboard';
 import { AddAMCPage } from './pages/AddAMCPage';
 import { AMCDetailsPage } from './pages/AMCDetailsPage';
 import { EditAMCPage } from './pages/EditAMCPage';
@@ -368,6 +370,12 @@ function App() {
               <Route path="/maintenance/asset/edit/:id" element={<EditAssetDetailsPage />} />
               <Route path="/maintenance/asset/add" element={<AddAssetPage />} />
               <Route path="/maintenance/asset/inactive" element={<InActiveAssetsDashboard />} />
+              
+              {/* AMC Routes */}
+              <Route path="/maintenance/amc" element={<AMCDashboard />} />
+              <Route path="/maintenance/amc/add" element={<AddAMCPage />} />
+              <Route path="/maintenance/amc/details/:id" element={<AMCDetailsPage />} />
+              <Route path="/maintenance/amc/edit/:id" element={<EditAMCPage />} />
               
               {/* Inventory Routes */}
               <Route path="/maintenance/inventory" element={<InventoryDashboard />} />
