@@ -8,19 +8,19 @@ import { Input } from "@/components/ui/input";
 interface AddCategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (category: { category: string; amount: string }) => void;
+  onSubmit: (category: { category: string; timings: string }) => void;
 }
 
 export const AddCategoryModal = ({ isOpen, onClose, onSubmit }: AddCategoryModalProps) => {
   const [formData, setFormData] = useState({
     category: "",
-    amount: ""
+    timings: ""
   });
 
   const handleSubmit = () => {
     if (formData.category.trim()) {
       onSubmit(formData);
-      setFormData({ category: "", amount: "" });
+      setFormData({ category: "", timings: "" });
       onClose();
     }
   };
@@ -29,17 +29,17 @@ export const AddCategoryModal = ({ isOpen, onClose, onSubmit }: AddCategoryModal
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">Add Category</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">ADD Category</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="category">
-              Category <span className="text-red-500">*</span>
+            <Label htmlFor="category" className="text-sm">
+              Category
             </Label>
             <Input
               id="category"
-              placeholder=""
+              placeholder="Enter Category Name"
               value={formData.category}
               onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
               className="w-full"
@@ -47,12 +47,14 @@ export const AddCategoryModal = ({ isOpen, onClose, onSubmit }: AddCategoryModal
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount</Label>
+            <Label htmlFor="timings" className="text-sm">
+              Timings
+            </Label>
             <Input
-              id="amount"
-              placeholder=""
-              value={formData.amount}
-              onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+              id="timings"
+              placeholder="Enter Timings"
+              value={formData.timings}
+              onChange={(e) => setFormData(prev => ({ ...prev, timings: e.target.value }))}
               className="w-full"
             />
           </div>

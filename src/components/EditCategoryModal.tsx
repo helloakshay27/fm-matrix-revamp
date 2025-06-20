@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 interface Category {
   id: number;
   category: string;
-  amount: string;
+  timings: string;
   active: boolean;
 }
 
@@ -22,14 +22,14 @@ interface EditCategoryModalProps {
 export const EditCategoryModal = ({ isOpen, onClose, category, onSubmit }: EditCategoryModalProps) => {
   const [formData, setFormData] = useState({
     category: "",
-    amount: ""
+    timings: ""
   });
 
   useEffect(() => {
     if (category) {
       setFormData({
         category: category.category,
-        amount: category.amount
+        timings: category.timings
       });
     }
   }, [category]);
@@ -39,10 +39,10 @@ export const EditCategoryModal = ({ isOpen, onClose, category, onSubmit }: EditC
       onSubmit({
         ...category,
         category: formData.category,
-        amount: formData.amount
+        timings: formData.timings
       });
     }
-    setFormData({ category: "", amount: "" });
+    setFormData({ category: "", timings: "" });
     onClose();
   };
 
@@ -50,17 +50,16 @@ export const EditCategoryModal = ({ isOpen, onClose, category, onSubmit }: EditC
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">Edit Category</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">Edit Status</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="edit-category">
-              Category <span className="text-red-500">*</span>
+            <Label htmlFor="edit-category" className="text-sm">
+              Category
             </Label>
             <Input
               id="edit-category"
-              placeholder=""
               value={formData.category}
               onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
               className="w-full"
@@ -68,12 +67,13 @@ export const EditCategoryModal = ({ isOpen, onClose, category, onSubmit }: EditC
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-amount">Amount</Label>
+            <Label htmlFor="edit-timings" className="text-sm">
+              Timings
+            </Label>
             <Input
-              id="edit-amount"
-              placeholder=""
-              value={formData.amount}
-              onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+              id="edit-timings"
+              value={formData.timings}
+              onChange={(e) => setFormData(prev => ({ ...prev, timings: e.target.value }))}
               className="w-full"
             />
           </div>
@@ -82,7 +82,7 @@ export const EditCategoryModal = ({ isOpen, onClose, category, onSubmit }: EditC
         <div className="flex justify-center pt-4">
           <Button 
             onClick={handleSubmit}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
+            className="bg-green-600 hover:bg-green-700 text-white px-8"
           >
             Submit
           </Button>
