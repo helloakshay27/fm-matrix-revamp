@@ -380,7 +380,7 @@ const Tasks = ({ isEdit }) => {
     const payload = createTaskPayload(formData);
 
     try {
-      const resultAction = await dispatch(createTask({ token, payload }));
+      const resultAction = await dispatch(createTask({ token, payload })).unwrap();
       if (createTask.fulfilled.match(resultAction)) {
         toast.success("Task created successfully.");
         setSavedTasks([...savedTasks, { id: nextId, formData }]);

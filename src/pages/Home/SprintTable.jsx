@@ -13,6 +13,7 @@ import TaskActions from "../../components/Home/TaskActions";
 import BoardsSection from "../../components/Home/BoardsSection";
 import { Milestone } from "lucide-react";
 import SprintGantt from "../../components/Sprints/SprintGantt";
+import { fetchUsers } from "../../redux/slices/userSlice";
 
 const globalStatusOptions = [
     "open",
@@ -45,29 +46,54 @@ const formatDuration = (days) => {
 const SprintTable = (setIsSidebarOpen) => {
     const token = localStorage.getItem("token");
     const dispatch = useDispatch();
-    const newSpirints = useSelector(
-        (state) => state.fetchSpirints?.fetchSpirints || []
-    );
+    const {
+        fetchSpirints:newSpirints,
+        loading: sprintsLoading,
+        error: sprintsError,
+    }=useSelector((state) => state.fetchSpirints);
 
+    const{
+        fetchUsers:users,
+        loading:usersLoading,
+        error:usersError
+    }=useSelector((state) => state.fetchUsers);
+
+    const {
+        loading:createSprintLoading
+    }=useSelector((state) => state.postSprint);
+  
     const [data, setData] = useState([]);
+    const [loaderMessage, setLoaderMessage] = useState("");
 
-    const handlefetchSpirints = () => {
+    const handlefetchSpirints = async() => {
         try {
-            dispatch(fetchSpirints({ token })).unwrap();
+           await  dispatch(fetchSpirints({ token })).unwrap();
         } catch (error) {
             console.log(error);
         }
     };
 
+    useEffect(()=>{
+      if(sprintsLoading || usersLoading){
+        setLoaderMessage("Loading...");
+      }else if(createSprintLoading)
+      {
+        setLoaderMessage("Creating Sprint...");
+      }else{
+        setLoaderMessage("");
+      }
+    },[sprintsLoading,usersLoading,createSprintLoading])
+
     const handleCreateSprints = async (payload) => {
         try {
-            dispatch(postSprint({ token, payload })).unwrap();
+            await dispatch(postSprint({ token, payload })).unwrap();
         } catch (error) {
             console.log(error);
         }
     };
     useEffect(() => {
         handlefetchSpirints();
+        dispatch(fetchUsers({ token }));
     }, [dispatch]);
 
     useEffect(() => {
@@ -139,6 +165,7 @@ const SprintTable = (setIsSidebarOpen) => {
                 accessorKey: "sprint_owner_name",
                 header: "Sprint Owner",
                 size: 150,
+
             },
             {
                 accessorKey: "start_date",
@@ -178,7 +205,7 @@ const SprintTable = (setIsSidebarOpen) => {
                 size: 120,
             },
         ],
-        []
+        [data]
     );
 
     const [selectedType, setSelectedType] = useState(() => {
@@ -209,6 +236,9 @@ const SprintTable = (setIsSidebarOpen) => {
                     onAdd={() => setIsModalOpen(true)}
                     onCreateInlineItem={handleCreateSprints}
                     onRefreshInlineData={handlefetchSpirints}
+                    loading={sprintsLoading||createSprintLoading || usersLoading}
+                    loadingMessage={loaderMessage}
+                    users={users}
                 />
             ) : (
                 <></>

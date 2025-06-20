@@ -35,7 +35,11 @@ const NewIssuesTextField = ({ value, onChange, onEnterPress, inputRef, placehold
       onEnterPress();
     }
   };
-  return <input ref={inputRef} type="text" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`${validator ? 'border border-red-500' : 'border-none'} w-full p-1 focus:outline-none rounded text-[12px] `} style={{ background: "none" }} />;
+
+  const handleBlur=()=>{
+    onEnterPress();
+  }
+  return <input ref={inputRef} type="text" onBlur={handleBlur} placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`${validator ? 'border border-red-500' : 'border-none'} w-full p-1 focus:outline-none rounded text-[12px] `} style={{ background: "none" }} />;
 };
 
 const NewIssuesDateEditor = ({ value, onChange, onEnterPress, placeholder, validator ,min}) => {

@@ -16,7 +16,7 @@ const ActionIcons = ({ row, onEdit }) => {
   const dispatch = useDispatch();
   const [isActive, setIsActive] = useState(!!row.original.active);
 
-  const handleToggle = () => {
+  const handleToggle = async() => {
     const updatedValue = !isActive;
     setIsActive(updatedValue);
 
@@ -28,9 +28,9 @@ const ActionIcons = ({ row, onEdit }) => {
         active: updatedValue ? 1 : 0,
       },
     };
-
-    dispatch(fetchUpdateUser({ token, userId: userData.id, updatedData: payload }))
-      .then(() => {
+    try{
+    await dispatch(fetchUpdateUser({ token, userId: userData.id, updatedData: payload })).unwrap();
+        await dispatch(fetchExternalUser({ token })).unwrap();
         toast.dismiss();
         toast.success(`Status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
           iconTheme: {
@@ -38,8 +38,8 @@ const ActionIcons = ({ row, onEdit }) => {
             secondary: 'white', // The circle background
           },
         });
-      })
-      .catch((error) => {
+      }
+      catch(error){
         toast.dismiss();
         toast.error('Failed to update status:', error, {
           iconTheme: {
@@ -47,7 +47,7 @@ const ActionIcons = ({ row, onEdit }) => {
             secondary: 'white', // The circle background
           },
         });
-      });
+      };
   };
 
   return (
@@ -165,7 +165,7 @@ const ExternalTable = () => {
         />
       ),
     },
-  ], []);
+  ], [externalUsers]);
 
   return (
     <div>

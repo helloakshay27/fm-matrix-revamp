@@ -86,7 +86,7 @@ const NewSubtaskTextField = ({ value, onChange, onEnterPress, inputRef, placehol
       onEnterPress();
     }
   };
-  return <input ref={inputRef} type="text" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`w-full p-1 ${validator ? 'border-red-500' : 'border-gray-300'} focus:outline-none rounded text-sm border border-gray-300`} />;
+  return <input ref={inputRef} type="text" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`w-full p-1 ${validator ? 'border-red-500' : 'border-gray-300'} focus:outline-none rounded text-sm `} />;
 };
 
 const DateEditor = ({

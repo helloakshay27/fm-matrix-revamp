@@ -27,7 +27,7 @@ const ActionIcons = ({ row, onEditClick }) => {
 
     try {
       await dispatch(fetchUpdateUser({ token, userId: userData.id, updatedData: payload })).unwrap();
-      setIsActive(updatedValue);
+      await dispatch(fetchInternalUser({ token })).unwrap();
       toast.dismiss();
       toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
         iconTheme: {
@@ -167,7 +167,7 @@ const InternalTable = () => {
         cell: ({ row }) => <ActionIcons row={row} onEditClick={handleEditClick} />,
       },
     ],
-    [users]
+    [users,internalUser]
   );
 
   return (

@@ -8,7 +8,8 @@ import {
 } from '@tanstack/react-table';
 import StatusBadge from '../Home/Projects/statusBadge';
 import { useLocation } from 'react-router-dom';
-
+import Loader from '../Loader';
+import SelectBox from '../SelectBox';
 // --- Input Components for Inline Add Row ---
 const InlineAddTextField = ({ value, onChange, onEnterPress, inputRef, placeholder, className, validator }) => {
     const handleKeyDown = (event) => {
@@ -20,18 +21,19 @@ const InlineAddTextField = ({ value, onChange, onEnterPress, inputRef, placehold
     return <input ref={inputRef} type="text" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`${validator ? 'border border-red-500' : ' border-none'} w-full p-1 h-full focus:outline-none rounded text-[13px] border border-gray-300 ${className || ''}`} />;
 };
 
-const InlineAddDateEditor = ({ value, onChange, onEnterPress, placeholder, className, validator }) => {
+const InlineAddDateEditor = ({ value, onChange, onEnterPress, placeholder, className, validator ,min}) => {
     const handleKeyDown = (event) => {
         if (event.key === 'Enter' && onEnterPress) {
             event.preventDefault();
             onEnterPress();
         }
     };
-    return <input type="date" placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`${validator ? 'border border-red-500' : ' border-none'} w-full p-1 h-full focus:outline-none rounded text-[13px] border border-gray-300 ${className || ''}`} />;
+    return <input type="date" min={min} placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={`${validator ? 'border border-red-500' : ' border-none'} w-full p-1 h-full focus:outline-none rounded text-[13px] border border-gray-300 ${className || ''}`} />;
 };
 // --- End Input Components ---
 
 const globalStatusOptionsForInlineAdd = ['open', 'in_progress', 'completed', 'on_hold'];
+const globalPriorityOptions = ['low', 'medium', 'high'];
 
 
 const CustomTable = ({
@@ -47,7 +49,10 @@ const CustomTable = ({
     onRefreshInlineData,
     layout = "block",
     showDropdown = false,
-    inlineAddButtonText = "+ Add Item Inline" // Text for the button at the bottom of the table
+    inlineAddButtonText = "+ Add Item Inline" ,// Text for the button at the bottom of the table
+    loadingMessage="",
+    loading = false,
+    users=null,
 }) => {
     const location = useLocation();
     const [pagination, setPagination] = useState({
@@ -59,6 +64,8 @@ const CustomTable = ({
     const [newInlineItemTitle, setNewInlineItemTitle] = useState('');
     const [newInlineItemStatus, setNewInlineItemStatus] = useState(globalStatusOptionsForInlineAdd[0]);
     const [newInlineItemStartDate, setNewInlineItemStartDate] = useState('');
+    const [newInlineItemResponsibleId, setNewInlineItemResponsibleId] = useState('');
+    const [newInlineItemPriority, setNewInlineItemPriority] = useState('');
     const [newInlineItemEndDate, setNewInlineItemEndDate] = useState('');
     const [inlineItemLocalError, setInlineItemLocalError] = useState(null);
     const [isSavingInlineItem, setIsSavingInlineItem] = useState(false);
@@ -66,6 +73,7 @@ const CustomTable = ({
 
     const newInlineItemTitleInputRef = useRef(null);
     const newInlineItemFormRowRef = useRef(null);
+
 
     const table = useReactTable({
         data,
@@ -120,6 +128,8 @@ const CustomTable = ({
         setValidator(false);
         const newInlineItemData = {
             name: newInlineItemTitle.trim(),
+            owner_id: newInlineItemResponsibleId,
+            priority: newInlineItemPriority,
             status: newInlineItemStatus,
             start_date: newInlineItemStartDate || null,
             end_date: newInlineItemEndDate || null,
@@ -128,7 +138,7 @@ const CustomTable = ({
         try {
             await onCreateInlineItem(newInlineItemData);
             if (typeof onRefreshInlineData === 'function') {
-                onRefreshInlineData();
+                await onRefreshInlineData();
             }
             handleCancelInlineItem();
         } catch (error) {
@@ -138,7 +148,7 @@ const CustomTable = ({
         }
     }, [
         newInlineItemTitle, newInlineItemStatus, newInlineItemStartDate, newInlineItemEndDate,
-        onCreateInlineItem, onRefreshInlineData, handleCancelInlineItem
+        onCreateInlineItem, onRefreshInlineData, handleCancelInlineItem,newInlineItemResponsibleId,newInlineItemPriority
     ]);
 
     useEffect(() => {
@@ -149,7 +159,7 @@ const CustomTable = ({
 
     useEffect(() => {
         const handleClickOutsideInlineForm = (event) => {
-            if (!isAddingInlineItem || isSavingInlineItem || !newInlineItemFormRowRef.current || newInlineItemFormRowRef.current.contains(event.target)) {
+            if (!isAddingInlineItem ||isSavingInlineItem || !newInlineItemFormRowRef.current || newInlineItemFormRowRef.current.contains(event.target)) {
                 return;
             }
 
@@ -187,9 +197,15 @@ const CustomTable = ({
 
     // Helper to get column width or a default if not available (e.g. for a new column)
     const getColWidth = (index) => tableColumns[index]?.getSize() ?? (index < 4 ? 150 : 100);
+    
+    let content;
+    if(loading) {
+        content=(
+            <Loader message={loadingMessage} />
+        )
+    } else{
+    content= (
 
-
-    return (
         <>
             <div className={`px-4 pl-7 ${!location.pathname.startsWith('/sprint-list') && "pt-4"} ${isInline ? "flex justify-between items-center" : ""}`}>
                 <div className={isInline ? "" : "bg-[#F5F7F7] px-3 py-1 rounded inline-block"}>
@@ -261,30 +277,35 @@ const CustomTable = ({
                                     </tr>
                                 );
                             })}
-                            {isAddingInlineItem && (
-                                <tr ref={newInlineItemFormRowRef} style={{ height: `${rowHeight}px` }}>
-                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(0) }}>&nbsp;</td>
-                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(1) }}>
-                                        <InlineAddTextField inputRef={newInlineItemTitleInputRef} value={newInlineItemTitle} onChange={(e) => { setNewInlineItemTitle(e.target.value); if (inlineItemLocalError) setInlineItemLocalError(null); }} onEnterPress={handleSaveInlineItem} placeholder="Title" validator={validator} />
-                                    </td>
-                                    <td className="px-1 py-0 align-middle h-full flex items-center justify-center" style={{ width: getColWidth(2) }}>
-                                        <StatusBadge statusOptions={globalStatusOptionsForInlineAdd} status={newInlineItemStatus} onStatusChange={setNewInlineItemStatus} />
-                                    </td>
-                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(3) }}>&nbsp;</td>
-                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(4) }}>
-                                        <InlineAddDateEditor value={newInlineItemStartDate} onChange={(e) => setNewInlineItemStartDate(e.target.value)} onEnterPress={handleSaveInlineItem} placeholder="Start Date" validator={validator} />
-                                    </td>
-                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(5) }}>
-                                        <InlineAddDateEditor value={newInlineItemEndDate} onChange={(e) => setNewInlineItemEndDate(e.target.value)} onEnterPress={handleSaveInlineItem} placeholder="End Date" validator={validator} />
-                                    </td>
-                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(6) }}>&nbsp;</td>
-                                    <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(7) }}>&nbsp;</td>
+                                {isAddingInlineItem && (
+                                    <tr ref={newInlineItemFormRowRef} style={{ height: `${rowHeight}px` }}>
+                                        <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(0) }}>&nbsp;</td>
+                                        <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(1) }}>
+                                            <InlineAddTextField inputRef={newInlineItemTitleInputRef} value={newInlineItemTitle} onChange={(e) => { setNewInlineItemTitle(e.target.value); if (inlineItemLocalError) setInlineItemLocalError(null); }} onEnterPress={handleSaveInlineItem} placeholder="Title" validator={validator} />
+                                        </td>
+                                        <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(2) }}>
+                                            <StatusBadge statusOptions={globalStatusOptionsForInlineAdd} status={newInlineItemStatus} onStatusChange={setNewInlineItemStatus} />
+                                        </td>
+                                        <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(3) }}>
+                                            <SelectBox table={true} options={users.map((user)=>{return {label: user.firstname + " " + user.lastname, value: user.id}})} value={newInlineItemResponsibleId} onChange={(selectedOptionValue) => setNewInlineItemResponsibleId(selectedOptionValue)} />
+                                        </td>
+                                        <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(4) }}>
+                                            <InlineAddDateEditor value={newInlineItemStartDate} min={new Date().toISOString().split("T")[0]} onChange={(e) => setNewInlineItemStartDate(e.target.value)} onEnterPress={handleSaveInlineItem} placeholder="Start Date" validator={validator} />
+                                        </td>
+                                        <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(5) }}>
+                                            <InlineAddDateEditor value={newInlineItemEndDate} min={newInlineItemStartDate} onChange={(e) => setNewInlineItemEndDate(e.target.value)} onEnterPress={handleSaveInlineItem} placeholder="End Date" validator={validator} />
+                                        </td>
+                                        <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(6) }}></td>
+                                        <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(7) }}>
+                                            <StatusBadge statusOptions={globalPriorityOptions} status={newInlineItemPriority} onStatusChange={setNewInlineItemPriority} />
+                                        </td>
+                                        {/* <td className="px-1 py-0 align-middle h-full" style={{ width: getColWidth(8) }}>&nbsp;</td> */}
 
-                                    {totalTableColumns > 8 && tableColumns.slice(8).map((column, index) => (
-                                        <td key={`new-inline-extra-empty-${column.id}`} className="px-1 py-0 align-middle h-full" style={{ width: column.getSize() }}>&nbsp;</td>
-                                    ))}
-                                </tr>
-                            )}
+                                        {totalTableColumns > 8 && tableColumns.slice(8).map((column, index) => (
+                                            <td key={`new-inline-extra-empty-${column.id}`} className="px-1 py-0 align-middle h-full" style={{ width: column.getSize() }}>&nbsp;</td>
+                                        ))}
+                                    </tr>
+                                )}
 
                             {Array.from({ length: numEmptyRowsToAdd }).map((_, index) => ( /* ... existing empty row mapping ... */
                                 <tr key={`empty-row-${index}`} style={{ height: `${rowHeight}px` }} className="even:bg-[#D5DBDB4D] pointer-events-none">
@@ -367,6 +388,10 @@ const CustomTable = ({
             </div>
         </>
     );
+}
+return(
+    <div>{content}</div>
+)
 };
 
 export default CustomTable;

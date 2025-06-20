@@ -14,7 +14,7 @@ const ActionIcons = ({ row, onEdit }) => {
   const [isActive, setIsActive] = useState(row.original.active);
   const dispatch = useDispatch();
 
-  const handleToggle = () => {
+  const handleToggle = async() => {
     const updatedValue = !isActive;
     setIsActive(updatedValue);
 
@@ -26,7 +26,8 @@ const ActionIcons = ({ row, onEdit }) => {
       },
     };
 
-    dispatch(editRole({ token, id: row.original.id, payload }));
+    await dispatch(editRole({ token, id: row.original.id, payload })).unwrap();
+    await dispatch(fetchRoles({ token })).unwrap();
     toast.dismiss();
     toast.success(`Status ${updatedValue ? "activated" : "deactivated"} successfully`, {
       iconTheme: {
