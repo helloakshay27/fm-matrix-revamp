@@ -100,6 +100,10 @@ const IssuesTable = () => {
       loading:loadingIssueType,
       error:issueTypeFetchError
     }=useSelector((state) => state.fetchIssueType || { issueType: [], loading: false, error: null });
+
+    const {
+      fetchProjectDetails: projectDetails,
+    }=useSelector((state) => state.fetchProjectDetails || { projectDetails: [], loading: false, error: null });
   
 
   const [data, setData] = useState([]);
@@ -223,15 +227,20 @@ useEffect(() => {
   }, [dispatch, users, loadingUsers, usersFetchError]);
 
  useEffect(()=>{  
+  if(parentId!==null && parentId!==undefined ){
+      setNewIssuesProjectId(parentId);
+    }else{
    if(!loadingProjects && (!Array.isArray(projectOptions) || projectOptions.length === 0)){
     dispatch(fetchProjects({token})).unwrap();
     setProjectOptions(projects.map((project) => ({
       value: project.id,
       label: project.title
     })))
-   }
+    }
+  }
    
- },[dispatch,loadingProjects,projectOptions]);
+   
+ },[dispatch,loadingProjects,projectOptions,parentId]);
 
   useEffect(() => {
   let allIssues;
@@ -443,14 +452,7 @@ useEffect(() => {
       { accessorKey: 'id', header: 'Issue id', size: 80,
         cell: ({getValue}) => <span className="text-xs text-gray-500 px-1">{`I-${getValue()?.toString().slice(-5)}`}</span>
       },
-     ...(parentId ? [
-      {
-        accessorKey:'projectName',
-        header: 'Project Name',
-        size: 150,
-        cell: info => info.getValue()
-      }
-     ] : [
+     
       {
         accessorKey:'projectName',
         header: 'Project Name',
@@ -464,9 +466,7 @@ useEffect(() => {
         accessorKey:'taskName'
         ,header: 'Task Name',
         size: 150
-      }
-       
-     ]),
+      },
       { accessorKey: 'issueTitle', header: 'Issues Title', size: 120,
         cell: info => info.getValue()
       },
@@ -539,7 +539,7 @@ useEffect(() => {
 
 
   let pageContent;
-  if (loadingAllIssues || (loadingUsers && !userFetchInitiatedRef.current) || isSavingIssues || isUpdatingIssue) { // Added isSavingIssues and isUpdatingIssue to main loader
+  if (loadingAllIssues || (loadingUsers && !userFetchInitiatedRef.current) || isSavingIssues || isUpdatingIssue || loadingProjects || loadingMilestone || loadingTasks) { // Added isSavingIssues and isUpdatingIssue to main loader
     pageContent = (<div className="p-4 flex justify-center items-center min-h-[200px]"><ArrowPathIcon className="h-8 w-8 animate-spin text-gray-500 mr-2" /> Loading data...</div>);
   } else if (allIssuesError || usersFetchError) {
     pageContent = (<div className="p-4 text-red-600 bg-red-100 border border-red-400 rounded">
@@ -582,12 +582,11 @@ useEffect(() => {
               {isAddingNewIssues && (
                 <tr ref={newIssueFormRowRef} style={{height: `${rowHeight}px` }}>
                   <td className="border p-1 text-xs text-gray-400 align-middle">NEW</td>
-                   {
-                     parentId?(
-                       <td colSpan={1}></td> 
-                     ):(
-                      <>
                        <td className="border p-1 text-xs text-gray-400 align-middle">
+                        {parentId?(
+                        <span className="text-xs text-gray-600">{projectDetails?.title}</span>
+                        ):
+                        (
                          <SelectBox
                            options={projectOptions}
                            value={newIssuesProjectId}
@@ -595,6 +594,8 @@ useEffect(() => {
                            placeholder="Select Project"
                            table={true}
                          />
+                        )
+                      }
                        </td>
                        <td className="border p-1 text-xs text-gray-400 align-middle">
                          <SelectBox
@@ -613,10 +614,7 @@ useEffect(() => {
                            placeholder="Select Task"
                            table={true}
                          />
-                       </td>
-                       </>
-                     )
-                   }
+                       </td>                     
                   <td className="border p-1 align-middle">
                     <NewIssuesTextField
                       inputRef={newIssuesTitleInputRef}
