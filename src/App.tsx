@@ -95,6 +95,7 @@ import { EditStaffPage } from './pages/EditStaffPage';
 import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
 import { FnBRestaurantDetailsPage } from './pages/FnBRestaurantDetailsPage';
 import ParkingDashboard from './pages/ParkingDashboard';
+import ParkingDetailsPage from './pages/ParkingDetailsPage';
 import ParkingBookingsDashboard from './pages/ParkingBookingsDashboard';
 
 // Import Design Insights pages
@@ -462,6 +463,7 @@ function App() {
               <Route path="/vas/fnb" element={<FnBRestaurantDashboard />} />
               <Route path="/vas/fnb/details/:id" element={<FnBRestaurantDetailsPage />} />
               <Route path="/vas/parking" element={<ParkingDashboard />} />
+              <Route path="/vas/parking/details/:clientId" element={<ParkingDetailsPage />} />
               <Route path="/vas/parking/bookings" element={<ParkingBookingsDashboard />} />
               
               {/* Space Management Routes */}

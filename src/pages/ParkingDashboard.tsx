@@ -33,11 +33,15 @@ const ParkingDashboard = () => {
   ];
 
   const handleViewBookings = () => {
-    navigate('/property/parking/bookings');
+    navigate('/vas/parking/bookings');
   };
 
   const handleExport = () => {
     setIsBulkUploadOpen(true);
+  };
+
+  const handleViewDetails = (clientId: string) => {
+    navigate(`/vas/parking/details/${encodeURIComponent(clientId)}`);
   };
 
   return (
@@ -105,7 +109,10 @@ const ParkingDashboard = () => {
               {parkingData.map((row) => (
                 <TableRow key={row.id} className="hover:bg-gray-50">
                   <TableCell className="border-r">
-                    <button className="text-gray-400 hover:text-gray-600">
+                    <button 
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      onClick={() => handleViewDetails(row.id)}
+                    >
                       <Eye className="w-4 h-4" />
                     </button>
                   </TableCell>
