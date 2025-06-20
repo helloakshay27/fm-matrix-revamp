@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Save } from 'lucide-react';
 import { StatusSetupTable } from '../components/StatusSetupTable';
 import { CategoriesSetupTable } from '../components/CategoriesSetupTable';
+import { SubCategoriesSetupTable } from '../components/SubCategoriesSetupTable';
 
 interface Restaurant {
   id: number;
@@ -443,9 +444,15 @@ export const FnBRestaurantDetailsPage = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="sub-categories-setup">
-          <div className="p-8 text-center text-gray-500">
-            Sub Categories Setup content would be implemented here
+        <TabsContent value="sub-categories-setup" className="mt-6">
+          <div className="space-y-4">
+            <div className="flex items-center text-sm text-[#1a1a1a] opacity-70 mb-2">
+              <span>Restaurant</span>
+              <span className="mx-2">{'>'}</span>
+              <span>Restaurant Status</span>
+            </div>
+            <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT STATUS</h2>
+            <SubCategoriesSetupTable />
           </div>
         </TabsContent>
 

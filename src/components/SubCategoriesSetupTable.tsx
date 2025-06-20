@@ -3,76 +3,76 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
-import { AddCategoryModal } from './AddCategoryModal';
+import { AddSubCategoryModal } from './AddSubCategoryModal';
 import { EditCategoryModal } from './EditCategoryModal';
 import { DeletePatrollingModal } from './DeletePatrollingModal';
 
-interface Category {
+interface SubCategory {
   id: number;
   category: string;
-  timings: string;
+  subCategory: string;
   active: boolean;
 }
 
-const mockCategoriesData: Category[] = [
+const mockSubCategoriesData: SubCategory[] = [
   {
     id: 1,
     category: 'Breakfast',
-    timings: '9 Am to 1 Pm',
+    subCategory: 'Continental',
     active: true
   },
   {
     id: 2,
     category: 'Lunch',
-    timings: '1 Pm to 3:30 Pm',
+    subCategory: 'North Indian',
     active: true
   },
   {
     id: 3,
     category: 'Dinner',
-    timings: '5 Pm to 11:45 Pm',
+    subCategory: 'South Indian',
     active: true
   }
 ];
 
-export const CategoriesSetupTable = () => {
-  const [categories, setCategories] = useState<Category[]>(mockCategoriesData);
+export const SubCategoriesSetupTable = () => {
+  const [subCategories, setSubCategories] = useState<SubCategory[]>(mockSubCategoriesData);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
+  const [selectedSubCategory, setSelectedSubCategory] = useState<SubCategory | null>(null);
+  const [subCategoryToDelete, setSubCategoryToDelete] = useState<number | null>(null);
 
-  const handleAddCategory = (newCategory: { category: string; amount: string }) => {
-    const category: Category = {
-      id: categories.length + 1,
-      category: newCategory.category,
-      timings: newCategory.amount, // Using amount field as timings
+  const handleAddSubCategory = (newSubCategory: { category: string; subCategory: string }) => {
+    const subCategory: SubCategory = {
+      id: subCategories.length + 1,
+      category: newSubCategory.category,
+      subCategory: newSubCategory.subCategory,
       active: true
     };
-    setCategories([...categories, category]);
+    setSubCategories([...subCategories, subCategory]);
   };
 
-  const handleEditCategory = (category: Category) => {
-    setSelectedCategory(category);
+  const handleEditSubCategory = (subCategory: SubCategory) => {
+    setSelectedSubCategory(subCategory);
     setIsEditModalOpen(true);
   };
 
-  const handleUpdateCategory = (updatedCategory: { category: string; timings: string; id: number }) => {
-    setCategories(categories.map(cat => 
-      cat.id === updatedCategory.id ? { ...cat, category: updatedCategory.category, timings: updatedCategory.timings } : cat
+  const handleUpdateSubCategory = (updatedSubCategory: { category: string; subCategory: string; id: number }) => {
+    setSubCategories(subCategories.map(subCat => 
+      subCat.id === updatedSubCategory.id ? { ...subCat, category: updatedSubCategory.category, subCategory: updatedSubCategory.subCategory } : subCat
     ));
   };
 
-  const handleDeleteCategory = (id: number) => {
-    setCategoryToDelete(id);
+  const handleDeleteSubCategory = (id: number) => {
+    setSubCategoryToDelete(id);
     setIsDeleteModalOpen(true);
   };
 
   const confirmDelete = () => {
-    if (categoryToDelete) {
-      setCategories(categories.filter(cat => cat.id !== categoryToDelete));
-      setCategoryToDelete(null);
+    if (subCategoryToDelete) {
+      setSubCategories(subCategories.filter(subCat => subCat.id !== subCategoryToDelete));
+      setSubCategoryToDelete(null);
     }
   };
 
@@ -93,19 +93,19 @@ export const CategoriesSetupTable = () => {
           <TableHeader>
             <TableRow className="bg-gray-50">
               <TableHead className="text-center">Actions</TableHead>
-              <TableHead className="text-center">Category Name</TableHead>
-              <TableHead className="text-center">Timings</TableHead>
+              <TableHead className="text-center">Category</TableHead>
+              <TableHead className="text-center">Sub Category</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {categories.map((category) => (
-              <TableRow key={category.id}>
+            {subCategories.map((subCategory) => (
+              <TableRow key={subCategory.id}>
                 <TableCell className="text-center">
                   <div className="flex justify-center gap-2">
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleEditCategory(category)}
+                      onClick={() => handleEditSubCategory(subCategory)}
                       className="text-blue-600 hover:text-blue-800"
                     >
                       <Edit2 className="w-4 h-4" />
@@ -113,39 +113,39 @@ export const CategoriesSetupTable = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDeleteCategory(category.id)}
+                      onClick={() => handleDeleteSubCategory(subCategory.id)}
                       className="text-red-600 hover:text-red-800"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </TableCell>
-                <TableCell className="text-center">{category.category}</TableCell>
-                <TableCell className="text-center">{category.timings}</TableCell>
+                <TableCell className="text-center">{subCategory.category}</TableCell>
+                <TableCell className="text-center">{subCategory.subCategory}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
 
-      <AddCategoryModal 
+      <AddSubCategoryModal 
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onSubmit={handleAddCategory}
+        onSubmit={handleAddSubCategory}
       />
 
       <EditCategoryModal 
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        category={selectedCategory}
-        onSubmit={handleUpdateCategory}
+        category={selectedSubCategory}
+        onSubmit={handleUpdateSubCategory}
       />
 
       <DeletePatrollingModal 
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={confirmDelete}
-        patrollingId={categoryToDelete || 0}
+        patrollingId={subCategoryToDelete || 0}
       />
     </div>
   );
