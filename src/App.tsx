@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -154,6 +155,10 @@ import { ServiceDashboard } from './pages/ServiceDashboard';
 import { AddServicePage } from './pages/AddServicePage';
 import { ServiceDetailsPage } from './pages/ServiceDetailsPage';
 import { EditServicePage } from './pages/EditServicePage';
+
+// Import Attendance pages
+import { AttendanceDashboard } from './pages/AttendanceDashboard';
+import { AttendanceDetailsPage } from './pages/AttendanceDetailsPage';
 
 // Import Roster Calendar page
 import { RosterCalendarDashboard } from './pages/setup/RosterCalendarDashboard';
@@ -389,6 +394,10 @@ function App() {
               <Route path="/maintenance/service/details/:id" element={<ServiceDetailsPage />} />
               <Route path="/maintenance/service/edit/:id" element={<EditServicePage />} />
               
+              {/* Attendance Routes */}
+              <Route path="/maintenance/attendance" element={<AttendanceDashboard />} />
+              <Route path="/maintenance/attendance/details/:id" element={<AttendanceDetailsPage />} />
+              
               {/* Inventory Routes */}
               <Route path="/maintenance/inventory" element={<InventoryDashboard />} />
               <Route path="/maintenance/inventory/add" element={<AddInventoryPage />} />
@@ -406,11 +415,6 @@ function App() {
               <Route path="/maintenance/schedule/edit/:id" element={<EditSchedulePage />} />
               <Route path="/maintenance/schedule/copy/:id" element={<CopySchedulePage />} />
               <Route path="/maintenance/schedule/view/:id" element={<ViewSchedulePage />} />
-              
-              {/* Inventory Routes */}
-              <Route path="/maintenance/inventory" element={<InventoryDashboard />} />
-              <Route path="/maintenance/inventory/details/:id" element={<InventoryDetailsPage />} />
-              <Route path="/maintenance/inventory/feeds/:id" element={<InventoryFeedsPage />} />
               
               {/* Utility Routes */}
               <Route path="/utility/energy" element={<UtilityDashboard />} />
