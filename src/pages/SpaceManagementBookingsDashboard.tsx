@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -173,19 +172,6 @@ export const SpaceManagementBookingsDashboard = () => {
             <Filter className="w-4 h-4" />
             Filters
           </Button>
-        </div>
-
-        {/* Search Bar */}
-        <div className="mb-6">
-          <div className="flex items-center space-x-2">
-            <input
-              type="text"
-              placeholder="Search bookings..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-md w-64 focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
-            />
-          </div>
         </div>
 
         {/* Table */}
