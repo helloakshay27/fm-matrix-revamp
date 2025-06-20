@@ -93,6 +93,7 @@ import { EditStaffPage } from './pages/EditStaffPage';
 
 // Import Value Added Services pages
 import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
+import { FnBRestaurantDetailsPage } from './pages/FnBRestaurantDetailsPage';
 import ParkingDashboard from './pages/ParkingDashboard';
 import ParkingBookingsDashboard from './pages/ParkingBookingsDashboard';
 
@@ -459,6 +460,7 @@ function App() {
               
               {/* Value Added Services Routes */}
               <Route path="/vas/fnb" element={<FnBRestaurantDashboard />} />
+              <Route path="/vas/fnb/details/:id" element={<FnBRestaurantDetailsPage />} />
               <Route path="/vas/parking" element={<ParkingDashboard />} />
               <Route path="/vas/parking/bookings" element={<ParkingBookingsDashboard />} />
               

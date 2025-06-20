@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -25,8 +26,13 @@ const mockRestaurants: Restaurant[] = [
 ];
 
 export const FnBRestaurantDashboard = () => {
+  const navigate = useNavigate();
   const [restaurants, setRestaurants] = useState<Restaurant[]>(mockRestaurants);
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
+
+  const handleViewRestaurant = (id: number) => {
+    navigate(`/vas/fnb/details/${id}`);
+  };
 
   const toggleBookingAllowed = (id: number) => {
     setRestaurants(prev => prev.map(restaurant => 
@@ -97,7 +103,10 @@ export const FnBRestaurantDashboard = () => {
             {restaurants.map((restaurant) => (
               <tr key={restaurant.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <button className="text-gray-400 hover:text-gray-600">
+                  <button 
+                    className="text-gray-400 hover:text-gray-600"
+                    onClick={() => handleViewRestaurant(restaurant.id)}
+                  >
                     <Eye className="w-5 h-5" />
                   </button>
                 </td>
