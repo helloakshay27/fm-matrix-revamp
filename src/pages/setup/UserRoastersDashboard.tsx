@@ -100,7 +100,11 @@ export const UserRoastersDashboard = () => {
   ]);
 
   const handleAddClick = () => {
-    navigate('/vas/space-management/setup/roaster/add');
+    navigate('/vas/space-management/setup/roster/create');
+  };
+
+  const handleEditClick = (rosterId: number) => {
+    navigate(`/vas/space-management/setup/roster/edit/${rosterId}`);
   };
 
   return (
@@ -142,7 +146,12 @@ export const UserRoastersDashboard = () => {
               {roasters.map((roaster) => (
                 <TableRow key={roaster.id} className="border-b">
                   <TableCell>
-                    <Button size="sm" variant="ghost" className="p-1">
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="p-1"
+                      onClick={() => handleEditClick(roaster.id)}
+                    >
                       <Eye className="w-4 h-4" />
                     </Button>
                   </TableCell>

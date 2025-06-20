@@ -270,6 +270,9 @@ import { MSafeDashboard } from './pages/MSafeDashboard';
 import { NonFTEUsersDashboard } from './pages/NonFTEUsersDashboard';
 import { KRCCFormListDashboard } from './pages/KRCCFormListDashboard';
 
+// Import Edit Roster Template page
+import { EditRosterTemplatePage } from './pages/setup/EditRosterTemplatePage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -481,6 +484,7 @@ function App() {
               <Route path="/vas/space-management/setup/shift" element={<ShiftDashboard />} />
               <Route path="/vas/space-management/setup/roster" element={<UserRoastersDashboard />} />
               <Route path="/vas/space-management/setup/roster/create" element={<CreateRosterTemplateDashboard />} />
+              <Route path="/vas/space-management/setup/roster/edit/:id" element={<EditRosterTemplatePage />} />
               <Route path="/vas/space-management/setup/employees" element={<EmployeesDashboard />} />
               <Route path="/vas/space-management/setup/employees/add" element={<AddEmployeeDashboard />} />
               <Route path="/vas/space-management/setup/employees/edit/:id" element={<EditEmployeePage />} />
