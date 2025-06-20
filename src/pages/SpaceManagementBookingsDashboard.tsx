@@ -18,6 +18,7 @@ export const SpaceManagementBookingsDashboard = () => {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleFilterApply = (filters: any) => {
     console.log('Applied filters:', filters);
@@ -29,10 +30,11 @@ export const SpaceManagementBookingsDashboard = () => {
   };
 
   const handleViewBooking = (bookingId: string) => {
+    console.log('Navigating to booking details for ID:', bookingId);
     navigate(`/vas/space-management/bookings/details/${bookingId}`);
   };
 
-  const bookingData = [
+  const allBookingData = [
     {
       id: "142179",
       employeeId: "73974",
@@ -96,8 +98,35 @@ export const SpaceManagementBookingsDashboard = () => {
       slotsAndSeat: "10:00 AM to 08:00 PM - Technology",
       status: "Confirmed",
       createdOn: "15/02/2023, 5:44 PM"
+    },
+    {
+      id: "305213",
+      employeeId: "71902",
+      employeeName: "Abdul G",
+      employeeEmail: "abdul.g@locatard.com",
+      scheduleDate: "7 February 2025",
+      day: "Friday",
+      category: "Meeting Room",
+      building: "Urbanwrk",
+      floor: "1st Floor",
+      designation: "Project Manager",
+      department: "Operations",
+      slotsAndSeat: "04:45 PM to 05:45 PM - Meeting Room 100",
+      status: "Pending",
+      createdOn: "7/02/2025, 4:45 PM"
     }
   ];
+
+  // Filter bookings based on search term
+  const filteredBookingData = allBookingData.filter(booking => 
+    booking.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    booking.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    booking.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    booking.employeeEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    booking.building.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    booking.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    booking.status.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
@@ -146,6 +175,19 @@ export const SpaceManagementBookingsDashboard = () => {
           </Button>
         </div>
 
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="flex items-center space-x-2">
+            <input
+              type="text"
+              placeholder="Search bookings..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-md w-64 focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+            />
+          </div>
+        </div>
+
         {/* Table */}
         <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
           <div className="overflow-x-auto">
@@ -171,47 +213,55 @@ export const SpaceManagementBookingsDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {bookingData.map((booking, index) => (
-                  <TableRow key={booking.id}>
-                    <TableCell>
-                      <Button 
-                        size="sm" 
-                        variant="ghost"
-                        onClick={() => handleViewBooking(booking.id)}
-                        className="hover:bg-gray-100"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                    <TableCell>{booking.id}</TableCell>
-                    <TableCell>{booking.employeeId}</TableCell>
-                    <TableCell className="text-blue-600">{booking.employeeName}</TableCell>
-                    <TableCell className="text-blue-600">{booking.employeeEmail}</TableCell>
-                    <TableCell>{booking.scheduleDate}</TableCell>
-                    <TableCell>{booking.day}</TableCell>
-                    <TableCell>{booking.category}</TableCell>
-                    <TableCell>{booking.building}</TableCell>
-                    <TableCell>{booking.floor}</TableCell>
-                    <TableCell>{booking.designation}</TableCell>
-                    <TableCell>{booking.department}</TableCell>
-                    <TableCell>{booking.slotsAndSeat}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        booking.status === 'Cancelled' ? 'bg-red-100 text-red-800' : 
-                        booking.status === 'Confirmed' ? 'bg-green-100 text-green-800' : 
-                        'bg-blue-100 text-blue-800'
-                      }`}>
-                        {booking.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>{booking.createdOn}</TableCell>
-                    <TableCell>
-                      <Button size="sm" className="bg-[#C72030] hover:bg-[#B01E2A] text-white">
-                        Cancel
-                      </Button>
+                {filteredBookingData.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={16} className="text-center py-8 text-gray-500">
+                      No bookings found matching your search.
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filteredBookingData.map((booking, index) => (
+                    <TableRow key={booking.id}>
+                      <TableCell>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => handleViewBooking(booking.id)}
+                          className="hover:bg-gray-100"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                      <TableCell>{booking.id}</TableCell>
+                      <TableCell>{booking.employeeId}</TableCell>
+                      <TableCell className="text-blue-600">{booking.employeeName}</TableCell>
+                      <TableCell className="text-blue-600">{booking.employeeEmail}</TableCell>
+                      <TableCell>{booking.scheduleDate}</TableCell>
+                      <TableCell>{booking.day}</TableCell>
+                      <TableCell>{booking.category}</TableCell>
+                      <TableCell>{booking.building}</TableCell>
+                      <TableCell>{booking.floor}</TableCell>
+                      <TableCell>{booking.designation}</TableCell>
+                      <TableCell>{booking.department}</TableCell>
+                      <TableCell>{booking.slotsAndSeat}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          booking.status === 'Cancelled' ? 'bg-red-100 text-red-800' : 
+                          booking.status === 'Confirmed' ? 'bg-green-100 text-green-800' : 
+                          'bg-blue-100 text-blue-800'
+                        }`}>
+                          {booking.status}
+                        </span>
+                      </TableCell>
+                      <TableCell>{booking.createdOn}</TableCell>
+                      <TableCell>
+                        <Button size="sm" className="bg-[#C72030] hover:bg-[#B01E2A] text-white">
+                          Cancel
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
