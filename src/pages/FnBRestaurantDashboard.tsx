@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, Plus, Search, Filter } from 'lucide-react';
 import { AddRestaurantForm } from '../components/AddRestaurantForm';
+import { useNavigate } from 'react-router-dom';
 
 interface Restaurant {
   id: number;
@@ -27,6 +28,7 @@ const mockRestaurants: Restaurant[] = [
 export const FnBRestaurantDashboard = () => {
   const [restaurants, setRestaurants] = useState<Restaurant[]>(mockRestaurants);
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
+  const navigate = useNavigate();
 
   const toggleBookingAllowed = (id: number) => {
     setRestaurants(prev => prev.map(restaurant => 
@@ -44,6 +46,10 @@ export const FnBRestaurantDashboard = () => {
     setRestaurants(prev => prev.map(restaurant => 
       restaurant.id === id ? { ...restaurant, active: !restaurant.active } : restaurant
     ));
+  };
+
+  const handleViewRestaurant = (restaurantId: number) => {
+    navigate(`/vas/fnb/details/${restaurantId}`);
   };
 
   return (
@@ -97,7 +103,10 @@ export const FnBRestaurantDashboard = () => {
             {restaurants.map((restaurant) => (
               <tr key={restaurant.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <button className="text-gray-400 hover:text-gray-600">
+                  <button 
+                    className="text-gray-400 hover:text-gray-600"
+                    onClick={() => handleViewRestaurant(restaurant.id)}
+                  >
                     <Eye className="w-5 h-5" />
                   </button>
                 </td>
