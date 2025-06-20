@@ -13,6 +13,7 @@ import { CategoriesSetupTable } from '../components/CategoriesSetupTable';
 import { SubCategoriesSetupTable } from '../components/SubCategoriesSetupTable';
 import { RestaurantMenuTable } from '../components/RestaurantMenuTable';
 import { RestaurantBookingsTable } from '../components/RestaurantBookingsTable';
+import { RestaurantOrdersTable } from '../components/RestaurantOrdersTable';
 import { toast } from 'sonner';
 
 interface Restaurant {
@@ -194,7 +195,7 @@ export const FnBRestaurantDetailsPage = () => {
           <TabsTrigger value="sub-categories-setup">Sub Categories Setup</TabsTrigger>
           <TabsTrigger value="restaurant-menu">Restaurant Menu</TabsTrigger>
           <TabsTrigger value="restaurant-bookings">Restaurant Bookings</TabsTrigger>
-          <TabsTrigger value="restaurant-order">Restaurant Order</TabsTrigger>
+          <TabsTrigger value="restaurant-order">Restaurant Orders</TabsTrigger>
         </TabsList>
 
         <TabsContent value="restaurant" className="mt-6">
@@ -473,7 +474,7 @@ export const FnBRestaurantDetailsPage = () => {
               <CardContent>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                   <p className="text-gray-500">Menu management functionality would be implemented here</p>
-                  <Button className="mt-4 bg-[#C72030] hover:bg-[#C72030]/90 text-white">
+                  <Button className="mt-4 bg-[#C72030] hover:bg-[#C7030]/90 text-white">
                     Add Menu Items
                   </Button>
                 </div>
@@ -560,9 +561,15 @@ export const FnBRestaurantDetailsPage = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="restaurant-order">
-          <div className="p-8 text-center text-gray-500">
-            Restaurant Order content would be implemented here
+        <TabsContent value="restaurant-order" className="mt-6">
+          <div className="space-y-4">
+            <div className="flex items-center text-sm text-[#1a1a1a] opacity-70 mb-2">
+              <span>Restaurant</span>
+              <span className="mx-2">{'>'}</span>
+              <span>Restaurant Orders</span>
+            </div>
+            <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT ORDERS</h2>
+            <RestaurantOrdersTable />
           </div>
         </TabsContent>
       </Tabs>
