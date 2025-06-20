@@ -58,14 +58,14 @@ const TeamModal = ({
         }
     }, [isModalOpen]);
 
-    const closeModal = () => {
-        gsap.to(addTaskModalRef.current, {
-            x: "100%",
-            duration: 0.5,
-            ease: "power3.in",
-            onComplete: () => setIsModalOpen(false),
-        });
-    };
+    // const closeModal = () => {
+    //     gsap.to(addTaskModalRef.current, {
+    //         x: "100%",
+    //         duration: 0.5,
+    //         ease: "power3.in",
+    //         onComplete: () => setIsModalOpen(false),
+    //     });
+    // };
 
     useEffect(() => {
         dispatch(fetchUsers({ token }));
@@ -77,7 +77,7 @@ const TeamModal = ({
     }, [dispatch]);
 
     useEffect(() => {
-        if (projectTeam && users.length > 0) {
+        if (projectTeam && users.length > 0 && isEdit) {
             // Map user IDs to objects with label and value
             const selectedTeamMembers = projectTeam?.project_team_members?.map(
                 (member) => {
@@ -99,7 +99,7 @@ const TeamModal = ({
             setProjectTeamId(projectTeam.id);
             setPrevMembers(selectedTeamMembers);
         }
-    }, [projectTeam, users]);
+    }, [projectTeam, users, isEdit]);
 
 
     const handleChange = (e) => {
@@ -146,7 +146,22 @@ const TeamModal = ({
         }
         return true
     }
-
+     
+            const handleCloseModal=()=>{
+                gsap.to(addTaskModalRef.current, {
+            x: "100%",
+            duration: 0.5,
+            ease: "power3.in",
+            onComplete: () => setIsModalOpen(false),
+        });
+                setFormData({
+                    teamName: "",
+                    teamLead: "",
+                    project: "",
+                    teamMembers: [],
+                })
+                
+            }
     const handleSubmit = () => {
         if (!validateForm()) return;
 
@@ -185,7 +200,7 @@ const TeamModal = ({
                 </h3>
                 <CloseIcon
                     className="absolute top-[26px] right-8 cursor-pointer"
-                    onClick={closeModal}
+                    onClick={handleCloseModal}
                 />
 
                 <hr className="border border-[#E95420] my-4" />
@@ -257,7 +272,7 @@ const TeamModal = ({
                     </button>
                     <button
                         className="border-2 border-[#C72030] text-[#C72030] px-4 h-[30px] w-[100px]"
-                        onClick={closeModal}
+                        onClick={handleCloseModal}
                     >
                         Cancel
                     </button>

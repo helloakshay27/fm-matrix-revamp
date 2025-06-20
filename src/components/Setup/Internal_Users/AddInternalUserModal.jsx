@@ -142,7 +142,7 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
             <div className="w-[560px] h-max bg-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-[#C0C0C0]">
                 {/* Close Icon */}
                 <div className="flex justify-end p-4">
-                    <CloseIcon className="cursor-pointer" onClick={onClose} />
+                    <CloseIcon className="cursor-pointer" onClick={handleClose} />
                 </div>
 
                 {/* Input Section */}

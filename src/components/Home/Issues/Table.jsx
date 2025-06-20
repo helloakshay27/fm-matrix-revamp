@@ -24,7 +24,7 @@ import {fetchProjects} from '../../../redux/slices/projectSlice';
 import {fetchMilestone} from '../../../redux/slices/milestoneSlice';
 import {fetchTasks} from '../../../redux/slices/taskSlice';
 import { all } from 'axios';
-import { set } from 'react-hook-form';
+import { get, set } from 'react-hook-form';
 
 
 
@@ -254,7 +254,7 @@ useEffect(() => {
             projectName: issue.project_management_name || 'Unassigned',
             milestoneName: issue.milestone_name|| 'Unassigned',
             taskName: issue.task_management_name|| 'Unassigned',
-            comments: issue.comments && issue.comments.length > 0 && issue.comments[0]?.body ? issue.comments[0].body : '', // Robust comment handling
+            comments: issue.comments?.length? issue.comments[issue.comments.length - 1].body : '',    // Robust comment handling
         }));
         setData(processedIssuess);
         setLocalError(null);
@@ -345,7 +345,7 @@ useEffect(() => {
 
   const handleUpdateIssues = useCallback(async (id, field, newValue) => {
     // Optimistic UI updat
-
+    if(isUpdatingIssue)return;
     setIsUpdatingIssue(true);
     setLocalError(null);
 
@@ -513,12 +513,14 @@ useEffect(() => {
       },
       {
         accessorKey: 'comments', header: 'Comments', size: 360,
-        cell: ({ row }) => (
-          <span className="whitespace-pre-wrap">{row.original.comments}</span>
-        )
+        cell: ({ row, getValue }) => {
+          const [editField, setEditField] = useState(getValue() || "");
+          return (
+            <NewIssuesTextField value={editField} onChange={(e) => setEditField(e.target.value)} onEnterPress={()=> handleUpdateIssues(row.original.id, "comment", editField)} placeholder="Comments" validator={false} />
+        )}
       },
     ],
-    [handleDeleteExistingIssues, handleUpdateIssues, userOptionsForSelectBox,issueTypeOptions]
+    [handleDeleteExistingIssues, handleUpdateIssues, userOptionsForSelectBox,issueTypeOptions,data]
   );
 
   const table = useReactTable({

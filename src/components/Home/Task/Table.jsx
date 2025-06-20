@@ -477,7 +477,7 @@ const TaskTable = () => {
   const handleUpdateTaskFieldCell = useCallback(
     async (taskId, fieldName, newValue) => {
       console.log(taskId, fieldName, newValue)
-      if (isUpdatingTask) return;
+      if (isUpdatingTask ) return;
       const payload = { [fieldName]: newValue };
       setIsUpdatingTask(true);
       setLocalError(null);
@@ -490,7 +490,7 @@ const TaskTable = () => {
         else {
           await dispatch(updateTask({ token, id: taskId, payload }))
             .unwrap()
-              return dispatch(fetchTasks({ token, id: mid })).unwrap();
+            dispatch(fetchTasks({ token, id: mid })).unwrap();
         }
       } catch (error) {
         console.error(
@@ -774,7 +774,7 @@ const TaskTable = () => {
             {" "}
             <tbody className="bg-white">
               {" "}
-              {                data.length==0 &&
+              { data.length==0 &&
                 !isAddingNewTask &&
                 !showTopLevelAddTaskButton &&
                 !loadingTasks &&
