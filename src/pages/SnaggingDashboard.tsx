@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Eye } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { SnaggingFilterDialog } from '@/components/SnaggingFilterDialog';
 
 interface SnaggingItem {
   id: number;
@@ -15,6 +16,13 @@ interface SnaggingItem {
   roomType: string;
   stage: string;
   noOfQuestions: number;
+}
+
+interface FilterValues {
+  tower: string;
+  floor: string;
+  flat: string;
+  stage: string;
 }
 
 const mockData: SnaggingItem[] = [
@@ -31,6 +39,13 @@ const mockData: SnaggingItem[] = [
 export const SnaggingDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeView, setActiveView] = useState('User Snag');
+  const [showFilters, setShowFilters] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<FilterValues>({
+    tower: '',
+    floor: '',
+    flat: '',
+    stage: ''
+  });
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -44,11 +59,22 @@ export const SnaggingDashboard = () => {
     }
   }, [location.search]);
 
-  const filteredData = mockData.filter(item =>
-    item.checklistName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.tower.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.flat.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const applyFilters = (data: SnaggingItem[]) => {
+    return data.filter(item => {
+      const matchesSearch = item.checklistName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           item.tower.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           item.flat.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesTower = !appliedFilters.tower || item.tower === appliedFilters.tower;
+      const matchesFloor = !appliedFilters.floor || item.floor === appliedFilters.floor;
+      const matchesFlat = !appliedFilters.flat || item.flat === appliedFilters.flat;
+      const matchesStage = !appliedFilters.stage || item.stage === appliedFilters.stage;
+
+      return matchesSearch && matchesTower && matchesFloor && matchesFlat && matchesStage;
+    });
+  };
+
+  const filteredData = applyFilters(mockData);
 
   const handleViewDetail = (item: SnaggingItem) => {
     navigate(`/transitioning/snagging/details/${item.id}`, { state: { item } });
@@ -59,12 +85,16 @@ export const SnaggingDashboard = () => {
     console.log('Search triggered for:', searchTerm);
   };
 
+  const handleApplyFilters = (filters: FilterValues) => {
+    setAppliedFilters(filters);
+  };
+
   return (
     <div className="p-6 bg-white">
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-4">SNAG LIST</h1>
         
-        {/* Search Section */}
+        {/* Search Section with Filters Button */}
         <div className="flex gap-3 mb-6">
           <Input
             placeholder="Search"
@@ -78,6 +108,14 @@ export const SnaggingDashboard = () => {
             className="hover:bg-[#C72030]/90 text-white"
           >
             Search
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(true)}
+            className="flex items-center gap-2"
+          >
+            <span className="text-sm">⊞</span>
+            Filters
           </Button>
         </div>
 
@@ -131,6 +169,13 @@ export const SnaggingDashboard = () => {
           </Table>
         </div>
       </div>
+
+      {/* Filters Dialog */}
+      <SnaggingFilterDialog
+        open={showFilters}
+        onOpenChange={setShowFilters}
+        onApplyFilters={handleApplyFilters}
+      />
     </div>
   );
 };
