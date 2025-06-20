@@ -12,6 +12,7 @@ import { StatusSetupTable } from '../components/StatusSetupTable';
 import { CategoriesSetupTable } from '../components/CategoriesSetupTable';
 import { SubCategoriesSetupTable } from '../components/SubCategoriesSetupTable';
 import { RestaurantMenuTable } from '../components/RestaurantMenuTable';
+import { RestaurantBookingsTable } from '../components/RestaurantBookingsTable';
 
 interface Restaurant {
   id: number;
@@ -469,9 +470,15 @@ export const FnBRestaurantDetailsPage = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="restaurant-bookings">
-          <div className="p-8 text-center text-gray-500">
-            Restaurant Bookings content would be implemented here
+        <TabsContent value="restaurant-bookings" className="mt-6">
+          <div className="space-y-4">
+            <div className="flex items-center text-sm text-[#1a1a1a] opacity-70 mb-2">
+              <span>Restaurant</span>
+              <span className="mx-2">{'>'}</span>
+              <span>Restaurant Bookings</span>
+            </div>
+            <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT BOOKINGS</h2>
+            <RestaurantBookingsTable />
           </div>
         </TabsContent>
       </Tabs>
