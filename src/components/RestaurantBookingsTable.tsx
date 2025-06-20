@@ -21,7 +21,7 @@ export const RestaurantBookingsTable = () => {
 
   return (
     <div className="space-y-4">
-      {/* Tabs for different booking views */}
+      {/* Main tabs for different sections */}
       <Tabs defaultValue="restaurant-bookings" className="w-full">
         <TabsList className="grid w-full grid-cols-6 bg-gray-100">
           <TabsTrigger value="restaurant">Restaurant</TabsTrigger>
@@ -36,7 +36,7 @@ export const RestaurantBookingsTable = () => {
 
         <TabsContent value="restaurant-bookings" className="mt-6">
           <div className="space-y-4">
-            {/* Additional sub-tabs for bookings */}
+            {/* Sub-tabs for bookings and orders */}
             <Tabs defaultValue="restaurant-bookings" className="w-full">
               <TabsList className="bg-gray-100">
                 <TabsTrigger value="restaurant-bookings" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
