@@ -2,78 +2,40 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 import { AddSubCategoryModal } from './AddSubCategoryModal';
-import { EditCategoryModal } from './EditCategoryModal';
-import { DeletePatrollingModal } from './DeletePatrollingModal';
 
 interface SubCategory {
   id: number;
   category: string;
   subCategory: string;
-  active: boolean;
+  amount: number;
 }
 
-const mockSubCategoriesData: SubCategory[] = [
-  {
-    id: 1,
-    category: 'Breakfast',
-    subCategory: 'Continental',
-    active: true
-  },
-  {
-    id: 2,
-    category: 'Lunch',
-    subCategory: 'North Indian',
-    active: true
-  },
-  {
-    id: 3,
-    category: 'Dinner',
-    subCategory: 'South Indian',
-    active: true
-  }
-];
+const mockSubCategoriesData: SubCategory[] = [];
 
 export const SubCategoriesSetupTable = () => {
   const [subCategories, setSubCategories] = useState<SubCategory[]>(mockSubCategoriesData);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedSubCategory, setSelectedSubCategory] = useState<SubCategory | null>(null);
-  const [subCategoryToDelete, setSubCategoryToDelete] = useState<number | null>(null);
+  const [editingSubCategory, setEditingSubCategory] = useState<SubCategory | null>(null);
 
-  const handleAddSubCategory = (newSubCategory: { category: string; subCategory: string }) => {
+  const handleAddSubCategory = (newSubCategory: Omit<SubCategory, 'id'>) => {
     const subCategory: SubCategory = {
       id: subCategories.length + 1,
-      category: newSubCategory.category,
-      subCategory: newSubCategory.subCategory,
-      active: true
+      ...newSubCategory
     };
     setSubCategories([...subCategories, subCategory]);
   };
 
-  const handleEditSubCategory = (subCategory: SubCategory) => {
-    setSelectedSubCategory(subCategory);
-    setIsEditModalOpen(true);
-  };
-
-  const handleUpdateSubCategory = (updatedSubCategory: { category: string; subCategory: string; id: number }) => {
+  const handleEditSubCategory = (updatedSubCategory: SubCategory) => {
     setSubCategories(subCategories.map(subCat => 
-      subCat.id === updatedSubCategory.id ? { ...subCat, category: updatedSubCategory.category, subCategory: updatedSubCategory.subCategory } : subCat
+      subCat.id === updatedSubCategory.id ? updatedSubCategory : subCat
     ));
+    setEditingSubCategory(null);
   };
 
   const handleDeleteSubCategory = (id: number) => {
-    setSubCategoryToDelete(id);
-    setIsDeleteModalOpen(true);
-  };
-
-  const confirmDelete = () => {
-    if (subCategoryToDelete) {
-      setSubCategories(subCategories.filter(subCat => subCat.id !== subCategoryToDelete));
-      setSubCategoryToDelete(null);
-    }
+    setSubCategories(subCategories.filter(subCat => subCat.id !== id));
   };
 
   return (
@@ -95,57 +57,57 @@ export const SubCategoriesSetupTable = () => {
               <TableHead className="text-center">Actions</TableHead>
               <TableHead className="text-center">Category</TableHead>
               <TableHead className="text-center">Sub Category</TableHead>
+              <TableHead className="text-center">Amount</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {subCategories.map((subCategory) => (
-              <TableRow key={subCategory.id}>
-                <TableCell className="text-center">
-                  <div className="flex justify-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditSubCategory(subCategory)}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteSubCategory(subCategory.id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+            {subCategories.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                  No sub categories found. Click "Add" to create your first sub category.
                 </TableCell>
-                <TableCell className="text-center">{subCategory.category}</TableCell>
-                <TableCell className="text-center">{subCategory.subCategory}</TableCell>
               </TableRow>
-            ))}
+            ) : (
+              subCategories.map((subCategory) => (
+                <TableRow key={subCategory.id}>
+                  <TableCell className="text-center">
+                    <div className="flex justify-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditingSubCategory(subCategory)}
+                        className="p-1"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteSubCategory(subCategory.id)}
+                        className="p-1 text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center">{subCategory.category}</TableCell>
+                  <TableCell className="text-center">{subCategory.subCategory}</TableCell>
+                  <TableCell className="text-center">₹{subCategory.amount}</TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
 
       <AddSubCategoryModal 
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSubmit={handleAddSubCategory}
-      />
-
-      <EditCategoryModal 
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        category={selectedSubCategory}
-        onSubmit={handleUpdateSubCategory}
-      />
-
-      <DeletePatrollingModal 
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={confirmDelete}
-        patrollingId={subCategoryToDelete || 0}
+        isOpen={isAddModalOpen || editingSubCategory !== null}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setEditingSubCategory(null);
+        }}
+        onSubmit={editingSubCategory ? handleEditSubCategory : handleAddSubCategory}
+        initialData={editingSubCategory}
       />
     </div>
   );
