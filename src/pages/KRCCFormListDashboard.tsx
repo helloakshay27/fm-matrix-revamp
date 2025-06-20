@@ -9,7 +9,7 @@ export const KRCCFormListDashboard = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center text-sm text-gray-600 mb-4">
         <span>Krcc Forms</span>
-        <span className="mx-2">></span>
+        <span className="mx-2">{'>'}</span>
         <span>KRCC FORM List</span>
       </div>
       
