@@ -19,15 +19,26 @@ const App = () => (
             <Route path="/" element={<Index />} />
             {navItems.map(({ to, page, subItems }) => {
               if (subItems) {
-                return subItems.map((subItem) => (
-                  <Route 
-                    key={subItem.to} 
-                    path={subItem.to} 
-                    element={<subItem.page />} 
-                  />
-                ));
+                return subItems.map((subItem) => {
+                  if (subItem.subItems) {
+                    return subItem.subItems.map((nestedSubItem) => (
+                      <Route 
+                        key={nestedSubItem.to} 
+                        path={nestedSubItem.to} 
+                        element={<nestedSubItem.page />} 
+                      />
+                    ));
+                  }
+                  return (
+                    <Route 
+                      key={subItem.to} 
+                      path={subItem.to} 
+                      element={<subItem.page />} 
+                    />
+                  );
+                });
               }
-              return <Route key={to} path={to} element={<page />} />;
+              return page ? <Route key={to} path={to} element={<page />} /> : null;
             })}
           </Routes>
         </Layout>
