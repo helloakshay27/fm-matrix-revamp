@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +51,19 @@ export const AssetDashboard = () => {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  // Calculate stats dynamically from asset data
+  const stats = useMemo(() => {
+    const totalAssets = assetData.length;
+    const inUseAssets = assetData.filter(asset => asset.status === 'In Use').length;
+    const breakdownAssets = assetData.filter(asset => asset.status === 'Breakdown').length;
+    
+    return {
+      total: totalAssets,
+      inUse: inUseAssets,
+      breakdown: breakdownAssets
+    };
+  }, []);
 
   const handleAddAsset = () => {
     navigate('/maintenance/asset/add');
@@ -225,12 +237,12 @@ export const AssetDashboard = () => {
         <h1 className="text-2xl font-bold text-[#1a1a1a] uppercase">ASSET LIST</h1>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - Now using dynamic data */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div className="bg-orange-500 text-white p-6 rounded-lg shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-3xl font-bold mb-1">315</div>
+              <div className="text-3xl font-bold mb-1">{stats.total}</div>
               <div className="text-sm font-medium">Total Asset</div>
             </div>
           </div>
@@ -238,7 +250,7 @@ export const AssetDashboard = () => {
         <div className="bg-green-500 text-white p-6 rounded-lg shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-3xl font-bold mb-1">298</div>
+              <div className="text-3xl font-bold mb-1">{stats.inUse}</div>
               <div className="text-sm font-medium">In Use</div>
             </div>
           </div>
@@ -246,7 +258,7 @@ export const AssetDashboard = () => {
         <div className="bg-red-500 text-white p-6 rounded-lg shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-3xl font-bold mb-1">27</div>
+              <div className="text-3xl font-bold mb-1">{stats.breakdown}</div>
               <div className="text-sm font-medium">Breakdown</div>
             </div>
           </div>
