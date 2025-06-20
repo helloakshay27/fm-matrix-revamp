@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -264,6 +263,11 @@ import { EditGRNDashboard } from './pages/EditGRNDashboard';
 import { AddInventoryPage } from './pages/AddInventoryPage';
 import { EditAssetDetailsPage } from './pages/EditAssetDetailsPage';
 
+// Import M Safe pages
+import { MSafeDashboard } from './pages/MSafeDashboard';
+import { NonFTEUsersDashboard } from './pages/NonFTEUsersDashboard';
+import { KRCCFormListDashboard } from './pages/KRCCFormListDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -480,6 +484,11 @@ function App() {
               <Route path="/vas/space-management/setup/check-in-margin" element={<CheckInMarginDashboard />} />
               <Route path="/vas/space-management/setup/roster-calendar" element={<RosterCalendarDashboard />} />
               <Route path="/vas/space-management/setup/export" element={<ExportDashboard />} />
+              
+              {/* M Safe Routes */}
+              <Route path="/maintenance/m-safe" element={<MSafeDashboard />} />
+              <Route path="/maintenance/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
+              <Route path="/maintenance/m-safe/krcc-form-list" element={<KRCCFormListDashboard />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
