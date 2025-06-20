@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -264,6 +263,11 @@ import { EditGRNDashboard } from './pages/EditGRNDashboard';
 import { AddInventoryPage } from './pages/AddInventoryPage';
 import { EditAssetDetailsPage } from './pages/EditAssetDetailsPage';
 
+// Import M Safe pages
+import { MSafeDashboard } from './pages/MSafeDashboard';
+import { NonFTEUsersDashboard } from './pages/NonFTEUsersDashboard';
+import { KRCCFormListDashboard } from './pages/KRCCFormListDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -320,6 +324,11 @@ function App() {
               {/* Permit Routes */}
               <Route path="/maintenance/permit" element={<PermitListDashboard />} />
               <Route path="/maintenance/permit/add" element={<AddPermitPage />} />
+              
+              {/* M Safe Routes */}
+              <Route path="/maintenance/safety/m-safe" element={<MSafeDashboard />} />
+              <Route path="/maintenance/safety/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
+              <Route path="/maintenance/safety/m-safe/krcc-form-list" element={<KRCCFormListDashboard />} />
               
               {/* Operational Audit Routes */}
               <Route path="/maintenance/audit/operational/scheduled" element={<OperationalAuditScheduledDashboard />} />
