@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,7 @@ import { StatusSetupTable } from '../components/StatusSetupTable';
 import { CategoriesSetupTable } from '../components/CategoriesSetupTable';
 import { SubCategoriesSetupTable } from '../components/SubCategoriesSetupTable';
 import { toast } from 'sonner';
+import { RestaurantMenuTable } from '../components/RestaurantMenuTable';
 
 interface Restaurant {
   id: number;
@@ -535,9 +535,15 @@ export const FnBRestaurantDetailsPage = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="restaurant-menu">
-          <div className="p-8 text-center text-gray-500">
-            Restaurant Menu content would be implemented here
+        <TabsContent value="restaurant-menu" className="mt-6">
+          <div className="space-y-4">
+            <div className="flex items-center text-sm text-[#1a1a1a] opacity-70 mb-2">
+              <span>Restaurant</span>
+              <span className="mx-2">{'>'}</span>
+              <span>Restaurant Menu</span>
+            </div>
+            <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT MENU</h2>
+            <RestaurantMenuTable />
           </div>
         </TabsContent>
 
