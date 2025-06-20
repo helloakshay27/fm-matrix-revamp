@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X } from 'lucide-react';
 
 interface SnaggingFilterDialogProps {
   open: boolean;
@@ -44,16 +43,8 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] bg-white">
-        <DialogHeader className="flex flex-row items-center justify-between">
+        <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Filters</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onOpenChange(false)}
-            className="h-6 w-6 p-0"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
         
         <div className="grid grid-cols-2 gap-4 py-4">
@@ -125,7 +116,7 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
         <div className="flex justify-center gap-4 pt-4">
           <Button
             onClick={handleApply}
-            className="bg-[#6B2C91] hover:bg-[#6B2C91]/90 text-white px-8"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
           >
             APPLY
           </Button>

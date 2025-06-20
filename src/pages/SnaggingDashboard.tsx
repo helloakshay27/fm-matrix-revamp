@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -104,8 +103,7 @@ export const SnaggingDashboard = () => {
           />
           <Button 
             onClick={handleSearch}
-            style={{ backgroundColor: '#C72030' }}
-            className="hover:bg-[#C72030]/90 text-white"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
           >
             Search
           </Button>
