@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { X } from 'lucide-react';
 
 interface AssetFilterDialogProps {
   isOpen: boolean;
@@ -62,42 +63,49 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="flex flex-row items-center justify-between">
+          <DialogTitle className="text-lg font-semibold text-gray-900">FILTER BY</DialogTitle>
+          <Button
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={onClose}
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </DialogHeader>
         
         <div className="space-y-6 py-4">
-          {/* Asset Details */}
+          {/* Asset Details Section */}
           <div>
-            <h3 className="text-sm font-medium text-orange-600 mb-3">Asset Details</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="assetName" className="text-sm">Asset Name</Label>
+            <h3 className="text-sm font-medium text-[#C72030] mb-4">Asset Details</h3>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="assetName" className="text-sm font-medium">Asset Name</Label>
                 <Input 
                   id="assetName"
                   placeholder="Enter Asset Name"
                   value={assetName}
                   onChange={(e) => setAssetName(e.target.value)}
-                  className="mt-1"
+                  className="h-10"
                 />
               </div>
-              <div>
-                <Label htmlFor="dateRange" className="text-sm">Date Range*</Label>
+              <div className="space-y-2">
+                <Label htmlFor="dateRange" className="text-sm font-medium">Date Range*</Label>
                 <Input 
                   id="dateRange"
                   placeholder="Select Date Range"
                   value={dateRange}
                   onChange={(e) => setDateRange(e.target.value)}
-                  className="mt-1"
+                  className="h-10"
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div>
-                <Label className="text-sm">Group</Label>
+            <div className="grid grid-cols-2 gap-6 mt-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Group</Label>
                 <Select value={group} onValueChange={setGroup}>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="h-10">
                     <SelectValue placeholder="Select Category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -106,10 +114,10 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label className="text-sm">Subgroup</Label>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Subgroup</Label>
                 <Select value={subgroup} onValueChange={setSubgroup}>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="h-10">
                     <SelectValue placeholder="Select Sub Group" />
                   </SelectTrigger>
                   <SelectContent>
@@ -121,14 +129,14 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
             </div>
           </div>
 
-          {/* Location Details */}
+          {/* Location Details Section */}
           <div>
-            <h3 className="text-sm font-medium text-orange-600 mb-3">Location Details</h3>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label className="text-sm">Building</Label>
+            <h3 className="text-sm font-medium text-[#C72030] mb-4">Location Details</h3>
+            <div className="grid grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Building</Label>
                 <Select value={building} onValueChange={setBuilding}>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="h-10">
                     <SelectValue placeholder="Select Building" />
                   </SelectTrigger>
                   <SelectContent>
@@ -137,10 +145,10 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label className="text-sm">Wing</Label>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Wing</Label>
                 <Select value={wing} onValueChange={setWing}>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="h-10">
                     <SelectValue placeholder="Select Wing" />
                   </SelectTrigger>
                   <SelectContent>
@@ -149,10 +157,10 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label className="text-sm">Area</Label>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Area</Label>
                 <Select value={area} onValueChange={setArea}>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="h-10">
                     <SelectValue placeholder="Select Area" />
                   </SelectTrigger>
                   <SelectContent>
@@ -162,11 +170,11 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div>
-                <Label className="text-sm">Floor</Label>
+            <div className="grid grid-cols-2 gap-6 mt-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Floor</Label>
                 <Select value={floor} onValueChange={setFloor}>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="h-10">
                     <SelectValue placeholder="Select Floor" />
                   </SelectTrigger>
                   <SelectContent>
@@ -175,10 +183,10 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label className="text-sm">Room</Label>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Room</Label>
                 <Select value={room} onValueChange={setRoom}>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="h-10">
                     <SelectValue placeholder="Select Room" />
                   </SelectTrigger>
                   <SelectContent>
@@ -191,25 +199,23 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-4 pt-6">
             <Button 
               onClick={handleSubmit}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white flex-1 hover:bg-[#C72030]/90"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex-1 h-11"
             >
               Submit
             </Button>
             <Button 
               onClick={handleExport}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white flex-1 hover:bg-[#C72030]/90"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex-1 h-11"
             >
               Export
             </Button>
             <Button 
               variant="outline" 
               onClick={handleReset}
-              className="flex-1"
+              className="flex-1 h-11"
             >
               Reset
             </Button>

@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -33,13 +32,7 @@ import { FitoutViolationDashboard } from './pages/FitoutViolationDashboard';
 import { AssetDashboard } from './pages/AssetDashboard';
 import { AssetDetailsPage } from './pages/AssetDetailsPage';
 import { AddAssetPage } from './pages/AddAssetPage';
-import { AMCDashboard } from './pages/AMCDashboard';
-import { ServiceDashboard } from './pages/ServiceDashboard';
-import { AddServicePage } from './pages/AddServicePage';
-import { ServiceDetailsPage } from './pages/ServiceDetailsPage';
-import { EditServicePage } from './pages/EditServicePage';
-import { AttendanceDashboard } from './pages/AttendanceDashboard';
-import { AttendanceDetailsPage } from './pages/AttendanceDetailsPage';
+import { InActiveAssetsDashboard } from './pages/InActiveAssetsDashboard';
 
 // Import Incident pages
 import { IncidentListDashboard } from './pages/IncidentListDashboard';
@@ -60,7 +53,6 @@ import { TaskDetailsPage } from './pages/TaskDetailsPage';
 import { UtilityDashboard } from './pages/UtilityDashboard';
 import { AddAssetDashboard } from './pages/AddAssetDashboard';
 import { AddEnergyAssetDashboard } from './pages/AddEnergyAssetDashboard';
-import { InActiveAssetsDashboard } from './pages/InActiveAssetsDashboard';
 import { UtilityWaterDashboard } from './pages/UtilityWaterDashboard';
 import { AddWaterAssetDashboard } from './pages/AddWaterAssetDashboard';
 import UtilitySTPDashboard from './pages/UtilitySTPDashboard';
@@ -372,17 +364,7 @@ function App() {
               <Route path="/maintenance/asset" element={<AssetDashboard />} />
               <Route path="/maintenance/asset/details/:id" element={<AssetDetailsPage />} />
               <Route path="/maintenance/asset/add" element={<AddAssetPage />} />
-              <Route path="/maintenance/amc" element={<AMCDashboard />} />
-              <Route path="/maintenance/amc/add" element={<AddAMCPage />} />
-              <Route path="/maintenance/amc/details/:id" element={<AMCDetailsPage />} />
-              <Route path="/maintenance/amc/edit/:id" element={<EditAMCPage />} />
-              <Route path="/maintenance/service" element={<ServiceDashboard />} />
-              <Route path="/maintenance/service/add" element={<AddServicePage />} />
-              <Route path="/maintenance/service/details/:id" element={<ServiceDetailsPage />} />
-              <Route path="/maintenance/service/edit/:id" element={<EditServicePage />} />
-              <Route path="/maintenance/services" element={<ServiceDashboard />} />
-              <Route path="/maintenance/attendance" element={<AttendanceDashboard />} />
-              <Route path="/maintenance/attendance/details/:id" element={<AttendanceDetailsPage />} />
+              <Route path="/maintenance/asset/inactive" element={<InActiveAssetsDashboard />} />
               
               {/* Task Routes */}
               <Route path="/maintenance/task" element={<TaskDashboard />} />
