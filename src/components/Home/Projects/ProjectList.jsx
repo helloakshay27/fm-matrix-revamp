@@ -6,7 +6,7 @@ import {
     useRef,
     Fragment,
 } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import LoginTwoToneIcon from "@mui/icons-material/LoginTwoTone";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
@@ -92,6 +92,7 @@ const NewProjectDateEditor = ({
 };
 
 const ActionIcons = ({ row }) => {
+    const navigate = useNavigate()
     const dispatch = useDispatch();
     const handleDelete = async (id) => {
         const formatId = id.split('-')[1];
@@ -106,17 +107,19 @@ const ActionIcons = ({ row }) => {
             },
         })
     }
+
+    console.log(row.original)
     return (
         <div className="action-icons flex justify-around items-center">
             <button
-                onClick={() => alert(`Viewing/Editing Project ID: ${row.original.id}`)}
-                title="View/Edit Details"
+                onClick={() => navigate(`/projects/${row.original.actualId}`)}
+                title="View Details"
             >
                 <OpenInFullIcon sx={{ fontSize: "1.2em" }} />
             </button>
             <button
                 onClick={() => alert(`Some other action for: ${row.original.title}`)}
-                title="Other Action"
+                title="View Tasks"
             >
                 <LoginTwoToneIcon sx={{ fontSize: "1.2em" }} />
             </button>
@@ -280,7 +283,12 @@ const ProjectList = () => {
                     status: project.status
                         ? project.status.charAt(0).toUpperCase() + project.status.slice(1)
                         : "Unknown",
-                    type: project.project_type_name || project.type || "",
+                    type: project.project_type_name
+                        ? project.project_type_name.charAt(0).toUpperCase() + project.project_type_name.slice(1)
+                        : project.type
+                            ? project.type.charAt(0).toUpperCase() + project.type.slice(1)
+                            : "",
+
                     manager: project.project_owner_name || project.manager || "Unassigned",
                     milestones: project.milestones || "70%",
                     tasks: project.tasks || "90%",

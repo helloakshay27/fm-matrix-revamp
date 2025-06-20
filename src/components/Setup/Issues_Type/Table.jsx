@@ -15,7 +15,7 @@ import Modal from './Modal';
 import toast from 'react-hot-toast';
 import { Type } from 'lucide-react';
 const TypesTable = () => {
-  const token= localStorage.getItem('token');
+  const token = localStorage.getItem('token');
   const [openModal, setOpenModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedData, setSelectedData] = useState(null);
@@ -28,20 +28,20 @@ const TypesTable = () => {
 
   // Initial fetch of project types
   useEffect(() => {
-    dispatch(fetchIssueType({token}));
+    dispatch(fetchIssueType({ token }));
   }, [dispatch]);
 
   // Update table data when ProjectTypes changes
   useEffect(() => {
     if (ProjectTypes) {
-      setData(ProjectTypes);
+      setData([...ProjectTypes].reverse());
     }
   }, [ProjectTypes]);
 
   // Fetch data when modal closes to ensure table is refreshed
   useEffect(() => {
     if (!openModal) {
-      dispatch(fetchIssueType({token}));
+      dispatch(fetchIssueType({ token }));
     }
   }, [openModal, dispatch]);
 
@@ -53,18 +53,18 @@ const TypesTable = () => {
 
   const handleDeleteClick = async (id) => {
     try {
-      await dispatch(deleteIssueType({token,id})).unwrap(); // unwrap to handle async correctly
+      await dispatch(deleteIssueType({ token, id })).unwrap(); // unwrap to handle async correctly
       toast.dismiss();
-      toast.success('Issue Type deleted successfully',{
+      toast.success('Issue Type deleted successfully', {
         iconTheme: {
           primary: 'red', // This might directly change the color of the success icon
           secondary: 'white', // The circle background
         },
       });
-       dispatch(fetchIssueType({token})); // refetch data after successful delete
+      dispatch(fetchIssueType({ token })); // refetch data after successful delete
     } catch (error) {
       console.error('Failed to delete:', error);
-      toast.error('Failed to delete Issue Type.',{
+      toast.error('Failed to delete Issue Type.', {
         iconTheme: {
           primary: 'red', // This might directly change the color of the error icon
           secondary: 'white', // The circle background
@@ -72,34 +72,6 @@ const TypesTable = () => {
       })
     }
   };
-
-
-  // const handleToggle = async (row) => {
-  //   const updatedValue = !row.original.active;
-  //   const payload = {
-  //     active: updatedValue,
-  //   };
-
-  //   try {
-  //     await dispatch(updateIssueType({ token,id: row.original.id, data: payload })).unwrap();
-  //     toast.dismiss();
-  //     toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`,{
-  //       iconTheme: {
-  //         primary: 'red', // This might directly change the color of the success icon
-  //         secondary: 'white', // The circle background
-  //       },
-  //     });
-  //     dispatch(fetchIssueType({token}))
-  //   } catch (error) {
-  //     console.error('Failed to update toggle:', error,{
-  //       iconTheme: {
-  //         primary: 'red', // This might directly change the color of the error icon
-  //         secondary: 'white', // The circle background
-  //       },
-  //     });
-  //   }
-  // };
-
 
   const ActionIcons = ({ row }) => (
     <div className="action-icons flex justify-between gap-5">
@@ -117,9 +89,6 @@ const TypesTable = () => {
     </div>
   );
 
-
-
-
   function formatToDDMMYYYY(dateString) {
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, '0');
@@ -127,8 +96,6 @@ const TypesTable = () => {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   }
-
-
 
   const fixedRowsPerPage = 13;
 
@@ -139,38 +106,19 @@ const TypesTable = () => {
         header: 'Issues Type Name',
         size: 350,
         cell: ({ row, getValue }) => {
-          return row.original ? getValue() : null;
+          const value = getValue();
+          return row.original && value
+            ? value.charAt(0).toUpperCase() + value.slice(1)
+            : null;
         },
       },
-      // {
-      //   accessorKey: 'status',
-      //   header: 'Status',
-      //   size: 150,
-      //   cell: ({ row }) => {
-      //     const isActive = row.original.active;
-
-      //     return (
-      //       <div className="flex gap-4">
-      //         <span>Inactive</span>
-      //         <Switch
-      //           color={`${isActive ? 'success' : 'danger'}`}
-
-      //           checked={isActive}
-      //           onChange={() => handleToggle(row)} // toggle the row state
-      //         />
-      //         <span>Active</span>
-
-      //       </div>
-      //     );
-      //   },
-      // },
       {
         accessorKey: 'created_at',
         header: 'CreatedOn',
         size: 150,
         cell: ({ getValue }) => {
           const rawDate = getValue();
-          return rawDate ? <span className="pl-2">{formatToDDMMYYYY(rawDate)} </span>: null;
+          return rawDate ? <span className="pl-2">{formatToDDMMYYYY(rawDate)} </span> : null;
         },
       },
       {
@@ -299,57 +247,57 @@ const TypesTable = () => {
         </div>
 
         {data.length > 0 && (
-                    <div className=" flex items-center justify-start gap-4 mt-4 text-[12px]">
-                        {/* Previous Button */}
-                        <button
-                            onClick={() => table.previousPage()}
-                            disabled={!table.getCanPreviousPage()}
-                            className="text-red-600 disabled:opacity-30"
-                        >
-                            {"<"}
-                        </button>
+          <div className=" flex items-center justify-start gap-4 mt-4 text-[12px]">
+            {/* Previous Button */}
+            <button
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="text-red-600 disabled:opacity-30"
+            >
+              {"<"}
+            </button>
 
-                        {/* Page Numbers (Sliding Window of 3) */}
-                        {(() => {
-                            const totalPages = table.getPageCount();
-                            const currentPage = table.getState().pagination.pageIndex;
-                            const visiblePages = 3;
+            {/* Page Numbers (Sliding Window of 3) */}
+            {(() => {
+              const totalPages = table.getPageCount();
+              const currentPage = table.getState().pagination.pageIndex;
+              const visiblePages = 3;
 
-                            let start = Math.max(0, currentPage - Math.floor(visiblePages / 2));
-                            let end = start + visiblePages;
+              let start = Math.max(0, currentPage - Math.floor(visiblePages / 2));
+              let end = start + visiblePages;
 
-                            // Ensure end does not exceed total pages
-                            if (end > totalPages) {
-                                end = totalPages;
-                                start = Math.max(0, end - visiblePages);
-                            }
+              // Ensure end does not exceed total pages
+              if (end > totalPages) {
+                end = totalPages;
+                start = Math.max(0, end - visiblePages);
+              }
 
-                            return [...Array(end - start)].map((_, i) => {
-                                const page = start + i;
-                                const isActive = page === currentPage;
+              return [...Array(end - start)].map((_, i) => {
+                const page = start + i;
+                const isActive = page === currentPage;
 
-                                return (
-                                    <button
-                                        key={page}
-                                        onClick={() => table.setPageIndex(page)}
-                                        className={` px-3 py-1 ${isActive ? "bg-gray-200 font-bold" : ""}`}
-                                    >
-                                        {page + 1}
-                                    </button>
-                                );
-                            });
-                        })()}
+                return (
+                  <button
+                    key={page}
+                    onClick={() => table.setPageIndex(page)}
+                    className={` px-3 py-1 ${isActive ? "bg-gray-200 font-bold" : ""}`}
+                  >
+                    {page + 1}
+                  </button>
+                );
+              });
+            })()}
 
-                        {/* Next Button */}
-                        <button
-                            onClick={() => table.nextPage()}
-                            disabled={!table.getCanNextPage()}
-                            className="text-red-600 disabled:opacity-30"
-                        >
-                            {">"}
-                        </button>
-                    </div>
-                )}
+            {/* Next Button */}
+            <button
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="text-red-600 disabled:opacity-30"
+            >
+              {">"}
+            </button>
+          </div>
+        )}
       </div>
       {openModal && (
         <Modal
