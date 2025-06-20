@@ -40,10 +40,6 @@ const ParkingDashboard = () => {
     setIsBulkUploadOpen(true);
   };
 
-  const handleViewDetails = (clientId: string) => {
-    navigate(`/property/parking/details/${clientId}`);
-  };
-
   return (
     <div className="p-6 space-y-6 bg-[#f6f4ee] min-h-screen">
       <div className="flex items-center justify-between">
@@ -109,10 +105,7 @@ const ParkingDashboard = () => {
               {parkingData.map((row) => (
                 <TableRow key={row.id} className="hover:bg-gray-50">
                   <TableCell className="border-r">
-                    <button 
-                      onClick={() => handleViewDetails(row.id)}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
+                    <button className="text-gray-400 hover:text-gray-600">
                       <Eye className="w-4 h-4" />
                     </button>
                   </TableCell>

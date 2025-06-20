@@ -7,8 +7,7 @@ import { SetupLayout } from './components/SetupLayout';
 
 // Import existing pages
 import Index from './pages/Index';
-import ParkingDashboard from './pages/ParkingDashboard';
-import { ParkingDetailsPage } from './pages/ParkingDetailsPage';
+import NotFound from './pages/NotFound';
 
 // Import Snagging pages
 import { SnaggingDashboard } from './pages/SnaggingDashboard';
@@ -95,6 +94,7 @@ import { EditStaffPage } from './pages/EditStaffPage';
 // Import Value Added Services pages
 import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
 import { FnBRestaurantDetailsPage } from './pages/FnBRestaurantDetailsPage';
+import ParkingDashboard from './pages/ParkingDashboard';
 import ParkingBookingsDashboard from './pages/ParkingBookingsDashboard';
 
 // Import Design Insights pages
@@ -269,9 +269,6 @@ import { MSafeDashboard } from './pages/MSafeDashboard';
 import { NonFTEUsersDashboard } from './pages/NonFTEUsersDashboard';
 import { KRCCFormListDashboard } from './pages/KRCCFormListDashboard';
 
-// Import NotFound component
-import NotFound from './pages/NotFound';
-
 const queryClient = new QueryClient();
 
 function App() {
@@ -280,13 +277,8 @@ function App() {
       <LayoutProvider>
         <Router>
           <Routes>
-            <Route path="/" element={<Index />} />
-            
-            {/* Layout Routes */}
-            <Route path="/*" element={<Layout />}>
-              {/* Property Routes */}
-              <Route path="property/parking" element={<ParkingDashboard />} />
-              <Route path="property/parking/details/:clientId" element={<ParkingDetailsPage />} />
+            <Route path="/" element={<Layout><div /></Layout>}>
+              <Route index element={<Index />} />
               
               {/* Settings Routes */}
               <Route path="/settings/users" element={<FMUsersDashboard />} />
@@ -504,13 +496,41 @@ function App() {
             </Route>
             
             {/* Setup Routes */}
-            <Route path="/setup/*" element={<SetupLayout />}>
-              {/* ... keep existing code (all setup routes) */}
+            <Route path="/setup" element={<SetupLayout><div /></SetupLayout>}>
+              <Route path="/setup/location/account" element={<div>Location Account</div>} />
+              <Route path="/setup/location/building" element={<div>Location Building</div>} />
+              <Route path="/setup/location/wing" element={<div>Location Wing</div>} />
+              <Route path="/setup/location/area" element={<div>Location Area</div>} />
+              <Route path="/setup/location/floor" element={<div>Location Floor</div>} />
+              <Route path="/setup/location/unit" element={<div>Location Unit</div>} />
+              <Route path="/setup/location/room" element={<div>Location Room</div>} />
+              <Route path="/setup/user-role/department" element={<SetupDepartmentDashboard />} />
+              <Route path="/setup/user-role/role" element={<div>User Role Role</div>} />
+              <Route path="/setup/fm-user" element={<div>FM User</div>} />
+              <Route path="/setup/occupant-users" element={<div>Occupant Users</div>} />
+              <Route path="/setup/meter-type" element={<div>Meter Type</div>} />
+              <Route path="/setup/asset-groups" element={<div>Asset Groups</div>} />
+              <Route path="/setup/checklist-group" element={<div>Checklist Group</div>} />
+              <Route path="/setup/ticket/setup" element={<div>Ticket Setup</div>} />
+              <Route path="/setup/ticket/escalation" element={<div>Ticket Escalation</div>} />
+              <Route path="/setup/ticket/cost-approval" element={<div>Ticket Cost Approval</div>} />
+              <Route path="/setup/task-escalation" element={<div>Task Escalation</div>} />
+              <Route path="/setup/approval-matrix" element={<ApprovalMatrixDashboard />} />
+              <Route path="/setup/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
+              <Route path="/setup/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
+              <Route path="/setup/patrolling-approval" element={<div>Patrolling Approval</div>} />
+              <Route path="/setup/email-rule" element={<div>Email Rule</div>} />
+              <Route path="/setup/fm-group" element={<div>FM Group</div>} />
+              <Route path="/setup/master-checklist" element={<div>Master Checklist</div>} />
+              <Route path="/setup/sac-hsn-setup" element={<div>SAC/HSN Setup</div>} />
+              <Route path="/setup/address" element={<div>Address</div>} />
+              <Route path="/setup/tag" element={<div>Tag</div>} />
+              <Route path="/setup/export" element={<ExportDashboard />} />
             </Route>
           </Routes>
+          <Toaster />
         </Router>
       </LayoutProvider>
-      <Toaster />
     </QueryClientProvider>
   );
 }

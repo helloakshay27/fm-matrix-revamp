@@ -5,7 +5,7 @@ import { SetupSidebar } from './SetupSidebar';
 import { SetupHeader } from './SetupHeader';
 
 interface SetupLayoutProps {
-  children?: React.ReactNode;
+  children: React.ReactNode;
 }
 
 export const SetupLayout = ({ children }: SetupLayoutProps) => {
