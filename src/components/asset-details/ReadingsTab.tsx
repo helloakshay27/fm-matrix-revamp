@@ -32,7 +32,7 @@ export const ReadingsTab = () => {
         />
         <Button 
           onClick={handleApply}
-          className="bg-purple-600 hover:bg-purple-700 text-white"
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
         >
           Apply
         </Button>

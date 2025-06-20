@@ -28,7 +28,7 @@ export const WaterReadingsTab = () => {
           className="border border-gray-300 rounded px-3 py-2 min-w-64"
           placeholder="Select date range"
         />
-        <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+        <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white">
           Apply
         </Button>
         <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50">
