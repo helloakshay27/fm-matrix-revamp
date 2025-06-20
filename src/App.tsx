@@ -21,24 +21,29 @@ const App = () => (
               if (subItems) {
                 return subItems.map((subItem) => {
                   if (subItem.subItems) {
-                    return subItem.subItems.map((nestedSubItem) => (
-                      <Route 
-                        key={nestedSubItem.to} 
-                        path={nestedSubItem.to} 
-                        element={<nestedSubItem.page />} 
-                      />
-                    ));
+                    return subItem.subItems.map((nestedSubItem) => {
+                      const NestedPageComponent = nestedSubItem.page;
+                      return NestedPageComponent ? (
+                        <Route 
+                          key={nestedSubItem.to} 
+                          path={nestedSubItem.to} 
+                          element={<NestedPageComponent />} 
+                        />
+                      ) : null;
+                    });
                   }
-                  return (
+                  const SubPageComponent = subItem.page;
+                  return SubPageComponent ? (
                     <Route 
                       key={subItem.to} 
                       path={subItem.to} 
-                      element={<subItem.page />} 
+                      element={<SubPageComponent />} 
                     />
-                  );
+                  ) : null;
                 });
               }
-              return page ? <Route key={to} path={to} element={<page />} /> : null;
+              const PageComponent = page;
+              return PageComponent ? <Route key={to} path={to} element={<PageComponent />} /> : null;
             })}
           </Routes>
         </Layout>
