@@ -2,8 +2,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { LayoutProvider } from './contexts/LayoutContext';
-import Layout from './components/Layout';
-import SetupLayout from './components/SetupLayout';
+import { Layout } from './components/Layout';
+import { SetupLayout } from './components/SetupLayout';
 
 // Import existing pages
 import Index from './pages/Index';
@@ -95,7 +95,7 @@ import { EditStaffPage } from './pages/EditStaffPage';
 // Import Value Added Services pages
 import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
 import { FnBRestaurantDetailsPage } from './pages/FnBRestaurantDetailsPage';
-import { ParkingBookingsDashboard } from './pages/ParkingBookingsDashboard';
+import ParkingBookingsDashboard from './pages/ParkingBookingsDashboard';
 
 // Import Design Insights pages
 import { DesignInsightsDashboard } from './pages/DesignInsightsDashboard';
@@ -268,6 +268,9 @@ import { EditAssetDetailsPage } from './pages/EditAssetDetailsPage';
 import { MSafeDashboard } from './pages/MSafeDashboard';
 import { NonFTEUsersDashboard } from './pages/NonFTEUsersDashboard';
 import { KRCCFormListDashboard } from './pages/KRCCFormListDashboard';
+
+// Import NotFound component
+import NotFound from './pages/NotFound';
 
 const queryClient = new QueryClient();
 
