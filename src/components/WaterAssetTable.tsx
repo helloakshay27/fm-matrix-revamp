@@ -5,13 +5,17 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { EditStatusModal } from '@/components/EditStatusModal';
 
-export const WaterAssetTable = () => {
+interface WaterAssetTableProps {
+  searchTerm?: string;
+}
+
+export const WaterAssetTable = ({ searchTerm = '' }: WaterAssetTableProps) => {
   const navigate = useNavigate();
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
   const [selectedAssetId, setSelectedAssetId] = useState<string>('');
 
   // Water assets data matching the images
-  const waterAssets = [
+  const allWaterAssets = [
     {
       id: 1,
       assetName: 'Borewell',
@@ -48,6 +52,16 @@ export const WaterAssetTable = () => {
     }
   ];
 
+  // Filter water assets based on search term
+  const filteredWaterAssets = allWaterAssets.filter(asset => 
+    asset.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    asset.assetId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    asset.assetCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    asset.assetNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    asset.building.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    asset.equipmentId.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const getStatusBadge = (status: string) => {
     if (status === 'In Use') {
       return <span className="bg-green-500 text-white px-2 py-1 rounded text-xs">{status}</span>;
@@ -58,6 +72,7 @@ export const WaterAssetTable = () => {
   };
 
   const handleEyeClick = (assetId: string) => {
+    console.log('Navigating to water asset details for ID:', assetId);
     navigate(`/utility/water/details/${assetId}`);
   };
 
@@ -127,7 +142,7 @@ export const WaterAssetTable = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-[#D5DbDB]">
-            {waterAssets.map((asset) => (
+            {filteredWaterAssets.map((asset) => (
               <tr key={asset.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3">
                   <input
@@ -172,6 +187,13 @@ export const WaterAssetTable = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Show message when no assets found */}
+      {filteredWaterAssets.length === 0 && (
+        <div className="text-center py-8">
+          <p className="text-gray-500">No water assets found matching your search.</p>
+        </div>
+      )}
 
       {/* Edit Status Modal */}
       <EditStatusModal 

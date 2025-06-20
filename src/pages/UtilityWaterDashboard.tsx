@@ -64,6 +64,13 @@ export const UtilityWaterDashboard = () => {
 
   const handleSearch = () => {
     console.log('Searching for:', searchTerm);
+    // The search is now handled automatically by the WaterAssetTable component
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   return (
@@ -160,15 +167,11 @@ export const UtilityWaterDashboard = () => {
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
             <Input
-              placeholder="Search..."
+              placeholder="Search assets..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={handleKeyPress}
               className="pl-10 w-64"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleSearch();
-                }
-              }}
             />
           </div>
           <Button 
@@ -181,10 +184,10 @@ export const UtilityWaterDashboard = () => {
         </div>
       </div>
 
-      {/* Data Table */}
+      {/* Data Table with search functionality */}
       <Card>
         <CardContent className="p-0">
-          <WaterAssetTable />
+          <WaterAssetTable searchTerm={searchTerm} />
         </CardContent>
       </Card>
 

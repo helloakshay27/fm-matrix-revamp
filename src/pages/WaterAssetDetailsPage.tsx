@@ -22,13 +22,55 @@ export const WaterAssetDetailsPage = () => {
   const [isInUse, setIsInUse] = useState(true);
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
 
-  // Mock water asset data based on the images
-  const asset = {
-    id: id || '53619',
-    name: 'Borewell',
-    code: '83898732f107c5df0121',
-    status: 'In Use'
+  // Mock water asset data based on the asset ID from URL
+  const assetDatabase = {
+    '53619': {
+      id: '53619',
+      name: 'Borewell',
+      code: '83898732f107c5df0121',
+      assetNo: '505',
+      status: 'In Use',
+      equipmentId: '',
+      building: 'Sarova',
+      site: 'Located Site 1',
+      wing: 'SW1',
+      floor: 'FW1',
+      area: 'AW1'
+    },
+    '53615': {
+      id: '53615',
+      name: 'Tanker',
+      code: 'c302fd076e1a78a9116',
+      assetNo: '502',
+      status: 'In Use',
+      equipmentId: '',
+      building: 'Twin Tower',
+      site: 'Located Site 1',
+      wing: '',
+      floor: '',
+      area: ''
+    }
   };
+
+  // Get asset data based on ID from URL
+  const asset = assetDatabase[id as keyof typeof assetDatabase] || {
+    id: id || 'Unknown',
+    name: 'Asset Not Found',
+    code: 'N/A',
+    assetNo: 'N/A',
+    status: 'Unknown',
+    equipmentId: '',
+    building: 'Unknown',
+    site: 'Unknown',
+    wing: '',
+    floor: '',
+    area: ''
+  };
+
+  // Set initial switch state based on asset status
+  React.useEffect(() => {
+    setIsInUse(asset.status === 'In Use');
+  }, [asset.status]);
 
   const handleBack = () => {
     navigate('/utility/water');
@@ -39,7 +81,7 @@ export const WaterAssetDetailsPage = () => {
   };
 
   const handleCreateChecklist = () => {
-    console.log('Create Checklist clicked');
+    console.log('Create Checklist clicked for water asset:', asset.id);
   };
 
   const handleEditClick = () => {
@@ -61,7 +103,7 @@ export const WaterAssetDetailsPage = () => {
         
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">
-            {asset.name} (#{asset.id})
+            {asset.name.toUpperCase()} (#{asset.id})
           </h1>
           
           <div className="flex items-center gap-4">
@@ -98,6 +140,34 @@ export const WaterAssetDetailsPage = () => {
             >
               Create a Checklist
             </Button>
+          </div>
+        </div>
+
+        {/* Asset Info Display */}
+        <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <span className="text-gray-600">Asset Code:</span>
+              <span className="ml-2 font-mono">{asset.code}</span>
+            </div>
+            <div>
+              <span className="text-gray-600">Asset No:</span>
+              <span className="ml-2">{asset.assetNo}</span>
+            </div>
+            <div>
+              <span className="text-gray-600">Status:</span>
+              <span className={`ml-2 px-2 py-1 rounded text-xs ${
+                asset.status === 'In Use' ? 'bg-green-500 text-white' : 
+                asset.status === 'Breakdown' ? 'bg-red-500 text-white' : 
+                'bg-gray-500 text-white'
+              }`}>
+                {asset.status}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-600">Building:</span>
+              <span className="ml-2">{asset.building}</span>
+            </div>
           </div>
         </div>
       </div>
