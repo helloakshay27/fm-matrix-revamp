@@ -456,6 +456,7 @@ const Attachments = ({ attachments, id }) => {
     const fileInputRef = useRef(null);
     const dispatch = useDispatch();
     const [files, setFiles] = useState(attachments);
+    const token = localStorage.getItem("token");
 
     const handleAttachFile = () => {
         fileInputRef.current.click(); // Open file picker
@@ -477,8 +478,9 @@ const Attachments = ({ attachments, id }) => {
 
 
         try {
-            const result = dispatch(attachFiles({ token, id, payload: formData }));
-            const updatedAttachments = result?.payload?.attachments || [];
+            const result = await dispatch(attachFiles({ token, id, payload: formData })).unwrap();
+            console.log(result);
+            const updatedAttachments = result?.attachments || [];
             setFiles(updatedAttachments);
         } catch (error) {
             console.error("File upload or task fetch failed:", error);
@@ -492,10 +494,10 @@ const Attachments = ({ attachments, id }) => {
             {files.length > 0 ? (
                 <>
                     {files.map((file) => (
-                        <div key={index} className="flex items-center gap-3">
+                        <div className="flex items-center gap-3">
                             <FolderIcon className="h-5 w-5 text-gray-600" />
-                            <a href={file.document_url} download={file.document_name} className="text-blue-600 underline">
-                                {file.document_name}
+                            <a href={file.document_url} download={file.document_file_name} >
+                                {file.document_file_name}
                             </a>
                         </div>
                     ))}
