@@ -1,10 +1,25 @@
-
 import { HomeIcon, Users, Calendar, Settings, BarChart3, FileText, Wrench, Building, Zap, Droplets, Shield, Car, Briefcase, ClipboardList, AlertTriangle, Package, DollarSign, UserCheck, MapPin, Clock, CheckSquare, TrendingUp, Building2, Eye, FileCheck } from "lucide-react";
 import Index from "./pages/Index";
 import { UtilityWaterDashboard } from "./pages/UtilityWaterDashboard";
+import { UtilityElectricityDashboard } from "./pages/UtilityElectricityDashboard";
+import { UtilityGasDashboard } from "./pages/UtilityGasDashboard";
+import { UtilityChillerDashboard } from "./pages/UtilityChillerDashboard";
+import { UtilitySteamDashboard } from "./pages/UtilitySteamDashboard";
+import { UtilityOtherDashboard } from "./pages/UtilityOtherDashboard";
+import { SpaceManagementDashboard } from "./pages/SpaceManagementDashboard";
+import { SpaceManagementFloorsDashboard } from "./pages/SpaceManagementFloorsDashboard";
+import { SpaceManagementSeatsDashboard } from "./pages/SpaceManagementSeatsDashboard";
 import { SpaceManagementBookingsDashboard } from "./pages/SpaceManagementBookingsDashboard";
+import { FinanceDashboard } from "./pages/FinanceDashboard";
+import { FinanceInvoicesDashboard } from "./pages/FinanceInvoicesDashboard";
+import { FinanceQuotationDashboard } from "./pages/FinanceQuotationDashboard";
+import { FinanceVendorDashboard } from "./pages/FinanceVendorDashboard";
+import { FinanceMaterialPRDashboard } from "./pages/FinanceMaterialPRDashboard";
+import { FinanceGRNDashboard } from "./pages/FinanceGRNDashboard";
+import { FinanceSRNDashboard } from "./pages/FinanceSRNDashboard";
 import { AddMaterialPRDashboard } from "./pages/AddMaterialPRDashboard";
 import { AddGRNDashboard } from "./pages/AddGRNDashboard";
+import { AddSRNDashboard } from "./pages/AddSRNDashboard";
 import { AddVendorDashboard } from "./pages/AddVendorDashboard";
 import { AddQuotationDashboard } from "./pages/AddQuotationDashboard";
 import { AddInvoiceDashboard } from "./pages/AddInvoiceDashboard";
@@ -38,12 +53,60 @@ export const navItems = [
         icon: <Droplets className="h-4 w-4" />,
         page: UtilityWaterDashboard,
       },
+      {
+        title: "Electricity",
+        to: "/utility/electricity",
+        icon: <Zap className="h-4 w-4" />,
+        page: UtilityElectricityDashboard,
+      },
+      {
+        title: "Gas",
+        to: "/utility/gas",
+        icon: <BarChart3 className="h-4 w-4" />,
+        page: UtilityGasDashboard,
+      },
+      {
+        title: "Chiller",
+        to: "/utility/chiller",
+        icon: <Zap className="h-4 w-4" />,
+        page: UtilityChillerDashboard,
+      },
+      {
+        title: "Steam",
+        to: "/utility/steam",
+        icon: <BarChart3 className="h-4 w-4" />,
+        page: UtilitySteamDashboard,
+      },
+      {
+        title: "Other",
+        to: "/utility/other",
+        icon: <BarChart3 className="h-4 w-4" />,
+        page: UtilityOtherDashboard,
+      },
     ],
   },
   {
     title: "Space Management",
     icon: <Building className="h-4 w-4" />,
     subItems: [
+      {
+        title: "Dashboard",
+        to: "/vas/space-management",
+        icon: <HomeIcon className="h-4 w-4" />,
+        page: SpaceManagementDashboard,
+      },
+      {
+        title: "Floors",
+        to: "/vas/space-management/floors",
+        icon: <MapPin className="h-4 w-4" />,
+        page: SpaceManagementFloorsDashboard,
+      },
+      {
+        title: "Seats",
+        to: "/vas/space-management/seats",
+        icon: <UserCheck className="h-4 w-4" />,
+        page: SpaceManagementSeatsDashboard,
+      },
       {
         title: "Bookings",
         to: "/vas/space-management/bookings",
@@ -57,34 +120,40 @@ export const navItems = [
     icon: <DollarSign className="h-4 w-4" />,
     subItems: [
       {
+        title: "Dashboard",
+        to: "/finance",
+        icon: <HomeIcon className="h-4 w-4" />,
+        page: FinanceDashboard,
+      },
+      {
+        title: "Invoices",
+        to: "/finance/invoices",
+        icon: <FileText className="h-4 w-4" />,
+        page: FinanceInvoicesDashboard,
+      },
+      {
+        title: "Quotation",
+        to: "/finance/quotation",
+        icon: <FileText className="h-4 w-4" />,
+        page: FinanceQuotationDashboard,
+      },
+      {
+        title: "Vendor",
+        to: "/finance/vendor",
+        icon: <Users className="h-4 w-4" />,
+        page: FinanceVendorDashboard,
+      },
+      {
         title: "Material PR",
         to: "/finance/material-pr",
         icon: <Package className="h-4 w-4" />,
-        page: AddMaterialPRDashboard,
+        page: FinanceMaterialPRDashboard,
       },
       {
         title: "GRN / SRN",
         to: "/finance/grn-srn",
         icon: <Package className="h-4 w-4" />,
-        page: AddGRNDashboard,
-      },
-      {
-        title: "Add Vendor",
-        to: "/finance/add-vendor",
-        icon: <Users className="h-4 w-4" />,
-        page: AddVendorDashboard,
-      },
-      {
-        title: "Add Quotation",
-        to: "/finance/add-quotation",
-        icon: <FileText className="h-4 w-4" />,
-        page: AddQuotationDashboard,
-      },
-      {
-        title: "Add Invoice",
-        to: "/finance/add-invoice",
-        icon: <FileText className="h-4 w-4" />,
-        page: AddInvoiceDashboard,
+        page: FinanceGRNDashboard,
       },
     ],
   },
@@ -112,22 +181,20 @@ export const navItems = [
         ],
       },
       {
+        title: "Corrective",
+        to: "/maintenance/corrective",
+        icon: <AlertTriangle className="h-4 w-4" />,
+      },
+      {
         title: "Incident",
         to: "/maintenance/incident",
         icon: <Shield className="h-4 w-4" />,
         page: IncidentDashboard,
       },
       {
-        title: "Add Incident",
-        to: "/maintenance/add-incident",
-        icon: <AlertTriangle className="h-4 w-4" />,
-        page: AddIncidentPage,
-      },
-      {
-        title: "Add Master Checklist",
-        to: "/maintenance/add-master-checklist",
-        icon: <ClipboardList className="h-4 w-4" />,
-        page: AddMasterChecklistPage,
+        title: "Vehicle",
+        to: "/maintenance/vehicle",
+        icon: <Car className="h-4 w-4" />,
       },
     ],
   },
@@ -162,22 +229,10 @@ export const navItems = [
         page: DesignInsightDashboard,
       },
       {
-        title: "Add Design Insight",
-        to: "/transitioning/add-design-insight",
-        icon: <Eye className="h-4 w-4" />,
-        page: AddDesignInsightDashboard,
-      },
-      {
         title: "Fitout checklist",
         to: "/transitioning/fitout/checklist",
         icon: <CheckSquare className="h-4 w-4" />,
         page: FitoutChecklistDashboard,
-      },
-      {
-        title: "Add Checklist",
-        to: "/transitioning/add-checklist",
-        icon: <ClipboardList className="h-4 w-4" />,
-        page: AddChecklistDashboard,
       },
     ]
   },
