@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, ChevronDown, ChevronUp, Plus } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
 
 export const EditAssetDetailsPage = () => {
   const { id } = useParams();
@@ -75,6 +75,10 @@ export const EditAssetDetailsPage = () => {
     { id: 'iex-gdam', label: 'IEX-GDAM' }
   ];
 
+  const unitTypes = [
+    'kWh', 'kW', 'Liters', 'Cubic Meters', 'Units', 'Percentage', 'Temperature', 'Pressure'
+  ];
+
   const handleLocationChange = (field: string, value: string) => {
     setLocationData(prev => ({ ...prev, [field]: value }));
   };
@@ -95,8 +99,13 @@ export const EditAssetDetailsPage = () => {
     const newMeasure = {
       id: Date.now(),
       name: '',
-      unit: '',
-      description: ''
+      unitType: '',
+      min: '',
+      max: '',
+      alertBelowVal: '',
+      alertAboveVal: '',
+      multiplierFactor: '',
+      checkPreviousReading: false
     };
     setConsumptionMeasures(prev => [...prev, newMeasure]);
   };
@@ -105,10 +114,35 @@ export const EditAssetDetailsPage = () => {
     const newMeasure = {
       id: Date.now(),
       name: '',
-      unit: '',
-      description: ''
+      unitType: '',
+      min: '',
+      max: '',
+      alertBelowVal: '',
+      alertAboveVal: '',
+      multiplierFactor: '',
+      checkPreviousReading: false
     };
     setNonConsumptionMeasures(prev => [...prev, newMeasure]);
+  };
+
+  const handleRemoveConsumptionMeasure = (id: number) => {
+    setConsumptionMeasures(prev => prev.filter(measure => measure.id !== id));
+  };
+
+  const handleRemoveNonConsumptionMeasure = (id: number) => {
+    setNonConsumptionMeasures(prev => prev.filter(measure => measure.id !== id));
+  };
+
+  const handleUpdateConsumptionMeasure = (id: number, field: string, value: string | boolean) => {
+    setConsumptionMeasures(prev => prev.map(measure => 
+      measure.id === id ? { ...measure, [field]: value } : measure
+    ));
+  };
+
+  const handleUpdateNonConsumptionMeasure = (id: number, field: string, value: string | boolean) => {
+    setNonConsumptionMeasures(prev => prev.map(measure => 
+      measure.id === id ? { ...measure, [field]: value } : measure
+    ));
   };
 
   const handleFileUpload = (category: string, event: React.ChangeEvent<HTMLInputElement>) => {
@@ -650,42 +684,91 @@ export const EditAssetDetailsPage = () => {
               </Button>
               
               {consumptionMeasures.map((measure, index) => (
-                <div key={measure.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Measure Name</Label>
-                    <Input
-                      placeholder="Enter measure name"
-                      value={measure.name}
-                      onChange={(e) => {
-                        const updated = [...consumptionMeasures];
-                        updated[index].name = e.target.value;
-                        setConsumptionMeasures(updated);
-                      }}
-                    />
+                <div key={measure.id} className="p-4 border border-gray-200 rounded-lg space-y-4">
+                  <div className="flex justify-end">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleRemoveConsumptionMeasure(measure.id)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Unit</Label>
-                    <Input
-                      placeholder="Enter unit"
-                      value={measure.unit}
-                      onChange={(e) => {
-                        const updated = [...consumptionMeasures];
-                        updated[index].unit = e.target.value;
-                        setConsumptionMeasures(updated);
-                      }}
-                    />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Name</Label>
+                      <Input
+                        placeholder="Enter Text"
+                        value={measure.name}
+                        onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'name', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Unit Type</Label>
+                      <Select value={measure.unitType} onValueChange={(value) => handleUpdateConsumptionMeasure(measure.id, 'unitType', value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Unit Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {unitTypes.map((unit) => (
+                            <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Min</Label>
+                      <Input
+                        placeholder="Enter Number"
+                        value={measure.min}
+                        onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'min', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Max</Label>
+                      <Input
+                        placeholder="Enter Number"
+                        value={measure.max}
+                        onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'max', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Alert Below Val.</Label>
+                      <Input
+                        placeholder="Enter Value"
+                        value={measure.alertBelowVal}
+                        onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Description</Label>
-                    <Input
-                      placeholder="Enter description"
-                      value={measure.description}
-                      onChange={(e) => {
-                        const updated = [...consumptionMeasures];
-                        updated[index].description = e.target.value;
-                        setConsumptionMeasures(updated);
-                      }}
-                    />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Alert Above Val.</Label>
+                      <Input
+                        placeholder="Enter Value"
+                        value={measure.alertAboveVal}
+                        onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Multiplier Factor</Label>
+                      <Input
+                        placeholder="Enter Text"
+                        value={measure.multiplierFactor}
+                        onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2 pt-8">
+                      <Checkbox 
+                        id={`check-previous-reading-${measure.id}`}
+                        checked={measure.checkPreviousReading}
+                        onCheckedChange={(checked) => handleUpdateConsumptionMeasure(measure.id, 'checkPreviousReading', checked === true)}
+                      />
+                      <Label htmlFor={`check-previous-reading-${measure.id}`} className="text-sm font-medium">Check Previous Reading</Label>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -719,42 +802,91 @@ export const EditAssetDetailsPage = () => {
               </Button>
               
               {nonConsumptionMeasures.map((measure, index) => (
-                <div key={measure.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Measure Name</Label>
-                    <Input
-                      placeholder="Enter measure name"
-                      value={measure.name}
-                      onChange={(e) => {
-                        const updated = [...nonConsumptionMeasures];
-                        updated[index].name = e.target.value;
-                        setNonConsumptionMeasures(updated);
-                      }}
-                    />
+                <div key={measure.id} className="p-4 border border-gray-200 rounded-lg space-y-4">
+                  <div className="flex justify-end">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleRemoveNonConsumptionMeasure(measure.id)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Unit</Label>
-                    <Input
-                      placeholder="Enter unit"
-                      value={measure.unit}
-                      onChange={(e) => {
-                        const updated = [...nonConsumptionMeasures];
-                        updated[index].unit = e.target.value;
-                        setNonConsumptionMeasures(updated);
-                      }}
-                    />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Name</Label>
+                      <Input
+                        placeholder="Name"
+                        value={measure.name}
+                        onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'name', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Unit Type</Label>
+                      <Select value={measure.unitType} onValueChange={(value) => handleUpdateNonConsumptionMeasure(measure.id, 'unitType', value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Unit Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {unitTypes.map((unit) => (
+                            <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Min</Label>
+                      <Input
+                        placeholder="Min"
+                        value={measure.min}
+                        onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'min', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Max</Label>
+                      <Input
+                        placeholder="Max"
+                        value={measure.max}
+                        onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'max', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Alert Below Val.</Label>
+                      <Input
+                        placeholder="Alert Below Value"
+                        value={measure.alertBelowVal}
+                        onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Description</Label>
-                    <Input
-                      placeholder="Enter description"
-                      value={measure.description}
-                      onChange={(e) => {
-                        const updated = [...nonConsumptionMeasures];
-                        updated[index].description = e.target.value;
-                        setNonConsumptionMeasures(updated);
-                      }}
-                    />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Alert Above Val.</Label>
+                      <Input
+                        placeholder="Alert Above Value"
+                        value={measure.alertAboveVal}
+                        onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Multiplier Factor</Label>
+                      <Input
+                        placeholder="Multiplier Factor"
+                        value={measure.multiplierFactor}
+                        onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2 pt-8">
+                      <Checkbox 
+                        id={`check-previous-reading-nc-${measure.id}`}
+                        checked={measure.checkPreviousReading}
+                        onCheckedChange={(checked) => handleUpdateNonConsumptionMeasure(measure.id, 'checkPreviousReading', checked === true)}
+                      />
+                      <Label htmlFor={`check-previous-reading-nc-${measure.id}`} className="text-sm font-medium">Check Previous Reading</Label>
+                    </div>
                   </div>
                 </div>
               ))}
