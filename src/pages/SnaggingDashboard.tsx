@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Eye, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface SnaggingItem {
@@ -30,6 +31,7 @@ const mockData: SnaggingItem[] = [
 
 export const SnaggingDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeView, setActiveView] = useState('User Snag');
   const navigate = useNavigate();
 
   const filteredData = mockData.filter(item =>
@@ -50,7 +52,38 @@ export const SnaggingDashboard = () => {
   return (
     <div className="p-6 bg-white">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-4">SNAG LIST</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold">SNAG LIST</h1>
+          
+          {/* Dropdown Navigation */}
+          <div className="flex gap-3">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                >
+                  {activeView}
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-white border shadow-lg">
+                <DropdownMenuItem 
+                  onClick={() => setActiveView('User Snag')}
+                  className="cursor-pointer hover:bg-gray-100"
+                >
+                  User Snag
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setActiveView('My Snags')}
+                  className="cursor-pointer hover:bg-gray-100"
+                >
+                  My Snags
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
         
         {/* Search Section */}
         <div className="flex gap-3 mb-6">
@@ -67,6 +100,13 @@ export const SnaggingDashboard = () => {
           >
             Search
           </Button>
+        </div>
+
+        {/* Content based on active view */}
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-gray-700">
+            {activeView === 'User Snag' ? 'User Snagging Items' : 'My Snagging Items'}
+          </h2>
         </div>
 
         {/* Table */}
