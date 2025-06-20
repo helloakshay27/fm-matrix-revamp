@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Save } from 'lucide-react';
 import { StatusSetupTable } from '../components/StatusSetupTable';
 import { CategoriesSetupTable } from '../components/CategoriesSetupTable';
+import { toast } from 'sonner';
 
 interface Restaurant {
   id: number;
@@ -25,6 +27,18 @@ interface Restaurant {
   openDays: string;
   orderAllowed: boolean;
   active: boolean;
+}
+
+interface DaySchedule {
+  day: string;
+  enabled: boolean;
+  startTime: string;
+  endTime: string;
+  breakStartTime: string;
+  breakEndTime: string;
+  bookingAllowed: boolean;
+  orderAllowed: boolean;
+  lastBookingTime: string;
 }
 
 const mockRestaurants: Restaurant[] = [
@@ -97,6 +111,16 @@ export const FnBRestaurantDetailsPage = () => {
   const restaurant = mockRestaurants.find(r => r.id === parseInt(id || '1'));
   const [formData, setFormData] = useState<Restaurant>(restaurant || mockRestaurants[0]);
 
+  const [scheduleData, setScheduleData] = useState<DaySchedule[]>([
+    { day: 'Monday', enabled: true, startTime: '06:00', endTime: '23:00', breakStartTime: '13:00', breakEndTime: '14:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '22:00' },
+    { day: 'Tuesday', enabled: true, startTime: '06:00', endTime: '23:00', breakStartTime: '13:00', breakEndTime: '14:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '22:00' },
+    { day: 'Wednesday', enabled: true, startTime: '06:00', endTime: '23:00', breakStartTime: '13:00', breakEndTime: '14:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '22:00' },
+    { day: 'Thursday', enabled: true, startTime: '06:00', endTime: '23:00', breakStartTime: '13:00', breakEndTime: '14:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '22:00' },
+    { day: 'Friday', enabled: true, startTime: '06:00', endTime: '23:00', breakStartTime: '13:00', breakEndTime: '14:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '22:00' },
+    { day: 'Saturday', enabled: true, startTime: '06:00', endTime: '23:00', breakStartTime: '13:00', breakEndTime: '14:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '22:00' },
+    { day: 'Sunday', enabled: true, startTime: '06:00', endTime: '23:00', breakStartTime: '13:00', breakEndTime: '14:00', bookingAllowed: true, orderAllowed: true, lastBookingTime: '22:00' },
+  ]);
+
   const handleInputChange = (field: keyof Restaurant, value: any) => {
     setFormData(prev => ({
       ...prev,
@@ -104,13 +128,24 @@ export const FnBRestaurantDetailsPage = () => {
     }));
   };
 
-  const handleSave = () => {
-    console.log('Saving restaurant data:', formData);
-    // Here you would typically make an API call to save the data
-    alert('Restaurant details saved successfully!');
+  const handleScheduleChange = (dayIndex: number, field: keyof DaySchedule, value: any) => {
+    setScheduleData(prev => prev.map((day, index) => 
+      index === dayIndex ? { ...day, [field]: value } : day
+    ));
   };
 
-  const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const handleSave = () => {
+    console.log('Saving restaurant data:', formData);
+    console.log('Saving schedule data:', scheduleData);
+    
+    // Update the mock data (in a real app, this would be an API call)
+    const updatedRestaurants = mockRestaurants.map(r => 
+      r.id === formData.id ? formData : r
+    );
+    
+    toast.success('Restaurant details saved successfully!');
+  };
+
   const timeOptions = Array.from({ length: 24 }, (_, i) => {
     const hour = i.toString().padStart(2, '0');
     return `${hour}:00`;
@@ -242,16 +277,22 @@ export const FnBRestaurantDetailsPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {daysOfWeek.map((day) => (
-                        <tr key={day} className="border-b">
+                      {scheduleData.map((dayData, index) => (
+                        <tr key={dayData.day} className="border-b">
                           <td className="p-3">
                             <div className="flex items-center gap-2">
-                              <Checkbox />
-                              <span>{day}</span>
+                              <Checkbox 
+                                checked={dayData.enabled}
+                                onCheckedChange={(checked) => handleScheduleChange(index, 'enabled', checked)}
+                              />
+                              <span>{dayData.day}</span>
                             </div>
                           </td>
                           <td className="p-3">
-                            <Select defaultValue="06:00">
+                            <Select 
+                              value={dayData.startTime} 
+                              onValueChange={(value) => handleScheduleChange(index, 'startTime', value)}
+                            >
                               <SelectTrigger className="w-20">
                                 <SelectValue />
                               </SelectTrigger>
@@ -263,7 +304,10 @@ export const FnBRestaurantDetailsPage = () => {
                             </Select>
                           </td>
                           <td className="p-3">
-                            <Select defaultValue="23:00">
+                            <Select 
+                              value={dayData.endTime}
+                              onValueChange={(value) => handleScheduleChange(index, 'endTime', value)}
+                            >
                               <SelectTrigger className="w-20">
                                 <SelectValue />
                               </SelectTrigger>
@@ -275,7 +319,10 @@ export const FnBRestaurantDetailsPage = () => {
                             </Select>
                           </td>
                           <td className="p-3">
-                            <Select defaultValue="13:00">
+                            <Select 
+                              value={dayData.breakStartTime}
+                              onValueChange={(value) => handleScheduleChange(index, 'breakStartTime', value)}
+                            >
                               <SelectTrigger className="w-20">
                                 <SelectValue />
                               </SelectTrigger>
@@ -287,7 +334,10 @@ export const FnBRestaurantDetailsPage = () => {
                             </Select>
                           </td>
                           <td className="p-3">
-                            <Select defaultValue="14:00">
+                            <Select 
+                              value={dayData.breakEndTime}
+                              onValueChange={(value) => handleScheduleChange(index, 'breakEndTime', value)}
+                            >
                               <SelectTrigger className="w-20">
                                 <SelectValue />
                               </SelectTrigger>
@@ -299,13 +349,22 @@ export const FnBRestaurantDetailsPage = () => {
                             </Select>
                           </td>
                           <td className="p-3">
-                            <Checkbox checked={formData.bookingAllowed} />
+                            <Checkbox 
+                              checked={dayData.bookingAllowed} 
+                              onCheckedChange={(checked) => handleScheduleChange(index, 'bookingAllowed', checked)}
+                            />
                           </td>
                           <td className="p-3">
-                            <Checkbox checked={formData.orderAllowed} />
+                            <Checkbox 
+                              checked={dayData.orderAllowed}
+                              onCheckedChange={(checked) => handleScheduleChange(index, 'orderAllowed', checked)}
+                            />
                           </td>
                           <td className="p-3">
-                            <Select defaultValue="00:00">
+                            <Select 
+                              value={dayData.lastBookingTime}
+                              onValueChange={(value) => handleScheduleChange(index, 'lastBookingTime', value)}
+                            >
                               <SelectTrigger className="w-20">
                                 <SelectValue />
                               </SelectTrigger>
@@ -344,8 +403,8 @@ export const FnBRestaurantDetailsPage = () => {
                 </div>
                 <div>
                   <Label htmlFor="booking-allowed" className="text-sm font-medium">Booking Allowed</Label>
-                  <div className="mt-1 flex items-center">
-                    <span className="mr-2">No</span>
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="text-sm">No</span>
                     <div
                       className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
                         formData.bookingAllowed ? 'bg-green-500' : 'bg-gray-300'
@@ -358,6 +417,7 @@ export const FnBRestaurantDetailsPage = () => {
                         }`}
                       />
                     </div>
+                    <span className="text-sm">Yes</span>
                   </div>
                 </div>
                 <div>
@@ -381,7 +441,7 @@ export const FnBRestaurantDetailsPage = () => {
               </CardContent>
             </Card>
 
-            {/* Cover, Menu, Gallery sections would be added here */}
+            {/* Cover */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg font-medium text-orange-600 flex items-center gap-2">
@@ -390,10 +450,16 @@ export const FnBRestaurantDetailsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-500">Cover image upload functionality would be implemented here</p>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                  <p className="text-gray-500">Cover image upload functionality would be implemented here</p>
+                  <Button className="mt-4 bg-[#C72030] hover:bg-[#C72030]/90 text-white">
+                    Upload Cover Image
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
+            {/* Menu */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg font-medium text-orange-600 flex items-center gap-2">
@@ -402,10 +468,16 @@ export const FnBRestaurantDetailsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-500">Menu management functionality would be implemented here</p>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                  <p className="text-gray-500">Menu management functionality would be implemented here</p>
+                  <Button className="mt-4 bg-[#C72030] hover:bg-[#C72030]/90 text-white">
+                    Add Menu Items
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
+            {/* Gallery */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg font-medium text-orange-600 flex items-center gap-2">
@@ -414,7 +486,12 @@ export const FnBRestaurantDetailsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-500">Gallery management functionality would be implemented here</p>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                  <p className="text-gray-500">Gallery management functionality would be implemented here</p>
+                  <Button className="mt-4 bg-[#C72030] hover:bg-[#C72030]/90 text-white">
+                    Add Gallery Images
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -437,9 +514,9 @@ export const FnBRestaurantDetailsPage = () => {
             <div className="flex items-center text-sm text-[#1a1a1a] opacity-70 mb-2">
               <span>Restaurant</span>
               <span className="mx-2">{'>'}</span>
-              <span>Restaurant Status</span>
+              <span>Restaurant Categories</span>
             </div>
-            <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT STATUS</h2>
+            <h2 className="text-xl font-bold text-[#1a1a1a] mb-4">RESTAURANT CATEGORIES</h2>
             <CategoriesSetupTable />
           </div>
         </TabsContent>
