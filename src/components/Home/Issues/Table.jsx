@@ -265,7 +265,7 @@ useEffect(() => {
             endDate: issue.end_date ? new Date(issue.end_date).toLocaleDateString('en-CA') : null, // Ensure 'en-CA' format (YYYY-MM-DD) is compatible with date input
             priority: issue.priority || 'None',
             projectName: issue.project_management_name || 'Unassigned',
-            milestoneName: issue.milestone_name|| 'Unassigned',
+            milestoneName: issue.milstone_name|| 'Unassigned',
             taskName: issue.task_management_name|| 'Unassigned',
             comments: issue.comments?.length? issue.comments[issue.comments.length - 1].body : '',    // Robust comment handling
         }));
