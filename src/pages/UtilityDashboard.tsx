@@ -68,7 +68,13 @@ export const UtilityDashboard = () => {
 
   const handleSearch = () => {
     console.log('Searching for:', searchTerm);
-    // Logic for search functionality
+    // The search is now handled automatically by the AssetTable component
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   return (
@@ -84,13 +90,13 @@ export const UtilityDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <StatsCard
           title="Total Asset"
-          value="5"
+          value="7"
           color="orange"
           icon={<Package className="w-8 h-8" />}
         />
         <StatsCard
           title="In Use"
-          value="4"
+          value="6"
           color="green"
           icon={<CheckCircle className="w-8 h-8" />}
         />
@@ -178,21 +184,17 @@ export const UtilityDashboard = () => {
           Filters
         </Button>
 
-        {/* Search Bar - moved here from the separate section */}
+        {/* Search Bar - Real-time search */}
         <div className="flex items-center ml-auto">
           <div className="flex items-center space-x-2">
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
               <Input
-                placeholder="Search..."
+                placeholder="Search assets..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={handleKeyPress}
                 className="pl-10 w-64"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSearch();
-                  }
-                }}
               />
             </div>
             <Button 
@@ -206,8 +208,8 @@ export const UtilityDashboard = () => {
         </div>
       </div>
       
-      {/* Asset Table */}
-      <AssetTable />
+      {/* Asset Table with search functionality */}
+      <AssetTable searchTerm={searchTerm} />
       
       {/* Filter Dialog */}
       <UtilityFilterDialog 

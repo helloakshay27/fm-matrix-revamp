@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Eye, Download, Filter, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -5,13 +6,17 @@ import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { EditStatusModal } from '@/components/EditStatusModal';
 
-export const AssetTable = () => {
+interface AssetTableProps {
+  searchTerm?: string;
+}
+
+export const AssetTable = ({ searchTerm = '' }: AssetTableProps) => {
   const navigate = useNavigate();
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
   const [selectedAssetId, setSelectedAssetId] = useState<string>('');
 
   // Sample data matching the screenshot
-  const assets = [
+  const allAssets = [
     {
       id: 1,
       assetName: 'sdcdsc',
@@ -133,6 +138,16 @@ export const AssetTable = () => {
     }
   ];
 
+  // Filter assets based on search term
+  const filteredAssets = allAssets.filter(asset => 
+    asset.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    asset.assetId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    asset.assetCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    asset.assetNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    asset.building.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    asset.equipmentId.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const getStatusBadge = (status: string) => {
     if (status === 'In Use') {
       return <span className="bg-green-500 text-white px-2 py-1 rounded text-xs">{status}</span>;
@@ -143,6 +158,7 @@ export const AssetTable = () => {
   };
 
   const handleEyeClick = (assetId: string) => {
+    console.log('Navigating to asset details for ID:', assetId);
     navigate(`/utility/energy/details/${assetId}`);
   };
 
@@ -212,7 +228,7 @@ export const AssetTable = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-[#D5DbDB]">
-            {assets.map((asset) => (
+            {filteredAssets.map((asset) => (
               <tr key={asset.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3">
                   <input
@@ -257,6 +273,13 @@ export const AssetTable = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Show message when no assets found */}
+      {filteredAssets.length === 0 && (
+        <div className="text-center py-8">
+          <p className="text-gray-500">No assets found matching your search.</p>
+        </div>
+      )}
 
       {/* Edit Status Modal */}
       <EditStatusModal 
