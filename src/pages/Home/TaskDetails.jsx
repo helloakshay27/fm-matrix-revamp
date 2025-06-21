@@ -494,12 +494,15 @@ const Attachments = ({ attachments, id }) => {
             {files.length > 0 ? (
                 <>
                     {files.map((file) => (
+                        <>
                         <div className="flex items-center gap-3">
                             <FolderIcon className="h-5 w-5 text-gray-600" />
                             <a href={file.document_url} download={file.document_file_name} >
                                 {file.document_file_name}
                             </a>
                         </div>
+                        {/* <hr className="border border-gray-200" ></hr> */}
+                        </>
                     ))}
                     <button
                         className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
