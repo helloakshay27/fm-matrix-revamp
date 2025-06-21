@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -223,7 +224,7 @@ import { InvoicesDashboard } from './pages/InvoicesDashboard';
 import { InvoicesSESDashboard } from './pages/InvoicesSESDashboard';
 import { BillBookingDashboard } from './pages/BillBookingDashboard';
 import { PendingApprovalsDashboard } from './pages/PendingApprovalsDashboard';
-import { InvoiceDashboard } from './pages/InvoiceDashboard';
+import InvoiceDashboard from './pages/InvoiceDashboard';
 
 // Import Settings pages
 import { FMUsersDashboard } from './pages/settings/FMUsersDashboard';
@@ -383,6 +384,7 @@ function App() {
               <Route path="/finance/bill-booking" element={<BillBookingDashboard />} />
               <Route path="/finance/bill-booking/add" element={<AddNewBillDashboard />} />
               <Route path="/finance/pending-approvals" element={<PendingApprovalsDashboard />} />
+              <Route path="/finance/invoice" element={<InvoiceDashboard />} />
               
               {/* Maintenance Routes */}
               <Route path="/maintenance/asset" element={<AssetDashboard />} />
