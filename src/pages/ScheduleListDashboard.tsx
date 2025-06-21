@@ -245,6 +245,8 @@ export const ScheduleListDashboard = () => {
         open={showImportModal}
         onOpenChange={setShowImportModal}
         title="Bulk Upload"
+        downloadText="Download Sample Format"
+        importText="Import"
       />
 
       <ScheduleFilterDialog

@@ -426,6 +426,8 @@ export const InventoryDashboard = () => {
         open={showBulkUpload}
         onOpenChange={setShowBulkUpload}
         title="Bulk Upload"
+        downloadText="Download Sample Format"
+        importText="Import"
       />
       
       <InventoryFilterDialog
