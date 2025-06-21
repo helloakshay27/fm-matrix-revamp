@@ -4,9 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Download, Mail, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { NonFTEImportModal } from '@/components/NonFTEImportModal';
+import { NonFTEEmailModal } from '@/components/NonFTEEmailModal';
+import { NonFTEFiltersModal } from '@/components/NonFTEFiltersModal';
 
 export const NonFTEUsersDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [filtersModalOpen, setFiltersModalOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<any>(null);
 
   const users = [
     { name: "Anand Babu Pawar", gender: "Male", mobile: "8355857800", email: "anandpawar54136@gmail.com", department: "FM", role: "Shift Engineer" },
@@ -31,6 +38,11 @@ export const NonFTEUsersDashboard = () => {
     { name: "Devendra Kumar", gender: "", mobile: "8104781760", email: "devendra.kumar@tuvindia.co.in", department: "", role: "" },
   ];
 
+  const handleApplyFilters = (filters: any) => {
+    setAppliedFilters(filters);
+    console.log('Applied filters:', filters);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center text-sm text-gray-600 mb-4">
@@ -42,19 +54,44 @@ export const NonFTEUsersDashboard = () => {
       <h1 className="text-2xl font-semibold text-gray-900">NON FTE USERS</h1>
       
       <div className="flex gap-4 mb-6">
-        <Button className="bg-purple-700 hover:bg-purple-800 text-white">
+        <Button 
+          className="text-white"
+          style={{ backgroundColor: '#C72030' }}
+          onClick={() => setImportModalOpen(true)}
+        >
           <Download className="w-4 h-4 mr-2" />
           Import
         </Button>
-        <Button variant="outline" className="border-purple-700 text-purple-700 hover:bg-purple-50">
+        <Button 
+          variant="outline" 
+          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+          onClick={() => setEmailModalOpen(true)}
+        >
           <Mail className="w-4 h-4 mr-2" />
           Resend Mail
         </Button>
-        <Button variant="outline" className="border-purple-700 text-purple-700 hover:bg-purple-50">
+        <Button 
+          variant="outline" 
+          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+          onClick={() => setFiltersModalOpen(true)}
+        >
           <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
       </div>
+
+      {appliedFilters && (
+        <div className="bg-blue-50 p-3 rounded-md mb-4">
+          <p className="text-sm text-blue-800">
+            Filters applied: 
+            {appliedFilters.userName && ` User Name: ${appliedFilters.userName}`}
+            {appliedFilters.email && ` Email: ${appliedFilters.email}`}
+            {appliedFilters.department && ` Department: ${appliedFilters.department}`}
+            {appliedFilters.circle && ` Circle: ${appliedFilters.circle}`}
+            {appliedFilters.role && ` Role: ${appliedFilters.role}`}
+          </p>
+        </div>
+      )}
 
       <div className="bg-white rounded-lg border">
         <Table>
@@ -96,13 +133,14 @@ export const NonFTEUsersDashboard = () => {
           <Button
             variant="outline"
             size="sm"
-            className="bg-purple-700 text-white hover:bg-purple-800"
+            className="text-white"
+            style={{ backgroundColor: '#C72030' }}
             onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
             disabled={currentPage === 1}
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <span className="bg-purple-700 text-white px-3 py-1 rounded text-sm">2</span>
+          <span className="text-white px-3 py-1 rounded text-sm" style={{ backgroundColor: '#C72030' }}>2</span>
           <Button variant="outline" size="sm" className="px-3 py-1 text-sm">3</Button>
           <Button variant="outline" size="sm" className="px-3 py-1 text-sm">4</Button>
           <Button variant="outline" size="sm" className="px-3 py-1 text-sm">5</Button>
@@ -112,13 +150,31 @@ export const NonFTEUsersDashboard = () => {
           <Button
             variant="outline"
             size="sm"
-            className="bg-purple-700 text-white hover:bg-purple-800"
+            className="text-white"
+            style={{ backgroundColor: '#C72030' }}
             onClick={() => setCurrentPage(currentPage + 1)}
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
         </div>
       </div>
+
+      {/* Modals */}
+      <NonFTEImportModal 
+        isOpen={importModalOpen} 
+        onClose={() => setImportModalOpen(false)} 
+      />
+      
+      <NonFTEEmailModal 
+        isOpen={emailModalOpen} 
+        onClose={() => setEmailModalOpen(false)} 
+      />
+      
+      <NonFTEFiltersModal 
+        isOpen={filtersModalOpen} 
+        onClose={() => setFiltersModalOpen(false)} 
+        onApplyFilters={handleApplyFilters}
+      />
     </div>
   );
 };
