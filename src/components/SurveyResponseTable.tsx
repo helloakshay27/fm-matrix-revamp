@@ -32,6 +32,10 @@ const mockResponseData = [
 ];
 
 export const SurveyResponseTable = () => {
+  const handleExport = () => {
+    console.log('Exporting survey responses...');
+  };
+
   return (
     <div className="space-y-4">
       {/* Search and Filter */}
@@ -44,7 +48,10 @@ export const SurveyResponseTable = () => {
             className="pl-10 pr-4 py-2 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent w-full"
           />
         </div>
-        <button className="flex items-center gap-2 bg-[#C72030] text-white px-4 py-2 rounded-lg hover:bg-[#A01B28] transition-colors">
+        <button 
+          onClick={handleExport}
+          className="flex items-center gap-2 bg-[#C72030] text-white px-4 py-2 rounded-lg hover:bg-[#A01B28] transition-colors"
+        >
           <Download className="w-4 h-4" />
           Export
         </button>
