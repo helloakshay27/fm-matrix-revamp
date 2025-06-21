@@ -156,6 +156,22 @@ export const EditSeatSetupDashboard = () => {
     }
   ];
 
+  // Sync seat type assignments with seat types data
+  useEffect(() => {
+    const updatedAssignments = seatTypeAssignments.map(assignment => {
+      const correspondingSeatType = seatTypes.find(st => st.name === assignment.name);
+      if (correspondingSeatType) {
+        const totalSeats = parseInt(correspondingSeatType.totalSeats) || 0;
+        return {
+          ...assignment,
+          total: totalSeats
+        };
+      }
+      return assignment;
+    });
+    setSeatTypeAssignments(updatedAssignments);
+  }, [seatTypes]);
+
   useEffect(() => {
     // Load existing data when component mounts
     if (id) {
@@ -331,19 +347,42 @@ export const EditSeatSetupDashboard = () => {
   };
 
   const toggleSeatTypeExpansion = (seatTypeName: string) => {
+    console.log("Toggling expansion for:", seatTypeName);
     const updated = [...seatTypeAssignments];
     const index = updated.findIndex(sta => sta.name === seatTypeName);
     if (index !== -1) {
       updated[index] = { ...updated[index], isExpanded: !updated[index].isExpanded };
       setSeatTypeAssignments(updated);
+      console.log("Updated expansion state:", updated[index].isExpanded);
     }
   };
 
   const handleAssignSeats = () => {
-    if (!selectedDepartment || !selectedAssignmentSeatType || !seatsToAssign) return;
+    console.log("Assigning seats:", { selectedDepartment, selectedAssignmentSeatType, seatsToAssign });
+    
+    if (!selectedDepartment || !selectedAssignmentSeatType || !seatsToAssign) {
+      console.log("Missing required fields");
+      return;
+    }
     
     const seatsCount = parseInt(seatsToAssign);
-    if (seatsCount <= 0) return;
+    if (seatsCount <= 0) {
+      console.log("Invalid seat count");
+      return;
+    }
+
+    // Get available seats for assignment
+    const seatTypeAssignment = seatTypeAssignments.find(sta => sta.name === selectedAssignmentSeatType);
+    if (!seatTypeAssignment) {
+      console.log("Seat type not found");
+      return;
+    }
+
+    const availableSeats = seatTypeAssignment.total - seatTypeAssignment.assigned;
+    if (seatsCount > availableSeats) {
+      console.log("Not enough available seats");
+      return;
+    }
 
     // Update department seats
     const updatedDepartments = departments.map(dept => {
@@ -368,10 +407,15 @@ export const EditSeatSetupDashboard = () => {
     setSelectedAssignmentSeatType("");
     setSeatsToAssign("");
     setDialogOpen(false);
+    
+    console.log("Assignment completed successfully");
   };
 
   const handleOpenAssignDialog = (seatTypeName: string) => {
+    console.log("Opening assign dialog for:", seatTypeName);
     setSelectedAssignmentSeatType(seatTypeName);
+    setSelectedDepartment("");
+    setSeatsToAssign("");
     setDialogOpen(true);
   };
 
@@ -693,6 +737,7 @@ export const EditSeatSetupDashboard = () => {
                                     size="sm"
                                     className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-xs px-3 py-1"
                                     onClick={() => handleOpenAssignDialog(seatType.name)}
+                                    disabled={seatType.assigned >= seatType.total}
                                   >
                                     Assign Seats
                                   </Button>
