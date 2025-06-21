@@ -143,6 +143,7 @@ const modulesByPackage = {
         { name: 'Pending Approvals', href: '/finance/pending-approvals', color: 'text-[#1a1a1a]' }
       ]
     },
+    { name: 'Bill Booking', icon: Receipt, href: '/finance/bill-booking' },
     { name: 'Invoice', icon: FileText, href: '/finance/invoice' },
     { 
       name: 'Lease Management', 
