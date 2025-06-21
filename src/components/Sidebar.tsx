@@ -150,7 +150,8 @@ const modulesByPackage = {
       icon: FileText, 
       href: '/finance/lease-management',
       color: 'text-[#1a1a1a]'
-    }
+    },
+    { name: 'WBS', icon: Layers, href: '/finance/wbs' }
   ],
   'CRM': [
     { name: 'Cloud Telephony', icon: Phone, href: '/crm/cloud-telephony' },
