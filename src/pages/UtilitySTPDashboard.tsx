@@ -273,15 +273,11 @@ const UtilitySTPDashboard = () => {
         open={isImportOpen} 
         onOpenChange={setIsImportOpen}
         title="Import STP Assets"
-        downloadText="Download Sample Format"
-        importText="Import"
       />
       <BulkUploadDialog 
         open={isUpdateOpen} 
         onOpenChange={setIsUpdateOpen}
         title="Update STP Assets"
-        downloadText="Download Sample Format"
-        importText="Update"
       />
       <UtilitySTPFilterDialog 
         isOpen={isFilterOpen} 

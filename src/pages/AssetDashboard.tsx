@@ -308,29 +308,31 @@ export const AssetDashboard = () => {
         </Button>
 
         {/* Search Box aligned to right */}
-        <div className="ml-auto flex items-center gap-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search assets..."
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10 w-64 bg-white"
-            />
-          </div>
-          <Button 
-            onClick={() => setIsFilterOpen(true)}
-            variant="outline" 
-            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filters
-          </Button>
+        <div className="relative ml-auto">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Search assets..."
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-10 w-64 bg-white border-gray-300"
+          />
         </div>
+        <Button 
+          className="bg-green-600 hover:bg-green-700 text-white px-4"
+        >
+          Go!
+        </Button>
       </div>
 
       {/* Second Row of Action Buttons */}
       <div className="flex flex-wrap items-center gap-3 mb-6">
+        <Button 
+          onClick={handleInActiveAssets}
+          variant="outline" 
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4"
+        >
+          In-Active Assets
+        </Button>
         <Button 
           onClick={handlePrintAllQR}
           variant="outline" 
@@ -340,102 +342,122 @@ export const AssetDashboard = () => {
           Print All QR
         </Button>
         <Button 
-          onClick={handleInActiveAssets}
+          onClick={() => setIsFilterOpen(true)}
           variant="outline" 
           className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4"
         >
-          In-Active Assets
+          <Filter className="w-4 h-4 mr-2" />
+          Filters
         </Button>
       </div>
 
       {/* Asset Table */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-[#f6f4ee]">
-              <TableHead className="w-12">
-                <input 
-                  type="checkbox" 
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                />
-              </TableHead>
-              <TableHead>Action</TableHead>
-              <TableHead>Asset Name</TableHead>
-              <TableHead>Asset ID</TableHead>
-              <TableHead>Asset Code</TableHead>
-              <TableHead>Asset No.</TableHead>
-              <TableHead>Asset Status</TableHead>
-              <TableHead>Equipment Id</TableHead>
-              <TableHead>Site</TableHead>
-              <TableHead>Building</TableHead>
-              <TableHead>Wing</TableHead>
-              <TableHead>Floor</TableHead>
-              <TableHead>Area</TableHead>
-              <TableHead>Room</TableHead>
-              <TableHead>Meter Type</TableHead>
-              <TableHead>Asset Type</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredAssets.map((asset) => (
-              <TableRow key={asset.id}>
-                <TableCell>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50 border-b border-gray-200">
+                <TableHead className="w-12 px-4 py-3">
                   <input 
                     type="checkbox" 
-                    checked={selectedAssets.includes(asset.id)}
-                    onChange={(e) => handleSelectAsset(asset.id, e.target.checked)}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    checked={selectedAssets.length === filteredAssets.length && filteredAssets.length > 0}
+                    className="rounded border-gray-300"
                   />
-                </TableCell>
-                <TableCell>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleViewAsset(asset.id)}
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                </TableCell>
-                <TableCell className="font-medium">{asset.name}</TableCell>
-                <TableCell>{asset.id}</TableCell>
-                <TableCell>{asset.code}</TableCell>
-                <TableCell>{asset.assetNo}</TableCell>
-                <TableCell>
-                  <Badge className={getStatusColor(asset.status)}>
-                    {asset.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>{asset.equipmentId}</TableCell>
-                <TableCell>{asset.site}</TableCell>
-                <TableCell>{asset.building}</TableCell>
-                <TableCell>{asset.wing}</TableCell>
-                <TableCell>{asset.floor}</TableCell>
-                <TableCell>{asset.area}</TableCell>
-                <TableCell>{asset.room}</TableCell>
-                <TableCell>{asset.meterType}</TableCell>
-                <TableCell>{asset.assetType}</TableCell>
+                </TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Name</TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset ID</TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Code</TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset No.</TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Status</TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Equipment Id</TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Site</TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Building</TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Wing</TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Floor</TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Area</TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Room</TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Meter Type</TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Type</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-
-        {/* Footer with pagination info */}
-        <div className="p-4 border-t bg-gray-50">
-          <div className="text-sm text-gray-600 text-right">
-            Showing 1 - {filteredAssets.length} of {assetData.length} assets
-          </div>
+            </TableHeader>
+            <TableBody>
+              {filteredAssets.map((asset) => (
+                <TableRow key={asset.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <TableCell className="px-4 py-3">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedAssets.includes(asset.id)}
+                      onChange={(e) => handleSelectAsset(asset.id, e.target.checked)}
+                      className="rounded border-gray-300"
+                    />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleViewAsset(asset.id)}
+                      className="p-1 h-8 w-8"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{asset.name}</TableCell>
+                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.id}</TableCell>
+                  <TableCell className="px-4 py-3 text-sm text-gray-600 font-mono">{asset.code}</TableCell>
+                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.assetNo}</TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Badge className={`${getStatusColor(asset.status)} text-xs px-2 py-1 rounded-full`}>
+                      {asset.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.equipmentId}</TableCell>
+                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.site}</TableCell>
+                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.building}</TableCell>
+                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.wing}</TableCell>
+                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.floor}</TableCell>
+                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.area}</TableCell>
+                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.room}</TableCell>
+                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.meterType}</TableCell>
+                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.assetType}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </div>
 
-      {/* Dialogs */}
+      {/* Pagination */}
+      <div className="flex items-center justify-center gap-2 mt-6">
+        <Button
+          variant="default"
+          size="sm"
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-3 py-2"
+        >
+          1
+        </Button>
+        {[2, 3, 4, 5, 6, 7, 8].map((page) => (
+          <Button
+            key={page}
+            variant="outline"
+            size="sm"
+            className="bg-white hover:bg-gray-50 border-gray-300 px-3 py-2"
+          >
+            {page}
+          </Button>
+        ))}
+        <Button variant="outline" size="sm" className="bg-white hover:bg-gray-50 border-gray-300 px-3 py-2">Last »</Button>
+      </div>
+
+      {/* Modals */}
       <BulkUploadDialog 
         open={isBulkUploadOpen}
         onOpenChange={setIsBulkUploadOpen}
         title={uploadType === 'import' ? 'Import Assets' : 'Update Assets'}
-        downloadText="Download Sample Format"
-        importText={uploadType === 'import' ? 'Import' : 'Update'}
       />
-      
-      <AssetFilterDialog
+
+      <AssetFilterDialog 
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
       />

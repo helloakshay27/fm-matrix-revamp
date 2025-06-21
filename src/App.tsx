@@ -281,9 +281,6 @@ import { KRCCFormListDashboard } from './pages/KRCCFormListDashboard';
 // Import Edit Roster Template page
 import { EditRosterTemplatePage } from './pages/setup/EditRosterTemplatePage';
 
-// Import WBS Element Dashboard
-import { WBSElementDashboard } from './pages/WBSElementDashboard';
-
 const queryClient = new QueryClient();
 
 function App() {
@@ -400,7 +397,6 @@ function App() {
               <Route path="/finance/bill-booking/add" element={<AddBillPage />} />
               <Route path="/finance/pending-approvals" element={<PendingApprovalsDashboard />} />
               <Route path="/finance/invoice" element={<InvoiceDashboard />} />
-              <Route path="/finance/wbs" element={<WBSElementDashboard />} />
               
               {/* Maintenance Routes */}
               <Route path="/maintenance/asset" element={<AssetDashboard />} />

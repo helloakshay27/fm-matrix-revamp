@@ -222,8 +222,6 @@ export const UtilityDashboard = () => {
         open={isBulkUploadOpen} 
         onOpenChange={setIsBulkUploadOpen}
         title={uploadType === 'import' ? 'Import Assets' : 'Update Assets'}
-        downloadText="Download Sample Format"
-        importText={uploadType === 'import' ? 'Import' : 'Update'}
       />
     </div>
   );

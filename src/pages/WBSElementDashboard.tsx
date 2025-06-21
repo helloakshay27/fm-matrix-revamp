@@ -4,11 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Download } from "lucide-react";
 import { AddWBSDialog } from "@/components/AddWBSDialog";
-import { BulkUploadDialog } from "@/components/BulkUploadDialog";
 
 export const WBSElementDashboard = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
 
   // Sample data - empty as shown in the image
   const wbsData: any[] = [];
@@ -26,15 +24,14 @@ export const WBSElementDashboard = () => {
       {/* Action Buttons */}
       <div className="mb-6 flex gap-3">
         <Button 
-          className="bg-[#C72030] hover:bg-[#A01020] text-white"
+          className="bg-blue-600 hover:bg-blue-700 text-white"
           onClick={() => setIsAddDialogOpen(true)}
         >
           + Add
         </Button>
         <Button 
           variant="outline" 
-          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
-          onClick={() => setIsBulkUploadOpen(true)}
+          className="border-blue-600 text-blue-600 hover:bg-blue-50"
         >
           <Download className="h-4 w-4 mr-2" />
           Import
@@ -82,21 +79,13 @@ export const WBSElementDashboard = () => {
       {/* Pagination */}
       <div className="flex justify-center mt-6 gap-2">
         <Button variant="outline" disabled>Previous</Button>
-        <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">1</Button>
+        <Button className="bg-blue-600 text-white">1</Button>
         <Button variant="outline" disabled>Next</Button>
       </div>
 
       <AddWBSDialog 
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-      />
-
-      <BulkUploadDialog
-        open={isBulkUploadOpen}
-        onOpenChange={setIsBulkUploadOpen}
-        title="Bulk Upload"
-        downloadText="Download Sample Format"
-        importText="Import"
       />
     </div>
   );

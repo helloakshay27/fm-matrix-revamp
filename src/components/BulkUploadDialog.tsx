@@ -2,101 +2,138 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
-import { toast } from "sonner";
+import { X } from 'lucide-react';
 
 interface BulkUploadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  downloadText: string;
-  importText: string;
 }
 
-export const BulkUploadDialog = ({ 
-  open, 
-  onOpenChange, 
-  title, 
-  downloadText, 
-  importText 
-}: BulkUploadDialogProps) => {
+export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
+  open,
+  onOpenChange,
+  title,
+}) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
-      console.log('File selected:', file.name);
     }
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setDragOver(false);
+    const file = event.dataTransfer.files[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setDragOver(false);
   };
 
   const handleDownloadSample = () => {
     console.log('Downloading sample format...');
-    toast.success('Sample format downloaded successfully!');
+    // Create sample CSV
+    const sampleData = [
+      'Name,ID,Reference Number,Code,Group,Sub Group,Criticality,Quantity,Active',
+      'Sample Item,12345,REF001,CODE001,Electronics,Computers,Critical,10,Active'
+    ].join('\n');
+    
+    const blob = new Blob([sampleData], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'inventory_sample_format.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
 
   const handleImport = () => {
-    if (!selectedFile) {
-      toast.error('Please select a file to import');
-      return;
+    if (selectedFile) {
+      console.log('Importing file:', selectedFile.name);
+      alert(`Successfully imported ${selectedFile.name}`);
+      setSelectedFile(null);
+      onOpenChange(false);
+    } else {
+      alert('Please select a file to import');
     }
-
-    console.log('Importing file:', selectedFile.name);
-    toast.success('File imported successfully!');
-    
-    // Reset form
-    setSelectedFile(null);
-    onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader className="flex flex-row items-center justify-between">
-          <DialogTitle className="text-lg font-semibold">{title}</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onOpenChange(false)}
-            className="h-6 w-6"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </DialogHeader>
-
-        <div className="space-y-6 pt-4">
-          <div>
-            <input
-              type="file"
-              id="fileInput"
-              accept=".xlsx,.xls,.csv"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-            <label 
-              htmlFor="fileInput" 
-              className="block w-full p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 text-center"
+      <DialogContent className="sm:max-w-md [&>button]:hidden">
+        <DialogHeader>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-lg font-semibold">{title}</DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+              className="h-6 w-6 p-0"
             >
-              <span className="text-blue-600">Choose File</span>
-              <span className="ml-2 text-gray-500">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </DialogHeader>
+        
+        <div className="space-y-4">
+          {/* File Upload Area */}
+          <div
+            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+              dragOver 
+                ? 'border-[#C72030] bg-red-50' 
+                : 'border-orange-300 bg-orange-50'
+            }`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+          >
+            <div className="space-y-2">
+              <p className="text-gray-600">
+                Drag & Drop or{' '}
+                <label className="text-[#C72030] cursor-pointer hover:underline">
+                  Choose File
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept=".csv,.xlsx,.xls"
+                    onChange={handleFileSelect}
+                  />
+                </label>
+              </p>
+              <p className="text-sm text-gray-500">
                 {selectedFile ? selectedFile.name : 'No file chosen'}
-              </span>
-            </label>
+              </p>
+            </div>
           </div>
 
-          <div className="flex justify-center gap-3">
+          {/* Action Buttons */}
+          <div className="flex gap-3">
             <Button 
-              variant="outline"
               onClick={handleDownloadSample}
-              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:bg-[#C72030]/90 flex-1"
             >
-              {downloadText}
+              Download Sample Format
             </Button>
             <Button 
               onClick={handleImport}
-              className="bg-[#C72030] hover:bg-[#A01020] text-white"
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:bg-[#C72030]/90 flex-1"
             >
-              {importText}
+              Import
             </Button>
           </div>
         </div>

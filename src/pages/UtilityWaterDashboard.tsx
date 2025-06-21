@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -196,12 +197,10 @@ export const UtilityWaterDashboard = () => {
         onClose={() => setIsFilterOpen(false)} 
       />
       
-      <BulkUploadDialog
-        open={isBulkUploadOpen}
+      <BulkUploadDialog 
+        open={isBulkUploadOpen} 
         onOpenChange={setIsBulkUploadOpen}
         title={uploadType === 'import' ? 'Import Water Assets' : 'Update Water Assets'}
-        downloadText="Download Sample Format"
-        importText={uploadType === 'import' ? 'Import' : 'Update'}
       />
     </div>
   );
