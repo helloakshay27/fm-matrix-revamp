@@ -92,11 +92,7 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({ open, onOpenChange }
           </div>
 
           <div className="flex justify-center pt-4">
-            <Button 
-              type="submit" 
-              className="text-white px-8"
-              style={{ backgroundColor: '#C72030' }}
-            >
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-8">
               Add
             </Button>
           </div>

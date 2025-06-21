@@ -2,13 +2,11 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Plus } from "lucide-react";
+import { Download } from "lucide-react";
 import { AddWBSDialog } from "@/components/AddWBSDialog";
-import { WBSBulkUploadDialog } from "@/components/WBSBulkUploadDialog";
 
 export const WBSElementDashboard = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
 
   // Sample data - empty as shown in the image
   const wbsData: any[] = [];
@@ -26,17 +24,14 @@ export const WBSElementDashboard = () => {
       {/* Action Buttons */}
       <div className="mb-6 flex gap-3">
         <Button 
-          className="text-white"
-          style={{ backgroundColor: '#C72030' }}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
           onClick={() => setIsAddDialogOpen(true)}
         >
-          <Plus className="h-4 w-4 mr-2" />
-          Add
+          + Add
         </Button>
         <Button 
-          className="text-white"
-          style={{ backgroundColor: '#C72030' }}
-          onClick={() => setIsBulkUploadOpen(true)}
+          variant="outline" 
+          className="border-blue-600 text-blue-600 hover:bg-blue-50"
         >
           <Download className="h-4 w-4 mr-2" />
           Import
@@ -48,20 +43,20 @@ export const WBSElementDashboard = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold text-gray-700">Plant Code</TableHead>
-              <TableHead className="font-semibold text-gray-700">Category</TableHead>
-              <TableHead className="font-semibold text-gray-700">Category WBS Code</TableHead>
-              <TableHead className="font-semibold text-gray-700">WBS Name</TableHead>
-              <TableHead className="font-semibold text-gray-700">WBS Code</TableHead>
-              <TableHead className="font-semibold text-gray-700">Site</TableHead>
-              <TableHead className="font-semibold text-gray-700">Actions</TableHead>
+              <TableHead className="font-semibold">Plant Code</TableHead>
+              <TableHead className="font-semibold">Category</TableHead>
+              <TableHead className="font-semibold">Category WBS Code</TableHead>
+              <TableHead className="font-semibold">WBS Name</TableHead>
+              <TableHead className="font-semibold">WBS Code</TableHead>
+              <TableHead className="font-semibold">Site</TableHead>
+              <TableHead className="font-semibold">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {wbsData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                  No data available
+                  No WBS elements found
                 </TableCell>
               </TableRow>
             ) : (
@@ -83,19 +78,14 @@ export const WBSElementDashboard = () => {
 
       {/* Pagination */}
       <div className="flex justify-center mt-6 gap-2">
-        <Button variant="outline" disabled className="text-gray-500">Previous</Button>
-        <Button style={{ backgroundColor: '#C72030' }} className="text-white">1</Button>
-        <Button variant="outline" disabled className="text-gray-500">Next</Button>
+        <Button variant="outline" disabled>Previous</Button>
+        <Button className="bg-blue-600 text-white">1</Button>
+        <Button variant="outline" disabled>Next</Button>
       </div>
 
       <AddWBSDialog 
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-      />
-
-      <WBSBulkUploadDialog 
-        open={isBulkUploadOpen}
-        onOpenChange={setIsBulkUploadOpen}
       />
     </div>
   );
