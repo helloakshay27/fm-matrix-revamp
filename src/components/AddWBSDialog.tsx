@@ -17,31 +17,20 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({ open, onOpenChange }
     category: '',
     categoryWBSCode: '',
     wbsName: '',
-    wbsCode: '',
-    site: ''
+    wbsCode: ''
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('WBS Form submitted:', formData);
-    alert('WBS element added successfully!');
     onOpenChange(false);
-    // Reset form
-    setFormData({
-      plantCode: '',
-      category: '',
-      categoryWBSCode: '',
-      wbsName: '',
-      wbsCode: '',
-      site: ''
-    });
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader className="flex flex-row items-center justify-between">
-          <DialogTitle>Add New WBS Element</DialogTitle>
+          <DialogTitle>Add New WBS</DialogTitle>
           <Button 
             variant="ghost" 
             size="icon"
@@ -63,7 +52,6 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({ open, onOpenChange }
                 <SelectContent>
                   <SelectItem value="plant1">Plant 1</SelectItem>
                   <SelectItem value="plant2">Plant 2</SelectItem>
-                  <SelectItem value="plant3">Plant 3</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -73,7 +61,6 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({ open, onOpenChange }
               <Input 
                 value={formData.category}
                 onChange={(e) => setFormData({...formData, category: e.target.value})}
-                placeholder="Enter category"
               />
             </div>
           </div>
@@ -84,7 +71,6 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({ open, onOpenChange }
               <Input 
                 value={formData.categoryWBSCode}
                 onChange={(e) => setFormData({...formData, categoryWBSCode: e.target.value})}
-                placeholder="Enter WBS code"
               />
             </div>
 
@@ -93,42 +79,20 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({ open, onOpenChange }
               <Input 
                 value={formData.wbsName}
                 onChange={(e) => setFormData({...formData, wbsName: e.target.value})}
-                placeholder="Enter WBS name"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">WBS Code</label>
-              <Input 
-                value={formData.wbsCode}
-                onChange={(e) => setFormData({...formData, wbsCode: e.target.value})}
-                placeholder="Enter WBS code"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Site</label>
-              <Select value={formData.site} onValueChange={(value) => setFormData({...formData, site: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="-- Select Site --" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="site1">Site 1</SelectItem>
-                  <SelectItem value="site2">Site 2</SelectItem>
-                  <SelectItem value="site3">Site 3</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">WBS Code</label>
+            <Input 
+              value={formData.wbsCode}
+              onChange={(e) => setFormData({...formData, wbsCode: e.target.value})}
+            />
           </div>
 
           <div className="flex justify-center pt-4">
-            <Button 
-              type="submit" 
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#C72030]/90 px-8"
-            >
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-8">
               Add
             </Button>
           </div>

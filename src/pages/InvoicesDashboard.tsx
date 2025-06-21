@@ -1,9 +1,11 @@
+
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, Filter } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { InvoicesSESFilterDialog } from "@/components/InvoicesSESFilterDialog";
+import { Layout } from '@/components/Layout';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Search, Filter } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { InvoicesSESFilterDialog } from '@/components/InvoicesSESFilterDialog';
 
 export const InvoicesDashboard = () => {
   const { toast } = useToast();
@@ -136,142 +138,144 @@ export const InvoicesDashboard = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header Section */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-gray-900">WORK ORDER INVOICES/SES</h1>
-      </div>
+    <Layout>
+      <div className="p-6 space-y-6">
+        {/* Header Section */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold text-gray-900">WORK ORDER INVOICES/SES</h1>
+        </div>
 
-      {/* Filter and Search Section */}
-      <div className="flex items-center gap-4">
-        <Button 
-          variant="outline" 
-          onClick={() => setShowFilterDialog(true)}
-          className="flex items-center gap-2"
-        >
-          <Filter className="w-4 h-4" />
-          Filters
-        </Button>
-        
-        <div className="flex items-center gap-2 ml-auto">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search..."
-              className="pl-10 w-80"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            />
-          </div>
-          <Button 
-            onClick={handleSearch}
-            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-          >
-            Go!
-          </Button>
+        {/* Filter and Search Section */}
+        <div className="flex items-center gap-4">
           <Button 
             variant="outline" 
-            onClick={handleReset}
+            onClick={() => setShowFilterDialog(true)}
+            className="flex items-center gap-2"
           >
-            Reset
+            <Filter className="w-4 h-4" />
+            Filters
           </Button>
-        </div>
-      </div>
-
-      {/* Invoices Table */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">View</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice Number</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice Date</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">W.O. Number</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">WO Amount</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Invoice Amount</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Approved By</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approved Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payable Amount</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adjustment Amount</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredInvoices.map((invoice) => (
-                <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-4 whitespace-nowrap text-sm">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleViewInvoice(invoice.id)}
-                      className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white"
-                    >
-                      View
-                    </Button>
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {invoice.id}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600 cursor-pointer hover:underline">
-                    {invoice.invoiceNumber}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {invoice.invoiceDate}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {invoice.supplier}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {invoice.woNumber}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                    {invoice.woAmount}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                    {invoice.totalInvoiceAmount}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {invoice.lastApprovedBy}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(invoice.approvedStatus)}`}>
-                      {invoice.approvedStatus}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                    {invoice.payableAmount}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {invoice.adjustmentAmount}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {invoice.remarks}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        
-        {/* No Results Message */}
-        {filteredInvoices.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            <p className="text-lg">No invoices found matching your criteria.</p>
-            <p className="text-sm mt-2">Try adjusting your search or filter criteria.</p>
+          
+          <div className="flex items-center gap-2 ml-auto">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search..."
+                className="pl-10 w-80"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              />
+            </div>
+            <Button 
+              onClick={handleSearch}
+              className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            >
+              Go!
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleReset}
+            >
+              Reset
+            </Button>
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* Filter Dialog */}
-      <InvoicesSESFilterDialog
-        open={showFilterDialog}
-        onOpenChange={setShowFilterDialog}
-        onApply={handleFilterApply}
-      />
-    </div>
+        {/* Invoices Table */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">View</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice Number</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">W.O. Number</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">WO Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Invoice Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Approved By</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approved Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payable Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adjustment Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredInvoices.map((invoice) => (
+                  <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleViewInvoice(invoice.id)}
+                        className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white"
+                      >
+                        View
+                      </Button>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {invoice.id}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600 cursor-pointer hover:underline">
+                      {invoice.invoiceNumber}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {invoice.invoiceDate}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {invoice.supplier}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {invoice.woNumber}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                      {invoice.woAmount}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                      {invoice.totalInvoiceAmount}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {invoice.lastApprovedBy}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(invoice.approvedStatus)}`}>
+                        {invoice.approvedStatus}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                      {invoice.payableAmount}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {invoice.adjustmentAmount}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {invoice.remarks}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* No Results Message */}
+          {filteredInvoices.length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              <p className="text-lg">No invoices found matching your criteria.</p>
+              <p className="text-sm mt-2">Try adjusting your search or filter criteria.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Filter Dialog */}
+        <InvoicesSESFilterDialog
+          open={showFilterDialog}
+          onOpenChange={setShowFilterDialog}
+          onApply={handleFilterApply}
+        />
+      </div>
+    </Layout>
   );
 };
