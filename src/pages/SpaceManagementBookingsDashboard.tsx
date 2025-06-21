@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { SpaceManagementImportDialog } from "@/components/SpaceManagementImportD
 import { SpaceManagementRosterExportDialog } from "@/components/SpaceManagementRosterExportDialog";
 import { SpaceManagementExportDialog } from "@/components/SpaceManagementExportDialog";
 import { EditBookingDialog } from "@/components/EditBookingDialog";
+import { CancelBookingDialog } from "@/components/CancelBookingDialog";
 
 export const SpaceManagementBookingsDashboard = () => {
   const navigate = useNavigate();
@@ -16,24 +18,11 @@ export const SpaceManagementBookingsDashboard = () => {
   const [isRosterExportOpen, setIsRosterExportOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isCancelOpen, setIsCancelOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const handleFilterApply = (filters: any) => {
-    console.log('Applied filters:', filters);
-  };
-
-  const handleEditBooking = (booking: any) => {
-    setSelectedBooking(booking);
-    setIsEditOpen(true);
-  };
-
-  const handleViewBooking = (bookingId: string) => {
-    console.log('Navigating to booking details for ID:', bookingId);
-    navigate(`/vas/space-management/bookings/details/${bookingId}`);
-  };
-
-  const allBookingData = [
+  const [bookingData, setBookingData] = useState([
     {
       id: "142179",
       employeeId: "73974",
@@ -114,10 +103,45 @@ export const SpaceManagementBookingsDashboard = () => {
       status: "Pending",
       createdOn: "7/02/2025, 4:45 PM"
     }
-  ];
+  ]);
+
+  const handleFilterApply = (filters: any) => {
+    console.log('Applied filters:', filters);
+  };
+
+  const handleEditBooking = (booking: any) => {
+    setSelectedBooking(booking);
+    setIsEditOpen(true);
+  };
+
+  const handleViewBooking = (bookingId: string) => {
+    console.log('Navigating to booking details for ID:', bookingId);
+    navigate(`/vas/space-management/bookings/details/${bookingId}`);
+  };
+
+  const handleCancelBooking = (booking: any) => {
+    console.log('Opening cancel dialog for booking:', booking.id);
+    setSelectedBooking(booking);
+    setIsCancelOpen(true);
+  };
+
+  const handleConfirmCancel = (bookingId: string, reason: string) => {
+    console.log('Cancelling booking:', bookingId, 'Reason:', reason);
+    
+    // Update the booking status to Cancelled
+    const updatedBookings = bookingData.map(booking => {
+      if (booking.id === bookingId) {
+        return { ...booking, status: "Cancelled" };
+      }
+      return booking;
+    });
+    
+    setBookingData(updatedBookings);
+    console.log('Booking cancelled successfully');
+  };
 
   // Filter bookings based on search term
-  const filteredBookingData = allBookingData.filter(booking => 
+  const filteredBookingData = bookingData.filter(booking => 
     booking.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     booking.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
     booking.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -241,8 +265,13 @@ export const SpaceManagementBookingsDashboard = () => {
                       </TableCell>
                       <TableCell>{booking.createdOn}</TableCell>
                       <TableCell>
-                        <Button size="sm" className="bg-[#C72030] hover:bg-[#B01E2A] text-white">
-                          Cancel
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleCancelBooking(booking)}
+                          className="bg-[#C72030] hover:bg-[#B01E2A] text-white"
+                          disabled={booking.status === 'Cancelled'}
+                        >
+                          {booking.status === 'Cancelled' ? 'Cancelled' : 'Cancel'}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -279,6 +308,13 @@ export const SpaceManagementBookingsDashboard = () => {
           open={isEditOpen}
           onOpenChange={setIsEditOpen}
           booking={selectedBooking}
+        />
+
+        <CancelBookingDialog 
+          open={isCancelOpen}
+          onOpenChange={setIsCancelOpen}
+          booking={selectedBooking}
+          onCancel={handleConfirmCancel}
         />
       </div>
     </div>
