@@ -1,6 +1,7 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -20,7 +21,7 @@ const mockSurveyData = [
     title: "Customer Satisfaction Survey",
     status: "Active",
     active: true,
-    ticketCreation: "Yes",
+    ticketCreation: true,
     ticketLevel: "Medium",
     ticketCategory: "Feedback",
     lastModified: "2024-01-15",
@@ -31,7 +32,7 @@ const mockSurveyData = [
     title: "Facility Maintenance Survey",
     status: "Draft",
     active: false,
-    ticketCreation: "No",
+    ticketCreation: false,
     ticketLevel: "Low",
     ticketCategory: "Maintenance",
     lastModified: "2024-01-14",
@@ -40,6 +41,38 @@ const mockSurveyData = [
 ];
 
 export const SurveyListTable = ({ onAddSurvey }: SurveyListTableProps) => {
+  const [surveys, setSurveys] = useState(mockSurveyData);
+
+  const handleStatusToggle = (surveyId: number) => {
+    setSurveys(prevSurveys => 
+      prevSurveys.map(survey => 
+        survey.id === surveyId 
+          ? { ...survey, status: survey.status === 'Active' ? 'Draft' : 'Active' }
+          : survey
+      )
+    );
+  };
+
+  const handleTicketCreationToggle = (surveyId: number) => {
+    setSurveys(prevSurveys => 
+      prevSurveys.map(survey => 
+        survey.id === surveyId 
+          ? { ...survey, ticketCreation: !survey.ticketCreation }
+          : survey
+      )
+    );
+  };
+
+  const handleActiveToggle = (surveyId: number) => {
+    setSurveys(prevSurveys => 
+      prevSurveys.map(survey => 
+        survey.id === surveyId 
+          ? { ...survey, active: !survey.active }
+          : survey
+      )
+    );
+  };
+
   return (
     <div className="space-y-4">
       {/* Action Buttons */}
@@ -69,30 +102,52 @@ export const SurveyListTable = ({ onAddSurvey }: SurveyListTableProps) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockSurveyData.map((survey) => (
+            {surveys.map((survey) => (
               <TableRow key={survey.id}>
                 <TableCell className="font-medium">{survey.title}</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    survey.status === 'Active' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {survey.status}
-                  </span>
+                  <button
+                    onClick={() => handleStatusToggle(survey.id)}
+                    className={`w-11 h-6 rounded-full relative transition-colors duration-200 ease-in-out ${
+                      survey.status === 'Active' 
+                        ? 'bg-[#C72030]' 
+                        : 'bg-gray-200'
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out absolute top-0.5 ${
+                        survey.status === 'Active' 
+                          ? 'translate-x-5' 
+                          : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
                 </TableCell>
                 <TableCell>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={survey.active}
-                      className="sr-only peer"
-                      onChange={() => {}}
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C72030]"></div>
-                  </label>
+                  <Switch
+                    checked={survey.active}
+                    onCheckedChange={() => handleActiveToggle(survey.id)}
+                    className="data-[state=checked]:bg-[#C72030]"
+                  />
                 </TableCell>
-                <TableCell>{survey.ticketCreation}</TableCell>
+                <TableCell>
+                  <button
+                    onClick={() => handleTicketCreationToggle(survey.id)}
+                    className={`w-11 h-6 rounded-full relative transition-colors duration-200 ease-in-out ${
+                      survey.ticketCreation 
+                        ? 'bg-[#C72030]' 
+                        : 'bg-gray-200'
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out absolute top-0.5 ${
+                        survey.ticketCreation 
+                          ? 'translate-x-5' 
+                          : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                </TableCell>
                 <TableCell>{survey.ticketLevel}</TableCell>
                 <TableCell>{survey.ticketCategory}</TableCell>
                 <TableCell>{survey.lastModified}</TableCell>
