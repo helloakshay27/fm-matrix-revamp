@@ -246,11 +246,6 @@ export const ScheduleListDashboard = () => {
         downloadText="Download Sample Format"
         importText="Import"
       />
-
-      <ScheduleFilterDialog
-        open={showFilterDialog}
-        onOpenChange={setShowFilterDialog}
-      />
     </div>
   );
 };

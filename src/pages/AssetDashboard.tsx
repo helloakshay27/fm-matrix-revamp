@@ -455,6 +455,8 @@ export const AssetDashboard = () => {
         open={isBulkUploadOpen}
         onOpenChange={setIsBulkUploadOpen}
         title={uploadType === 'import' ? 'Import Assets' : 'Update Assets'}
+        downloadText="Download Sample Format"
+        importText="Import"
       />
 
       <AssetFilterDialog 
