@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useNavigate, useParams } from 'react-router-dom';
-import { CirclePlus, CircleMinus, X } from 'lucide-react';
+import { CirclePlus, CircleMinus, X, Minus } from 'lucide-react';
 
 interface SeatTypeConfig {
   name: string;
@@ -24,6 +24,7 @@ interface SeatTypeAssignment {
   total: number;
   selectedSeats: string[];
   reservedSeats: string[];
+  isExpanded: boolean;
 }
 
 interface SeatSetupData {
@@ -120,20 +121,20 @@ export const EditSeatSetupDashboard = () => {
 
   // Seat type assignments for Tag Department
   const [seatTypeAssignments, setSeatTypeAssignments] = useState<SeatTypeAssignment[]>([
-    { name: "Angular Ws", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
-    { name: "Flexi Desk", assigned: 0, total: 4, selectedSeats: ["S1", "S2", "S3", "S4"], reservedSeats: [] },
-    { name: "Cabin", assigned: 4, total: 4, selectedSeats: ["S1", "S2", "S3", "S4"], reservedSeats: [] },
-    { name: "Fixed Desk", assigned: 3, total: 3, selectedSeats: ["FD1", "FD2", "FD3"], reservedSeats: [] },
-    { name: "IOS", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
-    { name: "cabin", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
-    { name: "circular", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
-    { name: "Rectangle", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
-    { name: "circularchair", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
-    { name: "Hot Desk", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
-    { name: "Fixed Angular Chair", assigned: 0, total: 2, selectedSeats: ["FAC1", "FAC2"], reservedSeats: [] },
-    { name: "Cubical", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
-    { name: "Cafe", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
-    { name: "Hotseat", assigned: 0, total: 2, selectedSeats: ["HS1", "HS2"], reservedSeats: [] }
+    { name: "Angular Ws", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [], isExpanded: false },
+    { name: "Flexi Desk", assigned: 0, total: 4, selectedSeats: ["S1", "S2", "S3", "S4"], reservedSeats: [], isExpanded: false },
+    { name: "Cabin", assigned: 4, total: 4, selectedSeats: ["S1", "S2", "S3", "S4"], reservedSeats: [], isExpanded: false },
+    { name: "Fixed Desk", assigned: 3, total: 3, selectedSeats: ["FD1", "FD2", "FD3"], reservedSeats: [], isExpanded: false },
+    { name: "IOS", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [], isExpanded: false },
+    { name: "cabin", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [], isExpanded: false },
+    { name: "circular", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [], isExpanded: false },
+    { name: "Rectangle", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [], isExpanded: false },
+    { name: "circularchair", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [], isExpanded: false },
+    { name: "Hot Desk", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [], isExpanded: false },
+    { name: "Fixed Angular Chair", assigned: 0, total: 2, selectedSeats: ["FAC1", "FAC2"], reservedSeats: [], isExpanded: false },
+    { name: "Cubical", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [], isExpanded: false },
+    { name: "Cafe", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [], isExpanded: false },
+    { name: "Hotseat", assigned: 0, total: 2, selectedSeats: ["HS1", "HS2"], reservedSeats: [], isExpanded: false }
   ]);
 
   // Mock data for existing seat setups
@@ -327,6 +328,15 @@ export const EditSeatSetupDashboard = () => {
 
   const getSelectedSeatTypeAssignment = () => {
     return seatTypeAssignments.find(sta => sta.name === selectedSeatType);
+  };
+
+  const toggleSeatTypeExpansion = (seatTypeName: string) => {
+    const updated = [...seatTypeAssignments];
+    const index = updated.findIndex(sta => sta.name === seatTypeName);
+    if (index !== -1) {
+      updated[index] = { ...updated[index], isExpanded: !updated[index].isExpanded };
+      setSeatTypeAssignments(updated);
+    }
   };
 
   const handleAssignSeats = () => {
@@ -643,93 +653,104 @@ export const EditSeatSetupDashboard = () => {
                 
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {seatTypeAssignments.map((seatType, index) => (
-                    <div key={index} className="bg-white rounded-lg border p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="font-medium text-gray-800 text-sm">{seatType.name}</div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500">{seatType.assigned}/{seatType.total}</span>
-                          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                            <DialogTrigger asChild>
-                              <Button
-                                size="sm"
-                                className="h-6 w-6 p-0 bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-full"
-                                disabled={seatType.total === 0}
-                              >
-                                <CirclePlus className="h-3 w-3" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-md bg-white">
-                              <DialogHeader>
-                                <DialogTitle className="text-lg font-semibold">Assign Seats</DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-4 py-4">
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-                                  <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select Department" />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-white z-50">
-                                      {departments.map((dept, idx) => (
-                                        <SelectItem key={idx} value={dept.name}>{dept.name}</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                    <div key={index} className="bg-white rounded-lg border">
+                      <div className="p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="font-medium text-gray-800 text-sm">{seatType.name}</div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">{seatType.assigned}/{seatType.total}</span>
+                            <Button
+                              onClick={() => toggleSeatTypeExpansion(seatType.name)}
+                              size="sm"
+                              className="h-6 w-6 p-0 bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-full"
+                              disabled={seatType.total === 0}
+                            >
+                              {seatType.isExpanded ? <Minus className="h-3 w-3" /> : <CirclePlus className="h-3 w-3" />}
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        {seatType.isExpanded && (
+                          <div className="mt-3 p-3 bg-gray-50 rounded border">
+                            {seatType.total > 0 ? (
+                              <>
+                                {seatType.selectedSeats.length > 0 && (
+                                  <div className="grid grid-cols-4 gap-2 mb-3">
+                                    {seatType.selectedSeats.map((seat, seatIdx) => (
+                                      <div key={seatIdx} className="bg-white text-xs p-2 text-center rounded border border-gray-300">
+                                        {seat}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                <div className="flex gap-2 items-center">
+                                  <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                                    <DialogTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-xs px-3 py-1"
+                                        onClick={() => setSelectedAssignmentSeatType(seatType.name)}
+                                      >
+                                        Assign Seats
+                                      </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-md bg-white">
+                                      <DialogHeader>
+                                        <DialogTitle className="text-lg font-semibold">Assign Seats - {selectedAssignmentSeatType}</DialogTitle>
+                                      </DialogHeader>
+                                      <div className="space-y-4 py-4">
+                                        <div>
+                                          <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                                          <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+                                            <SelectTrigger>
+                                              <SelectValue placeholder="Select Department" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-white z-50">
+                                              {departments.map((dept, idx) => (
+                                                <SelectItem key={idx} value={dept.name}>{dept.name}</SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                        <div>
+                                          <label className="block text-sm font-medium text-gray-700 mb-2">Number of Seats</label>
+                                          <Input
+                                            type="number"
+                                            placeholder="Enter number of seats"
+                                            value={seatsToAssign}
+                                            onChange={(e) => setSeatsToAssign(e.target.value)}
+                                            min="1"
+                                            max={seatType.total - seatType.assigned}
+                                          />
+                                        </div>
+                                        <div className="flex gap-2 pt-4">
+                                          <Button 
+                                            onClick={handleAssignSeats}
+                                            className="flex-1 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                                          >
+                                            Assign
+                                          </Button>
+                                          <Button 
+                                            onClick={() => setDialogOpen(false)}
+                                            variant="outline" 
+                                            className="flex-1"
+                                          >
+                                            Cancel
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </DialogContent>
+                                  </Dialog>
                                 </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-2">Seat Type</label>
-                                  <Select value={selectedAssignmentSeatType} onValueChange={setSelectedAssignmentSeatType}>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select Seat Type" />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-white z-50">
-                                      {seatTypeAssignments.filter(st => st.total > st.assigned).map((st, idx) => (
-                                        <SelectItem key={idx} value={st.name}>{st.name} ({st.total - st.assigned} available)</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-2">Number of Seats</label>
-                                  <Input
-                                    type="number"
-                                    placeholder="Enter number of seats"
-                                    value={seatsToAssign}
-                                    onChange={(e) => setSeatsToAssign(e.target.value)}
-                                    min="1"
-                                  />
-                                </div>
-                                <div className="flex gap-2 pt-4">
-                                  <Button 
-                                    onClick={handleAssignSeats}
-                                    className="flex-1 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-                                  >
-                                    Assign
-                                  </Button>
-                                  <Button 
-                                    onClick={() => setDialogOpen(false)}
-                                    variant="outline" 
-                                    className="flex-1"
-                                  >
-                                    Cancel
-                                  </Button>
-                                </div>
+                              </>
+                            ) : (
+                              <div className="text-xs text-gray-500 text-center py-4">
+                                No seats available
                               </div>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      
-                      {/* Display assigned seats if any */}
-                      {seatType.assigned > 0 && (
-                        <div className="grid grid-cols-4 gap-1 mt-2">
-                          {Array.from({ length: seatType.assigned }, (_, i) => (
-                            <div key={i} className="bg-gray-100 text-xs p-1 text-center rounded border">
-                              S{i + 1}
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
