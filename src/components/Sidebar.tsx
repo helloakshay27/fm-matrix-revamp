@@ -134,22 +134,6 @@ const modulesByPackage = {
       ]
     },
     { 
-      name: 'Invoices', 
-      icon: Receipt, 
-      href: '/finance/invoices',
-      subItems: [
-        { name: 'Invoices/SES', href: '/finance/invoices/ses', color: 'text-[#1a1a1a]' },
-        { name: 'Pending Approvals', href: '/finance/invoices/pending-approvals', color: 'text-[#1a1a1a]' },
-        { name: 'GDN', href: '/finance/invoices/gdn', color: 'text-[#1a1a1a]' },
-        { name: 'Auto Saved PR', href: '/finance/invoices/auto-saved-pr', color: 'text-[#1a1a1a]' },
-        { name: 'WBS Element', href: '/finance/invoices/wbs-element', color: 'text-[#1a1a1a]' },
-        { name: 'Other Bills', href: '/finance/invoices/other-bills', color: 'text-[#1a1a1a]' },
-        { name: 'Accounting', href: '/finance/invoices/accounting', color: 'text-[#1a1a1a]' },
-        { name: 'Customer Bills', href: '/finance/invoices/customer-bills', color: 'text-[#1a1a1a]' },
-        { name: 'My Bills', href: '/finance/invoices/my-bills', color: 'text-[#1a1a1a]' }
-      ]
-    },
-    { 
       name: 'Accounting', 
       icon: Calculator, 
       href: '/finance/accounting',
