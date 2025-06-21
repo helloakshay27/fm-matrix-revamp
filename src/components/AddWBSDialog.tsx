@@ -23,6 +23,14 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({ open, onOpenChange }
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('WBS Form submitted:', formData);
+    // Reset form
+    setFormData({
+      plantCode: '',
+      category: '',
+      categoryWBSCode: '',
+      wbsName: '',
+      wbsCode: ''
+    });
     onOpenChange(false);
   };
 
@@ -52,6 +60,7 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({ open, onOpenChange }
                 <SelectContent>
                   <SelectItem value="plant1">Plant 1</SelectItem>
                   <SelectItem value="plant2">Plant 2</SelectItem>
+                  <SelectItem value="plant3">Plant 3</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -61,6 +70,7 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({ open, onOpenChange }
               <Input 
                 value={formData.category}
                 onChange={(e) => setFormData({...formData, category: e.target.value})}
+                placeholder="Enter category"
               />
             </div>
           </div>
@@ -71,6 +81,7 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({ open, onOpenChange }
               <Input 
                 value={formData.categoryWBSCode}
                 onChange={(e) => setFormData({...formData, categoryWBSCode: e.target.value})}
+                placeholder="Enter WBS code"
               />
             </div>
 
@@ -79,6 +90,7 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({ open, onOpenChange }
               <Input 
                 value={formData.wbsName}
                 onChange={(e) => setFormData({...formData, wbsName: e.target.value})}
+                placeholder="Enter WBS name"
               />
             </div>
           </div>
@@ -88,11 +100,16 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({ open, onOpenChange }
             <Input 
               value={formData.wbsCode}
               onChange={(e) => setFormData({...formData, wbsCode: e.target.value})}
+              placeholder="Enter WBS code"
             />
           </div>
 
           <div className="flex justify-center pt-4">
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-8">
+            <Button 
+              type="submit" 
+              className="text-white px-8"
+              style={{ backgroundColor: '#C72030' }}
+            >
               Add
             </Button>
           </div>
