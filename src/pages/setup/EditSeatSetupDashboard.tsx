@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, useParams } from 'react-router-dom';
-import { CirclePlus, CircleMinus, Plus, Minus } from 'lucide-react';
+import { CirclePlus, CircleMinus, X } from 'lucide-react';
 
 interface SeatTypeConfig {
   name: string;
@@ -22,6 +23,7 @@ interface SeatTypeAssignment {
   assigned: number;
   total: number;
   selectedSeats: string[];
+  reservedSeats: string[];
 }
 
 interface SeatSetupData {
@@ -46,20 +48,20 @@ export const EditSeatSetupDashboard = () => {
   const [seatCountToAdd, setSeatCountToAdd] = useState<string>("");
   
   const [seatTypes, setSeatTypes] = useState<SeatTypeConfig[]>([
-    { name: "Angular Ws", totalSeats: "", reservedSeats: "" },
-    { name: "Flexi Desk", totalSeats: "", reservedSeats: "" },
-    { name: "Cabin", totalSeats: "", reservedSeats: "" },
-    { name: "Fixed Desk", totalSeats: "", reservedSeats: "" },
-    { name: "IOS", totalSeats: "", reservedSeats: "" },
-    { name: "cabin", totalSeats: "", reservedSeats: "" },
-    { name: "circular", totalSeats: "", reservedSeats: "" },
-    { name: "Rectangle", totalSeats: "", reservedSeats: "" },
-    { name: "circularchair", totalSeats: "", reservedSeats: "" },
-    { name: "Hot Desk", totalSeats: "", reservedSeats: "" },
-    { name: "Fixed Angular Chair", totalSeats: "", reservedSeats: "" },
-    { name: "Cubical", totalSeats: "", reservedSeats: "" },
-    { name: "Cafe", totalSeats: "", reservedSeats: "" },
-    { name: "Hotseat", totalSeats: "", reservedSeats: "" }
+    { name: "Angular Ws", totalSeats: "0", reservedSeats: "0" },
+    { name: "Flexi Desk", totalSeats: "4", reservedSeats: "2" },
+    { name: "Cabin", totalSeats: "4", reservedSeats: "0" },
+    { name: "Fixed Desk", totalSeats: "3", reservedSeats: "0" },
+    { name: "IOS", totalSeats: "0", reservedSeats: "0" },
+    { name: "cabin", totalSeats: "0", reservedSeats: "0" },
+    { name: "circular", totalSeats: "0", reservedSeats: "0" },
+    { name: "Rectangle", totalSeats: "0", reservedSeats: "0" },
+    { name: "circularchair", totalSeats: "0", reservedSeats: "0" },
+    { name: "Hot Desk", totalSeats: "0", reservedSeats: "0" },
+    { name: "Fixed Angular Chair", totalSeats: "2", reservedSeats: "2" },
+    { name: "Cubical", totalSeats: "0", reservedSeats: "0" },
+    { name: "Cafe", totalSeats: "0", reservedSeats: "0" },
+    { name: "Hotseat", totalSeats: "2", reservedSeats: "0" }
   ]);
 
   // Department data
@@ -114,83 +116,36 @@ export const EditSeatSetupDashboard = () => {
 
   // Seat type assignments for Tag Department
   const [seatTypeAssignments, setSeatTypeAssignments] = useState<SeatTypeAssignment[]>([
-    { name: "Angular Ws", assigned: 0, total: 0, selectedSeats: [] },
-    { name: "Flexi Desk", assigned: 0, total: 4, selectedSeats: ["FD1", "FD2", "FD3", "FD4"] },
-    { name: "Cabin", assigned: 0, total: 4, selectedSeats: ["C1", "C2", "C3", "C4"] },
-    { name: "Fixed Desk", assigned: 0, total: 0, selectedSeats: [] },
-    { name: "IOS", assigned: 0, total: 0, selectedSeats: [] },
-    { name: "cabin", assigned: 0, total: 0, selectedSeats: [] },
-    { name: "circular", assigned: 0, total: 5, selectedSeats: ["CR1", "CR2", "CR3", "CR4", "CR5"] },
-    { name: "Rectangle", assigned: 0, total: 0, selectedSeats: [] },
-    { name: "circularchair", assigned: 0, total: 0, selectedSeats: [] },
-    { name: "Hot Desk", assigned: 0, total: 0, selectedSeats: [] },
-    { name: "Fixed Angular Chair", assigned: 0, total: 0, selectedSeats: [] },
-    { name: "Cubical", assigned: 0, total: 0, selectedSeats: [] },
-    { name: "Cafe", assigned: 0, total: 0, selectedSeats: [] },
-    { name: "Hotseat", assigned: 0, total: 2, selectedSeats: ["HS1", "HS2"] }
+    { name: "Angular Ws", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
+    { name: "Flexi Desk", assigned: 0, total: 4, selectedSeats: ["S1", "S2"], reservedSeats: ["S3", "S4"] },
+    { name: "Cabin", assigned: 0, total: 4, selectedSeats: ["C1", "C2", "C3", "C4"], reservedSeats: [] },
+    { name: "Fixed Desk", assigned: 0, total: 3, selectedSeats: ["FD1", "FD2", "FD3"], reservedSeats: [] },
+    { name: "IOS", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
+    { name: "cabin", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
+    { name: "circular", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
+    { name: "Rectangle", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
+    { name: "circularchair", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
+    { name: "Hot Desk", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
+    { name: "Fixed Angular Chair", assigned: 0, total: 2, selectedSeats: ["FAC1", "FAC2"], reservedSeats: [] },
+    { name: "Cubical", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
+    { name: "Cafe", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
+    { name: "Hotseat", assigned: 0, total: 2, selectedSeats: ["HS1", "HS2"], reservedSeats: [] }
   ]);
-
-  const [expandedSeatTypes, setExpandedSeatTypes] = useState<Set<string>>(new Set());
 
   // Mock data for existing seat setups
   const existingSeatSetups: SeatSetupData[] = [
     {
       id: 1,
       location: "BBT A",
-      floor: "TA Floor 1",
+      floor: "TA Floor 1 - TA Wing 1 - BBT A",
       seatTypes: {
         "Angular Ws": { total: 0, reserved: 0 },
-        "Flexi Desk": { total: 4, reserved: 0 },
-        "Cabin": { total: 0, reserved: 0 },
-        "Fixed Desk": { total: 0, reserved: 0 },
+        "Flexi Desk": { total: 4, reserved: 2 },
+        "Cabin": { total: 4, reserved: 0 },
+        "Fixed Desk": { total: 3, reserved: 0 },
         "IOS": { total: 0, reserved: 0 },
         "cabin": { total: 0, reserved: 0 },
         "circular": { total: 0, reserved: 0 },
-        "Rectangle": { total: 2, reserved: 0 }
-      }
-    },
-    {
-      id: 2,
-      location: "test",
-      floor: "Ground Floor",
-      seatTypes: {
-        "Angular Ws": { total: 0, reserved: 0 },
-        "Flexi Desk": { total: 4, reserved: 0 },
-        "Cabin": { total: 0, reserved: 0 },
-        "Fixed Desk": { total: 0, reserved: 0 },
-        "IOS": { total: 0, reserved: 0 },
-        "cabin": { total: 0, reserved: 0 },
-        "circular": { total: 0, reserved: 0 },
-        "Rectangle": { total: 0, reserved: 0 }
-      }
-    },
-    {
-      id: 3,
-      location: "Jyoti Tower",
-      floor: "Ground Floor",
-      seatTypes: {
-        "Angular Ws": { total: 5, reserved: 0 },
-        "Flexi Desk": { total: 4, reserved: 0 },
-        "Cabin": { total: 0, reserved: 0 },
-        "Fixed Desk": { total: 5, reserved: 0 },
-        "IOS": { total: 0, reserved: 0 },
-        "cabin": { total: 0, reserved: 0 },
-        "circular": { total: 0, reserved: 0 },
-        "Rectangle": { total: 0, reserved: 0 }
-      }
-    },
-    {
-      id: 4,
-      location: "Gophygital",
-      floor: "2",
-      seatTypes: {
-        "Angular Ws": { total: 0, reserved: 0 },
-        "Flexi Desk": { total: 4, reserved: 0 },
-        "Cabin": { total: 0, reserved: 0 },
-        "Fixed Desk": { total: 0, reserved: 0 },
-        "IOS": { total: 0, reserved: 0 },
-        "cabin": { total: 0, reserved: 0 },
-        "circular": { total: 5, reserved: 0 },
         "Rectangle": { total: 0, reserved: 0 }
       }
     }
@@ -207,8 +162,8 @@ export const EditSeatSetupDashboard = () => {
         // Update seat types with existing data
         const updatedSeatTypes = seatTypes.map(seatType => ({
           ...seatType,
-          totalSeats: existingSetup.seatTypes[seatType.name]?.total.toString() || "",
-          reservedSeats: existingSetup.seatTypes[seatType.name]?.reserved.toString() || ""
+          totalSeats: existingSetup.seatTypes[seatType.name]?.total.toString() || seatType.totalSeats,
+          reservedSeats: existingSetup.seatTypes[seatType.name]?.reserved.toString() || seatType.reservedSeats
         }));
         setSeatTypes(updatedSeatTypes);
       }
@@ -221,12 +176,6 @@ export const EditSeatSetupDashboard = () => {
     setSeatTypes(updated);
   };
 
-  const updateDepartmentSeats = (index: number, seats: number) => {
-    const updated = [...departments];
-    updated[index] = { ...updated[index], seats };
-    setDepartments(updated);
-  };
-
   const updateSeatTypeAssignment = (seatTypeName: string, change: number) => {
     const updated = [...seatTypeAssignments];
     const index = updated.findIndex(sta => sta.name === seatTypeName);
@@ -235,16 +184,6 @@ export const EditSeatSetupDashboard = () => {
       updated[index] = { ...updated[index], assigned: newAssigned };
       setSeatTypeAssignments(updated);
     }
-  };
-
-  const toggleSeatTypeExpansion = (seatTypeName: string) => {
-    const newExpanded = new Set(expandedSeatTypes);
-    if (newExpanded.has(seatTypeName)) {
-      newExpanded.delete(seatTypeName);
-    } else {
-      newExpanded.add(seatTypeName);
-    }
-    setExpandedSeatTypes(newExpanded);
   };
 
   const handleSeatTypeClick = (seatTypeName: string) => {
@@ -290,29 +229,41 @@ export const EditSeatSetupDashboard = () => {
     setSeatCountToAdd("");
   };
 
-  const generateSeatGrid = (seatType: SeatTypeAssignment) => {
-    if (seatType.total === 0 || seatType.selectedSeats.length === 0) return null;
-    
-    return (
-      <div className="mt-3 p-4 bg-white border rounded-lg">
-        <div className="grid grid-cols-6 gap-2">
-          {seatType.selectedSeats.map((seat, idx) => (
-            <Button
-              key={idx}
-              variant="outline"
-              size="sm"
-              className="h-12 w-12 text-xs border-gray-300 hover:bg-gray-50"
-            >
-              {seat}
-            </Button>
-          ))}
-        </div>
-      </div>
-    );
-  };
+  const removeSeat = (seatId: string, isReserved: boolean = false) => {
+    const updatedAssignments = seatTypeAssignments.map(assignment => {
+      if (assignment.name === selectedSeatType) {
+        if (isReserved) {
+          return {
+            ...assignment,
+            reservedSeats: assignment.reservedSeats.filter(seat => seat !== seatId),
+            total: assignment.total - 1
+          };
+        } else {
+          return {
+            ...assignment,
+            selectedSeats: assignment.selectedSeats.filter(seat => seat !== seatId),
+            total: assignment.total - 1
+          };
+        }
+      }
+      return assignment;
+    });
+    setSeatTypeAssignments(updatedAssignments);
 
-  const getSelectedSeatTypeData = () => {
-    return seatTypes.find(st => st.name === selectedSeatType);
+    // Update seat types table
+    const updatedSeatTypes = seatTypes.map(seatType => {
+      if (seatType.name === selectedSeatType) {
+        const currentTotal = parseInt(seatType.totalSeats) || 0;
+        const currentReserved = parseInt(seatType.reservedSeats) || 0;
+        return {
+          ...seatType,
+          totalSeats: (currentTotal - 1).toString(),
+          reservedSeats: isReserved ? (currentReserved - 1).toString() : seatType.reservedSeats
+        };
+      }
+      return seatType;
+    });
+    setSeatTypes(updatedSeatTypes);
   };
 
   const getSelectedSeatTypeAssignment = () => {
@@ -342,7 +293,7 @@ export const EditSeatSetupDashboard = () => {
       <div className="flex-1 p-6">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Edit Seat Group Configuration</h1>
+          <h1 className="text-2xl font-bold text-gray-800">Seat Group Configuration</h1>
         </div>
 
         {/* Location and Floor Selection */}
@@ -368,8 +319,8 @@ export const EditSeatSetupDashboard = () => {
                 <SelectValue placeholder="Select Floor" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="TA Floor 1 - TA Wing 1 - BBT A">TA Floor 1 - TA Wing 1 - BBT A</SelectItem>
                 <SelectItem value="Ground Floor">Ground Floor</SelectItem>
-                <SelectItem value="TA Floor 1">TA Floor 1</SelectItem>
                 <SelectItem value="2">2</SelectItem>
               </SelectContent>
             </Select>
@@ -381,13 +332,13 @@ export const EditSeatSetupDashboard = () => {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger 
               value="seat-configuration" 
-              className="data-[state=active]:bg-gray-200 data-[state=active]:text-gray-700"
+              className="data-[state=active]:bg-[#C72030] data-[state=active]:text-white"
             >
               Seat Configuration
             </TabsTrigger>
             <TabsTrigger 
               value="tag-department"
-              className="data-[state=active]:bg-[#C72030] data-[state=active]:text-white"
+              className="data-[state=active]:bg-gray-200 data-[state=active]:text-gray-700"
             >
               Tag Department
             </TabsTrigger>
@@ -397,33 +348,40 @@ export const EditSeatSetupDashboard = () => {
             <div className="flex gap-6">
               {/* Left Side - Seat Configuration Form */}
               <div className="flex-1 bg-white rounded-lg border shadow-sm p-6">
-                <div className="space-y-4">
+                <div className="space-y-1">
+                  {/* Header Row */}
+                  <div className="grid grid-cols-3 gap-4 py-3 border-b-2 border-gray-300 bg-gray-50 px-4 -mx-6 mb-4">
+                    <div className="font-semibold text-gray-700">Seat Type</div>
+                    <div className="font-semibold text-gray-700 text-center">Total No. of Seats</div>
+                    <div className="font-semibold text-gray-700 text-center">Reserved Seats</div>
+                  </div>
+                  
                   {seatTypes.map((seatType, index) => (
                     <div 
                       key={index} 
-                      className={`flex items-center gap-4 py-2 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
-                        selectedSeatType === seatType.name ? 'bg-blue-50' : ''
+                      className={`grid grid-cols-3 gap-4 py-3 border-b border-gray-200 cursor-pointer hover:bg-gray-50 px-4 -mx-6 ${
+                        selectedSeatType === seatType.name ? 'bg-orange-50 border-orange-300' : ''
                       }`}
                       onClick={() => handleSeatTypeClick(seatType.name)}
                     >
-                      <div className="w-40">
+                      <div className="flex items-center">
                         <span className="text-sm font-medium text-gray-700">{seatType.name}</span>
                       </div>
-                      <div className="flex-1">
+                      <div className="flex items-center justify-center">
                         <Input
-                          placeholder="Total No. of Seats"
+                          placeholder="0"
                           value={seatType.totalSeats}
                           onChange={(e) => updateSeatType(index, 'totalSeats', e.target.value)}
-                          className="w-32"
+                          className="w-20 h-8 text-center"
                           onClick={(e) => e.stopPropagation()}
                         />
                       </div>
-                      <div className="flex-1">
+                      <div className="flex items-center justify-center">
                         <Input
-                          placeholder="Reserved Seats"
+                          placeholder="0"
                           value={seatType.reservedSeats}
                           onChange={(e) => updateSeatType(index, 'reservedSeats', e.target.value)}
-                          className="w-32"
+                          className="w-20 h-8 text-center"
                           onClick={(e) => e.stopPropagation()}
                         />
                       </div>
@@ -433,25 +391,31 @@ export const EditSeatSetupDashboard = () => {
               </div>
 
               {/* Right Side - Dynamic Seat Type Preview */}
-              <div className="w-80 bg-white rounded-lg border shadow-sm p-6">
+              <div className="w-80 bg-pink-50 rounded-lg border shadow-sm p-6">
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold text-gray-800">{selectedSeatType}</h3>
                   <p className="text-sm text-gray-600">Common Seats</p>
                 </div>
                 
                 <div className="space-y-4">
-                  {/* Show existing seats if any */}
+                  {/* Show existing common seats */}
                   {getSelectedSeatTypeAssignment()?.selectedSeats.length > 0 && (
-                    <div className="grid grid-cols-3 gap-2 mb-4">
+                    <div className="grid grid-cols-2 gap-2 mb-4">
                       {getSelectedSeatTypeAssignment()?.selectedSeats.map((seat, idx) => (
                         <Button
                           key={idx}
                           variant="outline"
                           size="sm"
-                          className="h-10 text-xs border-orange-300 bg-orange-50 text-orange-700"
+                          className="h-10 text-xs border-gray-300 bg-white text-gray-700 relative group"
                         >
                           {seat}
-                          <span className="ml-1 text-red-500 cursor-pointer">×</span>
+                          <X 
+                            className="w-3 h-3 text-red-500 absolute -top-1 -right-1 bg-red-500 text-white rounded-full cursor-pointer opacity-0 group-hover:opacity-100"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeSeat(seat, false);
+                            }}
+                          />
                         </Button>
                       ))}
                     </div>
@@ -467,7 +431,7 @@ export const EditSeatSetupDashboard = () => {
                     />
                     <Button 
                       onClick={handleAddSeats}
-                      className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                      className="bg-purple-700 hover:bg-purple-800 text-white"
                       size="sm"
                     >
                       Add
@@ -476,16 +440,41 @@ export const EditSeatSetupDashboard = () => {
                   
                   <div>
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Reserved Seats</h4>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                      <div className="space-y-2">
-                        <div className="text-gray-400">Drop seats here</div>
-                        <Button 
-                          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-                          size="sm"
-                        >
-                          Add
-                        </Button>
+                    
+                    {/* Show existing reserved seats */}
+                    {getSelectedSeatTypeAssignment()?.reservedSeats.length > 0 && (
+                      <div className="grid grid-cols-2 gap-2 mb-3">
+                        {getSelectedSeatTypeAssignment()?.reservedSeats.map((seat, idx) => (
+                          <Button
+                            key={idx}
+                            variant="outline"
+                            size="sm"
+                            className="h-10 text-xs border-gray-300 bg-white text-gray-700 relative group"
+                          >
+                            {seat}
+                            <X 
+                              className="w-3 h-3 text-red-500 absolute -top-1 -right-1 bg-red-500 text-white rounded-full cursor-pointer opacity-0 group-hover:opacity-100"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeSeat(seat, true);
+                              }}
+                            />
+                          </Button>
+                        ))}
                       </div>
+                    )}
+                    
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="2"
+                        className="flex-1"
+                      />
+                      <Button 
+                        className="bg-purple-700 hover:bg-purple-800 text-white"
+                        size="sm"
+                      >
+                        Add
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -510,23 +499,6 @@ export const EditSeatSetupDashboard = () => {
                 </label>
                 <span className="ml-2 text-gray-500">No file chosen</span>
               </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-4 mt-6">
-              <Button 
-                onClick={handleProceed}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
-              >
-                Proceed
-              </Button>
-              <Button 
-                onClick={handleCancel}
-                variant="outline" 
-                className="border-gray-300 text-gray-700 px-8"
-              >
-                Cancel
-              </Button>
             </div>
           </TabsContent>
 
