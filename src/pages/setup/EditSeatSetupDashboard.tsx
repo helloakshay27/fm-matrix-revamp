@@ -370,6 +370,11 @@ export const EditSeatSetupDashboard = () => {
     setDialogOpen(false);
   };
 
+  const handleOpenAssignDialog = (seatTypeName: string) => {
+    setSelectedAssignmentSeatType(seatTypeName);
+    setDialogOpen(true);
+  };
+
   const handleProceed = () => {
     console.log("Updating seat setup...", { id, selectedLocation, selectedFloor, seatTypes, departments, seatTypeAssignments });
     navigate('/vas/space-management/setup/seat-setup');
@@ -684,63 +689,13 @@ export const EditSeatSetupDashboard = () => {
                                   </div>
                                 )}
                                 <div className="flex gap-2 items-center">
-                                  <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                                    <DialogTrigger asChild>
-                                      <Button
-                                        size="sm"
-                                        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-xs px-3 py-1"
-                                        onClick={() => setSelectedAssignmentSeatType(seatType.name)}
-                                      >
-                                        Assign Seats
-                                      </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="sm:max-w-md bg-white">
-                                      <DialogHeader>
-                                        <DialogTitle className="text-lg font-semibold">Assign Seats - {selectedAssignmentSeatType}</DialogTitle>
-                                      </DialogHeader>
-                                      <div className="space-y-4 py-4">
-                                        <div>
-                                          <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-                                          <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                                            <SelectTrigger>
-                                              <SelectValue placeholder="Select Department" />
-                                            </SelectTrigger>
-                                            <SelectContent className="bg-white z-50">
-                                              {departments.map((dept, idx) => (
-                                                <SelectItem key={idx} value={dept.name}>{dept.name}</SelectItem>
-                                              ))}
-                                            </SelectContent>
-                                          </Select>
-                                        </div>
-                                        <div>
-                                          <label className="block text-sm font-medium text-gray-700 mb-2">Number of Seats</label>
-                                          <Input
-                                            type="number"
-                                            placeholder="Enter number of seats"
-                                            value={seatsToAssign}
-                                            onChange={(e) => setSeatsToAssign(e.target.value)}
-                                            min="1"
-                                            max={seatType.total - seatType.assigned}
-                                          />
-                                        </div>
-                                        <div className="flex gap-2 pt-4">
-                                          <Button 
-                                            onClick={handleAssignSeats}
-                                            className="flex-1 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-                                          >
-                                            Assign
-                                          </Button>
-                                          <Button 
-                                            onClick={() => setDialogOpen(false)}
-                                            variant="outline" 
-                                            className="flex-1"
-                                          >
-                                            Cancel
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    </DialogContent>
-                                  </Dialog>
+                                  <Button
+                                    size="sm"
+                                    className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-xs px-3 py-1"
+                                    onClick={() => handleOpenAssignDialog(seatType.name)}
+                                  >
+                                    Assign Seats
+                                  </Button>
                                 </div>
                               </>
                             ) : (
@@ -756,6 +711,56 @@ export const EditSeatSetupDashboard = () => {
                 </div>
               </div>
             </div>
+
+            {/* Seat Assignment Dialog */}
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogContent className="sm:max-w-md bg-white">
+                <DialogHeader>
+                  <DialogTitle className="text-lg font-semibold">Assign Seats - {selectedAssignmentSeatType}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                    <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Department" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white z-50">
+                        {departments.map((dept, idx) => (
+                          <SelectItem key={idx} value={dept.name}>{dept.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Number of Seats</label>
+                    <Input
+                      type="number"
+                      placeholder="Enter number of seats"
+                      value={seatsToAssign}
+                      onChange={(e) => setSeatsToAssign(e.target.value)}
+                      min="1"
+                      max={seatTypeAssignments.find(sta => sta.name === selectedAssignmentSeatType)?.total - seatTypeAssignments.find(sta => sta.name === selectedAssignmentSeatType)?.assigned || 0}
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-4">
+                    <Button 
+                      onClick={handleAssignSeats}
+                      className="flex-1 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                    >
+                      Assign
+                    </Button>
+                    <Button 
+                      onClick={() => setDialogOpen(false)}
+                      variant="outline" 
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
 
             {/* Action Buttons */}
             <div className="flex gap-4 mt-6">
