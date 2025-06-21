@@ -133,8 +133,6 @@ const modulesByPackage = {
         { name: 'Auto Saved PR', href: '/finance/auto-saved-pr', color: 'text-[#1a1a1a]' }
       ]
     },
-    { name: 'Invoices', icon: Receipt, href: '/finance/invoices' },
-    { name: 'Bill Booking', icon: FileText, href: '/finance/bill-booking' },
     { 
       name: 'Accounting', 
       icon: Calculator, 
