@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -134,7 +133,6 @@ const modulesByPackage = {
         { name: 'Auto Saved PR', href: '/finance/auto-saved-pr', color: 'text-[#1a1a1a]' }
       ]
     },
-    { name: 'Invoices', icon: Receipt, href: '/finance/invoices' },
     { 
       name: 'Accounting', 
       icon: Calculator, 
