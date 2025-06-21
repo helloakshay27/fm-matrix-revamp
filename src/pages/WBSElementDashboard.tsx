@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Download, Plus } from "lucide-react";
 import { AddWBSDialog } from "@/components/AddWBSDialog";
+import { WBSBulkUploadDialog } from "@/components/WBSBulkUploadDialog";
 
 export const WBSElementDashboard = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
 
   // Sample data - empty as shown in the image
   const wbsData: any[] = [];
@@ -24,14 +26,17 @@ export const WBSElementDashboard = () => {
       {/* Action Buttons */}
       <div className="mb-6 flex gap-3">
         <Button 
-          className="text-white bg-[#3B82F6] hover:bg-[#2563EB]"
+          className="text-white"
+          style={{ backgroundColor: '#C72030' }}
           onClick={() => setIsAddDialogOpen(true)}
         >
           <Plus className="h-4 w-4 mr-2" />
           Add
         </Button>
         <Button 
-          className="text-white bg-[#3B82F6] hover:bg-[#2563EB]"
+          className="text-white"
+          style={{ backgroundColor: '#C72030' }}
+          onClick={() => setIsBulkUploadOpen(true)}
         >
           <Download className="h-4 w-4 mr-2" />
           Import
@@ -79,13 +84,18 @@ export const WBSElementDashboard = () => {
       {/* Pagination */}
       <div className="flex justify-center mt-6 gap-2">
         <Button variant="outline" disabled className="text-gray-500">Previous</Button>
-        <Button className="bg-[#3B82F6] text-white hover:bg-[#2563EB]">1</Button>
+        <Button style={{ backgroundColor: '#C72030' }} className="text-white">1</Button>
         <Button variant="outline" disabled className="text-gray-500">Next</Button>
       </div>
 
       <AddWBSDialog 
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
+      />
+
+      <WBSBulkUploadDialog 
+        open={isBulkUploadOpen}
+        onOpenChange={setIsBulkUploadOpen}
       />
     </div>
   );
