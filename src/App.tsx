@@ -223,6 +223,7 @@ import { InvoicesDashboard } from './pages/InvoicesDashboard';
 import { InvoicesSESDashboard } from './pages/InvoicesSESDashboard';
 import { BillBookingDashboard } from './pages/BillBookingDashboard';
 import { PendingApprovalsDashboard } from './pages/PendingApprovalsDashboard';
+import { InvoiceDashboard } from './pages/InvoiceDashboard';
 
 // Import Settings pages
 import { FMUsersDashboard } from './pages/settings/FMUsersDashboard';
