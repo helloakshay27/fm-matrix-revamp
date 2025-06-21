@@ -5,8 +5,10 @@ import { SurveyResponseTable } from '../components/SurveyResponseTable';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 export const SurveyResponseDashboard = () => {
+  const { toast } = useToast();
   const [selectedSurvey, setSelectedSurvey] = useState('');
   const [dateRange, setDateRange] = useState('01/05/2025 - 21/06/2025');
   const [selectedSite, setSelectedSite] = useState('');
@@ -17,7 +19,7 @@ export const SurveyResponseDashboard = () => {
   const [selectedRoom, setSelectedRoom] = useState('');
 
   const handleSearch = () => {
-    console.log('Searching with filters:', {
+    const filters = {
       selectedSurvey,
       dateRange,
       selectedSite,
@@ -26,6 +28,13 @@ export const SurveyResponseDashboard = () => {
       selectedArea,
       selectedFloor,
       selectedRoom
+    };
+    
+    console.log('Searching with filters:', filters);
+    
+    toast({
+      title: "Search Initiated",
+      description: "Searching survey responses with applied filters",
     });
   };
 
@@ -38,6 +47,11 @@ export const SurveyResponseDashboard = () => {
     setSelectedArea('');
     setSelectedFloor('');
     setSelectedRoom('');
+    
+    toast({
+      title: "Filters Reset",
+      description: "All filters have been reset to default values",
+    });
   };
 
   return (
@@ -61,7 +75,7 @@ export const SurveyResponseDashboard = () => {
               <SelectTrigger className="border-[#D5DbDB] focus:ring-[#C72030] focus:border-[#C72030]">
                 <SelectValue placeholder="Select Survey" />
               </SelectTrigger>
-              <SelectContent className="bg-white border border-[#D5DbDB]">
+              <SelectContent className="bg-white border border-[#D5DbDB] z-50">
                 <SelectItem value="customer-satisfaction">Customer Satisfaction Survey</SelectItem>
                 <SelectItem value="facility-maintenance">Facility Maintenance Survey</SelectItem>
                 <SelectItem value="employee-feedback">Employee Feedback Survey</SelectItem>
@@ -89,7 +103,7 @@ export const SurveyResponseDashboard = () => {
               <SelectTrigger className="border-[#D5DbDB] focus:ring-[#C72030] focus:border-[#C72030]">
                 <SelectValue placeholder="Select Site" />
               </SelectTrigger>
-              <SelectContent className="bg-white border border-[#D5DbDB]">
+              <SelectContent className="bg-white border border-[#D5DbDB] z-50">
                 <SelectItem value="site-1">Lockastead Site 1</SelectItem>
                 <SelectItem value="site-2">Lockastead Site 2</SelectItem>
                 <SelectItem value="downtown">Downtown Office</SelectItem>
@@ -103,7 +117,7 @@ export const SurveyResponseDashboard = () => {
               <SelectTrigger className="border-[#D5DbDB] focus:ring-[#C72030] focus:border-[#C72030]">
                 <SelectValue placeholder="Select Building" />
               </SelectTrigger>
-              <SelectContent className="bg-white border border-[#D5DbDB]">
+              <SelectContent className="bg-white border border-[#D5DbDB] z-50">
                 <SelectItem value="building-a">Building A</SelectItem>
                 <SelectItem value="building-b">Building B</SelectItem>
                 <SelectItem value="main-tower">Main Tower</SelectItem>
@@ -117,7 +131,7 @@ export const SurveyResponseDashboard = () => {
               <SelectTrigger className="border-[#D5DbDB] focus:ring-[#C72030] focus:border-[#C72030]">
                 <SelectValue placeholder="Select Wing" />
               </SelectTrigger>
-              <SelectContent className="bg-white border border-[#D5DbDB]">
+              <SelectContent className="bg-white border border-[#D5DbDB] z-50">
                 <SelectItem value="east-wing">East Wing</SelectItem>
                 <SelectItem value="west-wing">West Wing</SelectItem>
                 <SelectItem value="north-wing">North Wing</SelectItem>
@@ -131,7 +145,7 @@ export const SurveyResponseDashboard = () => {
               <SelectTrigger className="border-[#D5DbDB] focus:ring-[#C72030] focus:border-[#C72030]">
                 <SelectValue placeholder="Select Area" />
               </SelectTrigger>
-              <SelectContent className="bg-white border border-[#D5DbDB]">
+              <SelectContent className="bg-white border border-[#D5DbDB] z-50">
                 <SelectItem value="lobby">Lobby</SelectItem>
                 <SelectItem value="workspace">Workspace</SelectItem>
                 <SelectItem value="cafeteria">Cafeteria</SelectItem>
@@ -148,7 +162,7 @@ export const SurveyResponseDashboard = () => {
               <SelectTrigger className="border-[#D5DbDB] focus:ring-[#C72030] focus:border-[#C72030]">
                 <SelectValue placeholder="Select Floor" />
               </SelectTrigger>
-              <SelectContent className="bg-white border border-[#D5DbDB]">
+              <SelectContent className="bg-white border border-[#D5DbDB] z-50">
                 <SelectItem value="ground">Ground Floor</SelectItem>
                 <SelectItem value="first">1st Floor</SelectItem>
                 <SelectItem value="second">2nd Floor</SelectItem>
@@ -163,7 +177,7 @@ export const SurveyResponseDashboard = () => {
               <SelectTrigger className="border-[#D5DbDB] focus:ring-[#C72030] focus:border-[#C72030]">
                 <SelectValue placeholder="Select Room" />
               </SelectTrigger>
-              <SelectContent className="bg-white border border-[#D5DbDB]">
+              <SelectContent className="bg-white border border-[#D5DbDB] z-50">
                 <SelectItem value="room-101">Room 101</SelectItem>
                 <SelectItem value="room-102">Room 102</SelectItem>
                 <SelectItem value="conference-a">Conference Room A</SelectItem>
@@ -177,7 +191,7 @@ export const SurveyResponseDashboard = () => {
         <div className="flex gap-4 pt-4">
           <Button 
             onClick={handleSearch}
-            className="bg-[#C72030] hover:bg-[#A01B28] text-white px-8 py-2 rounded flex items-center gap-2"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2 rounded flex items-center gap-2"
           >
             <Search className="w-4 h-4" />
             Search

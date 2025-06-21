@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { X } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ShiftData {
   id: number;
@@ -22,6 +23,7 @@ interface EditShiftDialogProps {
 }
 
 export const EditShiftDialog = ({ open, onOpenChange, shift }: EditShiftDialogProps) => {
+  const { toast } = useToast();
   const [fromHour, setFromHour] = useState<string>("");
   const [fromMinute, setFromMinute] = useState<string>("");
   const [toHour, setToHour] = useState<string>("");
@@ -72,13 +74,62 @@ export const EditShiftDialog = ({ open, onOpenChange, shift }: EditShiftDialogPr
     }
   }, [shift, open]);
 
+  const validateForm = () => {
+    if (!fromHour || !fromMinute || !toHour || !toMinute) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all time fields",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    const fromTime = parseInt(fromHour) * 60 + parseInt(fromMinute);
+    const toTime = parseInt(toHour) * 60 + parseInt(toMinute);
+
+    if (fromTime >= toTime) {
+      toast({
+        title: "Validation Error",
+        description: "End time must be after start time",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleUpdate = () => {
+    if (!validateForm()) return;
+
+    const formatTime = (hour: string, minute: string) => {
+      const h = parseInt(hour);
+      const m = parseInt(minute);
+      const period = h >= 12 ? 'PM' : 'AM';
+      const displayHour = h === 0 ? 12 : h > 12 ? h - 12 : h;
+      return `${String(displayHour).padStart(2, '0')}:${minute} ${period}`;
+    };
+
+    const fromTime = formatTime(fromHour, fromMinute);
+    const toTime = formatTime(toHour, toMinute);
+    
+    const totalHours = Math.abs(
+      (parseInt(toHour) * 60 + parseInt(toMinute)) - 
+      (parseInt(fromHour) * 60 + parseInt(fromMinute))
+    ) / 60;
+
     console.log("Updating shift:", {
       id: shift?.id,
-      from: `${fromHour}:${fromMinute}`,
-      to: `${toHour}:${toMinute}`,
-      checkInMargin
+      timings: `${fromTime} to ${toTime}`,
+      totalHours: Math.round(totalHours),
+      checkInMargin: checkInMargin ? "1h0m" : "0h0m"
     });
+
+    toast({
+      title: "Success",
+      description: "Shift updated successfully",
+    });
+
     onOpenChange(false);
   };
 
@@ -113,14 +164,14 @@ export const EditShiftDialog = ({ open, onOpenChange, shift }: EditShiftDialogPr
           {/* Shift Timings From */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Shift Timings From
+              Shift Timings From <span className="text-red-500">*</span>
             </label>
             <div className="flex gap-2">
               <Select value={fromHour} onValueChange={setFromHour}>
                 <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="08" />
+                  <SelectValue placeholder="HH" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white max-h-60">
                   {hours.map((hour) => (
                     <SelectItem key={hour} value={hour}>
                       {hour}
@@ -130,9 +181,9 @@ export const EditShiftDialog = ({ open, onOpenChange, shift }: EditShiftDialogPr
               </Select>
               <Select value={fromMinute} onValueChange={setFromMinute}>
                 <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="00" />
+                  <SelectValue placeholder="MM" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white max-h-60">
                   {minutes.map((minute) => (
                     <SelectItem key={minute} value={minute}>
                       {minute}
@@ -146,14 +197,14 @@ export const EditShiftDialog = ({ open, onOpenChange, shift }: EditShiftDialogPr
           {/* Shift Timings To */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Shift Timings To
+              Shift Timings To <span className="text-red-500">*</span>
             </label>
             <div className="flex gap-2">
               <Select value={toHour} onValueChange={setToHour}>
                 <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="17" />
+                  <SelectValue placeholder="HH" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white max-h-60">
                   {hours.map((hour) => (
                     <SelectItem key={hour} value={hour}>
                       {hour}
@@ -163,9 +214,9 @@ export const EditShiftDialog = ({ open, onOpenChange, shift }: EditShiftDialogPr
               </Select>
               <Select value={toMinute} onValueChange={setToMinute}>
                 <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="00" />
+                  <SelectValue placeholder="MM" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white max-h-60">
                   {minutes.map((minute) => (
                     <SelectItem key={minute} value={minute}>
                       {minute}
@@ -195,7 +246,7 @@ export const EditShiftDialog = ({ open, onOpenChange, shift }: EditShiftDialogPr
           <div className="flex justify-center pt-4">
             <Button 
               onClick={handleUpdate}
-              className="bg-[#8B4D6B] hover:bg-[#8B4D6B]/90 text-white px-8"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
             >
               Update
             </Button>

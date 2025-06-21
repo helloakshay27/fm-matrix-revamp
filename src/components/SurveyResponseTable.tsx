@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
 
 const mockResponseData = [
   {
@@ -31,6 +32,16 @@ const mockResponseData = [
 ];
 
 export const SurveyResponseTable = () => {
+  const { toast } = useToast();
+
+  const handleViewDetails = (responseId: number) => {
+    console.log("Viewing details for response:", responseId);
+    toast({
+      title: "View Details",
+      description: `Opening details for response ${responseId}`,
+    });
+  };
+
   return (
     <div className="bg-white rounded-lg border border-[#D5DbDB]">
       <Table>
@@ -64,7 +75,10 @@ export const SurveyResponseTable = () => {
                 </span>
               </TableCell>
               <TableCell>
-                <button className="text-[#C72030] hover:text-[#A01B28] text-sm font-medium">
+                <button 
+                  className="text-[#C72030] hover:text-[#C72030]/80 text-sm font-medium"
+                  onClick={() => handleViewDetails(response.id)}
+                >
                   View Details
                 </button>
               </TableCell>

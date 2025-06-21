@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
 import {
   Table,
   TableBody,
@@ -41,6 +42,7 @@ const mockSurveyData = [
 ];
 
 export const SurveyListTable = ({ onAddSurvey }: SurveyListTableProps) => {
+  const { toast } = useToast();
   const [surveys, setSurveys] = useState(mockSurveyData);
 
   const handleStatusToggle = (surveyId: number) => {
@@ -51,6 +53,11 @@ export const SurveyListTable = ({ onAddSurvey }: SurveyListTableProps) => {
           : survey
       )
     );
+    
+    toast({
+      title: "Status Updated",
+      description: "Survey status has been updated successfully",
+    });
   };
 
   const handleTicketCreationToggle = (surveyId: number) => {
@@ -61,6 +68,11 @@ export const SurveyListTable = ({ onAddSurvey }: SurveyListTableProps) => {
           : survey
       )
     );
+    
+    toast({
+      title: "Ticket Creation Updated",
+      description: "Ticket creation setting has been updated successfully",
+    });
   };
 
   const handleActiveToggle = (surveyId: number) => {
@@ -71,6 +83,20 @@ export const SurveyListTable = ({ onAddSurvey }: SurveyListTableProps) => {
           : survey
       )
     );
+    
+    toast({
+      title: "Active Status Updated",
+      description: "Survey active status has been updated successfully",
+    });
+  };
+
+  const handleAddSurvey = () => {
+    console.log("Adding new survey...");
+    toast({
+      title: "Add Survey",
+      description: "Add survey functionality initiated",
+    });
+    onAddSurvey();
   };
 
   return (
@@ -78,8 +104,8 @@ export const SurveyListTable = ({ onAddSurvey }: SurveyListTableProps) => {
       {/* Action Buttons */}
       <div className="flex items-center gap-4">
         <button
-          onClick={onAddSurvey}
-          className="flex items-center gap-2 bg-[#C72030] text-white px-4 py-2 rounded-lg hover:bg-[#A01B28] transition-colors"
+          onClick={handleAddSurvey}
+          className="flex items-center gap-2 bg-[#C72030] text-white px-4 py-2 rounded-lg hover:bg-[#C72030]/90 transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add
