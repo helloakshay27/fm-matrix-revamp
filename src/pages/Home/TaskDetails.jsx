@@ -482,6 +482,7 @@ const Attachments = ({ attachments, id }) => {
             console.log(result);
             const updatedAttachments = result?.attachments || [];
             setFiles(updatedAttachments);
+            dispatch(fetchTaskDetails({ token, id }));
         } catch (error) {
             console.error("File upload or task fetch failed:", error);
         }

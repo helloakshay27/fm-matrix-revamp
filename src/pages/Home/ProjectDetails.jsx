@@ -7,6 +7,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { changeProjectStatus, createProject, deleteProject, editProject, fetchProjectDetails } from "../../redux/slices/projectSlice";
 import AddProjectModal from "../../components/Home/Projects/AddProjectModal";
+import {attachFiles} from "../../redux/slices/projectSlice";
+import FolderIcon from '@mui/icons-material/Folder';
 
 const Issues = () => {
     return <IssuesTable />;
@@ -106,48 +108,86 @@ const Status = ({ project }) => {
     );
 };
 
-
-const Documents = () => {
-    const token = localStorage.getItem("token");
-    const { id } = useParams();
+const Attachments = ({ attachments, id }) => {
+    const fileInputRef = useRef(null);
     const dispatch = useDispatch();
-    const attahmentRef = useRef(null);
+    const [files, setFiles] = useState(attachments);
+    const token = localStorage.getItem("token");
 
-    const { success } = useSelector(state => state.editProject)
+    const handleAttachFile = () => {
+        fileInputRef.current.click(); // Open file picker
+    };
 
-    const handleAttachmentChange = (e) => {
-        const file = e.target.files[0];
+    const handleFileChange = async (event) => {
+        const selectedFiles = Array.from(event.target.files);
+        if (!selectedFiles.length) return;
+        console.log(selectedFiles);
+        const formData = new FormData();
 
-        const payload = {
-            project_management: {
-                attachments: file,
-            }
-        }
+        selectedFiles.forEach((file) => {
+            formData.append("project_management[attachments][]", file);
+            //   formData.append("task_management[attachment_metadatas][][relation_id]", id);
+            //   formData.append("task_management[attachment_metadatas][][relation]", "TaskManagement");
+            //   formData.append("task_management[attachment_metadatas][][active]", "1");
+            //   formData.append("task_management[attachment_metadatas][][document]", "doc");
+        });
 
-        if (file) {
-            dispatch(editProject({ token, id, payload }))
+
+        try {
+            const result = await dispatch(attachFiles({ token, id, payload: formData })).unwrap();
+            console.log(result);
+            const updatedAttachments = result?.attachments || [];
+            setFiles(updatedAttachments);
+            dispatch(fetchProjectDetails({ token, id }));
+        } catch (error) {
+            console.error("File upload or task fetch failed:", error);
         }
     };
 
-    useEffect(() => {
-        if (success) {
-            window.location.reload()
-        }
-    }, [success]);
+
 
     return (
-        <div>
-            <div className="flex justify-start flex-col gap-3 p-5 text-[14px] mt-2">
-                <span>No Documents Attached</span>
-                <span className="text-[#C2C2C2]">Drop or attach relevant documents here</span>
-                <button className="bg-[#C72030] h-[40px] w-[240px] text-white px-5" onClick={() => attahmentRef.current?.click()}>Attach Files</button>
-                <input type="file" accept="image/*" ref={attahmentRef} hidden onChange={handleAttachmentChange} />
-            </div>
-            {/* <div className="flex items-start gap-2 p-5">
-                <SourceIcon />
-                <h1 className="text-[#0063AF]"></h1>
-            </div> */}
-            {/* <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div> */}
+        <div className="flex flex-col gap-3 p-5">
+            {files.length > 0 ? (
+                <>
+                    {files.map((file) => (
+                        <>
+                        <div className="flex items-center gap-3">
+                            <FolderIcon className="h-5 w-5 text-gray-600" />
+                            <a href={file.document_url} download={file.document_file_name} >
+                                {file.document_file_name}
+                            </a>
+                        </div>
+                        {/* <hr className="border border-gray-200" ></hr> */}
+                        </>
+                    ))}
+                    <button
+                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
+                        onClick={handleAttachFile}
+                    >
+                        Attach Files
+                    </button>
+                </>
+            ) : (
+                <div className="text-[14px] mt-2">
+                    <span>No Documents Attached</span>
+                    <div className="text-[#C2C2C2]">Drop or attach relevant documents here</div>
+                    <button
+                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
+                        onClick={handleAttachFile}
+                    >
+                        Attach Files
+                    </button>
+                </div>
+            )}
+
+            <input
+                type="file"
+                multiple
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                onChange={handleFileChange}
+            />
         </div>
     );
 };
@@ -492,7 +532,7 @@ const ProjectDetails = () => {
 
                     <div>
                         {tab == "Member" && <Members allNames={projectMembers} projectOwner={project.project_owner_name} />}
-                        {tab == "Documents" && <Documents />}
+                        {tab == "Documents" && <Attachments attachments={project.attachments} id={project.id} />}
                         {tab == "Status" && <Status project={project} />}
                         {tab == "Issues" && <Issues />}
                     </div>

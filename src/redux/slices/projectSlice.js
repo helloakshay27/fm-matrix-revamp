@@ -459,6 +459,24 @@ export const removeMembersFromGroup = createAsyncThunk('removeMembersFromGroup',
     }
 })
 
+export const attachFiles = createAsyncThunk('attachFiles', async ({ token, id, payload }) => {
+    try {
+        const response = await axios.put(`https://api-tasks.lockated.com/project_managements/${id}.json`,
+            payload, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'Multipart/form-data'
+            }
+        });
+
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        return error.response.data;
+    }
+})
+
+
 
 
 export const createProjectSlice = createApiSlice('createProject', createProject);
