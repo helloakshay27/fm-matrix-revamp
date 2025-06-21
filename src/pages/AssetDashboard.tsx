@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -437,8 +436,8 @@ export const AssetDashboard = () => {
       />
       
       <AssetFilterDialog
-        open={isFilterOpen}
-        onOpenChange={setIsFilterOpen}
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
       />
     </div>
   );
