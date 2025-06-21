@@ -1,47 +1,28 @@
-import React from 'react';
-import { Layout } from '@/components/Layout';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Grid3X3, FileDown, Plus, Settings, Banknote, CreditCard, Clock } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Plus, Search, Settings, Banknote, CreditCard, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const BillBookingDashboard = () => {
   const navigate = useNavigate();
-
-  const billsData = [
-    { id: 'BB001', vendor: 'ABC Supplies', amount: '₹50,000', bookingDate: '2024-03-15', status: 'Booked', invoiceNumber: 'INV001', description: 'Bill for supplies' },
-    { id: 'BB002', vendor: 'XYZ Services', amount: '₹25,000', bookingDate: '2024-03-14', status: 'Draft', invoiceNumber: 'INV002', description: 'Bill for services' },
-    { id: 'BB003', vendor: 'DEF Materials', amount: '₹75,000', bookingDate: '2024-03-13', status: 'Approved', invoiceNumber: 'INV003', description: 'Bill for materials' }
-  ];
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleAddClick = () => {
     navigate('/finance/bill-booking/add');
   };
 
-  return (
-    <Layout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-gray-900">BILL LIST</h1>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search"
-                className="pl-10 w-80"
-              />
-            </div>
-            <Button variant="outline" size="icon">
-              <Grid3X3 className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="icon">
-              <FileDown className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
+  // Sample data - empty for now as shown in reference
+  const billsData: any[] = [];
 
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="p-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">BILL LIST</h1>
+        
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
@@ -55,8 +36,8 @@ export const BillBookingDashboard = () => {
           <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm">Total Amount</p>
-                <p className="text-3xl font-bold">₹ 0</p>
+                <p className="text-blue-100 text-sm">₹ 0</p>
+                <p className="text-lg font-semibold">Total Amount</p>
               </div>
               <Banknote className="w-8 h-8 text-blue-200" />
             </div>
@@ -65,8 +46,8 @@ export const BillBookingDashboard = () => {
           <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-orange-100 text-sm">Total Paid Amount</p>
-                <p className="text-3xl font-bold">₹ 0</p>
+                <p className="text-orange-100 text-sm">₹ 0</p>
+                <p className="text-lg font-semibold">Total Paid Amount</p>
               </div>
               <CreditCard className="w-8 h-8 text-orange-200" />
             </div>
@@ -75,15 +56,16 @@ export const BillBookingDashboard = () => {
           <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-red-100 text-sm">Total Pending Amount</p>
-                <p className="text-3xl font-bold">₹ 0</p>
+                <p className="text-red-100 text-sm">₹ 0</p>
+                <p className="text-lg font-semibold">Total Pending Amount</p>
               </div>
               <Clock className="w-8 h-8 text-red-200" />
             </div>
           </div>
         </div>
 
-        <div className="flex justify-start">
+        {/* Add Button */}
+        <div className="mb-6">
           <Button 
             onClick={handleAddClick}
             className="bg-[#C72030] hover:bg-[#A01020] text-white"
@@ -93,87 +75,58 @@ export const BillBookingDashboard = () => {
           </Button>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deduction</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TDS(%)</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TDS Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Retention(%)</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Retention Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payable Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bill Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice Number</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Tenure In Days</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {billsData.length === 0 ? (
-                  <tr>
-                    <td colSpan={14} className="px-6 py-12 text-center text-gray-500">
-                      No bills found
-                    </td>
-                  </tr>
-                ) : (
-                  billsData.map((bill, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {/* Action buttons would go here */}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600">
-                        {bill.id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {bill.description}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {bill.vendor}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {bill.amount}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {/* Deduction value */}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {/* TDS percentage */}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {/* TDS amount */}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {/* Retention percentage */}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {/* Retention amount */}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {/* Payable amount */}
-                      </td>
-                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {/* Bill date */}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {/* Invoice number */}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {/* Payment tenure */}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+        {/* Table Section */}
+        <div className="bg-white rounded-lg shadow-sm border">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50">
+                <TableHead className="font-semibold text-gray-900">Action</TableHead>
+                <TableHead className="font-semibold text-gray-900">ID</TableHead>
+                <TableHead className="font-semibold text-gray-900">Description</TableHead>
+                <TableHead className="font-semibold text-gray-900">Supplier</TableHead>
+                <TableHead className="font-semibold text-gray-900">Amount</TableHead>
+                <TableHead className="font-semibold text-gray-900">Deduction</TableHead>
+                <TableHead className="font-semibold text-gray-900">TDS(%)</TableHead>
+                <TableHead className="font-semibold text-gray-900">TDS Amount</TableHead>
+                <TableHead className="font-semibold text-gray-900">Retention(%)</TableHead>
+                <TableHead className="font-semibold text-gray-900">Retention Amount</TableHead>
+                <TableHead className="font-semibold text-gray-900">Payable Amount</TableHead>
+                <TableHead className="font-semibold text-gray-900">Bill Date</TableHead>
+                <TableHead className="font-semibold text-gray-900">Invoice Number</TableHead>
+                <TableHead className="font-semibold text-gray-900">Payment Tenure In Days</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {billsData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={14} className="text-center py-8 text-gray-500">
+                    No data available
+                  </TableCell>
+                </TableRow>
+              ) : (
+                billsData.map((bill, index) => (
+                  <TableRow key={index} className="hover:bg-gray-50">
+                    <TableCell>{/* Action buttons */}</TableCell>
+                    <TableCell>{bill.id}</TableCell>
+                    <TableCell>{bill.description}</TableCell>
+                    <TableCell>{bill.supplier}</TableCell>
+                    <TableCell>{bill.amount}</TableCell>
+                    <TableCell>{bill.deduction}</TableCell>
+                    <TableCell>{bill.tdsPercentage}</TableCell>
+                    <TableCell>{bill.tdsAmount}</TableCell>
+                    <TableCell>{bill.retentionPercentage}</TableCell>
+                    <TableCell>{bill.retentionAmount}</TableCell>
+                    <TableCell>{bill.payableAmount}</TableCell>
+                    <TableCell>{bill.billDate}</TableCell>
+                    <TableCell>{bill.invoiceNumber}</TableCell>
+                    <TableCell>{bill.paymentTenure}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
