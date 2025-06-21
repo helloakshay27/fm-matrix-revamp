@@ -24,7 +24,8 @@ export const WBSElementDashboard = () => {
       {/* Action Buttons */}
       <div className="mb-6 flex gap-3">
         <Button 
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="text-white"
+          style={{ backgroundColor: '#C72030' }}
           onClick={() => setIsAddDialogOpen(true)}
         >
           + Add
@@ -79,7 +80,7 @@ export const WBSElementDashboard = () => {
       {/* Pagination */}
       <div className="flex justify-center mt-6 gap-2">
         <Button variant="outline" disabled>Previous</Button>
-        <Button className="bg-blue-600 text-white">1</Button>
+        <Button style={{ backgroundColor: '#C72030' }} className="text-white">1</Button>
         <Button variant="outline" disabled>Next</Button>
       </div>
 
