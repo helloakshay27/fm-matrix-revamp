@@ -31,6 +31,7 @@ export const InvoicesDashboard = () => {
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+    console.log('Searching for:', e.target.value);
   };
 
   const handleGridView = () => {
@@ -57,9 +58,26 @@ export const InvoicesDashboard = () => {
     });
   };
 
+  const handleViewInvoice = (invoiceId: string) => {
+    console.log('Viewing invoice:', invoiceId);
+    toast({
+      title: "View Invoice",
+      description: `Viewing details for ${invoiceId}`,
+    });
+  };
+
+  const handleEditInvoice = (invoiceId: string) => {
+    console.log('Editing invoice:', invoiceId);
+    toast({
+      title: "Edit Invoice",
+      description: `Editing ${invoiceId}`,
+    });
+  };
+
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="p-6 space-y-6">
+        {/* Header Section */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold text-gray-900">Invoices</h1>
           <div className="flex items-center gap-3">
@@ -81,6 +99,7 @@ export const InvoicesDashboard = () => {
           </div>
         </div>
 
+        {/* Add Invoice Button */}
         <div className="flex justify-start">
           <Button 
             className="bg-[#C72030] hover:bg-[#A01020] text-white"
@@ -91,7 +110,8 @@ export const InvoicesDashboard = () => {
           </Button>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200">
+        {/* Invoices Table */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
@@ -107,7 +127,7 @@ export const InvoicesDashboard = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredInvoices.map((invoice) => (
-                  <tr key={invoice.id} className="hover:bg-gray-50">
+                  <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 cursor-pointer hover:underline"
                         onClick={() => handleInvoiceClick(invoice.id)}>
                       {invoice.id}
@@ -115,7 +135,7 @@ export const InvoicesDashboard = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {invoice.vendor}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
                       {invoice.amount}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -125,7 +145,7 @@ export const InvoicesDashboard = () => {
                       {invoice.dueDate}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                         invoice.status === 'Paid' ? 'bg-green-100 text-green-800' :
                         invoice.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-red-100 text-red-800'
@@ -138,7 +158,8 @@ export const InvoicesDashboard = () => {
                         <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => handleInvoiceClick(invoice.id)}
+                          onClick={() => handleViewInvoice(invoice.id)}
+                          className="hover:bg-gray-100"
                         >
                           View
                         </Button>
@@ -146,13 +167,7 @@ export const InvoicesDashboard = () => {
                           variant="outline" 
                           size="sm"
                           className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white"
-                          onClick={() => {
-                            console.log('Editing invoice:', invoice.id);
-                            toast({
-                              title: "Edit Invoice",
-                              description: `Editing ${invoice.id}`,
-                            });
-                          }}
+                          onClick={() => handleEditInvoice(invoice.id)}
                         >
                           Edit
                         </Button>
@@ -164,11 +179,33 @@ export const InvoicesDashboard = () => {
             </table>
           </div>
           
+          {/* No Results Message */}
           {filteredInvoices.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              No invoices found matching your search.
+            <div className="text-center py-12 text-gray-500">
+              <p className="text-lg">No invoices found matching your search.</p>
+              <p className="text-sm mt-2">Try adjusting your search criteria or add a new invoice.</p>
             </div>
           )}
+        </div>
+
+        {/* Summary Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+            <h3 className="text-sm font-medium text-gray-500">Total Invoices</h3>
+            <p className="text-2xl font-bold text-gray-900">{invoicesData.length}</p>
+          </div>
+          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+            <h3 className="text-sm font-medium text-gray-500">Pending Invoices</h3>
+            <p className="text-2xl font-bold text-yellow-600">
+              {invoicesData.filter(inv => inv.status === 'Pending').length}
+            </p>
+          </div>
+          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+            <h3 className="text-sm font-medium text-gray-500">Overdue Invoices</h3>
+            <p className="text-2xl font-bold text-red-600">
+              {invoicesData.filter(inv => inv.status === 'Overdue').length}
+            </p>
+          </div>
         </div>
       </div>
     </Layout>
