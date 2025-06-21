@@ -187,6 +187,11 @@ import { AddVendorAuditSchedulePage } from './pages/AddVendorAuditSchedulePage';
 import { AddVendorAuditPage } from './pages/AddVendorAuditPage';
 import { ViewVendorAuditPage } from './pages/ViewVendorAuditPage';
 
+// Import Asset Audit pages
+import { AssetAuditDashboard } from './pages/AssetAuditDashboard';
+import { AddAssetAuditPage } from './pages/AddAssetAuditPage';
+import { AssetAuditDetailsPage } from './pages/AssetAuditDetailsPage';
+
 // Import Master Checklist page
 import { AddMasterChecklistPage } from './pages/AddMasterChecklistPage';
 
@@ -345,6 +350,11 @@ function App() {
               <Route path="/maintenance/audit/vendor/scheduled/copy" element={<AddVendorAuditSchedulePage />} />
               <Route path="/maintenance/audit/vendor/scheduled/view/:id" element={<ViewVendorAuditPage />} />
               <Route path="/maintenance/audit/vendor/conducted" element={<VendorAuditConductedDashboard />} />
+              
+              {/* Asset Audit Routes */}
+              <Route path="/maintenance/audit/assets" element={<AssetAuditDashboard />} />
+              <Route path="/maintenance/audit/assets/add" element={<AddAssetAuditPage />} />
+              <Route path="/maintenance/audit/assets/details/:id" element={<AssetAuditDetailsPage />} />
               
               {/* Waste Generation Routes */}
               <Route path="/maintenance/audit/waste/generation" element={<UtilityWasteGenerationDashboard />} />
