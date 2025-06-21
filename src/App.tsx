@@ -190,6 +190,7 @@ import { ViewVendorAuditPage } from './pages/ViewVendorAuditPage';
 // Import Asset Audit pages
 import { AssetAuditDashboard } from './pages/AssetAuditDashboard';
 import { AddAssetAuditPage } from './pages/AddAssetAuditPage';
+import { EditAssetAuditPage } from './pages/EditAssetAuditPage';
 import { AssetAuditDetailsPage } from './pages/AssetAuditDetailsPage';
 
 // Import Master Checklist page
@@ -354,6 +355,7 @@ function App() {
               {/* Asset Audit Routes */}
               <Route path="/maintenance/audit/assets" element={<AssetAuditDashboard />} />
               <Route path="/maintenance/audit/assets/add" element={<AddAssetAuditPage />} />
+              <Route path="/maintenance/audit/assets/edit/:id" element={<EditAssetAuditPage />} />
               <Route path="/maintenance/audit/assets/details/:id" element={<AssetAuditDetailsPage />} />
               
               {/* Waste Generation Routes */}

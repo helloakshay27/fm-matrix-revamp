@@ -6,13 +6,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Edit, Printer } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export const AssetAuditDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
   // Sample audit details
-  const auditDetails = {
+  const [auditDetails, setAuditDetails] = useState({
     name: 'Name Latest',
     id: '10',
     status: 'Scheduled',
@@ -30,7 +31,7 @@ export const AssetAuditDetailsPage = () => {
       department: 'N/A',
       conductedBy: 'Abhishek Sharma'
     }
-  };
+  });
 
   const [filterWing, setFilterWing] = useState('');
   const [filterArea, setFilterArea] = useState('');
@@ -67,7 +68,97 @@ export const AssetAuditDetailsPage = () => {
     }
   ];
 
-  const scannedAssets = []; // No scanned assets available as per reference
+  const scannedAssets = [];
+
+  const handleStatusChange = (newStatus: string) => {
+    setAuditDetails(prev => ({ ...prev, status: newStatus }));
+    toast.success(`Audit status updated to ${newStatus}`);
+  };
+
+  const handleEditClick = () => {
+    navigate(`/maintenance/audit/assets/edit/${id}`);
+  };
+
+  const handlePrintList = () => {
+    const printContent = `
+      <html>
+        <head>
+          <title>Asset Audit List - ${auditDetails.name}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { color: #333; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .header { margin-bottom: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Asset Audit List</h1>
+            <p><strong>Audit Name:</strong> ${auditDetails.name} (${auditDetails.id})</p>
+            <p><strong>Status:</strong> ${auditDetails.status}</p>
+            <p><strong>Created By:</strong> ${auditDetails.createdBy}</p>
+            <p><strong>Date Range:</strong> ${auditDetails.basicDetails.startDate} - ${auditDetails.basicDetails.endDate}</p>
+            <p><strong>Site:</strong> ${auditDetails.basicDetails.site}</p>
+            <p><strong>Building:</strong> ${auditDetails.basicDetails.building}</p>
+          </div>
+          <h2>Assets to be Scanned</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Asset Name</th>
+                <th>Asset Serial No</th>
+                <th>Manufacturer</th>
+                <th>Group</th>
+                <th>Subgroup</th>
+                <th>Site</th>
+                <th>Building</th>
+                <th>Wing</th>
+                <th>Floor</th>
+                <th>Department</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${assetsToScan.map(asset => `
+                <tr>
+                  <td>${asset.assetName}</td>
+                  <td>${asset.serialNo}</td>
+                  <td>${asset.manufacturer}</td>
+                  <td>${asset.group}</td>
+                  <td>${asset.subgroup}</td>
+                  <td>${asset.site}</td>
+                  <td>${asset.building}</td>
+                  <td>${asset.wing}</td>
+                  <td>${asset.floor}</td>
+                  <td>${asset.department}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.print();
+    }
+    toast.success('Print dialog opened');
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Scheduled': return 'bg-blue-500';
+      case 'In Progress': return 'bg-orange-500';
+      case 'Completed': return 'bg-green-500';
+      case 'Overdue': return 'bg-red-500';
+      case 'Closed': return 'bg-gray-500';
+      default: return 'bg-blue-500';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -81,11 +172,20 @@ export const AssetAuditDetailsPage = () => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-bold">{auditDetails.name} ({auditDetails.id})</h1>
-            <Badge className="bg-blue-500 text-white">
-              {auditDetails.status} ▼
-            </Badge>
+            <Select value={auditDetails.status} onValueChange={handleStatusChange}>
+              <SelectTrigger className={`w-40 text-white ${getStatusColor(auditDetails.status)}`}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Scheduled">Scheduled</SelectItem>
+                <SelectItem value="In Progress">In Progress</SelectItem>
+                <SelectItem value="Completed">Completed</SelectItem>
+                <SelectItem value="Overdue">Overdue</SelectItem>
+                <SelectItem value="Closed">Closed</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <Button size="sm" variant="ghost">
+          <Button size="sm" variant="ghost" onClick={handleEditClick}>
             <Edit className="w-4 h-4" />
           </Button>
         </div>
@@ -239,6 +339,7 @@ export const AssetAuditDetailsPage = () => {
 
             <div className="flex justify-end mb-4">
               <Button 
+                onClick={handlePrintList}
                 className="bg-[#C72030] hover:bg-[#A01020] text-white"
                 size="sm"
               >
