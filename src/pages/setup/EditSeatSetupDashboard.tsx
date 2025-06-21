@@ -44,12 +44,13 @@ export const EditSeatSetupDashboard = () => {
   const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [selectedFloor, setSelectedFloor] = useState<string>("");
   const [activeTab, setActiveTab] = useState("seat-configuration");
-  const [selectedSeatType, setSelectedSeatType] = useState<string>("Angular Ws");
+  const [selectedSeatType, setSelectedSeatType] = useState<string>("Flexi Desk");
   const [seatCountToAdd, setSeatCountToAdd] = useState<string>("");
+  const [reservedSeatCountToAdd, setReservedSeatCountToAdd] = useState<string>("");
   
   const [seatTypes, setSeatTypes] = useState<SeatTypeConfig[]>([
     { name: "Angular Ws", totalSeats: "0", reservedSeats: "0" },
-    { name: "Flexi Desk", totalSeats: "4", reservedSeats: "2" },
+    { name: "Flexi Desk", totalSeats: "4", reservedSeats: "0" },
     { name: "Cabin", totalSeats: "4", reservedSeats: "0" },
     { name: "Fixed Desk", totalSeats: "3", reservedSeats: "0" },
     { name: "IOS", totalSeats: "0", reservedSeats: "0" },
@@ -117,7 +118,7 @@ export const EditSeatSetupDashboard = () => {
   // Seat type assignments for Tag Department
   const [seatTypeAssignments, setSeatTypeAssignments] = useState<SeatTypeAssignment[]>([
     { name: "Angular Ws", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
-    { name: "Flexi Desk", assigned: 0, total: 4, selectedSeats: ["S1", "S2"], reservedSeats: ["S3", "S4"] },
+    { name: "Flexi Desk", assigned: 0, total: 4, selectedSeats: ["S1", "S2", "S3", "S4"], reservedSeats: [] },
     { name: "Cabin", assigned: 0, total: 4, selectedSeats: ["C1", "C2", "C3", "C4"], reservedSeats: [] },
     { name: "Fixed Desk", assigned: 0, total: 3, selectedSeats: ["FD1", "FD2", "FD3"], reservedSeats: [] },
     { name: "IOS", assigned: 0, total: 0, selectedSeats: [], reservedSeats: [] },
@@ -140,7 +141,7 @@ export const EditSeatSetupDashboard = () => {
       floor: "TA Floor 1 - TA Wing 1 - BBT A",
       seatTypes: {
         "Angular Ws": { total: 0, reserved: 0 },
-        "Flexi Desk": { total: 4, reserved: 2 },
+        "Flexi Desk": { total: 4, reserved: 0 },
         "Cabin": { total: 4, reserved: 0 },
         "Fixed Desk": { total: 3, reserved: 0 },
         "IOS": { total: 0, reserved: 0 },
@@ -174,6 +175,20 @@ export const EditSeatSetupDashboard = () => {
     const updated = [...seatTypes];
     updated[index] = { ...updated[index], [field]: value };
     setSeatTypes(updated);
+
+    // Update seat type assignments when total seats change
+    if (field === 'totalSeats') {
+      const seatTypeName = updated[index].name;
+      const updatedAssignments = [...seatTypeAssignments];
+      const assignmentIndex = updatedAssignments.findIndex(sta => sta.name === seatTypeName);
+      if (assignmentIndex !== -1) {
+        updatedAssignments[assignmentIndex] = {
+          ...updatedAssignments[assignmentIndex],
+          total: parseInt(value) || 0
+        };
+        setSeatTypeAssignments(updatedAssignments);
+      }
+    }
   };
 
   const updateSeatTypeAssignment = (seatTypeName: string, change: number) => {
@@ -227,6 +242,47 @@ export const EditSeatSetupDashboard = () => {
 
     // Clear the input
     setSeatCountToAdd("");
+  };
+
+  const handleAddReservedSeats = () => {
+    const count = parseInt(reservedSeatCountToAdd);
+    if (!count || count <= 0) return;
+
+    // Update the seat types table
+    const updatedSeatTypes = seatTypes.map(seatType => {
+      if (seatType.name === selectedSeatType) {
+        const currentReserved = parseInt(seatType.reservedSeats) || 0;
+        const currentTotal = parseInt(seatType.totalSeats) || 0;
+        return {
+          ...seatType,
+          totalSeats: (currentTotal + count).toString(),
+          reservedSeats: (currentReserved + count).toString()
+        };
+      }
+      return seatType;
+    });
+    setSeatTypes(updatedSeatTypes);
+
+    // Update seat type assignments
+    const updatedAssignments = seatTypeAssignments.map(assignment => {
+      if (assignment.name === selectedSeatType) {
+        const currentReservedTotal = assignment.reservedSeats.length;
+        const newReservedSeats = [];
+        for (let i = 1; i <= count; i++) {
+          newReservedSeats.push(`R${currentReservedTotal + i}`);
+        }
+        return {
+          ...assignment,
+          total: assignment.total + count,
+          reservedSeats: [...assignment.reservedSeats, ...newReservedSeats]
+        };
+      }
+      return assignment;
+    });
+    setSeatTypeAssignments(updatedAssignments);
+
+    // Clear the input
+    setReservedSeatCountToAdd("");
   };
 
   const removeSeat = (seatId: string, isReserved: boolean = false) => {
@@ -360,12 +416,14 @@ export const EditSeatSetupDashboard = () => {
                     <div 
                       key={index} 
                       className={`grid grid-cols-3 gap-4 py-3 border-b border-gray-200 cursor-pointer hover:bg-gray-50 px-4 -mx-6 ${
-                        selectedSeatType === seatType.name ? 'bg-orange-50 border-orange-300' : ''
+                        selectedSeatType === seatType.name ? 'bg-[#C72030]/10 border-[#C72030] border-l-4' : ''
                       }`}
                       onClick={() => handleSeatTypeClick(seatType.name)}
                     >
                       <div className="flex items-center">
-                        <span className="text-sm font-medium text-gray-700">{seatType.name}</span>
+                        <span className={`text-sm font-medium ${selectedSeatType === seatType.name ? 'text-[#C72030]' : 'text-gray-700'}`}>
+                          {seatType.name}
+                        </span>
                       </div>
                       <div className="flex items-center justify-center">
                         <Input
@@ -431,7 +489,7 @@ export const EditSeatSetupDashboard = () => {
                     />
                     <Button 
                       onClick={handleAddSeats}
-                      className="bg-purple-700 hover:bg-purple-800 text-white"
+                      className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
                       size="sm"
                     >
                       Add
@@ -466,11 +524,15 @@ export const EditSeatSetupDashboard = () => {
                     
                     <div className="flex gap-2">
                       <Input
-                        placeholder="2"
+                        placeholder="No. of Seats"
+                        value={reservedSeatCountToAdd}
+                        onChange={(e) => setReservedSeatCountToAdd(e.target.value)}
+                        type="number"
                         className="flex-1"
                       />
                       <Button 
-                        className="bg-purple-700 hover:bg-purple-800 text-white"
+                        onClick={handleAddReservedSeats}
+                        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
                         size="sm"
                       >
                         Add
@@ -499,6 +561,23 @@ export const EditSeatSetupDashboard = () => {
                 </label>
                 <span className="ml-2 text-gray-500">No file chosen</span>
               </div>
+            </div>
+
+            {/* Action Buttons for Seat Configuration */}
+            <div className="flex gap-4 mt-6">
+              <Button 
+                onClick={handleProceed}
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
+              >
+                Proceed
+              </Button>
+              <Button 
+                onClick={handleCancel}
+                variant="outline" 
+                className="border-gray-300 text-gray-700 px-8"
+              >
+                Cancel
+              </Button>
             </div>
           </TabsContent>
 
