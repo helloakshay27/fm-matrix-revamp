@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Plus, Upload, Filter, Download, Eye, Edit, Copy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
+import { ScheduleFilterDialog } from '@/components/ScheduleFilterDialog';
 
 const scheduleData = [
   {
@@ -243,8 +245,11 @@ export const ScheduleListDashboard = () => {
         open={showImportModal}
         onOpenChange={setShowImportModal}
         title="Bulk Upload"
-        downloadText="Download Sample Format"
-        importText="Import"
+      />
+
+      <ScheduleFilterDialog
+        open={showFilterDialog}
+        onOpenChange={setShowFilterDialog}
       />
     </div>
   );

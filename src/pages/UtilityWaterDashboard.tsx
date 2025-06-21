@@ -201,8 +201,6 @@ export const UtilityWaterDashboard = () => {
         open={isBulkUploadOpen} 
         onOpenChange={setIsBulkUploadOpen}
         title={uploadType === 'import' ? 'Import Water Assets' : 'Update Water Assets'}
-        downloadText="Download Sample Format"
-        importText="Import"
       />
     </div>
   );

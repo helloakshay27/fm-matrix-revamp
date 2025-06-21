@@ -8,18 +8,15 @@ interface BulkUploadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  downloadText: string;
-  importText: string;
 }
 
 export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
   open,
   onOpenChange,
   title,
-  downloadText,
-  importText,
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -28,20 +25,37 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
     }
   };
 
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setDragOver(false);
+    const file = event.dataTransfer.files[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setDragOver(false);
+  };
+
   const handleDownloadSample = () => {
     console.log('Downloading sample format...');
-    // Create sample CSV for WBS
+    // Create sample CSV
     const sampleData = [
-      'Plant Code,Category,Category WBS Code,WBS Name,WBS Code,Site',
-      'PLANT001,Construction,WBS001,Building Foundation,WBS-FOUND-001,Site A',
-      'PLANT002,Equipment,WBS002,HVAC System,WBS-HVAC-001,Site B'
+      'Name,ID,Reference Number,Code,Group,Sub Group,Criticality,Quantity,Active',
+      'Sample Item,12345,REF001,CODE001,Electronics,Computers,Critical,10,Active'
     ].join('\n');
     
     const blob = new Blob([sampleData], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'wbs_sample_format.csv';
+    a.download = 'inventory_sample_format.csv';
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -74,19 +88,31 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
           </div>
         </DialogHeader>
         
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* File Upload Area */}
-          <div className="border border-gray-300 rounded-lg p-8 text-center">
+          <div
+            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+              dragOver 
+                ? 'border-[#C72030] bg-red-50' 
+                : 'border-orange-300 bg-orange-50'
+            }`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+          >
             <div className="space-y-2">
-              <label className="text-blue-600 cursor-pointer hover:underline">
-                Choose File
-                <input
-                  type="file"
-                  className="hidden"
-                  accept=".csv,.xlsx,.xls"
-                  onChange={handleFileSelect}
-                />
-              </label>
+              <p className="text-gray-600">
+                Drag & Drop or{' '}
+                <label className="text-[#C72030] cursor-pointer hover:underline">
+                  Choose File
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept=".csv,.xlsx,.xls"
+                    onChange={handleFileSelect}
+                  />
+                </label>
+              </p>
               <p className="text-sm text-gray-500">
                 {selectedFile ? selectedFile.name : 'No file chosen'}
               </p>
@@ -97,17 +123,17 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
           <div className="flex gap-3">
             <Button 
               onClick={handleDownloadSample}
-              variant="outline"
-              className="flex-1"
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:bg-[#C72030]/90 flex-1"
             >
-              {downloadText}
+              Download Sample Format
             </Button>
             <Button 
               onClick={handleImport}
-              className="text-white flex-1"
               style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:bg-[#C72030]/90 flex-1"
             >
-              {importText}
+              Import
             </Button>
           </div>
         </div>

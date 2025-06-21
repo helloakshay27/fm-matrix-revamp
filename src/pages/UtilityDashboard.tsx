@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -221,8 +222,6 @@ export const UtilityDashboard = () => {
         open={isBulkUploadOpen} 
         onOpenChange={setIsBulkUploadOpen}
         title={uploadType === 'import' ? 'Import Assets' : 'Update Assets'}
-        downloadText="Download Sample Format"
-        importText="Import"
       />
     </div>
   );
