@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Filter } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useNavigate } from 'react-router-dom';
 import { FitoutRequestFilterDialog } from '@/components/FitoutRequestFilterDialog';
 import { EditProjectModal } from '@/components/EditProjectModal';
@@ -25,6 +26,7 @@ export const FitoutRequestListDashboard = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<FitoutProject | null>(null);
   const [projects, setProjects] = useState<FitoutProject[]>([]);
+  const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
 
   useEffect(() => {
     // Load projects from localStorage
@@ -49,6 +51,22 @@ export const FitoutRequestListDashboard = () => {
     localStorage.setItem('fitoutProjects', JSON.stringify(updatedProjects));
     setShowEditModal(false);
     setSelectedProject(null);
+  };
+
+  const handleProjectSelect = (projectId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedProjects([...selectedProjects, projectId]);
+    } else {
+      setSelectedProjects(selectedProjects.filter(id => id !== projectId));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedProjects(projects.map(p => p.id));
+    } else {
+      setSelectedProjects([]);
+    }
   };
 
   return (
@@ -85,6 +103,13 @@ export const FitoutRequestListDashboard = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
+              <TableHead className="font-semibold w-12">
+                <Checkbox 
+                  checked={selectedProjects.length === projects.length && projects.length > 0}
+                  onCheckedChange={handleSelectAll}
+                  className="border-[#C72030] data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                />
+              </TableHead>
               <TableHead className="font-semibold">Actions</TableHead>
               <TableHead className="font-semibold">ID</TableHead>
               <TableHead className="font-semibold">User</TableHead>
@@ -100,7 +125,14 @@ export const FitoutRequestListDashboard = () => {
           <TableBody>
             {projects.length > 0 ? (
               projects.map((project) => (
-                <TableRow key={project.id}>
+                <TableRow key={project.id} className="hover:bg-gray-50">
+                  <TableCell>
+                    <Checkbox 
+                      checked={selectedProjects.includes(project.id)}
+                      onCheckedChange={(checked) => handleProjectSelect(project.id, checked as boolean)}
+                      className="border-[#C72030] data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                    />
+                  </TableCell>
                   <TableCell>
                     <Button 
                       variant="ghost" 
@@ -128,7 +160,7 @@ export const FitoutRequestListDashboard = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={11} className="text-center py-8 text-gray-500">
                   No fitout requests found. Click "Add" to create your first project.
                 </TableCell>
               </TableRow>

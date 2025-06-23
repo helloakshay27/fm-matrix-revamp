@@ -52,6 +52,14 @@ export const TicketTagVendorPage = () => {
     }
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedVendors(vendorData.map(v => v.id));
+    } else {
+      setSelectedVendors([]);
+    }
+  };
+
   return (
     <div className="p-6 bg-white min-h-screen">
       <div className="max-w-6xl mx-auto">
@@ -126,41 +134,37 @@ export const TicketTagVendorPage = () => {
           </Button>
         </div>
 
-        {/* Vendor Table */}
+        {/* Vendor Table with improved checkbox styling */}
         <Card>
           <CardContent className="p-6">
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="bg-gray-50">
                   <TableHead className="w-12">
                     <Checkbox 
-                      checked={selectedVendors.length === vendorData.length}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedVendors(vendorData.map(v => v.id));
-                        } else {
-                          setSelectedVendors([]);
-                        }
-                      }}
+                      checked={selectedVendors.length === vendorData.length && vendorData.length > 0}
+                      onCheckedChange={handleSelectAll}
+                      className="border-[#C72030] data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
                     />
                   </TableHead>
-                  <TableHead>Vendor Name</TableHead>
-                  <TableHead>Email Sent To</TableHead>
-                  <TableHead>Email Sent At</TableHead>
-                  <TableHead>Email Sent By</TableHead>
+                  <TableHead className="font-semibold">Vendor Name</TableHead>
+                  <TableHead className="font-semibold">Email Sent To</TableHead>
+                  <TableHead className="font-semibold">Email Sent At</TableHead>
+                  <TableHead className="font-semibold">Email Sent By</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {vendorData.length > 0 ? (
                   vendorData.map((vendor) => (
-                    <TableRow key={vendor.id}>
+                    <TableRow key={vendor.id} className="hover:bg-gray-50">
                       <TableCell>
                         <Checkbox 
                           checked={selectedVendors.includes(vendor.id)}
                           onCheckedChange={(checked) => handleVendorSelect(vendor.id, checked as boolean)}
+                          className="border-[#C72030] data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
                         />
                       </TableCell>
-                      <TableCell>{vendor.vendorName}</TableCell>
+                      <TableCell className="font-medium">{vendor.vendorName}</TableCell>
                       <TableCell>{vendor.emailSentTo}</TableCell>
                       <TableCell>{vendor.emailSentAt}</TableCell>
                       <TableCell>{vendor.emailSentBy}</TableCell>
