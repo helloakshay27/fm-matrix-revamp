@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Heading } from "@/components/ui/heading";
 
 export const AccountingDashboard = () => {
   const [name, setName] = useState('');
@@ -13,35 +12,35 @@ export const AccountingDashboard = () => {
   };
 
   return (
-    <div className="p-grid-margin-mobile md:p-grid-margin-tablet lg:p-grid-margin-desktop bg-bg-primary min-h-screen">
+    <div className="p-6">
       {/* Breadcrumb */}
-      <div className="mb-4 body-text-4 text-ds-secondary">
+      <div className="mb-4 text-sm text-gray-600">
         Finance &gt; Account
       </div>
 
       {/* Page Title */}
-      <Heading level="h1" className="mb-6 uppercase">ACCOUNT EDIT/DETAIL</Heading>
+      <h1 className="text-2xl font-bold mb-6">ACCOUNT EDIT/DETAIL</h1>
 
       {/* Welcome Message */}
       <div className="mb-6">
-        <p className="body-text-1">Welcome Ankit Gupta,</p>
+        <p className="text-lg">Welcome Ankit Gupta,</p>
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="max-w-md space-y-ds-4">
-        <div>
-          <label className="block body-text-4 font-medium mb-2 text-ds-primary">Name</label>
+      <form onSubmit={handleSubmit} className="max-w-md">
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">Name</label>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="text-field w-full"
+            className="w-full"
             placeholder="Enter name"
           />
         </div>
 
         <Button 
           type="submit"
-          className="btn-primary"
+          className="bg-purple-600 hover:bg-purple-700 text-white px-8"
         >
           Submit
         </Button>

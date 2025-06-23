@@ -65,201 +65,70 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans text-left;
-    font-family: 'Work Sans', sans-serif;
-    color: #1A1A1A;
-    letter-spacing: 0%;
-    line-height: auto;
+    @apply bg-background text-foreground;
   }
 }
 
-/* Design System Base Styles */
-@layer base {
-  /* Typography Responsive Classes */
-  .heading-title {
-    @apply text-heading-title-mobile md:text-heading-title-tablet lg:text-heading-title-desktop;
-  }
-  
-  .title-1 {
-    @apply text-title-1-mobile md:text-title-1-tablet lg:text-title-1-desktop;
-  }
-  
-  .body-text-1 {
-    @apply text-body-1-mobile md:text-body-1-tablet lg:text-body-1-desktop;
-  }
-  
-  .body-text-2 {
-    @apply text-body-2-mobile md:text-body-2-tablet lg:text-body-2-desktop;
-  }
-  
-  .body-text-3 {
-    @apply text-body-3-mobile md:text-body-3-tablet lg:text-body-3-desktop;
-  }
-  
-  .body-text-4 {
-    @apply text-body-4-mobile md:text-body-4-tablet lg:text-body-4-desktop;
-  }
-  
-  .body-text-5 {
-    @apply text-body-5-mobile md:text-body-5-tablet lg:text-body-5-desktop;
-  }
-  
-  .body-text-6 {
-    @apply text-body-6-mobile md:text-body-6-tablet lg:text-body-6-desktop;
-  }
-
-  /* Grid System */
-  .grid-system {
-    @apply grid grid-cols-4 gap-4 px-4 max-w-grid-mobile mx-auto;
-    @apply md:grid-cols-8 md:gap-6 md:px-6 md:max-w-grid-tablet;
-    @apply lg:grid-cols-12 lg:gap-6 lg:px-6 lg:max-w-grid-desktop;
-  }
-
-  /* Component Base Styles */
-  .btn-primary {
-    @apply bg-primary text-text-white font-medium rounded-none shadow-none;
-    @apply h-btn-mobile w-btn-mobile text-body-4-mobile px-3;
-    @apply md:h-btn-tablet md:w-btn-tablet md:text-body-4-tablet md:px-4;
-    @apply lg:h-btn-desktop lg:w-btn-desktop lg:text-body-4-desktop lg:px-5;
-  }
-
-  .card-container {
-    @apply bg-white shadow-design-system rounded-none;
-    @apply w-card-mobile h-card-mobile p-3;
-    @apply md:w-card-tablet md:h-card-tablet md:p-4;
-    @apply lg:w-card-desktop lg:h-card-desktop lg:p-5;
-  }
-
-  .search-input {
-    @apply border border-grey-text rounded-none shadow-none px-3;
-    @apply h-search-mobile text-body-4-mobile;
-    @apply md:h-search-tablet md:text-body-4-tablet;
-    @apply lg:h-search-desktop lg:text-body-4-desktop;
-  }
-
-  .dropdown-field {
-    @apply bg-bg-secondary border-0 rounded-none font-normal px-3;
-    @apply h-dropdown-mobile text-body-4-mobile py-1;
-    @apply md:h-dropdown-tablet md:text-body-3-tablet md:py-2;
-    @apply lg:h-dropdown-desktop lg:text-body-4-desktop lg:py-4;
-  }
-
-  .text-field {
-    @apply border border-grey-text rounded-none px-3;
-    @apply h-field-mobile text-body-4-mobile;
-    @apply md:h-field-tablet md:text-body-3-tablet;
-    @apply lg:h-field-desktop lg:text-body-4-desktop;
-  }
-
-  .dialog-container {
-    @apply shadow-design-system rounded-none;
-    @apply w-dialog-mobile p-3;
-    @apply md:w-dialog-tablet md:p-4;
-    @apply lg:w-dialog-desktop lg:p-5;
-  }
-
-  .time-input {
-    @apply p-2 font-medium text-text-primary rounded-none;
-    @apply w-time-mobile h-time-mobile text-body-4-mobile;
-    @apply md:w-time-tablet md:h-time-tablet md:text-body-3-tablet;
-    @apply lg:w-time-desktop lg:h-time-desktop lg:text-body-4-desktop;
-  }
-
-  .sidebar-container {
-    @apply bg-bg-secondary;
-    @apply w-sidebar-mobile;
-    @apply md:w-sidebar-tablet;
-    @apply lg:w-sidebar-desktop;
-  }
-
-  .sidebar-text-primary {
-    @apply text-body-text-4 md:text-body-text-4 lg:text-body-1-desktop font-semibold;
-  }
-
-  .sidebar-text-secondary {
-    @apply text-body-4-mobile md:text-body-4-tablet lg:text-body-4-desktop font-medium;
-  }
-}
-
-/* Status Colors */
+/* Design System Utilities */
 @layer utilities {
-  .status-accepted {
-    @apply text-status-accepted;
+  /* Shadow System */
+  .shadow-system-sm {
+    box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.06);
   }
   
-  .status-pending {
-    @apply text-status-pending;
+  .shadow-system-md {
+    box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
   }
   
-  .status-rejected {
-    @apply text-status-rejected;
+  .shadow-system-lg {
+    box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.12);
+  }
+  
+  .shadow-system-xl {
+    box-shadow: 0px 8px 24px 0px rgba(0, 0, 0, 0.15);
   }
 
-  .bg-status-accepted {
-    @apply bg-status-accepted;
+  /* Spacing System */
+  .space-system-xs {
+    @apply space-y-1;
   }
   
-  .bg-status-pending {
-    @apply bg-status-pending;
+  .space-system-sm {
+    @apply space-y-2;
   }
   
-  .bg-status-rejected {
-    @apply bg-status-rejected;
+  .space-system-md {
+    @apply space-y-4;
+  }
+  
+  .space-system-lg {
+    @apply space-y-6;
+  }
+  
+  .space-system-xl {
+    @apply space-y-8;
   }
 
-  /* Progress Bar Utilities */
-  .progress-fill {
-    @apply bg-progress-fill;
+  /* Border System */
+  .border-system {
+    @apply border border-gray-200;
   }
   
-  .progress-stroke {
-    @apply stroke-progress-stroke;
+  .border-system-focus {
+    @apply border-blue-500;
   }
 
-  /* Text Color Utilities */
-  .text-ds-primary {
-    @apply text-text-primary;
+  /* Typography System */
+  .text-system-primary {
+    @apply text-gray-900;
   }
   
-  .text-ds-secondary {
-    @apply text-text-secondary;
+  .text-system-secondary {
+    @apply text-gray-600;
   }
   
-  .text-ds-accent {
-    @apply text-text-accent;
-  }
-  
-  .text-ds-white {
-    @apply text-text-white;
-  }
-
-  /* Background Utilities */
-  .bg-ds-primary {
-    @apply bg-bg-primary;
-  }
-  
-  .bg-ds-secondary {
-    @apply bg-bg-secondary;
-  }
-
-  /* Spacing Utilities */
-  .gap-ds-1 { gap: 4px; }
-  .gap-ds-2 { gap: 8px; }
-  .gap-ds-3 { gap: 12px; }
-  .gap-ds-4 { gap: 16px; }
-  .gap-ds-5 { gap: 20px; }
-  .gap-ds-6 { gap: 24px; }
-  .gap-ds-8 { gap: 32px; }
-  .gap-ds-10 { gap: 40px; }
-  .gap-ds-12 { gap: 48px; }
-  .gap-ds-14 { gap: 56px; }
-  .gap-ds-16 { gap: 64px; }
-  .gap-ds-18 { gap: 72px; }
-  .gap-ds-20 { gap: 80px; }
-
-  /* Icon Gap Utilities */
-  .icon-gap {
-    @apply gap-ds-2 lg:gap-ds-3;
+  .text-system-tertiary {
+    @apply text-gray-500;
   }
 }
 
