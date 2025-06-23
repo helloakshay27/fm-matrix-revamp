@@ -433,7 +433,7 @@ export const StaffsDashboard = () => {
                     placeholder="Search using staff's name or mobile number"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 bg-white"
+                    className="pl-10 bg-white h-10 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
                         handleSearch();
@@ -444,7 +444,7 @@ export const StaffsDashboard = () => {
                 <Button 
                   onClick={handleSearch}
                   style={{ backgroundColor: '#C72030' }}
-                  className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md"
+                  className="hover:bg-[#C72030]/90 text-white px-6 py-2 h-10 rounded-none text-sm font-medium border-0"
                 >
                   Go!
                 </Button>
@@ -460,7 +460,7 @@ export const StaffsDashboard = () => {
                     placeholder="Search by name, mobile, email or ID"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 bg-white"
+                    className="pl-10 bg-white h-10 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
                         handleSearch();
@@ -471,7 +471,7 @@ export const StaffsDashboard = () => {
                 <Button 
                   onClick={handleSearch}
                   style={{ backgroundColor: '#C72030' }}
-                  className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md"
+                  className="hover:bg-[#C72030]/90 text-white px-6 py-2 h-10 rounded-none text-sm font-medium border-0"
                 >
                   Go!
                 </Button>
