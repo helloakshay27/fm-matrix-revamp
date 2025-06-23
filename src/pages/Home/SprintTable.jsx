@@ -47,42 +47,41 @@ const SprintTable = (setIsSidebarOpen) => {
     const token = localStorage.getItem("token");
     const dispatch = useDispatch();
     const {
-        fetchSpirints:newSpirints,
+        fetchSpirints: newSpirints,
         loading: sprintsLoading,
         error: sprintsError,
-    }=useSelector((state) => state.fetchSpirints);
-
-    const{
-        fetchUsers:users,
-        loading:usersLoading,
-        error:usersError
-    }=useSelector((state) => state.fetchUsers);
+    } = useSelector((state) => state.fetchSpirints);
 
     const {
-        loading:createSprintLoading
-    }=useSelector((state) => state.postSprint);
-  
+        fetchUsers: users,
+        loading: usersLoading,
+        error: usersError
+    } = useSelector((state) => state.fetchUsers);
+
+    const {
+        loading: createSprintLoading
+    } = useSelector((state) => state.postSprint);
+
     const [data, setData] = useState([]);
     const [loaderMessage, setLoaderMessage] = useState("");
 
-    const handlefetchSpirints = async() => {
+    const handlefetchSpirints = async () => {
         try {
-           await  dispatch(fetchSpirints({ token })).unwrap();
+            await dispatch(fetchSpirints({ token })).unwrap();
         } catch (error) {
             console.log(error);
         }
     };
 
-    useEffect(()=>{
-      if(sprintsLoading || usersLoading){
-        setLoaderMessage("Loading...");
-      }else if(createSprintLoading)
-      {
-        setLoaderMessage("Creating Sprint...");
-      }else{
-        setLoaderMessage("");
-      }
-    },[sprintsLoading,usersLoading,createSprintLoading])
+    useEffect(() => {
+        if (sprintsLoading || usersLoading) {
+            setLoaderMessage("Loading...");
+        } else if (createSprintLoading) {
+            setLoaderMessage("Creating Sprint...");
+        } else {
+            setLoaderMessage("");
+        }
+    }, [sprintsLoading, usersLoading, createSprintLoading])
 
     const handleCreateSprints = async (payload) => {
         try {
@@ -138,7 +137,23 @@ const SprintTable = (setIsSidebarOpen) => {
                 accessorKey: "name",
                 header: "Sprint Title",
                 size: 250,
-            },
+                cell: ({ getValue, row }) => {
+                    const title = getValue();
+                    const rawId = String(row.original.id || "");
+                    const linkIdPart = rawId.startsWith("S-") ? rawId.substring(2) : rawId;
+
+                    return (
+                        <Link
+                            to={`/sprintdetails/${linkIdPart}`}
+                            className="text-xs hover:underline p-1 block"
+                            style={{ paddingLeft: `${row.depth * 1.5}rem` }}
+                        >
+                            <span>{title}</span>
+                        </Link>
+                    );
+                },
+            }
+            ,
             {
                 accessorKey: "status",
                 header: "Status",
@@ -236,7 +251,7 @@ const SprintTable = (setIsSidebarOpen) => {
                     onAdd={() => setIsModalOpen(true)}
                     onCreateInlineItem={handleCreateSprints}
                     onRefreshInlineData={handlefetchSpirints}
-                    loading={sprintsLoading||createSprintLoading || usersLoading}
+                    loading={sprintsLoading || createSprintLoading || usersLoading}
                     loadingMessage={loaderMessage}
                     users={users}
                 />

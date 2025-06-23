@@ -41,6 +41,7 @@ import ProjectTemplates from "./pages/Setup/ProjectTemplates.jsx";
 import { Toaster } from "react-hot-toast";
 import Table from "./components/Setup/Issues_Type/Table.jsx";
 import IssuesType from "./pages/Setup/IssueType.jsx";
+import SprintDetails from "./components/Home/Sprints/SprintDetails.jsx";
 
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -84,6 +85,9 @@ const App = () => {
                   <Route path="/mom" element={<MinutesOfMeeting />} />
                   <Route path="/new-mom" element={<MoMAdd />} />
                   <Route path="/channels" element={<Channel />} />
+                  <Route path="/sprintdetails/:sid" element={<SprintDetails />} />
+
+                  
 
                   {/* Setup Routes */}
                   <Route
