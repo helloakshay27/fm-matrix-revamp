@@ -45,8 +45,8 @@ export const WasteGenerationFilterDialog = ({ isOpen, onClose }: WasteGeneration
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl [&>button]:hidden">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl p-6 [&>button]:hidden">
+        <DialogHeader className="pb-4">
           <div className="flex items-center justify-between">
             <DialogTitle>FILTER BY</DialogTitle>
             <Button

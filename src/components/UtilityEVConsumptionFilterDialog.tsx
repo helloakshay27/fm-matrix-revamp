@@ -52,8 +52,8 @@ export const UtilityEVConsumptionFilterDialog = ({ isOpen, onClose }: UtilityEVC
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md [&>button]:hidden">
-        <DialogHeader>
+      <DialogContent className="max-w-md p-6 [&>button]:hidden">
+        <DialogHeader className="pb-4">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
             <Button
@@ -67,7 +67,7 @@ export const UtilityEVConsumptionFilterDialog = ({ isOpen, onClose }: UtilityEVC
           </div>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Date Range*</Label>
@@ -111,7 +111,7 @@ export const UtilityEVConsumptionFilterDialog = ({ isOpen, onClose }: UtilityEVC
           </div>
         </div>
 
-        <div className="flex justify-center gap-4 pt-4">
+        <div className="flex justify-center gap-4 pt-6">
           <Button 
             onClick={handleSubmit}
             className="bg-[#8B3A8B] text-white hover:bg-[#7A2E7A] transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium shadow-none"
