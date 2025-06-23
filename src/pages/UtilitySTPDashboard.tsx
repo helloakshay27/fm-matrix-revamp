@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Plus, Upload, RefreshCw, Download, QrCode, Filter, Search } from 'lucide-react';
+import { Package, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { BulkUploadDialog } from '../components/BulkUploadDialog';
 import { UtilitySTPFilterDialog } from '../components/UtilitySTPFilterDialog';
+import { StatsCard } from '../components/StatsCard';
 import { useNavigate } from 'react-router-dom';
 
 const UtilitySTPDashboard = () => {
@@ -72,41 +74,24 @@ const UtilitySTPDashboard = () => {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 rounded-lg">
-            <div className="flex items-center gap-4">
-              <div className="bg-white/20 p-3 rounded-full">
-                <div className="w-6 h-6 bg-white/40 rounded-full"></div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold">0</div>
-                <div className="text-white/90">Total Asset</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white p-6 rounded-lg">
-            <div className="flex items-center gap-4">
-              <div className="bg-white/20 p-3 rounded-full">
-                <div className="w-6 h-6 bg-white/40 rounded-full"></div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold">0</div>
-                <div className="text-white/90">In Use</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white p-6 rounded-lg">
-            <div className="flex items-center gap-4">
-              <div className="bg-white/20 p-3 rounded-full">
-                <div className="w-6 h-6 bg-white/40 rounded-full"></div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold">0</div>
-                <div className="text-white/90">Breakdown</div>
-              </div>
-            </div>
-          </div>
+          <StatsCard
+            title="Total Asset"
+            value="0"
+            color="orange"
+            icon={<Package className="w-8 h-8" />}
+          />
+          <StatsCard
+            title="In Use"
+            value="0"
+            color="green"
+            icon={<CheckCircle className="w-8 h-8" />}
+          />
+          <StatsCard
+            title="Breakdown"
+            value="0"
+            color="red"
+            icon={<AlertTriangle className="w-8 h-8" />}
+          />
         </div>
 
         {/* Action Buttons */}

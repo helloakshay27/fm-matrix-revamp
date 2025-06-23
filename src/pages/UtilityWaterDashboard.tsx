@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Search, Plus, Import, RefreshCw, FileDown, Printer, Filter } from 'lucide-react';
+import { Package, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { WaterFilterDialog } from '../components/WaterFilterDialog';
 import { BulkUploadDialog } from '../components/BulkUploadDialog';
 import { WaterAssetTable } from '../components/WaterAssetTable';
+import { StatsCard } from '../components/StatsCard';
 
 export const UtilityWaterDashboard = () => {
   const navigate = useNavigate();
@@ -15,12 +17,6 @@ export const UtilityWaterDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
-
-  const stats = [
-    { title: 'Total Asset', value: '2', color: 'bg-red-500' },
-    { title: 'In Use', value: '2', color: 'bg-green-500' },
-    { title: 'Breakdown', value: '0', color: 'bg-red-600' }
-  ];
 
   const handleAdd = () => {
     navigate('/utility/water/add-asset');
@@ -84,22 +80,25 @@ export const UtilityWaterDashboard = () => {
       <h1 className="text-2xl font-bold text-gray-900">ASSET LIST</h1>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {stats.map((stat, index) => (
-          <Card key={index}>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className={`w-12 h-12 rounded-full ${stat.color} flex items-center justify-center`}>
-                  <span className="text-white font-bold text-lg">{stat.value}</span>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">{stat.title}</p>
-                  <p className="text-2xl font-bold">{stat.value}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StatsCard
+          title="Total Asset"
+          value="2"
+          color="orange"
+          icon={<Package className="w-8 h-8" />}
+        />
+        <StatsCard
+          title="In Use"
+          value="2"
+          color="green"
+          icon={<CheckCircle className="w-8 h-8" />}
+        />
+        <StatsCard
+          title="Breakdown"
+          value="0"
+          color="red"
+          icon={<AlertTriangle className="w-8 h-8" />}
+        />
       </div>
 
       {/* Action Buttons */}
