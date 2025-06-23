@@ -49,7 +49,7 @@ export const Header = () => {
               <ChevronDown className="w-3 h-3" />
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-48 bg-white border border-grey-text shadow-design-system z-50">
-              <Dropdown MenuItem className="body-text-4">Lockastead Site 1</DropdownMenuItem>
+              <DropdownMenuItem className="body-text-4">Lockastead Site 1</DropdownMenuItem>
               <DropdownMenuItem className="body-text-4">Lockastead Site 2</DropdownMenuItem>
               <DropdownMenuItem className="body-text-4">Downtown Office</DropdownMenuItem>
             </DropdownMenuContent>
