@@ -62,7 +62,7 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
                 <Input 
                   id="assetName"
                   placeholder="Enter Asset Name"
-                  className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20"
+                  className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] bg-white focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20"
                 />
               </div>
               <div className="space-y-2">
@@ -70,7 +70,7 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
                 <Input 
                   id="dateRange"
                   placeholder="Select Date Range"
-                  className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20"
+                  className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] bg-white focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20"
                 />
               </div>
             </div>
@@ -78,10 +78,10 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
               <div className="space-y-2">
                 <Label htmlFor="group" className="text-sm text-[#374151]">Group</Label>
                 <Select>
-                  <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
+                  <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] bg-white focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
                     <SelectValue placeholder="Select Category" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-none border-[#D1D5DB]">
+                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-[100] shadow-lg">
                     <SelectItem value="category1">Category 1</SelectItem>
                     <SelectItem value="category2">Category 2</SelectItem>
                   </SelectContent>
@@ -90,10 +90,10 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
               <div className="space-y-2">
                 <Label htmlFor="subgroup" className="text-sm text-[#374151]">Subgroup</Label>
                 <Select>
-                  <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
+                  <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] bg-white focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
                     <SelectValue placeholder="Select Sub Group" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-none border-[#D1D5DB]">
+                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-[100] shadow-lg">
                     <SelectItem value="subgroup1">Sub Group 1</SelectItem>
                     <SelectItem value="subgroup2">Sub Group 2</SelectItem>
                   </SelectContent>
@@ -109,10 +109,10 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
               <div className="space-y-2">
                 <Label htmlFor="building" className="text-sm text-[#374151]">Building</Label>
                 <Select>
-                  <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
+                  <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] bg-white focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
                     <SelectValue placeholder="Select Building" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-none border-[#D1D5DB]">
+                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-[100] shadow-lg">
                     <SelectItem value="building1">Building 1</SelectItem>
                     <SelectItem value="building2">Building 2</SelectItem>
                   </SelectContent>
@@ -121,10 +121,10 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
               <div className="space-y-2">
                 <Label htmlFor="wing" className="text-sm text-[#374151]">Wing</Label>
                 <Select>
-                  <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
+                  <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] bg-white focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
                     <SelectValue placeholder="Select Wing" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-none border-[#D1D5DB]">
+                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-[100] shadow-lg">
                     <SelectItem value="wing1">Wing 1</SelectItem>
                     <SelectItem value="wing2">Wing 2</SelectItem>
                   </SelectContent>
@@ -135,10 +135,10 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
               <div className="space-y-2">
                 <Label htmlFor="area" className="text-sm text-[#374151]">Area</Label>
                 <Select>
-                  <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
+                  <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] bg-white focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
                     <SelectValue placeholder="Select Area" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-none border-[#D1D5DB]">
+                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-[100] shadow-lg">
                     <SelectItem value="area1">Area 1</SelectItem>
                     <SelectItem value="area2">Area 2</SelectItem>
                   </SelectContent>
@@ -147,10 +147,10 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
               <div className="space-y-2">
                 <Label htmlFor="floor" className="text-sm text-[#374151]">Floor</Label>
                 <Select>
-                  <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
+                  <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] bg-white focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
                     <SelectValue placeholder="Select Floor" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-none border-[#D1D5DB]">
+                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-[100] shadow-lg">
                     <SelectItem value="floor1">Floor 1</SelectItem>
                     <SelectItem value="floor2">Floor 2</SelectItem>
                   </SelectContent>
@@ -161,10 +161,10 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
               <div className="space-y-2">
                 <Label htmlFor="room" className="text-sm text-[#374151]">Room</Label>
                 <Select>
-                  <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
+                  <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] bg-white focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
                     <SelectValue placeholder="Select Room" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-none border-[#D1D5DB]">
+                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-[100] shadow-lg">
                     <SelectItem value="room1">Room 1</SelectItem>
                     <SelectItem value="room2">Room 2</SelectItem>
                   </SelectContent>
