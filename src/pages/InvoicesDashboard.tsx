@@ -1,152 +1,281 @@
 
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { InvoicesSESFilterDialog } from "@/components/InvoicesSESFilterDialog";
+import { Layout } from '@/components/Layout';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Search, Filter } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { InvoicesSESFilterDialog } from '@/components/InvoicesSESFilterDialog';
 
 export const InvoicesDashboard = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
-  const [appliedFilters, setAppliedFilters] = useState({
-    invoiceNumber: '',
-    invoiceDate: '',
-    supplierName: ''
-  });
+  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showFilterDialog, setShowFilterDialog] = useState(false);
+  const [invoicesData, setInvoicesData] = useState([
+    { 
+      id: 1,
+      invoiceNumber: 'INV-2024-001', 
+      invoiceDate: '2024-03-15', 
+      supplier: 'ABC Supplies Ltd', 
+      woNumber: 'WO-001',
+      woAmount: '₹50,000',
+      totalInvoiceAmount: '₹55,000',
+      lastApprovedBy: 'John Doe',
+      approvedStatus: 'Approved',
+      payableAmount: '₹55,000',
+      adjustmentAmount: '₹0',
+      remarks: 'Payment processed'
+    },
+    { 
+      id: 2,
+      invoiceNumber: 'INV-2024-002', 
+      invoiceDate: '2024-03-14', 
+      supplier: 'XYZ Services Pvt Ltd', 
+      woNumber: 'WO-002',
+      woAmount: '₹25,000',
+      totalInvoiceAmount: '₹27,500',
+      lastApprovedBy: 'Jane Smith',
+      approvedStatus: 'Pending',
+      payableAmount: '₹27,500',
+      adjustmentAmount: '₹0',
+      remarks: 'Under review'
+    },
+    { 
+      id: 3,
+      invoiceNumber: 'INV-2024-003', 
+      invoiceDate: '2024-03-13', 
+      supplier: 'DEF Materials Corp', 
+      woNumber: 'WO-003',
+      woAmount: '₹75,000',
+      totalInvoiceAmount: '₹82,500',
+      lastApprovedBy: 'Mike Johnson',
+      approvedStatus: 'Rejected',
+      payableAmount: '₹0',
+      adjustmentAmount: '₹-5,000',
+      remarks: 'Documentation incomplete'
+    }
+  ]);
 
-  // Sample data - empty as shown in the image
-  const invoicesData: any[] = [];
+  const [filteredInvoices, setFilteredInvoices] = useState(invoicesData);
 
-  const handleFilterApply = (filters: typeof appliedFilters) => {
-    setAppliedFilters(filters);
-    console.log('Applied filters:', filters);
+  const handleSearch = () => {
+    console.log('Searching for:', searchTerm);
+    const filtered = invoicesData.filter(invoice =>
+      invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.supplier.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.woNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.approvedStatus.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredInvoices(filtered);
+    toast({
+      title: "Search Applied",
+      description: `Found ${filtered.length} matching records`,
+    });
   };
 
-  const filteredData = invoicesData.filter(item => {
-    const matchesSearch = searchQuery === '' || 
-      (item?.invoiceNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-       item?.supplier?.toLowerCase().includes(searchQuery.toLowerCase()));
+  const handleReset = () => {
+    console.log('Resetting search...');
+    setSearchTerm('');
+    setFilteredInvoices(invoicesData);
+    toast({
+      title: "Search Reset",
+      description: "All records are now displayed",
+    });
+  };
 
-    const matchesFilters = 
-      (!appliedFilters.invoiceNumber || item?.invoiceNumber?.toLowerCase().includes(appliedFilters.invoiceNumber.toLowerCase())) &&
-      (!appliedFilters.supplierName || item?.supplier?.toLowerCase().includes(appliedFilters.supplierName.toLowerCase())) &&
-      (!appliedFilters.invoiceDate || item?.invoiceDate?.includes(appliedFilters.invoiceDate));
+  const handleFilterApply = (filters: {
+    invoiceNumber: string;
+    invoiceDate: string;
+    supplierName: string;
+  }) => {
+    console.log('Applying filters:', filters);
+    let filtered = invoicesData;
 
-    return matchesSearch && matchesFilters;
-  });
+    if (filters.invoiceNumber) {
+      filtered = filtered.filter(invoice =>
+        invoice.invoiceNumber.toLowerCase().includes(filters.invoiceNumber.toLowerCase())
+      );
+    }
+
+    if (filters.invoiceDate) {
+      filtered = filtered.filter(invoice =>
+        invoice.invoiceDate === filters.invoiceDate
+      );
+    }
+
+    if (filters.supplierName) {
+      filtered = filtered.filter(invoice =>
+        invoice.supplier.toLowerCase().includes(filters.supplierName.toLowerCase())
+      );
+    }
+
+    setFilteredInvoices(filtered);
+    toast({
+      title: "Filters Applied",
+      description: `Found ${filtered.length} matching records`,
+    });
+  };
+
+  const handleViewInvoice = (invoiceId: number) => {
+    console.log('Viewing invoice:', invoiceId);
+    toast({
+      title: "View Invoice",
+      description: `Opening details for Invoice ID ${invoiceId}`,
+    });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'rejected':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   return (
-    <div className="p-6">
-      {/* Page Title */}
-      <h1 className="text-2xl font-bold mb-6">WORK ORDER INVOICES/SES</h1>
-
-      {/* Search and Filter Controls */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex gap-3">
-          <Button 
-            variant="outline"
-            onClick={() => setIsFilterDialogOpen(true)}
-            className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
-          >
-            🏷️ Filters
-          </Button>
+    <Layout>
+      <div className="p-6 space-y-6">
+        {/* Header Section */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold text-gray-900">WORK ORDER INVOICES/SES</h1>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <Input
-              type="text"
-              placeholder=""
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 w-64 rounded-md border border-gray-300"
-            />
-          </div>
-          <Button 
-            className="bg-purple-600 hover:bg-purple-700 text-white px-6 rounded-md shadow-sm transition-colors"
-          >
-            Go!
-          </Button>
+        {/* Filter and Search Section */}
+        <div className="flex items-center gap-4">
           <Button 
             variant="outline" 
-            className="px-4 rounded-md border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
-            onClick={() => {
-              setSearchQuery('');
-              setAppliedFilters({
-                invoiceNumber: '',
-                invoiceDate: '',
-                supplierName: ''
-              });
-            }}
+            onClick={() => setShowFilterDialog(true)}
+            className="flex items-center gap-2"
           >
-            Reset
+            <Filter className="w-4 h-4" />
+            Filters
           </Button>
+          
+          <div className="flex items-center gap-2 ml-auto">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search..."
+                className="pl-10 w-80"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              />
+            </div>
+            <Button 
+              onClick={handleSearch}
+              className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            >
+              Go!
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleReset}
+            >
+              Reset
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold">View</TableHead>
-              <TableHead className="font-semibold">ID</TableHead>
-              <TableHead className="font-semibold">Invoice Number</TableHead>
-              <TableHead className="font-semibold">Invoice Date</TableHead>
-              <TableHead className="font-semibold">Supplier</TableHead>
-              <TableHead className="font-semibold">W.O. Number</TableHead>
-              <TableHead className="font-semibold">WO Amount</TableHead>
-              <TableHead className="font-semibold">Total Invoice Amount</TableHead>
-              <TableHead className="font-semibold">Last Approved By</TableHead>
-              <TableHead className="font-semibold">Approved Status</TableHead>
-              <TableHead className="font-semibold">Payable Amount</TableHead>
-              <TableHead className="font-semibold">Adjustment Amount</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredData.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={12} className="text-center py-8 text-gray-500">
-                  No invoices found
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredData.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    <Button size="sm" variant="ghost" className="p-1">
-                      👁️
-                    </Button>
-                  </TableCell>
-                  <TableCell className="font-medium">{item.id}</TableCell>
-                  <TableCell>{item.invoiceNumber}</TableCell>
-                  <TableCell>{item.invoiceDate}</TableCell>
-                  <TableCell>{item.supplier}</TableCell>
-                  <TableCell className="text-blue-600">{item.woNumber}</TableCell>
-                  <TableCell className="font-medium">{item.woAmount}</TableCell>
-                  <TableCell className="font-medium">{item.totalInvoiceAmount}</TableCell>
-                  <TableCell>{item.lastApprovedBy}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded text-xs font-medium bg-gray-100`}>
-                      {item.approvedStatus}
-                    </span>
-                  </TableCell>
-                  <TableCell className="font-medium">{item.payableAmount}</TableCell>
-                  <TableCell className="font-medium">{item.adjustmentAmount}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+        {/* Invoices Table */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">View</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice Number</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">W.O. Number</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">WO Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Invoice Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Approved By</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approved Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payable Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adjustment Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredInvoices.map((invoice) => (
+                  <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleViewInvoice(invoice.id)}
+                        className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white"
+                      >
+                        View
+                      </Button>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {invoice.id}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600 cursor-pointer hover:underline">
+                      {invoice.invoiceNumber}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {invoice.invoiceDate}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {invoice.supplier}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {invoice.woNumber}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                      {invoice.woAmount}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                      {invoice.totalInvoiceAmount}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {invoice.lastApprovedBy}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(invoice.approvedStatus)}`}>
+                        {invoice.approvedStatus}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                      {invoice.payableAmount}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {invoice.adjustmentAmount}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {invoice.remarks}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* No Results Message */}
+          {filteredInvoices.length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              <p className="text-lg">No invoices found matching your criteria.</p>
+              <p className="text-sm mt-2">Try adjusting your search or filter criteria.</p>
+            </div>
+          )}
+        </div>
 
-      <InvoicesSESFilterDialog 
-        open={isFilterDialogOpen}
-        onOpenChange={setIsFilterDialogOpen}
-        onApply={handleFilterApply}
-      />
-    </div>
+        {/* Filter Dialog */}
+        <InvoicesSESFilterDialog
+          open={showFilterDialog}
+          onOpenChange={setShowFilterDialog}
+          onApply={handleFilterApply}
+        />
+      </div>
+    </Layout>
   );
 };
