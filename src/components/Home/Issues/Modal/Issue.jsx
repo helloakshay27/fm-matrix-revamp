@@ -164,6 +164,15 @@ const Issues = ({ closeModal }) => {
       toast.error("Project is required");
       return;
     }
+    
+    if(!newIssuesMilestoneId){
+      toast.error("Milestone is required");
+      return;
+    }
+    if(!newIssuesTaskId){
+      toast.error("Task is required");
+      return;
+    }
     if (!title.trim()) {
       toast.error("Title is required");
       return;
@@ -187,14 +196,6 @@ const Issues = ({ closeModal }) => {
     }
     if (!comments.trim()) {
       toast.error("Comment is required");
-      return;
-    }
-    if(!newIssuesMilestoneId){
-      toast.error("Milestone is required");
-      return;
-    }
-    if(!newIssuesTaskId){
-      toast.error("Task is required");
       return;
     }
 
@@ -236,6 +237,9 @@ const Issues = ({ closeModal }) => {
     priority,
     comments,
     type,
+    newIssuesProjectId,
+    newIssuesMilestoneId,
+    newIssuesTaskId,
     closeModal,
   ]);
 

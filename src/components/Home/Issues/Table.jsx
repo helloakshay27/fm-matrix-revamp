@@ -613,6 +613,7 @@ useEffect(() => {
                            onChange={(selected) => setNewIssuesProjectId(selected)}
                            placeholder="Select Project"
                            table={true}
+                           validator={validator}
                          />
                         )
                       }
@@ -624,6 +625,7 @@ useEffect(() => {
                            onChange={(selected) => setNewIssuesMilestoneId(selected)}
                            placeholder="Select Milestone"
                            table={true}
+                           validator={validator}
                          />
                        </td>
                         <td className="border p-1 text-xs text-gray-400 align-middle">
@@ -633,6 +635,7 @@ useEffect(() => {
                            onChange={(selected) => setNewIssuesTaskId(selected)}
                            placeholder="Select Task"
                            table={true}
+                           validator={validator}
                          />
                        </td>                     
                   <td className="border p-1 align-middle">

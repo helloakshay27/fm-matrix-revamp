@@ -12,7 +12,8 @@ export default function SelectBox({
   card = false,
   placeholder,
   table = false,
-  mom = false
+  mom = false,
+  validator = false,
 }) {
   const customStyles = {
     control: (base, state) => ({
@@ -21,13 +22,13 @@ export default function SelectBox({
       padding: "1px",
       position: "relative",
       zIndex: 8,
-      border: table ? "none" : "1px solid #b3b2b2",
+      border: validator ? "1px solid red" : table ? "none" : "1px solid #b3b2b2",
 
       boxShadow: state.isFocused ? "#ccc" : base.boxShadow,
       "&:hover": {
         outline: "none",
       },
-      borderRadius: "0px",
+      borderRadius: "4px",
       backgroundColor: table ? "none" : card ? "#FAF8F5" : "#fff",
 
       fontSize: "12px",
