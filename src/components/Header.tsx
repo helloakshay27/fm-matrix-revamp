@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Bell, Search, User, MapPin, ChevronDown, Home, Settings, LogOut } from 'lucide-react';
+import { Bell, Search, User, MapPin, ChevronDown, Home, Settings } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -85,7 +85,7 @@ export const Header = () => {
               <DropdownMenuItem>Preferences</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-red-600">
-                <LogOut className="w-4 h-4 mr-2" />
+                <Settings className="w-4 h-4 mr-2" />
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>

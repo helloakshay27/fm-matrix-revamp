@@ -7,7 +7,7 @@ import { StatsCard } from '../components/StatsCard';
 import { AssetTable } from '../components/AssetTable';
 import { UtilityFilterDialog } from '../components/UtilityFilterDialog';
 import { BulkUploadDialog } from '../components/BulkUploadDialog';
-import { Plus, Filter, Download, Upload, RotateCcw, FileText, QrCode, Eye, Search } from 'lucide-react';
+import { Plus, Filter, Download, Upload, Search, QrCode } from 'lucide-react';
 import { Package, CheckCircle, AlertTriangle } from 'lucide-react';
 
 export const UtilityDashboard = () => {

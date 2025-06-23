@@ -10,13 +10,13 @@ import {
   Video, Lock, Key, Eye, ShieldCheck, Headphones, Gift,
   Star, MessageSquare, Coffee, Wifi, Home, ChevronDown,
   ChevronRight, Plus, Search, Filter, Download, Upload,
-  HandHeart, Briefcase, BookOpen, FileSpreadsheet, Target,
-  Layers, Archive, UserCog, TreePine, FlaskConical
+  Briefcase, BookOpen, FileSpreadsheet, Target,
+  Archive, TreePine, FlaskConical
 } from 'lucide-react';
 
 const modulesByPackage = {
   'Transitioning': [
-    { name: 'HOTO', icon: HandHeart, href: '/transitioning/hoto' },
+    { name: 'HOTO', icon: FileText, href: '/transitioning/hoto' },
     { 
       name: 'Snagging', 
       icon: CheckSquare, 
@@ -176,7 +176,7 @@ const modulesByPackage = {
       ]
     },
     { name: 'Visitor', icon: Users, href: '/security/visitor' },
-    { name: 'Staff', icon: UserCog, href: '/security/staff' },
+    { name: 'Staff', icon: Users, href: '/security/staff' },
     { 
       name: 'Vehicle', 
       icon: Car, 
@@ -202,7 +202,7 @@ const modulesByPackage = {
     { name: 'OSR', icon: TreePine, href: '/vas/osr' },
     { 
       name: 'Space Management', 
-      icon: Layers, 
+      icon: Building, 
       href: '/vas/space-management',
       subItems: [
         { name: 'Bookings', href: '/vas/space-management/bookings', color: 'text-[#1a1a1a]' },
@@ -228,7 +228,7 @@ const modulesByPackage = {
   ],
   'Settings': [
     { name: 'General', icon: Settings, href: '/settings/general' },
-    { name: 'Account', icon: UserCog, href: '/settings/account' },
+    { name: 'Account', icon: Users, href: '/settings/account' },
     { name: 'Users', icon: Users, href: '/settings/users' },
     { 
       name: 'Roles (RACI)', 
