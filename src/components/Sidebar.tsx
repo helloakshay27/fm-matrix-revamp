@@ -12,7 +12,7 @@ import {
   Star, MessageSquare, Coffee, Wifi, Home, ChevronDown,
   ChevronRight, Plus, Search, Filter, Download, Upload,
   Briefcase, BookOpen, FileSpreadsheet, Target,
-  Archive, TreePine, FlaskConical, Megaphone, Group
+  Archive, TreePine, FlaskConical, Megaphone, Group, Wallet
 } from 'lucide-react';
 
 const modulesByPackage = {
