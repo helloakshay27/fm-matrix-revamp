@@ -1,16 +1,10 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { EVConsumptionFilterDialog } from '@/components/EVConsumptionFilterDialog';
 
 const UtilityEVConsumptionDashboard = () => {
-  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
-  const [appliedFilters, setAppliedFilters] = useState({
-    dateRange: ''
-  });
-
   const evConsumptionData = [
     {
       id: "001",
@@ -56,20 +50,6 @@ const UtilityEVConsumptionDashboard = () => {
     }
   ];
 
-  const handleFilterApply = (filters: { dateRange: string }) => {
-    setAppliedFilters(filters);
-    console.log('Applied filters:', filters);
-  };
-
-  // Filter data based on applied filters
-  const filteredData = evConsumptionData.filter(item => {
-    if (appliedFilters.dateRange) {
-      // Simple date filtering logic - in real app, you'd implement proper date range filtering
-      return item.transactionDate.includes(appliedFilters.dateRange);
-    }
-    return true;
-  });
-
   return (
     <div className="p-6 space-y-6">
       {/* Breadcrumb */}
@@ -87,7 +67,6 @@ const UtilityEVConsumptionDashboard = () => {
         <Button 
           variant="outline" 
           className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
-          onClick={() => setIsFilterDialogOpen(true)}
         >
           🔍 Filters
         </Button>
@@ -114,7 +93,7 @@ const UtilityEVConsumptionDashboard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredData.map((item) => (
+              {evConsumptionData.map((item) => (
                 <TableRow key={item.id} className="hover:bg-gray-50">
                   <TableCell className="text-[#1a1a1a]">{item.id}</TableCell>
                   <TableCell className="text-[#1a1a1a]">{item.transactionDate}</TableCell>
@@ -134,12 +113,6 @@ const UtilityEVConsumptionDashboard = () => {
           </Table>
         </CardContent>
       </Card>
-
-      <EVConsumptionFilterDialog 
-        open={isFilterDialogOpen}
-        onOpenChange={setIsFilterDialogOpen}
-        onApply={handleFilterApply}
-      />
     </div>
   );
 };
