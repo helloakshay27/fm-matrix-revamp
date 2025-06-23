@@ -34,7 +34,7 @@ export const GatePassOutwardsFilterModal = ({ isOpen, onClose }: GatePassOutward
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="h-6 w-6 p-0"
+            className="h-6 w-6 p-0 rounded-none"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
@@ -52,7 +52,7 @@ export const GatePassOutwardsFilterModal = ({ isOpen, onClose }: GatePassOutward
               placeholder="Search by Name or Id"
               value={searchByNameOrId}
               onChange={(e) => setSearchByNameOrId(e.target.value)}
-              className="border-gray-300"
+              className="border-gray-300 rounded-none"
             />
           </div>
 
@@ -61,13 +61,13 @@ export const GatePassOutwardsFilterModal = ({ isOpen, onClose }: GatePassOutward
             <Button
               onClick={handleReset}
               variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2 rounded-none"
             >
               Reset
             </Button>
             <Button
               onClick={handleApply}
-              className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-6 py-2"
+              className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-6 py-2 rounded-none"
             >
               Apply
             </Button>

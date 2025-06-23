@@ -88,7 +88,7 @@ export const GatePassOutwardsDashboard = () => {
           {/* Filters Button */}
           <Button 
             variant="outline"
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded flex items-center gap-2"
+            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-none flex items-center gap-2"
             onClick={() => setIsFilterModalOpen(true)}
           >
             <SlidersHorizontal className="w-4 h-4" />
