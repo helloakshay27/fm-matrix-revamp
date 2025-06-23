@@ -84,7 +84,7 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
                   <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] bg-white focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
                     <SelectValue placeholder="Select Category" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-50">
+                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-[100] shadow-lg">
                     <SelectItem value="stp">STP Equipment</SelectItem>
                     <SelectItem value="water">Water Treatment</SelectItem>
                     <SelectItem value="waste">Waste Management</SelectItem>
@@ -97,7 +97,7 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
                   <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] bg-white focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
                     <SelectValue placeholder="Select Sub Group" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-50">
+                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-[100] shadow-lg">
                     <SelectItem value="primary">Primary Treatment</SelectItem>
                     <SelectItem value="secondary">Secondary Treatment</SelectItem>
                     <SelectItem value="tertiary">Tertiary Treatment</SelectItem>
@@ -117,7 +117,7 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
                   <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] bg-white focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
                     <SelectValue placeholder="Select..." />
                   </SelectTrigger>
-                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-50">
+                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-[100] shadow-lg">
                     <SelectItem value="building-a">Building A</SelectItem>
                     <SelectItem value="building-b">Building B</SelectItem>
                     <SelectItem value="building-c">Building C</SelectItem>
@@ -130,7 +130,7 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
                   <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] bg-white focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
                     <SelectValue placeholder="Select Wing" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-50">
+                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-[100] shadow-lg">
                     <SelectItem value="east">East Wing</SelectItem>
                     <SelectItem value="west">West Wing</SelectItem>
                     <SelectItem value="north">North Wing</SelectItem>
@@ -144,7 +144,7 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
                   <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] bg-white focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
                     <SelectValue placeholder="Select Area" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-50">
+                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-[100] shadow-lg">
                     <SelectItem value="treatment">Treatment Area</SelectItem>
                     <SelectItem value="storage">Storage Area</SelectItem>
                     <SelectItem value="maintenance">Maintenance Area</SelectItem>
@@ -159,7 +159,7 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
                   <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] bg-white focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
                     <SelectValue placeholder="Select Floor" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-50">
+                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-[100] shadow-lg">
                     <SelectItem value="ground">Ground Floor</SelectItem>
                     <SelectItem value="first">First Floor</SelectItem>
                     <SelectItem value="second">Second Floor</SelectItem>
@@ -172,7 +172,7 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
                   <SelectTrigger className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] bg-white focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20">
                     <SelectValue placeholder="Select Room" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-50">
+                  <SelectContent className="rounded-none border-[#D1D5DB] bg-white z-[100] shadow-lg">
                     <SelectItem value="room-101">Room 101</SelectItem>
                     <SelectItem value="room-102">Room 102</SelectItem>
                     <SelectItem value="room-103">Room 103</SelectItem>
