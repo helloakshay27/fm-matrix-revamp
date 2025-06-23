@@ -7,18 +7,19 @@ import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
 
 interface InvoiceFilterDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onApply: (filters: any) => void;
 }
 
-export const InvoiceFilterDialog = ({ isOpen, onClose }: InvoiceFilterDialogProps) => {
+export const InvoiceFilterDialog = ({ open, onOpenChange, onApply }: InvoiceFilterDialogProps) => {
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [invoiceDate, setInvoiceDate] = useState('');
   const [supplierName, setSupplierName] = useState('');
 
   const handleApply = () => {
-    console.log('Filter applied:', { invoiceNumber, invoiceDate, supplierName });
-    onClose();
+    onApply({ invoiceNumber, invoiceDate, supplierName });
+    onOpenChange(false);
   };
 
   const handleReset = () => {
@@ -28,14 +29,14 @@ export const InvoiceFilterDialog = ({ isOpen, onClose }: InvoiceFilterDialogProp
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md bg-white">
         <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
           <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
           <Button
             variant="ghost"
             size="icon"
-            onClick={onClose}
+            onClick={() => onOpenChange(false)}
             className="h-6 w-6 p-0"
           >
             <X className="h-4 w-4" />

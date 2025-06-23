@@ -6,7 +6,7 @@ import Index from '@/pages/Index';
 import { UtilityDashboard } from '@/pages/UtilityDashboard';
 import UtilityEVConsumptionDashboard from '@/pages/UtilityEVConsumptionDashboard';
 import { WBSElementDashboard } from '@/pages/WBSElementDashboard';
-import { InvoicesSESDashboard } from '@/pages/InvoicesSESDashboard';
+import InvoicesSESDashboard from '@/pages/InvoicesSESDashboard';
 
 const router = createBrowserRouter([
   {
