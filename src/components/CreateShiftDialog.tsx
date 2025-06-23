@@ -124,10 +124,10 @@ export const CreateShiftDialog = ({ open, onOpenChange }: CreateShiftDialogProps
             </label>
             <div className="flex gap-2">
               <Select value={fromHour} onValueChange={setFromHour}>
-                <SelectTrigger className="flex-1">
+                <SelectTrigger className="flex-1 rounded-none border border-gray-300 h-10">
                   <SelectValue placeholder="HH" />
                 </SelectTrigger>
-                <SelectContent className="bg-white max-h-60">
+                <SelectContent className="bg-white max-h-60 rounded-none">
                   {hours.map((hour) => (
                     <SelectItem key={hour} value={hour}>
                       {hour}
@@ -135,11 +135,12 @@ export const CreateShiftDialog = ({ open, onOpenChange }: CreateShiftDialogProps
                   ))}
                 </SelectContent>
               </Select>
+              <span className="flex items-center text-gray-500">:</span>
               <Select value={fromMinute} onValueChange={setFromMinute}>
-                <SelectTrigger className="flex-1">
+                <SelectTrigger className="flex-1 rounded-none border border-gray-300 h-10">
                   <SelectValue placeholder="MM" />
                 </SelectTrigger>
-                <SelectContent className="bg-white max-h-60">
+                <SelectContent className="bg-white max-h-60 rounded-none">
                   {minutes.map((minute) => (
                     <SelectItem key={minute} value={minute}>
                       {minute}
@@ -147,6 +148,12 @@ export const CreateShiftDialog = ({ open, onOpenChange }: CreateShiftDialogProps
                   ))}
                 </SelectContent>
               </Select>
+              <Button 
+                className="bg-red-600 text-white px-3 py-1 rounded-none text-xs h-10 min-w-[40px]"
+                disabled
+              >
+                AM
+              </Button>
             </div>
           </div>
 
@@ -157,10 +164,10 @@ export const CreateShiftDialog = ({ open, onOpenChange }: CreateShiftDialogProps
             </label>
             <div className="flex gap-2">
               <Select value={toHour} onValueChange={setToHour}>
-                <SelectTrigger className="flex-1">
+                <SelectTrigger className="flex-1 rounded-none border border-gray-300 h-10">
                   <SelectValue placeholder="HH" />
                 </SelectTrigger>
-                <SelectContent className="bg-white max-h-60">
+                <SelectContent className="bg-white max-h-60 rounded-none">
                   {hours.map((hour) => (
                     <SelectItem key={hour} value={hour}>
                       {hour}
@@ -168,11 +175,12 @@ export const CreateShiftDialog = ({ open, onOpenChange }: CreateShiftDialogProps
                   ))}
                 </SelectContent>
               </Select>
+              <span className="flex items-center text-gray-500">:</span>
               <Select value={toMinute} onValueChange={setToMinute}>
-                <SelectTrigger className="flex-1">
+                <SelectTrigger className="flex-1 rounded-none border border-gray-300 h-10">
                   <SelectValue placeholder="MM" />
                 </SelectTrigger>
-                <SelectContent className="bg-white max-h-60">
+                <SelectContent className="bg-white max-h-60 rounded-none">
                   {minutes.map((minute) => (
                     <SelectItem key={minute} value={minute}>
                       {minute}
@@ -180,6 +188,12 @@ export const CreateShiftDialog = ({ open, onOpenChange }: CreateShiftDialogProps
                   ))}
                 </SelectContent>
               </Select>
+              <Button 
+                className="bg-red-600 text-white px-3 py-1 rounded-none text-xs h-10 min-w-[40px]"
+                disabled
+              >
+                PM
+              </Button>
             </div>
           </div>
 
@@ -202,7 +216,7 @@ export const CreateShiftDialog = ({ open, onOpenChange }: CreateShiftDialogProps
           <div className="flex justify-center pt-4">
             <Button 
               onClick={handleCreate}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 rounded-none"
             >
               Create
             </Button>
