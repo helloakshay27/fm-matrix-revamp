@@ -4,22 +4,23 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const headingVariants = cva(
-  "text-gray-900 font-medium tracking-tight",
+  "text-ds-primary font-medium tracking-normal text-left",
   {
     variants: {
       level: {
-        h1: "text-4xl lg:text-5xl font-bold",
-        h2: "text-3xl lg:text-4xl font-semibold", 
-        h3: "text-2xl lg:text-3xl font-semibold",
-        h4: "text-xl lg:text-2xl font-medium",
-        h5: "text-lg lg:text-xl font-medium",
-        h6: "text-base lg:text-lg font-medium",
+        h1: "heading-title font-semibold",
+        h2: "title-1 font-medium", 
+        h3: "body-text-1 font-medium",
+        h4: "body-text-2 font-medium",
+        h5: "body-text-3 font-medium",
+        h6: "body-text-4 font-medium",
       },
       variant: {
-        default: "text-gray-900",
-        primary: "text-[#C72030]",
-        secondary: "text-gray-700",
-        muted: "text-gray-600",
+        default: "text-ds-primary",
+        primary: "text-ds-accent",
+        secondary: "text-ds-secondary",
+        muted: "text-grey-text",
+        white: "text-ds-white",
       },
       spacing: {
         tight: "mb-2",
@@ -27,49 +28,11 @@ const headingVariants = cva(
         loose: "mb-6",
         none: "mb-0",
       },
-      responsive: {
-        true: "",
-        false: "",
-      }
     },
-    compoundVariants: [
-      // Desktop specific styles
-      {
-        responsive: true,
-        level: "h1",
-        class: "text-2xl sm:text-3xl lg:text-4xl xl:text-5xl"
-      },
-      {
-        responsive: true,
-        level: "h2", 
-        class: "text-xl sm:text-2xl lg:text-3xl xl:text-4xl"
-      },
-      {
-        responsive: true,
-        level: "h3",
-        class: "text-lg sm:text-xl lg:text-2xl xl:text-3xl"
-      },
-      {
-        responsive: true,
-        level: "h4",
-        class: "text-base sm:text-lg lg:text-xl xl:text-2xl"
-      },
-      {
-        responsive: true,
-        level: "h5", 
-        class: "text-sm sm:text-base lg:text-lg xl:text-xl"
-      },
-      {
-        responsive: true,
-        level: "h6",
-        class: "text-xs sm:text-sm lg:text-base xl:text-lg"
-      }
-    ],
     defaultVariants: {
       level: "h1",
       variant: "default", 
       spacing: "normal",
-      responsive: true,
     },
   }
 )
@@ -81,12 +44,12 @@ export interface HeadingProps
 }
 
 const Heading = React.forwardRef<HTMLHeadingElement, HeadingProps>(
-  ({ className, level, variant, spacing, responsive, as, ...props }, ref) => {
+  ({ className, level, variant, spacing, as, ...props }, ref) => {
     const Comp = as || level || "h1"
     
     return (
       <Comp
-        className={cn(headingVariants({ level: level || as, variant, spacing, responsive }), className)}
+        className={cn(headingVariants({ level: level || as, variant, spacing }), className)}
         ref={ref}
         {...props}
       />
