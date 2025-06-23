@@ -5,44 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Filter } from "lucide-react";
 
-// Sample data for solar generators
-const solarGeneratorData = [
-  {
-    id: 1,
-    date: "2024-01-15",
-    totalUnits: 250.5,
-    plantDayGeneration: 2450.8,
-    tower: "Tower A"
-  },
-  {
-    id: 2,
-    date: "2024-01-16",
-    totalUnits: 275.2,
-    plantDayGeneration: 2680.4,
-    tower: "Tower B"
-  },
-  {
-    id: 3,
-    date: "2024-01-17",
-    totalUnits: 290.8,
-    plantDayGeneration: 2850.6,
-    tower: "Tower A"
-  },
-  {
-    id: 4,
-    date: "2024-01-18",
-    totalUnits: 265.4,
-    plantDayGeneration: 2590.2,
-    tower: "Tower C"
-  },
-  {
-    id: 5,
-    date: "2024-01-19",
-    totalUnits: 310.6,
-    plantDayGeneration: 3020.8,
-    tower: "Tower B"
-  }
-];
+// Empty data array for solar generators
+const solarGeneratorData = [];
 
 const UtilitySolarGeneratorDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
