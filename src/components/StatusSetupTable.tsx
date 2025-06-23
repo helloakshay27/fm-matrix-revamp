@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -6,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { AddStatusModal } from './AddStatusModal';
 import { EditStatusModal } from './EditStatusModal';
+import { StatusBadge } from './ui/status-badge';
 
 interface StatusItem {
   id: number;
@@ -120,7 +120,13 @@ export const StatusSetupTable = () => {
                   </div>
                 </TableCell>
                 <TableCell className="text-center">{item.order}</TableCell>
-                <TableCell className="text-center">{item.status}</TableCell>
+                <TableCell className="text-center">
+                  <StatusBadge 
+                    status={item.status.toLowerCase() === 'active' ? 'accepted' : 'pending'}
+                  >
+                    {item.status}
+                  </StatusBadge>
+                </TableCell>
                 <TableCell className="text-center">{item.display}</TableCell>
                 <TableCell className="text-center">
                   <select className="border rounded px-2 py-1 text-sm">

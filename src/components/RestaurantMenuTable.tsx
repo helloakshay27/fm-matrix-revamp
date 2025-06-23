@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -6,6 +5,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Upload, Pencil, Trash2 } from "lucide-react";
 import { AddMenuItemModal } from "./AddMenuItemModal";
 import { ImportDataModal } from "./ImportDataModal";
+import { StatusBadge } from "./ui/status-badge";
 
 interface MenuItem {
   id: number;
@@ -133,13 +133,11 @@ export const RestaurantMenuTable = () => {
                   <TableCell className="text-center">{menuItem.createdOn}</TableCell>
                   <TableCell className="text-center">{menuItem.updatedOn}</TableCell>
                   <TableCell className="text-center">
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      menuItem.status === 'Active' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
+                    <StatusBadge 
+                      status={menuItem.status === 'Active' ? 'accepted' : 'rejected'}
+                    >
                       {menuItem.status}
-                    </span>
+                    </StatusBadge>
                   </TableCell>
                 </TableRow>
               ))
