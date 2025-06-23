@@ -19,7 +19,7 @@ import SelectBox from '../../SelectBox';
 
 // Redux Thunks
 import { fetchUsers } from '../../../redux/slices/userSlice';
-import { fetchIssue ,createIssue, updateIssue,fetchIssueType } from '../../../redux/slices/IssueSlice';
+import { fetchIssue ,createIssue, updateIssue,fetchIssueType } from "../../../redux/slices/issueSlice";
 import {fetchProjects} from '../../../redux/slices/projectSlice';
 import {fetchMilestone} from '../../../redux/slices/milestoneSlice';
 import {fetchTasks} from '../../../redux/slices/taskSlice';
@@ -70,6 +70,13 @@ const IssuesTable = () => {
     loading: loadingAllIssues,
     error: allIssuesError,
   } = useSelector((state) => state.fetchIssues || { issues: [], loading: false, error: null });
+
+  const{
+    filterIssue:filteredIssues,
+    loading:loadingFilteredIssues,
+    error:filteredIssuesError,
+    success:filterSuccess
+  }=useSelector((state) => state.filterIssue || { issues: [], loading: false, error: null });
 
   const {
     fetchUsers:users, // Corrected: Assuming 'users' is the key in state.fetchUsers and the desired variable name
@@ -248,6 +255,9 @@ useEffect(() => {
   if(parentId!==null && parentId!==undefined  ){
    allIssues=allIssuesFromStore.filter((issue) => issue.project_management_id == parentId);
   }
+  else if(filterSuccess && filteredIssues){
+   allIssues=filteredIssues;
+  }
   else{
    allIssues=allIssuesFromStore;
   }
@@ -264,9 +274,9 @@ useEffect(() => {
             startDate: issue.start_date ? new Date(issue.start_date).toLocaleDateString('en-CA') : null,
             endDate: issue.end_date ? new Date(issue.end_date).toLocaleDateString('en-CA') : null, // Ensure 'en-CA' format (YYYY-MM-DD) is compatible with date input
             priority: issue.priority || 'None',
-            projectName: issue.project_management_name || null,
-            milestoneName: issue.milstone_name|| null,
-            taskName: issue.task_management_name|| null,
+            projectName: issue.project_management_name || "",
+            milestoneName: issue.milstone_name|| "",
+            taskName: issue.task_management_name|| "",
             comments: issue.comments?.length? issue.comments[issue.comments.length - 1].body : '',    // Robust comment handling
         }));
         setData(processedIssuess);
@@ -275,7 +285,7 @@ useEffect(() => {
         setLocalError('Failed to load issues.');
         setData([]);
     }
-  }, [allIssuesFromStore, allIssuesError,parentId,milestoneOptions,taskOptions]);
+  }, [allIssuesFromStore, allIssuesError,parentId,milestoneOptions,taskOptions,filteredIssues]);
 
 
   useEffect(() => {
@@ -462,6 +472,7 @@ useEffect(() => {
           accessorKey:'milestoneName',
           header: 'Milestone Name',
           size: 150,
+          
       },{
         accessorKey:'taskName'
         ,header: 'Task Name',
@@ -539,7 +550,7 @@ useEffect(() => {
 
 
   let pageContent;
-  if (loadingAllIssues || (loadingUsers && !userFetchInitiatedRef.current) || isSavingIssues || isUpdatingIssue || loadingProjects || loadingMilestone || loadingTasks) { // Added isSavingIssues and isUpdatingIssue to main loader
+  if (loadingAllIssues || (loadingUsers && !userFetchInitiatedRef.current) || isSavingIssues || isUpdatingIssue || loadingProjects || loadingMilestone || loadingTasks || loadingFilteredIssues) { // Added isSavingIssues and isUpdatingIssue to main loader
     pageContent = (<div className="p-4 flex justify-center items-center min-h-[200px]"><ArrowPathIcon className="h-8 w-8 animate-spin text-gray-500 mr-2" /> Loading data...</div>);
   } else if (allIssuesError || usersFetchError) {
     pageContent = (<div className="p-4 text-red-600 bg-red-100 border border-red-400 rounded">
@@ -568,6 +579,15 @@ useEffect(() => {
               ))}
             </thead>
             <tbody>
+              {
+                data.length==0 && (
+                  <tr>
+                    <td colSpan={columns.length} className="text-center py-4 ">
+                     <i>{filterSuccess?"Try adjusting the filters.": "No issues found"}</i>
+                    </td>
+                  </tr>
+                )
+              }
               {table.getRowModel().rows.map(row => (
                 <tr key={row.id} className="hover:bg-gray-50 even:bg-gray-100" style={{height: `${rowHeight}px` }}>
                   {row.getVisibleCells().map(cell => (

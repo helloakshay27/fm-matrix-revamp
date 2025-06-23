@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import SelectBox from "../../../SelectBox";
 import { useDispatch, useSelector} from "react-redux";
 import { fetchUsers } from "../../../../redux/slices/userSlice";
-import { createIssue, fetchIssue ,fetchIssueType} from "../../../../redux/slices/IssueSlice";
+import { createIssue, fetchIssue ,fetchIssueType} from "../../../../redux/slices/issueSlice";
 import { fetchMilestone } from "../../../../redux/slices/milestoneSlice";
 import { fetchProjects } from "../../../../redux/slices/projectSlice";
 import { fetchTasks } from "../../../../redux/slices/taskSlice";
@@ -159,6 +159,7 @@ const Issues = ({ closeModal }) => {
     toast.dismiss();
     // Form Validations
     if(isSubmittingRef.current)return;
+    console.log(newIssuesProjectId);
     if(!newIssuesProjectId){
       toast.error("Project is required");
       return;

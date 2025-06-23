@@ -18,6 +18,8 @@ import { filterProjects } from "../../redux/slices/projectSlice";
 import { filterTask } from "../../redux/slices/taskSlice";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams } from "react-router-dom";
+import IssueFilter from "./Issues/Modal/Filter";
+import { filterIssue } from "../../redux/slices/issueSlice";
 
 const TYPE_OPTIONS = [
     { key: "Kanban", icon: <ChartNoAxesColumn size={18} className="rotate-180 text-[#C72030]" />, label: "Kanban" },
@@ -104,18 +106,25 @@ const TaskActions = ({
             if (status !== "All") {
                 filters["q[status_eq]"] = formattedStatus;
             }
-        } else {
+        } else if(addType === "Issues") {
+            if (status !== "All") {
+                filters["q[status_eq]"] = formattedStatus;
+            }
+        }else{
             if (status !== "All") {
                 filters["q[status_eq]"] = formattedStatus;
             }
             filters["q[milestone_id_eq]"] = mid;
-
         }
 
-        if (addType == "Project") {
+        if (addType === "Project") {
             dispatch(filterProjects({ token, filters })).unwrap();
-        } else {
+        } else if(addType === "Issues") {
+            dispatch(filterIssue({ token, filter: filters })).unwrap();
+        } 
+        else{
             dispatch(filterTask({ token, filter: filters })).unwrap();
+           
         }
         setSelectedStatus(status);
         setIsStatusOpen(false);
@@ -338,6 +347,13 @@ const TaskActions = ({
                 <AddIssueModal
                     isModalOpen={isAddIssueModalOpen}
                     setIsModalOpen={setIsAddIssueModalOpen}
+                />
+            )}
+
+            {isIssueFilter && (
+                <IssueFilter
+                    isModalOpen={isIssueFilter} 
+                    setIsModalOpen={setIsIssueFilter}
                 />
             )}
         </>

@@ -4,9 +4,10 @@ import { X, Search, ChevronRight, ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { useSelector, useDispatch } from "react-redux";
-import { filterIssue, fetchIssue } from "../../../redux/slices/IssueSlice";
+import { filterIssue, fetchIssue } from "../../../../redux/slices/issueSlice";
 import { useParams } from "react-router-dom";
 import qs from "qs";
+import { set } from "react-hook-form";
 
 const colorOptions = [
     { label: "Open", color: "bg-[#c85e68]", value: "open" },
@@ -32,11 +33,17 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                     selectedResponsible: [],
                     selectedCreators: [],
                     selectedTypes: [],
+                    selectedProjects: [],
+                    selectedMilestones: [],
+                    selectedTasks: [],
                     dates: { startDate: "", endDate: "" },
                     statusSearch: "",
                     ResponsiblePersonSearch: "",
                     creatorSearch: "",
-                    typeSearch:""
+                    typeSearch:"",
+                    projectSearch:"",
+                    milestoneSearch:"",
+                    taskSearch:""
                 };
         } catch (error) {
             console.error("Error parsing projectFilters from localStorage:", error);
@@ -45,11 +52,17 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                 selectedResponsible: [],
                 selectedCreators: [],
                 selectedTypes: [],
+                selectedProjects: [],
+                selectedMilestones: [],
+                selectedTasks: [],
                 dates: { startDate: "", endDate: "" },
                 statusSearch: "",
                 ResponsiblePersonSearch: "",
                 creatorSearch: "",
-                typeSearch:""
+                typeSearch:"",
+                projectSearch:"",
+                    milestoneSearch:"",
+                    taskSearch:""
             };
         }
     };
@@ -57,7 +70,10 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
     // Selected options
     const [selectedStatuses, setSelectedStatuses] = useState(getInitialFilters().selectedStatuses);
     const [selectedResponsible, setSelectedResponsible] = useState(getInitialFilters().selectedResponsible);
-    const [slectedType, setSelectedType] = useState([]);
+    const [selectedTypes, setSelectedTypes] = useState(getInitialFilters().selectedTypes);
+    const [selectedProjects, setSelectedProjects] = useState(getInitialFilters().selectedProjects);
+    const [selectedMilestones, setSelectedMilestones] = useState(getInitialFilters().selectedMilestones);
+    const [selectedTasks, setSelectedTasks] = useState(getInitialFilters().selectedTasks);
     // const [selectedManagers, setSelectedManagers] = useState([]);
     const [selectedCreators, setSelectedCreators] = useState(getInitialFilters().selectedCreators);
     const [dates, setDates] = useState({ "Start Date": "", "End Date": "" });
@@ -65,12 +81,18 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
     const [createdByOptions, setCreatedByOptions] = useState([]);
     const [statusOptions, setStatusOptions] = useState([]);
     const[typeOptions,setTypeOptions]=useState([])
+    const [projectOptions,setProjectOptions]=useState([])
+    const[milestoneOptions,setMilestoneOptions]=useState([])
+    const[taskOptions,setTaskOptions]=useState([])
 
     // Search inputs inside dropdowns
     const [statusSearch, setStatusSearch] = useState("");
     const [ResponsiblePersonSearch, setResponsiblePersonSearch] = useState("");
     const [creatorSearch, setCreatorSearch] = useState("");
     const [typeSearch,setTypeSearch]=useState("")
+    const [projectSearch,setProjectSearch]=useState("")
+    const [milestoneSearch,setMilestoneSearch]=useState("")
+    const [taskSearch,setTaskSearch]=useState("")
     // Dropdown open/close state (only one open at a time)
     const [dropdowns, setDropdowns] = useState({
         status: false,
@@ -78,26 +100,28 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
         startDate: false,
         endDate: false,
         creator: false,
-        type:false
+        type:false,
+        projects: false,
+        milestone: false,
+        task: false
+
     });
     const dispatch = useDispatch();
-
-    const {
-        loading: loadingIssues,
-        error: IssuesError,
-        fetchIssues: IssuesFromStore,
-    } = useSelector((state) => state.fetchIssues);
+     
 
     const {
         fetchUsers: users,
-        loading,
+        loading: usersLoading,
         error,
     } = useSelector(state => state.fetchUsers)
 
-    // const {
-    //     loading:filterLoading,
-    //     error:filterError,
-    // }=useSelector(state=>state.filterIssue)
+
+    const {
+        fetchIssue: IssuesFromStore,
+        loading: loadingIssues,
+        error: issuesError,
+    } = useSelector(state => state.fetchIssues);
+
 
     useEffect(() => {
         if (IssuesFromStore.length > 0) {
@@ -135,6 +159,66 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
         if (users.length > 0) {
             setCreatedByOptions(users.map(user => ({ label: user.firstname + " " + user.lastname, value: user.id })));
         }
+        
+        
+        if (IssuesFromStore.length > 0) {
+            const uniqueMap = new Map();
+
+            IssuesFromStore.forEach((Issue, index) => {
+                if (Issue.issue_type && !uniqueMap.has(Issue.issue_type)) {
+                    uniqueMap.set(Issue.issue_type, {
+                        label: Issue.issue_type.charAt(0).toUpperCase() + Issue.issue_type.slice(1),
+                        value: Issue.issue_type,
+                    });
+                }
+            });
+
+            setTypeOptions(Array.from(uniqueMap.values()));
+        }
+
+        if (IssuesFromStore.length > 0) {
+            const uniqueMap = new Map();
+
+            IssuesFromStore.forEach((Issue, index) => {
+                if (Issue.project_management_id && Issue.project_management_name && !uniqueMap.has(Issue.project_management_id)) {
+                    uniqueMap.set(Issue.project_management_id, {
+                        label: Issue.project_management_name,
+                        value: Issue.project_management_id,
+                    });
+                }
+            });
+
+            setProjectOptions(Array.from(uniqueMap.values()));
+        }
+        if (IssuesFromStore.length > 0) {
+            const uniqueMap = new Map();
+
+            IssuesFromStore.forEach((Issue, index) => {
+                if (Issue.milestone_id && Issue.milstone_name && !uniqueMap.has(Issue.milestone_id)) {
+                    uniqueMap.set(Issue.milestone_id, {
+                        label: Issue.milstone_name,
+                        value: Issue.milestone_id,
+                    });
+                }
+            });
+
+            setMilestoneOptions(Array.from(uniqueMap.values()));
+        }
+        if (IssuesFromStore.length > 0) {
+            const uniqueMap = new Map();
+
+            IssuesFromStore.forEach((Issue, index) => {
+                if (Issue.task_management_id && Issue.task_management_name && !uniqueMap.has(Issue.task_management_id)) {
+                    uniqueMap.set(Issue.task_management_id, {
+                        label: Issue.task_management_name,
+                        value: Issue.task_management_id,
+                    });
+                }
+            });
+
+            setTaskOptions(Array.from(uniqueMap.values()));
+        }
+
     }, [IssuesFromStore, users])
 
     // Save filter state to localStorage whenever it changes
@@ -143,12 +227,20 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
             selectedStatuses,
             selectedResponsible,
             selectedCreators,
+            selectedTypes,
+            selectedProjects,
+            selectedMilestones,
+            selectedTasks,
             dates,
             statusSearch,
             ResponsiblePersonSearch,
             creatorSearch,
+            typeSearch,
+            projectSearch,
+            milestoneSearch,
+            taskSearch
         };
-        if (selectedStatuses.length > 0 || selectedResponsible.length > 0 || selectedCreators.length > 0 || dates["Start Date"] || dates["End Date"] || statusSearch || ResponsiblePersonSearch || creatorSearch) {
+        if (selectedStatuses.length > 0 || selectedResponsible.length > 0 || selectedCreators.length > 0 || dates["Start Date"] || dates["End Date"] || statusSearch || ResponsiblePersonSearch || creatorSearch || typeSearch || projectSearch || milestoneSearch || taskSearch || selectedTypes.length > 0 || selectedProjects.length > 0 || selectedMilestones.length > 0 || selectedTasks.length > 0) {
 
             localStorage.setItem("IssueFilters", JSON.stringify(filters));
         }
@@ -156,10 +248,18 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
         selectedStatuses,
         selectedResponsible,
         selectedCreators,
+        selectedTypes,
+        selectedProjects,
+        selectedMilestones,
+        selectedTasks,
         dates,
         statusSearch,
         ResponsiblePersonSearch,
         creatorSearch,
+        typeSearch,
+        projectSearch,
+        milestoneSearch,
+        taskSearch
     ]);
 
 
@@ -172,7 +272,9 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                 "q[start_date_eq]": dates["Start Date"],
                 "q[end_date_eq]": dates["End Date"],
                 "q[responsible_person_id_in][]": selectedResponsible.length > 0 ? selectedResponsible : [],
-                "q[milestone_id_eq]": mid
+                "q[issue_type_in][]": selectedTypes.length > 0 ? selectedTypes : [],
+                "q[project_management_id_in][]": selectedProjects.length > 0 ? selectedProjects : [],
+                "q[task_management_id_in][]": selectedTasks.length > 0 ? selectedTasks : [],
             }
             if (newFilter) {
                         const queryString = qs.stringify(newFilter, { arrayFormat: 'repeat' });
@@ -275,15 +377,20 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
         setSelectedStatuses([]);
         setSelectedResponsible([]);
         setSelectedCreators([]);
+        setSelectedProjects([]);
+        setSelectedMilestones([]);
+        setSelectedTasks([]);
         setSelectedTypes([]);
         setDates({ "Start date": "", "End date": "" });
         setStatusSearch("");
+        setProjectSearch("");
+        setMilestoneSearch("");
+        setTaskSearch("");
         setResponsiblePersonSearch("");
         setCreatorSearch("");
         setTypeSearch("");
         localStorage.removeItem("IssueFilters");
         handleApplyFilter({
-            "q[milestone_id_eq]": mid
         });
         // dispatch(fetchIssues({ token }));
     };
@@ -342,6 +449,94 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                         )}
                     </div>
 
+                    <div className="p-6 py-3">
+                        <div
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => toggleDropdown("projects")}
+                        >
+                            <span className="font-medium text-sm select-none">Project</span>
+                            {dropdowns.projects ? (
+                                <ChevronDown className="text-gray-400" />
+                            ) : (
+                                <ChevronRight className="text-gray-400" />
+                            )}
+                        </div>
+                        {dropdowns.projects && (
+                            <div className="mt-4 border">
+                                <div className="relative border-b">
+                                    <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                    <input
+                                        type="text"
+                                        placeholder="Filter project type..."
+                                        className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
+                                        value={projectSearch}
+                                        onChange={(e) => setProjectSearch(e.target.value)}
+                                    />
+                                </div>
+                                {renderCheckboxList(projectOptions, selectedProjects, setSelectedProjects, projectSearch)}
+                            </div>
+                        )}
+                    </div>
+
+<div className="p-6 py-3">
+                        <div
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => toggleDropdown("milestone")}
+                        >
+                            <span className="font-medium text-sm select-none">Milestone</span>
+                            {dropdowns.milestone ? (
+                                <ChevronDown className="text-gray-400" />
+                            ) : (
+                                <ChevronRight className="text-gray-400" />
+                            )}
+                        </div>
+                        {dropdowns.milestone && (
+                            <div className="mt-4 border">
+                                <div className="relative border-b">
+                                    <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                    <input
+                                        type="text"
+                                        placeholder="Filter project type..."
+                                        className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
+                                        value={milestoneSearch}
+                                        onChange={(e) => setMilestoneSearch(e.target.value)}
+                                    />
+                                </div>
+                                {renderCheckboxList(milestoneOptions, selectedMilestones, setSelectedMilestones, milestoneSearch)}
+                            </div>
+                        )}
+                    </div>
+
+<div className="p-6 py-3">
+                        <div
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => toggleDropdown("task")}
+                        >
+                            <span className="font-medium text-sm select-none">Task</span>
+                            {dropdowns.task ? (
+                                <ChevronDown className="text-gray-400" />
+                            ) : (
+                                <ChevronRight className="text-gray-400" />
+                            )}
+                        </div>
+                        {dropdowns.task && (
+                            <div className="mt-4 border">
+                                <div className="relative border-b">
+                                    <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                    <input
+                                        type="text"
+                                        placeholder="Filter project type..."
+                                        className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
+                                        value={taskSearch}
+                                        onChange={(e) => setTaskSearch(e.target.value)}
+                                    />
+                                </div>
+                                {renderCheckboxList(taskOptions, selectedTasks, setSelectedTasks, taskSearch)}
+                            </div>
+                        )}
+                    </div>
+
+
                     {/* Project Type */}
                     <div className="p-6 py-3">
                         <div
@@ -372,20 +567,20 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                         )}
                     </div>
 
-                    {/* Project Manager */}
-                    {/* <div className="p-6 py-3">
+                    {/* Issue Type */}
+                    <div className="p-6 py-3">
                         <div
                             className="flex items-center justify-between cursor-pointer"
-                            onClick={() => toggleDropdown("projectManager")}
+                            onClick={() => toggleDropdown("type")}
                         >
-                            <span className="font-medium text-sm select-none">Project Manager</span>
-                            {dropdowns.projectManager ? (
+                            <span className="font-medium text-sm select-none">Type</span>
+                            {dropdowns.type ? (
                                 <ChevronDown className="text-gray-400" />
                             ) : (
                                 <ChevronRight className="text-gray-400" />
                             )}
                         </div>
-                        {dropdowns.projectManager && (
+                        {dropdowns.type && (
                             <div className="mt-4 border">
                                 <div className="relative border-b">
                                     <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
@@ -393,14 +588,14 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                                         type="text"
                                         placeholder="Filter project manager..."
                                         className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
-                                        value={managerSearch}
-                                        onChange={(e) => setManagerSearch(e.target.value)}
+                                        value={typeSearch}
+                                        onChange={(e) => setTypeSearch(e.target.value)}
                                     />
                                 </div>
-                                {renderCheckboxList(projectManagerOptions, selectedManagers, setSelectedManagers, managerSearch)}
+                                {renderCheckboxList(typeOptions, selectedTypes, setSelectedTypes, typeSearch)}
                             </div>
                         )}
-                    </div> */}
+                    </div>
 
                     {["startDate", "endDate"].map((key) => {
                         const label = (key === "startDate") ? "Start Date" : "End Date";
