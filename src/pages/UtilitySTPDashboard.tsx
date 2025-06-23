@@ -113,48 +113,42 @@ const UtilitySTPDashboard = () => {
         <div className="flex flex-wrap gap-4">
           <Button 
             onClick={handleAdd}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
+            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-4 h-4" />
             Add
           </Button>
           <Button 
             onClick={() => setIsImportOpen(true)}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
+            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
           >
-            <Upload className="w-4 h-4 mr-2" />
+            <Upload className="w-4 h-4" />
             Import
           </Button>
           <Button 
             onClick={() => setIsUpdateOpen(true)}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
+            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
           >
-            <RefreshCw className="w-4 h-4 mr-2" />
+            <RefreshCw className="w-4 h-4" />
             Update
           </Button>
           <Button 
             onClick={handleExportAll}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
+            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
           >
-            <Download className="w-4 h-4 mr-2" />
+            <Download className="w-4 h-4" />
             Export All
           </Button>
           <Button 
             onClick={handlePrintQR}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
+            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
           >
-            <QrCode className="w-4 h-4 mr-2" />
+            <QrCode className="w-4 h-4" />
             Print QR
           </Button>
           <Button 
             onClick={handleInActiveAssets}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
+            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
           >
             In-Active Assets
           </Button>
@@ -164,10 +158,9 @@ const UtilitySTPDashboard = () => {
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <Button 
             onClick={() => setIsFilterOpen(true)}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
+            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
           >
-            <Filter className="w-4 h-4 mr-2" />
+            <Filter className="w-4 h-4" />
             Filters
           </Button>
           
@@ -188,8 +181,7 @@ const UtilitySTPDashboard = () => {
             </div>
             <Button 
               onClick={handleSearch}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#C72030]/90"
+              className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium"
             >
               Go!
             </Button>

@@ -106,48 +106,42 @@ export const UtilityWaterDashboard = () => {
       <div className="flex flex-wrap gap-3">
         <Button 
           onClick={handleAdd}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4" />
           Add
         </Button>
         <Button 
           onClick={handleImport}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
-          <Import className="w-4 h-4 mr-2" />
+          <Import className="w-4 h-4" />
           Import
         </Button>
         <Button 
           onClick={handleUpdate}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
-          <RefreshCw className="w-4 h-4 mr-2" />
+          <RefreshCw className="w-4 h-4" />
           Update
         </Button>
         <Button 
           onClick={handleExportAll}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
-          <FileDown className="w-4 h-4 mr-2" />
+          <FileDown className="w-4 h-4" />
           Export All
         </Button>
         <Button 
           onClick={handlePrintQR}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
-          <Printer className="w-4 h-4 mr-2" />
+          <Printer className="w-4 h-4" />
           Print QR
         </Button>
         <Button 
           onClick={handleInActiveAssets}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
           In-Active Assets
         </Button>
@@ -157,10 +151,9 @@ export const UtilityWaterDashboard = () => {
       <div className="flex justify-between items-center">
         <Button 
           onClick={() => setIsFilterOpen(true)}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
-          <Filter className="w-4 h-4 mr-2" />
+          <Filter className="w-4 h-4" />
           Filters
         </Button>
         <div className="flex items-center space-x-2">
@@ -176,8 +169,7 @@ export const UtilityWaterDashboard = () => {
           </div>
           <Button 
             onClick={handleSearch}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
+            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium"
           >
             Go
           </Button>

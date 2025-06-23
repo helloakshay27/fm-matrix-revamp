@@ -112,8 +112,7 @@ export const UtilityDashboard = () => {
       <div className="flex flex-wrap gap-3 mb-6">
         <Button 
           onClick={handleAddClick}
-          style={{ backgroundColor: '#C72030' }}
-          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Add
@@ -121,8 +120,7 @@ export const UtilityDashboard = () => {
         
         <Button 
           onClick={handleImport}
-          style={{ backgroundColor: '#C72030' }}
-          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
           <Download className="w-4 h-4" />
           Import
@@ -130,8 +128,7 @@ export const UtilityDashboard = () => {
         
         <Button 
           onClick={handleUpdate}
-          style={{ backgroundColor: '#C72030' }}
-          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
           <Upload className="w-4 h-4" />
           Update
@@ -139,8 +136,7 @@ export const UtilityDashboard = () => {
         
         <Button 
           onClick={handleExportAll}
-          style={{ backgroundColor: '#C72030' }}
-          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
           <Download className="w-4 h-4" />
           Export All
@@ -148,8 +144,7 @@ export const UtilityDashboard = () => {
         
         <Button 
           onClick={handlePrintQR}
-          style={{ backgroundColor: '#C72030' }}
-          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
           <QrCode className="w-4 h-4" />
           Print QR
@@ -157,8 +152,7 @@ export const UtilityDashboard = () => {
         
         <Button 
           onClick={handleInActiveAssetsClick}
-          style={{ backgroundColor: '#C72030' }}
-          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
           In-Active Assets
         </Button>
@@ -168,8 +162,7 @@ export const UtilityDashboard = () => {
       <div className="flex flex-wrap gap-3 mb-6">
         <Button 
           onClick={handlePrintAllQR}
-          style={{ backgroundColor: '#C72030' }}
-          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
           <QrCode className="w-4 h-4" />
           Print All QR
@@ -177,8 +170,7 @@ export const UtilityDashboard = () => {
         
         <Button 
           onClick={() => setIsFilterOpen(true)}
-          style={{ backgroundColor: '#C72030' }}
-          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
           <Filter className="w-4 h-4" />
           Filters
@@ -199,8 +191,7 @@ export const UtilityDashboard = () => {
             </div>
             <Button 
               onClick={handleSearch}
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:bg-[#C72030]/90 text-white"
+              className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium"
             >
               Go
             </Button>
