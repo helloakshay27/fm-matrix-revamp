@@ -11,7 +11,7 @@ interface InvoiceFilterDialogProps {
   onClose: () => void;
 }
 
-export const InvoiceFilterDialog: React.FC<InvoiceFilterDialogProps> = ({ isOpen, onClose }) => {
+export const InvoiceFilterDialog = ({ isOpen, onClose }: InvoiceFilterDialogProps) => {
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [invoiceDate, setInvoiceDate] = useState('');
   const [supplierName, setSupplierName] = useState('');

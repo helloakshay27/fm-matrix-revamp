@@ -1,79 +1,105 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { SolarGeneratorFilterDialog } from '@/components/SolarGeneratorFilterDialog';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Filter } from "lucide-react";
+
+// Sample data for solar generators
+const solarGeneratorData = [
+  {
+    id: 1,
+    date: "2024-01-15",
+    totalUnits: 250.5,
+    plantDayGeneration: 2450.8,
+    tower: "Tower A"
+  },
+  {
+    id: 2,
+    date: "2024-01-16",
+    totalUnits: 275.2,
+    plantDayGeneration: 2680.4,
+    tower: "Tower B"
+  },
+  {
+    id: 3,
+    date: "2024-01-17",
+    totalUnits: 290.8,
+    plantDayGeneration: 2850.6,
+    tower: "Tower A"
+  },
+  {
+    id: 4,
+    date: "2024-01-18",
+    totalUnits: 265.4,
+    plantDayGeneration: 2590.2,
+    tower: "Tower C"
+  },
+  {
+    id: 5,
+    date: "2024-01-19",
+    totalUnits: 310.6,
+    plantDayGeneration: 3020.8,
+    tower: "Tower B"
+  }
+];
 
 const UtilitySolarGeneratorDashboard = () => {
-  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
-
-  const solarGeneratorData: any[] = [];
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   return (
     <div className="p-6 space-y-6">
       {/* Breadcrumb */}
-      <div className="text-sm text-gray-600">
-        Solar Generators &gt; Solar Generators List
+      <div className="flex items-center space-x-2 text-sm text-gray-600">
+        <span>Solar Generators</span>
+        <span>&gt;</span>
+        <span>Solar Generators List</span>
       </div>
 
-      {/* Page Title */}
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">SOLAR GENERATORS LIST</h1>
+        <h1 className="text-2xl font-bold text-gray-900">SOLAR GENERATORS LIST</h1>
       </div>
 
       {/* Filters Button */}
       <div className="flex justify-start">
-        <Button 
-          variant="outline" 
-          onClick={() => setIsFilterDialogOpen(true)}
-          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+        <Button
+          variant="outline"
+          onClick={() => setIsFilterOpen(!isFilterOpen)}
+          className="flex items-center gap-2"
         >
-          🔍 Filters
+          <Filter className="w-4 h-4" />
+          Filters
         </Button>
       </div>
 
-      {/* Solar Generator Table */}
-      <Card className="border border-gray-200">
+      {/* Table */}
+      <Card>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-[#1a1a1a]">ID</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Date</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Total Units</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Plant day Generation</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Tower</TableHead>
+              <TableRow>
+                <TableHead className="font-semibold">ID</TableHead>
+                <TableHead className="font-semibold">Date</TableHead>
+                <TableHead className="font-semibold">Total Units</TableHead>
+                <TableHead className="font-semibold">Plant day Generation</TableHead>
+                <TableHead className="font-semibold">Tower</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {solarGeneratorData.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                    No solar generator data found
-                  </TableCell>
+              {solarGeneratorData.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>{item.id}</TableCell>
+                  <TableCell>{item.date}</TableCell>
+                  <TableCell>{item.totalUnits}</TableCell>
+                  <TableCell>{item.plantDayGeneration}</TableCell>
+                  <TableCell>{item.tower}</TableCell>
                 </TableRow>
-              ) : (
-                solarGeneratorData.map((item) => (
-                  <TableRow key={item.id} className="hover:bg-gray-50">
-                    <TableCell className="text-[#1a1a1a]">{item.id}</TableCell>
-                    <TableCell className="text-[#1a1a1a]">{item.date}</TableCell>
-                    <TableCell className="text-[#1a1a1a]">{item.totalUnits}</TableCell>
-                    <TableCell className="text-[#1a1a1a]">{item.plantDayGeneration}</TableCell>
-                    <TableCell className="text-[#1a1a1a]">{item.tower}</TableCell>
-                  </TableRow>
-                ))
-              )}
+              ))}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
-
-      {/* Filter Dialog */}
-      <SolarGeneratorFilterDialog 
-        isOpen={isFilterDialogOpen}
-        onClose={() => setIsFilterDialogOpen(false)}
-      />
     </div>
   );
 };

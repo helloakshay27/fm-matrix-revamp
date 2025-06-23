@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -162,9 +161,7 @@ const modulesByPackage = {
   'Utility': [
     { name: 'Energy', icon: Zap, href: '/utility/energy' },
     { name: 'Water', icon: Droplets, href: '/utility/water' },
-    { name: 'STP', icon: Database, href: '/utility/stp' },
-    { name: 'Solar Generator', icon: Sun, href: '/utility/solar-generator' },
-    { name: 'EV Consumption', icon: Battery, href: '/utility/ev-consumption' }
+    { name: 'STP', icon: Database, href: '/utility/stp' }
   ],
   'Security': [
     { 
