@@ -29,7 +29,7 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+    --radius: 0rem;
   }
 
   .dark {
@@ -66,6 +66,69 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Design System Utilities */
+@layer utilities {
+  /* Shadow System */
+  .shadow-system-sm {
+    box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.06);
+  }
+  
+  .shadow-system-md {
+    box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
+  }
+  
+  .shadow-system-lg {
+    box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.12);
+  }
+  
+  .shadow-system-xl {
+    box-shadow: 0px 8px 24px 0px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Spacing System */
+  .space-system-xs {
+    @apply space-y-1;
+  }
+  
+  .space-system-sm {
+    @apply space-y-2;
+  }
+  
+  .space-system-md {
+    @apply space-y-4;
+  }
+  
+  .space-system-lg {
+    @apply space-y-6;
+  }
+  
+  .space-system-xl {
+    @apply space-y-8;
+  }
+
+  /* Border System */
+  .border-system {
+    @apply border border-gray-200;
+  }
+  
+  .border-system-focus {
+    @apply border-blue-500;
+  }
+
+  /* Typography System */
+  .text-system-primary {
+    @apply text-gray-900;
+  }
+  
+  .text-system-secondary {
+    @apply text-gray-600;
+  }
+  
+  .text-system-tertiary {
+    @apply text-gray-500;
   }
 }
 

@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -64,9 +65,24 @@ export default {
 				}
 			},
 			borderRadius: {
-				lg: 'var(--radius)',
-				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
+				lg: '0px',
+				md: '0px',
+				sm: '0px'
+			},
+			spacing: {
+				'system-xs': '4px',
+				'system-sm': '8px',
+				'system-md': '16px',
+				'system-lg': '24px',
+				'system-xl': '32px',
+				'system-2xl': '48px',
+				'system-3xl': '64px'
+			},
+			boxShadow: {
+				'system-sm': '0px 1px 2px 0px rgba(0, 0, 0, 0.06)',
+				'system-md': '0px 4px 8px 0px rgba(0, 0, 0, 0.1)',
+				'system-lg': '0px 4px 16px 0px rgba(0, 0, 0, 0.12)',
+				'system-xl': '0px 8px 24px 0px rgba(0, 0, 0, 0.15)',
 			},
 			keyframes: {
 				'accordion-down': {
