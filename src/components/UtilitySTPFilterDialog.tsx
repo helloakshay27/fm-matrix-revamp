@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -42,33 +41,33 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg [&>button]:hidden">
-        <DialogHeader>
+      <DialogContent className="w-[755px] h-[560px] md:w-[530px] md:h-[300px] sm:w-[310px] sm:h-[230px] max-w-none rounded-none shadow-[0px_4px_8px_0px_rgba(0,0,0,0.1),0px_1px_2px_0px_rgba(0,0,0,0.06)] border-[#E4E4E4] [&>button]:hidden">
+        <DialogHeader className="px-6 pt-6 pb-4">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+            <DialogTitle className="text-lg font-semibold text-[#1F2937]">FILTER BY</DialogTitle>
             <Button
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="h-6 w-6 p-0"
+              className="h-6 w-6 p-0 hover:bg-gray-100"
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="px-6 pb-6 space-y-6">
           {/* Asset Details */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-[#C72030]">Asset Details</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Asset Name</Label>
-                <Input placeholder="Enter Asset Name" className="rounded-none" />
+                <Label className="text-sm text-[#374151]">Asset Name</Label>
+                <Input placeholder="Enter Asset Name" className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20" />
               </div>
               <div className="space-y-2">
-                <Label>Date Range*</Label>
-                <Input placeholder="Select Date Range" className="rounded-none" />
+                <Label className="text-sm text-[#374151]">Date Range*</Label>
+                <Input placeholder="Select Date Range" className="h-10 px-3 py-2 rounded-none border-[#D1D5DB] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] focus:ring-opacity-20" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -177,22 +176,22 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
           </div>
         </div>
 
-        <div className="flex justify-center gap-4 pt-4">
+        <div className="flex justify-center gap-4 px-6 pb-6">
           <Button 
             onClick={handleSubmit}
-            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium"
+            className="bg-[#C72030] hover:bg-[#A01B26] text-white rounded-none px-8 py-2 h-10 text-sm font-medium shadow-none border-none"
           >
             Submit
           </Button>
           <Button 
             onClick={handleExport}
-            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium"
+            className="bg-[#C72030] hover:bg-[#A01B26] text-white rounded-none px-8 py-2 h-10 text-sm font-medium shadow-none border-none"
           >
             Export
           </Button>
           <Button 
             onClick={handleReset}
-            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium"
+            className="bg-[#C72030] hover:bg-[#A01B26] text-white rounded-none px-8 py-2 h-10 text-sm font-medium shadow-none border-none"
           >
             Reset
           </Button>
