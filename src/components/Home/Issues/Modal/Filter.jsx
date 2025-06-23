@@ -4,7 +4,7 @@ import { X, Search, ChevronRight, ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { useSelector, useDispatch } from "react-redux";
-import { filterIssue, fetchIssue } from "../../../../redux/slices/issueSlice";
+import { filterIssue, fetchIssue } from "../../../../redux/slices/IssueSlice";
 import { useParams } from "react-router-dom";
 import qs from "qs";
 import { set } from "react-hook-form";

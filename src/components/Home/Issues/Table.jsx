@@ -19,7 +19,7 @@ import SelectBox from '../../SelectBox';
 
 // Redux Thunks
 import { fetchUsers } from '../../../redux/slices/userSlice';
-import { fetchIssue ,createIssue, updateIssue,fetchIssueType } from "../../../redux/slices/issueSlice";
+import { fetchIssue ,createIssue, updateIssue,fetchIssueType } from "../../../redux/slices/IssueSlice";
 import {fetchProjects} from '../../../redux/slices/projectSlice';
 import {fetchMilestone} from '../../../redux/slices/milestoneSlice';
 import {fetchTasks} from '../../../redux/slices/taskSlice';

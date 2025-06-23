@@ -19,7 +19,7 @@ import { filterTask } from "../../redux/slices/taskSlice";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams } from "react-router-dom";
 import IssueFilter from "./Issues/Modal/Filter";
-import { filterIssue } from "../../redux/slices/issueSlice";
+import { filterIssue } from "../../redux/slices/IssueSlice";
 
 const TYPE_OPTIONS = [
     { key: "Kanban", icon: <ChartNoAxesColumn size={18} className="rotate-180 text-[#C72030]" />, label: "Kanban" },
@@ -107,6 +107,7 @@ const TaskActions = ({
                 filters["q[status_eq]"] = formattedStatus;
             }
         } else if(addType === "Issues") {
+            console.log(formattedStatus);
             if (status !== "All") {
                 filters["q[status_eq]"] = formattedStatus;
             }
@@ -123,8 +124,7 @@ const TaskActions = ({
             dispatch(filterIssue({ token, filter: filters })).unwrap();
         } 
         else{
-            dispatch(filterTask({ token, filter: filters })).unwrap();
-           
+            dispatch(filterTask({ token, filter: filters })).unwrap(); 
         }
         setSelectedStatus(status);
         setIsStatusOpen(false);
