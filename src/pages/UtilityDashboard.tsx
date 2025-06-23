@@ -1,235 +1,219 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Filter, Plus, Edit, Eye, FileText } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { StatsCard } from '../components/StatsCard';
+import { AssetTable } from '../components/AssetTable';
 import { UtilityFilterDialog } from '../components/UtilityFilterDialog';
-
-// Mock data for energy assets
-const energyAssets = [
-  {
-    id: 1,
-    assetName: 'Main Transformer',
-    assetNo: 'TR-001',
-    equipmentId: 'EQ-TR-001',
-    location: 'Building A - Ground Floor',
-    capacity: '1000 kVA',
-    status: 'Active',
-    lastReading: '450 kWh',
-    readingDate: '2024-01-15'
-  },
-  {
-    id: 2,
-    assetName: 'Backup Generator',
-    assetNo: 'GN-002',
-    equipmentId: 'EQ-GN-002',
-    location: 'Building B - Basement',
-    capacity: '500 kW',
-    status: 'Standby',
-    lastReading: '120 kWh',
-    readingDate: '2024-01-14'
-  },
-  {
-    id: 3,
-    assetName: 'UPS System',
-    assetNo: 'UP-003',
-    equipmentId: 'EQ-UP-003',
-    location: 'Server Room',
-    capacity: '100 kVA',
-    status: 'Active',
-    lastReading: '85 kWh',
-    readingDate: '2024-01-15'
-  }
-];
+import { BulkUploadDialog } from '../components/BulkUploadDialog';
+import { Plus, Filter, Download, Upload, RotateCcw, FileText, QrCode, Eye, Search } from 'lucide-react';
+import { Package, CheckCircle, AlertTriangle } from 'lucide-react';
 
 export const UtilityDashboard = () => {
+  const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const ResponsiveButton = ({ children, variant = "default", className = "", onClick, ...props }) => (
-    <Button
-      variant={variant}
-      onClick={onClick}
-      className={`
-        // Desktop styling
-        desktop:px-6 desktop:py-3 desktop:text-sm desktop:font-medium desktop:rounded-lg
-        desktop:bg-white desktop:text-[#C72030] desktop:border desktop:border-[#C72030] 
-        desktop:hover:bg-[#C72030] desktop:hover:text-white desktop:transition-colors desktop:duration-200
-        desktop:shadow-sm desktop:min-w-[120px]
-        
-        // Tablet styling  
-        tablet:px-4 tablet:py-2.5 tablet:text-sm tablet:rounded-md
-        tablet:bg-[#C72030] tablet:text-white tablet:border-0
-        tablet:hover:bg-[#A61B2A] tablet:transition-colors tablet:duration-200
-        tablet:min-w-[100px]
-        
-        // Mobile styling
-        mobile:px-3 mobile:py-2 mobile:text-xs mobile:rounded mobile:font-medium
-        mobile:bg-[#8B3A8B] mobile:text-white mobile:border-0  
-        mobile:hover:bg-[#7A2E7A] mobile:transition-colors mobile:duration-200
-        mobile:min-w-[80px] mobile:text-center
-        
-        // Base responsive classes
-        lg:px-6 lg:py-3 lg:text-sm lg:font-medium lg:rounded-lg
-        lg:bg-white lg:text-[#C72030] lg:border lg:border-[#C72030] 
-        lg:hover:bg-[#C72030] lg:hover:text-white lg:transition-colors lg:duration-200
-        lg:shadow-sm lg:min-w-[120px]
-        
-        md:px-4 md:py-2.5 md:text-sm md:rounded-md
-        md:bg-[#C72030] md:text-white md:border-0
-        md:hover:bg-[#A61B2A] md:transition-colors md:duration-200
-        md:min-w-[100px]
-        
-        sm:px-3 sm:py-2 sm:text-xs sm:rounded sm:font-medium
-        sm:bg-[#8B3A8B] sm:text-white sm:border-0  
-        sm:hover:bg-[#7A2E7A] sm:transition-colors sm:duration-200
-        sm:min-w-[80px] sm:text-center
-        
-        // Default mobile-first approach
-        px-3 py-2 text-xs rounded font-medium
-        bg-[#8B3A8B] text-white border-0  
-        hover:bg-[#7A2E7A] transition-colors duration-200
-        min-w-[80px] text-center
-        
-        ${className}
-      `}
-      {...props}
-    >
-      {children}
-    </Button>
-  );
+  const handleAddClick = () => {
+    navigate('/utility/energy/add-asset');
+  };
+
+  const handleInActiveAssetsClick = () => {
+    navigate('/utility/inactive-assets');
+  };
+
+  const handleImport = () => {
+    setUploadType('import');
+    setIsBulkUploadOpen(true);
+  };
+
+  const handleUpdate = () => {
+    setUploadType('update');
+    setIsBulkUploadOpen(true);
+  };
+
+  const handleExportAll = () => {
+    // Create and download CSV file
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      "Asset Name,Asset ID,Asset Code,Asset No.,Asset Status,Equipment Id,Site,Building,Wing,Floor,Area,Room,Meter Type,Asset Type\n" +
+      "Generator,GEN001,GEN001,001,In Use,EQ001,Main Site,Building A,East Wing,Ground Floor,Utility Area,Generator Room,Energy,Parent\n" +
+      "Transformer,TRF001,TRF001,002,In Use,EQ002,Main Site,Building A,East Wing,Ground Floor,Utility Area,Transformer Room,Energy,Parent\n" +
+      "UPS System,UPS001,UPS001,003,In Use,EQ003,Main Site,Building B,West Wing,First Floor,Server Room,UPS Room,Energy,Sub\n" +
+      "Solar Panel,SOL001,SOL001,004,In Use,EQ004,Main Site,Building C,North Wing,Rooftop,Solar Farm,Panel Area,Renewable,Parent\n" +
+      "Emergency Generator,EGEN001,EGEN001,005,Breakdown,EQ005,Main Site,Building A,East Wing,Basement,Emergency Area,Generator Room,Energy,Parent";
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "energy_assets.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    console.log('Exporting all energy assets data...');
+  };
+
+  const handlePrintQR = () => {
+    console.log('Printing QR codes for selected assets...');
+    // Logic for printing QR codes
+  };
+
+  const handlePrintAllQR = () => {
+    console.log('Printing QR codes for all assets...');
+    // Logic for printing all QR codes
+  };
+
+  const handleSearch = () => {
+    console.log('Searching for:', searchTerm);
+    // The search is now handled automatically by the AssetTable component
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Breadcrumb */}
-      <div className="text-sm text-gray-600">
-        Utility &gt; Energy Asset List
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="mb-6">
+        <div>
+          <p className="text-[#1a1a1a] opacity-70 mb-2">Assets &gt; Asset List</p>
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">ASSET LIST</h1>
+        </div>
       </div>
-
-      {/* Page Title */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">ENERGY ASSET LIST</h1>
-        <ResponsiveButton className="flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          <span className="hidden sm:inline">Add New Asset</span>
-          <span className="sm:hidden">Add</span>
-        </ResponsiveButton>
-      </div>
-
+      
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border border-gray-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Assets</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#1a1a1a]">156</div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <StatsCard
+          title="Total Asset"
+          value="7"
+          color="orange"
+          icon={<Package className="w-8 h-8" />}
+        />
+        <StatsCard
+          title="In Use"
+          value="6"
+          color="green"
+          icon={<CheckCircle className="w-8 h-8" />}
+        />
+        <StatsCard
+          title="Breakdown"
+          value="1"
+          color="red"
+          icon={<AlertTriangle className="w-8 h-8" />}
+        />
+      </div>
+      
+      {/* Action Buttons Row 1 */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        <Button 
+          onClick={handleAddClick}
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Add
+        </Button>
         
-        <Card className="border border-gray-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Active Assets</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">142</div>
-          </CardContent>
-        </Card>
+        <Button 
+          onClick={handleImport}
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+        >
+          <Download className="w-4 h-4" />
+          Import
+        </Button>
         
-        <Card className="border border-gray-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Inactive Assets</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">14</div>
-          </CardContent>
-        </Card>
+        <Button 
+          onClick={handleUpdate}
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+        >
+          <Upload className="w-4 h-4" />
+          Update
+        </Button>
+        
+        <Button 
+          onClick={handleExportAll}
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+        >
+          <Download className="w-4 h-4" />
+          Export All
+        </Button>
+        
+        <Button 
+          onClick={handlePrintQR}
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+        >
+          <QrCode className="w-4 h-4" />
+          Print QR
+        </Button>
+        
+        <Button 
+          onClick={handleInActiveAssetsClick}
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+        >
+          In-Active Assets
+        </Button>
       </div>
 
-      {/* Filters Button */}
-      <div className="flex justify-start">
-        <ResponsiveButton 
+      {/* Action Buttons Row 2 */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        <Button 
+          onClick={handlePrintAllQR}
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+        >
+          <QrCode className="w-4 h-4" />
+          Print All QR
+        </Button>
+        
+        <Button 
           onClick={() => setIsFilterOpen(true)}
-          className="flex items-center gap-2"
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
           <Filter className="w-4 h-4" />
           Filters
-        </ResponsiveButton>
+        </Button>
+
+        {/* Search Bar - Real-time search */}
+        <div className="flex items-center ml-auto">
+          <div className="flex items-center space-x-2">
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+              <Input
+                placeholder="Search assets..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="pl-10 w-64"
+              />
+            </div>
+            <Button 
+              onClick={handleSearch}
+              className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium"
+            >
+              Go
+            </Button>
+          </div>
+        </div>
       </div>
-
-      {/* Energy Assets Table */}
-      <Card className="border border-gray-200">
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-[#1a1a1a]">Asset Name</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Asset No.</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Equipment ID</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Location</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Capacity</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Last Reading</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {energyAssets.map((asset) => (
-                <TableRow key={asset.id} className="hover:bg-gray-50">
-                  <TableCell className="text-[#1a1a1a]">{asset.assetName}</TableCell>
-                  <TableCell className="text-[#1a1a1a]">{asset.assetNo}</TableCell>
-                  <TableCell className="text-[#1a1a1a]">{asset.equipmentId}</TableCell>
-                  <TableCell className="text-[#1a1a1a]">{asset.location}</TableCell>
-                  <TableCell className="text-[#1a1a1a]">{asset.capacity}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      asset.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {asset.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-[#1a1a1a]">
-                    <div>
-                      <div>{asset.lastReading}</div>
-                      <div className="text-xs text-gray-500">{asset.readingDate}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <ResponsiveButton 
-                        variant="ghost" 
-                        className="!p-2 !min-w-0 h-8 w-8"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </ResponsiveButton>
-                      <ResponsiveButton 
-                        variant="ghost" 
-                        className="!p-2 !min-w-0 h-8 w-8"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </ResponsiveButton>
-                      <ResponsiveButton 
-                        variant="ghost" 
-                        className="!p-2 !min-w-0 h-8 w-8"
-                      >
-                        <FileText className="w-4 h-4" />
-                      </ResponsiveButton>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
+      
+      {/* Asset Table with search functionality */}
+      <AssetTable searchTerm={searchTerm} />
+      
       {/* Filter Dialog */}
       <UtilityFilterDialog 
         isOpen={isFilterOpen} 
         onClose={() => setIsFilterOpen(false)} 
       />
+
+      {/* Bulk Upload Dialog */}
+      <BulkUploadDialog 
+        open={isBulkUploadOpen} 
+        onOpenChange={setIsBulkUploadOpen}
+        title={uploadType === 'import' ? 'Import Assets' : 'Update Assets'}
+      />
     </div>
   );
 };
-
-export default UtilityDashboard;
