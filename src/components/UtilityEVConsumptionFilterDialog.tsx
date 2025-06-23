@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { DateRange } from 'react-day-picker';
 
 interface UtilityEVConsumptionFilterDialogProps {
   isOpen: boolean;
@@ -15,13 +16,11 @@ interface UtilityEVConsumptionFilterDialogProps {
 }
 
 export const UtilityEVConsumptionFilterDialog = ({ isOpen, onClose }: UtilityEVConsumptionFilterDialogProps) => {
-  const [dateRange, setDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({
-    from: undefined,
-    to: undefined,
-  });
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+
+  const handleDateRangeSelect = (range: DateRange | undefined) => {
+    setDateRange(range);
+  };
 
   const handleSubmit = () => {
     console.log('Filtering EV consumption data with date range:', dateRange);
@@ -47,7 +46,7 @@ export const UtilityEVConsumptionFilterDialog = ({ isOpen, onClose }: UtilityEVC
   };
 
   const handleReset = () => {
-    setDateRange({ from: undefined, to: undefined });
+    setDateRange(undefined);
     console.log('Resetting EV consumption filters...');
   };
 
@@ -78,11 +77,11 @@ export const UtilityEVConsumptionFilterDialog = ({ isOpen, onClose }: UtilityEVC
                     variant="outline"
                     className={cn(
                       "w-full justify-start text-left font-normal",
-                      !dateRange.from && "text-muted-foreground"
+                      !dateRange?.from && "text-muted-foreground"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateRange.from ? (
+                    {dateRange?.from ? (
                       dateRange.to ? (
                         <>
                           {format(dateRange.from, "LLL dd, y")} -{" "}
@@ -100,9 +99,9 @@ export const UtilityEVConsumptionFilterDialog = ({ isOpen, onClose }: UtilityEVC
                   <Calendar
                     initialFocus
                     mode="range"
-                    defaultMonth={dateRange.from}
+                    defaultMonth={dateRange?.from}
                     selected={dateRange}
-                    onSelect={setDateRange}
+                    onSelect={handleDateRangeSelect}
                     numberOfMonths={2}
                     className={cn("p-3 pointer-events-auto")}
                   />
