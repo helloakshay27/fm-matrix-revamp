@@ -42,10 +42,10 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
           <div className="flex items-center justify-between">
             <DialogTitle>FILTER BY</DialogTitle>
             <Button
-              variant="ghost"
-              size="sm"
+              variant="icon"
+              size="icon-sm"
               onClick={onClose}
-              className="h-6 w-6 p-0"
+              className="h-8 w-8 p-1 bg-[#C72030] text-white hover:bg-[#C72030]/90 rounded-none shadow-none"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -176,21 +176,21 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
             <Button 
               onClick={handleSubmit}
               style={{ backgroundColor: '#C72030' }}
-              className="hover:bg-[#C72030]/90 text-white flex-1 rounded-none"
+              className="hover:bg-[#C72030]/90 text-white flex-1 rounded-none shadow-none"
             >
               Submit
             </Button>
             <Button 
               onClick={handleExport}
               style={{ backgroundColor: '#C72030' }}
-              className="hover:bg-[#C72030]/90 text-white flex-1 rounded-none"
+              className="hover:bg-[#C72030]/90 text-white flex-1 rounded-none shadow-none"
             >
               Export
             </Button>
             <Button 
               onClick={handleReset}
               style={{ backgroundColor: '#C72030' }}
-              className="hover:bg-[#C72030]/90 text-white flex-1 rounded-none"
+              className="hover:bg-[#C72030]/90 text-white flex-1 rounded-none shadow-none"
             >
               Reset
             </Button>

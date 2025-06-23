@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { X } from "lucide-react";
 
 interface WasteGenerationFilterDialogProps {
   isOpen: boolean;
@@ -44,9 +45,19 @@ export const WasteGenerationFilterDialog = ({ isOpen, onClose }: WasteGeneration
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl [&>button]:hidden">
         <DialogHeader>
-          <DialogTitle>FILTER BY</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>FILTER BY</DialogTitle>
+            <Button
+              variant="icon"
+              size="icon-sm"
+              onClick={onClose}
+              className="h-8 w-8 p-1 bg-[#C72030] text-white hover:bg-[#C72030]/90 rounded-none shadow-none"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </DialogHeader>
         
         <div className="space-y-6">
@@ -112,21 +123,21 @@ export const WasteGenerationFilterDialog = ({ isOpen, onClose }: WasteGeneration
             <Button
               onClick={handleSubmit}
               style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#A01B26] px-8 rounded-none"
+              className="text-white hover:bg-[#A01B26] px-8 rounded-none shadow-none"
             >
               Submit
             </Button>
             <Button
               onClick={handleExport}
               style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#A01B26] px-8 rounded-none"
+              className="text-white hover:bg-[#A01B26] px-8 rounded-none shadow-none"
             >
               Export
             </Button>
             <Button
               onClick={handleReset}
               variant="outline"
-              className="px-8 rounded-none"
+              className="px-8 rounded-none shadow-none"
             >
               Reset
             </Button>

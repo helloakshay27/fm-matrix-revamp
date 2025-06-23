@@ -149,10 +149,10 @@ export const EditShiftDialog = ({ open, onOpenChange, shift }: EditShiftDialogPr
           <DialogTitle className="flex items-center justify-between">
             Edit Shift
             <Button
-              variant="ghost"
-              size="sm"
+              variant="icon"
+              size="icon-sm"
               onClick={handleClose}
-              className="h-6 w-6 p-0"
+              className="h-8 w-8 p-1 bg-[#C72030] text-white hover:bg-[#C72030]/90 rounded-none shadow-none"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -192,7 +192,7 @@ export const EditShiftDialog = ({ open, onOpenChange, shift }: EditShiftDialogPr
                 </SelectContent>
               </Select>
               <Button 
-                className="bg-red-600 text-white px-3 py-1 rounded-none text-xs h-10 min-w-[40px]"
+                className="bg-[#C72030] text-white px-3 py-1 rounded-none text-xs h-10 min-w-[40px] shadow-none hover:bg-[#C72030]/90"
                 disabled
               >
                 AM
@@ -232,7 +232,7 @@ export const EditShiftDialog = ({ open, onOpenChange, shift }: EditShiftDialogPr
                 </SelectContent>
               </Select>
               <Button 
-                className="bg-red-600 text-white px-3 py-1 rounded-none text-xs h-10 min-w-[40px]"
+                className="bg-[#C72030] text-white px-3 py-1 rounded-none text-xs h-10 min-w-[40px] shadow-none hover:bg-[#C72030]/90"
                 disabled
               >
                 PM
@@ -259,7 +259,7 @@ export const EditShiftDialog = ({ open, onOpenChange, shift }: EditShiftDialogPr
           <div className="flex justify-center pt-4">
             <Button 
               onClick={handleUpdate}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 rounded-none"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 rounded-none shadow-none"
             >
               Update
             </Button>

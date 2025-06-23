@@ -57,10 +57,10 @@ export const UtilityEVConsumptionFilterDialog = ({ isOpen, onClose }: UtilityEVC
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
             <Button
-              variant="ghost"
-              size="sm"
+              variant="icon"
+              size="icon-sm"
               onClick={onClose}
-              className="h-6 w-6 p-0"
+              className="h-8 w-8 p-1 bg-[#C72030] text-white hover:bg-[#C72030]/90 rounded-none shadow-none"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -76,7 +76,7 @@ export const UtilityEVConsumptionFilterDialog = ({ isOpen, onClose }: UtilityEVC
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal rounded-none",
+                      "w-full justify-start text-left font-normal rounded-none shadow-none",
                       !dateRange?.from && "text-muted-foreground"
                     )}
                   >
@@ -114,19 +114,19 @@ export const UtilityEVConsumptionFilterDialog = ({ isOpen, onClose }: UtilityEVC
         <div className="flex justify-center gap-4 pt-4">
           <Button 
             onClick={handleSubmit}
-            className="bg-[#8B3A8B] text-white hover:bg-[#7A2E7A] transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium"
+            className="bg-[#8B3A8B] text-white hover:bg-[#7A2E7A] transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium shadow-none"
           >
             Submit
           </Button>
           <Button 
             onClick={handleExport}
-            className="bg-[#8B3A8B] text-white hover:bg-[#7A2E7A] transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium"
+            className="bg-[#8B3A8B] text-white hover:bg-[#7A2E7A] transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium shadow-none"
           >
             Export
           </Button>
           <Button 
             onClick={handleReset}
-            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium"
+            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium shadow-none"
           >
             Reset
           </Button>
