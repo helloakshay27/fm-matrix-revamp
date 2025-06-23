@@ -55,7 +55,7 @@ const TaskActions = ({
     const [isAddIssueModalOpen, setIsAddIssueModalOpen] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState(STATUS_OPTIONS[0]);
     const [isProjectFilter, setIsProjectFilter] = useState(false);
-    const token=localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
     const typeDropdownRef = useRef(null);
     const statusDropdownRef = useRef(null);
@@ -95,29 +95,29 @@ const TaskActions = ({
         if (type === "Kanban") setIsSidebarOpen(false);
     }, [setSelectedType, setIsSidebarOpen]);
 
-    const handleStatusSelect = useCallback(({status}) => {
+    const handleStatusSelect = useCallback(({ status }) => {
         let filters = {};
-        const formattedStatus=status.toLowerCase().replace(" ","_");
+        const formattedStatus = status.toLowerCase().replace(" ", "_");
 
-if (addType === "Project") {
-  if (status !== "All") {
-    filters["q[status_eq]"] = formattedStatus;
-  }
-} else {
-  if (status !== "All") {
-    filters["q[status_eq]"] = formattedStatus;
-  }
-    filters["q[milestone_id_eq]"] = mid;
-  
-}
+        if (addType === "Project") {
+            if (status !== "All") {
+                filters["q[status_eq]"] = formattedStatus;
+            }
+        } else {
+            if (status !== "All") {
+                filters["q[status_eq]"] = formattedStatus;
+            }
+            filters["q[milestone_id_eq]"] = mid;
 
-        if(addType=="Project"){
-          dispatch(filterProjects({ token, filters })).unwrap();
-        }else {
-          dispatch(filterTask({ token, filter:filters })).unwrap();
+        }
+
+        if (addType == "Project") {
+            dispatch(filterProjects({ token, filters })).unwrap();
+        } else {
+            dispatch(filterTask({ token, filter: filters })).unwrap();
         }
         setSelectedStatus(status);
-        setIsStatusOpen(false); 
+        setIsStatusOpen(false);
     }, []);
 
     const handleAddClick = useCallback(() => {
@@ -233,7 +233,7 @@ if (addType === "Project") {
                             <li key={status}>
                                 <button
                                     className="w-full text-left px-4 py-2 text-[13px] hover:bg-gray-100"
-                                    onClick={() => handleStatusSelect({status})}
+                                    onClick={() => handleStatusSelect({ status })}
                                 >
                                     {status}
                                 </button>

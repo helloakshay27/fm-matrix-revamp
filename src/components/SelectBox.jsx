@@ -1,18 +1,19 @@
 import React from "react";
 import Select from "react-select";
 
-  export default function SelectBox({
-    label,
-    options,
-    value,
-    onChange,
-    style = {},
-    className = "",
-    isDisableFirstOption = false,
-    card = false,
-    placeholder,
-    table=false,
-  }) {
+export default function SelectBox({
+  label,
+  options,
+  value,
+  onChange,
+  style = {},
+  className = "",
+  isDisableFirstOption = false,
+  card = false,
+  placeholder,
+  table = false,
+  mom = false
+}) {
   const customStyles = {
     control: (base, state) => ({
       ...base,
@@ -20,15 +21,15 @@ import Select from "react-select";
       padding: "1px",
       position: "relative",
       zIndex: 8,
-       border:table?"none":"1px solid #b3b2b2",
+      border: table ? "none" : "1px solid #b3b2b2",
 
       boxShadow: state.isFocused ? "#ccc" : base.boxShadow,
       "&:hover": {
         outline: "none",
       },
       borderRadius: "0px",
-      backgroundColor: table?"none":card ? "#FAF8F5" : "#fff",
-      
+      backgroundColor: table ? "none" : card ? "#FAF8F5" : "#fff",
+
       fontSize: "12px",
     }),
     valueContainer: (base) => ({
@@ -96,12 +97,12 @@ import Select from "react-select";
       <Select
         options={formattedOptions}
         value={selected}
-        onChange={(option) => onChange(option?.value)}
+        onChange={(option) => onChange(mom ? option : option?.value)}
         isOptionDisabled={(option) => option.isDisabled}
         styles={customStyles}
         menuPortalTarget={document.body}
         placeholder={placeholder}
-       menuPosition="fixed"
+        menuPosition="fixed"
       />
     </div>
   );

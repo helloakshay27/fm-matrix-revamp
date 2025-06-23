@@ -9,6 +9,8 @@ import { createMilestoneReducer, fetchMilestoneByIdReducer, fetchMilestoneReduce
 import { fetchSpirintByIdReducer, fetchSpirintsReducer, postSprintReducer, putSprintReducer } from './slices/spirintSlice'
 import { createIssueReducer, fetchIssueReducer, updateIssueReducer, fetchIssueTypeReducer, createIssueTypeReducer, updateIssueTypeReducer, deleteIssueTypeReducer } from './slices/IssueSlice'
 import { fetchStatusReducer, createStatusReducer, deleteStatusReducer, updateStatusReducer } from './slices/statusSlice'
+import { createMoMReducer, fetchMoMReducer } from './slices/momSlice'
+import { createMessageReducer, fetchChannelByIdReducer, fetchChannelsReducer, fetchConversationsReducer } from './slices/channelSlice'
 
 export const store = configureStore({
   reducer: {
@@ -105,5 +107,15 @@ export const store = configureStore({
     postSprint: postSprintReducer,
     putSprint: putSprintReducer,
     fetchSpirintById: fetchSpirintByIdReducer,
+
+    //MoM
+    fetchMoM: fetchMoMReducer,
+    createMoM: createMoMReducer,
+
+    //Channels
+    fetchChannels: fetchChannelsReducer,
+    fetchConversations: fetchConversationsReducer,
+    fetchChannelById: fetchChannelByIdReducer,
+    createMessage: createMessageReducer,
   },
 })

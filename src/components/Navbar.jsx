@@ -30,11 +30,7 @@ const Navbar = () => {
 
 
     // Dummy user data (replace with real user data as needed)
-    const user = JSON.parse(localStorage.getItem("user")) || {
-        firstName: "John",
-        lastName: "Doe",
-        email: "john.doe@example.com"
-    };
+    const user = JSON.parse(localStorage.getItem("user"))
 
     const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -140,9 +136,9 @@ const Navbar = () => {
                             <span
                                 className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center cursor-pointer"
                                 onClick={() => setShowLogoutModal(true)}
-                                title={`${user.firstName || ""} ${user.lastName || ""}`}
+                                title={`${user.firstname || ""} ${user.lasnName || ""}`}
                             >
-                                {(user.firstName && user.firstName[0]) ? user.firstName[0] : "U"}
+                                {user.firstname ? user.firstname.charAt(0) : "U"}
                             </span>
                             {/* Enhanced Logout Modal */}
                             {showLogoutModal && (
@@ -158,10 +154,10 @@ const Navbar = () => {
                                         </button>
                                         <div className="flex items-center gap-4 mb-4">
                                             <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold text-gray-600 border">
-                                                {(user.firstName && user.firstName[0]) ? user.firstName[0] : "U"}
+                                                {user.firstname ? user.firstname.charAt(0) : "U"}
                                             </div>
                                             <div>
-                                                <div className="text-lg font-semibold">{user.firstName} {user.lastName}</div>
+                                                <div className="text-lg font-semibold">{user.firstname} {user.lastname}</div>
                                                 <div className="text-xs text-gray-500">{user.email}</div>
                                             </div>
                                         </div>

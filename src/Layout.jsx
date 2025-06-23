@@ -5,7 +5,6 @@ import SetupSidebar from "./components/SetupSidebar";
 
 const Layout = ({ children, isSidebarOpen, setIsSidebarOpen }) => {
     const { pathname } = useLocation();
-    console.log(pathname);
 
     return (
         <div className="h-screen w-screen">

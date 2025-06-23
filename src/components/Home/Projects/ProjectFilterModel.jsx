@@ -284,7 +284,7 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen }) => {
             "q[status_in][]": selectedStatuses, // Use array for multiple selections
             "q[owner_id_in][]": selectedManagers,
             "q[created_by_id_in][]": selectedCreators,
-            "q[project_type_id_eq][]": selectedTypes,
+            "q[project_type_id_in][]": selectedTypes,
             "q[title_cont]": "",
             "q[is_template_eq]": "",
             "q[start_date_eq]": dates.startDate || "", // Ensure date is sent or empty string
