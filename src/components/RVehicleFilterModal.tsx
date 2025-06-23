@@ -25,14 +25,14 @@ export const RVehicleFilterModal = ({ isOpen, onClose }: RVehicleFilterModalProp
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-white [&>button]:hidden">
+      <DialogContent className="max-w-md bg-white [&>button]:hidden rounded-none">
         <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
           <DialogTitle className="text-lg font-semibold">FILTER</DialogTitle>
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="h-6 w-6 p-0"
+            className="h-6 w-6 p-0 rounded-none"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -48,7 +48,7 @@ export const RVehicleFilterModal = ({ isOpen, onClose }: RVehicleFilterModalProp
               placeholder="Vehicle no."
               value={vehicleNumber}
               onChange={(e) => setVehicleNumber(e.target.value)}
-              className="border-gray-300"
+              className="border-gray-300 rounded-none"
             />
           </div>
 
@@ -57,14 +57,14 @@ export const RVehicleFilterModal = ({ isOpen, onClose }: RVehicleFilterModalProp
             <Button
               onClick={handleReset}
               variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2 rounded-none"
             >
               Reset
             </Button>
             <Button
               onClick={handleApply}
               style={{ backgroundColor: '#C72030' }}
-              className="hover:opacity-90 text-white px-6 py-2"
+              className="hover:opacity-90 text-white px-6 py-2 rounded-none"
             >
               Apply
             </Button>
