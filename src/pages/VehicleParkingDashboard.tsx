@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Plus,  Download, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Heading } from '@/components/ui/heading';
 import { AddVehicleParkingModal } from '../components/AddVehicleParkingModal';
 
 export const VehicleParkingDashboard = () => {
@@ -16,7 +17,9 @@ export const VehicleParkingDashboard = () => {
           <span>Vehicle Parkings</span>
         </div>
         
-        <h1 className="text-2xl font-bold text-[#1a1a1a] mb-6 uppercase">VEHICLE PARKINGS</h1>
+        <Heading level="h1" variant="default" className="uppercase mb-6">
+          VEHICLE PARKINGS
+        </Heading>
         
         {/* Action Buttons */}
         <div className="flex gap-3 mb-6">

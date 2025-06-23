@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { SupplierTable } from '../components/SupplierTable';
 import { AddSupplierForm } from '../components/AddSupplierForm';
+import { Heading } from '@/components/ui/heading';
 
 export const SupplierDashboard = () => {
   const [isAddSupplierOpen, setIsAddSupplierOpen] = useState(false);
@@ -11,7 +12,9 @@ export const SupplierDashboard = () => {
       <div className="mb-6">
         <div>
           <p className="text-[#1a1a1a] opacity-70 mb-2">Supplier &gt; Supplier List</p>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">SUPPLIER LIST</h1>
+          <Heading level="h1" variant="default" className="uppercase">
+            SUPPLIER LIST
+          </Heading>
         </div>
       </div>
       

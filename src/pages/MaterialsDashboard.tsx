@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Heading } from '@/components/ui/heading';
 
 export const MaterialsDashboard = () => {
   return (
@@ -13,7 +14,7 @@ export const MaterialsDashboard = () => {
         
         <div className="bg-white rounded-lg border border-gray-200 p-8 min-h-[400px] flex items-center justify-center">
           <div className="text-center text-gray-500">
-            <h2 className="text-xl font-semibold mb-2">Materials</h2>
+            <Heading level="h2" variant="default" className="mb-2">Materials</Heading>
             <p>Materials content will be displayed here</p>
           </div>
         </div>
