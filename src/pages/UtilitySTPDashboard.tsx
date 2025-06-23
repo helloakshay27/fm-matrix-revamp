@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus, Upload, RefreshCw, Download, QrCode, Filter, Search } from 'lucide-react';
 import { Package, CheckCircle, AlertTriangle } from 'lucide-react';
@@ -154,7 +153,7 @@ const UtilitySTPDashboard = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input 
                 placeholder="Search..." 
-                className="pl-10 w-64 h-10 bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+                className="pl-10 w-64 h-10 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={(e) => {
@@ -166,7 +165,7 @@ const UtilitySTPDashboard = () => {
             </div>
             <Button 
               onClick={handleSearch}
-              className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-full px-6 py-2 h-10 text-sm font-medium border-0"
+              className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-6 py-2 h-10 text-sm font-medium border-0"
             >
               Go!
             </Button>
