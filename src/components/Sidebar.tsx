@@ -39,70 +39,68 @@ const modulesByPackage = {
       ]
     }
   ],
-'Maintenance': [
-  { name: 'Assets', icon: Building, href: '/maintenance/asset' },
-  { name: 'AMC', icon: FileText, href: '/maintenance/amc' },
-  { name: 'Services', icon: Wrench, href: '/maintenance/services' },
-  { name: 'Attendance', icon: Clock, href: '/maintenance/attendance' },
-  { name: 'Inventory', icon: Package, href: '/maintenance/inventory' },
-  { name: 'Ticket', icon: FileText, href: '/maintenance/ticket' },
-  { name: 'Task', icon: CheckSquare, href: '/maintenance/task' },
-  { name: 'Schedule', icon: Calendar, href: '/maintenance/schedule' },
-  { 
-    name: 'Audit', 
-    icon: Clipboard, 
-    href: '/maintenance/audit',
-    subItems: [
-      { 
-        name: 'Operational', 
-        href: '/maintenance/audit/operational', 
-        color: 'text-[#1a1a1a]',
-        subItems: [
-          { name: 'Scheduled', href: '/maintenance/audit/operational/scheduled', color: 'text-[#1a1a1a]' },
-          { name: 'Conducted', href: '/maintenance/audit/operational/conducted', color: 'text-[#1a1a1a]' },
-          { name: 'Master Checklists', href: '/maintenance/audit/operational/master-checklists', color: 'text-[#1a1a1a]' }
-        ]
-      },
-      { 
-        name: 'Vendor', 
-        href: '/maintenance/audit/vendor', 
-        color: 'text-[#1a1a1a]',
-        subItems: [
-          { name: 'Scheduled', href: '/maintenance/audit/vendor/scheduled', color: 'text-[#1a1a1a]' },
-          { name: 'Conducted', href: '/maintenance/audit/vendor/conducted', color: 'text-[#1a1a1a]' }
-        ]
-      },
-      { name: 'Assets', href: '/maintenance/audit/assets', color: 'text-[#1a1a1a]' }
-    ]
-  },
-  {
-    name: 'Waste',
-    icon: Trash2,
-    href: '/maintenance/audit/waste',
-    subItems: [
-      { name: 'Waste Generation', href: '/maintenance/audit/waste/generation', color: 'text-[#1a1a1a]' },
-      { name: 'Setup', href: '/maintenance/audit/waste/setup', color: 'text-[#1a1a1a]' }
-    ]
-  },
-  {
-    name: 'Survey',
-    icon: Edit3,
-    href: '/maintenance/audit/survey',
-    subItems: [
-      { name: 'Survey List', href: '/maintenance/audit/survey/list', color: 'text-[#1a1a1a]' },
-      { name: 'Mapping', href: '/maintenance/audit/survey/mapping', color: 'text-[#1a1a1a]' },
-      { name: 'Response', href: '/maintenance/audit/survey/response', color: 'text-[#1a1a1a]' }
-    ]
-  }
-]
-
-'Safety': [
-  { name: 'Incident', icon: AlertTriangle, href: '/maintenance/incident' },
-  { name: 'Permit to Work', icon: FileText, href: '/maintenance/permit' },
-  { name: 'M Safe', icon: Shield, href: '/maintenance/m-safe' },
-  { name: 'Training List', icon: BookOpen, href: '/maintenance/m-safe/training-list' }
-],
-
+  'Maintenance': [
+    { name: 'Assets', icon: Building, href: '/maintenance/asset' },
+    { name: 'AMC', icon: FileText, href: '/maintenance/amc' },
+    { name: 'Services', icon: Wrench, href: '/maintenance/services' },
+    { name: 'Attendance', icon: Clock, href: '/maintenance/attendance' },
+    { name: 'Inventory', icon: Package, href: '/maintenance/inventory' },
+    { name: 'Ticket', icon: FileText, href: '/maintenance/ticket' },
+    { name: 'Task', icon: CheckSquare, href: '/maintenance/task' },
+    { name: 'Schedule', icon: Calendar, href: '/maintenance/schedule' },
+    { 
+      name: 'Audit', 
+      icon: Clipboard, 
+      href: '/maintenance/audit',
+      subItems: [
+        { 
+          name: 'Operational', 
+          href: '/maintenance/audit/operational', 
+          color: 'text-[#1a1a1a]',
+          subItems: [
+            { name: 'Scheduled', href: '/maintenance/audit/operational/scheduled', color: 'text-[#1a1a1a]' },
+            { name: 'Conducted', href: '/maintenance/audit/operational/conducted', color: 'text-[#1a1a1a]' },
+            { name: 'Master Checklists', href: '/maintenance/audit/operational/master-checklists', color: 'text-[#1a1a1a]' }
+          ]
+        },
+        { 
+          name: 'Vendor', 
+          href: '/maintenance/audit/vendor', 
+          color: 'text-[#1a1a1a]',
+          subItems: [
+            { name: 'Scheduled', href: '/maintenance/audit/vendor/scheduled', color: 'text-[#1a1a1a]' },
+            { name: 'Conducted', href: '/maintenance/audit/vendor/conducted', color: 'text-[#1a1a1a]' }
+          ]
+        },
+        { name: 'Assets', href: '/maintenance/audit/assets', color: 'text-[#1a1a1a]' }
+      ]
+    },
+    {
+      name: 'Waste',
+      icon: Trash2,
+      href: '/maintenance/audit/waste',
+      subItems: [
+        { name: 'Waste Generation', href: '/maintenance/audit/waste/generation', color: 'text-[#1a1a1a]' },
+        { name: 'Setup', href: '/maintenance/audit/waste/setup', color: 'text-[#1a1a1a]' }
+      ]
+    },
+    {
+      name: 'Survey',
+      icon: FileSpreadsheet,
+      href: '/maintenance/audit/survey',
+      subItems: [
+        { name: 'Survey List', href: '/maintenance/audit/survey/list', color: 'text-[#1a1a1a]' },
+        { name: 'Mapping', href: '/maintenance/audit/survey/mapping', color: 'text-[#1a1a1a]' },
+        { name: 'Response', href: '/maintenance/audit/survey/response', color: 'text-[#1a1a1a]' }
+      ]
+    }
+  ],
+  'Safety': [
+    { name: 'Incident', icon: AlertTriangle, href: '/maintenance/incident' },
+    { name: 'Permit to Work', icon: FileText, href: '/maintenance/permit' },
+    { name: 'M Safe', icon: Shield, href: '/maintenance/m-safe' },
+    { name: 'Training List', icon: BookOpen, href: '/maintenance/m-safe/training-list' }
+  ],
   'Finance': [
     { 
       name: 'Procurement', 
@@ -238,6 +236,7 @@ const modulesByPackage = {
       name: 'Roles (RACI)', 
       icon: UserCheck, 
       href: '/settings/roles',
+      hasDropdowns: true,
       subItems: [
         { name: 'Department', href: '/settings/roles/department', color: 'text-[#1a1a1a]' },
         { name: 'Role', href: '/settings/roles/role', color: 'text-[#1a1a1a]' }
