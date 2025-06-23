@@ -5,6 +5,7 @@ import { useLayout } from '../contexts/LayoutContext';
 const packages = [
   'Transitioning',
   'Maintenance',
+  'Safety',
   'Finance',
   'CRM',
   'Utility',
