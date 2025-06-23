@@ -11,7 +11,8 @@ import {
   Star, MessageSquare, Coffee, Wifi, Home, ChevronDown,
   ChevronRight, Plus, Search, Filter, Download, Upload,
   Briefcase, BookOpen, FileSpreadsheet, Target,
-  Archive, TreePine, FlaskConical
+  Archive, TreePine, FlaskConical, Wallet, Megaphone,
+  Vote, Mic, Radio, Heart, Coins
 } from 'lucide-react';
 
 const modulesByPackage = {
@@ -63,47 +64,19 @@ const modulesByPackage = {
       icon: Clipboard, 
       href: '/maintenance/audit',
       subItems: [
-        { 
-          name: 'Operational', 
-          href: '/maintenance/audit/operational', 
-          color: 'text-[#1a1a1a]',
-          subItems: [
-            { name: 'Scheduled', href: '/maintenance/audit/operational/scheduled', color: 'text-[#1a1a1a]' },
-            { name: 'Conducted', href: '/maintenance/audit/operational/conducted', color: 'text-[#1a1a1a]' },
-            { name: 'Master Checklists', href: '/maintenance/audit/operational/master-checklists', color: 'text-[#1a1a1a]' }
-          ]
-        },
-        { 
-          name: 'Vendor', 
-          href: '/maintenance/audit/vendor', 
-          color: 'text-[#1a1a1a]',
-          subItems: [
-            { name: 'Scheduled', href: '/maintenance/audit/vendor/scheduled', color: 'text-[#1a1a1a]' },
-            { name: 'Conducted', href: '/maintenance/audit/vendor/conducted', color: 'text-[#1a1a1a]' }
-          ]
-        },
+        { name: 'Operational', href: '/maintenance/audit/operational', color: 'text-[#1a1a1a]' },
+        { name: 'Vendor', href: '/maintenance/audit/vendor', color: 'text-[#1a1a1a]' },
         { name: 'Assets', href: '/maintenance/audit/assets', color: 'text-[#1a1a1a]' },
-        { 
-          name: 'Waste', 
-          href: '/maintenance/audit/waste', 
-          color: 'text-[#1a1a1a]',
-          subItems: [
-            { name: 'Waste Generation', href: '/maintenance/audit/waste/generation', color: 'text-[#1a1a1a]' },
-            { name: 'Setup', href: '/maintenance/audit/waste/setup', color: 'text-[#1a1a1a]' }
-          ]
-        },
-        { 
-          name: 'Survey', 
-          href: '/maintenance/audit/survey', 
-          color: 'text-[#1a1a1a]',
-          subItems: [
-            { name: 'Survey List', href: '/maintenance/audit/survey/list', color: 'text-[#1a1a1a]' },
-            { name: 'Mapping', href: '/maintenance/audit/survey/mapping', color: 'text-[#1a1a1a]' },
-            { name: 'Response', href: '/maintenance/audit/survey/response', color: 'text-[#1a1a1a]' }
-          ]
-        }
+        { name: 'Waste', href: '/maintenance/audit/waste', color: 'text-[#1a1a1a]' },
+        { name: 'Survey', href: '/maintenance/audit/survey', color: 'text-[#1a1a1a]' }
       ]
     }
+  ],
+  'Safety': [
+    { name: 'Incident', icon: AlertTriangle, href: '/safety/incident' },
+    { name: 'Permit to Work', icon: FileText, href: '/safety/permit' },
+    { name: 'M Safe', icon: Shield, href: '/safety/m-safe' },
+    { name: 'Training List', icon: BookOpen, href: '/safety/training' }
   ],
   'Finance': [
     { 
@@ -111,59 +84,35 @@ const modulesByPackage = {
       icon: Briefcase, 
       href: '/finance/procurement',
       subItems: [
-        { 
-          name: 'PR/ SR', 
-          href: '/finance/pr-sr', 
-          color: 'text-[#1a1a1a]',
-          subItems: [
-            { name: 'Material PR', href: '/finance/material-pr', color: 'text-[#1a1a1a]' },
-            { name: 'Service PR', href: '/finance/service-pr', color: 'text-[#1a1a1a]' }
-          ]
-        },
-        { 
-          name: 'PO/WO', 
-          href: '/finance/po-wo', 
-          color: 'text-[#1a1a1a]',
-          subItems: [
-            { name: 'PO', href: '/finance/po', color: 'text-[#1a1a1a]' },
-            { name: 'WO', href: '/finance/wo', color: 'text-[#1a1a1a]' }
-          ]
-        },
-        { name: 'GRN/ SRN', href: '/finance/grn-srn', color: 'text-[#1a1a1a]' },
+        { name: 'PR / SR', href: '/finance/pr-sr', color: 'text-[#1a1a1a]' },
+        { name: 'PO / WO', href: '/finance/po-wo', color: 'text-[#1a1a1a]' },
+        { name: 'GRN / SRN', href: '/finance/grn-srn', color: 'text-[#1a1a1a]' },
         { name: 'Auto Saved PR', href: '/finance/auto-saved-pr', color: 'text-[#1a1a1a]' }
       ]
     },
-    { 
-      name: 'Accounting', 
-      icon: Calculator, 
-      href: '/finance/accounting',
-      subItems: [
-        { name: 'Cost Center', href: '/finance/cost-center', color: 'text-[#1a1a1a]' },
-        { name: 'Budgeting', href: '/finance/budgeting', color: 'text-[#1a1a1a]' },
-        { name: 'Pending Approvals', href: '/finance/pending-approvals', color: 'text-[#1a1a1a]' }
-      ]
-    },
+    { name: 'Invoices', icon: FileText, href: '/finance/invoices' },
     { name: 'Bill Booking', icon: Receipt, href: '/finance/bill-booking' },
-    { name: 'Invoice', icon: FileText, href: '/finance/invoice' },
-    { 
-      name: 'Lease Management', 
-      icon: FileText, 
-      href: '/finance/lease-management',
-      color: 'text-[#1a1a1a]'
-    }
+    { name: 'Cost Center', icon: Calculator, href: '/finance/cost-center' },
+    { name: 'Budgeting', icon: PieChart, href: '/finance/budgeting' },
+    { name: 'Pending Approvals', icon: Clock, href: '/finance/pending-approvals' },
+    { name: 'WBS', icon: Archive, href: '/finance/wbs' }
   ],
   'CRM': [
-    { name: 'Cloud Telephony', icon: Phone, href: '/crm/cloud-telephony' },
     { name: 'Lead', icon: Target, href: '/crm/lead' },
     { name: 'Opportunity', icon: Star, href: '/crm/opportunity' },
-    { name: 'CRM', icon: Users, href: '/crm/crm' }
+    { name: 'CRM', icon: Users, href: '/crm/crm' },
+    { name: 'Events', icon: Calendar, href: '/crm/events' },
+    { name: 'Broadcast', icon: Megaphone, href: '/crm/broadcast' },
+    { name: 'Groups', icon: Users, href: '/crm/groups' },
+    { name: 'Polls', icon: Vote, href: '/crm/polls' },
+    { name: 'Campaign', icon: Mic, href: '/crm/campaign' }
   ],
   'Utility': [
     { name: 'Energy', icon: Zap, href: '/utility/energy' },
     { name: 'Water', icon: Droplets, href: '/utility/water' },
     { name: 'STP', icon: Database, href: '/utility/stp' },
-    { name: 'EV Consumption', icon: Car, href: '/utility/ev-consumption' },
-    { name: 'Solar Generator', icon: Sun, href: '/utility/solar-generator' }
+    { name: 'Ev Consumption', icon: Car, href: '/utility/ev-consumption' },
+    { name: 'Solar Generation', icon: Sun, href: '/utility/solar-generation' }
   ],
   'Security': [
     { 
@@ -182,15 +131,7 @@ const modulesByPackage = {
       icon: Car, 
       href: '/security/vehicle',
       subItems: [
-        { 
-          name: 'R Vehicles', 
-          href: '/security/vehicle/r-vehicles', 
-          color: 'text-[#1a1a1a]',
-          subItems: [
-            { name: 'All', href: '/security/vehicle/r-vehicles', color: 'text-[#1a1a1a]' },
-            { name: 'History', href: '/security/vehicle/r-vehicles/history', color: 'text-[#1a1a1a]' }
-          ]
-        },
+        { name: 'R Vehicles', href: '/security/vehicle/r-vehicles', color: 'text-[#1a1a1a]' },
         { name: 'G Vehicles', href: '/security/vehicle/g-vehicles', color: 'text-[#1a1a1a]' }
       ]
     },
@@ -206,25 +147,17 @@ const modulesByPackage = {
       href: '/vas/space-management',
       subItems: [
         { name: 'Bookings', href: '/vas/space-management/bookings', color: 'text-[#1a1a1a]' },
-        { name: 'Seat Requests', href: '/vas/space-management/seat-requests', color: 'text-[#1a1a1a]' },
-        { 
-          name: 'Setup', 
-          href: '/vas/space-management/setup', 
-          color: 'text-[#1a1a1a]',
-          subItems: [
-            { name: 'Seat Type', href: '/vas/space-management/setup/seat-type', color: 'text-[#1a1a1a]' },
-            { name: 'Seat Setup', href: '/vas/space-management/setup/seat-setup', color: 'text-[#1a1a1a]' },
-            { name: 'Shift', href: '/vas/space-management/setup/shift', color: 'text-[#1a1a1a]' },
-            { name: 'Roster', href: '/vas/space-management/setup/roster', color: 'text-[#1a1a1a]' },
-            { name: 'Employees', href: '/vas/space-management/setup/employees', color: 'text-[#1a1a1a]' },
-            { name: 'Check in Margin', href: '/vas/space-management/setup/check-in-margin', color: 'text-[#1a1a1a]' },
-            { name: 'Roster Calendar', href: '/vas/space-management/setup/roster-calendar', color: 'text-[#1a1a1a]' },
-            { name: 'Export', href: '/vas/space-management/setup/export', color: 'text-[#1a1a1a]' }
-          ]
-        }
+        { name: 'Seat Requests', href: '/vas/space-management/seat-requests', color: 'text-[#1a1a1a]' }
       ]
     },
-    { name: 'Training List', icon: BookOpen, href: '/vas/training-list' }
+    { name: 'Redemonection marketplace', icon: Globe, href: '/vas/marketplace' },
+    { name: 'Cold Wallet', icon: Wallet, href: '/vas/cold-wallet' }
+  ],
+  'Market Place': [
+    { name: 'Lease Management', icon: FileText, href: '/marketplace/lease-management' },
+    { name: 'Loyalty Rule Engine', icon: Heart, href: '/marketplace/loyalty' },
+    { name: 'Cloud Telephony', icon: Phone, href: '/marketplace/telephony' },
+    { name: 'Accounting', icon: Calculator, href: '/marketplace/accounting' }
   ],
   'Settings': [
     { name: 'General', icon: Settings, href: '/settings/general' },
@@ -234,6 +167,7 @@ const modulesByPackage = {
       name: 'Roles (RACI)', 
       icon: UserCheck, 
       href: '/settings/roles',
+      hasDropdowns: true,
       subItems: [
         { name: 'Department', href: '/settings/roles/department', color: 'text-[#1a1a1a]' },
         { name: 'Role', href: '/settings/roles/role', color: 'text-[#1a1a1a]' }
@@ -310,6 +244,10 @@ export const Sidebar = () => {
       setCurrentSection('Maintenance');
     } else if (path.startsWith('/crm')) {
       setCurrentSection('CRM');
+    } else if (path.startsWith('/safety')) {
+      setCurrentSection('Safety');
+    } else if (path.startsWith('/marketplace')) {
+      setCurrentSection('Market Place');
     } else if (path.startsWith('/settings')) {
       setCurrentSection('Settings');
     }
@@ -342,44 +280,14 @@ export const Sidebar = () => {
             <div className="space-y-1">
               {item.subItems.map((subItem: any) => (
                 <div key={subItem.name} className="ml-8">
-                  {subItem.subItems ? (
-                    <div>
-                      <button
-                        onClick={() => toggleExpanded(subItem.name)}
-                        className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                      >
-                        <span>{subItem.name}</span>
-                        {expandedItems.includes(subItem.name) ? 
-                          <ChevronDown className="w-4 h-4" /> : 
-                          <ChevronRight className="w-4 h-4" />
-                        }
-                      </button>
-                      {expandedItems.includes(subItem.name) && (
-                        <div className="ml-4 mt-1 space-y-1">
-                          {subItem.subItems.map((nestedItem: any) => (
-                            <button
-                              key={nestedItem.name}
-                              onClick={() => handleNavigation(nestedItem.href, currentSection)}
-                              className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] ${
-                                nestedItem.color || 'text-[#1a1a1a]'
-                              }`}
-                            >
-                              {nestedItem.name}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => handleNavigation(subItem.href, currentSection)}
-                      className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] ${
-                        subItem.color || 'text-[#1a1a1a]'
-                      }`}
-                    >
-                      {subItem.name}
-                    </button>
-                  )}
+                  <button
+                    onClick={() => handleNavigation(subItem.href, currentSection)}
+                    className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] ${
+                      subItem.color || 'text-[#1a1a1a]'
+                    }`}
+                  >
+                    {subItem.name}
+                  </button>
                 </div>
               ))}
             </div>
