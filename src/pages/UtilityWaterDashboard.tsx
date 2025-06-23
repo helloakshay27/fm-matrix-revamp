@@ -157,20 +157,20 @@ export const UtilityWaterDashboard = () => {
         </Button>
         <div className="flex items-center space-x-2">
           <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <Input
-              placeholder="Search assets..."
+              placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="pl-10 w-64"
+              className="pl-10 w-64 h-10 bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
             />
           </div>
           <Button 
             onClick={handleSearch}
-            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium"
+            className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-full px-6 py-2 h-10 text-sm font-medium border-0"
           >
-            Go
+            Go!
           </Button>
         </div>
       </div>
