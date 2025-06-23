@@ -1,10 +1,9 @@
 
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
 
 interface UtilitySTPFilterDialogProps {
@@ -13,192 +12,113 @@ interface UtilitySTPFilterDialogProps {
 }
 
 export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDialogProps) => {
-  const handleSubmit = () => {
-    console.log('Filtering STP assets...');
-    onClose();
-  };
+  const [assetName, setAssetName] = useState('');
+  const [assetCode, setAssetCode] = useState('');
+  const [site, setSite] = useState('');
+  const [building, setBuilding] = useState('');
 
-  const handleExport = () => {
-    // Create and download CSV file for filtered results
-    const csvContent = "data:text/csv;charset=utf-8," + 
-      "Asset Name,Asset ID,Asset Code,Asset No.,Asset Status,Equipment Id,Site,Building,Wing,Floor,Area,Room,Meter Type,Asset Type\n" +
-      "Sample STP Asset,STP001,STP-001,001,In Use,EQ001,Main Site,Building A,East Wing,Ground Floor,Treatment Area,Room 101,Flow Meter,STP Equipment";
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "stp_filtered_assets.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    console.log('Exporting filtered STP assets...');
+  const handleApply = () => {
+    console.log('Filter applied:', { assetName, assetCode, site, building });
     onClose();
   };
 
   const handleReset = () => {
-    console.log('Resetting STP filters...');
+    setAssetName('');
+    setAssetCode('');
+    setSite('');
+    setBuilding('');
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg [&>button]:hidden">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+      <DialogContent className="max-w-md bg-white">
+        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
+          <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-6 w-6 p-0"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </DialogHeader>
+        
+        <div className="p-6 space-y-6">
+          <div className="text-orange-500 font-medium text-sm mb-4">STP Asset Details</div>
+          
+          {/* Asset Name */}
+          <div className="space-y-2">
+            <Label htmlFor="assetName" className="text-sm font-medium">
+              Asset Name
+            </Label>
+            <Input
+              id="assetName"
+              placeholder="Search By Asset Name"
+              value={assetName}
+              onChange={(e) => setAssetName(e.target.value)}
+              className="border-gray-300"
+            />
+          </div>
+
+          {/* Asset Code */}
+          <div className="space-y-2">
+            <Label htmlFor="assetCode" className="text-sm font-medium">
+              Asset Code
+            </Label>
+            <Input
+              id="assetCode"
+              placeholder="Search By Asset Code"
+              value={assetCode}
+              onChange={(e) => setAssetCode(e.target.value)}
+              className="border-gray-300"
+            />
+          </div>
+
+          {/* Site */}
+          <div className="space-y-2">
+            <Label htmlFor="site" className="text-sm font-medium">
+              Site
+            </Label>
+            <Input
+              id="site"
+              placeholder="Search By Site"
+              value={site}
+              onChange={(e) => setSite(e.target.value)}
+              className="border-gray-300"
+            />
+          </div>
+
+          {/* Building */}
+          <div className="space-y-2">
+            <Label htmlFor="building" className="text-sm font-medium">
+              Building
+            </Label>
+            <Input
+              id="building"
+              placeholder="Search By Building"
+              value={building}
+              onChange={(e) => setBuilding(e.target.value)}
+              className="border-gray-300"
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-center gap-3 pt-4">
             <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-6 w-6 p-0"
+              onClick={handleReset}
+              variant="outline"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2"
             >
-              <X className="h-4 w-4" />
+              Reset
+            </Button>
+            <Button
+              onClick={handleApply}
+              className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-6 py-2"
+            >
+              Apply
             </Button>
           </div>
-        </DialogHeader>
-
-        <div className="space-y-6 py-4">
-          {/* Asset Details */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-[#C72030]">Asset Details</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Asset Name</Label>
-                <Input placeholder="Enter Asset Name" />
-              </div>
-              <div className="space-y-2">
-                <Label>Date Range*</Label>
-                <Input placeholder="Select Date Range" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Group</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="stp">STP Equipment</SelectItem>
-                    <SelectItem value="water">Water Treatment</SelectItem>
-                    <SelectItem value="waste">Waste Management</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Subgroup</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Sub Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="primary">Primary Treatment</SelectItem>
-                    <SelectItem value="secondary">Secondary Treatment</SelectItem>
-                    <SelectItem value="tertiary">Tertiary Treatment</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* Location Details */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-[#C72030]">Location Details</h3>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Building</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Building" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="building-a">Building A</SelectItem>
-                    <SelectItem value="building-b">Building B</SelectItem>
-                    <SelectItem value="building-c">Building C</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Wing</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Wing" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="east">East Wing</SelectItem>
-                    <SelectItem value="west">West Wing</SelectItem>
-                    <SelectItem value="north">North Wing</SelectItem>
-                    <SelectItem value="south">South Wing</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Area</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Area" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="treatment">Treatment Area</SelectItem>
-                    <SelectItem value="storage">Storage Area</SelectItem>
-                    <SelectItem value="maintenance">Maintenance Area</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Floor</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Floor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ground">Ground Floor</SelectItem>
-                    <SelectItem value="first">First Floor</SelectItem>
-                    <SelectItem value="second">Second Floor</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Room</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Room" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="room-101">Room 101</SelectItem>
-                    <SelectItem value="room-102">Room 102</SelectItem>
-                    <SelectItem value="room-103">Room 103</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-center gap-4 pt-4">
-          <Button 
-            onClick={handleSubmit}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90 px-8"
-          >
-            Submit
-          </Button>
-          <Button 
-            onClick={handleExport}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90 px-8"
-          >
-            Export
-          </Button>
-          <Button 
-            onClick={handleReset}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90 px-8"
-          >
-            Reset
-          </Button>
         </div>
       </DialogContent>
     </Dialog>
