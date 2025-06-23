@@ -15,7 +15,7 @@ export const Header = () => {
   return (
     <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-10 w-100">
       <div className="flex items-center justify-between h-full px-6">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center">
           {/* Home Dashboard */}
           <button className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
             <Home className="w-4 h-4" />
@@ -23,14 +23,14 @@ export const Header = () => {
           </button>
 
           {/* Setup Link */}
-          <a href="/setup" className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
+          <a href="/setup" className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors ml-6">
             <Settings className="w-4 h-4" />
             <span className="text-sm font-medium">Setup</span>
           </a>
 
           {/* Project Change Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
+            <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors ml-6">
               <span className="text-sm font-medium">Project Change</span>
               <ChevronDown className="w-3 h-3" />
             </DropdownMenuTrigger>
@@ -42,11 +42,11 @@ export const Header = () => {
           </DropdownMenu>
 
           {/* Vertical Separator */}
-          <div className="w-px h-6 bg-[#D5DbDB]"></div>
+          <div className="w-px h-6 bg-[#D5DbDB] ml-6"></div>
 
           {/* Site Change Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
+            <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors ml-6">
               <MapPin className="w-4 h-4" />
               <span className="text-sm font-medium">Lockastead Site 1</span>
               <ChevronDown className="w-3 h-3" />
