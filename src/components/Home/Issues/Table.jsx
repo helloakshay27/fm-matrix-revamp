@@ -264,9 +264,9 @@ useEffect(() => {
             startDate: issue.start_date ? new Date(issue.start_date).toLocaleDateString('en-CA') : null,
             endDate: issue.end_date ? new Date(issue.end_date).toLocaleDateString('en-CA') : null, // Ensure 'en-CA' format (YYYY-MM-DD) is compatible with date input
             priority: issue.priority || 'None',
-            projectName: issue.project_management_name || 'Unassigned',
-            milestoneName: issue.milstone_name|| 'Unassigned',
-            taskName: issue.task_management_name|| 'Unassigned',
+            projectName: issue.project_management_name || null,
+            milestoneName: issue.milstone_name|| null,
+            taskName: issue.task_management_name|| null,
             comments: issue.comments?.length? issue.comments[issue.comments.length - 1].body : '',    // Robust comment handling
         }));
         setData(processedIssuess);
@@ -310,7 +310,7 @@ useEffect(() => {
   }, [resetNewIssuesForm]);
 
   const handleSaveNewIssues = useCallback(async () => {
-    if (!newIssuesTitle || newIssuesTitle.trim() === "" || !newIssuesEndDate) {
+    if (!newIssuesTitle || newIssuesTitle.trim() === "" || !newIssuesEndDate || !newIssuesProjectId || !newIssuesMilestoneId || !newIssuesTaskId) {
       setLocalError("Please fill in all required fields.");
       setValidator(true);
       return;

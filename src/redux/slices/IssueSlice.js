@@ -154,6 +154,27 @@ export const deleteIssueType = createAsyncThunk("deleteIssueType", async ({ toke
     }
 })
 
+export const filterIssue = createAsyncThunk('filterIssue',
+    async ({ token, filter }, { rejectWithValue }) => {
+        try {
+            const params = new URLSearchParams(filter).toString();
+            console.log(params);
+            const response = await axios.get(
+                `https://api-tasks.lockated.com/issues.json?${params}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+
 export const createIssueSlice = createApiSlice('createIssue', createIssue);
 export const fetchIssueSlice = createApiSlice('fetchIssue', fetchIssue);
 export const updateIssueSlice = createApiSlice('updateIssue', updateIssue);
@@ -161,6 +182,7 @@ export const fetchIssueTypeSlice = createApiSlice('fetchIssueType', fetchIssueTy
 export const createIssueTypeSlice = createApiSlice('createIssueType', createIssueType);
 export const updateIssueTypeSlice = createApiSlice('updateIssueType', updateIssueType);
 export const deleteIssueTypeSlice = createApiSlice('deleteIssueType', deleteIssueType);
+export const filterIssueSlice = createApiSlice('filterIssue', filterIssue);
 
 export const createIssueReducer = createIssueSlice.reducer;
 export const fetchIssueReducer = fetchIssueSlice.reducer;
@@ -169,5 +191,6 @@ export const fetchIssueTypeReducer = fetchIssueTypeSlice.reducer;
 export const createIssueTypeReducer = createIssueTypeSlice.reducer;
 export const updateIssueTypeReducer = updateIssueTypeSlice.reducer;
 export const deleteIssueTypeReducer = deleteIssueTypeSlice.reducer;
+export const filterIssueReducer = filterIssueSlice.reducer;
 
 export const { resetIssueSuccess } = createIssueSlice.actions;

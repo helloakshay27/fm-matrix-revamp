@@ -188,6 +188,14 @@ const Issues = ({ closeModal }) => {
       toast.error("Comment is required");
       return;
     }
+    if(!newIssuesMilestoneId){
+      toast.error("Milestone is required");
+      return;
+    }
+    if(!newIssuesTaskId){
+      toast.error("Task is required");
+      return;
+    }
 
     setIsSubmitting(true);
     isSubmittingRef.current=true;

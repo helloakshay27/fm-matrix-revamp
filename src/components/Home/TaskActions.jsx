@@ -55,6 +55,7 @@ const TaskActions = ({
     const [isAddIssueModalOpen, setIsAddIssueModalOpen] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState(STATUS_OPTIONS[0]);
     const [isProjectFilter, setIsProjectFilter] = useState(false);
+    const [isIssueFilter, setIsIssueFilter] = useState(false);
     const token = localStorage.getItem("token");
 
     const typeDropdownRef = useRef(null);
@@ -256,7 +257,9 @@ const TaskActions = ({
                             className="flex items-center gap-1 cursor-pointer pl-4"
                             onClick={() =>
                                 addType === "Project"
-                                    ? setIsProjectFilter(true)
+                                    ? setIsProjectFilter(true):
+                                    addType==="Issues"?
+                                    setIsIssueFilter(true)
                                     : setIsFilterModalOpen(true)
 
                             }
