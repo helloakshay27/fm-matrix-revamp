@@ -64,18 +64,18 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Asset Name</Label>
-                <Input placeholder="Enter Asset Name" />
+                <Input placeholder="Enter Asset Name" className="rounded-none" />
               </div>
               <div className="space-y-2">
                 <Label>Date Range*</Label>
-                <Input placeholder="Select Date Range" />
+                <Input placeholder="Select Date Range" className="rounded-none" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Group</Label>
                 <Select>
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-none">
                     <SelectValue placeholder="Select Category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -88,7 +88,7 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
               <div className="space-y-2">
                 <Label>Subgroup</Label>
                 <Select>
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-none">
                     <SelectValue placeholder="Select Sub Group" />
                   </SelectTrigger>
                   <SelectContent>
@@ -108,7 +108,7 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
               <div className="space-y-2">
                 <Label>Building</Label>
                 <Select>
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-none">
                     <SelectValue placeholder="Select Building" />
                   </SelectTrigger>
                   <SelectContent>
@@ -121,7 +121,7 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
               <div className="space-y-2">
                 <Label>Wing</Label>
                 <Select>
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-none">
                     <SelectValue placeholder="Select Wing" />
                   </SelectTrigger>
                   <SelectContent>
@@ -135,7 +135,7 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
               <div className="space-y-2">
                 <Label>Area</Label>
                 <Select>
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-none">
                     <SelectValue placeholder="Select Area" />
                   </SelectTrigger>
                   <SelectContent>
@@ -150,7 +150,7 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
               <div className="space-y-2">
                 <Label>Floor</Label>
                 <Select>
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-none">
                     <SelectValue placeholder="Select Floor" />
                   </SelectTrigger>
                   <SelectContent>
@@ -163,7 +163,7 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
               <div className="space-y-2">
                 <Label>Room</Label>
                 <Select>
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-none">
                     <SelectValue placeholder="Select Room" />
                   </SelectTrigger>
                   <SelectContent>
@@ -180,19 +180,19 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
         <div className="flex justify-center gap-4 pt-4">
           <Button 
             onClick={handleSubmit}
-            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-8 py-2 h-9 text-sm font-medium"
+            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium"
           >
             Submit
           </Button>
           <Button 
             onClick={handleExport}
-            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-8 py-2 h-9 text-sm font-medium"
+            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium"
           >
             Export
           </Button>
           <Button 
             onClick={handleReset}
-            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-8 py-2 h-9 text-sm font-medium"
+            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium"
           >
             Reset
           </Button>

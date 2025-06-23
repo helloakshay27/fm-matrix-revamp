@@ -76,7 +76,7 @@ export const UtilityEVConsumptionFilterDialog = ({ isOpen, onClose }: UtilityEVC
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal",
+                      "w-full justify-start text-left font-normal rounded-none",
                       !dateRange?.from && "text-muted-foreground"
                     )}
                   >
@@ -114,19 +114,19 @@ export const UtilityEVConsumptionFilterDialog = ({ isOpen, onClose }: UtilityEVC
         <div className="flex justify-center gap-4 pt-4">
           <Button 
             onClick={handleSubmit}
-            className="bg-[#8B3A8B] text-white hover:bg-[#7A2E7A] transition-colors duration-200 rounded-lg px-8 py-2 h-9 text-sm font-medium"
+            className="bg-[#8B3A8B] text-white hover:bg-[#7A2E7A] transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium"
           >
             Submit
           </Button>
           <Button 
             onClick={handleExport}
-            className="bg-[#8B3A8B] text-white hover:bg-[#7A2E7A] transition-colors duration-200 rounded-lg px-8 py-2 h-9 text-sm font-medium"
+            className="bg-[#8B3A8B] text-white hover:bg-[#7A2E7A] transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium"
           >
             Export
           </Button>
           <Button 
             onClick={handleReset}
-            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-8 py-2 h-9 text-sm font-medium"
+            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium"
           >
             Reset
           </Button>

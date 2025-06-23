@@ -62,7 +62,7 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
                 <Input 
                   id="assetName"
                   placeholder="Enter Asset Name"
-                  className="mt-1"
+                  className="mt-1 rounded-none"
                 />
               </div>
               <div>
@@ -70,7 +70,7 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
                 <Input 
                   id="dateRange"
                   placeholder="Select Date Range"
-                  className="mt-1"
+                  className="mt-1 rounded-none"
                 />
               </div>
             </div>
@@ -78,7 +78,7 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
               <div>
                 <Label htmlFor="group" className="text-sm">Group</Label>
                 <Select>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="mt-1 rounded-none">
                     <SelectValue placeholder="Select Category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -90,7 +90,7 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
               <div>
                 <Label htmlFor="subgroup" className="text-sm">Subgroup</Label>
                 <Select>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="mt-1 rounded-none">
                     <SelectValue placeholder="Select Sub Group" />
                   </SelectTrigger>
                   <SelectContent>
@@ -109,7 +109,7 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
               <div>
                 <Label htmlFor="building" className="text-sm">Building</Label>
                 <Select>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="mt-1 rounded-none">
                     <SelectValue placeholder="Select Building" />
                   </SelectTrigger>
                   <SelectContent>
@@ -121,7 +121,7 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
               <div>
                 <Label htmlFor="wing" className="text-sm">Wing</Label>
                 <Select>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="mt-1 rounded-none">
                     <SelectValue placeholder="Select Wing" />
                   </SelectTrigger>
                   <SelectContent>
@@ -135,7 +135,7 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
               <div>
                 <Label htmlFor="area" className="text-sm">Area</Label>
                 <Select>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="mt-1 rounded-none">
                     <SelectValue placeholder="Select Area" />
                   </SelectTrigger>
                   <SelectContent>
@@ -147,7 +147,7 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
               <div>
                 <Label htmlFor="floor" className="text-sm">Floor</Label>
                 <Select>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="mt-1 rounded-none">
                     <SelectValue placeholder="Select Floor" />
                   </SelectTrigger>
                   <SelectContent>
@@ -160,7 +160,7 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
             <div className="mt-4">
               <Label htmlFor="room" className="text-sm">Room</Label>
               <Select>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mt-1 rounded-none">
                   <SelectValue placeholder="Select Room" />
                 </SelectTrigger>
                 <SelectContent>
@@ -176,21 +176,21 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
             <Button 
               onClick={handleSubmit}
               style={{ backgroundColor: '#C72030' }}
-              className="hover:bg-[#C72030]/90 text-white flex-1"
+              className="hover:bg-[#C72030]/90 text-white flex-1 rounded-none"
             >
               Submit
             </Button>
             <Button 
               onClick={handleExport}
               style={{ backgroundColor: '#C72030' }}
-              className="hover:bg-[#C72030]/90 text-white flex-1"
+              className="hover:bg-[#C72030]/90 text-white flex-1 rounded-none"
             >
               Export
             </Button>
             <Button 
               onClick={handleReset}
               style={{ backgroundColor: '#C72030' }}
-              className="hover:bg-[#C72030]/90 text-white flex-1"
+              className="hover:bg-[#C72030]/90 text-white flex-1 rounded-none"
             >
               Reset
             </Button>

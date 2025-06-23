@@ -54,7 +54,7 @@ export const WasteGenerationFilterDialog = ({ isOpen, onClose }: WasteGeneration
             <div className="space-y-2">
               <Label>Commodity/Source</Label>
               <Select value={filters.commodity} onValueChange={(value) => handleFilterChange('commodity', value)}>
-                <SelectTrigger>
+                <SelectTrigger className="rounded-none">
                   <SelectValue placeholder="Select Commodity" />
                 </SelectTrigger>
                 <SelectContent>
@@ -69,7 +69,7 @@ export const WasteGenerationFilterDialog = ({ isOpen, onClose }: WasteGeneration
             <div className="space-y-2">
               <Label>Category</Label>
               <Select value={filters.category} onValueChange={(value) => handleFilterChange('category', value)}>
-                <SelectTrigger>
+                <SelectTrigger className="rounded-none">
                   <SelectValue placeholder="Select Category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -85,7 +85,7 @@ export const WasteGenerationFilterDialog = ({ isOpen, onClose }: WasteGeneration
             <div className="space-y-2">
               <Label>Operational Name of Landlord/ Tenant</Label>
               <Select value={filters.operationalName} onValueChange={(value) => handleFilterChange('operationalName', value)}>
-                <SelectTrigger>
+                <SelectTrigger className="rounded-none">
                   <SelectValue placeholder="Select Operational Name" />
                 </SelectTrigger>
                 <SelectContent>
@@ -103,6 +103,7 @@ export const WasteGenerationFilterDialog = ({ isOpen, onClose }: WasteGeneration
                 value={filters.dateRange}
                 onChange={(e) => handleFilterChange('dateRange', e.target.value)}
                 placeholder="Select Date Range"
+                className="rounded-none"
               />
             </div>
           </div>
@@ -111,21 +112,21 @@ export const WasteGenerationFilterDialog = ({ isOpen, onClose }: WasteGeneration
             <Button
               onClick={handleSubmit}
               style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#A01B26] px-8"
+              className="text-white hover:bg-[#A01B26] px-8 rounded-none"
             >
               Submit
             </Button>
             <Button
               onClick={handleExport}
               style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#A01B26] px-8"
+              className="text-white hover:bg-[#A01B26] px-8 rounded-none"
             >
               Export
             </Button>
             <Button
               onClick={handleReset}
               variant="outline"
-              className="px-8"
+              className="px-8 rounded-none"
             >
               Reset
             </Button>

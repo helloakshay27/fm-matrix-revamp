@@ -79,7 +79,7 @@ export const WaterFilterDialog: React.FC<WaterFilterDialogProps> = ({ isOpen, on
           <div>
             <Label className="text-sm font-medium mb-2">Site</Label>
             <Select value={filters.site} onValueChange={(value) => handleFilterChange('site', value)}>
-              <SelectTrigger>
+              <SelectTrigger className="rounded-none">
                 <SelectValue placeholder="Select Site" />
               </SelectTrigger>
               <SelectContent>
@@ -92,7 +92,7 @@ export const WaterFilterDialog: React.FC<WaterFilterDialogProps> = ({ isOpen, on
           <div>
             <Label className="text-sm font-medium mb-2">Building</Label>
             <Select value={filters.building} onValueChange={(value) => handleFilterChange('building', value)}>
-              <SelectTrigger>
+              <SelectTrigger className="rounded-none">
                 <SelectValue placeholder="Select Building" />
               </SelectTrigger>
               <SelectContent>
@@ -105,7 +105,7 @@ export const WaterFilterDialog: React.FC<WaterFilterDialogProps> = ({ isOpen, on
           <div>
             <Label className="text-sm font-medium mb-2">Wing</Label>
             <Select value={filters.wing} onValueChange={(value) => handleFilterChange('wing', value)}>
-              <SelectTrigger>
+              <SelectTrigger className="rounded-none">
                 <SelectValue placeholder="Select Wing" />
               </SelectTrigger>
               <SelectContent>
@@ -118,7 +118,7 @@ export const WaterFilterDialog: React.FC<WaterFilterDialogProps> = ({ isOpen, on
           <div>
             <Label className="text-sm font-medium mb-2">Floor</Label>
             <Select value={filters.floor} onValueChange={(value) => handleFilterChange('floor', value)}>
-              <SelectTrigger>
+              <SelectTrigger className="rounded-none">
                 <SelectValue placeholder="Select Floor" />
               </SelectTrigger>
               <SelectContent>
@@ -131,7 +131,7 @@ export const WaterFilterDialog: React.FC<WaterFilterDialogProps> = ({ isOpen, on
           <div>
             <Label className="text-sm font-medium mb-2">Area</Label>
             <Select value={filters.area} onValueChange={(value) => handleFilterChange('area', value)}>
-              <SelectTrigger>
+              <SelectTrigger className="rounded-none">
                 <SelectValue placeholder="Select Area" />
               </SelectTrigger>
               <SelectContent>
@@ -144,7 +144,7 @@ export const WaterFilterDialog: React.FC<WaterFilterDialogProps> = ({ isOpen, on
           <div>
             <Label className="text-sm font-medium mb-2">Room</Label>
             <Select value={filters.room} onValueChange={(value) => handleFilterChange('room', value)}>
-              <SelectTrigger>
+              <SelectTrigger className="rounded-none">
                 <SelectValue placeholder="Select Room" />
               </SelectTrigger>
               <SelectContent>
@@ -160,6 +160,7 @@ export const WaterFilterDialog: React.FC<WaterFilterDialogProps> = ({ isOpen, on
               value={filters.assetName}
               onChange={(e) => handleFilterChange('assetName', e.target.value)}
               placeholder="Enter Asset Name"
+              className="rounded-none"
             />
           </div>
 
@@ -169,13 +170,14 @@ export const WaterFilterDialog: React.FC<WaterFilterDialogProps> = ({ isOpen, on
               value={filters.assetId}
               onChange={(e) => handleFilterChange('assetId', e.target.value)}
               placeholder="Enter Asset ID"
+              className="rounded-none"
             />
           </div>
 
           <div>
             <Label className="text-sm font-medium mb-2">Status</Label>
             <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
-              <SelectTrigger>
+              <SelectTrigger className="rounded-none">
                 <SelectValue placeholder="Select Status" />
               </SelectTrigger>
               <SelectContent>
@@ -189,7 +191,7 @@ export const WaterFilterDialog: React.FC<WaterFilterDialogProps> = ({ isOpen, on
           <div>
             <Label className="text-sm font-medium mb-2">Meter Type</Label>
             <Select value={filters.meterType} onValueChange={(value) => handleFilterChange('meterType', value)}>
-              <SelectTrigger>
+              <SelectTrigger className="rounded-none">
                 <SelectValue placeholder="Select Meter Type" />
               </SelectTrigger>
               <SelectContent>
@@ -205,14 +207,14 @@ export const WaterFilterDialog: React.FC<WaterFilterDialogProps> = ({ isOpen, on
           <Button 
             onClick={handleClearFilters}
             style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
+            className="text-white hover:bg-[#C72030]/90 rounded-none"
           >
             Clear All
           </Button>
           <Button 
             onClick={handleApplyFilters}
             style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
+            className="text-white hover:bg-[#C72030]/90 rounded-none"
           >
             Apply Filters
           </Button>
