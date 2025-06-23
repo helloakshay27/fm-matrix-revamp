@@ -3,6 +3,8 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 interface FitoutRequestFilterDialogProps {
   isOpen: boolean;
@@ -21,12 +23,40 @@ export const FitoutRequestFilterDialog = ({ isOpen, onClose }: FitoutRequestFilt
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">OPTIONS</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* Category Options */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Type</Label>
+            <RadioGroup defaultValue="ppm" className="flex flex-wrap gap-6">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="ppm" id="fitout-ppm" className="border-red-500 text-red-500" />
+                <Label htmlFor="fitout-ppm" className="text-sm font-medium">PPM</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="amc" id="fitout-amc" />
+                <Label htmlFor="fitout-amc" className="text-sm font-medium">AMC</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="preparedness" id="fitout-preparedness" />
+                <Label htmlFor="fitout-preparedness" className="text-sm font-medium">Preparedness</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="hoto" id="fitout-hoto" />
+                <Label htmlFor="fitout-hoto" className="text-sm font-medium">Hoto</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="routine" id="fitout-routine" />
+                <Label htmlFor="fitout-routine" className="text-sm font-medium">Routine</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {/* Additional Filter Options */}
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Category</label>

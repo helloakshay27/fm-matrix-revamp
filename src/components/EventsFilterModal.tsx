@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface EventsFilterModalProps {
   open: boolean;
@@ -17,24 +18,54 @@ interface EventsFilterModalProps {
 
 export const EventsFilterModal = ({ open, onOpenChange }: EventsFilterModalProps) => {
   const handleApply = () => {
-    // Handle filter apply logic here
     console.log("Applying filters...");
     onOpenChange(false);
   };
 
   const handleReset = () => {
-    // Handle filter reset logic here
     console.log("Resetting filters...");
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">FILTER</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">OPTIONS</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {/* Category Options */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Category</Label>
+            <RadioGroup defaultValue="ppm" className="flex flex-wrap gap-6">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="ppm" id="events-ppm" className="border-red-500 text-red-500" />
+                <Label htmlFor="events-ppm" className="text-sm font-medium">PPM</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="audit" id="events-audit" />
+                <Label htmlFor="events-audit" className="text-sm font-medium">Audit</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="hoto" id="events-hoto" />
+                <Label htmlFor="events-hoto" className="text-sm font-medium">Hoto</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="amc" id="events-amc" />
+                <Label htmlFor="events-amc" className="text-sm font-medium">AMC</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="preparedness" id="events-preparedness" />
+                <Label htmlFor="events-preparedness" className="text-sm font-medium">Preparedness</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="routine" id="events-routine" />
+                <Label htmlFor="events-routine" className="text-sm font-medium">Routine</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {/* Additional Filters */}
           <div className="grid grid-cols-3 gap-4">
             <div>
               <Label htmlFor="unit" className="text-sm font-medium">Unit</Label>
