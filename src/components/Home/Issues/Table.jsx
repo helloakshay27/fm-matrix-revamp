@@ -285,7 +285,7 @@ useEffect(() => {
         setLocalError('Failed to load issues.');
         setData([]);
     }
-  }, [allIssuesFromStore, allIssuesError,parentId,milestoneOptions,taskOptions,filteredIssues]);
+  }, [allIssuesFromStore, allIssuesError,parentId,milestoneOptions,taskOptions,filteredIssues,filterSuccess]);
 
 
   useEffect(() => {
@@ -535,7 +535,7 @@ useEffect(() => {
         )}
       },
     ],
-    [handleDeleteExistingIssues, handleUpdateIssues, userOptionsForSelectBox,issueTypeOptions,data]
+    [handleDeleteExistingIssues, handleUpdateIssues, userOptionsForSelectBox,issueTypeOptions,allIssuesFromStore]
   );
 
   const table = useReactTable({

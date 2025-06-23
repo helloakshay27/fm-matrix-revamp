@@ -106,25 +106,22 @@ const TaskActions = ({
             if (status !== "All") {
                 filters["q[status_eq]"] = formattedStatus;
             }
+            dispatch(filterIssue({ token, filter: filters })).unwrap();
+
         } else if(addType === "Issues") {
             console.log(formattedStatus);
             if (status !== "All") {
                 filters["q[status_eq]"] = formattedStatus;
             }
+            dispatch(filterProjects({ token, filters })).unwrap();
+
         }else{
             if (status !== "All") {
                 filters["q[status_eq]"] = formattedStatus;
             }
             filters["q[milestone_id_eq]"] = mid;
-        }
-
-        if (addType === "Project") {
-            dispatch(filterProjects({ token, filters })).unwrap();
-        } else if(addType === "Issues") {
-            dispatch(filterIssue({ token, filter: filters })).unwrap();
-        } 
-        else{
             dispatch(filterTask({ token, filter: filters })).unwrap(); 
+
         }
         setSelectedStatus(status);
         setIsStatusOpen(false);
