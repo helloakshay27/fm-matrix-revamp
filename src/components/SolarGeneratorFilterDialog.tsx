@@ -82,11 +82,15 @@ export const SolarGeneratorFilterDialog: React.FC<SolarGeneratorFilterDialogProp
                   initialFocus
                   mode="range"
                   defaultMonth={dateRange.from}
-                  selected={dateRange}
+                  selected={dateRange.from && dateRange.to ? { from: dateRange.from, to: dateRange.to } : undefined}
                   onSelect={(range) => {
-                    setDateRange(range || {});
-                    if (range?.from && range?.to) {
-                      setIsCalendarOpen(false);
+                    if (range) {
+                      setDateRange({ from: range.from, to: range.to });
+                      if (range.from && range.to) {
+                        setIsCalendarOpen(false);
+                      }
+                    } else {
+                      setDateRange({});
                     }
                   }}
                   numberOfMonths={2}

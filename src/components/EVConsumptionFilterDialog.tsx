@@ -4,7 +4,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { X } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { X, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface EVConsumptionFilterDialogProps {
   isOpen: boolean;
@@ -12,7 +16,8 @@ interface EVConsumptionFilterDialogProps {
 }
 
 export const EVConsumptionFilterDialog = ({ isOpen, onClose }: EVConsumptionFilterDialogProps) => {
-  const [dateRange, setDateRange] = useState('');
+  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const handleSubmit = () => {
     console.log('Filter submitted with date range:', dateRange);
@@ -26,8 +31,18 @@ export const EVConsumptionFilterDialog = ({ isOpen, onClose }: EVConsumptionFilt
   };
 
   const handleReset = () => {
-    setDateRange('');
+    setDateRange({});
     console.log('Filter reset');
+  };
+
+  const formatDateRange = () => {
+    if (dateRange.from) {
+      if (dateRange.to) {
+        return `${format(dateRange.from, 'dd/MM/yyyy')} - ${format(dateRange.to, 'dd/MM/yyyy')}`;
+      }
+      return format(dateRange.from, 'dd/MM/yyyy');
+    }
+    return 'Select Date Range';
   };
 
   return (
@@ -51,13 +66,59 @@ export const EVConsumptionFilterDialog = ({ isOpen, onClose }: EVConsumptionFilt
             <Label htmlFor="dateRange" className="text-sm font-medium text-gray-700">
               Date Range*
             </Label>
-            <Input
-              id="dateRange"
-              placeholder="Select Date Range"
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
-              className="border-gray-300"
-            />
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal border-gray-300",
+                    !dateRange.from && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formatDateRange()}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={dateRange.from}
+                  selected={dateRange.from && dateRange.to ? { from: dateRange.from, to: dateRange.to } : undefined}
+                  onSelect={(range) => {
+                    if (range) {
+                      setDateRange({ from: range.from, to: range.to });
+                      if (range.from && range.to) {
+                        setIsCalendarOpen(false);
+                      }
+                    } else {
+                      setDateRange({});
+                    }
+                  }}
+                  numberOfMonths={2}
+                  className="pointer-events-auto"
+                />
+                <div className="flex justify-between p-3 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setDateRange({});
+                      setIsCalendarOpen(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setIsCalendarOpen(false)}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    Apply
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Action Buttons */}
