@@ -11,7 +11,7 @@ import {
   Star, MessageSquare, Coffee, Wifi, Home, ChevronDown,
   ChevronRight, Plus, Search, Filter, Download, Upload,
   Briefcase, BookOpen, FileSpreadsheet, Target,
-  Archive, TreePine, FlaskConical, Wallet
+  Archive, TreePine, FlaskConical
 } from 'lucide-react';
 
 const modulesByPackage = {
@@ -48,6 +48,16 @@ const modulesByPackage = {
     { name: 'Ticket', icon: FileText, href: '/maintenance/ticket' },
     { name: 'Task', icon: CheckSquare, href: '/maintenance/task' },
     { name: 'Schedule', icon: Calendar, href: '/maintenance/schedule' },
+    { 
+      name: 'Safety', 
+      icon: Shield, 
+      href: '/maintenance/safety',
+      subItems: [
+        { name: 'Incident', href: '/maintenance/incident', color: 'text-[#1a1a1a]' },
+        { name: 'Permit to Work', href: '/maintenance/permit', color: 'text-[#1a1a1a]' },
+        { name: 'M Safe', href: '/maintenance/m-safe', color: 'text-[#1a1a1a]' }
+      ]
+    },
     { 
       name: 'Audit', 
       icon: Clipboard, 
@@ -95,12 +105,6 @@ const modulesByPackage = {
       ]
     }
   ],
-  'Safety': [
-    { name: 'Incident', icon: AlertTriangle, href: '/safety/incident' },
-    { name: 'Permit to Work', icon: FileText, href: '/safety/permit' },
-    { name: 'M Safe', icon: Shield, href: '/safety/m-safe' },
-    { name: 'Training List', icon: BookOpen, href: '/safety/training-list' }
-  ],
   'Finance': [
     { 
       name: 'Procurement', 
@@ -129,8 +133,6 @@ const modulesByPackage = {
         { name: 'Auto Saved PR', href: '/finance/auto-saved-pr', color: 'text-[#1a1a1a]' }
       ]
     },
-    { name: 'Invoices', icon: Receipt, href: '/finance/invoices' },
-    { name: 'Bill Booking', icon: Receipt, href: '/finance/bill-booking' },
     { 
       name: 'Accounting', 
       icon: Calculator, 
@@ -141,17 +143,20 @@ const modulesByPackage = {
         { name: 'Pending Approvals', href: '/finance/pending-approvals', color: 'text-[#1a1a1a]' }
       ]
     },
-    { name: 'WBS', icon: BarChart3, href: '/finance/wbs' }
+    { name: 'Bill Booking', icon: Receipt, href: '/finance/bill-booking' },
+    { name: 'Invoice', icon: FileText, href: '/finance/invoice' },
+    { 
+      name: 'Lease Management', 
+      icon: FileText, 
+      href: '/finance/lease-management',
+      color: 'text-[#1a1a1a]'
+    }
   ],
   'CRM': [
+    { name: 'Cloud Telephony', icon: Phone, href: '/crm/cloud-telephony' },
     { name: 'Lead', icon: Target, href: '/crm/lead' },
     { name: 'Opportunity', icon: Star, href: '/crm/opportunity' },
-    { name: 'CRM', icon: Users, href: '/crm/crm' },
-    { name: 'Events', icon: Calendar, href: '/crm/events' },
-    { name: 'Broadcast', icon: Bell, href: '/crm/broadcast' },
-    { name: 'Groups', icon: Users, href: '/crm/groups' },
-    { name: 'Polls', icon: BarChart3, href: '/crm/polls' },
-    { name: 'Campaign', icon: Target, href: '/crm/campaign' }
+    { name: 'CRM', icon: Users, href: '/crm/crm' }
   ],
   'Utility': [
     { name: 'Energy', icon: Zap, href: '/utility/energy' },
@@ -219,14 +224,7 @@ const modulesByPackage = {
         }
       ]
     },
-    { name: 'Redemonection marketplace', icon: Globe, href: '/vas/redemonection-marketplace' },
-    { name: 'Cold Wallet', icon: Wallet, href: '/vas/cold-wallet' }
-  ],
-  'Market Place': [
-    { name: 'Lease Management', icon: FileText, href: '/market-place/lease-management' },
-    { name: 'Loyalty Rule Engine', icon: Settings, href: '/market-place/loyalty-rule-engine' },
-    { name: 'Cloud Telephony', icon: Phone, href: '/market-place/cloud-telephony' },
-    { name: 'Accounting', icon: Calculator, href: '/market-place/accounting' }
+    { name: 'Training List', icon: BookOpen, href: '/vas/training-list' }
   ],
   'Settings': [
     { name: 'General', icon: Settings, href: '/settings/general' },
@@ -310,12 +308,8 @@ export const Sidebar = () => {
       setCurrentSection('Finance');
     } else if (path.startsWith('/maintenance')) {
       setCurrentSection('Maintenance');
-    } else if (path.startsWith('/safety')) {
-      setCurrentSection('Safety');
     } else if (path.startsWith('/crm')) {
       setCurrentSection('CRM');
-    } else if (path.startsWith('/market-place')) {
-      setCurrentSection('Market Place');
     } else if (path.startsWith('/settings')) {
       setCurrentSection('Settings');
     }
