@@ -1,44 +1,82 @@
 
 import React, { useState } from 'react';
-import { Plus, Upload, RefreshCw, Download, QrCode, Filter, Search } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
-import { BulkUploadDialog } from '../components/BulkUploadDialog';
-import { UtilitySTPFilterDialog } from '../components/UtilitySTPFilterDialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Search, Plus, Import, RefreshCw, FileDown, Printer, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { UtilitySTPFilterDialog } from '@/components/UtilitySTPFilterDialog';
+import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 
-const UtilitySTPDashboard = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isImportOpen, setIsImportOpen] = useState(false);
-  const [isUpdateOpen, setIsUpdateOpen] = useState(false);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+export const UtilitySTPDashboard = () => {
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
 
-  // Empty data array
-  const mockData: any[] = [];
+  const stats = [
+    { title: 'Total Asset', value: '3', color: 'bg-blue-500' },
+    { title: 'In Use', value: '3', color: 'bg-green-500' },
+    { title: 'Breakdown', value: '0', color: 'bg-red-600' }
+  ];
+
+  // Sample STP data
+  const stpData = [
+    {
+      id: 'STP001',
+      assetName: 'Primary STP Unit',
+      assetCode: 'STP-001-A',
+      assetNo: '301',
+      status: 'In Use',
+      site: 'Main Site',
+      building: 'Treatment Plant',
+      capacity: '500 KLD',
+      type: 'Biological Treatment'
+    },
+    {
+      id: 'STP002', 
+      assetName: 'Secondary STP Unit',
+      assetCode: 'STP-002-B',
+      assetNo: '302',
+      status: 'In Use',
+      site: 'Main Site',
+      building: 'Treatment Plant',
+      capacity: '300 KLD',
+      type: 'Chemical Treatment'
+    },
+    {
+      id: 'STP003',
+      assetName: 'Tertiary STP Unit',
+      assetCode: 'STP-003-C', 
+      assetNo: '303',
+      status: 'In Use',
+      site: 'Secondary Site',
+      building: 'Treatment Facility',
+      capacity: '200 KLD',
+      type: 'Membrane Treatment'
+    }
+  ];
 
   const handleAdd = () => {
     navigate('/utility/stp/add-asset');
   };
 
-  const handleInActiveAssets = () => {
-    navigate('/utility/inactive-assets');
+  const handleImport = () => {
+    setUploadType('import');
+    setIsBulkUploadOpen(true);
+  };
+
+  const handleUpdate = () => {
+    setUploadType('update');
+    setIsBulkUploadOpen(true);
   };
 
   const handleExportAll = () => {
-    // Create and download CSV file
     const csvContent = "data:text/csv;charset=utf-8," + 
-      "Asset Name,Asset ID,Asset Code,Asset No.,Asset Status,Equipment Id,Site,Building,Wing,Floor,Area,Room,Meter Type,Asset Type\n";
+      "Asset Name,Asset ID,Asset Code,Asset No.,Asset Status,Site,Building,Capacity,Type\n" +
+      stpData.map(item => `${item.assetName},${item.id},${item.assetCode},${item.assetNo},${item.status},${item.site},${item.building},${item.capacity},${item.type}`).join('\n');
     
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -51,240 +89,187 @@ const UtilitySTPDashboard = () => {
     console.log('Exporting all STP assets data...');
   };
 
+  const handlePrintQR = () => {
+    console.log('Printing QR codes...');
+  };
+
+  const handleInActiveAssets = () => {
+    navigate('/utility/inactive-assets');
+  };
+
   const handleSearch = () => {
     console.log('Searching for:', searchTerm);
   };
 
-  const handlePrintQR = () => {
-    console.log('Printing QR codes for STP assets...');
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
+  const filteredData = stpData.filter(item =>
+    searchTerm === '' || 
+    item.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.assetCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.type.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <>
-      <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-        {/* Header */}
-        <div>
-          <nav className="text-sm text-gray-600 mb-2">
-            Assets &gt; Asset List
-          </nav>
-          <h1 className="text-2xl font-bold text-gray-900">ASSET LIST</h1>
-        </div>
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+      {/* Breadcrumb */}
+      <div className="text-sm text-gray-600">
+        Assets &gt; STP Asset List
+      </div>
 
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 rounded-lg">
-            <div className="flex items-center gap-4">
-              <div className="bg-white/20 p-3 rounded-full">
-                <div className="w-6 h-6 bg-white/40 rounded-full"></div>
+      {/* Page Title */}
+      <h1 className="text-2xl font-bold text-gray-900">STP ASSET LIST</h1>
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {stats.map((stat, index) => (
+          <Card key={index}>
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className={`w-12 h-12 rounded-full ${stat.color} flex items-center justify-center`}>
+                  <span className="text-white font-bold text-lg">{stat.value}</span>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">{stat.title}</p>
+                  <p className="text-2xl font-bold">{stat.value}</p>
+                </div>
               </div>
-              <div>
-                <div className="text-3xl font-bold">0</div>
-                <div className="text-white/90">Total Asset</div>
-              </div>
-            </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex flex-wrap gap-3">
+        <Button 
+          onClick={handleAdd}
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-md shadow-sm px-4 py-2 flex items-center gap-2 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Add
+        </Button>
+        <Button 
+          onClick={handleImport}
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-md shadow-sm px-4 py-2 flex items-center gap-2 transition-colors"
+        >
+          <Import className="w-4 h-4" />
+          Import
+        </Button>
+        <Button 
+          onClick={handleUpdate}
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-md shadow-sm px-4 py-2 flex items-center gap-2 transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Update
+        </Button>
+        <Button 
+          onClick={handleExportAll}
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-md shadow-sm px-4 py-2 flex items-center gap-2 transition-colors"
+        >
+          <FileDown className="w-4 h-4" />
+          Export All
+        </Button>
+        <Button 
+          onClick={handlePrintQR}
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-md shadow-sm px-4 py-2 flex items-center gap-2 transition-colors"
+        >
+          <Printer className="w-4 h-4" />
+          Print QR
+        </Button>
+        <Button 
+          onClick={handleInActiveAssets}
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-md shadow-sm px-4 py-2 transition-colors"
+        >
+          In-Active Assets
+        </Button>
+      </div>
+
+      {/* Search and Filter */}
+      <div className="flex justify-between items-center">
+        <Button 
+          onClick={() => setIsFilterOpen(true)}
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-md shadow-sm px-4 py-2 flex items-center gap-2 transition-colors"
+        >
+          <Filter className="w-4 h-4" />
+          Filters
+        </Button>
+        <div className="flex items-center space-x-2">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+            <Input
+              placeholder="Search STP assets..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="pl-10 w-64 rounded-md border border-gray-300 shadow-sm"
+            />
           </div>
-
-          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white p-6 rounded-lg">
-            <div className="flex items-center gap-4">
-              <div className="bg-white/20 p-3 rounded-full">
-                <div className="w-6 h-6 bg-white/40 rounded-full"></div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold">0</div>
-                <div className="text-white/90">In Use</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white p-6 rounded-lg">
-            <div className="flex items-center gap-4">
-              <div className="bg-white/20 p-3 rounded-full">
-                <div className="w-6 h-6 bg-white/40 rounded-full"></div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold">0</div>
-                <div className="text-white/90">Breakdown</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-4">
           <Button 
-            onClick={handleAdd}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
+            onClick={handleSearch}
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-md shadow-sm px-4 py-2 transition-colors"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Add
+            Go
           </Button>
-          <Button 
-            onClick={() => setIsImportOpen(true)}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Import
-          </Button>
-          <Button 
-            onClick={() => setIsUpdateOpen(true)}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Update
-          </Button>
-          <Button 
-            onClick={handleExportAll}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export All
-          </Button>
-          <Button 
-            onClick={handlePrintQR}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
-          >
-            <QrCode className="w-4 h-4 mr-2" />
-            Print QR
-          </Button>
-          <Button 
-            onClick={handleInActiveAssets}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
-          >
-            In-Active Assets
-          </Button>
-        </div>
-
-        {/* Search and Filter */}
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <Button 
-            onClick={() => setIsFilterOpen(true)}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filters
-          </Button>
-          
-          <div className="flex gap-2 items-center">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input 
-                placeholder="Search..." 
-                className="pl-10 w-64"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSearch();
-                  }
-                }}
-              />
-            </div>
-            <Button 
-              onClick={handleSearch}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#C72030]/90"
-            >
-              Go!
-            </Button>
-          </div>
-        </div>
-
-        {/* Data Table */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="w-12">
-                  <Checkbox />
-                </TableHead>
-                <TableHead>Actions</TableHead>
-                <TableHead>Asset Name</TableHead>
-                <TableHead>Asset ID</TableHead>
-                <TableHead>Asset Code</TableHead>
-                <TableHead>Asset No.</TableHead>
-                <TableHead>Asset Status</TableHead>
-                <TableHead>Equipment Id</TableHead>
-                <TableHead>Site</TableHead>
-                <TableHead>Building</TableHead>
-                <TableHead>Wing</TableHead>
-                <TableHead>Floor</TableHead>
-                <TableHead>Area</TableHead>
-                <TableHead>Room</TableHead>
-                <TableHead>Meter Type</TableHead>
-                <TableHead>Asset Type</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {mockData.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={16} className="text-center py-8 text-gray-500">
-                    No data available
-                  </TableCell>
-                </TableRow>
-              ) : (
-                mockData.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      <Checkbox />
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" className="text-blue-600">
-                        Actions
-                      </Button>
-                    </TableCell>
-                    <TableCell className="font-medium">{item.assetName}</TableCell>
-                    <TableCell>{item.assetId}</TableCell>
-                    <TableCell>{item.assetCode}</TableCell>
-                    <TableCell>{item.assetNo}</TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={item.status === 'In Use' ? 'default' : 'destructive'}
-                        className={item.status === 'In Use' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
-                      >
-                        {item.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{item.equipmentId}</TableCell>
-                    <TableCell>{item.site}</TableCell>
-                    <TableCell>{item.building}</TableCell>
-                    <TableCell>{item.wing}</TableCell>
-                    <TableCell>{item.floor}</TableCell>
-                    <TableCell>{item.area}</TableCell>
-                    <TableCell>{item.room}</TableCell>
-                    <TableCell>{item.meterType}</TableCell>
-                    <TableCell>{item.assetType}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
         </div>
       </div>
 
+      {/* Data Table */}
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50">
+                <TableHead className="font-semibold">Asset Name</TableHead>
+                <TableHead className="font-semibold">Asset ID</TableHead>
+                <TableHead className="font-semibold">Asset Code</TableHead>
+                <TableHead className="font-semibold">Asset No.</TableHead>
+                <TableHead className="font-semibold">Status</TableHead>
+                <TableHead className="font-semibold">Site</TableHead>
+                <TableHead className="font-semibold">Building</TableHead>
+                <TableHead className="font-semibold">Capacity</TableHead>
+                <TableHead className="font-semibold">Type</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredData.map((item) => (
+                <TableRow key={item.id} className="hover:bg-gray-50">
+                  <TableCell className="font-medium text-blue-600 cursor-pointer">
+                    {item.assetName}
+                  </TableCell>
+                  <TableCell>{item.id}</TableCell>
+                  <TableCell>{item.assetCode}</TableCell>
+                  <TableCell>{item.assetNo}</TableCell>
+                  <TableCell>
+                    <span className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+                      {item.status}
+                    </span>
+                  </TableCell>
+                  <TableCell>{item.site}</TableCell>
+                  <TableCell>{item.building}</TableCell>
+                  <TableCell>{item.capacity}</TableCell>
+                  <TableCell>{item.type}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
       {/* Dialogs */}
-      <BulkUploadDialog 
-        open={isImportOpen} 
-        onOpenChange={setIsImportOpen}
-        title="Import STP Assets"
-      />
-      <BulkUploadDialog 
-        open={isUpdateOpen} 
-        onOpenChange={setIsUpdateOpen}
-        title="Update STP Assets"
-      />
       <UtilitySTPFilterDialog 
         isOpen={isFilterOpen} 
         onClose={() => setIsFilterOpen(false)} 
       />
-    </>
+      
+      <BulkUploadDialog 
+        open={isBulkUploadOpen} 
+        onOpenChange={setIsBulkUploadOpen}
+        title={uploadType === 'import' ? 'Import STP Assets' : 'Update STP Assets'}
+      />
+    </div>
   );
 };
-
-export default UtilitySTPDashboard;

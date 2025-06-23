@@ -106,48 +106,42 @@ export const UtilityWaterDashboard = () => {
       <div className="flex flex-wrap gap-3">
         <Button 
           onClick={handleAdd}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-md shadow-sm px-4 py-2 flex items-center gap-2 transition-colors"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4" />
           Add
         </Button>
         <Button 
           onClick={handleImport}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-md shadow-sm px-4 py-2 flex items-center gap-2 transition-colors"
         >
-          <Import className="w-4 h-4 mr-2" />
+          <Import className="w-4 h-4" />
           Import
         </Button>
         <Button 
           onClick={handleUpdate}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-md shadow-sm px-4 py-2 flex items-center gap-2 transition-colors"
         >
-          <RefreshCw className="w-4 h-4 mr-2" />
+          <RefreshCw className="w-4 h-4" />
           Update
         </Button>
         <Button 
           onClick={handleExportAll}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-md shadow-sm px-4 py-2 flex items-center gap-2 transition-colors"
         >
-          <FileDown className="w-4 h-4 mr-2" />
+          <FileDown className="w-4 h-4" />
           Export All
         </Button>
         <Button 
           onClick={handlePrintQR}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-md shadow-sm px-4 py-2 flex items-center gap-2 transition-colors"
         >
-          <Printer className="w-4 h-4 mr-2" />
+          <Printer className="w-4 h-4" />
           Print QR
         </Button>
         <Button 
           onClick={handleInActiveAssets}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-md shadow-sm px-4 py-2 transition-colors"
         >
           In-Active Assets
         </Button>
@@ -157,10 +151,9 @@ export const UtilityWaterDashboard = () => {
       <div className="flex justify-between items-center">
         <Button 
           onClick={() => setIsFilterOpen(true)}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-md shadow-sm px-4 py-2 flex items-center gap-2 transition-colors"
         >
-          <Filter className="w-4 h-4 mr-2" />
+          <Filter className="w-4 h-4" />
           Filters
         </Button>
         <div className="flex items-center space-x-2">
@@ -171,13 +164,12 @@ export const UtilityWaterDashboard = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="pl-10 w-64"
+              className="pl-10 w-64 rounded-md border border-gray-300 shadow-sm"
             />
           </div>
           <Button 
             onClick={handleSearch}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white rounded-md shadow-sm px-4 py-2 transition-colors"
           >
             Go
           </Button>
