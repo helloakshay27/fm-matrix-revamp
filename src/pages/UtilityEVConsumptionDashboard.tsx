@@ -9,50 +9,7 @@ import { UtilityEVConsumptionFilterDialog } from '../components/UtilityEVConsump
 const UtilityEVConsumptionDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  const evConsumptionData = [
-    {
-      id: "001",
-      transactionDate: "2024-01-15",
-      transactionId: "TXN001",
-      name: "John Doe",
-      site: "Site A",
-      unitsConsumed: "45.2",
-      tariffRate: "12.50",
-      saleOfEnergy: "565.00",
-      taxPercentage: "18%",
-      taxAmount: "101.70",
-      totalAmount: "666.70",
-      createdBy: "Admin"
-    },
-    {
-      id: "002",
-      transactionDate: "2024-01-16",
-      transactionId: "TXN002",
-      name: "Jane Smith",
-      site: "Site B",
-      unitsConsumed: "32.8",
-      tariffRate: "12.50",
-      saleOfEnergy: "410.00",
-      taxPercentage: "18%",
-      taxAmount: "73.80",
-      totalAmount: "483.80",
-      createdBy: "Manager"
-    },
-    {
-      id: "003",
-      transactionDate: "2024-01-17",
-      transactionId: "TXN003",
-      name: "Mike Johnson",
-      site: "Site C",
-      unitsConsumed: "28.5",
-      tariffRate: "12.50",
-      saleOfEnergy: "356.25",
-      taxPercentage: "18%",
-      taxAmount: "64.13",
-      totalAmount: "420.38",
-      createdBy: "Admin"
-    }
-  ];
+  const evConsumptionData = [];
 
   return (
     <div className="p-6 space-y-6">
