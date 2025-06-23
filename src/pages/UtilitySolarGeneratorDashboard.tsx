@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Filter } from "lucide-react";
+import { UtilitySolarGeneratorFilterDialog } from '../components/UtilitySolarGeneratorFilterDialog';
 
 // Empty data array for solar generators
 const solarGeneratorData = [];
@@ -64,6 +65,12 @@ const UtilitySolarGeneratorDashboard = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Filter Dialog */}
+      <UtilitySolarGeneratorFilterDialog 
+        isOpen={isFilterOpen} 
+        onClose={() => setIsFilterOpen(false)} 
+      />
     </div>
   );
 };
