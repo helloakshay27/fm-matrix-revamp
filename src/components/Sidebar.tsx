@@ -161,7 +161,8 @@ const modulesByPackage = {
   'Utility': [
     { name: 'Energy', icon: Zap, href: '/utility/energy' },
     { name: 'Water', icon: Droplets, href: '/utility/water' },
-    { name: 'STP', icon: Database, href: '/utility/stp' }
+    { name: 'STP', icon: Database, href: '/utility/stp' },
+    { name: 'EV Consumption', icon: Battery, href: '/utility/ev-consumption' }
   ],
   'Security': [
     { 
