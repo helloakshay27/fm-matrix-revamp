@@ -113,42 +113,48 @@ const UtilitySTPDashboard = () => {
         <div className="flex flex-wrap gap-4">
           <Button 
             onClick={handleAdd}
-            className="bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white px-6 py-2 rounded-md font-medium transition-colors border-0 shadow-sm"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
           <Button 
             onClick={() => setIsImportOpen(true)}
-            className="bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white px-6 py-2 rounded-md font-medium transition-colors border-0 shadow-sm"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
           >
             <Upload className="w-4 h-4 mr-2" />
             Import
           </Button>
           <Button 
             onClick={() => setIsUpdateOpen(true)}
-            className="bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white px-6 py-2 rounded-md font-medium transition-colors border-0 shadow-sm"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Update
           </Button>
           <Button 
             onClick={handleExportAll}
-            className="bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white px-6 py-2 rounded-md font-medium transition-colors border-0 shadow-sm"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
           >
             <Download className="w-4 h-4 mr-2" />
             Export All
           </Button>
           <Button 
             onClick={handlePrintQR}
-            className="bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white px-6 py-2 rounded-md font-medium transition-colors border-0 shadow-sm"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
           >
             <QrCode className="w-4 h-4 mr-2" />
             Print QR
           </Button>
           <Button 
             onClick={handleInActiveAssets}
-            className="bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white px-6 py-2 rounded-md font-medium transition-colors border-0 shadow-sm"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
           >
             In-Active Assets
           </Button>
@@ -158,7 +164,8 @@ const UtilitySTPDashboard = () => {
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <Button 
             onClick={() => setIsFilterOpen(true)}
-            className="bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white px-6 py-2 rounded-md font-medium transition-colors border-0 shadow-sm"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
           >
             <Filter className="w-4 h-4 mr-2" />
             Filters
@@ -169,7 +176,7 @@ const UtilitySTPDashboard = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input 
                 placeholder="Search..." 
-                className="pl-10 w-64 rounded-md border border-gray-300"
+                className="pl-10 w-64"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={(e) => {
@@ -181,7 +188,8 @@ const UtilitySTPDashboard = () => {
             </div>
             <Button 
               onClick={handleSearch}
-              className="bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white px-6 py-2 rounded-md font-medium transition-colors border-0 shadow-sm"
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:bg-[#C72030]/90"
             >
               Go!
             </Button>

@@ -112,47 +112,53 @@ export const UtilityDashboard = () => {
       <div className="flex flex-wrap gap-3 mb-6">
         <Button 
           onClick={handleAddClick}
-          className="bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white px-6 py-2 rounded-md font-medium transition-colors border-0 shadow-sm"
+          style={{ backgroundColor: '#C72030' }}
+          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4" />
           Add
         </Button>
         
         <Button 
           onClick={handleImport}
-          className="bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white px-6 py-2 rounded-md font-medium transition-colors border-0 shadow-sm"
+          style={{ backgroundColor: '#C72030' }}
+          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
         >
-          <Download className="w-4 h-4 mr-2" />
+          <Download className="w-4 h-4" />
           Import
         </Button>
         
         <Button 
           onClick={handleUpdate}
-          className="bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white px-6 py-2 rounded-md font-medium transition-colors border-0 shadow-sm"
+          style={{ backgroundColor: '#C72030' }}
+          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
         >
-          <Upload className="w-4 h-4 mr-2" />
+          <Upload className="w-4 h-4" />
           Update
         </Button>
         
         <Button 
           onClick={handleExportAll}
-          className="bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white px-6 py-2 rounded-md font-medium transition-colors border-0 shadow-sm"
+          style={{ backgroundColor: '#C72030' }}
+          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
         >
-          <Download className="w-4 h-4 mr-2" />
+          <Download className="w-4 h-4" />
           Export All
         </Button>
         
         <Button 
           onClick={handlePrintQR}
-          className="bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white px-6 py-2 rounded-md font-medium transition-colors border-0 shadow-sm"
+          style={{ backgroundColor: '#C72030' }}
+          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
         >
-          <QrCode className="w-4 h-4 mr-2" />
+          <QrCode className="w-4 h-4" />
           Print QR
         </Button>
         
         <Button 
           onClick={handleInActiveAssetsClick}
-          className="bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white px-6 py-2 rounded-md font-medium transition-colors border-0 shadow-sm"
+          style={{ backgroundColor: '#C72030' }}
+          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
         >
           In-Active Assets
         </Button>
@@ -162,17 +168,19 @@ export const UtilityDashboard = () => {
       <div className="flex flex-wrap gap-3 mb-6">
         <Button 
           onClick={handlePrintAllQR}
-          className="bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white px-6 py-2 rounded-md font-medium transition-colors border-0 shadow-sm"
+          style={{ backgroundColor: '#C72030' }}
+          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
         >
-          <QrCode className="w-4 h-4 mr-2" />
+          <QrCode className="w-4 h-4" />
           Print All QR
         </Button>
         
         <Button 
           onClick={() => setIsFilterOpen(true)}
-          className="bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white px-6 py-2 rounded-md font-medium transition-colors border-0 shadow-sm"
+          style={{ backgroundColor: '#C72030' }}
+          className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
         >
-          <Filter className="w-4 h-4 mr-2" />
+          <Filter className="w-4 h-4" />
           Filters
         </Button>
 
@@ -186,12 +194,13 @@ export const UtilityDashboard = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="pl-10 w-64 rounded-md border border-gray-300"
+                className="pl-10 w-64"
               />
             </div>
             <Button 
               onClick={handleSearch}
-              className="bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white px-6 py-2 rounded-md font-medium transition-colors border-0 shadow-sm"
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:bg-[#C72030]/90 text-white"
             >
               Go
             </Button>
