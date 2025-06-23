@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -328,7 +327,7 @@ export const Sidebar = () => {
         <div key={item.name}>
           <button
             onClick={() => toggleExpanded(item.name)}
-            className="flex items-center justify-between w-full gap-3 px-4 py-3 text-sm font-bold transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none"
+            className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
           >
             <div className="flex items-center gap-3">
               {level === 0 && <item.icon className="w-5 h-5" />}
@@ -347,7 +346,7 @@ export const Sidebar = () => {
                     <div>
                       <button
                         onClick={() => toggleExpanded(subItem.name)}
-                        className="flex items-center justify-between w-full gap-3 px-4 py-3 text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none"
+                        className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
                       >
                         <span>{subItem.name}</span>
                         {expandedItems.includes(subItem.name) ? 
@@ -361,7 +360,7 @@ export const Sidebar = () => {
                             <button
                               key={nestedItem.name}
                               onClick={() => handleNavigation(nestedItem.href, currentSection)}
-                              className={`flex items-center gap-3 w-full px-4 py-3 text-sm transition-colors hover:bg-[#DBC2A9] rounded-none ${
+                              className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] ${
                                 nestedItem.color || 'text-[#1a1a1a]'
                               }`}
                             >
@@ -374,7 +373,7 @@ export const Sidebar = () => {
                   ) : (
                     <button
                       onClick={() => handleNavigation(subItem.href, currentSection)}
-                      className={`flex items-center gap-3 w-full px-4 py-3 text-sm font-medium transition-colors hover:bg-[#DBC2A9] rounded-none ${
+                      className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] ${
                         subItem.color || 'text-[#1a1a1a]'
                       }`}
                     >
@@ -393,7 +392,7 @@ export const Sidebar = () => {
       <div key={item.name}>
         <button
           onClick={() => handleNavigation(item.href, currentSection)}
-          className={`flex items-center gap-3 w-full px-4 py-3 text-sm font-medium transition-colors hover:bg-[#DBC2A9] rounded-none ${
+          className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] ${
             item.color || 'text-[#1a1a1a]'
           }`}
         >
@@ -403,13 +402,13 @@ export const Sidebar = () => {
         
         {/* Show dropdowns for Roles (RACI) when on that page */}
         {showDropdowns && (
-          <div className="mt-4 space-y-3 px-4">
+          <div className="mt-4 space-y-3 px-3">
             <div>
               <label className="text-xs font-medium text-[#1a1a1a] mb-1 block">Department</label>
               <select
                 value={selectedDepartment}
                 onChange={(e) => setSelectedDepartment(e.target.value)}
-                className="w-full px-2 py-1 text-xs border border-gray-300 bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030] rounded-none"
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030]"
               >
                 <option value="">Select Department</option>
                 <option value="engineering">Engineering</option>
@@ -425,7 +424,7 @@ export const Sidebar = () => {
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                className="w-full px-2 py-1 text-xs border border-gray-300 bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030] rounded-none"
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030]"
               >
                 <option value="">Select Role</option>
                 <option value="manager">Manager</option>
@@ -448,7 +447,7 @@ export const Sidebar = () => {
     >
       <div className="p-6">
         <div className="flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 bg-[#C72030] flex items-center justify-center rounded-none">
+          <div className="w-8 h-8 bg-[#C72030] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">FM</span>
           </div>
           <span className="text-[#1a1a1a] font-semibold text-lg">Facility Management</span>
@@ -462,7 +461,7 @@ export const Sidebar = () => {
           </div>
         )}
         
-        <nav className="space-y-1">
+        <nav className="space-y-2">
           {currentModules.map((module) => renderMenuItem(module))}
         </nav>
       </div>

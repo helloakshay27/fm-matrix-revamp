@@ -15,22 +15,22 @@ export const Header = () => {
   return (
     <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-10 w-100">
       <div className="flex items-center justify-between h-full px-6">
-        <div className="flex items-center">
+        <div className="flex items-center gap-6">
           {/* Home Dashboard */}
           <button className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
             <Home className="w-4 h-4" />
-            <span className="text-sm font-medium">Home</span>
+            <span className="text-sm font-medium">Home </span>
           </button>
 
           {/* Setup Link */}
-          <a href="/setup" className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors ml-6">
+          <a href="/setup" className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
             <Settings className="w-4 h-4" />
             <span className="text-sm font-medium">Setup</span>
           </a>
 
           {/* Project Change Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors ml-6">
+            <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
               <span className="text-sm font-medium">Project Change</span>
               <ChevronDown className="w-3 h-3" />
             </DropdownMenuTrigger>
@@ -41,12 +41,9 @@ export const Header = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Vertical Separator */}
-          <div className="w-px h-6 bg-[#D5DbDB] ml-6"></div>
-
           {/* Site Change Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors ml-6">
+            <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
               <MapPin className="w-4 h-4" />
               <span className="text-sm font-medium">Lockastead Site 1</span>
               <ChevronDown className="w-3 h-3" />
