@@ -226,6 +226,12 @@ const modulesByPackage = {
     },
     { name: 'Training List', icon: BookOpen, href: '/vas/training-list' }
   ],
+  'Market Place': [
+    { name: 'Lease Management', icon: FileText, href: '/market-place/lease-management' },
+    { name: 'Loyalty Rule Engine', icon: Settings, href: '/market-place/loyalty-rule-engine' },
+    { name: 'Cloud Telephony', icon: Phone, href: '/market-place/cloud-telephony' },
+    { name: 'Accounting', icon: Calculator, href: '/market-place/accounting' }
+  ],
   'Settings': [
     { name: 'General', icon: Settings, href: '/settings/general' },
     { name: 'Account', icon: Users, href: '/settings/account' },
@@ -310,6 +316,8 @@ export const Sidebar = () => {
       setCurrentSection('Maintenance');
     } else if (path.startsWith('/crm')) {
       setCurrentSection('CRM');
+    } else if (path.startsWith('/market-place')) {
+      setCurrentSection('Market Place');
     } else if (path.startsWith('/settings')) {
       setCurrentSection('Settings');
     }

@@ -10,6 +10,7 @@ const packages = [
   'Utility',
   'Security',
   'Value Added Services',
+  'Market Place',
   'Settings'
 ];
 
