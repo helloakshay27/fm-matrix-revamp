@@ -57,6 +57,7 @@ import { UtilityWaterDashboard } from './pages/UtilityWaterDashboard';
 import { AddWaterAssetDashboard } from './pages/AddWaterAssetDashboard';
 import UtilitySTPDashboard from './pages/UtilitySTPDashboard';
 import AddSTPAssetDashboard from './pages/AddSTPAssetDashboard';
+import UtilityEVConsumptionDashboard from './pages/UtilityEVConsumptionDashboard';
 
 // Import Waste Generation pages
 import UtilityWasteGenerationDashboard from './pages/UtilityWasteGenerationDashboard';
@@ -448,6 +449,7 @@ function App() {
               <Route path="/utility/water/add-asset" element={<AddWaterAssetDashboard />} />
               <Route path="/utility/stp" element={<UtilitySTPDashboard />} />
               <Route path="/utility/stp/add-asset" element={<AddSTPAssetDashboard />} />
+              <Route path="/utility/ev-consumption" element={<UtilityEVConsumptionDashboard />} />
               <Route path="/utility/add-asset" element={<AddAssetDashboard />} />
               
               {/* Energy Asset Routes */}
