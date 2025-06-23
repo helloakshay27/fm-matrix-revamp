@@ -258,8 +258,7 @@ const Milestones = () => {
     isSubmittingRef.current = true;
 
     try {
-      const resultAction = await dispatch(createMilestone({ token, payload })).unwrap();
-      if (createMilestone.fulfilled.match(resultAction)) {
+      await dispatch(createMilestone({ token, payload })).unwrap();
         toast.success("Milestone created successfully.");
         setSavedMilestones([...savedMilestones, { id: nextId, formData }]);
         setFormData({
@@ -271,9 +270,7 @@ const Milestones = () => {
         });
         setNextId(nextId + 1);
         await dispatch(fetchMilestone({ token, id })).unwrap(); // Refresh milestones
-      } else {
-        toast.error("Failed to create milestone.");
-      }
+      
     } catch (error) {
       console.error("Error creating milestone:", error);
       toast.error("Error creating milestone.");
@@ -363,7 +360,7 @@ const Milestones = () => {
           <button
             type="submit"
             className="flex items-center justify-center border-2 text-[black] border-[red] px-4 py-2 w-[100px]"
-            disabled={loading}
+            disabled={loading }
           >
             {loading ? "Processing..." : "Save"}
           </button>
