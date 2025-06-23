@@ -1,10 +1,14 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Filter } from 'lucide-react';
+import { UtilityEVConsumptionFilterDialog } from '../components/UtilityEVConsumptionFilterDialog';
 
 const UtilityEVConsumptionDashboard = () => {
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
   const evConsumptionData = [
     {
       id: "001",
@@ -65,10 +69,11 @@ const UtilityEVConsumptionDashboard = () => {
       {/* Filters Button */}
       <div className="flex justify-start">
         <Button 
-          variant="outline" 
-          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          onClick={() => setIsFilterOpen(true)}
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
-          🔍 Filters
+          <Filter className="w-4 h-4" />
+          Filters
         </Button>
       </div>
 
@@ -113,6 +118,12 @@ const UtilityEVConsumptionDashboard = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Filter Dialog */}
+      <UtilityEVConsumptionFilterDialog 
+        isOpen={isFilterOpen} 
+        onClose={() => setIsFilterOpen(false)} 
+      />
     </div>
   );
 };
