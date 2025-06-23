@@ -5,11 +5,7 @@ import { Sidebar } from './Sidebar';
 import { DynamicHeader } from './DynamicHeader';
 import { Header } from './Header';
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-export const Layout: React.FC<LayoutProps> = ({ children }) => {
+export const Layout: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#fafafa]">
       <Header />

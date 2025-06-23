@@ -1,10 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { EVConsumptionFilterDialog } from '@/components/EVConsumptionFilterDialog';
 
 const UtilityEVConsumptionDashboard = () => {
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+
   const evConsumptionData = [
     {
       id: "001",
@@ -66,6 +69,7 @@ const UtilityEVConsumptionDashboard = () => {
       <div className="flex justify-start">
         <Button 
           variant="outline" 
+          onClick={() => setIsFilterDialogOpen(true)}
           className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
         >
           🔍 Filters
@@ -113,6 +117,12 @@ const UtilityEVConsumptionDashboard = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Filter Dialog */}
+      <EVConsumptionFilterDialog 
+        isOpen={isFilterDialogOpen}
+        onClose={() => setIsFilterDialogOpen(false)}
+      />
     </div>
   );
 };
