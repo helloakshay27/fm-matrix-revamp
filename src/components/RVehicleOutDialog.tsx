@@ -26,7 +26,7 @@ export const RVehicleOutDialog = ({ isOpen, onClose, vehicleNumber }: RVehicleOu
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent className="max-w-md rounded-none">
+      <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle>Registered Vehicle Out</AlertDialogTitle>
           <AlertDialogDescription>
@@ -34,11 +34,11 @@ export const RVehicleOutDialog = ({ isOpen, onClose, vehicleNumber }: RVehicleOu
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose} className="rounded-none">Cancel</AlertDialogCancel>
+          <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
           <AlertDialogAction 
             onClick={handleSubmit}
             style={{ backgroundColor: '#C72030' }}
-            className="hover:opacity-90 text-white rounded-none"
+            className="hover:opacity-90 text-white"
           >
             Submit
           </AlertDialogAction>
