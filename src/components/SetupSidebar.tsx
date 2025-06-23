@@ -51,18 +51,18 @@ export const SetupSidebar = () => {
     <div className="w-64 h-screen bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto">
       <div className="p-6">
         <div className="flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 bg-[#C72030] rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-[#C72030] flex items-center justify-center rounded-none">
             <span className="text-white font-bold text-sm">S</span>
           </div>
           <span className="text-[#1a1a1a] font-semibold text-lg">Setup</span>
         </div>
         
-        <nav className="space-y-2">
+        <nav className="space-y-1">
           {/* Location Dropdown */}
           <div>
             <button
               onClick={() => setIsLocationOpen(!isLocationOpen)}
-              className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              className="flex items-center justify-between w-full gap-3 px-4 py-3 text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none"
             >
               <div className="flex items-center gap-3">
                 <MapPin className="w-5 h-5" />
@@ -76,7 +76,7 @@ export const SetupSidebar = () => {
                   <a
                     key={item.name}
                     href={item.href}
-                    className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    className="block px-4 py-3 text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none"
                   >
                     {item.name}
                   </a>
@@ -89,7 +89,7 @@ export const SetupSidebar = () => {
           <div>
             <button
               onClick={() => setIsUserRoleOpen(!isUserRoleOpen)}
-              className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              className="flex items-center justify-between w-full gap-3 px-4 py-3 text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none"
             >
               <div className="flex items-center gap-3">
                 <Users className="w-5 h-5" />
@@ -103,7 +103,7 @@ export const SetupSidebar = () => {
                   <a
                     key={item.name}
                     href={item.href}
-                    className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    className="block px-4 py-3 text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none"
                   >
                     {item.name}
                   </a>
@@ -113,27 +113,27 @@ export const SetupSidebar = () => {
           </div>
 
           {/* Individual Items */}
-          <a href="/setup/fm-user" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <a href="/setup/fm-user" className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none">
             <Users className="w-5 h-5" />
             FM User
           </a>
 
-          <a href="/setup/occupant-users" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <a href="/setup/occupant-users" className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none">
             <Users className="w-5 h-5" />
             Occupant Users
           </a>
 
-          <a href="/setup/meter-type" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <a href="/setup/meter-type" className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none">
             <Settings className="w-5 h-5" />
             Meter Type
           </a>
 
-          <a href="/setup/asset-groups" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <a href="/setup/asset-groups" className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none">
             <Building className="w-5 h-5" />
             Asset Groups
           </a>
 
-          <a href="/setup/checklist-group" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <a href="/setup/checklist-group" className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none">
             <CheckSquare className="w-5 h-5" />
             Checklist Group
           </a>
@@ -142,7 +142,7 @@ export const SetupSidebar = () => {
           <div>
             <button
               onClick={() => setIsTicketOpen(!isTicketOpen)}
-              className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+              className="flex items-center justify-between w-full gap-3 px-4 py-3 text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none"
             >
               <div className="flex items-center gap-3">
                 <FileText className="w-5 h-5" />
@@ -156,7 +156,7 @@ export const SetupSidebar = () => {
                   <a
                     key={item.name}
                     href={item.href}
-                    className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
+                    className="block px-4 py-3 text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none"
                   >
                     {item.name}
                   </a>
@@ -165,52 +165,52 @@ export const SetupSidebar = () => {
             )}
           </div>
 
-          <a href="/setup/task-escalation" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <a href="/setup/task-escalation" className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none">
             <AlertTriangle className="w-5 h-5" />
             Task Escalation
           </a>
 
-          <a href="/setup/approval-matrix" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <a href="/setup/approval-matrix" className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none">
             <ClipboardList className="w-5 h-5" />
             Approval Matrix
           </a>
 
-          <a href="/setup/patrolling-approval" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <a href="/setup/patrolling-approval" className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none">
             <Shield className="w-5 h-5" />
             Patrolling Approval
           </a>
 
-          <a href="/setup/email-rule" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <a href="/setup/email-rule" className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none">
             <Mail className="w-5 h-5" />
             Email Rule
           </a>
 
-          <a href="/setup/fm-group" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <a href="/setup/fm-group" className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none">
             <Target className="w-5 h-5" />
             FM Group
           </a>
 
-          <a href="/setup/master-checklist" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <a href="/setup/master-checklist" className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none">
             <BookOpen className="w-5 h-5" />
             Master Checklist
           </a>
 
-          <a href="/setup/sac-hsn-setup" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <a href="/setup/sac-hsn-setup" className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none">
             <Receipt className="w-5 h-5" />
             SAC/HSN Setup
           </a>
 
-          <a href="/setup/address" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <a href="/setup/address" className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none">
             <Home className="w-5 h-5" />
             Address
           </a>
 
-          <a href="/setup/tag" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <a href="/setup/tag" className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none">
             <Tag className="w-5 h-5" />
             Tag
           </a>
 
-          <a href="/setup/export" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
+          <a href="/setup/export" className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] rounded-none">
             <FileText className="w-5 h-5" />
             Export
           </a>
