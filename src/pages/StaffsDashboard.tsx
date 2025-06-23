@@ -184,7 +184,7 @@ export const StaffsDashboard = () => {
           <TableHeader>
             <TableRow className="bg-[#f6f4ee]">
               <TableHead className="w-12">
-                <input type="checkbox" className="rounded" />
+                <input type="checkbox" className="rounded-none" />
               </TableHead>
               <TableHead>View</TableHead>
               <TableHead>Edit</TableHead>
@@ -204,13 +204,14 @@ export const StaffsDashboard = () => {
             {data.map((staff, index) => (
               <TableRow key={staff.id || index} className="hover:bg-gray-50">
                 <TableCell>
-                  <input type="checkbox" className="rounded" />
+                  <input type="checkbox" className="rounded-none" />
                 </TableCell>
                 <TableCell>
                   <Button 
                     variant="ghost" 
                     size="sm"
                     onClick={() => handleViewStaff(staff.id)}
+                    className="rounded-none"
                   >
                     <Eye className="w-4 h-4 text-blue-600" />
                   </Button>
@@ -220,6 +221,7 @@ export const StaffsDashboard = () => {
                     variant="ghost" 
                     size="sm"
                     onClick={() => handleEditStaff(staff.id)}
+                    className="rounded-none"
                   >
                     <Edit className="w-4 h-4 text-green-600" />
                   </Button>
@@ -297,8 +299,8 @@ export const StaffsDashboard = () => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
         {data.map((staff, index) => (
-          <div key={staff.id || index} className="bg-white rounded-lg border border-gray-200 p-4 flex items-center gap-4">
-            <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center">
+          <div key={staff.id || index} className="bg-white rounded-none border border-gray-200 p-4 flex items-center gap-4">
+            <div className="w-12 h-12 bg-yellow-400 rounded-none flex items-center justify-center">
               <span className="text-white font-bold">👤</span>
             </div>
             <div className="flex-1">
@@ -308,13 +310,13 @@ export const StaffsDashboard = () => {
               <p className="text-sm text-gray-600">{staff.department}</p>
             </div>
             <div className="flex flex-col gap-2">
-              <span className="bg-green-500 text-white px-2 py-1 rounded text-xs font-medium">
+              <span className="bg-green-500 text-white px-2 py-1 rounded-none text-xs font-medium">
                 {activeTab === 'in' ? 'In' : 'Out'}
               </span>
               {activeTab === 'out' && (
                 <Button 
                   size="sm" 
-                  className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1"
+                  className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 rounded-none"
                 >
                   Check In
                 </Button>
@@ -335,7 +337,7 @@ export const StaffsDashboard = () => {
           <span>Society Staffs</span>
         </div>
         
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div className="bg-white rounded-none border border-gray-200 shadow-sm">
           {/* Header */}
           <div className="p-4 border-b border-gray-200">
             <h2 className="text-xl font-semibold mb-4 text-[#1a1a1a] uppercase">SOCIETY STAFFS</h2>
@@ -345,15 +347,15 @@ export const StaffsDashboard = () => {
               <Button 
                 onClick={() => setIsAddModalOpen(true)}
                 style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md"
+                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add
               </Button>
               <Button 
                 onClick={() => setIsFilterModalOpen(true)}
-                style={{ backgroundColor: '#C772030' }}
-                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md"
+                style={{ backgroundColor: '#C72030' }}
+                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none"
               >
                 <Filter className="w-4 h-4 mr-2" />
                 Filters
@@ -361,7 +363,7 @@ export const StaffsDashboard = () => {
               <Button 
                 onClick={handlePrintQR}
                 style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md"
+                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none"
               >
                 <QrCode className="w-4 h-4 mr-2" />
                 Print QR
@@ -369,7 +371,7 @@ export const StaffsDashboard = () => {
               <Button 
                 onClick={handlePrintAllQR}
                 style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md"
+                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none"
               >
                 <FileText className="w-4 h-4 mr-2" />
                 Print ALL QR
@@ -377,10 +379,10 @@ export const StaffsDashboard = () => {
             </div>
 
             {/* Tab Navigation */}
-            <div className="flex gap-1 bg-gray-200 p-1 rounded-lg w-fit mb-4">
+            <div className="flex gap-1 bg-gray-200 p-1 rounded-none w-fit mb-4">
               <Button 
                 onClick={() => setActiveTab('history')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-none text-sm font-medium transition-colors ${
                   activeTab === 'history' 
                     ? 'text-white shadow-sm' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
@@ -391,7 +393,7 @@ export const StaffsDashboard = () => {
               </Button>
               <Button 
                 onClick={() => setActiveTab('all')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-none text-sm font-medium transition-colors ${
                   activeTab === 'all' 
                     ? 'text-white shadow-sm' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
@@ -402,7 +404,7 @@ export const StaffsDashboard = () => {
               </Button>
               <Button 
                 onClick={() => setActiveTab('in')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-none text-sm font-medium transition-colors ${
                   activeTab === 'in' 
                     ? 'text-white shadow-sm' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
@@ -413,7 +415,7 @@ export const StaffsDashboard = () => {
               </Button>
               <Button 
                 onClick={() => setActiveTab('out')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-none text-sm font-medium transition-colors ${
                   activeTab === 'out' 
                     ? 'text-white shadow-sm' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900'

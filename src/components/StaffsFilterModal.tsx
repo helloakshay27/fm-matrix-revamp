@@ -30,14 +30,14 @@ export const StaffsFilterModal = ({ isOpen, onClose }: StaffsFilterModalProps) =
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-white [&>button]:hidden">
+      <DialogContent className="max-w-md bg-white [&>button]:hidden rounded-none">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold">FILTER</DialogTitle>
           <Button
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="h-6 w-6 p-0"
+            className="h-6 w-6 p-0 rounded-none"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
@@ -55,7 +55,7 @@ export const StaffsFilterModal = ({ isOpen, onClose }: StaffsFilterModalProps) =
               placeholder="Search by Name, Mobile or Staff Id"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="border-gray-300"
+              className="border-gray-300 rounded-none"
             />
           </div>
 
@@ -65,10 +65,10 @@ export const StaffsFilterModal = ({ isOpen, onClose }: StaffsFilterModalProps) =
               Work type
             </Label>
             <Select value={workType} onValueChange={setWorkType}>
-              <SelectTrigger className="border-gray-300">
+              <SelectTrigger className="border-gray-300 rounded-none">
                 <SelectValue placeholder="Select Work Type" />
               </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+              <SelectContent className="bg-white border border-gray-200 shadow-lg z-50 rounded-none">
                 <SelectItem value="other">Other</SelectItem>
                 <SelectItem value="vendor">Vendor</SelectItem>
                 <SelectItem value="contractor">Contractor</SelectItem>
@@ -82,10 +82,10 @@ export const StaffsFilterModal = ({ isOpen, onClose }: StaffsFilterModalProps) =
               Status
             </Label>
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="border-gray-300">
+              <SelectTrigger className="border-gray-300 rounded-none">
                 <SelectValue placeholder="Select Status" />
               </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+              <SelectContent className="bg-white border border-gray-200 shadow-lg z-50 rounded-none">
                 <SelectItem value="approved">Approved</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
@@ -98,14 +98,14 @@ export const StaffsFilterModal = ({ isOpen, onClose }: StaffsFilterModalProps) =
             <Button
               onClick={handleReset}
               variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2 rounded-none"
             >
               Reset
             </Button>
             <Button
               onClick={handleApply}
               style={{ backgroundColor: '#C72030' }}
-              className="hover:bg-[#C72030]/90 text-white px-6 py-2"
+              className="hover:bg-[#C72030]/90 text-white px-6 py-2 rounded-none"
             >
               Apply
             </Button>
