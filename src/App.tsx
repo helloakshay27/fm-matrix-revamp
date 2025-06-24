@@ -1,9 +1,10 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { Layout } from './components/Layout';
-import { Index } from './pages/Index';
-import { NotFound } from './pages/NotFound';
+import Index from './pages/Index';
+import NotFound from './pages/NotFound';
 import { IncidentListDashboard } from './pages/IncidentListDashboard';
 import { IncidentDetailsPage } from './pages/IncidentDetailsPage';
 import { AddIncidentPage } from './pages/AddIncidentPage';
@@ -17,7 +18,7 @@ function App() {
       <LayoutProvider>
         <Router>
           <Routes>
-            <Route path="/" element={<Layout />}>
+            <Route path="/" element={<Layout children={undefined} />}>
               <Route index element={<Index />} />
               
               {/* Safety Routes */}
