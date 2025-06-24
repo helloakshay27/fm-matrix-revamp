@@ -55,7 +55,7 @@ export const UtilitySolarGeneratorFilterDialog = ({ isOpen, onClose }: UtilitySo
       <DialogContent className="max-w-md p-6 [&>button]:hidden">
         <DialogHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+            <DialogTitle className="text-lg font-semibold text-[#C72030]">FILTER BY</DialogTitle>
             <Button
               variant="icon"
               size="icon-sm"
@@ -70,14 +70,14 @@ export const UtilitySolarGeneratorFilterDialog = ({ isOpen, onClose }: UtilitySo
         <div className="space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Date Range*</Label>
+              <Label className="text-[#C72030] font-medium">Date Range*</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal rounded-none shadow-none",
-                      !dateRange?.from && "text-muted-foreground"
+                      "w-full justify-start text-left font-normal rounded-none shadow-none border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white",
+                      !dateRange?.from && "text-[#C72030]/70"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -114,13 +114,13 @@ export const UtilitySolarGeneratorFilterDialog = ({ isOpen, onClose }: UtilitySo
         <div className="flex justify-center gap-4 pt-6">
           <Button 
             onClick={handleSubmit}
-            className="bg-[#8B3A8B] text-white hover:bg-[#7A2E7A] transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium shadow-none"
+            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium shadow-none"
           >
             Submit
           </Button>
           <Button 
             onClick={handleExport}
-            className="bg-[#8B3A8B] text-white hover:bg-[#7A2E7A] transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium shadow-none"
+            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium shadow-none"
           >
             Export
           </Button>
