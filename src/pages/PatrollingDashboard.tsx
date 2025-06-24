@@ -243,7 +243,6 @@ export const PatrollingDashboard = () => {
       <BulkUploadModal 
         isOpen={isBulkUploadOpen} 
         onClose={() => setIsBulkUploadOpen(false)} 
-        title="Bulk Upload Patrolling Data"
       />
       
       <ExportModal 

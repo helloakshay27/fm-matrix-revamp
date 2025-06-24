@@ -4,40 +4,34 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Download } from "lucide-react";
 import { AddWBSDialog } from "@/components/AddWBSDialog";
-import { BulkUploadModal } from "@/components/BulkUploadModal";
 
 export const WBSElementDashboard = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
 
   // Sample data - empty as shown in the image
   const wbsData: any[] = [];
 
   return (
-    <div className="flex-1 p-6 bg-white min-h-screen">
+    <div className="p-6">
       {/* Breadcrumb */}
-      <div className="mb-4">
-        <nav className="flex items-center text-sm text-gray-600 mb-4">
-          <span>WBS</span>
-          <span className="mx-2">{'>'}</span>
-          <span>WBS List</span>
-        </nav>
-        <h1 className="text-2xl font-bold text-gray-900">WBS LIST</h1>
+      <div className="mb-4 text-sm text-gray-600">
+        WBS &gt; WBS List
       </div>
+
+      {/* Page Title */}
+      <h1 className="text-2xl font-bold mb-6">WBS LIST</h1>
 
       {/* Action Buttons */}
       <div className="mb-6 flex gap-3">
         <Button 
+          className="bg-blue-600 hover:bg-blue-700 text-white"
           onClick={() => setIsAddDialogOpen(true)}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:opacity-90"
         >
           + Add
         </Button>
         <Button 
-          onClick={() => setIsBulkUploadOpen(true)}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:opacity-90"
+          variant="outline" 
+          className="border-blue-600 text-blue-600 hover:bg-blue-50"
         >
           <Download className="h-4 w-4 mr-2" />
           Import
@@ -45,23 +39,23 @@ export const WBSElementDashboard = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg border overflow-x-auto">
+      <div className="bg-white rounded-lg shadow overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold text-gray-900">Plant Code</TableHead>
-              <TableHead className="font-semibold text-gray-900">Category</TableHead>
-              <TableHead className="font-semibold text-gray-900">Category WBS Code</TableHead>
-              <TableHead className="font-semibold text-gray-900">WBS Name</TableHead>
-              <TableHead className="font-semibold text-gray-900">WBS Code</TableHead>
-              <TableHead className="font-semibold text-gray-900">Site</TableHead>
-              <TableHead className="font-semibold text-gray-900">Actions</TableHead>
+              <TableHead className="font-semibold">Plant Code</TableHead>
+              <TableHead className="font-semibold">Category</TableHead>
+              <TableHead className="font-semibold">Category WBS Code</TableHead>
+              <TableHead className="font-semibold">WBS Name</TableHead>
+              <TableHead className="font-semibold">WBS Code</TableHead>
+              <TableHead className="font-semibold">Site</TableHead>
+              <TableHead className="font-semibold">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {wbsData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12 text-gray-500">
+                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                   No WBS elements found
                 </TableCell>
               </TableRow>
@@ -84,29 +78,14 @@ export const WBSElementDashboard = () => {
 
       {/* Pagination */}
       <div className="flex justify-center mt-6 gap-2">
-        <Button variant="outline" disabled className="px-4 py-2">
-          Previous
-        </Button>
-        <Button 
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white px-4 py-2"
-        >
-          1
-        </Button>
-        <Button variant="outline" disabled className="px-4 py-2">
-          Next
-        </Button>
+        <Button variant="outline" disabled>Previous</Button>
+        <Button className="bg-blue-600 text-white">1</Button>
+        <Button variant="outline" disabled>Next</Button>
       </div>
 
       <AddWBSDialog 
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-      />
-
-      <BulkUploadModal
-        isOpen={isBulkUploadOpen}
-        onClose={() => setIsBulkUploadOpen(false)}
-        title="Bulk Upload"
       />
     </div>
   );

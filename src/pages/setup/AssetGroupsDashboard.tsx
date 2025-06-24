@@ -194,7 +194,6 @@ export const AssetGroupsDashboard = () => {
       <BulkUploadModal 
         isOpen={bulkUploadModalOpen} 
         onClose={() => setBulkUploadModalOpen(false)} 
-        title="Bulk Upload Groups"
       />
     </SetupLayout>
   );
