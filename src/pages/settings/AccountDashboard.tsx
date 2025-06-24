@@ -62,7 +62,7 @@ export const AccountDashboard = () => {
     { country: 'India', region: 'Mumbai', zone: 'West Zone', status: true, icon: null },
   ]);
 
-  const [sites] = useState([
+  const [sites, setSites] = useState([
     { country: 'India', region: 'Mumbai', zone: 'West Zone', site: 'Lockated Site 2', latitude: '19.1249466', longitude: '72.8302155', status: false, qrCode: '/lovable-uploads/placeholder.svg' },
     { country: 'India', region: 'Mumbai', zone: 'West Zone', site: 'Lockated Site 1', latitude: '18.5509109', longitude: '73.8910294', status: false, qrCode: '/lovable-uploads/placeholder.svg' },
   ]);
@@ -125,6 +125,12 @@ export const AccountDashboard = () => {
     const updatedZones = [...zones];
     updatedZones[index].status = checked;
     setZones(updatedZones);
+  };
+
+  const handleSiteStatusChange = (index: number, checked: boolean) => {
+    const updatedSites = [...sites];
+    updatedSites[index].status = checked;
+    setSites(updatedSites);
   };
 
   const handleEntityStatusChange = (index: number, checked: boolean) => {
@@ -470,6 +476,7 @@ export const AccountDashboard = () => {
                       <TableCell>
                         <Switch 
                           checked={site.status} 
+                          onCheckedChange={(checked) => handleSiteStatusChange(index, checked)}
                           className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
                         />
                       </TableCell>
