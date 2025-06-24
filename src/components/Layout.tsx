@@ -6,7 +6,7 @@ import { DynamicHeader } from './DynamicHeader';
 import { Header } from './Header';
 
 interface LayoutProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
