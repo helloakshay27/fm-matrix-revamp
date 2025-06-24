@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -219,6 +218,16 @@ export const FMUsersDashboard = () => {
     navigate(`/settings/users/edit-details/${userId}`);
   };
 
+  const toggleUserActive = (userId: string) => {
+    setUsers(prevUsers => 
+      prevUsers.map(user => 
+        user.id === userId 
+          ? { ...user, active: !user.active }
+          : user
+      )
+    );
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -299,9 +308,12 @@ export const FMUsersDashboard = () => {
                   </Button>
                 </TableCell>
                 <TableCell>
-                  <div className={`w-8 h-5 rounded-full flex items-center ${user.active ? 'bg-green-500' : 'bg-gray-300'}`}>
+                  <button
+                    onClick={() => toggleUserActive(user.id)}
+                    className={`w-8 h-5 rounded-full flex items-center transition-colors ${user.active ? 'bg-green-500' : 'bg-gray-300'} cursor-pointer`}
+                  >
                     <div className={`w-4 h-4 bg-white rounded-full transition-transform ${user.active ? 'translate-x-3' : 'translate-x-0.5'}`} />
-                  </div>
+                  </button>
                 </TableCell>
                 <TableCell className="font-medium">{user.id}</TableCell>
                 <TableCell>{user.userName}</TableCell>
