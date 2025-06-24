@@ -16,7 +16,7 @@ const ActionIcons = ({ row, onEdit }) => {
   const dispatch = useDispatch();
   const [isActive, setIsActive] = useState(!!row.original.active);
 
-  const handleToggle = async() => {
+  const handleToggle = async () => {
     const updatedValue = !isActive;
     setIsActive(updatedValue);
 
@@ -28,26 +28,25 @@ const ActionIcons = ({ row, onEdit }) => {
         active: updatedValue ? 1 : 0,
       },
     };
-    try{
-    await dispatch(fetchUpdateUser({ token, userId: userData.id, updatedData: payload })).unwrap();
-        await dispatch(fetchExternalUser({ token })).unwrap();
-        toast.dismiss();
-        toast.success(`Status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
-          iconTheme: {
-            primary: 'red', // This might directly change the color of the success icon
-            secondary: 'white', // The circle background
-          },
-        });
-      }
-      catch(error){
-        toast.dismiss();
-        toast.error('Failed to update status:', error, {
-          iconTheme: {
-            primary: 'red', // This might directly change the color of the error icon
-            secondary: 'white', // The circle background
-          },
-        });
-      };
+    try {
+      await dispatch(fetchUpdateUser({ token, userId: userData.id, updatedData: payload })).unwrap();
+      toast.dismiss();
+      toast.success(`Status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
+        iconTheme: {
+          primary: 'red', // This might directly change the color of the success icon
+          secondary: 'white', // The circle background
+        },
+      });
+    }
+    catch (error) {
+      toast.dismiss();
+      toast.error('Failed to update status:', error, {
+        iconTheme: {
+          primary: 'red', // This might directly change the color of the error icon
+          secondary: 'white', // The circle background
+        },
+      });
+    };
   };
 
   return (
