@@ -52,27 +52,34 @@ const NewIssuesDateEditor = ({ value, onChange, onEnterPress, placeholder, valid
   return <input type="date" min={min} placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={` ${validator ? 'border border-red-500' : 'border-none'} my-custom-date-editor w-full p-1 focus:outline-none rounded text-[13px] `} />;
 };
 
-const Attachments = ({attachments,setAttachments,fileInputRef}) => {
+const Attachments = ({attachments,setAttachments,fileInputRef,containerRef,setIsFileDialogOpen}) => {
     const dispatch = useDispatch();
     // const [files, setFiles] = useState(attachments);
     // const token = localStorage.getItem("token");
 
-    const handleAttachFile = () => {
-        fileInputRef.current.click(); // Open file picker
-    };
+    
+    const handleAttachFile = (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  setIsFileDialogOpen(true);
+  fileInputRef.current.click();
+};
 
     const handleFileChange = async (event) => {
         const selectedFiles = Array.from(event.target.files);
-        if (!selectedFiles.length) return;
+        if (!selectedFiles.length) {
+    setIsFileDialogOpen(false);
+          return;}
         console.log(selectedFiles);
         setAttachments(selectedFiles);
+         setIsFileDialogOpen(false); 
 
       }
 
 
 
     return (
-        <div  className="flex flex-col gap-3 p-5">
+        <div ref={containerRef} className="flex flex-col gap-3 p-5">
             
                 <div className="text-[14px] mt-2">{
                   attachments.length > 0 ? (
@@ -177,11 +184,13 @@ const IssuesTable = () => {
   const [isSavingIssues, setIsSavingIssues] = useState(false);
   const [isUpdatingIssue, setIsUpdatingIssue] = useState(false); // Added state for tracking updates
   const [localError, setLocalError] = useState(null);
+  const [isFileDialogOpen, setIsFileDialogOpen] = useState(false);
   const [validator, setValidator] = useState(false);
 
   const newIssuesTitleInputRef = useRef(null);
   const newIssueFormRowRef = useRef(null);
   const newIssueAttachmentInputRef= useRef(null);
+  const newIssueAttachmentContainerRef = useRef(null);
   const userFetchInitiatedRef = useRef(false);
   const allIssuesFetchInitiatedRef = useRef(false);
 
@@ -241,7 +250,6 @@ const IssuesTable = () => {
   useEffect(() => {
     if (
       newIssuesProjectId &&
-      projectOptions.length > 0 &&
       !loadingProjects &&
       !projectsFetchError
     ) {
@@ -346,6 +354,7 @@ const IssuesTable = () => {
     setNewIssuesType('');
     setNewIssuesEndDate('');
     setNewIssuesPriority('None');
+    setAttachments([]);
     setNewIssuesComments('');
     setLocalError(null);
     setNewIssuesProjectId(null);
@@ -365,7 +374,7 @@ const IssuesTable = () => {
   }, [resetNewIssuesForm]);
 
   const handleSaveNewIssues = useCallback(async () => {
-    if (!newIssuesTitle || newIssuesTitle.trim() === "" || !newIssuesEndDate || !newIssuesProjectId || !newIssuesMilestoneId || !newIssuesTaskId ) {
+    if (!newIssuesTitle || newIssuesTitle.trim() === "" || !newIssuesEndDate || !newIssuesTaskId ) {
       setLocalError("Please fill in all required fields.");
       setValidator(true);
       return;
@@ -389,7 +398,7 @@ formData.append("issue[end_date]", newIssuesEndDate || "");
 formData.append("issue[priority]", newIssuesPriority);
 formData.append("issue[created_by_id]", 158);
 formData.append("issue[issue_type]", newIssuesType);
-formData.append("issue[comment]", JSON.stringify(newIssuesComments || []));
+formData.append("issue[comment]", newIssuesComments);
 
 // Append each attachment under issue[attachments][]
 attachments.forEach((file) => {
@@ -445,6 +454,20 @@ attachments.forEach((file) => {
     }
   }, [dispatch, users]);
 
+  
+    useEffect(() => {
+          const handleBeforeUnload = () => {
+              localStorage.removeItem("IssueFilters");
+          };
+  
+          window.addEventListener("beforeunload", handleBeforeUnload); console.log("Resetting filters at", new Date().toISOString());
+  
+  
+          return () => {
+              window.removeEventListener("beforeunload", handleBeforeUnload);
+          };
+      }, []);
+     
 
   useEffect(() => {
     const handleClickOutsideNewIssuesRow = (event) => {
@@ -452,21 +475,18 @@ attachments.forEach((file) => {
         !isAddingNewIssues ||
         isSavingIssues || isUpdatingIssue || // Consider ongoing updates
         !newIssueFormRowRef.current ||
+        isFileDialogOpen||
         newIssueFormRowRef.current.contains(event.target)
       ) {
         return;
       }
 
-        if (
-        newIssueFormRowRef.current.contains(event.target) ||
-        (newIssueAttachmentInputRef.current || newIssueAttachmentInputRef.current.contains(event.target))
-      ) {
-        return;
-      }
-
-      if (event.target.tagName === 'I' && event.target.textContent === 'Click to attach files') {
-        return;
-      }
+    if (
+      newIssueAttachmentContainerRef.current && 
+      newIssueAttachmentContainerRef.current.contains(event.target)
+    ) {
+      return;
+    }
 
       handleSaveNewIssues();
     };
@@ -786,7 +806,7 @@ attachments.forEach((file) => {
                       />
                     </td>
                     <td className="border p-1 align-middle">
-                      <Attachments setAttachments={setAttachments} attachments={attachments} fileInputRef={newIssueAttachmentInputRef}/>
+                      <Attachments setAttachments={setAttachments} attachments={attachments} fileInputRef={newIssueAttachmentInputRef} containerRef={newIssueAttachmentContainerRef} setIsFileDialogOpen={setIsFileDialogOpen}/>
                     </td>
                   </tr>
                 )}

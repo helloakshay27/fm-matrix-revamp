@@ -9,7 +9,7 @@ import {
 import { fetchUsers } from "../../../../redux/slices/userSlice";
 import toast from "react-hot-toast";
 
-const AddSprintsModal = ({ id, deleteSprint, formData, setFormData, isReadOnly = false, hasSavedSprints }) => {
+const AddSprintsModal = ({ id, deleteSprint, formData, setFormData, isReadOnly = false, hasSavedSprints ,setIsDelete}) => {
   const token = localStorage.getItem("token");
   const dispatch = useDispatch();
   const { fetchUsers: users = [] } = useSelector((state) => state.fetchUsers);
@@ -45,7 +45,10 @@ const AddSprintsModal = ({ id, deleteSprint, formData, setFormData, isReadOnly =
     <div className="flex flex-col relative justify-start gap-4 w-full bottom-0 py-3 bg-white my-10">
       {!isReadOnly && hasSavedSprints && (
         <DeleteOutlinedIcon
-          onClick={() => deleteSprint(id)}
+          onClick={() => {
+            setFormData({});
+            setIsDelete(true);
+          }}
           className="absolute top-3 right-3 text-red-600 cursor-pointer"
         />
       )}
@@ -155,6 +158,7 @@ const Sprints = ({ closeModal }) => {
   });
   const [savedSprints, setSavedSprints] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isDelete,setIsDelete]=useState(false);
   const isSubmittingRef = useRef(false);
   const dispatch = useDispatch();
 
@@ -194,18 +198,22 @@ const Sprints = ({ closeModal }) => {
 
   const handleAddSprints = async (e) => {
     e.preventDefault();
+    if(isDelete){
+      setIsDelete(false);
+      return
+    }
     if (!formData.title || !formData.ownerId || !formData.startDate || !formData.endDate || !formData.priority) {
       toast.dismiss()
       toast.error("Please fill all required fields.");
       return;
     }
+    
 
     const payload = createSprintPayload(formData);
 
     try {
       const resultAction = await dispatch(postSprint({ token, payload }));
       if (postSprint.fulfilled.match(resultAction)) {
-        toast.success("Sprint created successfully.");
         setSavedSprints([...savedSprints, { id: nextId, formData }]);
         setSprints([...sprints, { id: nextId }]);
         setFormData({
@@ -229,7 +237,7 @@ const Sprints = ({ closeModal }) => {
     e.preventDefault();
     if (isSubmittingRef.current) return;
 
-    if (!formData.title || !formData.ownerId || !formData.startDate || !formData.endDate || !formData.priority) {
+    if (!formData.title || !formData.ownerId || !formData.startDate || !formData.endDate || !formData.priority && !isDelete) {
       toast.error("Please fill all required fields.");
       return;
     }
@@ -240,14 +248,11 @@ const Sprints = ({ closeModal }) => {
     const payload = createSprintPayload(formData);
 
     try {
-      const resultAction = await dispatch(postSprint({ token, payload }));
-      if (postSprint.fulfilled.match(resultAction)) {
+      if(!isDelete){
+         await dispatch(postSprint({ token, payload })).unwrap();}
         toast.success("Sprint created successfully.");
         dispatch(fetchSpirints({ token }));
         closeModal();
-      } else {
-        toast.error("Sprint creation failed.");
-      }
     } catch (error) {
       console.error("Error submitting sprint:", error);
       toast.error("Error submitting sprint.");
@@ -273,6 +278,7 @@ const Sprints = ({ closeModal }) => {
             hasSavedSprints={savedSprints.length > 0}
           />
         ))}
+        {!isDelete && (
         <AddSprintsModal
           id={nextId}
           formData={formData}
@@ -280,7 +286,9 @@ const Sprints = ({ closeModal }) => {
           deleteSprint={handleDeleteSprint}
           isReadOnly={false}
           hasSavedSprints={savedSprints.length > 0}
+          setIsDelete={setIsDelete}
         />
+        )}
         <div className="relative">
           <button
             type="button"

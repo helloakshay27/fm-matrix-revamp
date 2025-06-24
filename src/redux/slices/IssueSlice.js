@@ -156,9 +156,9 @@ export const deleteIssueType = createAsyncThunk("deleteIssueType", async ({ toke
 })
 
 export const filterIssue = createAsyncThunk('filterIssue',
-    async ({ token, filters }, { rejectWithValue }) => {
+    async ({ token, filter }, { rejectWithValue }) => {
         try {
-            const params = new URLSearchParams(filters).toString();
+            const params = new URLSearchParams(filter).toString();
             console.log(params);
             const response = await axios.get(
                 `https://api-tasks.lockated.com/issues.json?${params}`,

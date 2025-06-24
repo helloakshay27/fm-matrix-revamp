@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import toast from "react-hot-toast";
 import { Eye, EyeOff } from 'lucide-react';
+import { set } from 'react-hook-form';
 
 
 const Login = () => {
@@ -10,6 +11,7 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleLogin = async () => {
@@ -18,6 +20,7 @@ const Login = () => {
             toast.error("Email and password are required");
             return;
         }
+        setLoading(true);
         try {
             const response = await axios.post("https://api-tasks.lockated.com/users/signin.json", {
                 user: {
@@ -37,6 +40,8 @@ const Login = () => {
             setError(errMsg);
             toast.dismiss();
             toast.error(errMsg);
+        }finally{
+            setLoading(false);
         }
     }
 
@@ -80,8 +85,9 @@ const Login = () => {
                         {error && <p className="text-red-500 align-center text-[12px]">{error}</p>}
                     </div>
                     <button
-                        className="w-[420px] h-[48px] bg-[#C72030] text-white text-[20px] font-[400]"
+                        className={`w-[420px] h-[48px] bg-[#C72030] text-white text-[20px] font-[400] ${loading?'cursor-not-allowed opacity-50':'cursor-pointer'}`}
                         onClick={handleLogin}
+                        disabled={loading}
                     >
                         LOGIN
                     </button>

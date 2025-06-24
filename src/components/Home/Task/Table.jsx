@@ -29,7 +29,8 @@ import {
   createTask,
   changeTaskStatus,
   updateTask,
-  filterTask
+  filterTask,
+  fetchMyTasks
 } from "../../../redux/slices/taskSlice";
 import { fetchUsers } from "../../../redux/slices/userSlice";
 import SelectBox from "../../SelectBox";
@@ -211,11 +212,19 @@ const TaskTable = () => {
   const { id, mid } = useParams();
   const dispatch = useDispatch();
   const location = useLocation();
+
   const {
     loading: loadingTasks,
     error: tasksError,
     fetchTasks: tasksFromStore,
   } = useSelector((state) => state.fetchTasks);
+
+  const{
+    fetchMyTasks: myTasksFromStore,
+    loading: loadingMyTasks,
+    error: myTasksError,
+    success: myTaskSuccess
+  } = useSelector((state) => state.fetchMyTasks);
 
 
   const {
@@ -337,25 +346,36 @@ const TaskTable = () => {
 
   useEffect(() => {
     if (isCreatingTask || isUpdatingTask) return;
+    
     let newProcessedData = [];
-    if (filterSuccess && Array.isArray(filterTasks)) {
-      newProcessedData = filterTasks?.map((task) =>
-        processTaskData(task)
-      );
-      setData(newProcessedData);
-      setLocalError(null);
+    const myTasks= localStorage.getItem("myTasks");
+
+    console.log(tasksFromStore,myTasks);
+    if (myTasks==="false") {
+      console.log("hi");
+        // All Tasks mode
+        if (filterSuccess && Array.isArray(filterTasks)) {
+            console.log("All Tasks mode: Using filtered tasks");
+            newProcessedData = filterTasks.map((task) => processTaskData(task));
+        } else if (tasksFromStore && Array.isArray(tasksFromStore) && tasksFromStore.length > 0) {
+            console.log("All Tasks mode: Using all tasks");
+            newProcessedData = tasksFromStore.map((task) => processTaskData(task));
+        }
+    } else {
+        // My Tasks mode
+        if (filterSuccess && Array.isArray(filterTasks)) {
+            console.log("My Tasks mode: Using filtered tasks");
+            newProcessedData = filterTasks.map((task) => processTaskData(task));
+        } else if (myTaskSuccess && Array.isArray(myTasksFromStore)) {
+            console.log("My Tasks mode: Using my tasks");
+            newProcessedData = myTasksFromStore.map((task) => processTaskData(task));
+        }
     }
-    else if (tasksFromStore && Array.isArray(tasksFromStore)) {
-      // Use the recursive helper to process tasks and their sub_tasks_managements
-      newProcessedData = tasksFromStore.map((task) =>
-        processTaskData(task)
-      );
-      setData(newProcessedData);
-      setLocalError(null);
-    } else if (tasksError && !tasksFromStore && filterTasksError && !filterTasks) {
-      setData([]);
-    }
-  }, [tasksFromStore, tasksError, isCreatingTask, isUpdatingTask, filterTasksError, filterTasks]);
+    
+    setData(newProcessedData);
+    setLocalError(null);
+    console.log(newProcessedData);
+  }, [tasksFromStore, tasksError, isCreatingTask, isUpdatingTask, filterTasksError, filterTasks,myTasksFromStore,myTasksError,myTaskSuccess]);
 
   useEffect(() => {
     if (isAddingNewTask && newTaskTitleInputRef.current) {
@@ -476,6 +496,28 @@ const TaskTable = () => {
     };
   }, [isAddingNewTask, handleCancelNewTask]);
 
+  const handleFetchTasks=async()=>{
+     const myTasks= localStorage.getItem("myTasks");
+
+    console.log(tasksFromStore,myTasks);
+      if (localStorage.getItem("taskFilters")){
+        console
+        console.log("ho");
+                   await dispatch(filterTask({token,filter:JSON.parse(localStorage.getItem("taskFilters"))})).unwrap();
+           return;
+    }
+    if(mid!=undefined && mid!=null){
+      await dispatch(fetchTasks({ token, id: mid })).unwrap();
+    }
+     else{
+    if (myTasks==="false") {
+         await dispatch(fetchTasks({ token, id: "" })).unwrap();
+    } else {
+      await dispatch(fetchMyTasks({ token })).unwrap();
+    }
+    }
+
+  }
 
 
   const handleUpdateTaskFieldCell = useCallback(
@@ -494,11 +536,7 @@ const TaskTable = () => {
           await dispatch(updateTask({ token, id: taskId, payload }))
             .unwrap()
           }
-          if(filterTasks && filterTasks.length>0 && filterSuccess && localStorage.getItem("filterTask")){
-            const filteredTask = JSON.parse(localStorage.getItem("filterTask"));
-            dispatch(filterTask({ token, filters: filteredTask })).unwrap();
-          }else
-          dispatch(fetchTasks({ token, id: mid?mid:"" })).unwrap();
+          handleFetchTasks();
       } catch (error) {
         console.error(
           `Task field update failed for ${taskId} (${fieldName}):`,
@@ -690,7 +728,7 @@ const TaskTable = () => {
         ),
       },
     ],
-    [handleUpdateTaskFieldCell, users]
+    [handleUpdateTaskFieldCell, users,data]
   );
 
   const table = useReactTable({
@@ -734,8 +772,9 @@ const TaskTable = () => {
   if (
     isCreatingTask ||
     isUpdatingTask ||
-    loadingFilterTasks ||
-    (loadingTasks && !data.length && !isAddingNewTask)
+    loadingFilterTasks 
+    || loadingMyTasks ||
+    loadingTasks
   ) {
     let loadingMessage = "Loading tasks...";
     if (isCreatingTask) loadingMessage = "Creating task...";

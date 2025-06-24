@@ -15,12 +15,15 @@ import AddProjectTemplate from "./Projects/AddProjectTempelateModal";
 import ProjectFilterModal from "./Projects/ProjectFilterModel";
 import AddIssueModal from "./Issues/AddIssueModal";
 import { filterProjects } from "../../redux/slices/projectSlice";
-import { filterTask } from "../../redux/slices/taskSlice";
+import { fetchMyTasks, filterTask ,fetchTasks} from "../../redux/slices/taskSlice";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams } from "react-router-dom";
 import IssueFilter from "./Issues/Modal/Filter";
 import { filterIssue } from "../../redux/slices/IssueSlice";
 import Switch from '@mui/joy/Switch';
+import { use } from "react";
+import { set } from "react-hook-form";
+import { all } from "axios";
 
 
 
@@ -41,6 +44,8 @@ const STATUS_OPTIONS = [
     "In Progress",
     "Overdue"
 ];
+
+
 
 const TaskActions = ({
     selectedType,
@@ -63,7 +68,9 @@ const TaskActions = ({
     const [selectedStatus, setSelectedStatus] = useState(STATUS_OPTIONS[0]);
     const [isProjectFilter, setIsProjectFilter] = useState(false);
     const [isIssueFilter, setIsIssueFilter] = useState(false);
+    const [myTasks, setMyTasks] = useState(false);
     const token = localStorage.getItem("token");
+    localStorage.setItem("myTasks", myTasks.toString());
 
     const typeDropdownRef = useRef(null);
     const statusDropdownRef = useRef(null);
@@ -73,6 +80,17 @@ const TaskActions = ({
         localStorage.getItem("projectFilters") || localStorage.getItem("taskFilters"),
         []
     );
+
+    const handleAllTasks = async(checked) => {
+    console.log(checked);
+    setMyTasks(checked);
+    localStorage.setItem("myTasks", checked.toString());
+    if(checked){
+     await  dispatch(fetchMyTasks({token: localStorage.getItem("token")})).unwrap();
+    }else{
+      await dispatch(fetchTasks({ token: localStorage.getItem("token") ,id:""})).unwrap();
+    }
+}
 
     // Handle outside click for dropdowns
     useEffect(() => {
@@ -270,6 +288,11 @@ const TaskActions = ({
                                 "h-[35px] w-21"
                                 `
                              }
+                             checked={myTasks}
+                             onChange={(e) => {
+                                const checked = e.target.checked;
+                                console.log(checked);
+                                handleAllTasks(checked);}}
                              color="danger"
                             />
                         <label className="ml-2 " >My Task</label>

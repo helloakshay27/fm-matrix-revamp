@@ -87,6 +87,23 @@ export const fetchTasks = createAsyncThunk('fetchTasks', async ({ token, id }) =
     }
 });
 
+export const fetchMyTasks = createAsyncThunk('fetchMyTasks', async ({ token}) => {
+    try {
+        const response = await axios.get(`https://api-tasks.lockated.com/task_managements/my_tasks.json`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            }
+        });
+
+
+        return response.data;
+    }
+    catch (error) {
+        console.log(error);
+        return error.response.data;
+    }
+});
+
 
 export const updateTask = createAsyncThunk('updateTask', async ({ token, id, payload }) => {
     try {
@@ -286,6 +303,7 @@ export const updateDependancy = createAsyncThunk('updateDependancy', async ({ to
     }
 })
 
+
 export const createTaskSlice = createApiSlice('createTask', createTask);
 export const fetchTasksSlice = createApiSlice('fetchTasks', fetchTasks);
 export const editTaskSlice = createApiSlice('editTask', editTask);
@@ -301,6 +319,7 @@ export const updateTaskSlice = createApiSlice('updateTask', updateTask);
 export const filterTaskSlice = createApiSlice('filterTask', filterTask);
 export const createDependancySlice = createApiSlice('createDependancy', createDependancy);
 export const updateDependancySlice = createApiSlice('updateDependancy', updateDependancy);
+export const fetchMyTasksSlice = createApiSlice('fetchMyTasks', fetchMyTasks);
 
 export const createTaskReducer = createTaskSlice.reducer;
 export const fetchTasksReducer = fetchTasksSlice.reducer;
@@ -317,3 +336,4 @@ export const updateTaskReducer = updateTaskSlice.reducer;
 export const filterTaskReducer = filterTaskSlice.reducer;
 export const createDependancyReducer = createDependancySlice.reducer;
 export const updateDependancyReducer = updateDependancySlice.reducer;
+export const fetchMyTasksReducer = fetchMyTasksSlice.reducer;
