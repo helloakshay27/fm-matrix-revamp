@@ -283,6 +283,9 @@ import { KRCCFormListDashboard } from './pages/KRCCFormListDashboard';
 // Import Edit Roster Template page
 import { EditRosterTemplatePage } from './pages/setup/EditRosterTemplatePage';
 
+// Import Accounting Dashboard
+import { AccountingDashboard } from './pages/AccountingDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -516,6 +519,12 @@ function App() {
               <Route path="/maintenance/m-safe" element={<MSafeDashboard />} />
               <Route path="/maintenance/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
               <Route path="/maintenance/m-safe/krcc-form-list" element={<KRCCFormListDashboard />} />
+              
+              {/* Market Place Routes */}
+              <Route path="/market-place/lease-management" element={<div>Lease Management</div>} />
+              <Route path="/market-place/loyalty-rule-engine" element={<div>Loyalty Rule Engine</div>} />
+              <Route path="/market-place/cloud-telephony" element={<div>Cloud Telephony</div>} />
+              <Route path="/market-place/accounting" element={<AccountingDashboard />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
