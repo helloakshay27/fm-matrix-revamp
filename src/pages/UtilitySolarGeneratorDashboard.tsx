@@ -23,7 +23,7 @@ const UtilitySolarGeneratorDashboard = () => {
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">SOLAR GENERATORS LIST</h1>
+        <h1 className="text-2xl font-bold text-[#C72030]">SOLAR GENERATORS LIST</h1>
       </div>
 
       {/* Filters Button */}
@@ -31,7 +31,7 @@ const UtilitySolarGeneratorDashboard = () => {
         <Button
           variant="outline"
           onClick={() => setIsFilterOpen(!isFilterOpen)}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
         >
           <Filter className="w-4 h-4" />
           Filters
@@ -44,11 +44,11 @@ const UtilitySolarGeneratorDashboard = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="font-semibold">ID</TableHead>
-                <TableHead className="font-semibold">Date</TableHead>
-                <TableHead className="font-semibold">Total Units</TableHead>
-                <TableHead className="font-semibold">Plant day Generation</TableHead>
-                <TableHead className="font-semibold">Tower</TableHead>
+                <TableHead className="font-semibold text-[#C72030]">ID</TableHead>
+                <TableHead className="font-semibold text-[#C72030]">Date</TableHead>
+                <TableHead className="font-semibold text-[#C72030]">Total Units</TableHead>
+                <TableHead className="font-semibold text-[#C72030]">Plant day Generation</TableHead>
+                <TableHead className="font-semibold text-[#C72030]">Tower</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
