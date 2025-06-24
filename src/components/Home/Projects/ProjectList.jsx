@@ -234,11 +234,11 @@ const ProjectList = () => {
     const [isFiltered, setIsFiltered] = useState(false);
     const [data, setData] = useState([]);
 
-    useEffect(() => {
-        if (!fetchProjectTypesLoading && !fetchProjectTypesError && (projectTypes.length == 0 || !Array.isArray(projectTypes))) {
-            dispatch(fetchProjectTypes({ token })).unwrap();
-        }
-    }, [fetchProjectTypesLoading, fetchProjectTypesError, projectTypes]);
+    // useEffect(() => {
+    //     if (!fetchProjectTypesLoading && !fetchProjectTypesError && (projectTypes.length == 0 || !Array.isArray(projectTypes))) {
+    //         dispatch(fetchProjectTypes({ token })).unwrap();
+    //     }
+    // }, [fetchProjectTypesLoading, fetchProjectTypesError, projectTypes]);
 
     useEffect(() => {
         if (Array.isArray(projectTypes) && projectTypes.length > 0) {
