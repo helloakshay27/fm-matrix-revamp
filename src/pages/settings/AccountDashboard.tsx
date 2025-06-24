@@ -28,8 +28,8 @@ export const AccountDashboard = () => {
   const [entriesPerPage, setEntriesPerPage] = useState('25');
   const [entityName, setEntityName] = useState('');
 
-  // Sample data
-  const countries = [
+  // Sample data with state management
+  const [countries, setCountries] = useState([
     { name: 'Afghanistan', status: false },
     { name: 'Albania', status: false },
     { name: 'Algeria', status: false },
@@ -40,9 +40,9 @@ export const AccountDashboard = () => {
     { name: 'Argentina', status: true },
     { name: 'Armenia', status: true },
     { name: 'Australia', status: true },
-  ];
+  ]);
 
-  const regions = [
+  const [regions, setRegions] = useState([
     { country: 'Australia', region: 'VICTORIA', status: false },
     { country: 'France', region: 'IT-S', status: false },
     { country: 'India', region: 'bng', status: true },
@@ -53,21 +53,21 @@ export const AccountDashboard = () => {
     { country: 'India', region: 'Demo', status: true },
     { country: 'India', region: 'MP', status: false },
     { country: 'India', region: 'Hyderabad', status: false },
-  ];
+  ]);
 
-  const zones = [
+  const [zones, setZones] = useState([
     { country: 'India', region: 'West', zone: 'Maharashtra', status: true, icon: '/lovable-uploads/placeholder.svg' },
     { country: 'India', region: 'Chennai', zone: 'South Zone', status: true, icon: null },
     { country: 'India', region: 'Kolkata', zone: 'East Zone', status: true, icon: null },
     { country: 'India', region: 'Mumbai', zone: 'West Zone', status: true, icon: null },
-  ];
+  ]);
 
-  const sites = [
+  const [sites] = useState([
     { country: 'India', region: 'Mumbai', zone: 'West Zone', site: 'Lockated Site 2', latitude: '19.1249466', longitude: '72.8302155', status: false, qrCode: '/lovable-uploads/placeholder.svg' },
     { country: 'India', region: 'Mumbai', zone: 'West Zone', site: 'Lockated Site 1', latitude: '18.5509109', longitude: '73.8910294', status: false, qrCode: '/lovable-uploads/placeholder.svg' },
-  ];
+  ]);
 
-  const entities = [
+  const [entities, setEntities] = useState([
     { entity: 'demo', status: true },
     { entity: 'Haven Infoline', status: true },
     { entity: 'Demo', status: false },
@@ -79,7 +79,7 @@ export const AccountDashboard = () => {
     { entity: 'Infinity', status: true },
     { entity: 'HSBC', status: true },
     { entity: 'Awfis', status: true },
-  ];
+  ]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -107,6 +107,30 @@ export const AccountDashboard = () => {
 
   const handleSampleFormat = () => {
     toast.info('Sample format downloaded');
+  };
+
+  const handleCountryStatusChange = (index: number, checked: boolean) => {
+    const updatedCountries = [...countries];
+    updatedCountries[index].status = checked;
+    setCountries(updatedCountries);
+  };
+
+  const handleRegionStatusChange = (index: number, checked: boolean) => {
+    const updatedRegions = [...regions];
+    updatedRegions[index].status = checked;
+    setRegions(updatedRegions);
+  };
+
+  const handleZoneStatusChange = (index: number, checked: boolean) => {
+    const updatedZones = [...zones];
+    updatedZones[index].status = checked;
+    setZones(updatedZones);
+  };
+
+  const handleEntityStatusChange = (index: number, checked: boolean) => {
+    const updatedEntities = [...entities];
+    updatedEntities[index].status = checked;
+    setEntities(updatedEntities);
   };
 
   return (
@@ -258,7 +282,11 @@ export const AccountDashboard = () => {
                     <TableRow key={index}>
                       <TableCell>{country.name}</TableCell>
                       <TableCell>
-                        <Switch checked={country.status} />
+                        <Switch 
+                          checked={country.status} 
+                          onCheckedChange={(checked) => handleCountryStatusChange(index, checked)}
+                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -316,7 +344,11 @@ export const AccountDashboard = () => {
                       <TableCell>{region.country}</TableCell>
                       <TableCell>{region.region}</TableCell>
                       <TableCell>
-                        <Switch checked={region.status} />
+                        <Switch 
+                          checked={region.status} 
+                          onCheckedChange={(checked) => handleRegionStatusChange(index, checked)}
+                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -385,7 +417,11 @@ export const AccountDashboard = () => {
                       <TableCell>{zone.region}</TableCell>
                       <TableCell>{zone.zone}</TableCell>
                       <TableCell>
-                        <Switch checked={zone.status} />
+                        <Switch 
+                          checked={zone.status} 
+                          onCheckedChange={(checked) => handleZoneStatusChange(index, checked)}
+                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                        />
                       </TableCell>
                       <TableCell>
                         {zone.icon ? (
@@ -432,7 +468,10 @@ export const AccountDashboard = () => {
                       <TableCell>{site.latitude}</TableCell>
                       <TableCell>{site.longitude}</TableCell>
                       <TableCell>
-                        <Switch checked={site.status} />
+                        <Switch 
+                          checked={site.status} 
+                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                        />
                       </TableCell>
                       <TableCell>
                         <img src={site.qrCode} alt="QR Code" className="w-8 h-8" />
@@ -512,7 +551,11 @@ export const AccountDashboard = () => {
                         </Button>
                       </TableCell>
                       <TableCell>
-                        <Switch checked={entity.status} />
+                        <Switch 
+                          checked={entity.status} 
+                          onCheckedChange={(checked) => handleEntityStatusChange(index, checked)}
+                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                        />
                       </TableCell>
                       <TableCell>{entity.entity}</TableCell>
                     </TableRow>
