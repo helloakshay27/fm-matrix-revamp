@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -234,6 +235,9 @@ import { AddBillPage } from './pages/AddBillPage';
 import { PendingApprovalsDashboard } from './pages/PendingApprovalsDashboard';
 import InvoiceDashboard from './pages/InvoiceDashboard';
 
+// Import WBS page
+import { WBSElementDashboard } from './pages/WBSElementDashboard';
+
 // Import Settings pages
 import { FMUsersDashboard } from './pages/settings/FMUsersDashboard';
 import { CloneRolePage } from './pages/settings/CloneRolePage';
@@ -417,6 +421,7 @@ function App() {
               <Route path="/finance/bill-booking/add" element={<AddBillPage />} />
               <Route path="/finance/pending-approvals" element={<PendingApprovalsDashboard />} />
               <Route path="/finance/invoice" element={<InvoiceDashboard />} />
+              <Route path="/finance/wbs" element={<WBSElementDashboard />} />
               
               {/* Maintenance Routes */}
               <Route path="/maintenance/asset" element={<AssetDashboard />} />
