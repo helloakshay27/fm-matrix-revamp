@@ -1,22 +1,44 @@
 
 import React, { useState } from 'react';
-import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Search, Filter } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { InvoicesSESFilterDialog } from '@/components/InvoicesSESFilterDialog';
+import { toast } from 'sonner';
+
+interface InvoiceData {
+  id: number;
+  invoiceNumber: string;
+  invoiceDate: string;
+  supplier: string;
+  woNumber: string;
+  woAmount: string;
+  totalInvoiceAmount: string;
+  lastApprovedBy: string;
+  approvedStatus: string;
+  payableAmount: string;
+  adjustmentAmount: string;
+  retentionAmount: string;
+  ksAmount: string;
+  physicalInvoiceSentToAccounts: string;
+  physicalInvoiceReceivedByAccounts: string;
+  daysPassed: number;
+  accountPaid: string;
+  balanceAmount: string;
+  paymentStatus: string;
+  aging: string;
+  createdOn: string;
+  createdBy: string;
+}
 
 export const InvoicesDashboard = () => {
-  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [showFilterDialog, setShowFilterDialog] = useState(false);
-  const [invoicesData, setInvoicesData] = useState([
-    { 
+  const [invoicesData] = useState<InvoiceData[]>([
+    {
       id: 1,
-      invoiceNumber: 'INV-2024-001', 
-      invoiceDate: '2024-03-15', 
-      supplier: 'ABC Supplies Ltd', 
+      invoiceNumber: 'INV-2024-001',
+      invoiceDate: '2024-03-15',
+      supplier: 'ABC Supplies Ltd',
       woNumber: 'WO-001',
       woAmount: '₹50,000',
       totalInvoiceAmount: '₹55,000',
@@ -24,13 +46,23 @@ export const InvoicesDashboard = () => {
       approvedStatus: 'Approved',
       payableAmount: '₹55,000',
       adjustmentAmount: '₹0',
-      remarks: 'Payment processed'
+      retentionAmount: '₹5,500',
+      ksAmount: '₹2,750',
+      physicalInvoiceSentToAccounts: 'Yes',
+      physicalInvoiceReceivedByAccounts: 'Yes',
+      daysPassed: 15,
+      accountPaid: '₹47,500',
+      balanceAmount: '₹7,500',
+      paymentStatus: 'Partial',
+      aging: '15 days',
+      createdOn: '2024-03-15',
+      createdBy: 'Admin'
     },
-    { 
+    {
       id: 2,
-      invoiceNumber: 'INV-2024-002', 
-      invoiceDate: '2024-03-14', 
-      supplier: 'XYZ Services Pvt Ltd', 
+      invoiceNumber: 'INV-2024-002',
+      invoiceDate: '2024-03-14',
+      supplier: 'XYZ Services Pvt Ltd',
       woNumber: 'WO-002',
       woAmount: '₹25,000',
       totalInvoiceAmount: '₹27,500',
@@ -38,21 +70,17 @@ export const InvoicesDashboard = () => {
       approvedStatus: 'Pending',
       payableAmount: '₹27,500',
       adjustmentAmount: '₹0',
-      remarks: 'Under review'
-    },
-    { 
-      id: 3,
-      invoiceNumber: 'INV-2024-003', 
-      invoiceDate: '2024-03-13', 
-      supplier: 'DEF Materials Corp', 
-      woNumber: 'WO-003',
-      woAmount: '₹75,000',
-      totalInvoiceAmount: '₹82,500',
-      lastApprovedBy: 'Mike Johnson',
-      approvedStatus: 'Rejected',
-      payableAmount: '₹0',
-      adjustmentAmount: '₹-5,000',
-      remarks: 'Documentation incomplete'
+      retentionAmount: '₹2,750',
+      ksAmount: '₹1,375',
+      physicalInvoiceSentToAccounts: 'No',
+      physicalInvoiceReceivedByAccounts: 'No',
+      daysPassed: 8,
+      accountPaid: '₹0',
+      balanceAmount: '₹27,500',
+      paymentStatus: 'Pending',
+      aging: '8 days',
+      createdOn: '2024-03-14',
+      createdBy: 'User1'
     }
   ]);
 
@@ -67,61 +95,19 @@ export const InvoicesDashboard = () => {
       invoice.approvedStatus.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredInvoices(filtered);
-    toast({
-      title: "Search Applied",
-      description: `Found ${filtered.length} matching records`,
-    });
+    toast.success(`Found ${filtered.length} matching records`);
   };
 
   const handleReset = () => {
     console.log('Resetting search...');
     setSearchTerm('');
     setFilteredInvoices(invoicesData);
-    toast({
-      title: "Search Reset",
-      description: "All records are now displayed",
-    });
-  };
-
-  const handleFilterApply = (filters: {
-    invoiceNumber: string;
-    invoiceDate: string;
-    supplierName: string;
-  }) => {
-    console.log('Applying filters:', filters);
-    let filtered = invoicesData;
-
-    if (filters.invoiceNumber) {
-      filtered = filtered.filter(invoice =>
-        invoice.invoiceNumber.toLowerCase().includes(filters.invoiceNumber.toLowerCase())
-      );
-    }
-
-    if (filters.invoiceDate) {
-      filtered = filtered.filter(invoice =>
-        invoice.invoiceDate === filters.invoiceDate
-      );
-    }
-
-    if (filters.supplierName) {
-      filtered = filtered.filter(invoice =>
-        invoice.supplier.toLowerCase().includes(filters.supplierName.toLowerCase())
-      );
-    }
-
-    setFilteredInvoices(filtered);
-    toast({
-      title: "Filters Applied",
-      description: `Found ${filtered.length} matching records`,
-    });
+    toast.success('Search reset successfully');
   };
 
   const handleViewInvoice = (invoiceId: number) => {
     console.log('Viewing invoice:', invoiceId);
-    toast({
-      title: "View Invoice",
-      description: `Opening details for Invoice ID ${invoiceId}`,
-    });
+    toast.info(`Opening invoice details for ID: ${invoiceId}`);
   };
 
   const getStatusColor = (status: string) => {
@@ -132,81 +118,103 @@ export const InvoicesDashboard = () => {
         return 'bg-yellow-100 text-yellow-800';
       case 'rejected':
         return 'bg-red-100 text-red-800';
+      case 'partial':
+        return 'bg-blue-100 text-blue-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
 
   return (
-    <Layout>
-      <div className="p-6 space-y-6">
-        {/* Header Section */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-gray-900">WORK ORDER INVOICES/SES</h1>
-        </div>
+    <div className="p-6 space-y-6">
+      {/* Breadcrumb */}
+      <div className="text-sm text-gray-600">
+        Home &gt; Finance &gt; Invoices
+      </div>
 
-        {/* Filter and Search Section */}
-        <div className="flex items-center gap-4">
+      {/* Header Section */}
+      <h1 className="text-2xl font-bold">WORK ORDER INVOICES/SES</h1>
+
+      {/* Filter and Search Section */}
+      <div className="flex items-center gap-4">
+        <Button 
+          variant="outline" 
+          className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+        >
+          <Filter className="w-4 h-4" />
+          Filters
+        </Button>
+        
+        <div className="flex items-center gap-2 ml-auto">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search..."
+              className="pl-10 w-80"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            />
+          </div>
+          <Button 
+            onClick={handleSearch}
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
+          >
+            Go!
+          </Button>
           <Button 
             variant="outline" 
-            onClick={() => setShowFilterDialog(true)}
-            className="flex items-center gap-2"
+            onClick={handleReset}
+            className="hover:bg-gray-50"
           >
-            <Filter className="w-4 h-4" />
-            Filters
+            Reset
           </Button>
-          
-          <div className="flex items-center gap-2 ml-auto">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search..."
-                className="pl-10 w-80"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              />
-            </div>
-            <Button 
-              onClick={handleSearch}
-              className="bg-[#C72030] hover:bg-[#A01020] text-white"
-            >
-              Go!
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={handleReset}
-            >
-              Reset
-            </Button>
-          </div>
         </div>
+      </div>
 
-        {/* Invoices Table */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">View</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice Number</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">W.O. Number</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">WO Amount</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Invoice Amount</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Approved By</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approved Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payable Amount</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adjustment Amount</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredInvoices.map((invoice) => (
-                  <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-4 whitespace-nowrap text-sm">
+      {/* Invoices Table */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50">
+                <TableHead className="font-semibold">View</TableHead>
+                <TableHead className="font-semibold">ID</TableHead>
+                <TableHead className="font-semibold">Invoice Number</TableHead>
+                <TableHead className="font-semibold">Invoice Date</TableHead>
+                <TableHead className="font-semibold">Supplier</TableHead>
+                <TableHead className="font-semibold">W.O. Number</TableHead>
+                <TableHead className="font-semibold">WO Amount</TableHead>
+                <TableHead className="font-semibold">Total Invoice Amount</TableHead>
+                <TableHead className="font-semibold">Last Approved By</TableHead>
+                <TableHead className="font-semibold">Approved Status</TableHead>
+                <TableHead className="font-semibold">Payable Amount</TableHead>
+                <TableHead className="font-semibold">Adjustment Amount</TableHead>
+                <TableHead className="font-semibold">Retention Amount</TableHead>
+                <TableHead className="font-semibold">KS Amount</TableHead>
+                <TableHead className="font-semibold">Physical Invoice Sent to Accounts</TableHead>
+                <TableHead className="font-semibold">Physical Invoice Received by Accounts</TableHead>
+                <TableHead className="font-semibold">Days Passed</TableHead>
+                <TableHead className="font-semibold">Account Paid</TableHead>
+                <TableHead className="font-semibold">Balance Amount</TableHead>
+                <TableHead className="font-semibold">Payment Status</TableHead>
+                <TableHead className="font-semibold">Aging</TableHead>
+                <TableHead className="font-semibold">Created On</TableHead>
+                <TableHead className="font-semibold">Created By</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredInvoices.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={23} className="text-center py-8 text-gray-500">
+                    No invoices found matching your criteria
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredInvoices.map((invoice) => (
+                  <TableRow key={invoice.id} className="hover:bg-gray-50">
+                    <TableCell>
                       <Button 
                         variant="outline" 
                         size="sm"
@@ -215,67 +223,54 @@ export const InvoicesDashboard = () => {
                       >
                         View
                       </Button>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {invoice.id}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600 cursor-pointer hover:underline">
+                    </TableCell>
+                    <TableCell className="font-medium">{invoice.id}</TableCell>
+                    <TableCell className="text-blue-600 cursor-pointer hover:underline">
                       {invoice.invoiceNumber}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {invoice.invoiceDate}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {invoice.supplier}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {invoice.woNumber}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                      {invoice.woAmount}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                      {invoice.totalInvoiceAmount}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {invoice.lastApprovedBy}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    </TableCell>
+                    <TableCell>{invoice.invoiceDate}</TableCell>
+                    <TableCell>{invoice.supplier}</TableCell>
+                    <TableCell>{invoice.woNumber}</TableCell>
+                    <TableCell className="font-medium">{invoice.woAmount}</TableCell>
+                    <TableCell className="font-medium">{invoice.totalInvoiceAmount}</TableCell>
+                    <TableCell>{invoice.lastApprovedBy}</TableCell>
+                    <TableCell>
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(invoice.approvedStatus)}`}>
                         {invoice.approvedStatus}
                       </span>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                      {invoice.payableAmount}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {invoice.adjustmentAmount}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {invoice.remarks}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          {/* No Results Message */}
-          {filteredInvoices.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
-              <p className="text-lg">No invoices found matching your criteria.</p>
-              <p className="text-sm mt-2">Try adjusting your search or filter criteria.</p>
-            </div>
-          )}
+                    </TableCell>
+                    <TableCell className="font-medium">{invoice.payableAmount}</TableCell>
+                    <TableCell>{invoice.adjustmentAmount}</TableCell>
+                    <TableCell>{invoice.retentionAmount}</TableCell>
+                    <TableCell>{invoice.ksAmount}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 text-xs rounded ${invoice.physicalInvoiceSentToAccounts === 'Yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {invoice.physicalInvoiceSentToAccounts}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 text-xs rounded ${invoice.physicalInvoiceReceivedByAccounts === 'Yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {invoice.physicalInvoiceReceivedByAccounts}
+                      </span>
+                    </TableCell>
+                    <TableCell>{invoice.daysPassed}</TableCell>
+                    <TableCell className="font-medium">{invoice.accountPaid}</TableCell>
+                    <TableCell className="font-medium">{invoice.balanceAmount}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(invoice.paymentStatus)}`}>
+                        {invoice.paymentStatus}
+                      </span>
+                    </TableCell>
+                    <TableCell>{invoice.aging}</TableCell>
+                    <TableCell>{invoice.createdOn}</TableCell>
+                    <TableCell>{invoice.createdBy}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
-
-        {/* Filter Dialog */}
-        <InvoicesSESFilterDialog
-          open={showFilterDialog}
-          onOpenChange={setShowFilterDialog}
-          onApply={handleFilterApply}
-        />
       </div>
-    </Layout>
+    </div>
   );
 };
