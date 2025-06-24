@@ -23,22 +23,22 @@ const ParkingBookingsDashboard = () => {
         <Button 
           onClick={() => navigate('/vas/parking')} 
           variant="ghost" 
-          className="mr-4 p-2"
+          className="mr-4 p-2 hover:bg-[#C72030]/10"
         >
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-xl font-bold text-gray-900">Parking</h1>
+        <h1 className="text-xl font-bold text-[#C72030]">Parking</h1>
       </div>
 
       <Card className="max-w-4xl mx-auto">
         <CardContent className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">Parking Create</h2>
+          <h2 className="text-lg font-semibold text-[#C72030] mb-6">Parking Create</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
             <div>
-              <Label htmlFor="building" className="text-sm font-medium text-gray-700 mb-2 block">Building</Label>
+              <Label htmlFor="building" className="text-sm font-medium text-[#C72030] mb-2 block">Building</Label>
               <Select value={building} onValueChange={setBuilding}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full border-[#C72030] focus:ring-[#C72030]">
                   <SelectValue placeholder="Select Building" />
                 </SelectTrigger>
                 <SelectContent>
@@ -50,9 +50,9 @@ const ParkingBookingsDashboard = () => {
             </div>
 
             <div>
-              <Label htmlFor="floor" className="text-sm font-medium text-gray-700 mb-2 block">Floor</Label>
+              <Label htmlFor="floor" className="text-sm font-medium text-[#C72030] mb-2 block">Floor</Label>
               <Select value={floor} onValueChange={setFloor}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full border-[#C72030] focus:ring-[#C72030]">
                   <SelectValue placeholder="Select Floor" />
                 </SelectTrigger>
                 <SelectContent>
@@ -64,9 +64,9 @@ const ParkingBookingsDashboard = () => {
             </div>
 
             <div>
-              <Label htmlFor="parkingSlot" className="text-sm font-medium text-gray-700 mb-2 block">Parking Slot</Label>
+              <Label htmlFor="parkingSlot" className="text-sm font-medium text-[#C72030] mb-2 block">Parking Slot</Label>
               <Select value={parkingSlot} onValueChange={setParkingSlot}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full border-[#C72030] focus:ring-[#C72030]">
                   <SelectValue placeholder="Select Parking Slot" />
                 </SelectTrigger>
                 <SelectContent>
@@ -80,7 +80,7 @@ const ParkingBookingsDashboard = () => {
             <div className="flex justify-start">
               <Button 
                 onClick={handleSubmit}
-                className="bg-[#8B4A9C] hover:bg-[#7A4089] text-white px-8 py-2"
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2 rounded-none border-none shadow-none"
               >
                 Submit
               </Button>
