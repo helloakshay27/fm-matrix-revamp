@@ -80,7 +80,6 @@ const App = () => {
                     element={<TaskDetails />}
                   />
                   <Route path="/tasks" element={<Tasks setIsSidebarOpen={setIsSidebarOpen} />} /> 
-                  <Route path="/issues" element={<IssuesTable />} />
                   <Route path="/issues" element={<Issues setIsSidebarOpen={setIsSidebarOpen} />} />
                   <Route path="/mom" element={<MinutesOfMeeting />} />
                   <Route path="/new-mom" element={<MoMAdd />} />

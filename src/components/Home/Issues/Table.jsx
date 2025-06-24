@@ -52,8 +52,7 @@ const NewIssuesDateEditor = ({ value, onChange, onEnterPress, placeholder, valid
   return <input type="date" min={min} placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={` ${validator ? 'border border-red-500' : 'border-none'} my-custom-date-editor w-full p-1 focus:outline-none rounded text-[13px] `} />;
 };
 
-const Attachments = ({attachments,setAttachments}) => {
-    const fileInputRef = useRef(null);
+const Attachments = ({attachments,setAttachments,fileInputRef}) => {
     const dispatch = useDispatch();
     // const [files, setFiles] = useState(attachments);
     // const token = localStorage.getItem("token");
@@ -73,13 +72,13 @@ const Attachments = ({attachments,setAttachments}) => {
 
 
     return (
-        <div className="flex flex-col gap-3 p-5">
+        <div  className="flex flex-col gap-3 p-5">
             
                 <div className="text-[14px] mt-2">{
                   attachments.length > 0 ? (
                     <span>{attachments.length}</span>
                   ):(
-                    <span onClick={handleAttachFile} className="block mb-2 cursor-pointer text-gray-400"><i>Click to attach files</i></span>
+                    <span onClick={handleAttachFile} type="button" className="block mb-2 cursor-pointer text-gray-400"><i>Click to attach files</i></span>
                   )
                 }
                 </div>
@@ -182,6 +181,7 @@ const IssuesTable = () => {
 
   const newIssuesTitleInputRef = useRef(null);
   const newIssueFormRowRef = useRef(null);
+  const newIssueAttachmentInputRef= useRef(null);
   const userFetchInitiatedRef = useRef(false);
   const allIssuesFetchInitiatedRef = useRef(false);
 
@@ -454,6 +454,17 @@ attachments.forEach((file) => {
         !newIssueFormRowRef.current ||
         newIssueFormRowRef.current.contains(event.target)
       ) {
+        return;
+      }
+
+        if (
+        newIssueFormRowRef.current.contains(event.target) ||
+        (newIssueAttachmentInputRef.current || newIssueAttachmentInputRef.current.contains(event.target))
+      ) {
+        return;
+      }
+
+      if (event.target.tagName === 'I' && event.target.textContent === 'Click to attach files') {
         return;
       }
 
@@ -775,7 +786,7 @@ attachments.forEach((file) => {
                       />
                     </td>
                     <td className="border p-1 align-middle">
-                      <Attachments setAttachments={setAttachments} attachments={attachments}/>
+                      <Attachments setAttachments={setAttachments} attachments={attachments} fileInputRef={newIssueAttachmentInputRef}/>
                     </td>
                   </tr>
                 )}
