@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,7 +38,7 @@ export const AddIncidentPage = () => {
 
   const handleSubmit = () => {
     console.log('Incident submitted:', formData);
-    navigate('/safety/incident');
+    navigate('/maintenance/incident');
   };
 
   const handleFileUpload = () => {
@@ -295,7 +296,7 @@ export const AddIncidentPage = () => {
         <div className="flex gap-3 pt-4 pb-6">
           <Button
             variant="outline"
-            onClick={() => navigate('/safety/incident')}
+            onClick={() => navigate('/maintenance/incident')}
             className="px-8"
           >
             Cancel
