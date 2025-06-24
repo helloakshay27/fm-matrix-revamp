@@ -39,9 +39,10 @@ const createApiSlice = (name, fetchThunk) => createSlice({
 
 export const createIssue = createAsyncThunk("createIssue", async ({ token, payload }) => {
     try {
-        const response = await axios.post("https://api-tasks.lockated.com/issues.json", { issue: payload }, {
+        const response = await axios.post("https://api-tasks.lockated.com/issues.json", payload , {
             headers: {
                 Authorization: `Bearer ${token}`,
+                "Content-Type":"Multipart/form-data"
             },
 
         });

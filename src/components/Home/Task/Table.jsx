@@ -301,7 +301,10 @@ const TaskTable = () => {
       !isCreatingTask &&
       !isUpdatingTask
     ) {
+      if(mid)
       dispatch(fetchTasks({ token, id: mid }));
+      else
+      dispatch(fetchTasks({ token ,id:""}));
     }
   }, [dispatch, isCreatingTask, isUpdatingTask, location.pathname]);
 
