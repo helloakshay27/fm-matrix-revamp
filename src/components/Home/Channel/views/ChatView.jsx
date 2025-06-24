@@ -1,16 +1,94 @@
-const ChatView = () => {
-  return (
-    <div className="flex flex-col w-full h-full overflow-hidden">
-       <div className="flex-1 w-full bg-[#F9F9F9] px-6 py-4 overflow-y-auto max-h-[calc(100vh-160px)]">
-                <div className="text-xs  mb-1 ml-14">May 10, 17:56</div>
-                <div className="mb-6 flex items-start space-x-3">
-                    <div className="w-8 h-8 rounded-full bg-[#5986FF] text-white text-sm flex items-center justify-center">
-                        A
-                    </div>
-                    <div className="bg-white rounded-2xl px-4 py-2 text-sm shadow">
-                        Please complete that today
-                    </div>
-                </div>
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { createMessage, resetSendMessage } from "../../../../redux/slices/channelSlice";
+import useChatSubscription from "../../../../hooks/useChatSubscription";
+
+const ChatView = ({ channel, type, id }) => {
+    const token = localStorage.getItem('token');
+    const dispatch = useDispatch();
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+
+    const { success } = useSelector(state => state.createMessage)
+
+    const [input, setInput] = useState("")
+    const [messages, setMessages] = useState(channel.messages || []);
+
+    useChatSubscription({
+        type,
+        id,
+        onMessage: (newMessage) => {
+            setMessages((prev) => [...prev, newMessage]);
+        },
+    });
+
+    const formatTimestamp = (isoString) => {
+        const date = new Date(isoString);
+        const datePart = date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }); // e.g. "20 Jun"
+        const timePart = date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }); // e.g. "05:58 PM"
+        return `${datePart}, ${timePart}`;
+    };
+
+    const sendMessage = (e) => {
+        e.preventDefault();
+        if (input.trim() === "") return;
+
+        const newMessage = {
+            body: input,
+            user_id: currentUser.id,
+            user_name: currentUser.name,
+            created_at: new Date().toISOString(),
+        };
+
+        setMessages(prev => [...prev, newMessage]);
+
+        const payload = {
+            body: input,
+            project_space_id: type === 'group' ? id : null,
+            conversation_id: type === 'chat' ? id : null,
+        }
+
+        dispatch(createMessage({ token, payload }))
+    }
+
+    useEffect(() => {
+        if (success) {
+            setInput("");
+            dispatch(resetSendMessage())
+        }
+    }, [success]);
+
+    return (
+        <div className="flex flex-col w-full h-full overflow-hidden">
+            <div className="flex-1 w-full bg-[#F9F9F9] px-6 py-4 overflow-y-auto max-h-[calc(100vh-160px)]">
+                {
+                    messages.map((message, index) => (
+                        <div className={`mb-6 flex flex-col ${message.user_id === currentUser.id ? 'items-end' : 'items-start'}`}>
+                            <div className={`text-xs text-gray-500 mb-2 ${message.user_id === currentUser.id ? 'mr-14' : 'ml-14'}`}>
+                                {formatTimestamp(message.created_at)}
+                            </div>
+
+                            <div className="flex items-start space-x-3">
+                                {message.user_id !== currentUser.id && (
+                                    <div className="w-8 h-8 rounded-full bg-[#5986FF] text-white text-sm flex items-center justify-center">
+                                        {(message.user_name || 'U')[0].toUpperCase()}
+                                    </div>
+                                )}
+
+                                <div className="bg-white rounded-2xl px-4 py-2 text-sm shadow max-w-xs">
+                                    {message.body}
+                                </div>
+
+                                {message.user_id === currentUser.id && (
+                                    <div className="w-8 h-8 rounded-full bg-[#5986FF] text-white text-sm flex items-center justify-center">
+                                        {(message.user_name || 'U')[0].toUpperCase()}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                    ))
+                }
+
             </div>
             <div className="w-[800px] mx-auto bg-white  px-6 py-6 flex items-center space-x-2">
                 <div className="relative flex-1">
@@ -18,6 +96,14 @@ const ChatView = () => {
                         type="text"
                         placeholder="Type here and hit enter"
                         className="w-full bg-[#F9F9F9] rounded-full px-4 py-4 pr-10 text-sm focus:outline-none"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                sendMessage(e);
+                                setInput("");
+                            }
+                        }}
                     />
                     <label
                         htmlFor="file-upload"
@@ -34,20 +120,18 @@ const ChatView = () => {
                         type="file"
                         className="hidden"
                         onChange={(e) => {
-                            // handle file upload here
                             console.log(e.target.files);
                         }}
                     />
                 </div>
-                <button className="text-gray-500 text-xl">
+                <button className="text-gray-500 text-xl" onClick={sendMessage}>
                     <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M4.25 28.3332V19.8332L15.5833 16.9998L4.25 14.1665V5.6665L31.1667 16.9998L4.25 28.3332Z" fill="black" fillOpacity="0.2" />
                     </svg>
-
                 </button>
             </div>
-    </div>
-  );
+        </div>
+    );
 }
 
 export default ChatView;

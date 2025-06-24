@@ -14,6 +14,11 @@ const createApiSlice = (name, fetchThunk) => createSlice({
             state.loading = false;
             state.success = false;
             state.error = null;
+        },
+        resetstartConversation: (state) => {
+            state.loading = false;
+            state.success = false;
+            state.error = null;
         }
     },
     extraReducers: (builder) => {
@@ -99,17 +104,32 @@ export const createMessage = createAsyncThunk('createMessage', async ({ token, p
     } catch (error) {
         console.log(error)
     }
+})
 
+export const startConversation = createAsyncThunk('startConversation', async ({ token, payload }) => {
+    try {
+        const response = await axios.post(`https://api-tasks.lockated.com/conversations.json`, payload, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.log(error)
+    }
 })
 
 export const fetchChannelsSlice = createApiSlice('fetchChannels', fetchChannels);
 export const fetchConversationsSlice = createApiSlice('fetchConversations', fetchConversations);
 export const fetchChannelByIdSlice = createApiSlice('fetchChannelById', fetchChannelById);
 export const createMessageSlice = createApiSlice('createMessage', createMessage);
+export const startConversationSlice = createApiSlice('startConversation', startConversation);
 
 export const fetchChannelsReducer = fetchChannelsSlice.reducer;
 export const fetchConversationsReducer = fetchConversationsSlice.reducer;
 export const fetchChannelByIdReducer = fetchChannelByIdSlice.reducer;
 export const createMessageReducer = createMessageSlice.reducer;
+export const startConversationReducer = startConversationSlice.reducer;
 
 export const { resetSendMessage } = createMessageSlice.actions;
+export const { resetstartConversation } = startConversationSlice.actions;

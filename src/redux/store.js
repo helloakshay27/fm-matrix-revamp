@@ -7,10 +7,10 @@ import { changeTaskStatusReducer, createDependancyReducer, createTaskCommentRedu
 import { fetchOrganizationsReducer } from './slices/organizationSlice'
 import { createMilestoneReducer, fetchMilestoneByIdReducer, fetchMilestoneReducer } from './slices/milestoneSlice'
 import { fetchSpirintByIdReducer, fetchSpirintsReducer, postSprintReducer, putSprintReducer } from './slices/spirintSlice'
-import { createIssueReducer, fetchIssueReducer, updateIssueReducer, fetchIssueTypeReducer, filterIssueReducer,createIssueTypeReducer, updateIssueTypeReducer, deleteIssueTypeReducer } from './slices/IssueSlice'
+import { createIssueReducer, fetchIssueReducer, updateIssueReducer, fetchIssueTypeReducer, filterIssueReducer, createIssueTypeReducer, updateIssueTypeReducer, deleteIssueTypeReducer } from './slices/IssueSlice'
 import { fetchStatusReducer, createStatusReducer, deleteStatusReducer, updateStatusReducer } from './slices/statusSlice'
 import { createMoMReducer, fetchMoMReducer } from './slices/momSlice'
-import { createMessageReducer, fetchChannelByIdReducer, fetchChannelsReducer, fetchConversationsReducer } from './slices/channelSlice'
+import { createMessageReducer, fetchChannelByIdReducer, fetchChannelsReducer, fetchConversationsReducer, startConversationReducer } from './slices/channelSlice'
 
 export const store = configureStore({
   reducer: {
@@ -118,5 +118,6 @@ export const store = configureStore({
     fetchConversations: fetchConversationsReducer,
     fetchChannelById: fetchChannelByIdReducer,
     createMessage: createMessageReducer,
+    startConversation: startConversationReducer,
   },
 })
