@@ -58,10 +58,10 @@ const StatusBadge = ({ status: initialStatus, statusOptions, onStatusChange }) =
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleDropdown()}
       >
         <span
-          className={`status-${currentStatus.toLowerCase().replace('_', '-')} rounded-full w-[5px] h-[5px]`}
+          className={`status-${currentStatus?.toLowerCase().replace('_', '-')} rounded-full w-[5px] h-[5px]`}
         ></span>
         <span>
-          {currentStatus
+          {currentStatus && currentStatus
             .split('_')
             .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ')}
@@ -91,7 +91,7 @@ const StatusBadge = ({ status: initialStatus, statusOptions, onStatusChange }) =
               }`}
               role="option"
               aria-selected={
-                option.toLowerCase().replace(' ', '-') === currentStatus.toLowerCase().replace(' ', '-')
+                option?.toLowerCase().replace(' ', '-') === currentStatus.toLowerCase().replace(' ', '-')
               }
               tabIndex={0}
               onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleStatusSelect(option)}

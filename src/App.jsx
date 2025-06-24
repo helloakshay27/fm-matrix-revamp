@@ -79,6 +79,7 @@ const App = () => {
                     path="/projects/:id/milestones/:mid/tasks/:tid"
                     element={<TaskDetails />}
                   />
+                  <Route path="/tasks" element={<Tasks setIsSidebarOpen={setIsSidebarOpen} />} /> 
                   <Route path="/issues" element={<Issues setIsSidebarOpen={setIsSidebarOpen} />} />
                   <Route path="/mom" element={<MinutesOfMeeting />} />
                   <Route path="/new-mom" element={<MoMAdd />} />

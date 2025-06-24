@@ -8,6 +8,7 @@ import { fetchProjects } from "../../../../redux/slices/projectSlice";
 import { fetchTasks } from "../../../../redux/slices/taskSlice";
 
 import toast from "react-hot-toast";
+import { set } from "react-hook-form";
 
 const globalTypesOptions = [
   { value: 1, label: 'bug' },
@@ -25,6 +26,58 @@ const globalPriorityOptions = [
   { value: 5, label: 'Urgent' },
 ];
 
+const Attachments = ({ attachments, setAttachments }) => {
+    const fileInputRef = useRef(null);
+    const dispatch = useDispatch();
+    const [files, setFiles] = useState(attachments);
+
+    const handleAttachFile = () => {
+        fileInputRef.current.click(); // Open file picker
+    };
+
+    const handleFileChange = async (event) => {
+        const selectedFiles = Array.from(event.target.files);
+        if (!selectedFiles.length) return;
+        setFiles(selectedFiles);
+        setAttachments(selectedFiles);
+        console.log(selectedFiles);
+    };
+
+
+
+    return (
+        <div className="flex h-[45px] border">
+            {files.length > 0 ? (
+                <>
+                    <div className="text-[14px] mt-2 p-1">
+                        <span className="p-2">{files.length}</span>
+                        
+                    </div>
+                </>
+            ) : (
+                <div className="flex  w-full justify-between items-center p-2 ">
+                    <span className="text-[14px] "><i className="text-gray-400">No Documents Attached</i></span>
+                    <button
+                        type="button"
+                        className="bg-[#C72030] h-[30px] w-[100px] text-white rounded"
+                        onClick={handleAttachFile}
+                    >
+                        Attach Files
+                    </button>
+                </div>
+            )}
+
+            <input
+                type="file"
+                multiple
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                onChange={handleFileChange}
+            />
+        </div>
+    );
+};
+
 const Issues = ({ closeModal }) => {
   const [title, setTitle] = useState("");
   const [responsiblePerson, setResponsiblePerson] = useState("");
@@ -37,6 +90,7 @@ const Issues = ({ closeModal }) => {
   const [newIssuesProjectId, setNewIssuesProjectId] = useState("");
   const [newIssuesMilestoneId, setNewIssuesMilestoneId] = useState("");
   const [newIssuesTaskId, setNewIssuesTaskId] = useState("");
+  const [attachments, setAttachments] = useState([]);
   const token= localStorage.getItem("token");
   const isSubmittingRef=useRef(false);
 
@@ -160,15 +214,6 @@ const Issues = ({ closeModal }) => {
     // Form Validations
     if(isSubmittingRef.current)return;
     console.log(newIssuesProjectId);
-    if(!newIssuesProjectId){
-      toast.error("Project is required");
-      return;
-    }
-    
-    if(!newIssuesMilestoneId){
-      toast.error("Milestone is required");
-      return;
-    }
     if(!newIssuesTaskId){
       toast.error("Task is required");
       return;
@@ -201,24 +246,31 @@ const Issues = ({ closeModal }) => {
 
     setIsSubmitting(true);
     isSubmittingRef.current=true;
+    const formData = new FormData();
 
-    const data = {
-      title: title.trim(),
-      status: "open",
-      responsible_person_id: responsiblePerson,
-      project_management_id: newIssuesProjectId || null,
-      milestone_id: newIssuesMilestoneId || null,
-      task_management_id: newIssuesTaskId || null,
-      start_date: startDate || null,
-      end_date: endDate || null,
-      priority: globalPriorityOptions.find((option) => option.value === priority)?.label || null,
-      created_by_id: 158,
-      comment: comments,
-      issue_type: issueTypeOptions.find((option) => option.value === type)?.label || null,
-    };
+formData.append("issue[title]", title.trim());
+formData.append("issue[status]", "open");
+formData.append("issue[responsible_person_id]", responsiblePerson);
+formData.append(
+  "issue[project_management_id]",
+    newIssuesProjectId || ""
+);
+formData.append("issue[milestone_id]", newIssuesMilestoneId || "");
+formData.append("issue[task_management_id]", newIssuesTaskId || "");
+formData.append("issue[start_date]", startDate || "");
+formData.append("issue[end_date]", endDate || "");
+formData.append("issue[priority]", globalPriorityOptions.find((option) => option.value === priority)?.label || null);
+formData.append("issue[created_by_id]", 158);
+formData.append("issue[issue_type]", issueTypeOptions.find((option) => option.value === type)?.label || null,);
+formData.append("issue[comment]", comments || "");
+
+attachments.forEach((file) => {
+  formData.append("issue[attachments][]", file);
+});
+
 
     try {
-      await dispatch(createIssue({token,payload:data})).unwrap();
+      await dispatch(createIssue({token,payload: formData})).unwrap();
       dispatch(fetchIssue({token}));
       closeModal();
       toast.success("Issue created successfully!");
@@ -240,6 +292,7 @@ const Issues = ({ closeModal }) => {
     newIssuesProjectId,
     newIssuesMilestoneId,
     newIssuesTaskId,
+    attachments,
     closeModal,
   ]);
 
@@ -364,6 +417,10 @@ const Issues = ({ closeModal }) => {
             value={comments}
             onChange={(e) => setComments(e.target.value)}
           />
+        </div>
+        <div className="mt-4 space-y-2">
+          <label>Attachments</label>
+          <Attachments attachments={attachments} setAttachments={setAttachments} />
         </div>
         <div className="flex items-center justify-center gap-4 w-full bottom-0 py-3 bg-white mt-10">
           <button

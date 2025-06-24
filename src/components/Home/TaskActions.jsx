@@ -20,6 +20,9 @@ import { useSelector, useDispatch } from "react-redux";
 import { useParams } from "react-router-dom";
 import IssueFilter from "./Issues/Modal/Filter";
 import { filterIssue } from "../../redux/slices/IssueSlice";
+import Switch from '@mui/joy/Switch';
+
+
 
 const TYPE_OPTIONS = [
     { key: "Kanban", icon: <ChartNoAxesColumn size={18} className="rotate-180 text-[#C72030]" />, label: "Kanban" },
@@ -34,7 +37,9 @@ const SPRINT_TYPE_OPTIONS = [
 const STATUS_OPTIONS = [
     "All",
     "On Hold",
-    "Completed"
+    "Completed",
+    "In Progress",
+    "Overdue"
 ];
 
 const TaskActions = ({
@@ -106,26 +111,27 @@ const TaskActions = ({
             if (status !== "All") {
                 filters["q[status_eq]"] = formattedStatus;
             }
-            dispatch(filterIssue({ token, filter: filters })).unwrap();
+            dispatch(filterProjects({ token, filters: filters })).unwrap();
 
         } else if(addType === "Issues") {
             console.log(formattedStatus);
             if (status !== "All") {
                 filters["q[status_eq]"] = formattedStatus;
             }
-            dispatch(filterProjects({ token, filters })).unwrap();
+            dispatch(filterIssue({ token, filters })).unwrap();
 
         }else{
             if (status !== "All") {
                 filters["q[status_eq]"] = formattedStatus;
             }
+            if(mid)
             filters["q[milestone_id_eq]"] = mid;
             dispatch(filterTask({ token, filter: filters })).unwrap(); 
 
         }
         setSelectedStatus(status);
         setIsStatusOpen(false);
-    }, []);
+    }, [dispatch, addType]);
 
     const handleAddClick = useCallback(() => {
         switch (addType) {
@@ -149,7 +155,7 @@ const TaskActions = ({
     // Renderers
     const renderTypeDropdown = () => (
         <div className="cursor-pointer" ref={typeDropdownRef}>
-            <div className="relative">
+            <div className="relative ml-2">
                 <button
                     className="text-sm flex items-center justify-between gap-2"
                     onClick={() => {
@@ -256,6 +262,19 @@ const TaskActions = ({
         <>
             <div className="flex items-center justify-end mx-6 mt-4 mb-3 text-sm">
                 <div className="flex items-center gap-3 divide-x divide-gray-400">
+                    {addType != "Issues" && addType != "Project" && addType != "Milestone" && addType != "templates" && addType != "archived" && addType != "Sprint-Gantt"  && (
+                        <div className="flex justify-center items-center">
+                            <label className="mr-2">All task</label>
+                            <Switch
+                             className={`
+                                "h-[35px] w-21"
+                                `
+                             }
+                             color="danger"
+                            />
+                        <label className="ml-2 " >My Task</label>
+                        </div>
+                    )}
                     {addType !== "Issues" && addType !== "Sprint-Gantt" && addType !== "Sprint-Gantt" && !["Milestone", "templates", "archived"].includes(addType) && renderTypeDropdown()}
                     {addType !== "Issues" && !["Milestone", "Project", "Task", "active_projects", "templates", "archived"].includes(addType) && renderSprintTypeDropdown()}
                     {addType !== "Milestone" && addType !== "templates" && addType !== "archived" && (

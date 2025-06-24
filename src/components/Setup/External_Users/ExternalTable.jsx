@@ -112,7 +112,7 @@ const ExternalTable = () => {
       },
     },
     {
-      accessorKey: 'organization_id',
+      accessorKey: 'organization_name',
       header: 'Organisation',
       size: 200,
     },

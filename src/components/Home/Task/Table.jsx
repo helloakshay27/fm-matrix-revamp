@@ -29,6 +29,7 @@ import {
   createTask,
   changeTaskStatus,
   updateTask,
+  filterTask
 } from "../../../redux/slices/taskSlice";
 import { fetchUsers } from "../../../redux/slices/userSlice";
 import SelectBox from "../../SelectBox";
@@ -226,7 +227,7 @@ const TaskTable = () => {
   );
 
   const {
-    filterTask,
+    filterTask: filterTasks,
     loading: loadingFilterTasks,
     error: filterTasksError,
     success:filterSuccess
@@ -294,14 +295,17 @@ const TaskTable = () => {
    
     useEffect(() => {
       filterSuccess? setIsFiltered(true) : setIsFiltered(false);  
-    },[filterSuccess,filterTask]);
+    },[filterSuccess,filterTasks]);
 
   useEffect(() => {
     if (
       !isCreatingTask &&
       !isUpdatingTask
     ) {
+      if(mid)
       dispatch(fetchTasks({ token, id: mid }));
+      else
+      dispatch(fetchTasks({ token ,id:""}));
     }
   }, [dispatch, isCreatingTask, isUpdatingTask, location.pathname]);
 
@@ -334,8 +338,8 @@ const TaskTable = () => {
   useEffect(() => {
     if (isCreatingTask || isUpdatingTask) return;
     let newProcessedData = [];
-    if (filterSuccess && Array.isArray(filterTask)) {
-      newProcessedData = filterTask?.map((task) =>
+    if (filterSuccess && Array.isArray(filterTasks)) {
+      newProcessedData = filterTasks?.map((task) =>
         processTaskData(task)
       );
       setData(newProcessedData);
@@ -348,16 +352,16 @@ const TaskTable = () => {
       );
       setData(newProcessedData);
       setLocalError(null);
-    } else if (tasksError && !tasksFromStore && filterTasksError && !filterTask) {
+    } else if (tasksError && !tasksFromStore && filterTasksError && !filterTasks) {
       setData([]);
     }
-  }, [tasksFromStore, tasksError, isCreatingTask, isUpdatingTask, filterTasksError, filterTask]);
+  }, [tasksFromStore, tasksError, isCreatingTask, isUpdatingTask, filterTasksError, filterTasks]);
 
   useEffect(() => {
     if (isAddingNewTask && newTaskTitleInputRef.current) {
       newTaskTitleInputRef.current.focus();
     }
-  }, [isAddingNewTask, filterTask, tasksFromStore,isFiltered]);
+  }, [isAddingNewTask, filterTasks, tasksFromStore,isFiltered]);
 
   const resetNewTaskForm = useCallback(() => {
     const defaults = createNewTaskDefaults();
@@ -406,7 +410,7 @@ const TaskTable = () => {
       .unwrap()
       .then(() => {
         resetNewTaskForm();
-        return dispatch(fetchTasks({ token, id: mid })).unwrap();
+        return dispatch(fetchTasks({ token, id: mid?mid:"" })).unwrap();
       })
       .catch((error) => {
         console.error("Task creation failed:", error);
@@ -485,13 +489,16 @@ const TaskTable = () => {
         if (fieldName === "status") {
           await dispatch(changeTaskStatus({ token, id: taskId, payload })) // Using changeTaskStatus as per import
             .unwrap()
-            dispatch(fetchTasks({ token, id: mid })).unwrap();
         }
         else {
           await dispatch(updateTask({ token, id: taskId, payload }))
             .unwrap()
-            dispatch(fetchTasks({ token, id: mid })).unwrap();
-        }
+          }
+          if(filterTasks && filterTasks.length>0 && filterSuccess && localStorage.getItem("filterTask")){
+            const filteredTask = JSON.parse(localStorage.getItem("filterTask"));
+            dispatch(filterTask({ token, filters: filteredTask })).unwrap();
+          }else
+          dispatch(fetchTasks({ token, id: mid?mid:"" })).unwrap();
       } catch (error) {
         console.error(
           `Task field update failed for ${taskId} (${fieldName}):`,
@@ -501,7 +508,6 @@ const TaskTable = () => {
           `Update failed: ${error?.response?.data?.errors || error?.message || "Server error"
           }`
         );
-        dispatch(fetchTasks({ token, id: mid }));
       }
       finally {
         setIsUpdatingTask(false);

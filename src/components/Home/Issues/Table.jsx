@@ -52,6 +52,48 @@ const NewIssuesDateEditor = ({ value, onChange, onEnterPress, placeholder, valid
   return <input type="date" min={min} placeholder={placeholder} value={value || ""} onChange={onChange} onKeyDown={handleKeyDown} className={` ${validator ? 'border border-red-500' : 'border-none'} my-custom-date-editor w-full p-1 focus:outline-none rounded text-[13px] `} />;
 };
 
+const Attachments = ({attachments,setAttachments,fileInputRef}) => {
+    const dispatch = useDispatch();
+    // const [files, setFiles] = useState(attachments);
+    // const token = localStorage.getItem("token");
+
+    const handleAttachFile = () => {
+        fileInputRef.current.click(); // Open file picker
+    };
+
+    const handleFileChange = async (event) => {
+        const selectedFiles = Array.from(event.target.files);
+        if (!selectedFiles.length) return;
+        console.log(selectedFiles);
+        setAttachments(selectedFiles);
+
+      }
+
+
+
+    return (
+        <div  className="flex flex-col gap-3 p-5">
+            
+                <div className="text-[14px] mt-2">{
+                  attachments.length > 0 ? (
+                    <span>{attachments.length}</span>
+                  ):(
+                    <span onClick={handleAttachFile} type="button" className="block mb-2 cursor-pointer text-gray-400"><i>Click to attach files</i></span>
+                  )
+                }
+                </div>
+
+            <input
+                type="file"
+                multiple
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                onChange={handleFileChange}
+            />
+        </div>
+    );
+};
+
 
 // Constants
 const globalPriorityOptions = ['None', 'Low', 'Medium', 'High', 'Urgent'];
@@ -130,6 +172,7 @@ const IssuesTable = () => {
   const [milestoneOptions, setMilestoneOptions] = useState([]);
   const [taskOptions, setTaskOptions] = useState([]);
   const [issueTypeOptions, setIssueTypeOptions] = useState([]);
+  const [attachments, setAttachments] = useState([]);
 
   const [isSavingIssues, setIsSavingIssues] = useState(false);
   const [isUpdatingIssue, setIsUpdatingIssue] = useState(false); // Added state for tracking updates
@@ -138,6 +181,7 @@ const IssuesTable = () => {
 
   const newIssuesTitleInputRef = useRef(null);
   const newIssueFormRowRef = useRef(null);
+  const newIssueAttachmentInputRef= useRef(null);
   const userFetchInitiatedRef = useRef(false);
   const allIssuesFetchInitiatedRef = useRef(false);
 
@@ -249,43 +293,44 @@ const IssuesTable = () => {
 
   }, [dispatch, loadingProjects, projectOptions, parentId]);
 
-  useEffect(() => {
-    let allIssues;
-    console.log(parentId);
-    if (parentId !== null && parentId !== undefined) {
-      allIssues = allIssuesFromStore.filter((issue) => issue.project_management_id == parentId);
-    }
-    else if (filterSuccess && filteredIssues) {
-      allIssues = filteredIssues;
-    }
-    else {
-      allIssues = allIssuesFromStore;
-    }
-    console.log(allIssuesFromStore);
-
-    if (allIssues && Array.isArray(allIssues)) {
-      const processedIssuess = allIssues.map(issue => ({
-        id: issue.id,
-        issueTitle: issue.title || "Unnamed Issues",
-        status: issue.status || 'open',
-        responsiblePerson: issue.responsible_person?.name || 'Unassigned',
-        responsiblePersonId: issue.responsible_person?.id || null,
-        issueType: issue.issue_type || 'None',
-        startDate: issue.start_date ? new Date(issue.start_date).toLocaleDateString('en-CA') : null,
-        endDate: issue.end_date ? new Date(issue.end_date).toLocaleDateString('en-CA') : null, // Ensure 'en-CA' format (YYYY-MM-DD) is compatible with date input
-        priority: issue.priority || 'None',
-        projectName: issue.project_management_name || "",
-        milestoneName: issue.milstone_name || "",
-        taskName: issue.task_management_name || "",
-        comments: issue.comments?.length ? issue.comments[issue.comments.length - 1].body : '',    // Robust comment handling
-      }));
-      setData(processedIssuess);
-      setLocalError(null);
-    } else if (allIssuesError) {
-      setLocalError('Failed to load issues.');
-      setData([]);
-    }
-  }, [allIssuesFromStore, allIssuesError, parentId, milestoneOptions, taskOptions, filteredIssues, filterSuccess]);
+  useEffect(() => {
+  let allIssues;
+  console.log(parentId);
+  if(parentId!==null && parentId!==undefined  ){
+   allIssues=allIssuesFromStore.filter((issue) => issue.project_management_id == parentId);
+  }
+  else if(filterSuccess && filteredIssues){
+   allIssues=filteredIssues;
+  }
+  else{
+   allIssues=allIssuesFromStore;
+  }
+  console.log(allIssuesFromStore);
+  
+    if (allIssues && Array.isArray(allIssues)) {
+        const processedIssuess = allIssues.map(issue => ({
+            id: issue.id,
+            issueTitle: issue.title || "Unnamed Issues",
+            status: issue.status || 'open',
+            responsiblePerson: issue.responsible_person?.name || 'Unassigned',
+            responsiblePersonId: issue.responsible_person?.id || null,
+            issueType: issue.issue_type || 'None',
+            startDate: issue.start_date ? new Date(issue.start_date).toLocaleDateString('en-CA') : null,
+            endDate: issue.end_date ? new Date(issue.end_date).toLocaleDateString('en-CA') : null, // Ensure 'en-CA' format (YYYY-MM-DD) is compatible with date input
+            priority: issue.priority || 'None',
+            projectName: issue.project_management_name || "",
+            milestoneName: issue.milstone_name|| "",
+            taskName: issue.task_management_name|| "",
+            comments: issue.comments?.length? issue.comments[issue.comments.length - 1].body : '',
+            attachments: issue.attachments || [],    // Robust comment handling
+        }));
+        setData(processedIssuess);
+        setLocalError(null);
+    } else if (allIssuesError) {
+        setLocalError('Failed to load issues.');
+        setData([]);
+    }
+  }, [allIssuesFromStore, allIssuesError,parentId,milestoneOptions,taskOptions,filteredIssues,filterSuccess]);
 
 
   useEffect(() => {
@@ -320,7 +365,7 @@ const IssuesTable = () => {
   }, [resetNewIssuesForm]);
 
   const handleSaveNewIssues = useCallback(async () => {
-    if (!newIssuesTitle || newIssuesTitle.trim() === "" || !newIssuesEndDate || !newIssuesProjectId || !newIssuesMilestoneId || !newIssuesTaskId) {
+    if (!newIssuesTitle || newIssuesTitle.trim() === "" || !newIssuesEndDate || !newIssuesProjectId || !newIssuesMilestoneId || !newIssuesTaskId ) {
       setLocalError("Please fill in all required fields.");
       setValidator(true);
       return;
@@ -328,39 +373,48 @@ const IssuesTable = () => {
     setLocalError(null);
     setIsSavingIssues(true);
     setValidator(false);
+const formData = new FormData();
 
-    const IssuesPayload = {
-      title: newIssuesTitle.trim(),
-      status: newIssuesStatus,
-      responsible_person_id: newIssuesResponsiblePersonId,
-      project_management_id: parentId || newIssuesProjectId || null,
-      milestone_id: newIssuesMilestoneId || null,
-      task_management_id: newIssuesTaskId || null,
-      start_date: newIssuesStartDate || null, // Standard ISO format for dates
-      end_date: newIssuesEndDate || null,
-      priority: newIssuesPriority,
-      created_by_id: 158,
-      comment: newIssuesComments, // Example: Save as array of comment objects
-      issue_type: newIssuesType
-    };
+formData.append("issue[title]", newIssuesTitle.trim());
+formData.append("issue[status]", newIssuesStatus);
+formData.append("issue[responsible_person_id]", newIssuesResponsiblePersonId);
+formData.append(
+  "issue[project_management_id]",
+  parentId || newIssuesProjectId || ""
+);
+formData.append("issue[milestone_id]", newIssuesMilestoneId || "");
+formData.append("issue[task_management_id]", newIssuesTaskId || "");
+formData.append("issue[start_date]", newIssuesStartDate || "");
+formData.append("issue[end_date]", newIssuesEndDate || "");
+formData.append("issue[priority]", newIssuesPriority);
+formData.append("issue[created_by_id]", 158);
+formData.append("issue[issue_type]", newIssuesType);
+formData.append("issue[comment]", JSON.stringify(newIssuesComments || []));
 
-    try {
-      await dispatch(createIssue({ token, payload: IssuesPayload })).unwrap();
-      dispatch(fetchIssue({ token })); // Re-fetch issues to get the latest data including the new one
-      setIsAddingNewIssues(false);
-      resetNewIssuesForm();
-    } catch (error) {
-      console.error("Failed to create Issues:", error);
-      const errorMessage = error?.response?.data?.message || error?.message || (typeof error === 'string' ? error : "Failed to save Issues.");
-      setLocalError(errorMessage);
-    } finally {
-      setIsSavingIssues(false);
-    }
-  }, [
-    dispatch, parentId, resetNewIssuesForm,
-    newIssuesTitle, newIssuesStatus, newIssuesResponsiblePersonId,
-    newIssuesEndDate, newIssuesPriority, newIssuesComments, newIssuesType, newIssuesProjectId,
-  ]);
+// Append each attachment under issue[attachments][]
+attachments.forEach((file) => {
+  formData.append("issue[attachments][]", file);
+});
+
+
+
+    try {
+      await dispatch(createIssue({token,payload: formData})).unwrap();
+      dispatch(fetchIssue({token})); // Re-fetch issues to get the latest data including the new one
+      setIsAddingNewIssues(false);
+      resetNewIssuesForm();
+    } catch (error) {
+      console.error("Failed to create Issues:", error);
+      const errorMessage = error?.response?.data?.message || error?.message || (typeof error === 'string' ? error : "Failed to save Issues.");
+      setLocalError(errorMessage);
+    } finally {
+      setIsSavingIssues(false);
+    }
+  }, [
+    dispatch, parentId, resetNewIssuesForm,
+    newIssuesTitle, newIssuesStatus, newIssuesResponsiblePersonId,
+    newIssuesEndDate, newIssuesPriority, newIssuesComments, newIssuesType,newIssuesProjectId,
+  ]);
 
   const handleDeleteExistingIssues = useCallback((IssuesId) => {
     alert(`API for deleting existing Issues ${IssuesId} needs to be implemented.`);
@@ -400,6 +454,17 @@ const IssuesTable = () => {
         !newIssueFormRowRef.current ||
         newIssueFormRowRef.current.contains(event.target)
       ) {
+        return;
+      }
+
+        if (
+        newIssueFormRowRef.current.contains(event.target) ||
+        (newIssueAttachmentInputRef.current || newIssueAttachmentInputRef.current.contains(event.target))
+      ) {
+        return;
+      }
+
+      if (event.target.tagName === 'I' && event.target.textContent === 'Click to attach files') {
         return;
       }
 
@@ -541,8 +606,16 @@ const IssuesTable = () => {
           )
         }
       },
+      {
+        accessorKey: 'attachments',header: 'Attachments', size: 100,
+        cell: ({ row,getValue }) => {
+          return (
+         <span>{getValue().length}</span>
+          )
+        }
+      }
     ],
-    [handleDeleteExistingIssues, handleUpdateIssues, userOptionsForSelectBox, issueTypeOptions, allIssuesFromStore]
+    [handleDeleteExistingIssues, handleUpdateIssues, userOptionsForSelectBox,issueTypeOptions,allIssuesFromStore,data]
   );
 
   const table = useReactTable({
@@ -711,6 +784,9 @@ const IssuesTable = () => {
                         placeholder="Comments"
 
                       />
+                    </td>
+                    <td className="border p-1 align-middle">
+                      <Attachments setAttachments={setAttachments} attachments={attachments} fileInputRef={newIssueAttachmentInputRef}/>
                     </td>
                   </tr>
                 )}
