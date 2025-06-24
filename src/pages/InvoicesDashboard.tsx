@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Search, Filter } from 'lucide-react';
 import { toast } from 'sonner';
+import { InvoicesFilterDialog } from '@/components/InvoicesFilterDialog';
 
 interface InvoiceData {
   id: number;
@@ -33,6 +33,13 @@ interface InvoiceData {
 
 export const InvoicesDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState({
+    invoiceNumber: '',
+    invoiceDate: '',
+    supplierName: ''
+  });
+
   const [invoicesData] = useState<InvoiceData[]>([
     {
       id: 1,
@@ -84,24 +91,45 @@ export const InvoicesDashboard = () => {
     }
   ]);
 
-  const [filteredInvoices, setFilteredInvoices] = useState(invoicesData);
+  const handleFilterApply = (filters: typeof appliedFilters) => {
+    setAppliedFilters(filters);
+    console.log('Applied filters:', filters);
+    toast.success('Filters applied successfully');
+  };
+
+  const applyFilters = (data: InvoiceData[]) => {
+    return data.filter(invoice => {
+      const matchesSearch = searchTerm === '' || 
+        invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.supplier.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.woNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.approvedStatus.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesFilters = 
+        (!appliedFilters.invoiceNumber || invoice.invoiceNumber.toLowerCase().includes(appliedFilters.invoiceNumber.toLowerCase())) &&
+        (!appliedFilters.supplierName || invoice.supplier.toLowerCase().includes(appliedFilters.supplierName.toLowerCase())) &&
+        (!appliedFilters.invoiceDate || invoice.invoiceDate.includes(appliedFilters.invoiceDate));
+
+      return matchesSearch && matchesFilters;
+    });
+  };
+
+  const filteredInvoices = applyFilters(invoicesData);
 
   const handleSearch = () => {
     console.log('Searching for:', searchTerm);
-    const filtered = invoicesData.filter(invoice =>
-      invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.supplier.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.woNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.approvedStatus.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredInvoices(filtered);
+    const filtered = applyFilters(invoicesData);
     toast.success(`Found ${filtered.length} matching records`);
   };
 
   const handleReset = () => {
     console.log('Resetting search...');
     setSearchTerm('');
-    setFilteredInvoices(invoicesData);
+    setAppliedFilters({
+      invoiceNumber: '',
+      invoiceDate: '',
+      supplierName: ''
+    });
     toast.success('Search reset successfully');
   };
 
@@ -139,6 +167,7 @@ export const InvoicesDashboard = () => {
       <div className="flex items-center gap-4">
         <Button 
           variant="outline" 
+          onClick={() => setIsFilterDialogOpen(true)}
           className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
         >
           <Filter className="w-4 h-4" />
@@ -271,6 +300,12 @@ export const InvoicesDashboard = () => {
           </Table>
         </div>
       </div>
+
+      <InvoicesFilterDialog 
+        open={isFilterDialogOpen}
+        onOpenChange={setIsFilterDialogOpen}
+        onApply={handleFilterApply}
+      />
     </div>
   );
 };
