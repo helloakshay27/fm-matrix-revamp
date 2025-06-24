@@ -337,10 +337,10 @@ function App() {
               <Route path="/maintenance/ticket/:id/tag-vendor" element={<TicketTagVendorPage />} />
               
               {/* Incident Routes */}
-              <Route path="/maintenance/incident" element={<IncidentListDashboard />} />
-              <Route path="/maintenance/incident/add" element={<AddIncidentPage />} />
-              <Route path="/maintenance/incident/:id" element={<IncidentDetailsPage />} />
-              <Route path="/maintenance/incident/edit/:id" element={<EditIncidentDetailsPage />} />
+              <Route path="/safety/incident" element={<IncidentListDashboard />} />
+              <Route path="/safety/incident/add" element={<AddIncidentPage />} />
+              <Route path="/safety/incident/:id" element={<IncidentDetailsPage />} />
+              <Route path="/safety/incident/edit/:id" element={<EditIncidentDetailsPage />} />
               
               {/* Permit Routes */}
               <Route path="/maintenance/permit" element={<PermitListDashboard />} />
