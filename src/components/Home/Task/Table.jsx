@@ -36,6 +36,7 @@ import { fetchUsers } from "../../../redux/slices/userSlice";
 import SelectBox from "../../SelectBox";
 import Loader from "../../Loader";
 import { useLocation } from "react-router-dom";
+import qs from "qs";
 
 const globalPriorityOptions = ["None", "Low", "Medium", "High", "Urgent"];
 const globalStatusOptions = ["open", "in_progress", "completed", "on_hold", "overdue", "reopen", "abort"];
@@ -501,9 +502,18 @@ const TaskTable = () => {
 
     console.log(tasksFromStore,myTasks);
       if (localStorage.getItem("taskFilters")){
-        console
-        console.log("ho");
-                   await dispatch(filterTask({token,filter:JSON.parse(localStorage.getItem("taskFilters"))})).unwrap();
+        console.log("hoe");
+        const saved=JSON.parse(localStorage.getItem("taskFilters"));
+        const newFilter = {
+                "q[status_in][]": saved.selectedStatuses.length > 0 ? saved.selectedStatuses : [],
+                "q[created_by_id_eq]": saved.selectedCreators.length > 0 ? saved.selectedCreators : [],
+                "q[start_date_eq]": saved.dates["Start Date"],
+                "q[end_date_eq]": saved.dates["End Date"],
+                "q[responsible_person_id_in][]": saved.selectedResponsible.length > 0 ? saved.selectedResponsible : [],
+                "q[milestone_id_eq]": mid
+            }
+          const queryString = qs.stringify(newFilter, { arrayFormat: 'repeat' });
+                   await dispatch(filterTask({token,filter:queryString})).unwrap();
            return;
     }
     if(mid!=undefined && mid!=null){
