@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,11 +64,11 @@ export const IncidentListDashboard = () => {
   };
 
   const handleAddIncident = () => {
-    navigate('/safety/incident/add');
+    navigate('/maintenance/incident/add');
   };
 
   const handleViewIncident = (incidentId: string) => {
-    navigate(`/safety/incident/${incidentId.replace('#', '')}`);
+    navigate(`/maintenance/incident/${incidentId.replace('#', '')}`);
   };
 
   return (
