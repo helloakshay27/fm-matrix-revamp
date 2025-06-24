@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +39,7 @@ export const AccountingDashboard = () => {
   });
   const [editDetails, setEditDetails] = useState<AccountDetails>(accountDetails);
 
-  const loggedInUser = 'Ankit Gupta'; // This would come from your auth context
+  const loggedInUser = 'Admin'; // Changed from 'Ankit Gupta' to 'Admin'
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
