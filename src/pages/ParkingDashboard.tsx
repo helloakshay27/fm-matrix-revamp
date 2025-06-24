@@ -50,15 +50,14 @@ const ParkingDashboard = () => {
         <h1 className="text-2xl font-bold text-gray-900">PARKING BOOKING LIST</h1>
         <div className="flex gap-2">
           <Button 
-            className="bg-[#8B4A9C] hover:bg-[#7A4089] text-white px-4 py-2 rounded" 
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none border-none shadow-none" 
             onClick={() => setIsAddModalOpen(true)}
           >
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
           <Button 
-            variant="outline" 
-            className="border-gray-300 text-gray-700 px-4 py-2 rounded"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none border-none shadow-none"
             onClick={handleExport}
           >
             <Download className="w-4 h-4 mr-2" />
