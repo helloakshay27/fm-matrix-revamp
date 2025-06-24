@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,7 +43,7 @@ export const IncidentDetailsPage = () => {
   };
 
   const handleEditDetails = () => {
-    navigate(`/safety/incident/edit/${id}`);
+    navigate(`/maintenance/incident/edit/${id}`);
   };
 
   const handleDownloadReport = () => {
@@ -76,7 +77,7 @@ Reported By: ${incident.reportedBy}
       {/* Header */}
       <div className="mb-6">
         <nav className="flex items-center text-sm text-gray-600 mb-4">
-          <span>Safety</span>
+          <span>Incidents</span>
           <span className="mx-2">{'>'}</span>
           <span>Incidents Details</span>
         </nav>
@@ -228,7 +229,7 @@ Reported By: ${incident.reportedBy}
       <div className="flex gap-3 pt-6">
         <Button
           variant="outline"
-          onClick={() => navigate('/safety/incident')}
+          onClick={() => navigate('/maintenance/incident')}
           className="px-8"
         >
           Back to List
