@@ -95,11 +95,11 @@ const Projects = ({ setIsSidebarOpen }) => {
                     <div>Tempelate</div>
                 )
             }
-            {
+            {/* {
                 activeTab === tabs[3].id && selectedType === "List" && (
                     <IssuesTable />
                 )
-            }
+            } */}
         </div>
     );
 };

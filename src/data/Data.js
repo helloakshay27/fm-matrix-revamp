@@ -11,10 +11,10 @@ export const tabs = [
     id: "archived",
     label: "Archived",
   },
-  {
-    id: "Issues",
-    label: "Issues",
-  },
+  // {
+  //   id: "Issues",
+  //   label: "Issues",
+  // },
 ];
 
 export const momTabs = [

@@ -15,18 +15,12 @@ import Channel from "./components/Home/Channel/Channel";
 import Role from "./pages/Setup/Role";
 import EscalationMatrix from "./pages/Setup/EscalationMatrix";
 import ProjectTeams from "./pages/Setup/ProjectTeams";
-import IssuesTable from "./components/Home/Issues/Table.jsx";
-// import TypesTable from "./components/Setup/ProjectTypes/Table";
-// import StatusTable from "./components/Setup/Status/Table";
-// import Modal from "./components/Setup/Status/Modal";
-import InternalUsers from "./pages/Setup/InternalUsers";
 import Details from "./components/Setup/Internal_Users/Details";
 import ExternalUsers from "./pages/Setup/ExternalUsers";
 import TeamDetails from "./components/Setup/ProjectTeams/Details.jsx";
 import ProjectTypes from "./pages/Setup/ProjectTypes.jsx";
 import ProjectTags from "./pages/Setup/ProjectTags.jsx";
 import Status from "./pages/Setup/Status.jsx";
-// import {Details as ExternalDetails} from "./components/Setup/ProjectTeams/Details";
 import InternalUser from "./pages/Setup/InternalUser";
 import InternalDetails from "./components/Setup/Internal_Users/InternalDetails";
 import ExternalTable from "./components/Setup/External_Users/ExternalTable";
@@ -42,6 +36,9 @@ import { Toaster } from "react-hot-toast";
 import Table from "./components/Setup/Issues_Type/Table.jsx";
 import IssuesType from "./pages/Setup/IssueType.jsx";
 import SprintDetails from "./components/Home/Sprints/SprintDetails.jsx";
+import ChatLayout from "./components/Home/Channel/ChatLayout.jsx";
+import Issues from "./pages/Home/Issues.jsx";
+import Documents from "./pages/Home/Documents.jsx";
 
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -71,7 +68,8 @@ const App = () => {
                     element={<Projects setIsSidebarOpen={setIsSidebarOpen} />}
                   />
                   <Route path="/projects/:id" element={<ProjectDetails />} />
-                  <Route path="/sprint-list" element={<SprintTable />} />
+                  <Route path="/sprint" element={<SprintTable />} />
+                  <Route path="/sprint/sprintdetails/:sid" element={<SprintDetails />} />
                   <Route path="/sprint/:id" element={<Sprints />} />
                   <Route
                     path="/projects/:id/milestones"
@@ -81,13 +79,13 @@ const App = () => {
                     path="/projects/:id/milestones/:mid/tasks/:tid"
                     element={<TaskDetails />}
                   />
-                  <Route path="/issues" element={<IssuesTable />} />
+                  <Route path="/issues" element={<Issues setIsSidebarOpen={setIsSidebarOpen} />} />
                   <Route path="/mom" element={<MinutesOfMeeting />} />
                   <Route path="/new-mom" element={<MoMAdd />} />
-                  <Route path="/channels" element={<Channel />} />
-                  <Route path="/sprintdetails/:sid" element={<SprintDetails />} />
 
-                  
+
+                  <Route path="/channels/*" element={<Channel />} />
+                  <Route path="/documents" element={<Documents />} />
 
                   {/* Setup Routes */}
                   <Route

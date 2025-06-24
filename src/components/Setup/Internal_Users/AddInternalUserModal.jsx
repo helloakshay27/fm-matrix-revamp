@@ -10,13 +10,16 @@ import {
     fetchUsers,
 } from '../../../redux/slices/userSlice';
 import { toast } from 'react-hot-toast';
+import { Eye, EyeOff } from 'lucide-react';
 
 const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = false, selectedUser = null }) => {
     const token = localStorage.getItem("token");
+    const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
         name: "",
         mobile: "",
         email: "",
+        password: "",
         role: null,
         reportTo: ""
     })
@@ -79,6 +82,7 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                 lastname: lastname,
                 mobile: formData.mobile,
                 email: formData.email,
+                password: formData.password,
                 role_id: formData.role,
                 user_type: "internal",
                 report_to_id: formData.reportTo
@@ -114,6 +118,7 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
             email: "",
             mobile: "",
             name: "",
+            password: "",
             reportTo: "",
             role: null
         })
@@ -125,6 +130,7 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
         setFormData({
             email: "",
             mobile: "",
+            password: "",
             name: "",
             reportTo: "",
             role: null
@@ -148,7 +154,7 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                 <div className='space-y-4 h-full overflow-y-auto pb-4'>
                     <div className="px-6">
                         <label className="block text-[11px] text-[#1B1B1B] mb-1">
-                            Name<span className="text-red-500 ml-1">*</span>
+                            Name <span className="text-red-500 ml-1">*</span>
                         </label>
                         <input
                             type="text"
@@ -179,6 +185,38 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                     </div>
                     <div className="px-6">
                         <label className="block text-[11px] text-[#1B1B1B] mb-1">
+                            Email Id<span className="text-red-500 ml-1">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="Enter email id here"
+                            className="border border-[#C0C0C0] w-full py-2 px-3 text-[#1B1B1B] text-[13px] focus:outline-none"
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            required
+                        />
+                    </div>
+                    <div className="px-6 relative">
+                        <label className="block text-[11px] text-[#1B1B1B] mb-1">
+                            Password<span className="text-red-500 ml-1">*</span>
+                        </label>
+                        <input
+                            type={`${showPassword ? "" : "password"}`}
+                            className="border border-[#C0C0C0] w-full py-2 px-3 text-[#1B1B1B] text-[13px] focus:outline-none"
+                            placeholder='Enter Password'
+                            value={formData.password}
+                            onChange={e => setFormData({ ...formData, password: e.target.value })}
+                        />
+                        {
+                            showPassword ? (
+                                <EyeOff size={20} className='absolute right-10 top-10 transform -translate-y-1/2 cursor-pointer' onClick={() => setShowPassword(false)} />
+                            ) : (
+                                <Eye size={20} className='absolute right-10 top-10 transform -translate-y-1/2 cursor-pointer' onClick={() => setShowPassword(true)} />
+                            )
+                        }
+                    </div>
+                    <div className="px-6">
+                        <label className="block text-[11px] text-[#1B1B1B] mb-1">
                             Role<span className="text-red-500 ml-1">*</span>
                         </label>
                         <SelectBox
@@ -194,20 +232,6 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
 
                         />
                     </div>
-                    <div className="px-6">
-                        <label className="block text-[11px] text-[#1B1B1B] mb-1">
-                            Email Id<span className="text-red-500 ml-1">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            placeholder="Enter email id here"
-                            className="border border-[#C0C0C0] w-full py-2 px-3 text-[#1B1B1B] text-[13px] focus:outline-none"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            required
-                        />
-                    </div>
-
                     <div className="px-6">
                         <label className="block text-[11px] text-[#1B1B1B] mb-1">
                             Reports To<span className="text-red-500 ml-1">*</span>

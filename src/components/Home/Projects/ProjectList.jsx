@@ -290,9 +290,27 @@ const ProjectList = () => {
                             : "",
 
                     manager: project.project_owner_name || project.manager || "Unassigned",
-                    milestones: project.milestones || "70%",
-                    tasks: project.tasks || "90%",
-                    issues: `${project.issues.length} / 10` || "8/10",
+                    milestones: (() => {
+                        const totalCount = Number(project.total_milestone_count);
+                        const completedCount = Number(project.completed_milestone_count);
+
+                        if (!totalCount || totalCount === 0) return 0;
+
+                        const percentage = Math.round((completedCount / totalCount) * 100);
+                        return percentage;
+                    })(),
+
+                    tasks: (() => {
+                        const totalCount = Number(project.total_task_management_count);
+                        const completedCount = Number(project.completed_task_management_count);
+
+                        if (!totalCount || totalCount === 0) return 0;
+
+                        const percentage = Math.round((completedCount / totalCount) * 100);
+                        console.log(percentage)
+                        return percentage;
+                    })(),
+                    issues: `${project.completed_issues_count} / ${project.total_issues_count}`,
                     startDate: project.start_date
                         ? new Date(project.start_date).toLocaleDateString("en-CA")
                         : "N/A",
@@ -631,7 +649,16 @@ const ProjectList = () => {
                 size: 110,
                 cell: (info) => <ProgressBar progressString={info.getValue()} />,
             },
-            { accessorKey: "issues", header: "Issues", size: 100 },
+            {
+                accessorKey: "issues",
+                header: "Issues",
+                size: 100,
+                cell: (info) => (
+                    <div style={{ textAlign: "center", width: "100%" }}>
+                        {info.getValue()}
+                    </div>
+                ),
+            },
             { accessorKey: "startDate", header: "Start Date", size: 120 },
             { accessorKey: "endDate", header: "End Date", size: 120 },
             {

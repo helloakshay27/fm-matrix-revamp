@@ -144,7 +144,7 @@ const SprintTable = (setIsSidebarOpen) => {
 
                     return (
                         <Link
-                            to={`/sprintdetails/${linkIdPart}`}
+                            to={`/sprint/sprintdetails/${linkIdPart}`}
                             className="text-xs hover:underline p-1 block"
                             style={{ paddingLeft: `${row.depth * 1.5}rem` }}
                         >

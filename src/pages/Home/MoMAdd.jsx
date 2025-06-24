@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import SelectBox from "../../components/SelectBox";
 import { useDispatch, useSelector } from "react-redux";
@@ -6,12 +6,12 @@ import { fetchInternalUser, fetchUsers } from "../../redux/slices/userSlice";
 import { createMoM, resetMomCreateSuccess } from "../../redux/slices/momSlice";
 import { useNavigate } from "react-router-dom";
 import { fetchActiveTags } from "../../redux/slices/tagsSlice";
-import MultiSelectBox from "../../components/MultiSelectBox";
+import toast from "react-hot-toast";
 
 const MoMAdd = () => {
     const token = localStorage.getItem("token");
     const dispatch = useDispatch();
-    const navigate = useNavigate()
+    const navigate = useNavigate();
 
     const { fetchInternalUser: internalUsers } = useSelector(
         (state) => state.fetchInternalUser
@@ -49,6 +49,18 @@ const MoMAdd = () => {
         setEntries((prev) => [...prev, { id: Date.now() }]);
     };
 
+    const handleDeleteEntry = (id, index) => {
+        if (entries.length === 1) {
+            toast.error("At least one attendee is required");
+            return;
+        }
+        setEntries((prev) => prev.filter((entry) => entry.id !== id));
+        setFormData((prev) => ({
+            ...prev,
+            users: prev.users.filter((_, i) => i !== index),
+        }));
+    };
+
     const updateCombinedDateTime = (newDate, newTime) => {
         if (newDate && newTime) {
             const combined = new Date(`${newDate}T${newTime}`);
@@ -79,7 +91,6 @@ const MoMAdd = () => {
             endDate: "",
             isTask: false,
         };
-
         setPoints((prev) => [...prev, { id: Date.now() }]);
         setFormData((prev) => ({
             ...prev,
@@ -87,12 +98,105 @@ const MoMAdd = () => {
         }));
     };
 
-    console.log(formData);
+    const handleDeletePoint = (id, index) => {
+        if (points.length === 1) {
+            toast.error("At least one discussion point is required");
+            return;
+        }
+        setPoints((prev) => prev.filter((point) => point.id !== id));
+        setFormData((prev) => ({
+            ...prev,
+            points: prev.points.filter((_, i) => i !== index),
+        }));
+    };
+
+    const handleDeleteAttachment = (index) => {
+        setFormData((prev) => ({
+            ...prev,
+            attachments: prev.attachments.filter((_, i) => i !== index),
+        }));
+    };
+
+    const validateForm = () => {
+        toast.dismiss();
+        if (!formData.title.trim()) {
+            toast.error("Meeting Title is required");
+            return false;
+        }
+
+        if (!formData.meetingMode) {
+            toast.error("Meeting Mode is required");
+            return false;
+        }
+
+        if (!rawDate) {
+            toast.error("Meeting Date is required");
+            return false;
+        }
+
+        if (!rawTime) {
+            toast.error("Meeting Time is required");
+            return false;
+        }
+
+        if (formData.users.length === 0) {
+            toast.error("At least one attendee is required");
+            return false;
+        }
+
+        if (isExternal) {
+            for (let i = 0; i < formData.users.length; i++) {
+                const user = formData.users[i];
+                if (!user.name?.trim()) {
+                    toast.error(`Name is required for attendee ${i + 1}`);
+                    return false;
+                }
+                if (!user.email?.trim()) {
+                    toast.error(`Email is required for attendee ${i + 1}`);
+                    return false;
+                }
+                if (!/\S+@\S+\.\S+/.test(user.email)) {
+                    toast.error(`Invalid email for attendee ${i + 1}`);
+                    return false;
+                }
+                if (!user.role?.trim()) {
+                    toast.error(`Role is required for attendee ${i + 1}`);
+                    return false;
+                }
+                if (!user.organization?.trim()) {
+                    toast.error(`Organization is required for attendee ${i + 1}`);
+                    return false;
+                }
+            }
+        } else {
+            for (let i = 0; i < formData.users.length; i++) {
+                const user = formData.users[i];
+                if (!user?.value) {
+                    toast.error(`Internal user selection is required for attendee ${i + 1}`);
+                    return false;
+                }
+            }
+        }
+
+        if (formData.points.length === 0) {
+            toast.error("At least one discussion point is required");
+            return false;
+        }
+
+        for (let i = 0; i < formData.points.length; i++) {
+            const point = formData.points[i];
+            if (!point.description?.trim()) {
+                toast.error(`Description is required for point ${i + 1}`);
+                return false;
+            }
+        }
+
+        return true;
+    };
 
     const handleSubmit = () => {
+        if (!validateForm()) return;
         const payload = {
-            resource_id: JSON.parse(localStorage.getItem("user")).site_id,
-            resource_type: "Site",
             title: formData.title,
             meeting_date: formData.date,
             meeting_type: formData.meetingType,
@@ -116,27 +220,31 @@ const MoMAdd = () => {
                     description: point.description,
                     raised_by: point.raisedBy,
                     responsible_person_id: point.responsiblePerson?.value,
-                    responsible_person_name: point.responsiblePerson.label,
+                    responsible_person_name: point.responsiblePerson?.label,
                     responsible_person_type: point.responsiblePerson?.user.user_type,
                     responsible_person_email: point.responsiblePerson?.user.email,
                     target_date: point.endDate,
                     status: "open",
                     save_task: point?.isTask,
-                    company_tag_id: point.tag.value
+                    company_tag_id: point.tag?.value,
                 })),
             ],
-            attachments: formData.attachments.map(file => file),
+            attachments: formData.attachments.map((file) => file),
         };
 
-        dispatch(createMoM({ token, payload }))
+        dispatch(createMoM({ token, payload }));
     };
 
     useEffect(() => {
         if (success) {
-            navigate(-1)
-            dispatch(resetMomCreateSuccess())
+            navigate(-1);
+            dispatch(resetMomCreateSuccess());
         }
-    }, [success])
+    }, [success]);
+
+    const isImage = (file) => {
+        return file.type.startsWith("image/");
+    };
 
     return (
         <div className="h-full overflow-y-auto no-scrollbar">
@@ -148,7 +256,9 @@ const MoMAdd = () => {
                 <div className="flex items-start gap-10 mb-6">
                     <div className="flex flex-col w-[40%] space-y-4">
                         <div className="space-y-2 w-full">
-                            <label className="text-[12px]">Meeting Title</label>
+                            <label className="text-[12px]">
+                                Meeting Title <span className="text-red-500 ml-1">*</span>
+                            </label>
                             <input
                                 type="text"
                                 className="w-full border outline-none border-gray-300 py-2 px-3 text-[12px]"
@@ -176,7 +286,9 @@ const MoMAdd = () => {
                                 />
                             </div>
                             <div className="space-y-2 w-full">
-                                <label className="text-[12px]">Meeting Mode</label>
+                                <label className="text-[12px]">
+                                    Meeting Mode <span className="text-red-500 ml-1">*</span>
+                                </label>
                                 <SelectBox
                                     className="w-full"
                                     placeholder="Select Meeting Mode"
@@ -194,7 +306,9 @@ const MoMAdd = () => {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[12px]">Meeting Date</label>
+                        <label className="text-[12px]">
+                            Meeting Date <span className="text-red-500 ml-1">*</span>
+                        </label>
                         <input
                             type="date"
                             className="w-full border outline-none border-gray-300 py-2 px-3 text-[12px]"
@@ -204,7 +318,9 @@ const MoMAdd = () => {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[12px]">Meeting Time</label>
+                        <label className="text-[12px]">
+                            Meeting Time <span className="text-red-500 ml-1">*</span>
+                        </label>
                         <input
                             type="time"
                             className="w-full border outline-none border-gray-300 py-2 px-3 text-[12px]"
@@ -256,7 +372,9 @@ const MoMAdd = () => {
                                 {isExternal ? (
                                     <>
                                         <div className="space-y-2">
-                                            <label className="text-[12px]">External User</label>
+                                            <label className="text-[12px]">
+                                                External User <span className="text-red-500 ml-1">*</span>
+                                            </label>
                                             <input
                                                 type="text"
                                                 className="w-full border outline-none border-gray-300 py-2 px-3 text-[12px]"
@@ -273,7 +391,9 @@ const MoMAdd = () => {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[12px]">Email ID</label>
+                                            <label className="text-[12px]">
+                                                Email ID <span className="text-red-500 ml-1">*</span>
+                                            </label>
                                             <input
                                                 type="text"
                                                 className="w-full border outline-none border-gray-300 py-2 px-3 text-[12px]"
@@ -290,7 +410,9 @@ const MoMAdd = () => {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[12px]">Role</label>
+                                            <label className="text-[12px]">
+                                                Role <span className="text-red-500 ml-1">*</span>
+                                            </label>
                                             <input
                                                 type="text"
                                                 className="w-full border outline-none border-gray-300 py-2 px-3 text-[12px]"
@@ -307,7 +429,9 @@ const MoMAdd = () => {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[12px]">Organization</label>
+                                            <label className="text-[12px]">
+                                                Organization <span className="text-red-500 ml-1">*</span>
+                                            </label>
                                             <input
                                                 type="text"
                                                 className="w-full border outline-none border-gray-300 py-2 px-3 text-[12px]"
@@ -323,26 +447,47 @@ const MoMAdd = () => {
                                                 }}
                                             />
                                         </div>
+                                        {entries.length > 1 && (
+                                            <button
+                                                className="text-[#C72030] p-2"
+                                                onClick={() => handleDeleteEntry(entry.id, i)}
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        )}
                                     </>
                                 ) : (
                                     <div className="space-y-2 w-[300px]">
-                                        <label className="text-[12px]">Select Internal User</label>
-                                        <SelectBox
-                                            className="w-full"
-                                            placeholder="Select Internal User"
-                                            options={internalUsers.map((user) => ({
-                                                value: user.id,
-                                                label: user.firstname + " " + user.lastname,
-                                                user: user,
-                                            }))}
-                                            value={formData.users[i]?.value || null}
-                                            onChange={(value) => {
-                                                const newUsers = [...formData.users];
-                                                newUsers[i] = value;
-                                                setFormData({ ...formData, users: newUsers });
-                                            }}
-                                            mom={true}
-                                        />
+                                        <label className="text-[12px]">
+                                            Select Internal User{" "}
+                                            <span className="text-red-500 ml-1">*</span>
+                                        </label>
+                                        <div className="flex items-center gap-2">
+                                            <SelectBox
+                                                className="w-full"
+                                                placeholder="Select Internal User"
+                                                options={internalUsers.map((user) => ({
+                                                    value: user.id,
+                                                    label: user.firstname + " " + user.lastname,
+                                                    user: user,
+                                                }))}
+                                                value={formData.users[i]?.value || null}
+                                                onChange={(value) => {
+                                                    const newUsers = [...formData.users];
+                                                    newUsers[i] = value;
+                                                    setFormData({ ...formData, users: newUsers });
+                                                }}
+                                                mom={true}
+                                            />
+                                            {entries.length > 1 && (
+                                                <button
+                                                    className="text-[#C72030] p-2"
+                                                    onClick={() => handleDeleteEntry(entry.id, i)}
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -364,8 +509,10 @@ const MoMAdd = () => {
                 {points.map((point, index) => (
                     <div key={point.id} className="flex mt-6 justify-between gap-4">
                         <div className="space-y-2 w-1/2">
-                            <label className="text-[12px]">Point {index + 1}</label>
-                            <div className="flex items-center gap-4 w-full">
+                            <label className="text-[12px]">
+                                Point {index + 1} <span className="text-red-500 ml-1">*</span>
+                            </label>
+                            <div className="flex items-start gap-4 w-full">
                                 <textarea
                                     rows={6}
                                     className="w-[70%] border outline-none border-gray-300 py-2 px-3 text-[12px]"
@@ -479,6 +626,14 @@ const MoMAdd = () => {
                             </div>
                         </div>
 
+                        {points.length > 1 && (
+                            <button
+                                className="text-[#C72030] p-2 self-start"
+                                onClick={() => handleDeletePoint(point.id, index)}
+                            >
+                                <Trash2 size={18} />
+                            </button>
+                        )}
                     </div>
                 ))}
 
@@ -492,10 +647,51 @@ const MoMAdd = () => {
                 <hr className="border border-dashed border-[#C72030]" />
 
                 <div className="my-6">
-                    <h3 className="text-[14px]">No Documents Attached</h3>
+                    <h3 className="text-[14px]">
+                        {formData.attachments.length > 0
+                            ? `${formData.attachments.length} Document(s) Attached`
+                            : "No Documents Attached"}
+                    </h3>
                     <span className="text-[#C2C2C2] text-[12px]">
                         Drop or attach relevant documents here
                     </span>
+
+                    {formData.attachments.length > 0 && (
+                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            {formData.attachments.map((file, index) => (
+                                <div
+                                    key={index}
+                                    className="relative border border-gray-300 rounded p-2 flex flex-col items-center"
+                                >
+                                    {isImage(file) ? (
+                                        <img
+                                            src={URL.createObjectURL(file)}
+                                            alt={file.name}
+                                            className="w-full h-32 object-cover rounded mb-2"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-32 bg-gray-100 flex items-center justify-center rounded mb-2">
+                                            <span className="text-[12px] text-gray-500">
+                                                {file.name.split(".").pop().toUpperCase()}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <span
+                                        className="text-[12px] text-center truncate w-full"
+                                        title={file.name}
+                                    >
+                                        {file.name}
+                                    </span>
+                                    <button
+                                        className="absolute top-2 right-2 text-[#C72030] p-1"
+                                        onClick={() => handleDeleteAttachment(index)}
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
                     <button
                         className="text-[12px] flex items-center justify-center gap-2 text-[#C72030] px-3 py-2 w-40 bg-white border border-[#C72030] mt-4 mb-6"

@@ -107,6 +107,83 @@ const ProjectCard = ({ project }) => {
                 </div>
             </div>
 
+            <div className="space-y-3 text-sm">
+                {/* Milestones */}
+                <div className="flex items-center gap-2">
+                    <div className="w-20 font-light text-gray-600">Milestone</div>
+                    <div className="w-4 text-center">{project.completed_milestone_count}</div>
+                    <div className="flex-1 relative bg-gray-200 rounded-full h-4">
+                        <div
+                            className="absolute top-0 left-0 h-4 rounded-full bg-blue-500"
+                            style={{
+                                width: `${project.total_milestone_count > 0
+                                        ? (project.completed_milestone_count / project.total_milestone_count) * 100
+                                        : 0
+                                    }%`,
+                            }}
+                        ></div>
+                        <div className="absolute w-full text-[10px] text-center text-black font-medium">
+                            {project.total_milestone_count > 0
+                                ? Math.round(
+                                    (project.completed_milestone_count / project.total_milestone_count) * 100
+                                ) + "%"
+                                : "0%"}
+                        </div>
+                    </div>
+                    <div className="w-4 text-center">{project.total_milestone_count}</div>
+                </div>
+
+                {/* Tasks */}
+                <div className="flex items-center gap-2">
+                    <div className="w-20 font-light text-gray-600">Tasks</div>
+                    <div className="w-4 text-center">{project.completed_task_management_count}</div>
+                    <div className="flex-1 relative bg-gray-200 rounded-full h-4">
+                        <div
+                            className="absolute top-0 left-0 h-4 rounded-full bg-green-500"
+                            style={{
+                                width: `${project.total_task_management_count > 0
+                                        ? (project.completed_task_management_count / project.total_task_management_count) *
+                                        100
+                                        : 0
+                                    }%`,
+                            }}
+                        ></div>
+                        <div className="absolute w-full text-[10px] text-center text-black font-medium">
+                            {project.total_task_management_count > 0
+                                ? Math.round(
+                                    (project.completed_task_management_count / project.total_task_management_count) * 100
+                                ) + "%"
+                                : "0%"}
+                        </div>
+                    </div>
+                    <div className="w-4 text-center">{project.total_task_management_count}</div>
+                </div>
+
+                {/* Issues */}
+                <div className="flex items-center gap-2">
+                    <div className="w-20 font-light text-gray-600">Issues</div>
+                    <div className="w-4 text-center">{project.completed_issues_count}</div>
+                    <div className="flex-1 relative bg-gray-200 rounded-full h-4">
+                        <div
+                            className="absolute top-0 left-0 h-4 rounded-full bg-red-500"
+                            style={{
+                                width: `${project.total_issues_count > 0
+                                        ? (project.completed_issues_count / project.total_issues_count) * 100
+                                        : 0
+                                    }%`,
+                            }}
+                        ></div>
+                        <div className="absolute w-full text-[10px] text-center text-black font-medium">
+                            {project.total_issues_count > 0
+                                ? Math.round((project.completed_issues_count / project.total_issues_count) * 100) + "%"
+                                : "0%"}
+                        </div>
+                    </div>
+                    <div className="w-4 text-center">{project.total_issues_count}</div>
+                </div>
+            </div>
+
+
             <hr className="border border-gray-200 my-2" />
 
             <div className="flex items-center justify-between">

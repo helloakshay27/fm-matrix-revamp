@@ -11,22 +11,25 @@ const getRandomColor = () => {
     const r = Math.floor(Math.random() * 76) + 180;
     const g = Math.floor(Math.random() * 76) + 180;
     const b = Math.floor(Math.random() * 76) + 180;
-    return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+    return `#${r.toString(16).padStart(2, "0")}${g
+        .toString(16)
+        .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 };
 
 const MinutesOfMeeting = () => {
     const token = localStorage.getItem("token");
-
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
-    const { fetchMoM: mom } = useSelector(state => state.fetchMoM)
+    const { fetchMoM: mom } = useSelector((state) => state.fetchMoM);
 
     const [activeTab, setActiveTab] = useState(momTabs[0].id);
+    const [currentPage, setCurrentPage] = useState(0);
+    const itemsPerPage = 10; // Number of items per page
 
     useEffect(() => {
-        dispatch(fetchMoM({ token }))
-    }, [dispatch])
+        dispatch(fetchMoM({ token }));
+    }, [dispatch]);
 
     const tabRefs = useRef({});
     const underlineRef = useRef(null);
@@ -44,6 +47,44 @@ const MinutesOfMeeting = () => {
             });
         }
     }, [activeTab]);
+
+    // Pagination logic
+    const totalItems = mom.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startIndex = currentPage * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentItems = [...mom].reverse().slice(startIndex, endIndex);
+
+    const handlePreviousPage = () => {
+        if (currentPage > 0) {
+            setCurrentPage(currentPage - 1);
+        }
+    };
+
+    const handleNextPage = () => {
+        if (currentPage < totalPages - 1) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    const handlePageClick = (page) => {
+        setCurrentPage(page);
+    };
+
+    // Generate page numbers to display
+    const visiblePages = 3;
+    let startPage = Math.max(0, currentPage - Math.floor(visiblePages / 2));
+    let endPage = startPage + visiblePages;
+
+    if (endPage > totalPages) {
+        endPage = totalPages;
+        startPage = Math.max(0, endPage - visiblePages);
+    }
+
+    const pageNumbers = Array.from(
+        { length: endPage - startPage },
+        (_, i) => startPage + i
+    );
 
     return (
         <>
@@ -68,9 +109,11 @@ const MinutesOfMeeting = () => {
             <hr className="border border-gray-200" />
 
             <div className="flex items-center justify-end mx-8 my-5 text-sm">
-                <button className="text-[12px] flex items-center justify-center gap-2 bg-red text-white px-3 py-2 w-40" onClick={() => navigate("/new-mom")}>
-                    <Plus size={18} />{" "}
-                    New MoM
+                <button
+                    className="text-[12px] flex items-center justify-center gap-2 bg-red text-white px-3 py-2 w-40"
+                    onClick={() => navigate("/new-mom")}
+                >
+                    <Plus size={18} /> New MoM
                 </button>
             </div>
 
@@ -90,39 +133,71 @@ const MinutesOfMeeting = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {
-                                [...mom].reverse().map(item => (
-                                    <tr>
-                                        <td className="p-4">{item.id}</td>
-                                        <td className="p-4">{item.title}</td>
-                                        <td style={{ padding: "1rem" }}>{item.meeting_date?.split("T")[0]}</td>
-                                        <td className="p-4">John Doe</td>
-                                        <td className="p-4">{item.meeting_mode}</td>
-                                        <td className="p-4">
-                                            <div className="flex items-center">
-                                                {item.mom_attendees?.map((member, index) => (
-                                                    <div
-                                                        key={index}
-                                                        title={member.name}
-                                                        className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-gray-800 cursor-pointer ${index !== 0 ? "-ml-[6px]" : ""}`}
-                                                        style={{ backgroundColor: getRandomColor() }}
-                                                    >
-                                                        {member.name ? member.name.charAt(0) : ""}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </td>
-                                        <td className="p-4">Meeting 1</td>
-                                        <td className="p-4">Meeting 1</td>
-                                    </tr>
-                                ))
-                            }
+                            {currentItems.map((item) => (
+                                <tr key={item.id}>
+                                    <td className="p-4">{item.id}</td>
+                                    <td className="p-4">{item.title}</td>
+                                    <td style={{ padding: "1rem" }}>
+                                        {item.meeting_date?.split("T")[0]}
+                                    </td>
+                                    <td className="p-4">John Doe</td>
+                                    <td className="p-4">{item.meeting_mode}</td>
+                                    <td className="p-4">
+                                        <div className="flex items-center">
+                                            {item.mom_attendees?.map((member, index) => (
+                                                <div
+                                                    key={index}
+                                                    title={member.name}
+                                                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-gray-800 cursor-pointer ${index !== 0 ? "-ml-[6px]" : ""
+                                                        }`}
+                                                    style={{ backgroundColor: getRandomColor() }}
+                                                >
+                                                    {member.name ? member.name.charAt(0) : ""}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </td>
+                                    <td className="p-4">Meeting 1</td>
+                                    <td className="p-4">Meeting 1</td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
             </div>
-        </>
-    )
-}
 
-export default MinutesOfMeeting
+            {mom.length > 0 && (
+                <div className="flex items-center justify-start gap-4 mt-4 mx-8 text-[12px]">
+                    <button
+                        onClick={handlePreviousPage}
+                        disabled={currentPage === 0}
+                        className="text-red-600 disabled:opacity-30"
+                    >
+                        {"<"}
+                    </button>
+
+                    {pageNumbers.map((page) => (
+                        <button
+                            key={page}
+                            onClick={() => handlePageClick(page)}
+                            className={`px-3 py-1 ${page === currentPage ? "bg-gray-200 font-bold" : ""
+                                }`}
+                        >
+                            {page + 1}
+                        </button>
+                    ))}
+
+                    <button
+                        onClick={handleNextPage}
+                        disabled={currentPage === totalPages - 1}
+                        className="text-red-600 disabled:opacity-30"
+                    >
+                        {">"}
+                    </button>
+                </div>
+            )}
+        </>
+    );
+};
+
+export default MinutesOfMeeting;
