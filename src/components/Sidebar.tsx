@@ -226,7 +226,14 @@ const modulesByPackage = {
     { name: 'Lease Management', icon: FileText, href: '/market-place/lease-management' },
     { name: 'Loyalty Rule Engine', icon: Settings, href: '/market-place/loyalty-rule-engine' },
     { name: 'Cloud Telephony', icon: Phone, href: '/market-place/cloud-telephony' },
-    { name: 'Accounting', icon: Calculator, href: '/market-place/accounting' }
+    { 
+      name: 'Accounting', 
+      icon: Calculator, 
+      href: '/market-place/accounting',
+      subItems: [
+        { name: 'Cost Center', href: '/market-place/accounting/cost-center', color: 'text-[#1a1a1a]' }
+      ]
+    }
   ],
   'Settings': [
     { name: 'General', icon: Settings, href: '/settings/general' },
