@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,10 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Upload } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export const AddIncidentPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     incidentDate: '',
     incidentTime: '',
@@ -29,6 +29,10 @@ export const AddIncidentPage = () => {
     preventiveMeasures: ''
   });
 
+  // Determine if we're in Safety or Maintenance context
+  const isSafetyContext = location.pathname.startsWith('/safety');
+  const basePath = isSafetyContext ? '/safety' : '/maintenance';
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -38,7 +42,7 @@ export const AddIncidentPage = () => {
 
   const handleSubmit = () => {
     console.log('Incident submitted:', formData);
-    navigate('/maintenance/incident');
+    navigate(`${basePath}/incident`);
   };
 
   const handleFileUpload = () => {
@@ -296,7 +300,7 @@ export const AddIncidentPage = () => {
         <div className="flex gap-3 pt-4 pb-6">
           <Button
             variant="outline"
-            onClick={() => navigate('/maintenance/incident')}
+            onClick={() => navigate(`${basePath}/incident`)}
             className="px-8"
           >
             Cancel

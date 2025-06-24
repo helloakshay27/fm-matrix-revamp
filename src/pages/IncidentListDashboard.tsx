@@ -1,14 +1,18 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Search, Eye } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export const IncidentListDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Determine if we're in Safety or Maintenance context
+  const isSafetyContext = location.pathname.startsWith('/safety');
+  const basePath = isSafetyContext ? '/safety' : '/maintenance';
 
   const incidents = [
     {
@@ -64,11 +68,11 @@ export const IncidentListDashboard = () => {
   };
 
   const handleAddIncident = () => {
-    navigate('/maintenance/incident/add');
+    navigate(`${basePath}/incident/add`);
   };
 
   const handleViewIncident = (incidentId: string) => {
-    navigate(`/maintenance/incident/${incidentId.replace('#', '')}`);
+    navigate(`${basePath}/incident/${incidentId.replace('#', '')}`);
   };
 
   return (
@@ -76,7 +80,7 @@ export const IncidentListDashboard = () => {
       {/* Breadcrumb */}
       <div className="mb-6">
         <nav className="flex items-center text-sm text-gray-600 mb-4">
-          <span>Incidents</span>
+          <span>{isSafetyContext ? 'Safety' : 'Incidents'}</span>
           <span className="mx-2">{'>'}</span>
           <span>Incidents List</span>
         </nav>

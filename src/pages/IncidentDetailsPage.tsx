@@ -1,19 +1,23 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Download, Edit, Plus } from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { UpdateIncidentModal } from '@/components/UpdateIncidentModal';
 import { AddInjuryModal } from '@/components/AddInjuryModal';
 
 export const IncidentDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showInjuryModal, setShowInjuryModal] = useState(false);
+
+  // Determine if we're in Safety or Maintenance context
+  const isSafetyContext = location.pathname.startsWith('/safety');
+  const basePath = isSafetyContext ? '/safety' : '/maintenance';
 
   // Mock incident data
   const incident = {
@@ -43,7 +47,7 @@ export const IncidentDetailsPage = () => {
   };
 
   const handleEditDetails = () => {
-    navigate(`/maintenance/incident/edit/${id}`);
+    navigate(`${basePath}/incident/edit/${id}`);
   };
 
   const handleDownloadReport = () => {
@@ -77,7 +81,7 @@ Reported By: ${incident.reportedBy}
       {/* Header */}
       <div className="mb-6">
         <nav className="flex items-center text-sm text-gray-600 mb-4">
-          <span>Incidents</span>
+          <span>{isSafetyContext ? 'Safety' : 'Incidents'}</span>
           <span className="mx-2">{'>'}</span>
           <span>Incidents Details</span>
         </nav>
@@ -229,7 +233,7 @@ Reported By: ${incident.reportedBy}
       <div className="flex gap-3 pt-6">
         <Button
           variant="outline"
-          onClick={() => navigate('/maintenance/incident')}
+          onClick={() => navigate(`${basePath}/incident`)}
           className="px-8"
         >
           Back to List

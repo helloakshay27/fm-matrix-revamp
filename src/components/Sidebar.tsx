@@ -96,10 +96,10 @@ const modulesByPackage = {
     }
   ],
   'Safety': [
-    { name: 'Incident', icon: AlertTriangle, href: '/maintenance/incident' },
-    { name: 'Permit to Work', icon: FileText, href: '/maintenance/permit' },
-    { name: 'M Safe', icon: Shield, href: '/maintenance/m-safe' },
-    { name: 'Training List', icon: BookOpen, href: '/maintenance/m-safe/training-list' }
+    { name: 'Incident', icon: AlertTriangle, href: '/safety/incident' },
+    { name: 'Permit to Work', icon: FileText, href: '/safety/permit' },
+    { name: 'M Safe', icon: Shield, href: '/safety/m-safe' },
+    { name: 'Training List', icon: BookOpen, href: '/safety/training-list' }
   ],
   'Finance': [
     { 
