@@ -129,7 +129,7 @@ export const LoyaltyRuleEngineDashboard = () => {
       </div>
 
       {/* Page Title */}
-      <h1 className="text-2xl font-bold text-orange-600 mb-6">New Rule</h1>
+      <h1 className="text-2xl font-bold text-[#C72030] mb-6">New Rule</h1>
 
       {/* Rule Name Section */}
       <div className="mb-8">
@@ -149,12 +149,12 @@ export const LoyaltyRuleEngineDashboard = () => {
 
       {/* Set Rule Conditions */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-orange-600 mb-6">Set Rule Conditions</h2>
+        <h2 className="text-lg font-semibold text-[#C72030] mb-6">Set Rule Conditions</h2>
         
         {conditions.map((condition, index) => (
           <div key={condition.id} className="mb-6 p-4 border border-gray-200 rounded-lg">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium text-orange-600">Condition {index + 1}</h3>
+              <h3 className="font-medium text-[#C72030]">Condition {index + 1}</h3>
               {conditions.length > 1 && (
                 <Button
                   onClick={() => removeCondition(condition.id)}
@@ -170,7 +170,7 @@ export const LoyaltyRuleEngineDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
               {/* Master Attribute */}
               <div>
-                <Label className="text-sm font-medium text-orange-600">Master Attribute*</Label>
+                <Label className="text-sm font-medium text-[#C72030]">Master Attribute*</Label>
                 <Select
                   value={condition.masterAttribute}
                   onValueChange={(value) => updateCondition(condition.id, 'masterAttribute', value)}
@@ -192,7 +192,7 @@ export const LoyaltyRuleEngineDashboard = () => {
 
               {/* Sub Attribute */}
               <div>
-                <Label className="text-sm font-medium text-orange-600">Sub Attribute*</Label>
+                <Label className="text-sm font-medium text-[#C72030]">Sub Attribute*</Label>
                 <Select
                   value={condition.subAttribute}
                   onValueChange={(value) => updateCondition(condition.id, 'subAttribute', value)}
@@ -211,10 +211,10 @@ export const LoyaltyRuleEngineDashboard = () => {
 
             {/* Operator Section */}
             <div className="mt-6">
-              <h4 className="font-medium text-orange-600 mb-4">Operator</h4>
+              <h4 className="font-medium text-[#C72030] mb-4">Operator</h4>
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                 <div>
-                  <Label className="text-sm font-medium text-orange-600">Master Operator*</Label>
+                  <Label className="text-sm font-medium text-[#C72030]">Master Operator*</Label>
                   <Select
                     value={condition.masterOperator}
                     onValueChange={(value) => updateCondition(condition.id, 'masterOperator', value)}
@@ -235,7 +235,7 @@ export const LoyaltyRuleEngineDashboard = () => {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium text-orange-600">Sub Operator*</Label>
+                  <Label className="text-sm font-medium text-[#C72030]">Sub Operator*</Label>
                   <Select
                     value={condition.subOperator}
                     onValueChange={(value) => updateCondition(condition.id, 'subOperator', value)}
@@ -255,9 +255,9 @@ export const LoyaltyRuleEngineDashboard = () => {
 
             {/* Value Section */}
             <div className="mt-6">
-              <h4 className="font-medium text-orange-600 mb-4">Value</h4>
+              <h4 className="font-medium text-[#C72030] mb-4">Value</h4>
               <div className="max-w-md">
-                <Label className="text-sm font-medium text-orange-600">Value*</Label>
+                <Label className="text-sm font-medium text-[#C72030]">Value*</Label>
                 <Input
                   value={condition.value}
                   onChange={(e) => updateCondition(condition.id, 'value', e.target.value)}
@@ -282,11 +282,11 @@ export const LoyaltyRuleEngineDashboard = () => {
 
       {/* THEN Section */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-orange-600 mb-6">THEN</h2>
+        <h2 className="text-lg font-semibold text-[#C72030] mb-6">THEN</h2>
         <div className="p-4 border border-gray-200 rounded-lg">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div>
-              <Label className="text-sm font-medium text-orange-600">Master Reward Outcome*</Label>
+              <Label className="text-sm font-medium text-[#C72030]">Master Reward Outcome*</Label>
               <Select
                 value={rewardOutcome.masterRewardOutcome}
                 onValueChange={(value) => setRewardOutcome({...rewardOutcome, masterRewardOutcome: value})}
@@ -307,7 +307,7 @@ export const LoyaltyRuleEngineDashboard = () => {
             </div>
 
             <div>
-              <Label className="text-sm font-medium text-orange-600">Sub Reward Outcome*</Label>
+              <Label className="text-sm font-medium text-[#C72030]">Sub Reward Outcome*</Label>
               <Select
                 value={rewardOutcome.subRewardOutcome}
                 onValueChange={(value) => setRewardOutcome({...rewardOutcome, subRewardOutcome: value})}
@@ -324,7 +324,7 @@ export const LoyaltyRuleEngineDashboard = () => {
             </div>
 
             <div>
-              <Label className="text-sm font-medium text-orange-600">Parameter*</Label>
+              <Label className="text-sm font-medium text-[#C72030]">Parameter*</Label>
               <Input
                 value={rewardOutcome.parameter}
                 onChange={(e) => setRewardOutcome({...rewardOutcome, parameter: e.target.value})}
@@ -340,7 +340,7 @@ export const LoyaltyRuleEngineDashboard = () => {
       <div className="flex gap-4">
         <Button
           onClick={handleSubmit}
-          className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+          className="bg-[#C72030] hover:bg-[#A01A28] text-white px-8"
         >
           Submit
         </Button>
