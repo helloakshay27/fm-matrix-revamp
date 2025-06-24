@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,11 +63,11 @@ export const IncidentListDashboard = () => {
   };
 
   const handleAddIncident = () => {
-    navigate('/maintenance/incident/add');
+    navigate('/safety/incident/add');
   };
 
   const handleViewIncident = (incidentId: string) => {
-    navigate(`/maintenance/incident/${incidentId.replace('#', '')}`);
+    navigate(`/safety/incident/${incidentId.replace('#', '')}`);
   };
 
   return (
@@ -76,7 +75,9 @@ export const IncidentListDashboard = () => {
       {/* Breadcrumb */}
       <div className="mb-6">
         <nav className="flex items-center text-sm text-gray-600 mb-4">
-          <span>Incidents</span>
+          <span>Safety</span>
+          <span className="mx-2">{'>'}</span>
+          <span>Incident</span>
           <span className="mx-2">{'>'}</span>
           <span>Incidents List</span>
         </nav>
