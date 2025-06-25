@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { Plus, Download, Upload, Filter, RefreshCw, Grid3X3, MoreHorizontal } from 'lucide-react';
+import { Plus, Download, Upload, Filter, RefreshCw, MoreHorizontal } from 'lucide-react';
 import { CreateInvoiceReceiptModal } from '@/components/CreateInvoiceReceiptModal';
 import { ImportReceiptModal } from '@/components/ImportReceiptModal';
 import { OSRReceiptFilterModal } from '@/components/OSRReceiptFilterModal';
+import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
 import { toast } from 'sonner';
 
 export const OSRGenerateReceiptPage = () => {
@@ -14,6 +15,42 @@ export const OSRGenerateReceiptPage = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+
+  const [columnVisibility, setColumnVisibility] = useState({
+    actions: true,
+    receiptNumber: true,
+    invoiceNumber: true,
+    flat: true,
+    customerName: true,
+    amountReceived: true,
+    paymentMode: true,
+    transactionNumber: true,
+    paymentDate: true,
+    receiptDate: true,
+    mailSent: true,
+    attachments: true
+  });
+
+  const columnOptions = [
+    { key: 'receiptNumber', label: 'Receipt Number', visible: columnVisibility.receiptNumber },
+    { key: 'invoiceNumber', label: 'Invoice Number', visible: columnVisibility.invoiceNumber },
+    { key: 'flat', label: 'Flat', visible: columnVisibility.flat },
+    { key: 'customerName', label: 'Customer Name', visible: columnVisibility.customerName },
+    { key: 'amountReceived', label: 'Amount Received', visible: columnVisibility.amountReceived },
+    { key: 'paymentMode', label: 'Payment Mode', visible: columnVisibility.paymentMode },
+    { key: 'transactionNumber', label: 'Transaction Number', visible: columnVisibility.transactionNumber },
+    { key: 'paymentDate', label: 'Payment Date', visible: columnVisibility.paymentDate },
+    { key: 'receiptDate', label: 'Receipt Date', visible: columnVisibility.receiptDate },
+    { key: 'mailSent', label: 'Mail sent', visible: columnVisibility.mailSent },
+    { key: 'attachments', label: 'Attachments', visible: columnVisibility.attachments }
+  ];
+
+  const handleColumnToggle = (columnKey: string, visible: boolean) => {
+    setColumnVisibility(prev => ({
+      ...prev,
+      [columnKey]: visible
+    }));
+  };
 
   const handleCreateReceipt = (data: any) => {
     console.log('Creating receipt with data:', data);
@@ -112,9 +149,10 @@ export const OSRGenerateReceiptPage = () => {
               <Button variant="ghost" size="sm" className="p-2">
                 <RefreshCw className="w-4 h-4" />
               </Button>
-              <Button variant="ghost" size="sm" className="p-2">
-                <Grid3X3 className="w-4 h-4" />
-              </Button>
+              <ColumnVisibilityDropdown
+                columns={columnOptions}
+                onColumnToggle={handleColumnToggle}
+              />
               <Button variant="ghost" size="sm" className="p-2">
                 <MoreHorizontal className="w-4 h-4" />
               </Button>
@@ -127,18 +165,42 @@ export const OSRGenerateReceiptPage = () => {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="text-left font-semibold">Actions</TableHead>
-                <TableHead className="text-left font-semibold">Receipt Number</TableHead>
-                <TableHead className="text-left font-semibold">Invoice Number</TableHead>
-                <TableHead className="text-left font-semibold">Flat</TableHead>
-                <TableHead className="text-left font-semibold">Customer Name</TableHead>
-                <TableHead className="text-left font-semibold">Amount Received</TableHead>
-                <TableHead className="text-left font-semibold">Payment Mode</TableHead>
-                <TableHead className="text-left font-semibold">Transaction Number</TableHead>
-                <TableHead className="text-left font-semibold">Payment Date</TableHead>
-                <TableHead className="text-left font-semibold">Receipt Date</TableHead>
-                <TableHead className="text-left font-semibold">Mail Sent</TableHead>
-                <TableHead className="text-left font-semibold">Attachment</TableHead>
+                {columnVisibility.actions && (
+                  <TableHead className="text-left font-semibold">Actions</TableHead>
+                )}
+                {columnVisibility.receiptNumber && (
+                  <TableHead className="text-left font-semibold">Receipt Number</TableHead>
+                )}
+                {columnVisibility.invoiceNumber && (
+                  <TableHead className="text-left font-semibold">Invoice Number</TableHead>
+                )}
+                {columnVisibility.flat && (
+                  <TableHead className="text-left font-semibold">Flat</TableHead>
+                )}
+                {columnVisibility.customerName && (
+                  <TableHead className="text-left font-semibold">Customer Name</TableHead>
+                )}
+                {columnVisibility.amountReceived && (
+                  <TableHead className="text-left font-semibold">Amount Received</TableHead>
+                )}
+                {columnVisibility.paymentMode && (
+                  <TableHead className="text-left font-semibold">Payment Mode</TableHead>
+                )}
+                {columnVisibility.transactionNumber && (
+                  <TableHead className="text-left font-semibold">Transaction Number</TableHead>
+                )}
+                {columnVisibility.paymentDate && (
+                  <TableHead className="text-left font-semibold">Payment Date</TableHead>
+                )}
+                {columnVisibility.receiptDate && (
+                  <TableHead className="text-left font-semibold">Receipt Date</TableHead>
+                )}
+                {columnVisibility.mailSent && (
+                  <TableHead className="text-left font-semibold">Mail Sent</TableHead>
+                )}
+                {columnVisibility.attachments && (
+                  <TableHead className="text-left font-semibold">Attachment</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
