@@ -3,11 +3,14 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, RefreshCw, Grid3X3, MoreHorizontal } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
+import { AddCostCenterDialog } from '@/components/AddCostCenterDialog';
+import { ExportDropdown } from '@/components/ExportDropdown';
 
 export const MarketPlaceCostCenterPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
   // Column visibility state
   const [columns, setColumns] = useState([
@@ -22,7 +25,7 @@ export const MarketPlaceCostCenterPage = () => {
   const costCenterData: any[] = [];
 
   const handleAdd = () => {
-    console.log('Add Cost Center clicked');
+    setShowAddDialog(true);
   };
 
   const handleRefresh = () => {
@@ -35,10 +38,6 @@ export const MarketPlaceCostCenterPage = () => {
         col.key === columnKey ? { ...col, visible } : col
       )
     );
-  };
-
-  const handleMoreActions = () => {
-    console.log('More actions clicked');
   };
 
   const isColumnVisible = (columnKey: string) => {
@@ -75,9 +74,7 @@ export const MarketPlaceCostCenterPage = () => {
                   columns={columns}
                   onColumnToggle={handleColumnToggle}
                 />
-                <Button variant="ghost" size="sm" className="p-2" onClick={handleMoreActions}>
-                  <MoreHorizontal className="w-4 h-4" />
-                </Button>
+                <ExportDropdown />
               </div>
             </div>
           </div>
@@ -127,6 +124,12 @@ export const MarketPlaceCostCenterPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Add Cost Center Dialog */}
+      <AddCostCenterDialog 
+        open={showAddDialog} 
+        onOpenChange={setShowAddDialog} 
+      />
     </div>
   );
 };
