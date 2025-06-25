@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +11,6 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
-import { AddEventModalCRM } from '@/components/AddEventModalCRM';
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
 
 // Sample events data based on the image
@@ -75,7 +73,6 @@ export const CRMEventsPage = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEvents, setSelectedEvents] = useState<number[]>([]);
-  const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
   const [filters, setFilters] = useState({
     unit: '',
     dateRange: undefined as Date | undefined,
@@ -117,9 +114,8 @@ export const CRMEventsPage = () => {
     navigate(`/crm/events/details/${eventId}`);
   };
 
-  const handleAddEvent = (eventData: any) => {
-    console.log('New event added:', eventData);
-    // In a real app, this would save the event to the backend
+  const handleAddEvent = () => {
+    navigate('/crm/events/add');
   };
 
   const handleColumnToggle = (columnKey: string, visible: boolean) => {
@@ -244,7 +240,7 @@ export const CRMEventsPage = () => {
         {/* Action Buttons */}
         <div className="flex items-center justify-between">
           <Button 
-            onClick={() => setIsAddEventModalOpen(true)}
+            onClick={handleAddEvent}
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -400,13 +396,6 @@ export const CRMEventsPage = () => {
           <span className="font-semibold">LOCATED</span>
         </div>
       </div>
-
-      {/* Add Event Modal */}
-      <AddEventModalCRM
-        isOpen={isAddEventModalOpen}
-        onClose={() => setIsAddEventModalOpen(false)}
-        onSubmit={handleAddEvent}
-      />
     </div>
   );
 };
