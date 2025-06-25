@@ -305,6 +305,9 @@ import { MarketPlaceAccountingPage } from './pages/MarketPlaceAccountingPage';
 // Import Market Place Cost Center page
 import { MarketPlaceCostCenterPage } from './pages/MarketPlaceCostCenterPage';
 
+// Import CRM Campaign page
+import { CRMCampaignPage } from './pages/CRMCampaignPage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -326,6 +329,9 @@ function App() {
               <Route path="/settings/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
               <Route path="/settings/roles/department" element={<DepartmentDashboard />} />
               <Route path="/settings/roles/role" element={<RoleDashboard />} />
+              
+              {/* CRM Routes */}
+              <Route path="/crm/campaign" element={<CRMCampaignPage />} />
               
               {/* Snagging Routes */}
               <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
