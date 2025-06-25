@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -293,6 +292,9 @@ import { AccountingDashboard } from './pages/AccountingDashboard';
 // Import Loyalty Rule Engine Dashboard
 import { LoyaltyRuleEngineDashboard } from './pages/LoyaltyRuleEngineDashboard';
 
+// Import OSR page
+import { OSRDashboard } from './pages/OSRDashboard';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -510,6 +512,7 @@ function App() {
               <Route path="/vas/parking" element={<ParkingDashboard />} />
               <Route path="/vas/parking/details/:clientId" element={<ParkingDetailsPage />} />
               <Route path="/vas/parking/bookings" element={<ParkingBookingsDashboard />} />
+              <Route path="/vas/osr" element={<OSRDashboard />} />
               
               {/* Space Management Routes */}
               <Route path="/vas/space-management/bookings" element={<SpaceManagementBookingsDashboard />} />
