@@ -32,7 +32,11 @@ const Tasks = ({ setIsSidebarOpen }) => {
 
     return (
         <div className="h-full overflow-y-auto no-scrollbar">
-            <h3 className="text-[11px] text-gray-400 mx-6 my-4">{project.title} / {milestone.title} / Tasks</h3>
+            <h3 className="text-[11px] text-gray-400 mx-6 my-4">
+                {project?.title && milestone?.title
+                    ? `${project.title} / ${milestone.title} / Tasks`
+                    : 'Tasks'}
+            </h3>
             <hr className="border border-gray-200" />
 
             <TaskActions
