@@ -47,7 +47,7 @@ export const AddBroadcastPage = () => {
         <Button
           variant="ghost"
           onClick={() => navigate('/crm/broadcast')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 hover:bg-[#C72030]/10"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Broadcasts
@@ -60,7 +60,7 @@ export const AddBroadcastPage = () => {
           {/* Communication Information Section */}
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-1 h-6 bg-orange-500 rounded"></div>
+              <div className="w-1 h-6 bg-[#C72030] rounded"></div>
               <h2 className="text-lg font-semibold text-gray-700">Communication Info</h2>
             </div>
             
@@ -72,7 +72,7 @@ export const AddBroadcastPage = () => {
                   placeholder="Title"
                   value={formData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
-                  className="border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="border-gray-300 focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
                 />
               </div>
               
@@ -83,7 +83,7 @@ export const AddBroadcastPage = () => {
                   placeholder="Enter Description"
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
-                  className="border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-32"
+                  className="border-gray-300 focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030] min-h-32"
                 />
               </div>
 
@@ -92,7 +92,7 @@ export const AddBroadcastPage = () => {
                   id="important"
                   checked={formData.markAsImportant}
                   onCheckedChange={(checked) => handleInputChange('markAsImportant', checked)}
-                  className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                  className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
                 />
                 <Label htmlFor="important" className="text-sm text-gray-700">Mark as Important</Label>
               </div>
@@ -108,7 +108,7 @@ export const AddBroadcastPage = () => {
                       type="date"
                       value={formData.endDate}
                       onChange={(e) => handleInputChange('endDate', e.target.value)}
-                      className="border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      className="border-gray-300 focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
                     />
                   </div>
                   <div>
@@ -119,7 +119,7 @@ export const AddBroadcastPage = () => {
                       type="time"
                       value={formData.endTime}
                       onChange={(e) => handleInputChange('endTime', e.target.value)}
-                      className="border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      className="border-gray-300 focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
                     />
                   </div>
                 </div>
@@ -130,13 +130,13 @@ export const AddBroadcastPage = () => {
           {/* Upload Files Section */}
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-1 h-6 bg-orange-500 rounded"></div>
+              <div className="w-1 h-6 bg-[#C72030] rounded"></div>
               <h2 className="text-lg font-semibold text-gray-700">Upload Files</h2>
             </div>
             
             <div 
               onClick={handleFileUpload}
-              className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors bg-gray-50"
+              className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-[#C72030] transition-colors bg-gray-50 hover:bg-[#C72030]/5"
             >
               <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
               <p className="text-gray-500 text-sm">Choose a file...</p>
@@ -146,7 +146,7 @@ export const AddBroadcastPage = () => {
           {/* Share With Section */}
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-1 h-6 bg-orange-500 rounded"></div>
+              <div className="w-1 h-6 bg-[#C72030] rounded"></div>
               <h2 className="text-lg font-semibold text-gray-700">Share with</h2>
             </div>
             
@@ -156,15 +156,15 @@ export const AddBroadcastPage = () => {
               className="flex items-center gap-6"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="all" id="all" className="text-blue-600" />
+                <RadioGroupItem value="all" id="all" className="text-[#C72030] border-[#C72030] data-[state=checked]:bg-[#C72030]" />
                 <Label htmlFor="all" className="text-sm text-gray-700">All</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="individuals" id="individuals" className="text-blue-600" />
+                <RadioGroupItem value="individuals" id="individuals" className="text-[#C72030] border-[#C72030] data-[state=checked]:bg-[#C72030]" />
                 <Label htmlFor="individuals" className="text-sm text-gray-700">Individuals</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="groups" id="groups" className="text-blue-600" />
+                <RadioGroupItem value="groups" id="groups" className="text-[#C72030] border-[#C72030] data-[state=checked]:bg-[#C72030]" />
                 <Label htmlFor="groups" className="text-sm text-gray-700">Groups</Label>
               </div>
             </RadioGroup>

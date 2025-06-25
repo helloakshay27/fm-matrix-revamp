@@ -159,6 +159,7 @@ export const BroadcastDashboard = () => {
                       variant="ghost" 
                       size="sm"
                       onClick={() => handleViewDetails(broadcast.id)}
+                      className="hover:bg-[#C72030]/10 hover:text-[#C72030]"
                     >
                       <Eye className="w-4 h-4" />
                     </Button>

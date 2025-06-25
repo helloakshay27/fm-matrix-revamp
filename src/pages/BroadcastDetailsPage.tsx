@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -48,7 +47,7 @@ export const BroadcastDetailsPage = () => {
           <Button
             variant="ghost"
             onClick={() => navigate('/crm/broadcast')}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-800 hover:bg-[#C72030]/10"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Broadcasts
@@ -56,7 +55,7 @@ export const BroadcastDetailsPage = () => {
         </div>
         <Button 
           onClick={handlePrint}
-          className="bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 text-sm"
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 text-sm"
         >
           PRINT
         </Button>
@@ -98,9 +97,9 @@ export const BroadcastDetailsPage = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsStatusDialogOpen(true)}
-                  className="h-6 w-6 p-0 hover:bg-gray-100"
+                  className="h-6 w-6 p-0 hover:bg-[#C72030]/10 hover:text-[#C72030]"
                 >
-                  <Edit className="h-3 w-3 text-gray-500" />
+                  <Edit className="h-3 w-3 text-gray-500 hover:text-[#C72030]" />
                 </Button>
               </div>
               <div className="text-xs text-gray-500 uppercase">STATUS TYPE</div>

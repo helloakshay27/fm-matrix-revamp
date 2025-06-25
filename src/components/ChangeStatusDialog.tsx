@@ -45,7 +45,7 @@ export const ChangeStatusDialog = ({
             variant="ghost" 
             size="icon" 
             onClick={() => onOpenChange(false)}
-            className="h-6 w-6 p-0"
+            className="h-6 w-6 p-0 hover:bg-[#C72030]/10 hover:text-[#C72030]"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -61,7 +61,7 @@ export const ChangeStatusDialog = ({
               Status
             </label>
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]">
                 <SelectValue placeholder="Select Status" />
               </SelectTrigger>
               <SelectContent>
@@ -77,7 +77,7 @@ export const ChangeStatusDialog = ({
           <div className="flex justify-center pt-4">
             <Button 
               onClick={handleSubmit}
-              className="bg-green-500 hover:bg-green-600 text-white px-8 py-2"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2"
             >
               Submit
             </Button>
