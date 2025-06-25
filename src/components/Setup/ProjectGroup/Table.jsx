@@ -46,14 +46,14 @@ const GroupTable = () => {
     }
   }, [openModal, dispatch]);
 
-const getRandomColor = () => {
+  const getRandomColor = () => {
     const r = Math.floor(Math.random() * 76) + 180;
     const g = Math.floor(Math.random() * 76) + 180;
     const b = Math.floor(Math.random() * 76) + 180;
     return `#${r.toString(16).padStart(2, "0")}${g
-        .toString(16)
-        .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
-};
+      .toString(16)
+      .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+  };
 
 
   const ActionIcons = ({ row }) => {
@@ -147,24 +147,24 @@ const getRandomColor = () => {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   }
-  
-  const ProjectMembers=(members)=>{
+
+  const ProjectMembers = (members) => {
     console.log(members);
-    return(
-      <div className="flex p-3">
-       {members.members?.map((member, index) => (
-                                                <div
-                                                    key={index}
-                                                    title={member.user_name}
-                                                    className={`w-[30px] h-[30px] rounded-full flex items-center justify-center text-[14px] text-gray-800 cursor-pointer ${index !== 0 ? "-ml-[6px]" : ""
-                                                        }`}
-                                                    style={{ backgroundColor: getRandomColor() }}
-                                                >
-                                                    {member.user_name ? member.user_name.charAt(0) : ""}
-                                                </div>
-                                            ))}
-       </div>
-          );
+    return (
+      <div className="flex">
+        {members.members?.map((member, index) => (
+          <div
+            key={index}
+            title={member.user_name}
+            className={`w-[30px] h-[30px] rounded-full flex items-center justify-center text-[14px] text-gray-800 cursor-pointer ${index !== 0 ? "-ml-[6px]" : ""
+              }`}
+            style={{ backgroundColor: getRandomColor() }}
+          >
+            {member.user_name ? member.user_name.charAt(0) : ""}
+          </div>
+        ))}
+      </div>
+    );
   }
 
 
@@ -177,7 +177,23 @@ const getRandomColor = () => {
         header: 'Project Group Name',
         size: 100,
         cell: ({ row, getValue }) => {
-          return row.original ? getValue() : null;
+          const raw = row.original ? getValue() : '';
+          if (!raw) return null;
+          // Title-case every word
+          return raw
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
+        },
+      },
+      {
+        id: 'project_group_members',
+        header: 'Project Group Members',
+        size: 20,
+        cell: ({ getValue, row }) => {
+          return (
+            <ProjectMembers members={row.original.project_group_members} />
+          )
         },
       },
       {
@@ -186,15 +202,6 @@ const getRandomColor = () => {
         size: 50,
         cell: ({ row }) => (row.original ? <ActionIcons row={row} /> : null),
 
-      },{
-        id:'project_group_members',
-        header: 'Project Group Members',
-        size: 20,
-        cell: ({ getValue, row }) => {
-           return (
-            <ProjectMembers members={row.original.project_group_members} />
-          )
-        },
       }
     ],
     []
