@@ -10,7 +10,7 @@ interface OSRReceiptFilterModalProps {
   isOpen: boolean;
   onClose: () => void;
   onApply: (filters: any) => void;
-  onReset: () => void;
+  onReset: () => void;  
 }
 
 export const OSRReceiptFilterModal = ({ isOpen, onClose, onApply, onReset }: OSRReceiptFilterModalProps) => {
@@ -52,7 +52,7 @@ export const OSRReceiptFilterModal = ({ isOpen, onClose, onApply, onReset }: OSR
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl w-full p-0 bg-white border border-gray-300 shadow-lg">
+      <DialogContent className="max-w-5xl w-full p-0 bg-white border border-gray-300 shadow-lg">
         <DialogHeader className="px-6 py-3 border-b border-gray-200 bg-gray-50">
           <DialogTitle className="text-sm font-medium text-gray-900 text-left">Filter</DialogTitle>
           <DialogDescription className="sr-only">
@@ -61,10 +61,10 @@ export const OSRReceiptFilterModal = ({ isOpen, onClose, onApply, onReset }: OSR
         </DialogHeader>
         
         <div className="p-4">
-          {/* Single row layout matching the image */}
-          <div className="flex items-center gap-3">
+          {/* Horizontal filter layout */}
+          <div className="flex items-center gap-4">
             {/* Select Tower */}
-            <div className="min-w-[120px]">
+            <div className="flex-1">
               <Select onValueChange={(value) => handleFilterChange('tower', value)} value={filters.tower}>
                 <SelectTrigger className="h-9 border border-gray-300 bg-white text-sm">
                   <SelectValue placeholder="Select Tower" />
@@ -78,7 +78,7 @@ export const OSRReceiptFilterModal = ({ isOpen, onClose, onApply, onReset }: OSR
             </div>
 
             {/* Select Flat */}
-            <div className="min-w-[120px]">
+            <div className="flex-1">
               <Select onValueChange={(value) => handleFilterChange('flat', value)} value={filters.flat}>
                 <SelectTrigger className="h-9 border border-gray-300 bg-white text-sm">
                   <SelectValue placeholder="Select flat" />
@@ -92,7 +92,7 @@ export const OSRReceiptFilterModal = ({ isOpen, onClose, onApply, onReset }: OSR
             </div>
 
             {/* Invoice Number */}
-            <div className="min-w-[140px]">
+            <div className="flex-1">
               <Input
                 placeholder="Invoice Number"
                 value={filters.invoiceNumber}
@@ -102,7 +102,7 @@ export const OSRReceiptFilterModal = ({ isOpen, onClose, onApply, onReset }: OSR
             </div>
 
             {/* Receipt Number */}
-            <div className="min-w-[140px]">
+            <div className="flex-1">
               <Input
                 placeholder="Receipt Number"
                 value={filters.receiptNumber}
@@ -112,28 +112,28 @@ export const OSRReceiptFilterModal = ({ isOpen, onClose, onApply, onReset }: OSR
             </div>
 
             {/* Receipt Date */}
-            <div className="min-w-[140px] relative">
+            <div className="flex-1 relative">
               <Input
                 type="date"
-                placeholder="mm/dd/yyyy"
+                placeholder="Receipt Date"
                 value={filters.receiptDate}
                 onChange={(e) => handleFilterChange('receiptDate', e.target.value)}
-                className="h-9 border border-gray-300 bg-white text-sm pr-10"
+                className="h-9 border border-gray-300 bg-white pr-10 text-sm"
               />
               <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-2 ml-2">
+            <div className="flex gap-2">
               <Button 
                 onClick={handleApply}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-1 h-9 text-sm font-medium"
+                className="bg-[#2563EB] hover:bg-[#2563EB]/90 text-white px-6 py-1 h-9 text-sm font-medium"
               >
                 Apply
               </Button>
               <Button 
                 onClick={handleReset}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-1 h-9 text-sm font-medium"
+                className="bg-[#2563EB] hover:bg-[#2563EB]/90 text-white px-6 py-1 h-9 text-sm font-medium"
               >
                 Reset
               </Button>

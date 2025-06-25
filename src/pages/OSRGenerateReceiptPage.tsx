@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Download, Upload, Filter, RefreshCw, MoreHorizontal, Calendar, Grid3X3 } from 'lucide-react';
+import { Plus, Download, Upload, Filter, RefreshCw, MoreHorizontal } from 'lucide-react';
 import { CreateInvoiceReceiptModal } from '@/components/CreateInvoiceReceiptModal';
 import { ImportReceiptModal } from '@/components/ImportReceiptModal';
 import { OSRReceiptFilterModal } from '@/components/OSRReceiptFilterModal';
@@ -54,10 +53,6 @@ export const OSRGenerateReceiptPage = () => {
     { key: 'mailSent', label: 'Mail sent', visible: columnVisibility.mailSent },
     { key: 'attachments', label: 'Attachments', visible: columnVisibility.attachments }
   ];
-
-  const handleFilterChange = (field: string, value: string) => {
-    setFilters(prev => ({ ...prev, [field]: value }));
-  };
 
   const handleApplyFilters = (newFilters: any) => {
     console.log('Applying filters:', newFilters);
@@ -136,88 +131,13 @@ export const OSRGenerateReceiptPage = () => {
   return (
     <div className="p-0 bg-gray-50 min-h-screen">
       <div className="bg-white">
-        {/* Filter Section */}
-        <div className="p-4 border-b border-gray-200 bg-gray-50">
-          <h3 className="text-sm font-medium text-gray-700 mb-3">Filter</h3>
-          <div className="flex items-end gap-4">
-            <div className="flex-1">
-              <Select onValueChange={(value) => handleFilterChange('tower', value)} value={filters.tower}>
-                <SelectTrigger className="w-full h-9 border border-gray-300 bg-white text-sm">
-                  <SelectValue placeholder="Select Tower" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 shadow-lg z-[60]">
-                  <SelectItem value="tower-a">Tower A</SelectItem>
-                  <SelectItem value="tower-b">Tower B</SelectItem>
-                  <SelectItem value="tower-c">Tower C</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex-1">
-              <Select onValueChange={(value) => handleFilterChange('flat', value)} value={filters.flat}>
-                <SelectTrigger className="w-full h-9 border border-gray-300 bg-white text-sm">
-                  <SelectValue placeholder="Select flat" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 shadow-lg z-[60]">
-                  <SelectItem value="flat-101">Flat 101</SelectItem>
-                  <SelectItem value="flat-102">Flat 102</SelectItem>
-                  <SelectItem value="flat-103">Flat 103</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex-1">
-              <Input
-                placeholder="Invoice Number"
-                value={filters.invoiceNumber}
-                onChange={(e) => handleFilterChange('invoiceNumber', e.target.value)}
-                className="w-full h-9 border border-gray-300 bg-white text-sm"
-              />
-            </div>
-
-            <div className="flex-1">
-              <Input
-                placeholder="Receipt Number"
-                value={filters.receiptNumber}
-                onChange={(e) => handleFilterChange('receiptNumber', e.target.value)}
-                className="w-full h-9 border border-gray-300 bg-white text-sm"
-              />
-            </div>
-
-            <div className="flex-1 relative">
-              <Input
-                type="date"
-                placeholder="Receipt Date"
-                value={filters.receiptDate}
-                onChange={(e) => handleFilterChange('receiptDate', e.target.value)}
-                className="w-full h-9 border border-gray-300 bg-white pr-10 text-sm"
-              />
-              <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            </div>
-
-            <Button 
-              onClick={handleApplyFilters}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 h-9 text-sm"
-            >
-              Apply
-            </Button>
-
-            <Button 
-              onClick={handleResetFilters}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 h-9 text-sm"
-            >
-              Reset
-            </Button>
-          </div>
-        </div>
-
         {/* Action Buttons Section */}
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button 
                 onClick={handleAddReceipt}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 h-9 text-sm flex items-center gap-2"
+                className="bg-[#2563EB] hover:bg-[#2563EB]/90 text-white px-4 py-2 h-9 text-sm flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Add
@@ -225,7 +145,7 @@ export const OSRGenerateReceiptPage = () => {
               
               <Button 
                 onClick={handleImportReceipts}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 h-9 text-sm flex items-center gap-2"
+                className="bg-[#2563EB] hover:bg-[#2563EB]/90 text-white px-4 py-2 h-9 text-sm flex items-center gap-2"
               >
                 <Download className="w-4 h-4" />
                 Import
@@ -233,7 +153,7 @@ export const OSRGenerateReceiptPage = () => {
               
               <Button 
                 onClick={handleExportReceipts}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 h-9 text-sm flex items-center gap-2"
+                className="bg-[#2563EB] hover:bg-[#2563EB]/90 text-white px-4 py-2 h-9 text-sm flex items-center gap-2"
               >
                 <Upload className="w-4 h-4" />
                 Export
@@ -241,7 +161,7 @@ export const OSRGenerateReceiptPage = () => {
               
               <Button 
                 onClick={() => setShowFilterModal(true)}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 h-9 text-sm flex items-center gap-2"
+                className="bg-[#2563EB] hover:bg-[#2563EB]/90 text-white px-4 py-2 h-9 text-sm flex items-center gap-2"
               >
                 <Filter className="w-4 h-4" />
                 Filters
@@ -307,7 +227,7 @@ export const OSRGenerateReceiptPage = () => {
                   <TableHead className="text-left font-semibold text-sm h-10">Payment Date</TableHead>
                 )}
                 {columnVisibility.receiptDate && (
-                  <TableHead className="text-left font-semibold text-sm h-10">Receipt Date</TableHead>
+                  <TableHead className="text-left font-semibool text-sm h-10">Receipt Date</TableHead>
                 )}
                 {columnVisibility.mailSent && (
                   <TableHead className="text-left font-semibold text-sm h-10">Mail Sent</TableHead>
