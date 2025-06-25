@@ -1,11 +1,12 @@
-
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Eye, FileText, Plus, Filter, RefreshCw, Grid3X3, MoreHorizontal } from 'lucide-react';
 
 export const OSRDashboard = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
 
   // Sample data matching the image structure
@@ -142,6 +143,10 @@ export const OSRDashboard = () => {
     console.log('View details for:', id);
   };
 
+  const handleGenerateReceipt = () => {
+    navigate('/vas/osr/generate-receipt');
+  };
+
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'Work Pending':
@@ -160,6 +165,7 @@ export const OSRDashboard = () => {
         <div className="p-4 border-b border-gray-200">
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <Button 
+              onClick={handleGenerateReceipt}
               className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2"
             >
               <FileText className="w-4 h-4" />

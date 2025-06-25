@@ -295,6 +295,9 @@ import { LoyaltyRuleEngineDashboard } from './pages/LoyaltyRuleEngineDashboard';
 // Import OSR page
 import { OSRDashboard } from './pages/OSRDashboard';
 
+// Import OSR Generate Receipt page
+import { OSRGenerateReceiptPage } from './pages/OSRGenerateReceiptPage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -513,6 +516,7 @@ function App() {
               <Route path="/vas/parking/details/:clientId" element={<ParkingDetailsPage />} />
               <Route path="/vas/parking/bookings" element={<ParkingBookingsDashboard />} />
               <Route path="/vas/osr" element={<OSRDashboard />} />
+              <Route path="/vas/osr/generate-receipt" element={<OSRGenerateReceiptPage />} />
               
               {/* Space Management Routes */}
               <Route path="/vas/space-management/bookings" element={<SpaceManagementBookingsDashboard />} />
