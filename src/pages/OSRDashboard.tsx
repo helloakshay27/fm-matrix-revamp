@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Eye, FileText, Plus, Filter, RefreshCw, Grid3X3, MoreHorizontal } from 'lucide-react';
 import { CreateScheduleModal } from '@/components/CreateScheduleModal';
 import { OSRDashboardFilterModal } from '@/components/OSRDashboardFilterModal';
+import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
 import { toast } from 'sonner';
 
 export const OSRDashboard = () => {
@@ -14,6 +14,23 @@ export const OSRDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+
+  // Column visibility state
+  const [columns, setColumns] = useState([
+    { key: 'actions', label: 'Actions', visible: true },
+    { key: 'id', label: 'ID', visible: true },
+    { key: 'schedule', label: 'Schedule', visible: true },
+    { key: 'amountPaid', label: 'Amount Paid', visible: true },
+    { key: 'paymentStatus', label: 'Payment Status', visible: true },
+    { key: 'paymentMode', label: 'Payment Mode', visible: true },
+    { key: 'createdBy', label: 'Created By', visible: true },
+    { key: 'flat', label: 'Flat', visible: true },
+    { key: 'category', label: 'Category', visible: true },
+    { key: 'subCategory', label: 'Sub Category', visible: true },
+    { key: 'status', label: 'Status', visible: true },
+    { key: 'rating', label: 'Rating', visible: true },
+    { key: 'createdOn', label: 'Created On', visible: true }
+  ]);
 
   // Sample data matching the image structure
   const osrData = [
@@ -145,6 +162,13 @@ export const OSRDashboard = () => {
     }
   ];
 
+  // Filter data based on search term
+  const filteredData = osrData.filter(entry =>
+    Object.values(entry).some(value =>
+      value.toString().toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
+
   const handleViewDetails = (id: string) => {
     console.log('Navigating to OSR details for ID:', id);
     console.log('Target route:', `/vas/osr/details/${id}`);
@@ -152,7 +176,9 @@ export const OSRDashboard = () => {
   };
 
   const handleGenerateReceipt = () => {
+    console.log('Generate Receipt clicked');
     navigate('/vas/osr/generate-receipt');
+    toast.success('Navigating to Generate Receipt page');
   };
 
   const handleCreateSchedule = (data: any) => {
@@ -170,6 +196,25 @@ export const OSRDashboard = () => {
     toast.success('Filters reset successfully!');
   };
 
+  const handleRefresh = () => {
+    console.log('Refreshing data');
+    toast.success('Data refreshed successfully!');
+  };
+
+  const handleColumnToggle = (columnKey: string, visible: boolean) => {
+    setColumns(prev => 
+      prev.map(col => 
+        col.key === columnKey ? { ...col, visible } : col
+      )
+    );
+    toast.success(`Column ${visible ? 'shown' : 'hidden'}: ${columns.find(c => c.key === columnKey)?.label}`);
+  };
+
+  const handleMoreActions = () => {
+    console.log('More actions clicked');
+    toast.info('More actions menu');
+  };
+
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'Work Pending':
@@ -179,6 +224,10 @@ export const OSRDashboard = () => {
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const isColumnVisible = (columnKey: string) => {
+    return columns.find(col => col.key === columnKey)?.visible ?? true;
   };
 
   return (
@@ -224,13 +273,14 @@ export const OSRDashboard = () => {
             </div>
             
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="p-2">
+              <Button variant="ghost" size="sm" className="p-2" onClick={handleRefresh}>
                 <RefreshCw className="w-4 h-4" />
               </Button>
-              <Button variant="ghost" size="sm" className="p-2">
-                <Grid3X3 className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="sm" className="p-2">
+              <ColumnVisibilityDropdown
+                columns={columns}
+                onColumnToggle={handleColumnToggle}
+              />
+              <Button variant="ghost" size="sm" className="p-2" onClick={handleMoreActions}>
                 <MoreHorizontal className="w-4 h-4" />
               </Button>
             </div>
@@ -242,61 +292,69 @@ export const OSRDashboard = () => {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="text-left font-semibold">Actions</TableHead>
-                <TableHead className="text-left font-semibold">ID</TableHead>
-                <TableHead className="text-left font-semibold">Schedule</TableHead>
-                <TableHead className="text-left font-semibold">Amount Paid</TableHead>
-                <TableHead className="text-left font-semibold">Payment Status</TableHead>
-                <TableHead className="text-left font-semibold">Payment Mode</TableHead>
-                <TableHead className="text-left font-semibold">Created By</TableHead>
-                <TableHead className="text-left font-semibold">Flat</TableHead>
-                <TableHead className="text-left font-semibold">Category</TableHead>
-                <TableHead className="text-left font-semibold">Sub Category</TableHead>
-                <TableHead className="text-left font-semibold">Status</TableHead>
-                <TableHead className="text-left font-semibold">Rating</TableHead>
-                <TableHead className="text-left font-semibold">Created On</TableHead>
+                {isColumnVisible('actions') && <TableHead className="text-left font-semibold">Actions</TableHead>}
+                {isColumnVisible('id') && <TableHead className="text-left font-semibold">ID</TableHead>}
+                {isColumnVisible('schedule') && <TableHead className="text-left font-semibold">Schedule</TableHead>}
+                {isColumnVisible('amountPaid') && <TableHead className="text-left font-semibold">Amount Paid</TableHead>}
+                {isColumnVisible('paymentStatus') && <TableHead className="text-left font-semibold">Payment Status</TableHead>}
+                {isColumnVisible('paymentMode') && <TableHead className="text-left font-semibold">Payment Mode</TableHead>}
+                {isColumnVisible('createdBy') && <TableHead className="text-left font-semibold">Created By</TableHead>}
+                {isColumnVisible('flat') && <TableHead className="text-left font-semibold">Flat</TableHead>}
+                {isColumnVisible('category') && <TableHead className="text-left font-semibold">Category</TableHead>}
+                {isColumnVisible('subCategory') && <TableHead className="text-left font-semibold">Sub Category</TableHead>}
+                {isColumnVisible('status') && <TableHead className="text-left font-semibold">Status</TableHead>}
+                {isColumnVisible('rating') && <TableHead className="text-left font-semibold">Rating</TableHead>}
+                {isColumnVisible('createdOn') && <TableHead className="text-left font-semibold">Created On</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {osrData.map((entry) => (
+              {filteredData.map((entry) => (
                 <TableRow key={entry.id} className="hover:bg-gray-50">
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleViewDetails(entry.id)}
-                      className="p-1"
-                    >
-                      <Eye className="w-4 h-4 text-blue-600" />
-                    </Button>
-                  </TableCell>
-                  <TableCell className="font-medium text-blue-600">
-                    <button
-                      onClick={() => handleViewDetails(entry.id)}
-                      className="text-blue-600 hover:underline"
-                    >
-                      {entry.id}
-                    </button>
-                  </TableCell>
-                  <TableCell>{entry.schedule}</TableCell>
-                  <TableCell>{entry.amountPaid}</TableCell>
-                  <TableCell>
-                    <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
-                      {entry.paymentStatus}
-                    </span>
-                  </TableCell>
-                  <TableCell>{entry.paymentMode}</TableCell>
-                  <TableCell>{entry.createdBy}</TableCell>
-                  <TableCell>{entry.flat}</TableCell>
-                  <TableCell>{entry.category}</TableCell>
-                  <TableCell>{entry.subCategory}</TableCell>
-                  <TableCell>
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(entry.status)}`}>
-                      {entry.status}
-                    </span>
-                  </TableCell>
-                  <TableCell>{entry.rating}</TableCell>
-                  <TableCell>{entry.createdOn}</TableCell>
+                  {isColumnVisible('actions') && (
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewDetails(entry.id)}
+                        className="p-1"
+                      >
+                        <Eye className="w-4 h-4 text-blue-600" />
+                      </Button>
+                    </TableCell>
+                  )}
+                  {isColumnVisible('id') && (
+                    <TableCell className="font-medium text-blue-600">
+                      <button
+                        onClick={() => handleViewDetails(entry.id)}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {entry.id}
+                      </button>
+                    </TableCell>
+                  )}
+                  {isColumnVisible('schedule') && <TableCell>{entry.schedule}</TableCell>}
+                  {isColumnVisible('amountPaid') && <TableCell>{entry.amountPaid}</TableCell>}
+                  {isColumnVisible('paymentStatus') && (
+                    <TableCell>
+                      <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                        {entry.paymentStatus}
+                      </span>
+                    </TableCell>
+                  )}
+                  {isColumnVisible('paymentMode') && <TableCell>{entry.paymentMode}</TableCell>}
+                  {isColumnVisible('createdBy') && <TableCell>{entry.createdBy}</TableCell>}
+                  {isColumnVisible('flat') && <TableCell>{entry.flat}</TableCell>}
+                  {isColumnVisible('category') && <TableCell>{entry.category}</TableCell>}
+                  {isColumnVisible('subCategory') && <TableCell>{entry.subCategory}</TableCell>}
+                  {isColumnVisible('status') && (
+                    <TableCell>
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(entry.status)}`}>
+                        {entry.status}
+                      </span>
+                    </TableCell>
+                  )}
+                  {isColumnVisible('rating') && <TableCell>{entry.rating}</TableCell>}
+                  {isColumnVisible('createdOn') && <TableCell>{entry.createdOn}</TableCell>}
                 </TableRow>
               ))}
             </TableBody>
@@ -328,4 +386,3 @@ export const OSRDashboard = () => {
     </div>
   );
 };
-
