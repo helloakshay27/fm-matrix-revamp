@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarIcon } from 'lucide-react';
@@ -54,6 +54,9 @@ export const OSRDashboardFilterModal = ({ isOpen, onClose, onApply, onReset }: O
       <DialogContent className="max-w-5xl">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Filter</DialogTitle>
+          <DialogDescription className="sr-only">
+            Filter the OSR dashboard data by various criteria
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6 p-4">
