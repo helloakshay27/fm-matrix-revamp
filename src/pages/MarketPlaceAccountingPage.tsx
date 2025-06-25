@@ -89,7 +89,7 @@ export const MarketPlaceAccountingPage = () => {
           {/* Submit Button */}
           <Button
             type="submit"
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-none"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6 py-2 rounded-none"
           >
             Submit
           </Button>

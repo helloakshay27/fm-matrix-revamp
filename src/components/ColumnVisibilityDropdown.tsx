@@ -30,7 +30,7 @@ export const ColumnVisibilityDropdown = ({ columns, onColumnToggle }: ColumnVisi
           <Grid3X3 className="w-4 h-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-48 p-2" align="end">
+      <PopoverContent className="w-48 p-2 bg-white border border-gray-200 shadow-lg z-50" align="end">
         <div className="space-y-2">
           <div className="font-medium text-sm border-b pb-2">Actions</div>
           {columns.map((column) => (
@@ -39,7 +39,7 @@ export const ColumnVisibilityDropdown = ({ columns, onColumnToggle }: ColumnVisi
                 id={column.key}
                 checked={column.visible}
                 onCheckedChange={(checked) => handleToggle(column.key, !!checked)}
-                className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
               />
               <label
                 htmlFor={column.key}

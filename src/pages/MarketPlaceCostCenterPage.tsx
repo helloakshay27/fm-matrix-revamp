@@ -25,14 +25,16 @@ export const MarketPlaceCostCenterPage = () => {
   const costCenterData: any[] = [];
 
   const handleAdd = () => {
+    console.log('Add button clicked');
     setShowAddDialog(true);
   };
 
   const handleRefresh = () => {
-    console.log('Refresh clicked');
+    console.log('Refresh button clicked');
   };
 
   const handleColumnToggle = (columnKey: string, visible: boolean) => {
+    console.log(`Column ${columnKey} toggled to ${visible}`);
     setColumns(prev => 
       prev.map(col => 
         col.key === columnKey ? { ...col, visible } : col
@@ -52,7 +54,7 @@ export const MarketPlaceCostCenterPage = () => {
           <div className="flex items-center justify-between mb-4">
             <Button 
               onClick={handleAdd}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Add

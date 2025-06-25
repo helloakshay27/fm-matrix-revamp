@@ -20,7 +20,7 @@ export const ExportDropdown = () => {
           <MoreHorizontal className="w-4 h-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-32 p-2 bg-white border border-gray-200 shadow-lg" align="end">
+      <PopoverContent className="w-32 p-2 bg-white border border-gray-200 shadow-lg z-50" align="end">
         <div className="space-y-1">
           <button
             onClick={handleExportExcel}

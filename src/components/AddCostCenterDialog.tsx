@@ -40,7 +40,7 @@ export const AddCostCenterDialog = ({ open, onOpenChange }: AddCostCenterDialogP
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] p-0">
-        {/* Header with cyan background */}
+        {/* Header with custom color theme */}
         <DialogHeader className="bg-cyan-400 text-white p-4 flex flex-row items-center justify-between">
           <DialogTitle className="text-white font-medium">New Account</DialogTitle>
           <Button
