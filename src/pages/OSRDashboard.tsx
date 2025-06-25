@@ -145,7 +145,7 @@ export const OSRDashboard = () => {
   ];
 
   const handleViewDetails = (id: string) => {
-    console.log('View details for:', id);
+    navigate(`/vas/osr/details/${id}`);
   };
 
   const handleGenerateReceipt = () => {
