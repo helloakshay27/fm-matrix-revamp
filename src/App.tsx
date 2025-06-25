@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -310,12 +311,15 @@ import { CRMCampaignPage } from './pages/CRMCampaignPage';
 import { AddLeadPage } from './pages/AddLeadPage';
 import { LeadDetailsPage } from './pages/LeadDetailsPage';
 
-// Import CRM Events page
+// Import CRM Events pages
 import { CRMEventsPage } from './pages/CRMEventsPage';
 import { CRMEventDetailsPage } from './pages/CRMEventDetailsPage';
 
 // Import Add Event page
 import { AddEventPage } from './pages/AddEventPage';
+
+// Import Broadcast page
+import { BroadcastDashboard } from './pages/BroadcastDashboard';
 
 const queryClient = new QueryClient();
 
@@ -346,6 +350,7 @@ function App() {
               <Route path="/crm/events" element={<CRMEventsPage />} />
               <Route path="/crm/events/add" element={<AddEventPage />} />
               <Route path="/crm/events/details/:id" element={<CRMEventDetailsPage />} />
+              <Route path="/crm/broadcast" element={<BroadcastDashboard />} />
               
               {/* Snagging Routes */}
               <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Plus, Filter, Search, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -84,7 +85,7 @@ export const BroadcastDashboard = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button 
-            className="bg-purple-700 hover:bg-purple-800 text-white"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
             onClick={() => setShowAddModal(true)}
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -110,7 +111,7 @@ export const BroadcastDashboard = () => {
               className="pl-10 w-64"
             />
           </div>
-          <Button className="bg-purple-700 hover:bg-purple-800 text-white">
+          <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white">
             Go!
           </Button>
           <Button variant="outline" className="border-gray-300">
@@ -177,6 +178,17 @@ export const BroadcastDashboard = () => {
             ))}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Footer branding */}
+      <div className="text-center text-xs text-gray-500 mt-8">
+        <p>Powered by</p>
+        <div className="flex items-center justify-center mt-1">
+          <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs mr-2">
+            L
+          </div>
+          <span className="font-semibold">LOCATED</span>
+        </div>
       </div>
 
       {/* Modals */}
