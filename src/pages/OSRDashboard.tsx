@@ -5,12 +5,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Eye, FileText, Plus, Filter, RefreshCw, Grid3X3, MoreHorizontal } from 'lucide-react';
 import { CreateScheduleModal } from '@/components/CreateScheduleModal';
+import { OSRDashboardFilterModal } from '@/components/OSRDashboardFilterModal';
 import { toast } from 'sonner';
 
 export const OSRDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
 
   // Sample data matching the image structure
   const osrData = [
@@ -155,6 +157,16 @@ export const OSRDashboard = () => {
     toast.success('Schedule created successfully!');
   };
 
+  const handleApplyFilters = (filters: any) => {
+    console.log('Applying filters:', filters);
+    toast.success('Filters applied successfully!');
+  };
+
+  const handleResetFilters = () => {
+    console.log('Resetting filters');
+    toast.success('Filters reset successfully!');
+  };
+
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'Work Pending':
@@ -189,8 +201,8 @@ export const OSRDashboard = () => {
             </Button>
             
             <Button 
-              variant="outline"
-              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 rounded-none flex items-center gap-2"
+              onClick={() => setShowFilterModal(true)}
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2"
             >
               <Filter className="w-4 h-4" />
               Filters
@@ -301,6 +313,14 @@ export const OSRDashboard = () => {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSubmit={handleCreateSchedule}
+      />
+
+      {/* Filter Modal */}
+      <OSRDashboardFilterModal
+        isOpen={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={handleApplyFilters}
+        onReset={handleResetFilters}
       />
     </div>
   );
