@@ -302,6 +302,9 @@ import { OSRGenerateReceiptPage } from './pages/OSRGenerateReceiptPage';
 // Import Market Place Accounting page
 import { MarketPlaceAccountingPage } from './pages/MarketPlaceAccountingPage';
 
+// Import Market Place Cost Center page
+import { MarketPlaceCostCenterPage } from './pages/MarketPlaceCostCenterPage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -557,6 +560,7 @@ function App() {
               <Route path="/market-place/loyalty-rule-engine" element={<LoyaltyRuleEngineDashboard />} />
               <Route path="/market-place/cloud-telephony" element={<div>Cloud Telephony</div>} />
               <Route path="/market-place/accounting" element={<MarketPlaceAccountingPage />} />
+              <Route path="/market-place/accounting/cost-center" element={<MarketPlaceCostCenterPage />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
