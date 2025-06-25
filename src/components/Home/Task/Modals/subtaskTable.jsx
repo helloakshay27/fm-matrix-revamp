@@ -96,7 +96,8 @@ const DateEditor = ({
   onEnterPress,
   className,
   placeholder = "Select date",
-  validator
+  validator,
+  min
 }) => {
   const [date, setDate] = useState(
     propValue ? new Date(propValue).toISOString().split("T")[0] : ""
@@ -147,6 +148,7 @@ const DateEditor = ({
       ref={inputRef}
       type="date"
       value={date}
+      min={min}
       onChange={handleInputChange}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
@@ -164,21 +166,23 @@ const globalStatusOptions = ['open', 'in_progress', 'completed', 'on_hold'];
 
 const calculateDuration = (startDateStr, endDateStr) => {
   if (!startDateStr || !endDateStr) { return '0d:0h:0m'; }
-  const startDate = new Date(startDateStr);
-  const endDate = new Date(endDateStr);
-  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime()) || endDate < startDate) { return '0d:0h:0m'; }
-  let ms = endDate.getTime() - startDate.getTime();
-  const days = Math.floor(ms / (1000 * 60 * 60 * 24));
-  ms -= days * (1000 * 60 * 60 * 24);
-  const hours = Math.floor(ms / (1000 * 60 * 60));
-  ms -= hours * (1000 * 60 * 60);
-  const minutes = Math.floor(ms / (1000 * 60));
-  return `${days}d:${hours}h:${minutes}m`;
+     const start = new Date(startDateStr);
+     const end = new Date(endDateStr);
+    if (end < start) return "Invalid: End date before start date";
+
+    const ms = end - start;
+    const totalMinutes = Math.floor(ms / (1000 * 60));
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24)) + 1;
+    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+    const minutes = totalMinutes % 60;
+    return `${days}d : ${hours}h : ${minutes}m`;
 };
+
 
 const SubtaskTable = () => {
   const token = localStorage.getItem('token');
-  const { mid, tid: parentId } = useParams();
+  const { mid="", tid:parentId } = useParams();
+
   const dispatch = useDispatch();
 
   const {
@@ -514,7 +518,7 @@ const SubtaskTable = () => {
       },
       {
         accessorKey: 'endDate', header: 'End Date', size: 160,
-        cell: ({ getValue, row }) => (<DateEditor value={getValue()} onUpdate={(date) => handleOnChange(row.original.id, "target_date", date)} onEnterPress={() => handleSaveNewSubtask()} />)
+        cell: ({ getValue, row }) => (<DateEditor min={row.original.startDate} value={getValue()} onUpdate={(date) => handleOnChange(row.original.id, "target_date", date)} onEnterPress={() => handleSaveNewSubtask()} />)
       },
       {
         accessorKey: 'duration', header: 'Duration', size: 100,
@@ -627,6 +631,7 @@ const SubtaskTable = () => {
                       onUpdate={(date) => setNewSubtaskStartDate(date)}
                       onEnterPress={handleSaveNewSubtask}
                       validator={validator}
+                      min={new Date().toISOString().split("T")[0]}
 
                     />
                   </td>
@@ -636,6 +641,7 @@ const SubtaskTable = () => {
                       onUpdate={(date) => setNewSubtaskEndDate(date)}
                       onEnterPress={handleSaveNewSubtask}
                       validator={validator}
+                      min={newSubtaskStartDate}
                     />
                   </td>
                   <td className="border p-1 text-xs align-middle">{newSubtaskDuration}</td>
