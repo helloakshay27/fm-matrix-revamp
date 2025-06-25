@@ -11,7 +11,7 @@ const ChatView = ({ channel, type, id }) => {
     const { success } = useSelector(state => state.createMessage)
 
     const [input, setInput] = useState("")
-    const [messages, setMessages] = useState(channel.messages || []);
+    const [messages, setMessages] = useState([]);
 
     useChatSubscription({
         type,
@@ -20,6 +20,12 @@ const ChatView = ({ channel, type, id }) => {
             setMessages((prev) => [...prev, newMessage]);
         },
     });
+
+    useEffect(() => {
+        if (channel.messages) {
+            setMessages(channel.messages);
+        }
+    }, [channel.messages]);
 
     const formatTimestamp = (isoString) => {
         const date = new Date(isoString);
@@ -35,7 +41,7 @@ const ChatView = ({ channel, type, id }) => {
         const newMessage = {
             body: input,
             user_id: currentUser.id,
-            user_name: currentUser.name,
+            user_name: currentUser.firstname[0].toUpperCase(),
             created_at: new Date().toISOString(),
         };
 
