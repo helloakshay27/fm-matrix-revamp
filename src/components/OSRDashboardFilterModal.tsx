@@ -51,7 +51,7 @@ export const OSRDashboardFilterModal = ({ isOpen, onClose, onApply, onReset }: O
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl">
+      <DialogContent className="max-w-7xl">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Filter</DialogTitle>
           <DialogDescription className="sr-only">
@@ -59,12 +59,12 @@ export const OSRDashboardFilterModal = ({ isOpen, onClose, onApply, onReset }: O
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-6 p-4">
-          <div className="grid grid-cols-6 gap-4">
-            <div>
-              <Label htmlFor="tower" className="text-sm font-medium">Select Tower</Label>
+        <div className="space-y-4 p-4">
+          <div className="flex items-end gap-4 flex-wrap">
+            <div className="min-w-[150px]">
+              <Label htmlFor="tower" className="text-sm font-medium mb-1 block">Select Tower</Label>
               <Select onValueChange={(value) => handleFilterChange('tower', value)} value={filters.tower}>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="h-9">
                   <SelectValue placeholder="Select Tower" />
                 </SelectTrigger>
                 <SelectContent>
@@ -75,10 +75,10 @@ export const OSRDashboardFilterModal = ({ isOpen, onClose, onApply, onReset }: O
               </Select>
             </div>
 
-            <div>
-              <Label htmlFor="flats" className="text-sm font-medium">Select Flats</Label>
+            <div className="min-w-[150px]">
+              <Label htmlFor="flats" className="text-sm font-medium mb-1 block">Select Flats</Label>
               <Select onValueChange={(value) => handleFilterChange('flats', value)} value={filters.flats}>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="h-9">
                   <SelectValue placeholder="Select Flats" />
                 </SelectTrigger>
                 <SelectContent>
@@ -91,11 +91,11 @@ export const OSRDashboardFilterModal = ({ isOpen, onClose, onApply, onReset }: O
               </Select>
             </div>
 
-            <div>
-              <Label htmlFor="category" className="text-sm font-medium">Select Category</Label>
+            <div className="min-w-[200px]">
+              <Label htmlFor="category" className="text-sm font-medium mb-1 block">Select Category</Label>
               <Select onValueChange={(value) => handleFilterChange('category', value)} value={filters.category}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="select Category" />
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Invisible Grill Starts from (per sq. ft.)" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pest-control">Pest Control</SelectItem>
@@ -107,19 +107,19 @@ export const OSRDashboardFilterModal = ({ isOpen, onClose, onApply, onReset }: O
               </Select>
             </div>
 
-            <div>
-              <Label className="text-sm font-medium">Created on</Label>
+            <div className="min-w-[200px]">
+              <Label className="text-sm font-medium mb-1 block">Created on</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full mt-1 justify-start text-left font-normal",
+                      "h-9 w-full justify-start text-left font-normal",
                       !filters.createdOn && "text-muted-foreground"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {filters.createdOn ? format(filters.createdOn, "dd/MM/yyyy") : "Created on"}
+                    {filters.createdOn ? format(filters.createdOn, "dd/MM/yyyy") : "01/01/2025 - 12/31/2025"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -134,10 +134,10 @@ export const OSRDashboardFilterModal = ({ isOpen, onClose, onApply, onReset }: O
               </Popover>
             </div>
 
-            <div>
-              <Label htmlFor="status" className="text-sm font-medium">Select Status</Label>
+            <div className="min-w-[150px]">
+              <Label htmlFor="status" className="text-sm font-medium mb-1 block">Select Status</Label>
               <Select onValueChange={(value) => handleFilterChange('status', value)} value={filters.status}>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="h-9">
                   <SelectValue placeholder="Select Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -148,10 +148,10 @@ export const OSRDashboardFilterModal = ({ isOpen, onClose, onApply, onReset }: O
               </Select>
             </div>
 
-            <div>
-              <Label htmlFor="rating" className="text-sm font-medium">Select Rating</Label>
+            <div className="min-w-[150px]">
+              <Label htmlFor="rating" className="text-sm font-medium mb-1 block">Select Rating</Label>
               <Select onValueChange={(value) => handleFilterChange('rating', value)} value={filters.rating}>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="h-9">
                   <SelectValue placeholder="Select Rating" />
                 </SelectTrigger>
                 <SelectContent>
@@ -163,21 +163,21 @@ export const OSRDashboardFilterModal = ({ isOpen, onClose, onApply, onReset }: O
                 </SelectContent>
               </Select>
             </div>
-          </div>
 
-          <div className="flex justify-center gap-4 pt-4">
-            <Button 
-              onClick={handleApply}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2"
-            >
-              Apply
-            </Button>
-            <Button 
-              onClick={handleReset}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2"
-            >
-              Reset
-            </Button>
+            <div className="flex gap-2 ml-auto">
+              <Button 
+                onClick={handleApply}
+                className="bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 text-white px-6 py-2 h-9"
+              >
+                Apply
+              </Button>
+              <Button 
+                onClick={handleReset}
+                className="bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 text-white px-6 py-2 h-9"
+              >
+                Reset
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
