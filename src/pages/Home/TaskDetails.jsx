@@ -487,10 +487,10 @@ const Attachments = ({ attachments, id }) => {
 
 
     return (
-        <div className="flex flex-col gap-3 p-5">
+        <div className="flex flex-col gap-3 p-5 ">
             {files.length > 0 ? (
                 <>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 mt-4">
                         {files.map((file, index) => {
                             const fileName = file.document_file_name;
                             const fileUrl = file.document_url;

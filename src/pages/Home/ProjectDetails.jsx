@@ -146,7 +146,7 @@ const Attachments = ({ attachments, id }) => {
         <div className="flex flex-col gap-3 p-5">
             {files.length > 0 ? (
                 <>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 mt-4">
                         {files.map((file, index) => {
                             const fileName = file.document_file_name;
                             const fileUrl = file.document_url;
@@ -162,7 +162,7 @@ const Attachments = ({ attachments, id }) => {
                                     className="border rounded p-2 flex flex-col items-center justify-center text-center shadow-sm bg-white"
                                 >
                                     {/* Preview or icon */}
-                                    <div className="w-full h-[100px] flex items-center justify-center bg-gray-100 rounded mb-2 overflow-hidden">
+                                    <div className="w-[100px] h-[100px] flex items-center justify-center bg-gray-100 rounded mb-2 overflow-hidden">
                                         {isImage ? (
                                             <img src={fileUrl} alt={fileName} className="object-contain h-full" />
                                         ) : isPdf ? (
