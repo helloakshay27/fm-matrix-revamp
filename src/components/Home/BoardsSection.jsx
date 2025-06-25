@@ -26,11 +26,17 @@ const BoardsSection = ({ section }) => {
   const [localError, setLocalError] = useState(null);
   const projectState = useSelector((state) => state.fetchProjects.fetchProjects);
   const taskState = useSelector((state) => state.fetchTasks.fetchTasks);
+  const { filterProjects, success } = useSelector((state) => state.filterProjects);
+  const { filterTask, success: taskSuccess } = useSelector((state) => state.filterTask);
 
   useEffect(() => {
     batch(() => {
       if (section === "Tasks") {
-        dispatch(fetchTasks({ token, id: mid }));
+        if (mid) {
+          dispatch(fetchTasks({ token, id: mid }));
+        } else {
+          dispatch(fetchTasks({ token, id: "" }));
+        }
       } else {
         dispatch(fetchProjects({ token }));
       }
@@ -38,12 +44,20 @@ const BoardsSection = ({ section }) => {
   }, [dispatch, section]);
 
   useDeepCompareEffect(() => {
-    setProjects(projectState);
-  }, [projectState]);
+    if (success && filterProjects.length > 0) {
+      setProjects(filterProjects);
+    } else {
+      setProjects(projectState);
+    }
+  }, [projectState, success, filterProjects]);
 
   useDeepCompareEffect(() => {
-    setTaskData(taskState);
-  }, [taskState]);
+    if (taskSuccess && filterTask.length > 0) {
+      setTaskData(filterTask);
+    } else {
+      setTaskData(taskState);
+    }
+  }, [taskState, taskSuccess, filterTask]);
 
   const toggleSubCard = useCallback((taskId) => {
     setSubCardVisibility((prev) => ({
@@ -101,7 +115,11 @@ const BoardsSection = ({ section }) => {
         setLocalError(
           `Update failed: ${error?.response?.data?.errors || error?.message || "Server error"}`
         );
-        dispatch(fetchTasks({ token, id: mid }));
+        if (mid) {
+          dispatch(fetchTasks({ token, id: mid }));
+        } else {
+          dispatch(fetchTasks({ token, id: "" }));
+        }
       }
     }, 300),
     [dispatch]
