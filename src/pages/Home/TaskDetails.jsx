@@ -314,7 +314,7 @@ const Comments = ({ comments }) => {
                 body: comment,
                 commentable_id: tid,
                 commentable_type: "TaskManagement",
-                commentor_id: 364,
+                commentor_id: JSON.parse(localStorage.getItem("user"))?.id,
                 active: true,
             },
         };
@@ -496,13 +496,13 @@ const Attachments = ({ attachments, id }) => {
                 <>
                     {files.map((file) => (
                         <>
-                        <div className="flex items-center gap-3">
-                            <FolderIcon className="h-5 w-5 text-gray-600" />
-                            <a href={file.document_url} download={file.document_file_name} >
-                                {file.document_file_name}
-                            </a>
-                        </div>
-                        {/* <hr className="border border-gray-200" ></hr> */}
+                            <div className="flex items-center gap-3">
+                                <FolderIcon className="h-5 w-5 text-gray-600" />
+                                <a href={file.document_url} download={file.document_file_name} >
+                                    {file.document_file_name}
+                                </a>
+                            </div>
+                            {/* <hr className="border border-gray-200" ></hr> */}
                         </>
                     ))}
                     <button

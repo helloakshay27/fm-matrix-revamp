@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import StatusBadge from "../../components/Home/Projects/statusBadge";
 import CustomTable from "../../components/Setup/CustomTable";
-import AddSprintModal from "../../components/Home/Sprints/AddSprintModal";
 import {
     fetchSpirints,
     putSprint,
@@ -10,8 +9,6 @@ import {
 } from "../../redux/slices/spirintSlice";
 import { Link } from "react-router-dom";
 import TaskActions from "../../components/Home/TaskActions";
-import BoardsSection from "../../components/Home/BoardsSection";
-import { Milestone } from "lucide-react";
 import SprintGantt from "../../components/Sprints/SprintGantt";
 import { fetchUsers } from "../../redux/slices/userSlice";
 
@@ -193,18 +190,50 @@ const SprintTable = (setIsSidebarOpen) => {
                 size: 130,
             },
             {
-                accessorKey: "duration",
+                accessorKey: "end_date",
                 header: "Duration",
-                size: 110,
-                cell: ({ getValue }) => {
-                    const durationInDays = getValue();
-                    return (
-                        <span style={{ color: "green" }}>
-                            {formatDuration(durationInDays)}
-                        </span>
-                    );
+                size: 150,
+                cell: ({ row }) => {
+                    const [countdown, setCountdown] = useState("");
+
+                    useEffect(() => {
+                        const updateCountdown = () => {
+                            const now = new Date();
+                            const endDate = new Date(row.original.end_date);
+
+                            // Set to midnight of the day AFTER the end_date
+                            const target = new Date(endDate);
+                            target.setDate(endDate.getDate() + 1);
+                            target.setHours(0, 0, 0, 0); // Midnight
+
+                            const diff = target - now;
+
+                            if (diff <= 0) {
+                                setCountdown("00d:00h:00m:00s");
+                                return;
+                            }
+
+                            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                            const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                            const minutes = Math.floor((diff / (1000 * 60)) % 60);
+                            const seconds = Math.floor((diff / 1000) % 60);
+
+                            setCountdown(
+                                `${String(days).padStart(2, "0")}d:${String(hours).padStart(2, "0")}h:${String(
+                                    minutes
+                                ).padStart(2, "0")}m:${String(seconds).padStart(2, "0")}s`
+                            );
+                        };
+
+                        updateCountdown();
+                        const interval = setInterval(updateCountdown, 1000);
+                        return () => clearInterval(interval);
+                    }, [row.original.end_date]);
+
+                    return <span className="text-green-700 font-mono">{countdown}</span>;
                 },
-            },
+            }
+            ,
             {
                 accessorKey: "priority",
                 header: "Priority",
