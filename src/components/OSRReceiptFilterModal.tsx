@@ -52,22 +52,22 @@ export const OSRReceiptFilterModal = ({ isOpen, onClose, onApply, onReset }: OSR
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-5xl w-full p-0 bg-white border border-gray-300 shadow-lg">
-        <DialogHeader className="px-6 py-3 border-b border-gray-200 bg-gray-50">
-          <DialogTitle className="text-sm font-medium text-gray-900 text-left">Filter</DialogTitle>
+      <DialogContent className="max-w-4xl w-full p-0 bg-white border border-gray-300 shadow-lg">
+        <DialogHeader className="px-6 py-4 border-b border-gray-200 bg-white">
+          <DialogTitle className="text-lg font-medium text-gray-900 text-left">Filter</DialogTitle>
           <DialogDescription className="sr-only">
             Filter receipts by tower, flat, invoice number, receipt number, and receipt date
           </DialogDescription>
         </DialogHeader>
         
-        <div className="p-4">
+        <div className="p-6 bg-white">
           {/* Horizontal filter layout */}
           <div className="flex items-center gap-4">
             {/* Select Tower */}
-            <div className="flex-1">
+            <div className="min-w-[140px]">
               <Select onValueChange={(value) => handleFilterChange('tower', value)} value={filters.tower}>
-                <SelectTrigger className="h-9 border border-gray-300 bg-white text-sm">
-                  <SelectValue placeholder="Select Tower" />
+                <SelectTrigger className="h-10 border border-gray-300 bg-white text-sm">
+                  <SelectValue placeholder="Select..." />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 shadow-lg z-[60]">
                   <SelectItem value="tower-a">Tower A</SelectItem>
@@ -78,10 +78,10 @@ export const OSRReceiptFilterModal = ({ isOpen, onClose, onApply, onReset }: OSR
             </div>
 
             {/* Select Flat */}
-            <div className="flex-1">
+            <div className="min-w-[140px]">
               <Select onValueChange={(value) => handleFilterChange('flat', value)} value={filters.flat}>
-                <SelectTrigger className="h-9 border border-gray-300 bg-white text-sm">
-                  <SelectValue placeholder="Select flat" />
+                <SelectTrigger className="h-10 border border-gray-300 bg-white text-sm">
+                  <SelectValue placeholder="Select..." />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 shadow-lg z-[60]">
                   <SelectItem value="flat-101">Flat 101</SelectItem>
@@ -92,48 +92,47 @@ export const OSRReceiptFilterModal = ({ isOpen, onClose, onApply, onReset }: OSR
             </div>
 
             {/* Invoice Number */}
-            <div className="flex-1">
+            <div className="min-w-[120px]">
               <Input
-                placeholder="Invoice Number"
+                placeholder=""
                 value={filters.invoiceNumber}
                 onChange={(e) => handleFilterChange('invoiceNumber', e.target.value)}
-                className="h-9 border border-gray-300 bg-white text-sm"
+                className="h-10 border border-gray-300 bg-white text-sm"
               />
             </div>
 
             {/* Receipt Number */}
-            <div className="flex-1">
+            <div className="min-w-[120px]">
               <Input
-                placeholder="Receipt Number"
+                placeholder=""
                 value={filters.receiptNumber}
                 onChange={(e) => handleFilterChange('receiptNumber', e.target.value)}
-                className="h-9 border border-gray-300 bg-white text-sm"
+                className="h-10 border border-gray-300 bg-white text-sm"
               />
             </div>
 
             {/* Receipt Date */}
-            <div className="flex-1 relative">
+            <div className="min-w-[140px] relative">
               <Input
                 type="date"
-                placeholder="Receipt Date"
+                placeholder="mm/dd/yyyy"
                 value={filters.receiptDate}
                 onChange={(e) => handleFilterChange('receiptDate', e.target.value)}
-                className="h-9 border border-gray-300 bg-white pr-10 text-sm"
+                className="h-10 border border-gray-300 bg-white text-sm"
               />
-              <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-2">
+            <div className="flex gap-3 ml-4">
               <Button 
                 onClick={handleApply}
-                className="bg-[#2563EB] hover:bg-[#2563EB]/90 text-white px-6 py-1 h-9 text-sm font-medium"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 h-10 text-sm font-medium rounded"
               >
                 Apply
               </Button>
               <Button 
                 onClick={handleReset}
-                className="bg-[#2563EB] hover:bg-[#2563EB]/90 text-white px-6 py-1 h-9 text-sm font-medium"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 h-10 text-sm font-medium rounded"
               >
                 Reset
               </Button>
