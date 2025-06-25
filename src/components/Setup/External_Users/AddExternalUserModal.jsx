@@ -7,6 +7,7 @@ import { fetchRoles } from '../../../redux/slices/roleSlice';
 import { fetchOrganizations } from '../../../redux/slices/organizationSlice';
 import { createExternalUser, fetchUpdateUser } from '../../../redux/slices/userSlice';
 import toast from 'react-hot-toast';
+import { Eye, EyeOff } from 'lucide-react';
 
 
 const AddExternalUserModal = ({
@@ -29,6 +30,7 @@ const AddExternalUserModal = ({
   const { loading: editLoading,
     success: editSuccess, } = useSelector(state => state.fetchUpdateUser)
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
 
   const [formData, setFormData] = useState({
@@ -36,6 +38,7 @@ const AddExternalUserModal = ({
     organisation: null,
     email: '',
     mobile: '',
+    password: "",
     role: null,
   });
 
@@ -90,6 +93,7 @@ const AddExternalUserModal = ({
         organization_id: formData.organisation,
         mobile: formData.mobile,
         email: formData.email,
+        password: formData.password,
         role_id: formData.role,
         user_type: 'external',
       },
@@ -173,36 +177,6 @@ const AddExternalUserModal = ({
           </div>
           <div className="px-6">
             <label className="block text-[11px] text-[#1B1B1B] mb-1">
-              Organisation<span className="text-red-500 ml-1">*</span>
-            </label>
-            <SelectBox
-              options={organizations.map((org) => ({
-                value: org.id,
-                label: org.name,
-              }))}
-              className="w-full"
-              value={formData.organisation}
-              onChange={(value) =>
-                setFormData({ ...formData, organisation: value })
-              }
-            />
-          </div>
-          <div className="px-6">
-            <label className="block text-[11px] text-[#1B1B1B] mb-1">
-              Role<span className="text-red-500 ml-1">*</span>
-            </label>
-            <SelectBox
-              options={roles.map((role) => ({
-                value: role.id,
-                label: role.display_name,
-              }))}
-              className="w-full"
-              value={formData.role}
-              onChange={(value) => setFormData({ ...formData, role: value })}
-            />
-          </div>
-          <div className="px-6">
-            <label className="block text-[11px] text-[#1B1B1B] mb-1">
               Email Id<span className="text-red-500 ml-1">*</span>
             </label>
             <input
@@ -230,6 +204,55 @@ const AddExternalUserModal = ({
                   setFormData({ ...formData, mobile: input })
                 }
               }}
+            />
+          </div>
+          <div className="px-6 relative">
+            <label className="block text-[11px] text-[#1B1B1B] mb-1">
+              Password<span className="text-red-500 ml-1">*</span>
+            </label>
+            <input
+              type={`${showPassword ? "" : "password"}`}
+              className="border border-[#C0C0C0] w-full py-2 px-3 text-[#1B1B1B] text-[13px] focus:outline-none"
+              placeholder='Enter Password'
+              value={formData.password}
+              onChange={e => setFormData({ ...formData, password: e.target.value })}
+            />
+            {
+              showPassword ? (
+                <EyeOff size={20} className='absolute right-10 top-10 transform -translate-y-1/2 cursor-pointer' onClick={() => setShowPassword(false)} />
+              ) : (
+                <Eye size={20} className='absolute right-10 top-10 transform -translate-y-1/2 cursor-pointer' onClick={() => setShowPassword(true)} />
+              )
+            }
+          </div>
+          <div className="px-6">
+            <label className="block text-[11px] text-[#1B1B1B] mb-1">
+              Organisation<span className="text-red-500 ml-1">*</span>
+            </label>
+            <SelectBox
+              options={organizations.map((org) => ({
+                value: org.id,
+                label: org.name,
+              }))}
+              className="w-full"
+              value={formData.organisation}
+              onChange={(value) =>
+                setFormData({ ...formData, organisation: value })
+              }
+            />
+          </div>
+          <div className="px-6">
+            <label className="block text-[11px] text-[#1B1B1B] mb-1">
+              Role<span className="text-red-500 ml-1">*</span>
+            </label>
+            <SelectBox
+              options={roles.map((role) => ({
+                value: role.id,
+                label: role.display_name,
+              }))}
+              className="w-full"
+              value={formData.role}
+              onChange={(value) => setFormData({ ...formData, role: value })}
             />
           </div>
         </div>
