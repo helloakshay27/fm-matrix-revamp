@@ -806,9 +806,6 @@ const IssuesTable = () => {
     (loadingUsers && !userFetchInitiatedRef.current) ||
     isSavingIssues ||
     isUpdatingIssue ||
-    loadingProjects ||
-    loadingMilestone ||
-    loadingTasks ||
     loadingFilteredIssues
   ) {
     pageContent = (

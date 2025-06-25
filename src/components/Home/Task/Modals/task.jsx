@@ -149,8 +149,8 @@ const TaskForm = ({
           </label>
           <SelectBox
             options={users.map((user) => ({
-              label: user?.user?.name,
-              value: user.user_id,
+              label: user?.user?.name || user.firstname + " " + user.lastname,
+              value: user.user_id || user.id,
             }))}
             placeholder="Select Person"
             value={formData.responsiblePerson}
@@ -236,8 +236,8 @@ const TaskForm = ({
           </label>
           <MultiSelectBox
             options={users.map((user) => ({
-              label: user?.user?.name,
-              value: user.user_id,
+              label: user?.user?.name || user.firstname + " " + user.lastname,
+              value: user.user_id || user.id,
             }))}
             value={formData.observer}
             placeholder="Select Observer"
@@ -463,7 +463,7 @@ const Tasks = ({ isEdit }) => {
             isReadOnly={true}
             project={project}
             milestone={milestone}
-            users={project?.project_team?.project_team_members || []}
+            users={project?.project_team?.project_team_members || users}
             tags={tags}
             prevTags={prevTags}
             setPrevTags={setPrevTags}
@@ -483,7 +483,7 @@ const Tasks = ({ isEdit }) => {
           isReadOnly={false}
           project={project}
           milestone={milestone}
-          users={project?.project_team?.project_team_members || []}
+          users={project?.project_team?.project_team_members || users}
           tags={tags}
           prevTags={prevTags}
           setPrevTags={setPrevTags}

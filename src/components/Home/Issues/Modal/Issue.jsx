@@ -8,7 +8,6 @@ import { fetchProjects } from "../../../../redux/slices/projectSlice";
 import { fetchTasks } from "../../../../redux/slices/taskSlice";
 
 import toast from "react-hot-toast";
-import { set } from "react-hook-form";
 
 const globalTypesOptions = [
   { value: 1, label: 'bug' },
@@ -26,54 +25,128 @@ const globalPriorityOptions = [
   { value: 5, label: 'Urgent' },
 ];
 
+// const Attachments = ({ attachments, setAttachments }) => {
+//   const fileInputRef = useRef(null);
+//   const dispatch = useDispatch();
+//   const [files, setFiles] = useState(attachments);
+
+//   const handleAttachFile = () => {
+//     fileInputRef.current.click(); // Open file picker
+//   };
+
+//   const handleFileChange = async (event) => {
+//     const selectedFiles = Array.from(event.target.files);
+//     if (!selectedFiles.length) return;
+//     setFiles(selectedFiles);
+//     setAttachments(selectedFiles);
+//     console.log(selectedFiles);
+//   };
+
+
+
+//   return (
+//     <div className="flex h-[45px] border">
+//       {files.length > 0 ? (
+//         <>
+//           <div className="text-[14px] mt-2 p-1">
+//             <span className="p-2">{files.length}</span>
+
+//           </div>
+//         </>
+//       ) : (
+//         <div className="flex  w-full justify-between items-center p-2 ">
+//           <span className="text-[14px] "><i className="text-gray-400">No Documents Attached</i></span>
+//           <button
+//             type="button"
+//             className="bg-[#C72030] h-[30px] w-[100px] text-white rounded"
+//             onClick={handleAttachFile}
+//           >
+//             Attach Files
+//           </button>
+//         </div>
+//       )}
+
+//       <input
+//         type="file"
+//         multiple
+//         ref={fileInputRef}
+//         style={{ display: "none" }}
+//         onChange={handleFileChange}
+//       />
+//     </div>
+//   );
+// };
+
 const Attachments = ({ attachments, setAttachments }) => {
   const fileInputRef = useRef(null);
-  const dispatch = useDispatch();
-  const [files, setFiles] = useState(attachments);
+  const [files, setFiles] = useState([]);
+
+  useEffect(() => {
+    setFiles(attachments || []);
+  }, [attachments]);
 
   const handleAttachFile = () => {
-    fileInputRef.current.click(); // Open file picker
+    fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (event) => {
+  const handleFileChange = (event) => {
     const selectedFiles = Array.from(event.target.files);
     if (!selectedFiles.length) return;
+
     setFiles(selectedFiles);
     setAttachments(selectedFiles);
-    console.log(selectedFiles);
   };
 
+  const isImage = (file) => file.type.startsWith("image/");
 
+  const getFileUrl = (file) => URL.createObjectURL(file);
 
   return (
-    <div className="flex h-[45px] border">
-      {files.length > 0 ? (
-        <>
-          <div className="text-[14px] mt-2 p-1">
-            <span className="p-2">{files.length}</span>
+    <div className="flex flex-col gap-2">
+      {/* Input area */}
+      <div className="flex justify-between items-center border h-[45px] px-3 rounded-md">
+        <span className="text-[14px] text-gray-500">
+          {files.length === 0 && <i>No Documents Attached</i>}
+        </span>
+        <button
+          type="button"
+          className="bg-[#C72030] h-[30px] w-[100px] text-white text-sm rounded"
+          onClick={handleAttachFile}
+        >
+          Attach Files
+        </button>
+        <input
+          type="file"
+          multiple
+          ref={fileInputRef}
+          className="hidden"
+          onChange={handleFileChange}
+        />
+      </div>
 
-          </div>
-        </>
-      ) : (
-        <div className="flex  w-full justify-between items-center p-2 ">
-          <span className="text-[14px] "><i className="text-gray-400">No Documents Attached</i></span>
-          <button
-            type="button"
-            className="bg-[#C72030] h-[30px] w-[100px] text-white rounded"
-            onClick={handleAttachFile}
-          >
-            Attach Files
-          </button>
+      {/* Preview area */}
+      {files.length > 0 && (
+        <div className="flex flex-wrap gap-4 mt-2">
+          {files.map((file, index) =>
+            isImage(file) ? (
+              <div key={index} className="w-[80px] h-[80px] border rounded-md overflow-hidden">
+                <img
+                  src={getFileUrl(file)}
+                  alt={file.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div
+                key={index}
+                className="text-sm text-gray-800 px-2 py-1 border rounded bg-gray-100"
+              >
+                📄 {file.name}
+              </div>
+            )
+          )}
         </div>
       )}
-
-      <input
-        type="file"
-        multiple
-        ref={fileInputRef}
-        style={{ display: "none" }}
-        onChange={handleFileChange}
-      />
     </div>
   );
 };
