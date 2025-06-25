@@ -1,5 +1,3 @@
-
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -301,6 +299,9 @@ import { OSRDetailsPage } from './pages/OSRDetailsPage';
 // Import OSR Generate Receipt page
 import { OSRGenerateReceiptPage } from './pages/OSRGenerateReceiptPage';
 
+// Import Market Place Accounting page
+import { MarketPlaceAccountingPage } from './pages/MarketPlaceAccountingPage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -555,7 +556,7 @@ function App() {
               <Route path="/market-place/lease-management" element={<div>Lease Management</div>} />
               <Route path="/market-place/loyalty-rule-engine" element={<LoyaltyRuleEngineDashboard />} />
               <Route path="/market-place/cloud-telephony" element={<div>Cloud Telephony</div>} />
-              <Route path="/market-place/accounting" element={<AccountingDashboard />} />
+              <Route path="/market-place/accounting" element={<MarketPlaceAccountingPage />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
@@ -601,4 +602,3 @@ function App() {
 }
 
 export default App;
-
