@@ -8,6 +8,7 @@ import { CreateInvoiceReceiptModal } from '@/components/CreateInvoiceReceiptModa
 import { ImportReceiptModal } from '@/components/ImportReceiptModal';
 import { OSRReceiptFilterModal } from '@/components/OSRReceiptFilterModal';
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
+import { ExportDropdown } from '@/components/ExportDropdown';
 import { toast } from 'sonner';
 
 export const OSRGenerateReceiptPage = () => {
@@ -46,33 +47,25 @@ export const OSRGenerateReceiptPage = () => {
   ];
 
   const handleColumnToggle = (columnKey: string, visible: boolean) => {
+    console.log(`Column ${columnKey} toggled to ${visible}`);
     setColumnVisibility(prev => ({
       ...prev,
       [columnKey]: visible
     }));
   };
 
-  const handleCreateReceipt = (data: any) => {
-    console.log('Creating receipt with data:', data);
-    toast.success('Receipt created successfully!');
+  const handleAddReceipt = () => {
+    console.log('Add Receipt button clicked');
+    setShowCreateModal(true);
   };
 
-  const handleImportReceipts = (file: File) => {
-    console.log('Importing receipts from file:', file.name);
-    toast.success('Receipts imported successfully!');
-  };
-
-  const handleApplyFilters = (filters: any) => {
-    console.log('Applying filters:', filters);
-    toast.success('Filters applied successfully!');
-  };
-
-  const handleResetFilters = () => {
-    console.log('Resetting filters');
-    toast.success('Filters reset successfully!');
+  const handleImportReceipts = () => {
+    console.log('Import Receipts button clicked');
+    setShowImportModal(true);
   };
 
   const handleExportReceipts = () => {
+    console.log('Export Receipts button clicked');
     // Create sample data for export
     const exportData = [
       ['Receipt Number', 'Invoice Number', 'Flat', 'Customer Name', 'Amount Received', 'Payment Mode', 'Transaction Number', 'Payment Date', 'Receipt Date', 'Mail Sent', 'Attachment'],
@@ -95,6 +88,36 @@ export const OSRGenerateReceiptPage = () => {
     toast.success('Receipts exported successfully!');
   };
 
+  const handleFilterClick = () => {
+    console.log('Filter button clicked');
+    setShowFilterModal(true);
+  };
+
+  const handleRefresh = () => {
+    console.log('Refresh button clicked');
+    toast.success('Data refreshed successfully!');
+  };
+
+  const handleCreateReceipt = (data: any) => {
+    console.log('Creating receipt with data:', data);
+    toast.success('Receipt created successfully!');
+  };
+
+  const handleImportReceiptsFile = (file: File) => {
+    console.log('Importing receipts from file:', file.name);
+    toast.success('Receipts imported successfully!');
+  };
+
+  const handleApplyFilters = (filters: any) => {
+    console.log('Applying filters:', filters);
+    toast.success('Filters applied successfully!');
+  };
+
+  const handleResetFilters = () => {
+    console.log('Resetting filters');
+    toast.success('Filters reset successfully!');
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg border border-gray-200">
@@ -102,7 +125,7 @@ export const OSRGenerateReceiptPage = () => {
         <div className="p-4 border-b border-gray-200">
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <Button 
-              onClick={() => setShowCreateModal(true)}
+              onClick={handleAddReceipt}
               className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
@@ -110,7 +133,7 @@ export const OSRGenerateReceiptPage = () => {
             </Button>
             
             <Button 
-              onClick={() => setShowImportModal(true)}
+              onClick={handleImportReceipts}
               className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
@@ -126,7 +149,7 @@ export const OSRGenerateReceiptPage = () => {
             </Button>
             
             <Button 
-              onClick={() => setShowFilterModal(true)}
+              onClick={handleFilterClick}
               className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2"
             >
               <Filter className="w-4 h-4" />
@@ -141,21 +164,19 @@ export const OSRGenerateReceiptPage = () => {
                 placeholder="Search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-64 border-gray-300 rounded-none"
+                className="w-64 border-gray-300 rounded-none focus:border-[#C72030] focus:ring-[#C72030]"
               />
             </div>
             
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="p-2">
+              <Button variant="ghost" size="sm" className="p-2" onClick={handleRefresh}>
                 <RefreshCw className="w-4 h-4" />
               </Button>
               <ColumnVisibilityDropdown
                 columns={columnOptions}
                 onColumnToggle={handleColumnToggle}
               />
-              <Button variant="ghost" size="sm" className="p-2">
-                <MoreHorizontal className="w-4 h-4" />
-              </Button>
+              <ExportDropdown />
             </div>
           </div>
         </div>
@@ -239,7 +260,7 @@ export const OSRGenerateReceiptPage = () => {
       <ImportReceiptModal
         isOpen={showImportModal}
         onClose={() => setShowImportModal(false)}
-        onImport={handleImportReceipts}
+        onImport={handleImportReceiptsFile}
       />
 
       <OSRReceiptFilterModal
