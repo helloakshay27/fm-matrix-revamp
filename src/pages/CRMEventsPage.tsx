@@ -11,6 +11,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
+import { AddEventModalCRM } from '@/components/AddEventModalCRM';
+import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
 
 // Sample events data based on the image
 const eventsData = [
@@ -69,13 +72,30 @@ const eventsData = [
 ];
 
 export const CRMEventsPage = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEvents, setSelectedEvents] = useState<number[]>([]);
+  const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
   const [filters, setFilters] = useState({
     unit: '',
     dateRange: undefined as Date | undefined,
     status: ''
   });
+
+  // Column visibility state
+  const [visibleColumns, setVisibleColumns] = useState([
+    { key: 'actions', label: 'Actions', visible: true },
+    { key: 'title', label: 'Title', visible: true },
+    { key: 'unit', label: 'Unit', visible: true },
+    { key: 'createdBy', label: 'Created By', visible: true },
+    { key: 'startDate', label: 'Start Date', visible: true },
+    { key: 'endDate', label: 'End Date', visible: true },
+    { key: 'eventType', label: 'Event Type', visible: true },
+    { key: 'status', label: 'Status', visible: true },
+    { key: 'expired', label: 'Expired', visible: true },
+    { key: 'attachments', label: 'Attachments', visible: true },
+    { key: 'createdOn', label: 'Created On', visible: true }
+  ]);
 
   const handleEventSelection = (eventId: number) => {
     setSelectedEvents(prev => 
@@ -91,6 +111,23 @@ export const CRMEventsPage = () => {
     } else {
       setSelectedEvents(eventsData.map(event => event.id));
     }
+  };
+
+  const handleViewEvent = (eventId: number) => {
+    navigate(`/crm/events/details/${eventId}`);
+  };
+
+  const handleAddEvent = (eventData: any) => {
+    console.log('New event added:', eventData);
+    // In a real app, this would save the event to the backend
+  };
+
+  const handleColumnToggle = (columnKey: string, visible: boolean) => {
+    setVisibleColumns(prev => 
+      prev.map(col => 
+        col.key === columnKey ? { ...col, visible } : col
+      )
+    );
   };
 
   const getStatusBadge = (status: string) => {
@@ -206,7 +243,10 @@ export const CRMEventsPage = () => {
 
         {/* Action Buttons */}
         <div className="flex items-center justify-between">
-          <Button className="bg-blue-800 hover:bg-blue-900 text-white px-6">
+          <Button 
+            onClick={() => setIsAddEventModalOpen(true)}
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6"
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add Event
           </Button>
@@ -224,13 +264,14 @@ export const CRMEventsPage = () => {
             <Button variant="outline" size="icon" className="border-gray-300">
               <RefreshCw className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" className="border-gray-300">
-              <Grid className="h-4 w-4" />
-            </Button>
+            <ColumnVisibilityDropdown 
+              columns={visibleColumns}
+              onColumnToggle={handleColumnToggle}
+            />
             <Button variant="outline" size="icon" className="border-gray-300">
               <MoreVertical className="h-4 w-4" />
             </Button>
-            <Button className="bg-blue-800 hover:bg-blue-900 text-white px-4">
+            <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4">
               Go!
             </Button>
           </div>
@@ -250,17 +291,39 @@ export const CRMEventsPage = () => {
                   className="rounded border-gray-300"
                 />
               </TableHead>
-              <TableHead className="text-gray-700 font-medium">Actions</TableHead>
-              <TableHead className="text-gray-700 font-medium">Title</TableHead>
-              <TableHead className="text-gray-700 font-medium">Unit</TableHead>
-              <TableHead className="text-gray-700 font-medium">Created By</TableHead>
-              <TableHead className="text-gray-700 font-medium">Start Date</TableHead>
-              <TableHead className="text-gray-700 font-medium">End Date</TableHead>
-              <TableHead className="text-gray-700 font-medium">Event Type</TableHead>
-              <TableHead className="text-gray-700 font-medium">Status</TableHead>
-              <TableHead className="text-gray-700 font-medium">Expired</TableHead>
-              <TableHead className="text-gray-700 font-medium">Attachments</TableHead>
-              <TableHead className="text-gray-700 font-medium">Created On</TableHead>
+              {visibleColumns.find(col => col.key === 'actions')?.visible && (
+                <TableHead className="text-gray-700 font-medium">Actions</TableHead>
+              )}
+              {visibleColumns.find(col => col.key === 'title')?.visible && (
+                <TableHead className="text-gray-700 font-medium">Title</TableHead>
+              )}
+              {visibleColumns.find(col => col.key === 'unit')?.visible && (
+                <TableHead className="text-gray-700 font-medium">Unit</TableHead>
+              )}
+              {visibleColumns.find(col => col.key === 'createdBy')?.visible && (
+                <TableHead className="text-gray-700 font-medium">Created By</TableHead>
+              )}
+              {visibleColumns.find(col => col.key === 'startDate')?.visible && (
+                <TableHead className="text-gray-700 font-medium">Start Date</TableHead>
+              )}
+              {visibleColumns.find(col => col.key === 'endDate')?.visible && (
+                <TableHead className="text-gray-700 font-medium">End Date</TableHead>
+              )}
+              {visibleColumns.find(col => col.key === 'eventType')?.visible && (
+                <TableHead className="text-gray-700 font-medium">Event Type</TableHead>
+              )}
+              {visibleColumns.find(col => col.key === 'status')?.visible && (
+                <TableHead className="text-gray-700 font-medium">Status</TableHead>
+              )}
+              {visibleColumns.find(col => col.key === 'expired')?.visible && (
+                <TableHead className="text-gray-700 font-medium">Expired</TableHead>
+              )}
+              {visibleColumns.find(col => col.key === 'attachments')?.visible && (
+                <TableHead className="text-gray-700 font-medium">Attachments</TableHead>
+              )}
+              {visibleColumns.find(col => col.key === 'createdOn')?.visible && (
+                <TableHead className="text-gray-700 font-medium">Created On</TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -274,25 +337,48 @@ export const CRMEventsPage = () => {
                     className="rounded border-gray-300"
                   />
                 </TableCell>
-                <TableCell>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-blue-600"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-                <TableCell className="font-medium">{event.title}</TableCell>
-                <TableCell>{event.unit}</TableCell>
-                <TableCell>{event.createdBy}</TableCell>
-                <TableCell>{event.startDate}</TableCell>
-                <TableCell>{event.endDate}</TableCell>
-                <TableCell>{getEventTypeBadge(event.eventType)}</TableCell>
-                <TableCell>{getStatusBadge(event.status)}</TableCell>
-                <TableCell>{getExpiredBadge(event.expired)}</TableCell>
-                <TableCell>{event.attachments}</TableCell>
-                <TableCell className="text-gray-600">{event.createdOn}</TableCell>
+                {visibleColumns.find(col => col.key === 'actions')?.visible && (
+                  <TableCell>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-blue-600"
+                      onClick={() => handleViewEvent(event.id)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                )}
+                {visibleColumns.find(col => col.key === 'title')?.visible && (
+                  <TableCell className="font-medium">{event.title}</TableCell>
+                )}
+                {visibleColumns.find(col => col.key === 'unit')?.visible && (
+                  <TableCell>{event.unit}</TableCell>
+                )}
+                {visibleColumns.find(col => col.key === 'createdBy')?.visible && (
+                  <TableCell>{event.createdBy}</TableCell>
+                )}
+                {visibleColumns.find(col => col.key === 'startDate')?.visible && (
+                  <TableCell>{event.startDate}</TableCell>
+                )}
+                {visibleColumns.find(col => col.key === 'endDate')?.visible && (
+                  <TableCell>{event.endDate}</TableCell>
+                )}
+                {visibleColumns.find(col => col.key === 'eventType')?.visible && (
+                  <TableCell>{getEventTypeBadge(event.eventType)}</TableCell>
+                )}
+                {visibleColumns.find(col => col.key === 'status')?.visible && (
+                  <TableCell>{getStatusBadge(event.status)}</TableCell>
+                )}
+                {visibleColumns.find(col => col.key === 'expired')?.visible && (
+                  <TableCell>{getExpiredBadge(event.expired)}</TableCell>
+                )}
+                {visibleColumns.find(col => col.key === 'attachments')?.visible && (
+                  <TableCell>{event.attachments}</TableCell>
+                )}
+                {visibleColumns.find(col => col.key === 'createdOn')?.visible && (
+                  <TableCell className="text-gray-600">{event.createdOn}</TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
@@ -314,6 +400,13 @@ export const CRMEventsPage = () => {
           <span className="font-semibold">LOCATED</span>
         </div>
       </div>
+
+      {/* Add Event Modal */}
+      <AddEventModalCRM
+        isOpen={isAddEventModalOpen}
+        onClose={() => setIsAddEventModalOpen(false)}
+        onSubmit={handleAddEvent}
+      />
     </div>
   );
 };

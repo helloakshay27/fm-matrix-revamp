@@ -312,6 +312,7 @@ import { LeadDetailsPage } from './pages/LeadDetailsPage';
 
 // Import CRM Events page
 import { CRMEventsPage } from './pages/CRMEventsPage';
+import { CRMEventDetailsPage } from './pages/CRMEventDetailsPage';
 
 const queryClient = new QueryClient();
 
@@ -340,6 +341,7 @@ function App() {
               <Route path="/crm/campaign/add" element={<AddLeadPage />} />
               <Route path="/crm/campaign/details/:id" element={<LeadDetailsPage />} />
               <Route path="/crm/events" element={<CRMEventsPage />} />
+              <Route path="/crm/events/details/:id" element={<CRMEventDetailsPage />} />
               
               {/* Snagging Routes */}
               <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
