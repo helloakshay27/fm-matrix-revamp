@@ -4,10 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Eye, FileText, Plus, Filter, RefreshCw, Grid3X3, MoreHorizontal } from 'lucide-react';
+import { CreateScheduleModal } from '@/components/CreateScheduleModal';
+import { toast } from 'sonner';
 
 export const OSRDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Sample data matching the image structure
   const osrData = [
@@ -147,6 +150,11 @@ export const OSRDashboard = () => {
     navigate('/vas/osr/generate-receipt');
   };
 
+  const handleCreateSchedule = (data: any) => {
+    console.log('Creating schedule with data:', data);
+    toast.success('Schedule created successfully!');
+  };
+
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'Work Pending':
@@ -173,6 +181,7 @@ export const OSRDashboard = () => {
             </Button>
             
             <Button 
+              onClick={() => setShowCreateModal(true)}
               className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
@@ -286,6 +295,13 @@ export const OSRDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Create Schedule Modal */}
+      <CreateScheduleModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreateSchedule}
+      />
     </div>
   );
 };
