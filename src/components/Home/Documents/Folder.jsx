@@ -1,58 +1,98 @@
 import { useState } from "react";
-import UploadButton from "./UploadButton";
+import UploadButton from "../../../components/Home/Documents/UploadButton";
 import { generateId } from "../../../utils/treeUtils";
+import CloseIcon from '@mui/icons-material/Close';
 
-const Folder = ({ data, onAddFolder, onUploadFile }) => {
-    const [expanded, setExpanded] = useState(true);
+const FolderNameModal = ({ isOpen, onClose, onSubmit }) => {
+    const [folderName, setFolderName] = useState("");
 
-    const handleAddFolder = () => {
-        const name = prompt("Folder name:");
-        if (name) {
-            const newFolder = {
-                id: generateId(),
-                name,
-                type: "folder",
-                children: [],
-            };
-            onAddFolder(data.id, newFolder);
+    const handleSubmit = () => {
+        if (folderName.trim()) {
+            onSubmit(folderName.trim());
+            setFolderName("");
+            onClose();
         }
     };
 
+    if (!isOpen) return null;
+
     return (
-        <div className="ml-4 mb-2">
-            <div className="flex items-center gap-2">
-                <button
-                    onClick={() => setExpanded(!expanded)}
-                    className="flex items-center justify-center w-5 h-5"
-                    aria-label={expanded ? "Collapse folder" : "Expand folder"}
-                >
-                    {expanded ? "📂" : "📁"}
-                </button>
-                <span className="font-semibold text-sm">{data.name}</span>
-                <button
-                    onClick={handleAddFolder}
-                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-md cursor-pointer hover:bg-blue-200 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors duration-150"
-                    aria-label="Add new folder"
-                >
-                    <svg
-                        className="w-4 h-4"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        xmlns="http://www.w3.org/2000/svg"
+        <div className="fixed inset-0 bg-black bg-opacity-30 z-50">
+            <div className="w-[560px] h-[280px] bg-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-[#C0C0C0]">
+                {/* Close Icon */}
+                <div className="flex justify-end p-4">
+                    <CloseIcon className="cursor-pointer" onClick={onClose} />
+                </div>
+
+                {/* Input Section */}
+                <div className="px-6">
+                    <label className="block text-[14px] text-[#1B1B1B] mb-3">
+                        Add New Folder
+                    </label>
+                    <input
+                        type="text"
+                        placeholder="Enter role name here..."
+                        className="border border-[#C0C0C0] w-full px-4 py-3 text-[#1B1B1B] text-[13px]"
+                        value={folderName}
+                        onChange={(e) => setFolderName(e.target.value)}
+                    />
+                </div>
+
+                {/* Footer Buttons */}
+                <div className="absolute bg-[#D5DBDB] bottom-0 left-0 right-0 h-[90px] flex justify-center items-center gap-4">
+                    <button
+                        className="border border-[#C72030] text-[#1B1B1B] text-[14px] px-8 py-2"
+                        onClick={handleSubmit}
                     >
-                        <path
-                            fillRule="evenodd"
-                            d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                            clipRule="evenodd"
-                        />
-                    </svg>
-                    Folder
+                        Create
+                    </button>
+                    <button
+                        className="border border-[#C72030] text-[#1B1B1B] text-[14px] px-8 py-2"
+                        onClick={onClose}
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const Folder = ({ data, onAddFolder, onUploadFile }) => {
+    const [expanded, setExpanded] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const handleAddFolder = (name) => {
+        const newFolder = {
+            id: generateId(),
+            name,
+            type: "folder",
+            children: [],
+        };
+        onAddFolder(data.id, newFolder);
+    };
+
+    return (
+        <div className="relative pl-4 border-l border-dotted border-gray-400">
+            <div className="relative flex items-center gap-2 py-1 before:absolute before:top-1/2 before:-left-4 before:w-4 before:border-t border-dotted border-gray-400">
+                <span
+                    className="cursor-pointer text-sm"
+                    onClick={() => setExpanded(!expanded)}
+                >
+                    {expanded ? "▾" : "▸"}
+                </span>
+                <span className="text-sm">{data.name}</span>
+                <button
+                    className="text-xs bg-[#c72030] text-white px-2 py-0.5 rounded hover:bg-[#a91b27] transition-colors duration-200"
+                    onClick={() => setIsModalOpen(true)}
+                >
+                    + Folder
                 </button>
                 <UploadButton folderId={data.id} onUpload={onUploadFile} />
             </div>
 
             {expanded && (
-                <div className="ml-6 mt-3">
+                <div className="ml-4">
                     {data.children.map((item) =>
                         item.type === "folder" ? (
                             <Folder
@@ -62,13 +102,22 @@ const Folder = ({ data, onAddFolder, onUploadFile }) => {
                                 onUploadFile={onUploadFile}
                             />
                         ) : (
-                            <div key={item.id} className="text-sm ml-6 flex items-center gap-1 mt-3">
-                                📄 {item.name}
+                            <div
+                                key={item.id}
+                                className="relative ml-4 text-sm py-0.5 before:absolute before:top-1/2 before:-left-4 before:w-4 before:border-t border-dotted border-gray-400"
+                            >
+                                {item.name}
                             </div>
                         )
                     )}
                 </div>
             )}
+
+            <FolderNameModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSubmit={handleAddFolder}
+            />
         </div>
     );
 };
