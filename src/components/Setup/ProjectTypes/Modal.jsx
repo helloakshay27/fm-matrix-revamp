@@ -29,7 +29,7 @@ const Modal = ({ openModal, setOpenModal, editMode = false, existingData = {} })
 
     const payload = {
       name: trimmedType.toLowerCase(),
-      created_by_id: 158,
+      created_by_id: JSON.parse(localStorage.getItem('user'))?.id || '',
     };
 
     try {
