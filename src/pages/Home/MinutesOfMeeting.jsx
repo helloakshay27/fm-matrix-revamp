@@ -123,7 +123,7 @@ const MinutesOfMeeting = () => {
                         <thead>
                             <tr>
                                 <th className="px-4 py-4">MoM id</th>
-                                <th className="px-4 py-4 w-[25%]">Minutes Title</th>
+                                <th className="px-4 py-4 w-[25%]">Meeting Title</th>
                                 <th className="px-4 py-4">Date Of Meeting</th>
                                 <th className="px-4 py-4 w-[15%]">Organizer</th>
                                 <th className="px-4 py-4">Meeting Mode</th>
@@ -133,35 +133,42 @@ const MinutesOfMeeting = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {currentItems.map((item) => (
-                                <tr key={item.id}>
-                                    <td className="p-4">{item.id}</td>
-                                    <td className="p-4">{item.title}</td>
-                                    <td style={{ padding: "1rem" }}>
-                                        {item.meeting_date?.split("T")[0]}
+                            {currentItems.length > 0 ? (
+                                currentItems.map((item) => (
+                                    <tr key={item.id}>
+                                        <td className="p-4">{item.id}</td>
+                                        <td className="p-4">{item.title}</td>
+                                        <td className="p-4" style={{ padding: "1rem" }}>{item.meeting_date?.split("T")[0]}</td>
+                                        <td className="p-4">John Doe</td>
+                                        <td className="p-4">{item.meeting_mode}</td>
+                                        <td className="p-4">
+                                            <div className="flex items-center">
+                                                {item.mom_attendees?.map((member, index) => (
+                                                    <div
+                                                        key={index}
+                                                        title={member.name}
+                                                        className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-gray-800 cursor-pointer ${index !== 0 ? "-ml-[6px]" : ""
+                                                            }`}
+                                                        style={{ backgroundColor: getRandomColor() }}
+                                                    >
+                                                        {member.name ? member.name.charAt(0) : ""}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </td>
+                                        <td className="p-4">Meeting 1</td>
+                                        <td className="p-4">Meeting 1</td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="8" className="text-center py-6 text-gray-500">
+                                        No meetings
                                     </td>
-                                    <td className="p-4">John Doe</td>
-                                    <td className="p-4">{item.meeting_mode}</td>
-                                    <td className="p-4">
-                                        <div className="flex items-center">
-                                            {item.mom_attendees?.map((member, index) => (
-                                                <div
-                                                    key={index}
-                                                    title={member.name}
-                                                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-gray-800 cursor-pointer ${index !== 0 ? "-ml-[6px]" : ""
-                                                        }`}
-                                                    style={{ backgroundColor: getRandomColor() }}
-                                                >
-                                                    {member.name ? member.name.charAt(0) : ""}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </td>
-                                    <td className="p-4">Meeting 1</td>
-                                    <td className="p-4">Meeting 1</td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
+
                     </table>
                 </div>
             </div>
