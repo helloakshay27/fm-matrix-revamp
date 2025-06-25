@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -145,6 +146,8 @@ export const OSRDashboard = () => {
   ];
 
   const handleViewDetails = (id: string) => {
+    console.log('Navigating to OSR details for ID:', id);
+    console.log('Target route:', `/vas/osr/details/${id}`);
     navigate(`/vas/osr/details/${id}`);
   };
 
@@ -325,3 +328,4 @@ export const OSRDashboard = () => {
     </div>
   );
 };
+
