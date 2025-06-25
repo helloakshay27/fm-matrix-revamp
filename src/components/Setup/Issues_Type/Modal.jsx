@@ -6,7 +6,7 @@ import { set } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 
 const Modal = ({ openModal, setOpenModal, editMode = false, existingData = {} }) => {
-  const token= localStorage.getItem('token');
+  const token = localStorage.getItem('token');
   const [type, setType] = useState(editMode ? existingData?.name || '' : '');
   const [description, setDescription] = useState(editMode ? existingData?.description || '' : '');
   const [warningOpen, setWarningOpen] = useState(false);
@@ -21,59 +21,60 @@ const Modal = ({ openModal, setOpenModal, editMode = false, existingData = {} })
     setOpenModal(false);
   }, [setOpenModal]);
 
-  const handleSave = useCallback(async() => {
+  const handleSave = useCallback(async () => {
     setWarningMessage('');
     setWarningOpen(false);
     const trimmedType = type.trim();
-    const trimmedDescription = description.trim(); 
+    const trimmedDescription = description.trim();
 
     if (!trimmedType) {
       setWarningOpen(true);
       setWarningMessage('Type name cannot be empty');
-      return;}
-    if(!trimmedDescription){
+      return;
+    }
+    if (!trimmedDescription) {
       setWarningOpen(true);
       setWarningMessage('Description cannot be empty');
-      return;}
+      return;
+    }
 
     const payload = {
       name: trimmedType.toLowerCase(),
       description: trimmedDescription,
-      created_by_id: 158
+      created_by_id: JSON.parse(localStorage.getItem('user'))?.id || '',
     };
 
-   try{
-    let response;
-    if(editMode && existingData?.id){
-      response=await dispatch(updateIssueType({ token,id: existingData.id,payload })).unwrap();
-    }
+    try {
+      let response;
+      if (editMode && existingData?.id) {
+        response = await dispatch(updateIssueType({ token, id: existingData.id, payload })).unwrap();
+      }
       else
-       response=await dispatch(createIssueType({ token, payload })).unwrap();
-     if(response?.name[0]!="has already been taken")
-      {
-        toast.success(`Type ${editMode ? 'Updated' : 'Created'} successfully`,{
+        response = await dispatch(createIssueType({ token, payload })).unwrap();
+      if (response?.name[0] != "has already been taken") {
+        toast.success(`Type ${editMode ? 'Updated' : 'Created'} successfully`, {
           iconTheme: {
             primary: 'red', // This might directly change the color of the success icon
             secondary: 'white', // The circle background
           },
         })
         resetModal();
-        dispatch(fetchIssueType({token}));
+        dispatch(fetchIssueType({ token }));
       }
-      else{
+      else {
         setWarningOpen(true);
         setWarningMessage('Issues Type already exists');
       }
     }
 
-    catch(error){
+    catch (error) {
       console.log(error);
       setWarningOpen(true);
       setWarningMessage(error.message);
     }
-  }, [type, warningOpen, dispatch, editMode, existingData, resetModal,description]);
+  }, [type, warningOpen, dispatch, editMode, existingData, resetModal, description]);
 
-  
+
 
   if (!openModal) return null;
 
@@ -100,7 +101,7 @@ const Modal = ({ openModal, setOpenModal, editMode = false, existingData = {} })
             onChange={(e) => setType(e.target.value)}
           />
           <label className="block text-[14px] text-[#1B1B1B] mb-1 mt-4">
-            Description            
+            Description
             <span className="text-red-500 ml-1">*</span>
           </label>
           <input
