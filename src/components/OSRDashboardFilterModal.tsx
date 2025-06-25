@@ -10,6 +10,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DateRange } from 'react-day-picker';
 
 interface OSRDashboardFilterModalProps {
   isOpen: boolean;
@@ -23,12 +24,15 @@ export const OSRDashboardFilterModal = ({ isOpen, onClose, onApply, onReset }: O
     tower: '',
     flats: '',
     category: '',
-    createdOn: undefined as Date | undefined,
+    dateRange: undefined as DateRange | undefined,
     status: '',
     rating: ''
   });
 
-  const handleFilterChange = (field: string, value: string | Date | undefined) => {
+  const [tempDateRange, setTempDateRange] = useState<DateRange | undefined>(filters.dateRange);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+
+  const handleFilterChange = (field: string, value: string | DateRange | undefined) => {
     setFilters(prev => ({ ...prev, [field]: value }));
   };
 
@@ -42,11 +46,22 @@ export const OSRDashboardFilterModal = ({ isOpen, onClose, onApply, onReset }: O
       tower: '',
       flats: '',
       category: '',
-      createdOn: undefined,
+      dateRange: undefined,
       status: '',
       rating: ''
     });
+    setTempDateRange(undefined);
     onReset();
+  };
+
+  const handleDateRangeCancel = () => {
+    setTempDateRange(filters.dateRange);
+    setIsDatePickerOpen(false);
+  };
+
+  const handleDateRangeApply = () => {
+    handleFilterChange('dateRange', tempDateRange);
+    setIsDatePickerOpen(false);
   };
 
   return (
@@ -109,27 +124,74 @@ export const OSRDashboardFilterModal = ({ isOpen, onClose, onApply, onReset }: O
 
             <div className="min-w-[200px]">
               <Label className="text-sm font-medium mb-1 block">Created on</Label>
-              <Popover>
+              <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
                       "h-9 w-full justify-start text-left font-normal",
-                      !filters.createdOn && "text-muted-foreground"
+                      !filters.dateRange && "text-muted-foreground"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {filters.createdOn ? format(filters.createdOn, "dd/MM/yyyy") : "01/01/2025 - 12/31/2025"}
+                    {filters.dateRange?.from ? (
+                      filters.dateRange.to ? (
+                        <>
+                          {format(filters.dateRange.from, "dd/MM/yyyy")} -{" "}
+                          {format(filters.dateRange.to, "dd/MM/yyyy")}
+                        </>
+                      ) : (
+                        format(filters.dateRange.from, "dd/MM/yyyy")
+                      )
+                    ) : (
+                      "01/01/2025 - 12/31/2025"
+                    )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={filters.createdOn}
-                    onSelect={(date) => handleFilterChange('createdOn', date)}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
+                  <div className="p-4">
+                    <Calendar
+                      initialFocus
+                      mode="range"
+                      defaultMonth={filters.dateRange?.from}
+                      selected={tempDateRange}
+                      onSelect={setTempDateRange}
+                      numberOfMonths={2}
+                      className="pointer-events-auto"
+                    />
+                    <div className="border-t pt-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Input
+                          placeholder="01/01/2025 - 12/31/2025"
+                          value={
+                            tempDateRange?.from
+                              ? tempDateRange.to
+                                ? `${format(tempDateRange.from, "dd/MM/yyyy")} - ${format(tempDateRange.to, "dd/MM/yyyy")}`
+                                : format(tempDateRange.from, "dd/MM/yyyy")
+                              : ""
+                          }
+                          readOnly
+                          className="flex-1"
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleDateRangeCancel}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={handleDateRangeApply}
+                          className="bg-[#1E3A8A] hover:bg-[#1E3A8A]/90"
+                        >
+                          Apply
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </PopoverContent>
               </Popover>
             </div>
