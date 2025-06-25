@@ -161,7 +161,7 @@ const SprintGantt = () => {
 `,
                     {
                         headers: {
-                            Authorization: "Bearer bTcVnWgQrF6QCdNbMiPXzCZNAqsN9qoEfFWdFQ1Auk4",
+                            Authorization: `Bearer ${localStorage.getItem("token")}`,
                         },
                     }
                 );

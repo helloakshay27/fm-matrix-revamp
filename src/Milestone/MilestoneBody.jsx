@@ -160,7 +160,7 @@ const GanttChart = () => {
                     `https://api-tasks.lockated.com/milestones.json?q[project_management_id_eq]=${id}`,
                     {
                         headers: {
-                            Authorization: "Bearer bTcVnWgQrF6QCdNbMiPXzCZNAqsN9qoEfFWdFQ1Auk4",
+                            Authorization: `Bearer ${localStorage.getItem("token")}`,
                         },
                     }
                 );
