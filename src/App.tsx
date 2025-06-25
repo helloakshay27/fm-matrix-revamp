@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -292,8 +293,9 @@ import { AccountingDashboard } from './pages/AccountingDashboard';
 // Import Loyalty Rule Engine Dashboard
 import { LoyaltyRuleEngineDashboard } from './pages/LoyaltyRuleEngineDashboard';
 
-// Import OSR page
+// Import OSR pages
 import { OSRDashboard } from './pages/OSRDashboard';
+import { OSRDetailsPage } from './pages/OSRDetailsPage';
 
 // Import OSR Generate Receipt page
 import { OSRGenerateReceiptPage } from './pages/OSRGenerateReceiptPage';
@@ -516,6 +518,7 @@ function App() {
               <Route path="/vas/parking/details/:clientId" element={<ParkingDetailsPage />} />
               <Route path="/vas/parking/bookings" element={<ParkingBookingsDashboard />} />
               <Route path="/vas/osr" element={<OSRDashboard />} />
+              <Route path="/vas/osr/details/:id" element={<OSRDetailsPage />} />
               <Route path="/vas/osr/generate-receipt" element={<OSRGenerateReceiptPage />} />
               
               {/* Space Management Routes */}
