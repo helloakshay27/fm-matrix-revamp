@@ -219,7 +219,7 @@ const modulesByPackage = {
         }
       ]
     },
-    { name: 'Redemonection marketplace', icon: Globe, href: '/vas/redemonection-marketplace' },
+    { name: 'Redemption marketplace', icon: Globe, href: '/vas/redemonection-marketplace' },
     { name: 'Cold Wallet', icon: Wallet, href: '/vas/cold-wallet' }
   ],
   'Market Place': [
