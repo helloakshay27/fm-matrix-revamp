@@ -6,12 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Plus, Download, Upload, Filter, RefreshCw, Grid3X3, MoreHorizontal } from 'lucide-react';
 import { CreateInvoiceReceiptModal } from '@/components/CreateInvoiceReceiptModal';
 import { ImportReceiptModal } from '@/components/ImportReceiptModal';
+import { OSRReceiptFilterModal } from '@/components/OSRReceiptFilterModal';
 import { toast } from 'sonner';
 
 export const OSRGenerateReceiptPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
 
   const handleCreateReceipt = (data: any) => {
     console.log('Creating receipt with data:', data);
@@ -21,6 +23,16 @@ export const OSRGenerateReceiptPage = () => {
   const handleImportReceipts = (file: File) => {
     console.log('Importing receipts from file:', file.name);
     toast.success('Receipts imported successfully!');
+  };
+
+  const handleApplyFilters = (filters: any) => {
+    console.log('Applying filters:', filters);
+    toast.success('Filters applied successfully!');
+  };
+
+  const handleResetFilters = () => {
+    console.log('Resetting filters');
+    toast.success('Filters reset successfully!');
   };
 
   const handleExportReceipts = () => {
@@ -54,7 +66,7 @@ export const OSRGenerateReceiptPage = () => {
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <Button 
               onClick={() => setShowCreateModal(true)}
-              className="bg-[#2E3A59] hover:bg-[#2E3A59]/90 text-white px-4 py-2 rounded-none flex items-center gap-2"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Add
@@ -62,7 +74,7 @@ export const OSRGenerateReceiptPage = () => {
             
             <Button 
               onClick={() => setShowImportModal(true)}
-              className="bg-[#2E3A59] hover:bg-[#2E3A59]/90 text-white px-4 py-2 rounded-none flex items-center gap-2"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
               Import
@@ -70,14 +82,15 @@ export const OSRGenerateReceiptPage = () => {
             
             <Button 
               onClick={handleExportReceipts}
-              className="bg-[#2E3A59] hover:bg-[#2E3A59]/90 text-white px-4 py-2 rounded-none flex items-center gap-2"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2"
             >
               <Upload className="w-4 h-4" />
               Export
             </Button>
             
             <Button 
-              className="bg-[#2E3A59] hover:bg-[#2E3A59]/90 text-white px-4 py-2 rounded-none flex items-center gap-2"
+              onClick={() => setShowFilterModal(true)}
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2"
             >
               <Filter className="w-4 h-4" />
               Filters
@@ -165,6 +178,13 @@ export const OSRGenerateReceiptPage = () => {
         isOpen={showImportModal}
         onClose={() => setShowImportModal(false)}
         onImport={handleImportReceipts}
+      />
+
+      <OSRReceiptFilterModal
+        isOpen={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={handleApplyFilters}
+        onReset={handleResetFilters}
       />
     </div>
   );
