@@ -109,16 +109,11 @@ export const SeatTypeDashboard = () => {
                   </TableCell>
                   <TableCell className="font-medium">{seat.name}</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-3">
-                      <span className={`text-sm font-medium ${seat.active ? 'text-green-600' : 'text-gray-500'}`}>
-                        {seat.active ? 'Active' : 'Inactive'}
-                      </span>
-                      <Switch 
-                        checked={seat.active} 
-                        onCheckedChange={() => handleToggleActive(seat.id)}
-                        className="data-[state=checked]:bg-green-500"
-                      />
-                    </div>
+                    <Switch 
+                      checked={seat.active} 
+                      onCheckedChange={() => handleToggleActive(seat.id)}
+                      className="data-[state=checked]:bg-green-500"
+                    />
                   </TableCell>
                   <TableCell className="text-gray-600">{seat.createdOn}</TableCell>
                 </TableRow>
