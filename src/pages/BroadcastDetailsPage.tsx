@@ -1,13 +1,16 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download, Edit } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ChangeStatusDialog } from '@/components/ChangeStatusDialog';
 
 export const BroadcastDetailsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+  const [broadcastStatus, setBroadcastStatus] = useState('Published');
 
   // Mock data - in a real app, this would be fetched based on the ID
   const broadcastDetails = {
@@ -15,7 +18,7 @@ export const BroadcastDetailsPage = () => {
     title: 'Technical issue',
     description: 'Due to some technical issue the system not work properly',
     createdBy: 'Godrej Living',
-    status: 'Published',
+    status: broadcastStatus,
     type: 'Personal',
     shareWith: 'Personal',
     createdOn: '24-04-2023',
@@ -30,6 +33,11 @@ export const BroadcastDetailsPage = () => {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleStatusChange = (newStatus: string) => {
+    setBroadcastStatus(newStatus);
+    console.log('Status changed to:', newStatus);
   };
 
   return (
@@ -84,8 +92,16 @@ export const BroadcastDetailsPage = () => {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  {broadcastDetails.status} ✏️
+                  {broadcastDetails.status}
                 </Badge>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsStatusDialogOpen(true)}
+                  className="h-6 w-6 p-0 hover:bg-gray-100"
+                >
+                  <Edit className="h-3 w-3 text-gray-500" />
+                </Button>
               </div>
               <div className="text-xs text-gray-500 uppercase">STATUS TYPE</div>
             </div>
@@ -194,6 +210,14 @@ export const BroadcastDetailsPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Change Status Dialog */}
+      <ChangeStatusDialog
+        open={isStatusDialogOpen}
+        onOpenChange={setIsStatusDialogOpen}
+        currentStatus={broadcastStatus}
+        onStatusChange={handleStatusChange}
+      />
     </div>
   );
 };
