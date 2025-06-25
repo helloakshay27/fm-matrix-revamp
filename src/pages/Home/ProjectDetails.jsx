@@ -7,7 +7,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { changeProjectStatus, createProject, deleteProject, editProject, fetchProjectDetails } from "../../redux/slices/projectSlice";
 import AddProjectModal from "../../components/Home/Projects/AddProjectModal";
-import {attachFiles} from "../../redux/slices/projectSlice";
+import { attachFiles } from "../../redux/slices/projectSlice";
 import FolderIcon from '@mui/icons-material/Folder';
 
 const Issues = () => {
@@ -126,10 +126,6 @@ const Attachments = ({ attachments, id }) => {
 
         selectedFiles.forEach((file) => {
             formData.append("project_management[attachments][]", file);
-            //   formData.append("task_management[attachment_metadatas][][relation_id]", id);
-            //   formData.append("task_management[attachment_metadatas][][relation]", "TaskManagement");
-            //   formData.append("task_management[attachment_metadatas][][active]", "1");
-            //   formData.append("task_management[attachment_metadatas][][document]", "doc");
         });
 
 
@@ -150,17 +146,51 @@ const Attachments = ({ attachments, id }) => {
         <div className="flex flex-col gap-3 p-5">
             {files.length > 0 ? (
                 <>
-                    {files.map((file) => (
-                        <>
-                        <div className="flex items-center gap-3">
-                            <FolderIcon className="h-5 w-5 text-gray-600" />
-                            <a href={file.document_url} download={file.document_file_name} >
-                                {file.document_file_name}
-                            </a>
-                        </div>
-                        {/* <hr className="border border-gray-200" ></hr> */}
-                        </>
-                    ))}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-4">
+                        {files.map((file, index) => {
+                            const fileName = file.document_file_name;
+                            const fileUrl = file.document_url;
+                            const fileExt = fileName.split('.').pop().toLowerCase();
+                            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExt);
+                            const isPdf = fileExt === 'pdf';
+                            const isWord = ['doc', 'docx'].includes(fileExt);
+                            const isExcel = ['xls', 'xlsx'].includes(fileExt);
+
+                            return (
+                                <div
+                                    key={index}
+                                    className="border rounded p-2 flex flex-col items-center justify-center text-center shadow-sm bg-white"
+                                >
+                                    {/* Preview or icon */}
+                                    <div className="w-full h-[100px] flex items-center justify-center bg-gray-100 rounded mb-2 overflow-hidden">
+                                        {isImage ? (
+                                            <img src={fileUrl} alt={fileName} className="object-contain h-full" />
+                                        ) : isPdf ? (
+                                            <span className="text-red-600 font-bold">PDF</span>
+                                        ) : isWord ? (
+                                            <span className="text-blue-600 font-bold">DOC</span>
+                                        ) : isExcel ? (
+                                            <span className="text-green-600 font-bold">XLS</span>
+                                        ) : (
+                                            <span className="text-gray-500 font-bold">FILE</span>
+                                        )}
+                                    </div>
+
+                                    {/* File name and link */}
+                                    <a
+                                        href={fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        download={fileName}
+                                        className="text-xs text-blue-700 hover:underline truncate w-full"
+                                        title={fileName}
+                                    >
+                                        {fileName}
+                                    </a>
+                                </div>
+                            );
+                        })}
+                    </div>
                     <button
                         className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
                         onClick={handleAttachFile}
