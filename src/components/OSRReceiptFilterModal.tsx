@@ -127,13 +127,13 @@ export const OSRReceiptFilterModal = ({ isOpen, onClose, onApply, onReset }: OSR
             <div className="flex gap-2 ml-2">
               <Button 
                 onClick={handleApply}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 h-9 text-sm font-medium"
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-1 h-9 text-sm font-medium"
               >
                 Apply
               </Button>
               <Button 
                 onClick={handleReset}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 h-9 text-sm font-medium"
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-1 h-9 text-sm font-medium"
               >
                 Reset
               </Button>

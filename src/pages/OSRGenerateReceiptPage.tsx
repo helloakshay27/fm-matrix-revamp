@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Download, Upload, Filter, RefreshCw, MoreHorizontal, Calendar, Grid3X3 } from 'lucide-react';
 import { CreateInvoiceReceiptModal } from '@/components/CreateInvoiceReceiptModal';
 import { ImportReceiptModal } from '@/components/ImportReceiptModal';
+import { OSRReceiptFilterModal } from '@/components/OSRReceiptFilterModal';
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
 import { ExportDropdown } from '@/components/ExportDropdown';
 import { toast } from 'sonner';
@@ -15,7 +16,7 @@ export const OSRGenerateReceiptPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [showFilterDialog, setShowFilterDialog] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
 
   const [filters, setFilters] = useState({
     tower: '',
@@ -58,8 +59,9 @@ export const OSRGenerateReceiptPage = () => {
     setFilters(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleApplyFilters = () => {
-    console.log('Applying filters:', filters);
+  const handleApplyFilters = (newFilters: any) => {
+    console.log('Applying filters:', newFilters);
+    setFilters(newFilters);
     toast.success('Filters applied successfully!');
   };
 
@@ -195,14 +197,14 @@ export const OSRGenerateReceiptPage = () => {
 
             <Button 
               onClick={handleApplyFilters}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 h-9 text-sm"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 h-9 text-sm"
             >
               Apply
             </Button>
 
             <Button 
               onClick={handleResetFilters}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 h-9 text-sm"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 h-9 text-sm"
             >
               Reset
             </Button>
@@ -215,7 +217,7 @@ export const OSRGenerateReceiptPage = () => {
             <div className="flex items-center gap-3">
               <Button 
                 onClick={handleAddReceipt}
-                className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 h-9 text-sm flex items-center gap-2"
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 h-9 text-sm flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Add
@@ -223,7 +225,7 @@ export const OSRGenerateReceiptPage = () => {
               
               <Button 
                 onClick={handleImportReceipts}
-                className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 h-9 text-sm flex items-center gap-2"
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 h-9 text-sm flex items-center gap-2"
               >
                 <Download className="w-4 h-4" />
                 Import
@@ -231,15 +233,15 @@ export const OSRGenerateReceiptPage = () => {
               
               <Button 
                 onClick={handleExportReceipts}
-                className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 h-9 text-sm flex items-center gap-2"
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 h-9 text-sm flex items-center gap-2"
               >
                 <Upload className="w-4 h-4" />
                 Export
               </Button>
               
               <Button 
-                onClick={() => setShowFilterDialog(true)}
-                className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 h-9 text-sm flex items-center gap-2"
+                onClick={() => setShowFilterModal(true)}
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 h-9 text-sm flex items-center gap-2"
               >
                 <Filter className="w-4 h-4" />
                 Filters
@@ -351,6 +353,13 @@ export const OSRGenerateReceiptPage = () => {
         isOpen={showImportModal}
         onClose={() => setShowImportModal(false)}
         onImport={handleImportReceiptsFile}
+      />
+
+      <OSRReceiptFilterModal
+        isOpen={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={handleApplyFilters}
+        onReset={handleResetFilters}
       />
     </div>
   );
