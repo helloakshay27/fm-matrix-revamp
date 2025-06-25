@@ -57,7 +57,7 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose }: GatePassInwardsF
             </Button>
             <Button
               onClick={handleApply}
-              className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-6 py-2 rounded-none"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6 py-2 rounded-none"
             >
               Apply
             </Button>
