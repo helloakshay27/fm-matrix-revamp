@@ -280,7 +280,7 @@ const TaskActions = ({
         <>
             <div className="flex items-center justify-end mx-6 mt-4 mb-3 text-sm">
                 <div className="flex items-center gap-3 divide-x divide-gray-400">
-                    {addType != "Issues" && addType != "Project" && addType != "Milestone" && addType != "templates" && addType != "archived" && addType != "Sprint-Gantt"  && (
+                    {addType != "Issues" && addType != "Project" && addType != "Milestone" && addType != "templates" && addType != "archived" && addType != "Sprint-Gantt"  && !mid && (
                         <div className="flex justify-center items-center">
                             <label className="mr-2">All task</label>
                             <Switch
