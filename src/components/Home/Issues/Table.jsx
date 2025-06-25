@@ -477,7 +477,7 @@ const IssuesTable = () => {
     formData.append("issue[start_date]", newIssuesStartDate || "");
     formData.append("issue[end_date]", newIssuesEndDate || "");
     formData.append("issue[priority]", newIssuesPriority);
-    formData.append("issue[created_by_id]", 158);
+    formData.append("issue[created_by_id]", JSON.parse(localStorage.getItem("user"))?.id || "");
     formData.append("issue[issue_type]", newIssuesType);
     formData.append("issue[comment]", newIssuesComments);
 

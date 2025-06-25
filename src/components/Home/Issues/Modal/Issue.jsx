@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import SelectBox from "../../../SelectBox";
-import { useDispatch, useSelector} from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers } from "../../../../redux/slices/userSlice";
-import { createIssue, fetchIssue ,fetchIssueType} from "../../../../redux/slices/IssueSlice";
+import { createIssue, fetchIssue, fetchIssueType } from "../../../../redux/slices/IssueSlice";
 import { fetchMilestone } from "../../../../redux/slices/milestoneSlice";
 import { fetchProjects } from "../../../../redux/slices/projectSlice";
 import { fetchTasks } from "../../../../redux/slices/taskSlice";
@@ -27,55 +27,55 @@ const globalPriorityOptions = [
 ];
 
 const Attachments = ({ attachments, setAttachments }) => {
-    const fileInputRef = useRef(null);
-    const dispatch = useDispatch();
-    const [files, setFiles] = useState(attachments);
+  const fileInputRef = useRef(null);
+  const dispatch = useDispatch();
+  const [files, setFiles] = useState(attachments);
 
-    const handleAttachFile = () => {
-        fileInputRef.current.click(); // Open file picker
-    };
+  const handleAttachFile = () => {
+    fileInputRef.current.click(); // Open file picker
+  };
 
-    const handleFileChange = async (event) => {
-        const selectedFiles = Array.from(event.target.files);
-        if (!selectedFiles.length) return;
-        setFiles(selectedFiles);
-        setAttachments(selectedFiles);
-        console.log(selectedFiles);
-    };
+  const handleFileChange = async (event) => {
+    const selectedFiles = Array.from(event.target.files);
+    if (!selectedFiles.length) return;
+    setFiles(selectedFiles);
+    setAttachments(selectedFiles);
+    console.log(selectedFiles);
+  };
 
 
 
-    return (
-        <div className="flex h-[45px] border">
-            {files.length > 0 ? (
-                <>
-                    <div className="text-[14px] mt-2 p-1">
-                        <span className="p-2">{files.length}</span>
-                        
-                    </div>
-                </>
-            ) : (
-                <div className="flex  w-full justify-between items-center p-2 ">
-                    <span className="text-[14px] "><i className="text-gray-400">No Documents Attached</i></span>
-                    <button
-                        type="button"
-                        className="bg-[#C72030] h-[30px] w-[100px] text-white rounded"
-                        onClick={handleAttachFile}
-                    >
-                        Attach Files
-                    </button>
-                </div>
-            )}
+  return (
+    <div className="flex h-[45px] border">
+      {files.length > 0 ? (
+        <>
+          <div className="text-[14px] mt-2 p-1">
+            <span className="p-2">{files.length}</span>
 
-            <input
-                type="file"
-                multiple
-                ref={fileInputRef}
-                style={{ display: "none" }}
-                onChange={handleFileChange}
-            />
+          </div>
+        </>
+      ) : (
+        <div className="flex  w-full justify-between items-center p-2 ">
+          <span className="text-[14px] "><i className="text-gray-400">No Documents Attached</i></span>
+          <button
+            type="button"
+            className="bg-[#C72030] h-[30px] w-[100px] text-white rounded"
+            onClick={handleAttachFile}
+          >
+            Attach Files
+          </button>
         </div>
-    );
+      )}
+
+      <input
+        type="file"
+        multiple
+        ref={fileInputRef}
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+      />
+    </div>
+  );
 };
 
 const Issues = ({ closeModal }) => {
@@ -91,8 +91,8 @@ const Issues = ({ closeModal }) => {
   const [newIssuesMilestoneId, setNewIssuesMilestoneId] = useState("");
   const [newIssuesTaskId, setNewIssuesTaskId] = useState("");
   const [attachments, setAttachments] = useState([]);
-  const token= localStorage.getItem("token");
-  const isSubmittingRef=useRef(false);
+  const token = localStorage.getItem("token");
+  const isSubmittingRef = useRef(false);
 
   const {
     fetchUsers: users,
@@ -100,29 +100,29 @@ const Issues = ({ closeModal }) => {
     error: usersFetchError
   } = useSelector((state) => state.fetchUsers || { users: [], loading: false, error: null });
 
-  const{
-    fetchProjects:projects,
-    loading:loadingProjects,
-    error:projectsFetchError
-  }=useSelector((state) => state.fetchProjects || { projects: [], loading: false, error: null });
+  const {
+    fetchProjects: projects,
+    loading: loadingProjects,
+    error: projectsFetchError
+  } = useSelector((state) => state.fetchProjects || { projects: [], loading: false, error: null });
 
-  const{
-    fetchMilestone:milestone,
-    loading:loadingMilestone,
-    error:milestoneFetchError
-  }=useSelector((state) => state.fetchMilestone || { milestone: [], loading: false, error: null });
+  const {
+    fetchMilestone: milestone,
+    loading: loadingMilestone,
+    error: milestoneFetchError
+  } = useSelector((state) => state.fetchMilestone || { milestone: [], loading: false, error: null });
 
-  const{
-    fetchTasks:tasks,
-    loading:loadingTasks,
-    error:tasksFetchError
-  }=useSelector((state) => state.fetchTasks || { tasks: [], loading: false, error: null });
+  const {
+    fetchTasks: tasks,
+    loading: loadingTasks,
+    error: tasksFetchError
+  } = useSelector((state) => state.fetchTasks || { tasks: [], loading: false, error: null });
 
-  const{
-    fetchIssueType:issueType,
-    loading:loadingIssueType,
-    error:issueTypeFetchError
-  }=useSelector((state) => state.fetchIssueType || { issueType: [], loading: false, error: null });
+  const {
+    fetchIssueType: issueType,
+    loading: loadingIssueType,
+    error: issueTypeFetchError
+  } = useSelector((state) => state.fetchIssueType || { issueType: [], loading: false, error: null });
 
   const [projectOptions, setProjectOptions] = useState([]);
   const [milestoneOptions, setMilestoneOptions] = useState([]);
@@ -132,89 +132,89 @@ const Issues = ({ closeModal }) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(fetchUsers({token}));
+    dispatch(fetchUsers({ token }));
   }, [dispatch]);
 
-  useEffect(()=>{
-    if(!loadingIssueType && (!issueType.length > 0 && !issueTypeFetchError)){
-    dispatch(fetchIssueType({token}));
+  useEffect(() => {
+    if (!loadingIssueType && (!issueType.length > 0 && !issueTypeFetchError)) {
+      dispatch(fetchIssueType({ token }));
     }
-  },[dispatch,loadingIssueType,issueType,issueTypeFetchError]);
+  }, [dispatch, loadingIssueType, issueType, issueTypeFetchError]);
 
-  useEffect(()=>{
-    if(!loadingIssueType && issueType.length > 0 && !issueTypeFetchError){
-    setIssueTypeOptions(
-      issueType.map((i) => ({
-        value: i.id,
-        label: i.name,
-    })))
+  useEffect(() => {
+    if (!loadingIssueType && issueType.length > 0 && !issueTypeFetchError) {
+      setIssueTypeOptions(
+        issueType.map((i) => ({
+          value: i.id,
+          label: i.name,
+        })))
     }
-  },[issueType,loadingIssueType,issueTypeFetchError]);
+  }, [issueType, loadingIssueType, issueTypeFetchError]);
 
-  useEffect(()=>{
-    if(!loadingMilestone && milestoneOptions.length > 0 && !milestoneFetchError && newIssuesMilestoneId){
-      dispatch(fetchTasks({id: newIssuesMilestoneId,token}));
+  useEffect(() => {
+    if (!loadingMilestone && milestoneOptions.length > 0 && !milestoneFetchError && newIssuesMilestoneId) {
+      dispatch(fetchTasks({ id: newIssuesMilestoneId, token }));
       setNewIssuesTaskId(null);
       setTaskOptions([]);
     }
-  },[dispatch, loadingMilestone, milestoneFetchError ,newIssuesMilestoneId, milestoneOptions]);
-  
-  useEffect(()=>{
-     if(!loadingTasks && !tasksFetchError && tasks.length > 0){
-         setTaskOptions(
-           tasks.map((t) => ({
-             value: t.id,
-             label: t.title,
-         })))
-     }
-  },[tasks, loadingTasks, tasksFetchError]);
-  
+  }, [dispatch, loadingMilestone, milestoneFetchError, newIssuesMilestoneId, milestoneOptions]);
 
-   useEffect(() => {
+  useEffect(() => {
+    if (!loadingTasks && !tasksFetchError && tasks.length > 0) {
+      setTaskOptions(
+        tasks.map((t) => ({
+          value: t.id,
+          label: t.title,
+        })))
+    }
+  }, [tasks, loadingTasks, tasksFetchError]);
+
+
+  useEffect(() => {
     if (
       newIssuesProjectId &&
       projectOptions.length > 0 &&
       !loadingProjects &&
       !projectsFetchError
     ) {
-      dispatch(fetchMilestone({ id: newIssuesProjectId ,token})).unwrap();
+      dispatch(fetchMilestone({ id: newIssuesProjectId, token })).unwrap();
       setNewIssuesMilestoneId('');
       setMilestoneOptions([]);
       setNewIssuesTaskId('');
       setTaskOptions([]);
     }
   }, [dispatch, newIssuesProjectId, projectOptions, loadingProjects, projectsFetchError]);
-  
-   useEffect(()=>{  
-     if(!loadingProjects && (!Array.isArray(projectOptions) || projectOptions.length === 0)){
-      dispatch(fetchProjects({token})).unwrap();
+
+  useEffect(() => {
+    if (!loadingProjects && (!Array.isArray(projectOptions) || projectOptions.length === 0)) {
+      dispatch(fetchProjects({ token })).unwrap();
       setProjectOptions(projects.map((project) => ({
         value: project.id,
         label: project.title
       })))
-     }
-     
-   },[dispatch,loadingProjects,projectOptions]);
+    }
 
-   useEffect(() => {
-     if (!loadingMilestone && !milestoneFetchError && milestone.length > 0) {
-       setMilestoneOptions(
-         milestone.map((m) => ({
-           value: m.id,
-           label: m.title,
-         }))
-       );
-     }
-   }, [milestone, loadingMilestone, milestoneFetchError]);
-   
+  }, [dispatch, loadingProjects, projectOptions]);
+
+  useEffect(() => {
+    if (!loadingMilestone && !milestoneFetchError && milestone.length > 0) {
+      setMilestoneOptions(
+        milestone.map((m) => ({
+          value: m.id,
+          label: m.title,
+        }))
+      );
+    }
+  }, [milestone, loadingMilestone, milestoneFetchError]);
+
 
   const handleSubmit = useCallback(async (event) => {
     event.preventDefault();
     toast.dismiss();
     // Form Validations
-    if(isSubmittingRef.current)return;
+    if (isSubmittingRef.current) return;
     console.log(newIssuesProjectId);
-    if(!newIssuesTaskId){
+    if (!newIssuesTaskId) {
       toast.error("Task is required");
       return;
     }
@@ -245,33 +245,33 @@ const Issues = ({ closeModal }) => {
     }
 
     setIsSubmitting(true);
-    isSubmittingRef.current=true;
+    isSubmittingRef.current = true;
     const formData = new FormData();
 
-formData.append("issue[title]", title.trim());
-formData.append("issue[status]", "open");
-formData.append("issue[responsible_person_id]", responsiblePerson);
-formData.append(
-  "issue[project_management_id]",
-    newIssuesProjectId || ""
-);
-formData.append("issue[milestone_id]", newIssuesMilestoneId || "");
-formData.append("issue[task_management_id]", newIssuesTaskId || "");
-formData.append("issue[start_date]", startDate || "");
-formData.append("issue[end_date]", endDate || "");
-formData.append("issue[priority]", globalPriorityOptions.find((option) => option.value === priority)?.label || null);
-formData.append("issue[created_by_id]", 158);
-formData.append("issue[issue_type]", issueTypeOptions.find((option) => option.value === type)?.label || null,);
-formData.append("issue[comment]", comments || "");
+    formData.append("issue[title]", title.trim());
+    formData.append("issue[status]", "open");
+    formData.append("issue[responsible_person_id]", responsiblePerson);
+    formData.append(
+      "issue[project_management_id]",
+      newIssuesProjectId || ""
+    );
+    formData.append("issue[milestone_id]", newIssuesMilestoneId || "");
+    formData.append("issue[task_management_id]", newIssuesTaskId || "");
+    formData.append("issue[start_date]", startDate || "");
+    formData.append("issue[end_date]", endDate || "");
+    formData.append("issue[priority]", globalPriorityOptions.find((option) => option.value === priority)?.label || null);
+    formData.append("issue[created_by_id]", JSON.parse(localStorage.getItem("user"))?.id || "");
+    formData.append("issue[issue_type]", issueTypeOptions.find((option) => option.value === type)?.label || null,);
+    formData.append("issue[comment]", comments || "");
 
-attachments.forEach((file) => {
-  formData.append("issue[attachments][]", file);
-});
+    attachments.forEach((file) => {
+      formData.append("issue[attachments][]", file);
+    });
 
 
     try {
-      await dispatch(createIssue({token,payload: formData})).unwrap();
-      dispatch(fetchIssue({token}));
+      await dispatch(createIssue({ token, payload: formData })).unwrap();
+      dispatch(fetchIssue({ token }));
       closeModal();
       toast.success("Issue created successfully!");
     } catch (error) {
@@ -308,8 +308,8 @@ attachments.forEach((file) => {
               Project <span className="text-red-600">*</span>
             </label>
             <SelectBox
-             options={projectOptions}
-             value={newIssuesProjectId}
+              options={projectOptions}
+              value={newIssuesProjectId}
               onChange={(selectedValue) => setNewIssuesProjectId(selectedValue)}
               placeholder={"Select Project"}
             />
@@ -319,19 +319,19 @@ attachments.forEach((file) => {
               Milestone <span className="text-red-600">*</span>
             </label>
             <SelectBox
-             options={milestoneOptions}
-             value={newIssuesMilestoneId}
+              options={milestoneOptions}
+              value={newIssuesMilestoneId}
               onChange={(selectedValue) => setNewIssuesMilestoneId(selectedValue)}
               placeholder={"Select Milestone"}
             />
           </div>
-           <div className="w-1/2 flex flex-col justify-between">
+          <div className="w-1/2 flex flex-col justify-between">
             <label className="block mb-2">
               Task <span className="text-red-600">*</span>
             </label>
             <SelectBox
-             options={taskOptions}
-             value={newIssuesTaskId}
+              options={taskOptions}
+              value={newIssuesTaskId}
               onChange={(selectedValue) => setNewIssuesTaskId(selectedValue)}
               placeholder={"Select Task"}
             />
@@ -374,7 +374,7 @@ attachments.forEach((file) => {
           </div>
         </div>
         <div className="flex items-start gap-4 mt-4 text-[12px]">
-           <div className="w-1/2 space-y-2">
+          <div className="w-1/2 space-y-2">
             <label className="block">Start Date <span className="text-red-600">*</span></label>
             <input
               value={startDate}
