@@ -48,7 +48,7 @@ export const CampaignFilterModal = ({ isOpen, onClose, onApply, onReset }: Campa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-full bg-white border border-gray-300 shadow-lg">
+      <DialogContent className="max-w-md w-full bg-white border border-gray-300 shadow-lg">
         <DialogHeader className="px-6 py-4 border-b border-gray-200">
           <DialogTitle className="text-lg font-semibold text-gray-900 text-left">Filter</DialogTitle>
           <DialogDescription className="sr-only">
@@ -57,11 +57,11 @@ export const CampaignFilterModal = ({ isOpen, onClose, onApply, onReset }: Campa
         </DialogHeader>
         
         <div className="px-6 py-6">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex-1">
+          <div className="space-y-4 mb-6">
+            <div className="w-full">
               <Select onValueChange={(value) => handleFilterChange('referredBy', value)} value={filters.referredBy}>
                 <SelectTrigger className="w-full h-10 border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm bg-white">
-                  <SelectValue placeholder="Referred by" />
+                  <SelectValue placeholder="Referre..." />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 shadow-lg z-[60]">
                   <SelectItem value="deepak-gupta">Deepak Gupta</SelectItem>
@@ -72,10 +72,10 @@ export const CampaignFilterModal = ({ isOpen, onClose, onApply, onReset }: Campa
               </Select>
             </div>
 
-            <div className="flex-1">
+            <div className="w-full">
               <Select onValueChange={(value) => handleFilterChange('status', value)} value={filters.status}>
                 <SelectTrigger className="w-full h-10 border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm bg-white">
-                  <SelectValue placeholder="Select Status" />
+                  <SelectValue placeholder="Selec..." />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 shadow-lg z-[60]">
                   <SelectItem value="hot">Hot</SelectItem>
@@ -86,7 +86,7 @@ export const CampaignFilterModal = ({ isOpen, onClose, onApply, onReset }: Campa
               </Select>
             </div>
 
-            <div className="flex-1">
+            <div className="w-full">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -111,21 +111,21 @@ export const CampaignFilterModal = ({ isOpen, onClose, onApply, onReset }: Campa
                 </PopoverContent>
               </Popover>
             </div>
+          </div>
 
-            <div className="flex gap-2">
-              <Button 
-                onClick={handleApply}
-                className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-6 py-2 h-10 text-sm font-medium"
-              >
-                Apply
-              </Button>
-              <Button 
-                onClick={handleReset}
-                className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-6 py-2 h-10 text-sm font-medium"
-              >
-                Reset
-              </Button>
-            </div>
+          <div className="flex gap-2 justify-center">
+            <Button 
+              onClick={handleApply}
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2 h-10 text-sm font-medium"
+            >
+              Apply
+            </Button>
+            <Button 
+              onClick={handleReset}
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2 h-10 text-sm font-medium"
+            >
+              Reset
+            </Button>
           </div>
         </div>
       </DialogContent>
