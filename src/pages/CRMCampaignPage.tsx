@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Filter, Search, RefreshCw, Grid, MoreVertical } from 'lucide-react';
+import { Filter, Search, RefreshCw, Grid, MoreVertical, Eye } from 'lucide-react';
 import { CampaignFilterModal } from '@/components/CampaignFilterModal';
-import { CreateLeadModal } from '@/components/CreateLeadModal';
+import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
 
 // Sample data based on the image
 const leadsData = [
@@ -93,10 +94,21 @@ const leadsData = [
 ];
 
 export const CRMCampaignPage = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
+  const [visibleColumns, setVisibleColumns] = useState({
+    actions: true,
+    id: true,
+    createdBy: true,
+    uniqueId: true,
+    project: true,
+    lead: true,
+    mobile: true,
+    status: true,
+    createdOn: true
+  });
 
   const handleLeadSelection = (leadId: string) => {
     setSelectedLeads(prev => 
@@ -112,6 +124,10 @@ export const CRMCampaignPage = () => {
     } else {
       setSelectedLeads(leadsData.map(lead => lead.id));
     }
+  };
+
+  const handleViewLead = (leadId: string) => {
+    navigate(`/crm/campaign/details/${leadId.replace('#', '')}`);
   };
 
   const getStatusBadge = (status: string) => {
@@ -142,7 +158,7 @@ export const CRMCampaignPage = () => {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <Button 
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={() => navigate('/crm/campaign/add')}
               className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6"
             >
               Add
@@ -170,9 +186,10 @@ export const CRMCampaignPage = () => {
             <Button variant="outline" size="icon" className="border-gray-300">
               <RefreshCw className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" className="border-gray-300">
-              <Grid className="h-4 w-4" />
-            </Button>
+            <ColumnVisibilityDropdown 
+              visibleColumns={visibleColumns}
+              onColumnChange={setVisibleColumns}
+            />
             <Button variant="outline" size="icon" className="border-gray-300">
               <MoreVertical className="h-4 w-4" />
             </Button>
@@ -193,15 +210,15 @@ export const CRMCampaignPage = () => {
                   className="rounded border-gray-300"
                 />
               </TableHead>
-              <TableHead className="text-gray-700 font-medium">Actions</TableHead>
-              <TableHead className="text-gray-700 font-medium">ID</TableHead>
-              <TableHead className="text-gray-700 font-medium">Created By</TableHead>
-              <TableHead className="text-gray-700 font-medium">Unique Id</TableHead>
-              <TableHead className="text-gray-700 font-medium">Project</TableHead>
-              <TableHead className="text-gray-700 font-medium">Lead</TableHead>
-              <TableHead className="text-gray-700 font-medium">Mobile</TableHead>
-              <TableHead className="text-gray-700 font-medium">Status</TableHead>
-              <TableHead className="text-gray-700 font-medium">Created On</TableHead>
+              {visibleColumns.actions && <TableHead className="text-gray-700 font-medium">Actions</TableHead>}
+              {visibleColumns.id && <TableHead className="text-gray-700 font-medium">ID</TableHead>}
+              {visibleColumns.createdBy && <TableHead className="text-gray-700 font-medium">Created By</TableHead>}
+              {visibleColumns.uniqueId && <TableHead className="text-gray-700 font-medium">Unique Id</TableHead>}
+              {visibleColumns.project && <TableHead className="text-gray-700 font-medium">Project</TableHead>}
+              {visibleColumns.lead && <TableHead className="text-gray-700 font-medium">Lead</TableHead>}
+              {visibleColumns.mobile && <TableHead className="text-gray-700 font-medium">Mobile</TableHead>}
+              {visibleColumns.status && <TableHead className="text-gray-700 font-medium">Status</TableHead>}
+              {visibleColumns.createdOn && <TableHead className="text-gray-700 font-medium">Created On</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -215,19 +232,26 @@ export const CRMCampaignPage = () => {
                     className="rounded border-gray-300"
                   />
                 </TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600">
-                    👁️
-                  </Button>
-                </TableCell>
-                <TableCell className="font-medium text-blue-600">{lead.id}</TableCell>
-                <TableCell>{lead.createdBy}</TableCell>
-                <TableCell className="text-gray-600">{lead.uniqueId}</TableCell>
-                <TableCell className="font-medium">{lead.project}</TableCell>
-                <TableCell>{lead.lead}</TableCell>
-                <TableCell>{lead.mobile}</TableCell>
-                <TableCell>{getStatusBadge(lead.status)}</TableCell>
-                <TableCell className="text-gray-600">{lead.createdOn}</TableCell>
+                {visibleColumns.actions && (
+                  <TableCell>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-blue-600"
+                      onClick={() => handleViewLead(lead.id)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                )}
+                {visibleColumns.id && <TableCell className="font-medium text-blue-600">{lead.id}</TableCell>}
+                {visibleColumns.createdBy && <TableCell>{lead.createdBy}</TableCell>}
+                {visibleColumns.uniqueId && <TableCell className="text-gray-600">{lead.uniqueId}</TableCell>}
+                {visibleColumns.project && <TableCell className="font-medium">{lead.project}</TableCell>}
+                {visibleColumns.lead && <TableCell>{lead.lead}</TableCell>}
+                {visibleColumns.mobile && <TableCell>{lead.mobile}</TableCell>}
+                {visibleColumns.status && <TableCell>{getStatusBadge(lead.status)}</TableCell>}
+                {visibleColumns.createdOn && <TableCell className="text-gray-600">{lead.createdOn}</TableCell>}
               </TableRow>
             ))}
           </TableBody>
@@ -239,7 +263,7 @@ export const CRMCampaignPage = () => {
         </div>
       </div>
 
-      {/* Modals */}
+      {/* Filter Modal */}
       <CampaignFilterModal
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
@@ -249,15 +273,6 @@ export const CRMCampaignPage = () => {
         }}
         onReset={() => {
           console.log('Reset filters');
-        }}
-      />
-
-      <CreateLeadModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSubmit={(leadData) => {
-          console.log('Create lead:', leadData);
-          setIsCreateModalOpen(false);
         }}
       />
     </div>

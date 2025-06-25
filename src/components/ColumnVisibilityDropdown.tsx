@@ -1,56 +1,72 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Grid3X3 } from 'lucide-react';
-
-interface ColumnOption {
-  key: string;
-  label: string;
-  visible: boolean;
-}
+import { Grid } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface ColumnVisibilityDropdownProps {
-  columns: ColumnOption[];
-  onColumnToggle: (columnKey: string, visible: boolean) => void;
+  visibleColumns: {
+    actions: boolean;
+    id: boolean;
+    createdBy: boolean;
+    uniqueId: boolean;
+    project: boolean;
+    lead: boolean;
+    mobile: boolean;
+    status: boolean;
+    createdOn: boolean;
+  };
+  onColumnChange: (columns: any) => void;
 }
 
-export const ColumnVisibilityDropdown = ({ columns, onColumnToggle }: ColumnVisibilityDropdownProps) => {
-  const [open, setOpen] = useState(false);
+export const ColumnVisibilityDropdown = ({ visibleColumns, onColumnChange }: ColumnVisibilityDropdownProps) => {
+  const handleColumnToggle = (column: string, checked: boolean) => {
+    onColumnChange({
+      ...visibleColumns,
+      [column]: checked
+    });
+  };
 
-  const handleToggle = (columnKey: string, checked: boolean) => {
-    onColumnToggle(columnKey, checked);
+  const columnLabels = {
+    actions: 'Actions',
+    id: 'ID',
+    createdBy: 'Created By',
+    uniqueId: 'Unique Id',
+    project: 'Project',
+    lead: 'Lead',
+    mobile: 'Mobile',
+    status: 'Status',
+    createdOn: 'Created On'
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="p-2">
-          <Grid3X3 className="w-4 h-4" />
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon" className="border-gray-300">
+          <Grid className="h-4 w-4" />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-48 p-2 bg-white border border-gray-200 shadow-lg z-50" align="end">
-        <div className="space-y-2">
-          <div className="font-medium text-sm border-b pb-2">Actions</div>
-          {columns.map((column) => (
-            <div key={column.key} className="flex items-center space-x-2">
-              <Checkbox
-                id={column.key}
-                checked={column.visible}
-                onCheckedChange={(checked) => handleToggle(column.key, !!checked)}
-                className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
-              />
-              <label
-                htmlFor={column.key}
-                className="text-sm font-normal cursor-pointer flex-1"
-              >
-                {column.label}
-              </label>
-            </div>
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56 bg-white border border-gray-200 shadow-lg z-50">
+        {Object.entries(columnLabels).map(([key, label]) => (
+          <DropdownMenuItem key={key} className="flex items-center space-x-2 p-2 hover:bg-gray-50">
+            <Checkbox
+              id={key}
+              checked={visibleColumns[key as keyof typeof visibleColumns]}
+              onCheckedChange={(checked) => handleColumnToggle(key, checked as boolean)}
+              className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+            />
+            <label htmlFor={key} className="text-sm font-medium cursor-pointer">
+              {label}
+            </label>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };

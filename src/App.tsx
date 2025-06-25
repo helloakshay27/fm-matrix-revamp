@@ -305,8 +305,10 @@ import { MarketPlaceAccountingPage } from './pages/MarketPlaceAccountingPage';
 // Import Market Place Cost Center page
 import { MarketPlaceCostCenterPage } from './pages/MarketPlaceCostCenterPage';
 
-// Import CRM Campaign page
+// Import CRM Campaign pages
 import { CRMCampaignPage } from './pages/CRMCampaignPage';
+import { AddLeadPage } from './pages/AddLeadPage';
+import { LeadDetailsPage } from './pages/LeadDetailsPage';
 
 const queryClient = new QueryClient();
 
@@ -332,6 +334,8 @@ function App() {
               
               {/* CRM Routes */}
               <Route path="/crm/campaign" element={<CRMCampaignPage />} />
+              <Route path="/crm/campaign/add" element={<AddLeadPage />} />
+              <Route path="/crm/campaign/details/:id" element={<LeadDetailsPage />} />
               
               {/* Snagging Routes */}
               <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
