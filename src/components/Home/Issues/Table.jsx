@@ -318,16 +318,33 @@ const IssuesTable = () => {
   }, [dispatch, newIssuesProjectId, loadingProjects, projectsFetchError, token]);
 
   // Set milestone options
+  // useEffect(() => {
+  //   if (milestone && !loadingMilestone && !milestoneFetchError && milestone.length > 0) {
+  //     setMilestoneOptions(
+  //       milestone?.map((m) => ({
+  //         value: m.id,
+  //         label: m.title,
+  //       }))
+  //     );
+  //   }
+  // }, [milestone, loadingMilestone, milestoneFetchError]);
+
   useEffect(() => {
-    if (milestone && !loadingMilestone && !milestoneFetchError && milestone.length > 0) {
+    if (
+      Array.isArray(milestone) &&
+      milestone.length > 0 &&
+      !loadingMilestone &&
+      !milestoneFetchError
+    ) {
       setMilestoneOptions(
-        milestone?.map((m) => ({
+        milestone.map((m) => ({
           value: m.id,
           label: m.title,
         }))
       );
     }
   }, [milestone, loadingMilestone, milestoneFetchError]);
+
 
   // Fetch users
   useEffect(() => {
