@@ -1,11 +1,15 @@
 
 import React, { useState } from 'react';
+import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Calendar } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface OSRDashboardFilterModalProps {
   isOpen: boolean;
@@ -19,12 +23,12 @@ export const OSRDashboardFilterModal = ({ isOpen, onClose, onApply, onReset }: O
     tower: '',
     flats: '',
     category: '',
-    createdOn: '',
+    createdOn: undefined as Date | undefined,
     status: '',
     rating: ''
   });
 
-  const handleFilterChange = (field: string, value: string) => {
+  const handleFilterChange = (field: string, value: string | Date | undefined) => {
     setFilters(prev => ({ ...prev, [field]: value }));
   };
 
@@ -38,7 +42,7 @@ export const OSRDashboardFilterModal = ({ isOpen, onClose, onApply, onReset }: O
       tower: '',
       flats: '',
       category: '',
-      createdOn: '',
+      createdOn: undefined,
       status: '',
       rating: ''
     });
@@ -101,16 +105,30 @@ export const OSRDashboardFilterModal = ({ isOpen, onClose, onApply, onReset }: O
             </div>
 
             <div>
-              <Label htmlFor="createdOn" className="text-sm font-medium">Created on</Label>
-              <div className="relative mt-1">
-                <Input
-                  id="createdOn"
-                  placeholder="Created on"
-                  value={filters.createdOn}
-                  onChange={(e) => handleFilterChange('createdOn', e.target.value)}
-                />
-                <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              </div>
+              <Label className="text-sm font-medium">Created on</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full mt-1 justify-start text-left font-normal",
+                      !filters.createdOn && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {filters.createdOn ? format(filters.createdOn, "dd/MM/yyyy") : "Created on"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={filters.createdOn}
+                    onSelect={(date) => handleFilterChange('createdOn', date)}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div>
