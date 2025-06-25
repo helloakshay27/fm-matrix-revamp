@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 import { ScheduleSecondVisitDialog } from '@/components/ScheduleSecondVisitDialog';
 import { CancelOSRDialog } from '@/components/CancelOSRDialog';
 import { EditOSRDialog } from '@/components/EditOSRDialog';
+import { CloseOSRDialog } from '@/components/CloseOSRDialog';
 
 export const OSRDetailsPage = () => {
   const { id } = useParams();
@@ -15,6 +15,7 @@ export const OSRDetailsPage = () => {
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showCloseDialog, setShowCloseDialog] = useState(false);
 
   // Sample data - in real app this would come from API based on ID
   const osrDetails = {
@@ -59,6 +60,11 @@ export const OSRDetailsPage = () => {
     setShowEditDialog(false);
   };
 
+  const handleCloseOSR = () => {
+    console.log('OSR closed successfully');
+    navigate('/vas/osr');
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="max-w-6xl mx-auto">
@@ -76,7 +82,7 @@ export const OSRDetailsPage = () => {
 
         {/* Action Buttons */}
         <div className="flex gap-3 mb-6">
-          <Button onClick={() => navigate('/vas/osr')}>
+          <Button onClick={() => setShowCloseDialog(true)}>
             Close OSR
           </Button>
           <Button 
@@ -233,6 +239,12 @@ export const OSRDetailsPage = () => {
         onOpenChange={setShowEditDialog}
         osrDetails={osrDetails}
         onSubmit={handleEdit}
+      />
+
+      <CloseOSRDialog
+        isOpen={showCloseDialog}
+        onClose={() => setShowCloseDialog(false)}
+        onConfirm={handleCloseOSR}
       />
     </div>
   );
