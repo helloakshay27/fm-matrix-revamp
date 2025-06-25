@@ -10,23 +10,30 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-// Support both interfaces for backward compatibility
+// Support multiple interfaces for different pages
 interface ColumnVisibilityDropdownProps {
-  // New interface (used by CRMCampaignPage)
+  // CRM Campaign interface
   visibleColumns?: {
-    actions: boolean;
-    id: boolean;
-    createdBy: boolean;
-    uniqueId: boolean;
-    project: boolean;
-    lead: boolean;
-    mobile: boolean;
-    status: boolean;
-    createdOn: boolean;
+    actions?: boolean;
+    id?: boolean;
+    createdBy?: boolean;
+    uniqueId?: boolean;
+    project?: boolean;
+    lead?: boolean;
+    mobile?: boolean;
+    status?: boolean;
+    createdOn?: boolean;
+    // Broadcast interface
+    action?: boolean;
+    title?: boolean;
+    type?: boolean;
+    expiredOn?: boolean;
+    expired?: boolean;
+    attachment?: boolean;
   };
   onColumnChange?: (columns: any) => void;
   
-  // Alternative interface (used by other pages)
+  // Generic interface for other pages
   columns?: Array<{
     key: string;
     label: string;
@@ -43,13 +50,11 @@ export const ColumnVisibilityDropdown = ({
 }: ColumnVisibilityDropdownProps) => {
   const handleColumnToggle = (column: string, checked: boolean) => {
     if (onColumnChange && visibleColumns) {
-      // Use the original interface
       onColumnChange({
         ...visibleColumns,
         [column]: checked
       });
     } else if (onColumnToggle) {
-      // Use the alternative interface
       onColumnToggle(column, checked);
     }
   };
@@ -57,8 +62,20 @@ export const ColumnVisibilityDropdown = ({
   // Generate column labels based on which interface is being used
   const getColumnData = () => {
     if (visibleColumns) {
-      // Original interface
-      const columnLabels = {
+      // Determine which column set we're using
+      const columnLabels = visibleColumns.hasOwnProperty('action') ? {
+        // Broadcast columns
+        action: 'Action',
+        title: 'Title',
+        type: 'Type',
+        createdOn: 'Created On',
+        createdBy: 'Created by',
+        status: 'Status',
+        expiredOn: 'Expired On',
+        expired: 'Expired',
+        attachment: 'Attachment'
+      } : {
+        // CRM Campaign columns
         actions: 'Actions',
         id: 'ID',
         createdBy: 'Created By',
@@ -69,13 +86,13 @@ export const ColumnVisibilityDropdown = ({
         status: 'Status',
         createdOn: 'Created On'
       };
+      
       return Object.entries(columnLabels).map(([key, label]) => ({
         key,
         label,
-        visible: visibleColumns[key as keyof typeof visibleColumns]
+        visible: visibleColumns[key as keyof typeof visibleColumns] ?? false
       }));
     } else if (columns) {
-      // Alternative interface
       return columns;
     }
     return [];

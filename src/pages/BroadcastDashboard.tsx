@@ -1,12 +1,12 @@
 
 import React, { useState } from 'react';
-import { Plus, Filter, Search, Eye } from 'lucide-react';
+import { Plus, Search, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AddBroadcastModal } from '@/components/AddBroadcastModal';
-import { BroadcastFilterModal } from '@/components/BroadcastFilterModal';
+import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
+import { useNavigate } from 'react-router-dom';
 
 const broadcastData = [
   {
@@ -67,9 +67,27 @@ const broadcastData = [
 ];
 
 export const BroadcastDashboard = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState({
+    action: true,
+    title: true,
+    type: true,
+    createdOn: true,
+    createdBy: true,
+    status: true,
+    expiredOn: true,
+    expired: true,
+    attachment: true
+  });
+
+  const handleColumnChange = (columns: typeof visibleColumns) => {
+    setVisibleColumns(columns);
+  };
+
+  const handleViewDetails = (id: number) => {
+    navigate(`/crm/broadcast/details/${id}`);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -86,18 +104,10 @@ export const BroadcastDashboard = () => {
         <div className="flex items-center gap-3">
           <Button 
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-            onClick={() => setShowAddModal(true)}
+            onClick={() => navigate('/crm/broadcast/add')}
           >
             <Plus className="w-4 h-4 mr-2" />
             Add
-          </Button>
-          <Button 
-            variant="outline" 
-            className="border-gray-300"
-            onClick={() => setShowFilterModal(true)}
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filter
           </Button>
         </div>
         
@@ -117,6 +127,10 @@ export const BroadcastDashboard = () => {
           <Button variant="outline" className="border-gray-300">
             Reset
           </Button>
+          <ColumnVisibilityDropdown
+            visibleColumns={visibleColumns}
+            onColumnChange={handleColumnChange}
+          />
         </div>
       </div>
 
@@ -125,55 +139,71 @@ export const BroadcastDashboard = () => {
         <Table>
           <TableHeader>
             <TableRow className="border-b">
-              <TableHead>Action</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Created On</TableHead>
-              <TableHead>Created by</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Expired On</TableHead>
-              <TableHead>Expired</TableHead>
-              <TableHead>Attachment</TableHead>
+              {visibleColumns.action && <TableHead>Action</TableHead>}
+              {visibleColumns.title && <TableHead>Title</TableHead>}
+              {visibleColumns.type && <TableHead>Type</TableHead>}
+              {visibleColumns.createdOn && <TableHead>Created On</TableHead>}
+              {visibleColumns.createdBy && <TableHead>Created by</TableHead>}
+              {visibleColumns.status && <TableHead>Status</TableHead>}
+              {visibleColumns.expiredOn && <TableHead>Expired On</TableHead>}
+              {visibleColumns.expired && <TableHead>Expired</TableHead>}
+              {visibleColumns.attachment && <TableHead>Attachment</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {broadcastData.map((broadcast) => (
               <TableRow key={broadcast.id} className="border-b">
-                <TableCell>
-                  <Button variant="ghost" size="sm">
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                </TableCell>
-                <TableCell className="font-medium">{broadcast.title}</TableCell>
-                <TableCell>
-                  <Badge 
-                    variant={broadcast.type === 'General' ? 'default' : 'secondary'}
-                    className={broadcast.type === 'General' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'}
-                  >
-                    {broadcast.type}
-                  </Badge>
-                </TableCell>
-                <TableCell>{broadcast.createdOn}</TableCell>
-                <TableCell>{broadcast.createdBy}</TableCell>
-                <TableCell>
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                    {broadcast.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>{broadcast.expiredOn}</TableCell>
-                <TableCell>
-                  <Badge 
-                    variant={broadcast.expired === 'No' ? 'secondary' : 'destructive'}
-                    className={broadcast.expired === 'No' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
-                  >
-                    {broadcast.expired}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {broadcast.attachment && (
-                    <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                  )}
-                </TableCell>
+                {visibleColumns.action && (
+                  <TableCell>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleViewDetails(broadcast.id)}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                )}
+                {visibleColumns.title && (
+                  <TableCell className="font-medium">{broadcast.title}</TableCell>
+                )}
+                {visibleColumns.type && (
+                  <TableCell>
+                    <Badge 
+                      variant={broadcast.type === 'General' ? 'default' : 'secondary'}
+                      className={broadcast.type === 'General' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'}
+                    >
+                      {broadcast.type}
+                    </Badge>
+                  </TableCell>
+                )}
+                {visibleColumns.createdOn && <TableCell>{broadcast.createdOn}</TableCell>}
+                {visibleColumns.createdBy && <TableCell>{broadcast.createdBy}</TableCell>}
+                {visibleColumns.status && (
+                  <TableCell>
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                      {broadcast.status}
+                    </Badge>
+                  </TableCell>
+                )}
+                {visibleColumns.expiredOn && <TableCell>{broadcast.expiredOn}</TableCell>}
+                {visibleColumns.expired && (
+                  <TableCell>
+                    <Badge 
+                      variant={broadcast.expired === 'No' ? 'secondary' : 'destructive'}
+                      className={broadcast.expired === 'No' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
+                    >
+                      {broadcast.expired}
+                    </Badge>
+                  </TableCell>
+                )}
+                {visibleColumns.attachment && (
+                  <TableCell>
+                    {broadcast.attachment && (
+                      <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                    )}
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
@@ -190,10 +220,6 @@ export const BroadcastDashboard = () => {
           <span className="font-semibold">LOCATED</span>
         </div>
       </div>
-
-      {/* Modals */}
-      <AddBroadcastModal open={showAddModal} onOpenChange={setShowAddModal} />
-      <BroadcastFilterModal open={showFilterModal} onOpenChange={setShowFilterModal} />
     </div>
   );
 };
