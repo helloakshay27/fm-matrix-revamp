@@ -20,6 +20,7 @@ import {
   ArrowPathIcon,
 } from "@heroicons/react/20/solid";
 import SelectBox from "../../SelectBox";
+import qs from "qs";
 
 // Redux Thunks
 import { fetchUsers } from "../../../redux/slices/userSlice";
@@ -28,6 +29,7 @@ import {
   createIssue,
   updateIssue,
   fetchIssueType,
+  filterIssue,
 } from "../../../redux/slices/IssueSlice";
 import { fetchProjects } from "../../../redux/slices/projectSlice";
 import { fetchMilestone } from "../../../redux/slices/milestoneSlice";
@@ -392,7 +394,8 @@ const IssuesTable = () => {
       allIssues = allIssuesFromStore.filter(
         (issue) => issue.project_management_id == parentId
       );
-    } else if (filterSuccess && filteredIssues) {
+    } else if (filterSuccess && filteredIssues && localStorage.getItem("IssueFilters")) {
+      console.log("hi");
       allIssues = filteredIssues;
     } else {
       allIssues = allIssuesFromStore;
@@ -553,7 +556,27 @@ const IssuesTable = () => {
           payload.responsible_person_id = newValue;
         }
         await dispatch(updateIssue({ token, id, payload })).unwrap();
-        dispatch(fetchIssue({ token }));
+        if(localStorage.getItem("IssueFilters")){
+          const item = JSON.parse(localStorage.getItem("IssueFilters"));
+          const newFilter = {
+                          "q[status_in][]": item.selectedStatuses.length > 0 ? item.selectedStatuses : [],
+                          "q[created_by_id_eq]": item.selectedCreators.length > 0 ? item.selectedCreators : [],
+                          "q[start_date_eq]": item.dates["Start Date"],
+                          "q[end_date_eq]": item.dates["End Date"],
+                          "q[responsible_person_id_in][]": item.selectedResponsible.length > 0 ? item.selectedResponsible : [],
+                          "q[issue_type_in][]": item.selectedTypes.length > 0 ? item.selectedTypes : [],
+                          "q[project_management_id_in][]": item.selectedProjects.length > 0 ? item.selectedProjects : [],
+                          "q[task_management_id_in][]": item.selectedTasks.length > 0 ? item.selectedTasks : [],
+                      }
+                      console.log(newFilter);
+                      if (newFilter) {
+                                  const queryString = qs.stringify(newFilter, { arrayFormat: 'repeat' });
+                      
+          await  dispatch(filterIssue({ token, filter: queryString })).unwrap();
+        }
+      }else{
+        await dispatch(fetchIssue({ token })).unwrap();
+      }
       } catch (error) {
         console.error("Failed to update issue:", error);
         const errorMessage =

@@ -24,8 +24,10 @@ import {
     createProject,
     deleteProject,
     fetchProjectTypes,
-    resetProjectSuccess
+    resetProjectSuccess,
+    filterProjects
 } from "../../../redux/slices/projectSlice";
+import qs from "qs";
 import { fetchUsers } from "../../../redux/slices/userSlice";
 import StatusBadge from "./statusBadge";
 import "./Table.css";
@@ -252,7 +254,7 @@ const ProjectList = () => {
 
     const transformedData = useMemo(() => {
         const projectsSource =
-            isFiltered
+            (isFiltered && localStorage.getItem("projectFilters"))
                 ? filteredProjects.length > 0
                     ? filteredProjects
                     : []
@@ -364,7 +366,24 @@ const ProjectList = () => {
                         payload: { project_management: { [name]: apiCompatibleValue } },
                     })
                 ).unwrap();
+                if(isFiltered && localStorage.getItem("projectFilters")) {
+                    const saved= JSON.parse(localStorage.getItem("projectFilters"));
+                    const newFilters = {
+                                "q[status_in][]": saved.selectedStatuses, // Use array for multiple selections
+                                "q[owner_id_in][]": saved.selectedManagers,
+                                "q[created_by_id_in][]": saved.selectedCreators,
+                                "q[project_type_id_in][]": saved.selectedTypes,
+                                "q[title_cont]": "",
+                                "q[is_template_eq]": "",
+                                "q[start_date_eq]": saved.dates.startDate || "", // Ensure date is sent or empty string
+                                "q[end_date_eq]": saved.dates.endDate || "",
+                            };
+                            const queryString = qs.stringify(newFilters, { arrayFormat: 'repeat' });
+                            dispatch(filterProjects({ token, filters: queryString }));
+                            
+                }else{
                 dispatch(fetchProjects({ token }));
+                }
             } catch (err) {
                 console.error(
                     `Failed to update project ${name} for ID ${actualProjectId}:`,
