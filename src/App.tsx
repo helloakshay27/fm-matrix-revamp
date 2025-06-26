@@ -334,6 +334,9 @@ import { HotelDetailsPage } from './pages/HotelDetailsPage';
 // Import Hotel Booking page
 import { HotelBookingPage } from './pages/HotelBookingPage';
 
+// Import Cold Wallet page
+import { ColdWalletPage } from './pages/ColdWalletPage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -567,12 +570,13 @@ function App() {
               <Route path="/vas/osr/details/:id" element={<OSRDetailsPage />} />
               <Route path="/vas/osr/generate-receipt" element={<OSRGenerateReceiptPage />} />
               <Route path="/vas/redemption-marketplace" element={<RedemptionMarketplacePage />} />
+              <Route path="/vas/cold-wallet" element={<ColdWalletPage />} />
               <Route path="/vas/hotels/rewards" element={<HotelRewardsPage />} />
               <Route path="/vas/hotels/details" element={<HotelDetailsPage />} />
               <Route path="/vas/hotels/booking" element={<HotelBookingPage />} />
               <Route path="/vas/tickets/discounts" element={<TicketDiscountsPage />} />
               
-              {/* Handle the typo in the URL */}
+              // Handle the typo in the URL
               <Route path="/vas/redemonection-marketplace" element={<Navigate to="/vas/redemption-marketplace" replace />} />
               
               {/* Space Management Routes */}
