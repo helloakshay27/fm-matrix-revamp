@@ -85,13 +85,13 @@ const StatusBadge = ({ status: initialStatus, statusOptions, onStatusChange }) =
               key={option}
               onClick={() => handleStatusSelect(option)}
               className={`dropdown-item ${
-                option.toLowerCase().replace(' ', '-') === currentStatus.toLowerCase().replace(' ', '-')
+                option?.toLowerCase().replace(' ', '-') === currentStatus?.toLowerCase().replace(' ', '-')
                   ? 'selected'
                   : ''
               }`}
               role="option"
               aria-selected={
-                option?.toLowerCase().replace(' ', '-') === currentStatus.toLowerCase().replace(' ', '-')
+                option?.toLowerCase().replace(' ', '-') === currentStatus?.toLowerCase().replace(' ', '-')
               }
               tabIndex={0}
               onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleStatusSelect(option)}
