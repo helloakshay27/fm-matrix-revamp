@@ -10,7 +10,7 @@ import { FnBDiscountsPage } from '@/pages/FnBDiscountsPage';
 import { FnBDetailsPage } from '@/pages/FnBDetailsPage';
 import { TicketDiscountsPage } from '@/pages/TicketDiscountsPage';
 import { TicketDetailsPage } from '@/pages/TicketDetailsPage';
-import { NotFound } from '@/pages/NotFound';
+import NotFound from '@/pages/NotFound';
 import './App.css';
 
 const queryClient = new QueryClient();
