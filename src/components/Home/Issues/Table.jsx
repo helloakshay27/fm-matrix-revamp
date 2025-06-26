@@ -394,7 +394,7 @@ const IssuesTable = () => {
       allIssues = allIssuesFromStore.filter(
         (issue) => issue.project_management_id == parentId
       );
-    } else if (filterSuccess && filteredIssues && localStorage.getItem("IssueFilters")) {
+    } else if (filterSuccess && filteredIssues && (localStorage.getItem("IssueFilters") || localStorage.getItem("issueStatus"))) {
       console.log("hi");
       allIssues = filteredIssues;
     } else {
@@ -574,7 +574,14 @@ const IssuesTable = () => {
                       
           await  dispatch(filterIssue({ token, filter: queryString })).unwrap();
         }
-      }else{
+      }else if(localStorage.getItem("issueStatus")){
+        const status=localStorage.getItem("issueStatus");
+        const filter={
+          "q[status_eq]":status
+        }
+        await dispatch(filterIssue({ token, filter})).unwrap();
+      }
+      else{
         await dispatch(fetchIssue({ token })).unwrap();
       }
       } catch (error) {

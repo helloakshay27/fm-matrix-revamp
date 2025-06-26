@@ -275,6 +275,7 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                 "q[issue_type_in][]": selectedTypes.length > 0 ? selectedTypes : [],
                 "q[project_management_id_in][]": selectedProjects.length > 0 ? selectedProjects : [],
                 "q[task_management_id_in][]": selectedTasks.length > 0 ? selectedTasks : [],
+                "q[milestone_id_in][]": selectedMilestones.length > 0 ? selectedMilestones : [],
             }
             if (newFilter) {
                         const queryString = qs.stringify(newFilter, { arrayFormat: 'repeat' });

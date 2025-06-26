@@ -81,9 +81,9 @@ const Attachments = ({ attachments, setAttachments }) => {
   const fileInputRef = useRef(null);
   const [files, setFiles] = useState([]);
 
-  useEffect(() => {
-    setFiles(attachments || []);
-  }, [attachments]);
+  // useEffect(() => {
+  //   setFiles(attachments || []);
+  // }, [attachments]);
 
   const handleAttachFile = () => {
     fileInputRef.current?.click();
@@ -93,8 +93,8 @@ const Attachments = ({ attachments, setAttachments }) => {
     const selectedFiles = Array.from(event.target.files);
     if (!selectedFiles.length) return;
 
-    setFiles(selectedFiles);
-    setAttachments(selectedFiles);
+    setFiles([...files, ...selectedFiles]);
+    setAttachments([...attachments, ...selectedFiles]);
   };
 
   const isImage = (file) => file.type.startsWith("image/");
@@ -225,8 +225,11 @@ const Issues = ({ closeModal }) => {
   }, [issueType, loadingIssueType, issueTypeFetchError]);
 
   useEffect(() => {
-    if (!loadingMilestone && milestoneOptions.length > 0 && !milestoneFetchError && newIssuesMilestoneId) {
+    if (!loadingMilestone && milestoneOptions.length > 0 && !milestoneFetchError ) {
+      if( newIssuesMilestoneId)
       dispatch(fetchTasks({ id: newIssuesMilestoneId, token }));
+      else
+      dispatch(fetchTasks({ token ,id:""}));
       setNewIssuesTaskId(null);
       setTaskOptions([]);
     }
@@ -270,9 +273,9 @@ const Issues = ({ closeModal }) => {
   }, [dispatch, loadingProjects, projectOptions]);
 
   useEffect(() => {
-    if (!loadingMilestone && !milestoneFetchError && milestone.length > 0) {
+    if (!loadingMilestone && !milestoneFetchError && milestone.length > 0 && Array.isArray(milestone) ){
       setMilestoneOptions(
-        milestone.map((m) => ({
+        milestone?.map((m) => ({
           value: m.id,
           label: m.title,
         }))

@@ -350,7 +350,7 @@ const TaskTable = () => {
     if (myTasks === "false") {
       console.log("hi");
       // All Tasks mode
-      if (filterSuccess && Array.isArray(filterTasks)) {
+      if (filterSuccess && Array.isArray(filterTasks) && ( localStorage.getItem("taskFilters") || localStorage.getItem("taskStatus"))) {
         console.log("All Tasks mode: Using filtered tasks");
         newProcessedData = filterTasks.map((task) => processTaskData(task));
       } else if (tasksFromStore && Array.isArray(tasksFromStore) && tasksFromStore.length > 0) {
@@ -359,7 +359,7 @@ const TaskTable = () => {
       }
     } else {
       // My Tasks mode
-      if (filterSuccess && Array.isArray(filterTasks)) {
+      if (filterSuccess && Array.isArray(filterTasks) && ( localStorage.getItem("taskFilters") || localStorage.getItem("taskStatus"))) {
         console.log("My Tasks mode: Using filtered tasks");
         newProcessedData = filterTasks.map((task) => processTaskData(task));
       } else if (myTaskSuccess && Array.isArray(myTasksFromStore)) {
@@ -509,6 +509,14 @@ const TaskTable = () => {
       }
       const queryString = qs.stringify(newFilter, { arrayFormat: 'repeat' });
       await dispatch(filterTask({ token, filter: queryString })).unwrap();
+      return;
+    }
+    if(localStorage.getItem("taskStatus")) {
+      const saved=localStorage.getItem("taskStatus");
+      const filter={
+        "q[status_eq]":saved      
+      }
+      await dispatch(filterTask({ token, filter })).unwrap();
       return;
     }
     if (mid != undefined && mid != null) {

@@ -42,7 +42,9 @@ const STATUS_OPTIONS = [
     "On Hold",
     "Completed",
     "In Progress",
-    "Overdue"
+    "Overdue",
+    "Active",
+    "Open"
 ];
 
 
@@ -71,6 +73,15 @@ const TaskActions = ({
     const [myTasks, setMyTasks] = useState(false);
     const token = localStorage.getItem("token");
     localStorage.setItem("myTasks", myTasks.toString());
+    
+    useEffect(()=>{
+    localStorage.removeItem("taskFilters");
+    localStorage.removeItem("projectFilters");
+    localStorage.removeItem("IssueFilters");
+    localStorage.removeItem("projectStatus");
+    localStorage.removeItem("issueStatus");
+    localStorage.removeItem("taskStatus");
+    },[]);
 
     const typeDropdownRef = useRef(null);
     const statusDropdownRef = useRef(null);
@@ -128,6 +139,9 @@ const TaskActions = ({
         if (addType === "Project") {
             if (status !== "All") {
                 filters["q[status_eq]"] = formattedStatus;
+                localStorage.setItem("projectStatus", formattedStatus);
+            }else{
+                localStorage.removeItem("projectStatus");
             }
             dispatch(filterProjects({ token, filters: filters })).unwrap();
 
@@ -135,12 +149,19 @@ const TaskActions = ({
             console.log(formattedStatus);
             if (status !== "All") {
                 filters["q[status_eq]"] = formattedStatus;
+                localStorage.setItem("issueStatus", formattedStatus);
+            }else{
+                localStorage.removeItem("issueStatus");
             }
-            dispatch(filterIssue({ token, filters })).unwrap();
+            dispatch(filterIssue({ token, filter: filters })).unwrap();
 
         }else{
             if (status !== "All") {
                 filters["q[status_eq]"] = formattedStatus;
+                localStorage.setItem("taskStatus", formattedStatus);
+            }
+            else{
+                localStorage.removeItem("taskStatus");
             }
             if(mid)
             filters["q[milestone_id_eq]"] = mid;

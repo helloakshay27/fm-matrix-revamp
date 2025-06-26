@@ -250,15 +250,19 @@ const ProjectList = () => {
 
     useEffect(() => {
         filterProjectsSuccess ? setIsFiltered(true) : setIsFiltered(false)
-    }, [filteredProjects]);
+    }, [filterProjectsSuccess,filteredProjects]);
 
     const transformedData = useMemo(() => {
-        const projectsSource =
-            (isFiltered && localStorage.getItem("projectFilters"))
-                ? filteredProjects.length > 0
-                    ? filteredProjects
-                    : []
-                : initialProjects;
+let projectsSource;
+
+const hasFilter = isFiltered ||
+    (localStorage.getItem("projectFilters") || localStorage.getItem("projectStatus"));
+
+if (hasFilter) {
+    projectsSource = filteredProjects?.length > 0 ? filteredProjects : [];
+} else {
+    projectsSource = initialProjects;
+}
 
         if (!projectsSource) return [];
         if (!Array.isArray(projectsSource)) {
@@ -366,7 +370,8 @@ const ProjectList = () => {
                         payload: { project_management: { [name]: apiCompatibleValue } },
                     })
                 ).unwrap();
-                if(isFiltered && localStorage.getItem("projectFilters")) {
+                if(localStorage.getItem("projectFilters")){ 
+                    console.log("hoe");
                     const saved= JSON.parse(localStorage.getItem("projectFilters"));
                     const newFilters = {
                                 "q[status_in][]": saved.selectedStatuses, // Use array for multiple selections
@@ -381,7 +386,15 @@ const ProjectList = () => {
                             const queryString = qs.stringify(newFilters, { arrayFormat: 'repeat' });
                             dispatch(filterProjects({ token, filters: queryString }));
                             
-                }else{
+                }else if( localStorage.getItem("projectStatus")){
+                    const status= localStorage.getItem("projectStatus");
+                    const filter={
+                        "q[status_eq]": status
+                    }
+                    dispatch(filterProjects({ token, filters: filter }));
+
+                }
+                else{
                 dispatch(fetchProjects({ token }));
                 }
             } catch (err) {
