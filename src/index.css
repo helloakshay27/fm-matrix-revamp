@@ -30,32 +30,6 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0rem;
-
-    /* Custom Dashboard Layout Variables */
-    --header-height: 10vh;
-    --subheader-height: 9vh;
-    --sidebar-width: 250px;
-    --body-height: calc(100vh - var(--header-height) - var(--subheader-height));
-
-    /* Dashboard Colors */
-    --theme-dark: #1a1a1a;
-    --theme-light: #f6f4ee;
-    --theme-mid: #ffffff;
-    --theme-bg: #fafafa;
-    --theme-text: #1a1a1a;
-    --theme-accent: #C72030;
-    --theme-border: #D5DbDB;
-    --theme-hover: #DBC2A9;
-
-    /* Dashboard Colors Applied */
-    --header-bg: var(--theme-mid);
-    --sidebar-bg: var(--theme-light);
-    --subheader-bg: var(--theme-mid);
-    --body-bg: var(--theme-bg);
-    --text-color: var(--theme-text);
-
-    /* Fonts */
-    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   }
 
   .dark {
@@ -92,55 +66,11 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-family);
   }
 }
 
-/* Dashboard Layout Classes */
+/* Design System Utilities */
 @layer utilities {
-  .dashboard-header {
-    height: var(--header-height);
-    background-color: var(--header-bg);
-    border-bottom: 1px solid var(--theme-border);
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 50;
-    width: 100%;
-  }
-
-  .dashboard-sidebar {
-    width: var(--sidebar-width);
-    height: calc(100vh - var(--header-height));
-    background-color: var(--sidebar-bg);
-    border-right: 1px solid var(--theme-border);
-    position: fixed;
-    left: 0;
-    top: var(--header-height);
-    overflow-y: auto;
-    z-index: 40;
-  }
-
-  .dashboard-subheader {
-    height: var(--subheader-height);
-    background-color: var(--subheader-bg);
-    border-bottom: 1px solid var(--theme-border);
-    position: fixed;
-    top: var(--header-height);
-    left: var(--sidebar-width);
-    right: 0;
-    z-index: 30;
-  }
-
-  .dashboard-main {
-    margin-left: var(--sidebar-width);
-    margin-top: calc(var(--header-height) + var(--subheader-height));
-    min-height: var(--body-height);
-    background-color: var(--body-bg);
-    overflow-y: auto;
-  }
-
   /* Shadow System */
   .shadow-system-sm {
     box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.06);
@@ -190,7 +120,7 @@
 
   /* Typography System */
   .text-system-primary {
-    color: var(--text-color);
+    @apply text-gray-900;
   }
   
   .text-system-secondary {
