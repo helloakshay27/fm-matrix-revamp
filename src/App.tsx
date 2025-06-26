@@ -310,13 +310,12 @@ import { MarketPlaceCostCenterPage } from './pages/MarketPlaceCostCenterPage';
 import { CRMCampaignPage } from './pages/CRMCampaignPage';
 import { AddLeadPage } from './pages/AddLeadPage';
 import { LeadDetailsPage } from './pages/LeadDetailsPage';
-
-// Import CRM Events pages
 import { CRMEventsPage } from './pages/CRMEventsPage';
 import { CRMEventDetailsPage } from './pages/CRMEventDetailsPage';
-
-// Import Add Event page
 import { AddEventPage } from './pages/AddEventPage';
+
+// Import CRM Groups page
+import CRMGroupsPage from './pages/CRMGroupsPage';
 
 // Import Broadcast page
 import { BroadcastDashboard } from './pages/BroadcastDashboard';
@@ -375,6 +374,7 @@ function App() {
               <Route path="/crm/broadcast/details/:id" element={<BroadcastDetailsPage />} />
               <Route path="/crm/polls" element={<CRMPollsPage />} />
               <Route path="/crm/polls/add" element={<AddPollPage />} />
+              <Route path="/crm/groups" element={<CRMGroupsPage />} />
               
               {/* Snagging Routes */}
               <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
