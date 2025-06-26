@@ -228,12 +228,14 @@ const Issues = ({ closeModal }) => {
     if (!loadingMilestone && milestoneOptions.length > 0 && !milestoneFetchError ) {
       if( newIssuesMilestoneId)
       dispatch(fetchTasks({ id: newIssuesMilestoneId, token }));
-      else
-      dispatch(fetchTasks({ token ,id:""}));
       setNewIssuesTaskId(null);
       setTaskOptions([]);
     }
   }, [dispatch, loadingMilestone, milestoneFetchError, newIssuesMilestoneId, milestoneOptions]);
+
+  useEffect(()=>{
+    dispatch(fetchTasks({ id: "", token }));
+  },[dispatch]);
 
   useEffect(() => {
     if (!loadingTasks && !tasksFetchError && tasks.length > 0) {
