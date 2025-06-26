@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -18,13 +19,16 @@ export const RedemptionMarketplacePage = () => {
 
   const handleViewReward = (service: string) => {
     if (service === 'hotels') {
-      navigate('/vas/hotels');
+      navigate('/vas/hotels/rewards');
     }
   };
 
   const handleViewDiscount = (service: string) => {
-    // All discount buttons redirect to hotels page
-    navigate('/vas/hotels');
+    if (service === 'fnb') {
+      navigate('/vas/fnb/discounts');
+    } else if (service === 'tickets') {
+      navigate('/vas/tickets/discounts');
+    }
   };
 
   // Sample transaction data
