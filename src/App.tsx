@@ -322,6 +322,9 @@ import { BroadcastDashboard } from './pages/BroadcastDashboard';
 import { AddBroadcastPage } from './pages/AddBroadcastPage';
 import { BroadcastDetailsPage } from './pages/BroadcastDetailsPage';
 
+// Import Redemption Marketplace page
+import { RedemptionMarketplacePage } from './pages/RedemptionMarketplacePage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -553,6 +556,7 @@ function App() {
               <Route path="/vas/osr" element={<OSRDashboard />} />
               <Route path="/vas/osr/details/:id" element={<OSRDetailsPage />} />
               <Route path="/vas/osr/generate-receipt" element={<OSRGenerateReceiptPage />} />
+              <Route path="/vas/redemption-marketplace" element={<RedemptionMarketplacePage />} />
               
               {/* Space Management Routes */}
               <Route path="/vas/space-management/bookings" element={<SpaceManagementBookingsDashboard />} />
