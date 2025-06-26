@@ -1,11 +1,22 @@
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Calendar, Users, Search } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarIcon, Users, Search } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 export const HotelRewardsPage = () => {
+  const navigate = useNavigate();
+  const [checkInDate, setCheckInDate] = useState<Date>();
+  const [checkOutDate, setCheckOutDate] = useState<Date>();
+  const [destination, setDestination] = useState('');
+  const [guests, setGuests] = useState('');
+
   const hotels = [
     {
       id: 1,
@@ -48,6 +59,15 @@ export const HotelRewardsPage = () => {
     }
   ];
 
+  const handleHotelClick = (hotelId: number) => {
+    navigate('/vas/hotels/details');
+  };
+
+  const handleSearch = () => {
+    console.log('Searching with:', { destination, checkInDate, checkOutDate, guests });
+    // Handle search logic
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Search Section */}
@@ -58,28 +78,62 @@ export const HotelRewardsPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Where</label>
               <Input 
                 placeholder="Search destinations" 
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
                 className="border-gray-300 focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Check in</label>
-              <div className="relative">
-                <Input 
-                  placeholder="mm/dd/yyyy" 
-                  className="border-gray-300 focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030] pr-10"
-                />
-                <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal border-gray-300 focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]",
+                      !checkInDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {checkInDate ? format(checkInDate, "PPP") : <span>mm/dd/yyyy</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={checkInDate}
+                    onSelect={setCheckInDate}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Check out</label>
-              <div className="relative">
-                <Input 
-                  placeholder="mm/dd/yyyy" 
-                  className="border-gray-300 focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030] pr-10"
-                />
-                <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal border-gray-300 focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]",
+                      !checkOutDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {checkOutDate ? format(checkOutDate, "PPP") : <span>mm/dd/yyyy</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={checkOutDate}
+                    onSelect={setCheckOutDate}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Who</label>
@@ -87,12 +141,15 @@ export const HotelRewardsPage = () => {
                 <div className="relative flex-1">
                   <Input 
                     placeholder="Add guests" 
+                    value={guests}
+                    onChange={(e) => setGuests(e.target.value)}
                     className="border-gray-300 focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030] pr-10"
                   />
                   <Users className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 </div>
                 <Button 
                   size="icon"
+                  onClick={handleSearch}
                   className="bg-gray-800 hover:bg-gray-700 text-white rounded-full"
                 >
                   <Search className="h-4 w-4" />
@@ -108,7 +165,11 @@ export const HotelRewardsPage = () => {
         <h2 className="text-2xl font-bold mb-6 text-gray-900">Popular Hotels</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {hotels.map((hotel) => (
-            <Card key={hotel.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+            <Card 
+              key={hotel.id} 
+              className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => handleHotelClick(hotel.id)}
+            >
               <div className="aspect-video overflow-hidden">
                 <img 
                   src={hotel.image} 
@@ -130,7 +191,11 @@ export const HotelRewardsPage = () => {
         <h2 className="text-2xl font-bold mb-6 text-gray-900">Available this weekend</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {weekendHotels.map((hotel) => (
-            <Card key={hotel.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+            <Card 
+              key={hotel.id} 
+              className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => handleHotelClick(hotel.id)}
+            >
               <div className="aspect-video overflow-hidden">
                 <img 
                   src={hotel.image} 

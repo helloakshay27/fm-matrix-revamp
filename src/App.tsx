@@ -328,6 +328,12 @@ import { RedemptionMarketplacePage } from './pages/RedemptionMarketplacePage';
 import { HotelRewardsPage } from './pages/HotelRewardsPage';
 import { TicketDiscountsPage } from './pages/TicketDiscountsPage';
 
+// Import Hotel Details page
+import { HotelDetailsPage } from './pages/HotelDetailsPage';
+
+// Import Hotel Booking page
+import { HotelBookingPage } from './pages/HotelBookingPage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -562,6 +568,8 @@ function App() {
               <Route path="/vas/osr/generate-receipt" element={<OSRGenerateReceiptPage />} />
               <Route path="/vas/redemption-marketplace" element={<RedemptionMarketplacePage />} />
               <Route path="/vas/hotels/rewards" element={<HotelRewardsPage />} />
+              <Route path="/vas/hotels/details" element={<HotelDetailsPage />} />
+              <Route path="/vas/hotels/booking" element={<HotelBookingPage />} />
               <Route path="/vas/tickets/discounts" element={<TicketDiscountsPage />} />
               
               {/* Handle the typo in the URL */}
