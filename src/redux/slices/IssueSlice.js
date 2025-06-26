@@ -73,6 +73,23 @@ export const fetchIssue = createAsyncThunk("fetchIssue", async ({ token }) => {
 export const updateIssue = createAsyncThunk("updateIssue", async ({ token, id, payload }) => {
     try {
         const response = await axios.put(`https://api-tasks.lockated.com/issues/${id}.json`, 
+         {issue:payload}, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+
+        });
+
+        return response.data;
+    }
+    catch (error) {
+        console.log(error);
+    }
+})
+
+export const attachFile = createAsyncThunk("updateIssue", async ({ token, id, payload }) => {
+    try {
+        const response = await axios.put(`https://api-tasks.lockated.com/issues/${id}.json`, 
          payload, {
             headers: {
                 Authorization: `Bearer ${token}`,

@@ -5,7 +5,7 @@ import { useGSAP } from "@gsap/react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchIssue, updateIssue } from "../../redux/slices/IssueSlice";
+import { attachFile, fetchIssue, updateIssue } from "../../redux/slices/IssueSlice";
 import { map } from "zod";
 
 
@@ -53,7 +53,7 @@ const Attachments = ({ attachments, id }) => {
 
 
         try {
-            const result = await dispatch(updateIssue({ token, id, payload: formData })).unwrap();
+            const result = await dispatch(attachFile({ token, id, payload: formData })).unwrap();
             console.log(result);
             const updatedAttachments = result?.attachments || [];
             setFiles(updatedAttachments);
@@ -260,10 +260,10 @@ const IssueDetails = () => {
     const handleOptionSelect = (option) => {
         setSelectedOption(option);
         setOpenDropdown(false);
-        const form=new FormData();
-
-        form.append("issue[status]", mapDisplayToApiStatus(option));
-        dispatch(updateIssue({ token, id, payload: form }));
+        const payload={
+            status:mapDisplayToApiStatus(option)
+        }
+        dispatch(updateIssue({ token, id, payload }));
     };
 
     useEffect(() => {
