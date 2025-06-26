@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { LayoutProvider } from './contexts/LayoutContext';
@@ -557,6 +557,9 @@ function App() {
               <Route path="/vas/osr/details/:id" element={<OSRDetailsPage />} />
               <Route path="/vas/osr/generate-receipt" element={<OSRGenerateReceiptPage />} />
               <Route path="/vas/redemption-marketplace" element={<RedemptionMarketplacePage />} />
+              
+              {/* Handle the typo in the URL */}
+              <Route path="/vas/redemonection-marketplace" element={<Navigate to="/vas/redemption-marketplace" replace />} />
               
               {/* Space Management Routes */}
               <Route path="/vas/space-management/bookings" element={<SpaceManagementBookingsDashboard />} />
