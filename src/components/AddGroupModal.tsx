@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { X } from 'lucide-react';
+import { X, Filter } from 'lucide-react';
 
 interface AddGroupModalProps {
   isOpen: boolean;
@@ -13,29 +13,24 @@ interface AddGroupModalProps {
 }
 
 const members = [
-  'Sureshdutt Shukla',
-  'Security HO 1', 
-  'Security HO 2',
-  'Kshitij Rasal',
-  'Vinayak Mane',
-  'Demo User',
-  'Demo Site1',
-  'Gaurav Mane',
-  'Abhishek Sharma',
-  'Tejas Chaudhari',
-  'Sohail Ansari',
-  'Sagar Singh',
-  'Aquil Husain',
-  'Samira Merchant',
-  'Vidhya Balota',
-  'Suyash Jagdale',
-  'Akshay Mugale'
+  'Demo Quikgate : B - 1505',
+  'Secure Test : D - 1702', 
+  'Santosh Naik : B - 1505',
+  'Chetan Bafna : D - 1201',
+  'Bhavesh Chauhan : D - 1702',
+  'Yogesh Video : D - 1701',
+  'Crm Admin : F - 2011',
+  'Agora Secure : B - 1505',
+  'Rahul Verma : B - 1505',
+  'Irfan Shaikh : F - soc_office',
+  'Rahul Kapoor : D - 1702'
 ];
 
 export const AddGroupModal = ({ isOpen, onClose }: AddGroupModalProps) => {
   const [groupName, setGroupName] = useState('');
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
 
   const handleSelectAll = () => {
     if (selectAll) {
@@ -64,7 +59,7 @@ export const AddGroupModal = ({ isOpen, onClose }: AddGroupModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] p-0 max-h-[80vh] overflow-hidden">
+      <DialogContent className="sm:max-w-[600px] p-0 max-h-[80vh] overflow-hidden">
         <DialogHeader className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-medium text-gray-900">Add Group</DialogTitle>
@@ -94,7 +89,18 @@ export const AddGroupModal = ({ isOpen, onClose }: AddGroupModalProps) => {
           </div>
 
           <div className="space-y-3">
-            <Label className="text-sm font-medium text-gray-700">Add Members</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium text-gray-700">Add Members</Label>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFilter(!showFilter)}
+                className="flex items-center gap-2 text-blue-600 border-blue-600 hover:bg-blue-50"
+              >
+                <Filter className="w-4 h-4" />
+                Filter
+              </Button>
+            </div>
             
             <Button
               onClick={handleSelectAll}
@@ -105,7 +111,7 @@ export const AddGroupModal = ({ isOpen, onClose }: AddGroupModalProps) => {
 
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {members.map((member) => (
-                <div key={member} className="flex items-center space-x-2">
+                <div key={member} className="flex items-center space-x-3 p-2">
                   <Checkbox
                     id={member}
                     checked={selectedMembers.includes(member)}
@@ -117,6 +123,9 @@ export const AddGroupModal = ({ isOpen, onClose }: AddGroupModalProps) => {
                   >
                     {member}
                   </Label>
+                  <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">
+                    Primary
+                  </span>
                 </div>
               ))}
             </div>

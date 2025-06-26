@@ -316,6 +316,7 @@ import { AddEventPage } from './pages/AddEventPage';
 
 // Import CRM Groups page
 import CRMGroupsPage from './pages/CRMGroupsPage';
+import CRMGroupDetailsPage from './pages/CRMGroupDetailsPage';
 
 // Import Broadcast page
 import { BroadcastDashboard } from './pages/BroadcastDashboard';
@@ -375,6 +376,7 @@ function App() {
               <Route path="/crm/polls" element={<CRMPollsPage />} />
               <Route path="/crm/polls/add" element={<AddPollPage />} />
               <Route path="/crm/groups" element={<CRMGroupsPage />} />
+              <Route path="/crm/groups/details/:id" element={<CRMGroupDetailsPage />} />
               
               {/* Snagging Routes */}
               <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
