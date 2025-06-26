@@ -10,14 +10,23 @@ interface SetupLayoutProps {
 
 export const SetupLayout = ({ children }: SetupLayoutProps) => {
   return (
-    <div className="flex min-h-screen bg-[#f6f4ee]">
-      <SetupSidebar />
-      <div className="flex-1 ml-64">
+    <div className="min-h-screen">
+      {/* Setup Header */}
+      <div className="dashboard-header">
         <SetupHeader />
-        <main className="p-8">
-          <Outlet />
-        </main>
       </div>
+      
+      {/* Setup Sidebar */}
+      <div className="dashboard-sidebar">
+        <SetupSidebar />
+      </div>
+      
+      {/* Main Content */}
+      <main className="dashboard-main">
+        <div className="p-8">
+          <Outlet />
+        </div>
+      </main>
     </div>
   );
 };

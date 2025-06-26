@@ -11,13 +11,27 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <div className="min-h-screen bg-[#fafafa]">
-      <Header />
-      <Sidebar />
-      <DynamicHeader />
+    <div className="min-h-screen">
+      {/* Header - using CSS variables */}
+      <div className="dashboard-header">
+        <Header />
+      </div>
       
-      <main className="ml-64 pt-28">
-        <Outlet />
+      {/* Sidebar - using CSS variables */}
+      <div className="dashboard-sidebar">
+        <Sidebar />
+      </div>
+      
+      {/* Subheader - using CSS variables */}
+      <div className="dashboard-subheader">
+        <DynamicHeader />
+      </div>
+      
+      {/* Main Content - using CSS variables */}
+      <main className="dashboard-main">
+        <div className="p-6">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

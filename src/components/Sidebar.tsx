@@ -455,21 +455,18 @@ export const Sidebar = () => {
   };
 
   return (
-    <div
-      className="w-64 bg-[#f6f4ee] border-r border-[#1a1a1a] fixed left-0 top-0 overflow-y-auto"
-      style={{ top: '10vh', height: '90vh' }}
-    >
+    <div className="h-full overflow-y-auto">
       <div className="p-2">
         <div className="flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 bg-[#C72030] rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-[var(--theme-accent)] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">FM</span>
           </div>
-          <span className="text-[#1a1a1a] font-semibold text-lg">Facility Management</span>
+          <span className="text-[var(--text-color)] font-semibold text-lg">Facility Management</span>
         </div>
         
         {currentSection && (
           <div className="mb-4">
-            <h3 className="text-sm font-medium text-[#1a1a1a] opacity-70 uppercase tracking-wide">
+            <h3 className="text-sm font-medium text-[var(--text-color)] opacity-70 uppercase tracking-wide">
               {currentSection}
             </h3>
           </div>
