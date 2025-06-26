@@ -5,7 +5,7 @@ import {
   useRef,
   useCallback,
 } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   useReactTable,
@@ -686,7 +686,7 @@ const IssuesTable = () => {
         header: "Issue ID",
         size: 80,
         cell: ({ getValue }) => (
-          <span className="text-xs text-gray-500 px-1">{`I-${getValue()?.toString().slice(-5)}`}</span>
+          <Link to={`/issues/${getValue()}`} className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer">{`I-${getValue()?.toString().slice(-5)}`}</Link>
         ),
       },
       {

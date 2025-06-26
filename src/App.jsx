@@ -39,6 +39,7 @@ import SprintDetails from "./components/Home/Sprints/SprintDetails.jsx";
 import ChatLayout from "./components/Home/Channel/ChatLayout.jsx";
 import Issues from "./pages/Home/Issues.jsx";
 import Documents from "./pages/Home/Documents.jsx";
+import IssueDetails from "./pages/Home/IssueDetails.jsx";
 
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -85,6 +86,7 @@ const App = () => {
                   />
                   <Route path="/tasks" element={<Tasks setIsSidebarOpen={setIsSidebarOpen} />} />
                   <Route path="/issues" element={<Issues setIsSidebarOpen={setIsSidebarOpen} />} />
+                  <Route path="/issues/:id" element={<IssueDetails />} />
                   <Route path="/mom" element={<MinutesOfMeeting />} />
                   <Route path="/new-mom" element={<MoMAdd />} />
 

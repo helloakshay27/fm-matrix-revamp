@@ -72,11 +72,11 @@ export const fetchIssue = createAsyncThunk("fetchIssue", async ({ token }) => {
 
 export const updateIssue = createAsyncThunk("updateIssue", async ({ token, id, payload }) => {
     try {
-        const response = await axios.put(`https://api-tasks.lockated.com/issues/${id}.json`, {
-            issue: payload
-        }, {
+        const response = await axios.put(`https://api-tasks.lockated.com/issues/${id}.json`, 
+         payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
+                "Content-Type":"Multipart/form-data"
             },
 
         });
