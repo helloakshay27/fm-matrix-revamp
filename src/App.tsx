@@ -337,6 +337,9 @@ import { HotelBookingPage } from './pages/HotelBookingPage';
 // Import Cold Wallet page
 import { ColdWalletPage } from './pages/ColdWalletPage';
 
+// Import CRM Polls page
+import CRMPollsPage from './pages/CRMPollsPage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -369,6 +372,7 @@ function App() {
               <Route path="/crm/broadcast" element={<BroadcastDashboard />} />
               <Route path="/crm/broadcast/add" element={<AddBroadcastPage />} />
               <Route path="/crm/broadcast/details/:id" element={<BroadcastDetailsPage />} />
+              <Route path="/crm/polls" element={<CRMPollsPage />} />
               
               {/* Snagging Routes */}
               <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
