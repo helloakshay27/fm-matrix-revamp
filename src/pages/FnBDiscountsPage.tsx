@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -60,7 +59,8 @@ export const FnBDiscountsPage = () => {
   ];
 
   const handleRestaurantClick = (restaurantId: number) => {
-    navigate('/vas/fnb/details');
+    // When clicking on F&B items, navigate to hotel rewards page
+    navigate('/vas/hotels/rewards');
   };
 
   const handleSearch = () => {

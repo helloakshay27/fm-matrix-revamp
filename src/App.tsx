@@ -576,7 +576,7 @@ function App() {
               <Route path="/vas/hotels/booking" element={<HotelBookingPage />} />
               <Route path="/vas/tickets/discounts" element={<TicketDiscountsPage />} />
               
-              // Handle the typo in the URL
+              {/* Handle the typo in the URL */}
               <Route path="/vas/redemonection-marketplace" element={<Navigate to="/vas/redemption-marketplace" replace />} />
               
               {/* Space Management Routes */}
