@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,11 +8,26 @@ import { ReferSomeoneDialog } from '@/components/ReferSomeoneDialog';
 
 export const RedemptionMarketplacePage = () => {
   const [isReferDialogOpen, setIsReferDialogOpen] = useState(false);
+  const navigate = useNavigate();
 
   const loyaltyPoints = 99500;
   const earnedPoints = 99500;
   const redeemedPoints = 0;
   const progressPercentage = (loyaltyPoints / 100000) * 100;
+
+  const handleViewReward = (service: string) => {
+    if (service === 'hotels') {
+      navigate('/vas/hotels/rewards');
+    }
+  };
+
+  const handleViewDiscount = (service: string) => {
+    if (service === 'fnb') {
+      navigate('/vas/fnb/discounts');
+    } else if (service === 'tickets') {
+      navigate('/vas/tickets/discounts');
+    }
+  };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -138,6 +154,7 @@ export const RedemptionMarketplacePage = () => {
             </div>
             <div className="flex justify-between items-end">
               <Button 
+                onClick={() => handleViewReward('hotels')}
                 className="bg-orange-500 hover:bg-orange-600 text-white"
               >
                 View Reward
@@ -165,6 +182,7 @@ export const RedemptionMarketplacePage = () => {
               <p className="text-sm opacity-90">Special discounts available</p>
             </div>
             <Button 
+              onClick={() => handleViewDiscount('fnb')}
               className="bg-orange-500 hover:bg-orange-600 text-white self-start"
             >
               View Discount
@@ -188,6 +206,7 @@ export const RedemptionMarketplacePage = () => {
               <p className="text-sm opacity-90">Journey for Less</p>
             </div>
             <Button 
+              onClick={() => handleViewDiscount('tickets')}
               className="bg-orange-500 hover:bg-orange-600 text-white self-start"
             >
               View Discount

@@ -96,6 +96,7 @@ import { EditStaffPage } from './pages/EditStaffPage';
 // Import Value Added Services pages
 import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
 import { FnBRestaurantDetailsPage } from './pages/FnBRestaurantDetailsPage';
+import { FnBDiscountsPage } from './pages/FnBDiscountsPage';
 import ParkingDashboard from './pages/ParkingDashboard';
 import ParkingDetailsPage from './pages/ParkingDetailsPage';
 import ParkingBookingsDashboard from './pages/ParkingBookingsDashboard';
@@ -324,6 +325,8 @@ import { BroadcastDetailsPage } from './pages/BroadcastDetailsPage';
 
 // Import Redemption Marketplace page
 import { RedemptionMarketplacePage } from './pages/RedemptionMarketplacePage';
+import { HotelRewardsPage } from './pages/HotelRewardsPage';
+import { TicketDiscountsPage } from './pages/TicketDiscountsPage';
 
 const queryClient = new QueryClient();
 
@@ -550,6 +553,7 @@ function App() {
               {/* Value Added Services Routes */}
               <Route path="/vas/fnb" element={<FnBRestaurantDashboard />} />
               <Route path="/vas/fnb/details/:id" element={<FnBRestaurantDetailsPage />} />
+              <Route path="/vas/fnb/discounts" element={<FnBDiscountsPage />} />
               <Route path="/vas/parking" element={<ParkingDashboard />} />
               <Route path="/vas/parking/details/:clientId" element={<ParkingDetailsPage />} />
               <Route path="/vas/parking/bookings" element={<ParkingBookingsDashboard />} />
@@ -557,6 +561,8 @@ function App() {
               <Route path="/vas/osr/details/:id" element={<OSRDetailsPage />} />
               <Route path="/vas/osr/generate-receipt" element={<OSRGenerateReceiptPage />} />
               <Route path="/vas/redemption-marketplace" element={<RedemptionMarketplacePage />} />
+              <Route path="/vas/hotels/rewards" element={<HotelRewardsPage />} />
+              <Route path="/vas/tickets/discounts" element={<TicketDiscountsPage />} />
               
               {/* Handle the typo in the URL */}
               <Route path="/vas/redemonection-marketplace" element={<Navigate to="/vas/redemption-marketplace" replace />} />
