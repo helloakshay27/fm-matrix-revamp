@@ -1,11 +1,17 @@
-
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Calendar, Users, Search } from 'lucide-react';
 
 export const HotelRewardsPage = () => {
+  const navigate = useNavigate();
+
+  const handleHotelClick = () => {
+    navigate('/vas/hotels/details');
+  };
+
   const hotels = [
     {
       id: 1,
@@ -108,7 +114,11 @@ export const HotelRewardsPage = () => {
         <h2 className="text-2xl font-bold mb-6 text-gray-900">Popular Hotels</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {hotels.map((hotel) => (
-            <Card key={hotel.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+            <Card 
+              key={hotel.id} 
+              className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={handleHotelClick}
+            >
               <div className="aspect-video overflow-hidden">
                 <img 
                   src={hotel.image} 
@@ -130,7 +140,11 @@ export const HotelRewardsPage = () => {
         <h2 className="text-2xl font-bold mb-6 text-gray-900">Available this weekend</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {weekendHotels.map((hotel) => (
-            <Card key={hotel.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+            <Card 
+              key={hotel.id} 
+              className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={handleHotelClick}
+            >
               <div className="aspect-video overflow-hidden">
                 <img 
                   src={hotel.image} 
