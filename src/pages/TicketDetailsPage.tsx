@@ -1,218 +1,174 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Users, Clock, MapPin, CheckCircle, Star, Music } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 
 export const TicketDetailsPage = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('overview');
 
-  const handleBookNow = () => {
-    navigate('/vas/tickets/booking');
+  const handleBackToList = () => {
+    navigate('/maintenance/ticket');
   };
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'overview':
-        return (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold mb-4">About this event</h3>
-              <p className="text-gray-600 mb-4">Experience an unforgettable evening with live music at Marina Bay</p>
-              
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-gray-600" />
-                  <span>Saturday, June 15</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-gray-600" />
-                  <span>7:00 PM - 11:00 PM</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-gray-600" />
-                  <span>Marina Bay Amphitheater</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Music className="h-5 w-5 text-gray-600" />
-                  <span>Live Concert</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-gray-600" />
-                  <span>All ages welcome</span>
-                </div>
-              </div>
-              
-              <Button variant="outline" className="text-[#C72030] border-[#C72030]">
-                View full details
-              </Button>
-            </div>
+  const handleFeeds = () => {
+    navigate(`/maintenance/ticket/${id}/feeds`);
+  };
 
-            <div>
-              <h3 className="text-xl font-semibold mb-4">Special Discount</h3>
-              <p className="text-gray-600">
-                Get 25% off on all tickets. Limited time offer for this amazing event.
-              </p>
-            </div>
-          </div>
-        );
-      case 'lineup':
-        return <div className="p-4">Artist lineup goes here...</div>;
-      case 'venue':
-        return <div className="p-4">Venue information goes here...</div>;
-      case 'reviews':
-        return <div className="p-4">Reviews content goes here...</div>;
-      default:
-        return null;
-    }
+  const handleTagVendor = () => {
+    navigate(`/maintenance/ticket/${id}/tag-vendor`);
+  };
+
+  const handleCreateTask = () => {
+    // Handle create task functionality
+    console.log('Create task clicked');
+  };
+
+  // Mock ticket data - in real app this would come from API
+  const ticketData = {
+    id: id || '2189-11106',
+    title: 'test',
+    status: 'Pending',
+    createdOn: '16/06/2025 5:17 PM',
+    category: 'Air Conditioner',
+    adminPriority: 'p1',
+    subCategory: 'test',
+    referenceNumber: '-',
+    createdBy: 'Abhishek Sharma',
+    department: 'Technician',
+    site: 'Lockated'
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Image Gallery */}
-      <div className="bg-white">
-        <div className="max-w-7xl mx-auto p-6">
-          <div className="grid grid-cols-12 gap-4 h-96">
-            <div className="col-span-8">
-              <img 
-                src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-                alt="Concert Main"
-                className="w-full h-full object-cover rounded-lg"
-              />
+    <div className="p-6 bg-white min-h-screen">
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+          <button 
+            onClick={handleBackToList}
+            className="flex items-center gap-1 hover:text-[#C72030] transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Ticket List</span>
+          </button>
+        </div>
+        
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+          <span>Ticket</span>
+          <span>&gt;</span>
+          <span>Ticket Details</span>
+        </div>
+        
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">TICKET DETAILS</h1>
+          <div className="flex gap-3">
+            <Button 
+              onClick={handleFeeds}
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:bg-[#C72030]/90"
+            >
+              Feeds
+            </Button>
+            <Button 
+              onClick={handleTagVendor}
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:bg-[#C72030]/90"
+            >
+              Tag Vendor
+            </Button>
+            <Button 
+              onClick={handleCreateTask}
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:bg-[#C72030]/90"
+            >
+              Create Task
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Ticket Details Section */}
+      <Card className="mb-6">
+        <CardHeader className="bg-orange-50 border-b">
+          <CardTitle className="text-orange-600 flex items-center gap-2">
+            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">1</div>
+            TICKET DETAILS
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-3 gap-8">
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Title</label>
+                <p className="font-medium">{ticketData.title}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Status</label>
+                <Badge className="bg-yellow-100 text-yellow-700">{ticketData.status}</Badge>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">SubCategory</label>
+                <p className="font-medium">{ticketData.subCategory}</p>
+              </div>
             </div>
-            <div className="col-span-4 grid grid-rows-2 gap-4">
-              <img 
-                src="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-                alt="Concert Stage"
-                className="w-full h-full object-cover rounded-lg"
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <img 
-                  src="https://images.unsplash.com/photo-1507924538820-ede94a04019d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-                  alt="Concert Venue"
-                  className="w-full h-full object-cover rounded-lg"
-                />
-                <img 
-                  src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-                  alt="Concert Crowd"
-                  className="w-full h-full object-cover rounded-lg"
-                />
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Created on</label>
+                <p className="font-medium">{ticketData.createdOn}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Category</label>
+                <p className="font-medium">{ticketData.category}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Reference Number</label>
+                <p className="font-medium">{ticketData.referenceNumber}</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Ticket No.</label>
+                <p className="font-medium">{ticketData.id}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 block mb-1">Admin Priority</label>
+                <p className="font-medium">{ticketData.adminPriority}</p>
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Navigation Tabs */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex space-x-8">
-            {[
-              { id: 'overview', label: 'Overview' },
-              { id: 'lineup', label: 'Lineup' },
-              { id: 'venue', label: 'Venue' },
-              { id: 'reviews', label: 'Reviews' }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-2 border-b-2 font-medium text-sm ${
-                  activeTab === tab.id
-                    ? 'border-[#C72030] text-[#C72030]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="grid grid-cols-3 gap-8">
-          {/* Left Content */}
-          <div className="col-span-2">
-            {/* Event Title */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold mb-2">Concert at Marina Bay</h1>
-              <div className="flex items-center gap-2">
-                <Badge className="bg-orange-100 text-orange-800">4.5</Badge>
-                <span className="text-gray-600">Reviews</span>
-                <div className="flex items-center gap-1 ml-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star key={star} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-              </div>
+      {/* Creator's Information Section */}
+      <Card>
+        <CardHeader className="bg-orange-50 border-b">
+          <CardTitle className="text-orange-600 flex items-center gap-2">
+            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">2</div>
+            CREATOR'S INFORMATION
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-3 gap-8">
+            <div>
+              <label className="text-sm text-gray-600 block mb-1">Created By</label>
+              <p className="font-medium">{ticketData.createdBy}</p>
             </div>
-
-            {/* Tab Content */}
-            {renderTabContent()}
+            <div>
+              <label className="text-sm text-gray-600 block mb-1">Department</label>
+              <p className="font-medium">{ticketData.department}</p>
+            </div>
+            <div>
+              <label className="text-sm text-gray-600 block mb-1">Site</label>
+              <p className="font-medium">{ticketData.site}</p>
+            </div>
           </div>
-
-          {/* Right Sidebar - Ticket Booking */}
-          <div className="col-span-1">
-            <Card className="sticky top-6">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <div>
-                    <div className="text-2xl font-bold text-[#C72030]">25% OFF</div>
-                    <div className="text-gray-600">on all tickets</div>
-                  </div>
-                  <Button 
-                    onClick={handleBookNow}
-                    className="bg-gray-800 hover:bg-gray-700 text-white"
-                  >
-                    Buy Tickets
-                  </Button>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="p-4 border rounded-lg">
-                    <h3 className="font-semibold mb-3">Event Details</h3>
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        <span>Saturday, June 15</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        <span>7:00 PM - 11:00 PM</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        <span>Marina Bay Amphitheater</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        <span>All ages welcome</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4" />
-                        <span>E-tickets available</span>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4 p-3 bg-green-50 rounded">
-                      <div className="text-sm font-medium text-green-800">Limited offer</div>
-                      <div className="text-xs text-green-600">Valid for this weekend only</div>
-                    </div>
-                    
-                    <Button variant="outline" className="w-full mt-3 text-[#C72030] border-[#C72030]">
-                      View Seating Chart
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
