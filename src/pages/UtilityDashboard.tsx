@@ -6,9 +6,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Search, Plus, Import, RefreshCw, FileDown, Printer, Filter } from 'lucide-react';
 import { Package, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { EnergyFilterDialog } from '../components/EnergyFilterDialog';
+import { UtilityFilterDialog } from '../components/UtilityFilterDialog';
 import { BulkUploadDialog } from '../components/BulkUploadDialog';
-import { EnergyAssetTable } from '../components/EnergyAssetTable';
+import { AssetTable } from '../components/AssetTable';
 import { StatsCard } from '../components/StatsCard';
 
 export const UtilityDashboard = () => {
@@ -60,7 +60,7 @@ export const UtilityDashboard = () => {
 
   const handleSearch = () => {
     console.log('Searching for:', searchTerm);
-    // The search is now handled automatically by the EnergyAssetTable component
+    // The search is now handled automatically by the AssetTable component
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -178,12 +178,12 @@ export const UtilityDashboard = () => {
       {/* Data Table with search functionality */}
       <Card>
         <CardContent className="p-0">
-          <EnergyAssetTable searchTerm={searchTerm} />
+          <AssetTable searchTerm={searchTerm} />
         </CardContent>
       </Card>
 
       {/* Dialogs */}
-      <EnergyFilterDialog 
+      <UtilityFilterDialog 
         isOpen={isFilterOpen} 
         onClose={() => setIsFilterOpen(false)} 
       />
