@@ -7,20 +7,11 @@ import { Label } from "@/components/ui/label";
 
 export const MarketPlaceAccountingPage = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    name: '',
-    pan: '',
-    tan: '',
-    societyRegistrationNumber: ''
-  });
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  const [name, setName] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+    console.log('Form submitted:', { name });
     // Navigate to the details page
     navigate('/market-place/accounting/details');
   };
@@ -42,53 +33,11 @@ export const MarketPlaceAccountingPage = () => {
             <Input
               id="name"
               type="text"
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               className="w-full border-gray-300 rounded-none focus:border-gray-400 focus:ring-0"
             />
           </div>
-
-          <div>
-            <Label htmlFor="pan" className="block text-sm font-medium text-gray-700 mb-2">
-              PAN
-            </Label>
-            <Input
-              id="pan"
-              type="text"
-              value={formData.pan}
-              onChange={(e) => handleInputChange('pan', e.target.value)}
-              className="w-full border-gray-300 rounded-none focus:border-gray-400 focus:ring-0"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="tan" className="block text-sm font-medium text-gray-700 mb-2">
-              TAN
-            </Label>
-            <Input
-              id="tan"
-              type="text"
-              value={formData.tan}
-              onChange={(e) => handleInputChange('tan', e.target.value)}
-              className="w-full border-gray-300 rounded-none focus:border-gray-400 focus:ring-0"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="societyRegistrationNumber" className="block text-sm font-medium text-gray-700 mb-2">
-              Society Registration Number
-            </Label>
-            <Input
-              id="societyRegistrationNumber"
-              type="text"
-              value={formData.societyRegistrationNumber}
-              onChange={(e) => handleInputChange('societyRegistrationNumber', e.target.value)}
-              className="w-full border-gray-300 rounded-none focus:border-gray-400 focus:ring-0"
-            />
-          </div>
-
-          {/* Horizontal line */}
-          <hr className="border-gray-300 my-6" />
 
           {/* Submit Button */}
           <Button
