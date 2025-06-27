@@ -229,10 +229,7 @@ const modulesByPackage = {
     { 
       name: 'Accounting', 
       icon: Calculator, 
-      href: '/market-place/accounting',
-      subItems: [
-        { name: 'Cost Center', href: '/market-place/accounting/cost-center', color: 'text-[#1a1a1a]' }
-      ]
+      href: '/market-place/accounting'
     }
   ],
   'Settings': [
