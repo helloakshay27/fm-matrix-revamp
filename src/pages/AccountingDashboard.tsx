@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,7 +45,7 @@ export const AccountingDashboard = () => {
     societyRegistrationNumber: ''
   });
 
-  const loggedInUser = 'Admin'; // Changed from 'Ankit Gupta' to 'Admin'
+  const loggedInUser = 'Admin';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
