@@ -373,6 +373,7 @@ const Tasks = ({ isEdit }) => {
       !formData.observer.length ||
       !formData.tags.length
     ) {
+      toast.dismiss();
       toast.error("Please fill all required fields.");
       return;
     }
@@ -381,7 +382,7 @@ const Tasks = ({ isEdit }) => {
 
     try {
       const resultAction = await dispatch(createTask({ token, payload })).unwrap();
-      if (createTask.fulfilled.match(resultAction)) {
+        toast.dismiss();
         toast.success("Task created successfully.");
         setSavedTasks([...savedTasks, { id: nextId, formData }]);
         setFormData({
@@ -399,11 +400,10 @@ const Tasks = ({ isEdit }) => {
           tags: [],
         });
         setNextId(nextId + 1);
-      } else {
-        toast.error("Failed to create task.");
-      }
+      
     } catch (error) {
       console.error("Error creating task:", error);
+      toast.dismiss();
       toast.error("Error creating task.");
     }
   };
@@ -419,6 +419,7 @@ const Tasks = ({ isEdit }) => {
       !formData.observer.length ||
       !formData.tags.length
     ) {
+      toast.dismiss();
       toast.error("Please fill all required fields.");
       return;
     }
@@ -433,6 +434,7 @@ const Tasks = ({ isEdit }) => {
         (isEdit && editTask.fulfilled.match(resultAction)) ||
         (!isEdit && createTask.fulfilled.match(resultAction))
       ) {
+        toast.dismiss();
         toast.success(
           isEdit ? "Task updated successfully." : "Task created successfully."
         );
