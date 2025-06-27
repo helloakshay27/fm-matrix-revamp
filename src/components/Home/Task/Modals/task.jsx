@@ -87,7 +87,7 @@ const TaskForm = ({
 
   return (
     <div className="p-4 bg-white">
-      <div className="flex items-center justify-between gap-3">
+      {/* <div className="flex items-center justify-between gap-3">
         <div className="mt-4 space-y-2">
           <label className="block ms-2">
             Project <span className="text-red-600">*</span>
@@ -110,7 +110,37 @@ const TaskForm = ({
             className="w-full border h-[40px] outline-none border-gray-300 p-2 text-[13px] bg-gray-200"
           />
         </div>
-      </div>
+      </div> */}
+
+      {project && milestone &&
+        !Array.isArray(project) &&
+        !Array.isArray(milestone) &&
+        project.title && milestone.title && (
+          <div className="flex items-center justify-between gap-3">
+            <div className="mt-4 space-y-2">
+              <label className="block ms-2">
+                Project <span className="text-red-600">*</span>
+              </label>
+              <input
+                type="text"
+                value={project.title}
+                className="w-full border h-[40px] outline-none border-gray-300 p-2 text-[13px] bg-gray-200"
+                readOnly
+              />
+            </div>
+            <div className="mt-4 space-y-2 w-auto">
+              <label className="block ms-2">
+                Milestone <span className="text-red-600">*</span>
+              </label>
+              <input
+                type="text"
+                value={milestone.title}
+                readOnly
+                className="w-full border h-[40px] outline-none border-gray-300 p-2 text-[13px] bg-gray-200"
+              />
+            </div>
+          </div>
+        )}
 
       <div className="flex items-start gap-4 mt-3">
         <div className="w-full flex flex-col justify-between">

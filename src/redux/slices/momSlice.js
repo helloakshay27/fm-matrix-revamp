@@ -65,10 +65,26 @@ export const createMoM = createAsyncThunk('createMoM', async ({ token, payload }
     }
 })
 
+export const fetchMomDetails = createAsyncThunk('fetchMomDetails', async ({ token, id }) => {
+    try {
+        const response = await axios.get(`https://api-tasks.lockated.com/mom_details/${id}.json`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+
+        return response.data
+    } catch (error) {
+        console.log(error);
+    }
+})
+
 export const fetchMoMSlice = createApiSlice('fetchMoM', fetchMoM);
 export const createMoMSlice = createApiSlice('createMoM', createMoM);
+export const fetchMomDetailsSlice = createApiSlice('fetchMomDetails', fetchMomDetails);
 
 export const fetchMoMReducer = fetchMoMSlice.reducer;
 export const createMoMReducer = createMoMSlice.reducer;
+export const fetchMomDetailsReducer = fetchMomDetailsSlice.reducer;
 
 export const { resetMomCreateSuccess } = createMoMSlice.actions;

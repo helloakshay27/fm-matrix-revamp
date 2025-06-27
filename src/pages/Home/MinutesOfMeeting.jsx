@@ -2,7 +2,7 @@ import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { useEffect, useRef, useState } from "react";
 import { Plus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { momTabs } from "../../data/Data";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMoM } from "../../redux/slices/momSlice";
@@ -137,7 +137,11 @@ const MinutesOfMeeting = () => {
                                 currentItems.map((item) => (
                                     <tr key={item.id}>
                                         <td className="p-4">{item.id}</td>
-                                        <td className="p-4">{item.title}</td>
+                                        <td className="p-4">
+                                            <Link to={`/mom/${item.id}`} className="hover:underline">
+                                                {item.title}
+                                            </Link>
+                                        </td>
                                         <td className="p-4" style={{ padding: "1rem" }}>{item.meeting_date?.split("T")[0]}</td>
                                         <td className="p-4">John Doe</td>
                                         <td className="p-4">{item.meeting_mode}</td>
