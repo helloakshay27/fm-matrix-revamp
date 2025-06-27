@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -300,8 +301,9 @@ import { OSRDetailsPage } from './pages/OSRDetailsPage';
 // Import OSR Generate Receipt page
 import { OSRGenerateReceiptPage } from './pages/OSRGenerateReceiptPage';
 
-// Import Market Place Accounting page
+// Import Market Place Accounting pages
 import { MarketPlaceAccountingPage } from './pages/MarketPlaceAccountingPage';
+import { MarketPlaceAccountingDetailsPage } from './pages/MarketPlaceAccountingDetailsPage';
 
 // Import Market Place Cost Center page
 import { MarketPlaceCostCenterPage } from './pages/MarketPlaceCostCenterPage';
@@ -621,6 +623,7 @@ function App() {
               <Route path="/market-place/loyalty-rule-engine" element={<LoyaltyRuleEngineDashboard />} />
               <Route path="/market-place/cloud-telephony" element={<div>Cloud Telephony</div>} />
               <Route path="/market-place/accounting" element={<MarketPlaceAccountingPage />} />
+              <Route path="/market-place/accounting/details" element={<MarketPlaceAccountingDetailsPage />} />
               <Route path="/market-place/accounting/cost-center" element={<MarketPlaceCostCenterPage />} />
               
               <Route path="*" element={<NotFound />} />
