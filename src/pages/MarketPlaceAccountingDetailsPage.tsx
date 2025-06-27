@@ -92,14 +92,14 @@ export const MarketPlaceAccountingDetailsPage = () => {
         {/* Action Links */}
         <div className="mt-8 space-x-2">
           <button 
-            onClick={() => navigate('/market-place/accounting')}
+            onClick={() => navigate('/market-place/accounting/edit')}
             className="text-blue-600 hover:underline text-sm"
           >
             Edit
           </button>
           <span className="text-gray-400">|</span>
           <button 
-            onClick={() => navigate('/market-place')}
+            onClick={() => navigate('/market-place/accounting')}
             className="text-blue-600 hover:underline text-sm"
           >
             Back
