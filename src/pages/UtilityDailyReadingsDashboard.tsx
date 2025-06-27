@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -214,15 +213,21 @@ export default function UtilityDailyReadingsDashboard() {
 
       {/* Action Buttons */}
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="outline" className="gap-2">
+        <Button 
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+        >
           <Upload className="w-4 h-4" />
           Import
         </Button>
-        <Button variant="outline" className="gap-2">
+        <Button 
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+        >
           <Download className="w-4 h-4" />
           Export
         </Button>
-        <Button variant="outline" className="gap-2">
+        <Button 
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+        >
           <Filter className="w-4 h-4" />
           Filters
         </Button>
@@ -236,7 +241,7 @@ export default function UtilityDailyReadingsDashboard() {
             placeholder="Search readings..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 rounded-none border-gray-300 focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
           />
         </div>
       </div>
@@ -264,7 +269,10 @@ export default function UtilityDailyReadingsDashboard() {
                 {filteredData.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        size="sm"
+                        className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-2 py-1 h-8 text-xs font-medium"
+                      >
                         <Edit className="w-4 h-4" />
                       </Button>
                     </TableCell>

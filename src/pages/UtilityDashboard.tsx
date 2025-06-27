@@ -1,28 +1,25 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { StatsCard } from '../components/StatsCard';
-import { AssetTable } from '../components/AssetTable';
-import { UtilityFilterDialog } from '../components/UtilityFilterDialog';
-import { BulkUploadDialog } from '../components/BulkUploadDialog';
-import { Plus, Filter, Download, Upload, Search, QrCode } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Search, Plus, Import, RefreshCw, FileDown, Printer, Filter } from 'lucide-react';
 import { Package, CheckCircle, AlertTriangle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { EnergyFilterDialog } from '../components/EnergyFilterDialog';
+import { BulkUploadDialog } from '../components/BulkUploadDialog';
+import { EnergyAssetTable } from '../components/EnergyAssetTable';
+import { StatsCard } from '../components/StatsCard';
 
 export const UtilityDashboard = () => {
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
-  const [searchTerm, setSearchTerm] = useState('');
 
-  const handleAddClick = () => {
-    navigate('/utility/energy/add-asset');
-  };
-
-  const handleInActiveAssetsClick = () => {
-    navigate('/utility/inactive-assets');
+  const handleAdd = () => {
+    navigate('/utility/add-asset');
   };
 
   const handleImport = () => {
@@ -39,11 +36,8 @@ export const UtilityDashboard = () => {
     // Create and download CSV file
     const csvContent = "data:text/csv;charset=utf-8," + 
       "Asset Name,Asset ID,Asset Code,Asset No.,Asset Status,Equipment Id,Site,Building,Wing,Floor,Area,Room,Meter Type,Asset Type\n" +
-      "Generator,GEN001,GEN001,001,In Use,EQ001,Main Site,Building A,East Wing,Ground Floor,Utility Area,Generator Room,Energy,Parent\n" +
-      "Transformer,TRF001,TRF001,002,In Use,EQ002,Main Site,Building A,East Wing,Ground Floor,Utility Area,Transformer Room,Energy,Parent\n" +
-      "UPS System,UPS001,UPS001,003,In Use,EQ003,Main Site,Building B,West Wing,First Floor,Server Room,UPS Room,Energy,Sub\n" +
-      "Solar Panel,SOL001,SOL001,004,In Use,EQ004,Main Site,Building C,North Wing,Rooftop,Solar Farm,Panel Area,Renewable,Parent\n" +
-      "Emergency Generator,EGEN001,EGEN001,005,Breakdown,EQ005,Main Site,Building A,East Wing,Basement,Emergency Area,Generator Room,Energy,Parent";
+      "Diesel Generator,53614,83898732f107c5df0119,501,In Use,,Located Site 1,Sarova,SW1,FW1,AW1,,Main Meter,Comprehensive\n" +
+      "Panel meter,53616,f32e0f1a1a8b5c2d3e4f,503,In Use,,Located Site 1,Twin Tower,TW1,FTW1,ATW1,,Sub Meter,Non-Comprehensive";
     
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -57,18 +51,16 @@ export const UtilityDashboard = () => {
   };
 
   const handlePrintQR = () => {
-    console.log('Printing QR codes for selected assets...');
-    // Logic for printing QR codes
+    console.log('Printing QR codes...');
   };
 
-  const handlePrintAllQR = () => {
-    console.log('Printing QR codes for all assets...');
-    // Logic for printing all QR codes
+  const handleInActiveAssets = () => {
+    navigate('/utility/inactive-assets');
   };
 
   const handleSearch = () => {
     console.log('Searching for:', searchTerm);
-    // The search is now handled automatically by the AssetTable component
+    // The search is now handled automatically by the EnergyAssetTable component
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -78,96 +70,84 @@ export const UtilityDashboard = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="mb-6">
-        <div>
-          <p className="text-[#1a1a1a] opacity-70 mb-2">Assets &gt; Asset List</p>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">ASSET LIST</h1>
-        </div>
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+      {/* Breadcrumb */}
+      <div className="text-sm text-gray-600">
+        Assets &gt; Asset List
       </div>
-      
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
+      {/* Page Title */}
+      <h1 className="text-2xl font-bold text-gray-900">ASSET LIST</h1>
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatsCard
           title="Total Asset"
-          value="7"
+          value="2"
           color="orange"
           icon={<Package className="w-8 h-8" />}
         />
         <StatsCard
           title="In Use"
-          value="6"
+          value="2"
           color="green"
           icon={<CheckCircle className="w-8 h-8" />}
         />
         <StatsCard
           title="Breakdown"
-          value="1"
+          value="0"
           color="red"
           icon={<AlertTriangle className="w-8 h-8" />}
         />
       </div>
-      
-      {/* Action Buttons Row 1 */}
-      <div className="flex flex-wrap gap-3 mb-6">
+
+      {/* Action Buttons */}
+      <div className="flex flex-wrap gap-3">
         <Button 
-          onClick={handleAddClick}
+          onClick={handleAdd}
           className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Add
         </Button>
-        
         <Button 
           onClick={handleImport}
           className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
-          <Download className="w-4 h-4" />
+          <Import className="w-4 h-4" />
           Import
         </Button>
-        
         <Button 
           onClick={handleUpdate}
           className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
-          <Upload className="w-4 h-4" />
+          <RefreshCw className="w-4 h-4" />
           Update
         </Button>
-        
         <Button 
           onClick={handleExportAll}
           className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
-          <Download className="w-4 h-4" />
+          <FileDown className="w-4 h-4" />
           Export All
         </Button>
-        
         <Button 
           onClick={handlePrintQR}
           className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
-          <QrCode className="w-4 h-4" />
+          <Printer className="w-4 h-4" />
           Print QR
         </Button>
-        
         <Button 
-          onClick={handleInActiveAssetsClick}
+          onClick={handleInActiveAssets}
           className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
           In-Active Assets
         </Button>
       </div>
 
-      {/* Action Buttons Row 2 */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        <Button 
-          onClick={handlePrintAllQR}
-          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
-        >
-          <QrCode className="w-4 h-4" />
-          Print All QR
-        </Button>
-        
+      {/* Search and Filter */}
+      <div className="flex justify-between items-center">
         <Button 
           onClick={() => setIsFilterOpen(true)}
           className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
@@ -175,45 +155,46 @@ export const UtilityDashboard = () => {
           <Filter className="w-4 h-4" />
           Filters
         </Button>
-
-        {/* Updated Search Bar */}
-        <div className="flex items-center ml-auto">
-          <div className="flex items-center space-x-2">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                placeholder="Search..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="pl-10 w-64 h-10 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
-              />
-            </div>
-            <Button 
-              onClick={handleSearch}
-              className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-6 py-2 h-10 text-sm font-medium border-0"
-            >
-              Go!
-            </Button>
+        <div className="flex items-center space-x-2">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="pl-10 w-64 h-10 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+            />
           </div>
+          <Button 
+            onClick={handleSearch}
+            className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-6 py-2 h-10 text-sm font-medium border-0"
+          >
+            Go!
+          </Button>
         </div>
       </div>
-      
-      {/* Asset Table with search functionality */}
-      <AssetTable searchTerm={searchTerm} />
-      
-      {/* Filter Dialog */}
-      <UtilityFilterDialog 
+
+      {/* Data Table with search functionality */}
+      <Card>
+        <CardContent className="p-0">
+          <EnergyAssetTable searchTerm={searchTerm} />
+        </CardContent>
+      </Card>
+
+      {/* Dialogs */}
+      <EnergyFilterDialog 
         isOpen={isFilterOpen} 
         onClose={() => setIsFilterOpen(false)} 
       />
-
-      {/* Bulk Upload Dialog */}
+      
       <BulkUploadDialog 
         open={isBulkUploadOpen} 
         onOpenChange={setIsBulkUploadOpen}
-        title={uploadType === 'import' ? 'Import Assets' : 'Update Assets'}
+        title={uploadType === 'import' ? 'Import Energy Assets' : 'Update Energy Assets'}
       />
     </div>
   );
 };
+
+export default UtilityDashboard;

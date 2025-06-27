@@ -30,11 +30,15 @@ const UtilityConsumptionDashboard = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Utility Consumption</h1>
         <div className="flex gap-3">
-          <Button variant="outline" className="flex items-center gap-2">
+          <Button 
+            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+          >
             <Filter className="w-4 h-4" />
             Filters
           </Button>
-          <Button className="bg-[#8B4513] hover:bg-[#7A3E0F] text-white flex items-center gap-2">
+          <Button 
+            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+          >
             <Plus className="w-4 h-4" />
             Generate New
           </Button>
@@ -71,8 +75,18 @@ const UtilityConsumptionDashboard = () => {
                   <TableRow key={index} className="hover:bg-gray-50">
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">Edit</Button>
-                        <Button variant="outline" size="sm">Delete</Button>
+                        <Button 
+                          size="sm"
+                          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-3 py-1 h-8 text-xs font-medium"
+                        >
+                          Edit
+                        </Button>
+                        <Button 
+                          size="sm"
+                          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-3 py-1 h-8 text-xs font-medium"
+                        >
+                          Delete
+                        </Button>
                       </div>
                     </TableCell>
                     <TableCell>{item.clientName}</TableCell>

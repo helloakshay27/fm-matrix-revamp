@@ -146,7 +146,9 @@ const UtilityRequestDashboard = () => {
 
       {/* Add Button */}
       <div className="flex justify-start">
-        <Button className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2">
+        <Button 
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           Add
         </Button>
@@ -175,12 +177,18 @@ const UtilityRequestDashboard = () => {
               {utilityRequestData.map((item) => (
                 <TableRow key={item.id} className="hover:bg-gray-50">
                   <TableCell>
-                    <Button variant="ghost" size="sm" className="p-1">
+                    <Button 
+                      size="sm" 
+                      className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-2 py-1 h-8 text-xs font-medium"
+                    >
                       <Edit className="w-4 h-4" />
                     </Button>
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm" className="p-1">
+                    <Button 
+                      size="sm" 
+                      className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-2 py-1 h-8 text-xs font-medium"
+                    >
                       <Eye className="w-4 h-4" />
                     </Button>
                   </TableCell>
@@ -211,10 +219,10 @@ const UtilityRequestDashboard = () => {
               variant={currentPage === page ? "default" : "outline"}
               size="sm"
               onClick={() => handlePageChange(page)}
-              className={`w-8 h-8 ${
+              className={`w-8 h-8 rounded-none ${
                 currentPage === page 
-                  ? "bg-purple-600 hover:bg-purple-700 text-white" 
-                  : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                  ? "bg-[#C72030] hover:bg-[#A01B29] text-white" 
+                  : "bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200"
               }`}
             >
               {page}
@@ -223,14 +231,14 @@ const UtilityRequestDashboard = () => {
           <Button
             variant="outline"
             size="sm"
-            className="w-8 h-8 border-gray-300 text-gray-700 hover:bg-gray-100"
+            className="w-8 h-8 rounded-none bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200"
           >
             6
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="border-gray-300 text-gray-700 hover:bg-gray-100"
+            className="rounded-none bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200"
           >
             Last »
           </Button>

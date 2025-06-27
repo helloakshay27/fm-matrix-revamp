@@ -27,7 +27,7 @@ const UtilityEVConsumptionDashboard = () => {
       <div className="flex justify-start">
         <Button 
           onClick={() => setIsFilterOpen(true)}
-          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
           <Filter className="w-4 h-4" />
           Filters
