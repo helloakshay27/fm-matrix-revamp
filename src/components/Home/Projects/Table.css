@@ -238,7 +238,7 @@ tbody tr:hover {
   position: relative;
 }
 .progress-bar-fill {
-  background-color: green;
+  background-color: #ffd844;
   height: 100%;
   overflow: hidden;
   border-radius: 10px;

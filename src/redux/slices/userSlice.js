@@ -165,6 +165,21 @@ export const removeUserFromProject = createAsyncThunk('removeUserFromProject', a
     }
 })
 
+export const fetchAssociatedProjects = createAsyncThunk('fetchAssociatedProjects', async ({ token, id }) => {
+    try {
+        const response = await axios.get(`https://api-tasks.lockated.com/users/${id}/asssoicated_projects.json`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
+        return response.data;
+    }
+    catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
 // Create slices
 export const userSlice = createApiSlice('fetchUsers', fetchUsers);
 export const createInternalUserSlice = createApiSlice('createInternalUser', createInternalUser);
@@ -174,6 +189,7 @@ export const fetchExternalUserSlice = createApiSlice('fetchExternalUser', fetchE
 export const fetchUpdateUserSlice = createApiSlice('fetchUpdateUser', fetchUpdateUser);
 export const fetchInternalUserDetailsSlice = createApiSlice('fetchInternalUserDetails', fetchInternalUserDetails);
 export const removeUserFromProjectSlice = createApiSlice('removeUserFromProject', removeUserFromProject);
+export const fetchAssociatedProjectsSlice = createApiSlice('fetchAssociatedProjects', fetchAssociatedProjects);
 
 
 // Export reducers
@@ -185,3 +201,4 @@ export const fetchExternalUserReducer = fetchExternalUserSlice.reducer;
 export const fetchUpdatelUserReducer = fetchUpdateUserSlice.reducer;
 export const fetchInternalUserDetailsReducer = fetchInternalUserDetailsSlice.reducer;
 export const removeUserFromProjectReducer = removeUserFromProjectSlice.reducer;
+export const fetchAssociatedProjectsReducer = fetchAssociatedProjectsSlice.reducer;
