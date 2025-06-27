@@ -160,7 +160,7 @@ const TaskForm = ({
       </div>
 
       <div className="mt-4 space-y-2 h-[100px]">
-        <label className="block ms-2">Description</label>
+        <label className="block">Description</label>
         <textarea
           name="description"
           rows={5}
@@ -200,7 +200,7 @@ const TaskForm = ({
               allUsers.find((user) => user.id === formData.responsiblePerson)
                 ?.lock_role?.display_name || ""
             }
-            className="text-[13px] border-2 border-grey-300 px-2 py-[6px] bg-gray-200"
+            className="text-[13px] border-2 border-grey-300 px-2 py-[6px] bg-gray-200 w-full"
             readOnly
           />
         </div>

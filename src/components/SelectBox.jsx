@@ -28,9 +28,8 @@ export default function SelectBox({
       "&:hover": {
         outline: "none",
       },
-      borderRadius: "4px",
+      borderRadius: "0px",
       backgroundColor: table ? "none" : card ? "#FAF8F5" : "#fff",
-
       fontSize: "12px",
     }),
     valueContainer: (base) => ({
