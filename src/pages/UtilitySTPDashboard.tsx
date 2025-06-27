@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Plus, Upload, RefreshCw, Download, QrCode, Filter, Search } from 'lucide-react';
 import { Package, CheckCircle, AlertTriangle } from 'lucide-react';
@@ -97,42 +98,42 @@ const UtilitySTPDashboard = () => {
         <div className="flex flex-wrap gap-4">
           <Button 
             onClick={handleAdd}
-            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+            className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
           >
             <Plus className="w-4 h-4" />
             Add
           </Button>
           <Button 
             onClick={() => setIsImportOpen(true)}
-            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+            className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
           >
             <Upload className="w-4 h-4" />
             Import
           </Button>
           <Button 
             onClick={() => setIsUpdateOpen(true)}
-            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+            className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
           >
             <RefreshCw className="w-4 h-4" />
             Update
           </Button>
           <Button 
             onClick={handleExportAll}
-            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+            className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
           >
             <Download className="w-4 h-4" />
             Export All
           </Button>
           <Button 
             onClick={handlePrintQR}
-            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+            className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
           >
             <QrCode className="w-4 h-4" />
             Print QR
           </Button>
           <Button 
             onClick={handleInActiveAssets}
-            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+            className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
           >
             In-Active Assets
           </Button>
@@ -142,7 +143,7 @@ const UtilitySTPDashboard = () => {
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <Button 
             onClick={() => setIsFilterOpen(true)}
-            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+            className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
           >
             <Filter className="w-4 h-4" />
             Filters
