@@ -1,7 +1,7 @@
 import { useGSAP } from "@gsap/react";
 import { ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "lucide-react";
 import { Fragment, useEffect, useRef, useState } from "react";
-import { redirect, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { changeTaskStatus, createTaskComment, editTaskComment, taskDetails, attachFiles, editTask, deleteTaskComment, resetCommentEdit } from "../../redux/slices/taskSlice";
 import gsap from "gsap";
@@ -11,7 +11,6 @@ import AddTaskModal from "../../components/Home/Task/AddTaskModal";
 import toast, { Toaster } from "react-hot-toast";
 import { deleteTask } from "../../redux/slices/taskSlice";
 import { useNavigate } from "react-router-dom";
-import FolderIcon from '@mui/icons-material/Folder';
 import { fetchUsers } from "../../redux/slices/userSlice";
 import { MentionsInput, Mention } from "react-mentions";
 import { fetchStatus } from "../../redux/slices/statusSlice";
@@ -262,204 +261,6 @@ const WorkflowStatus = ({ taskStatusLogs }) => {
     );
 };
 
-// const Comments = ({ comments }) => {
-//     const token = localStorage.getItem("token");
-//     const { tid } = useParams();
-//     const [comment, setComment] = useState("");
-//     const [editingCommentId, setEditingCommentId] = useState(null);
-//     const textareaRef = useRef(null);
-
-//     const dispatch = useDispatch();
-//     const { loading, success } = useSelector((state) => state.createTaskComment);
-//     const { loading: editLoading, success: editSuccess } = useSelector((state) => state.editTaskComment);
-//     const { success: deleteSuccess } = useSelector((state) => state.deleteTaskComment);
-//     const { fetchUsers: name } = useSelector((state) => state.fetchUsers);
-//     const { fetchActiveTags: tags } = useSelector((state) => state.fetchActiveTags);
-
-//     useEffect(() => {
-//         dispatch(fetchUsers({ token }));
-//         dispatch(fetchActiveTags({ token }));
-//     }, [])
-
-//     const mentionData = name
-//         ? name.map((user) => ({
-//             id: user.id.toString(),
-//             display: user.firstname + " " + user.lastname || "Unknown User",
-//         }))
-//         : [];
-
-//     const tagData = tags
-//         ? tags.map((tag) => ({
-//             id: tag.id.toString(),
-//             display: tag.name,
-//         }))
-//         : [];
-
-//     const handleAddComment = (e) => {
-//         e.preventDefault();
-
-//         if (!comment?.trim()) {
-//             toast.error("Comment cannot be empty", {
-//                 duration: 1000,
-//             });
-//             return;
-//         }
-
-//         if (editingCommentId) {
-//             const formData = new FormData();
-//             formData.append("comment[body]", comment);
-//             return dispatch(editTaskComment({ token, id: editingCommentId, payload: formData }));
-//         }
-//         const payload = {
-//             comment: {
-//                 body: comment,
-//                 commentable_id: tid,
-//                 commentable_type: "TaskManagement",
-//                 commentor_id: JSON.parse(localStorage.getItem("user"))?.id,
-//                 active: true,
-//             },
-//         };
-
-//         dispatch(createTaskComment({ token, payload }));
-//     };
-
-//     const handleEdit = (comment) => {
-//         setEditingCommentId(comment.id);
-//         setComment(comment.body);
-//         if (textareaRef.current) {
-//             textareaRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-//             textareaRef.current.focus();
-//         }
-//     };
-
-//     const handleDelete = (id) => {
-//         dispatch(deleteTaskComment({ token, id }))
-//     }
-
-//     const handleCancel = () => {
-//         setEditingCommentId(null);
-//         setComment("");
-//     };
-
-//     useEffect(() => {
-//         if (success || editSuccess || deleteSuccess) {
-//             setComment("");
-//             setEditingCommentId(null);
-//             dispatch(taskDetails({ token, id: tid }));
-//         }
-//     }, [success, editSuccess, deleteSuccess, dispatch, tid]);
-
-//     return (
-//         <div className="text-[14px] flex flex-col gap-2">
-//             <div className="flex justify-start m-2 gap-5">
-//                 <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white text-center p-1.5">
-//                     <span className="">CB</span>
-//                 </div>
-//                 <MentionsInput
-//                     inputRef={textareaRef}
-//                     value={comment}
-//                     onChange={(e, newValue) => setComment(newValue)}
-//                     className="mentions w-[95%] h-[70px] bg-[#F2F4F4] p-2 border-2 border-[#DFDFDF] focus:outline-none"
-//                     placeholder="Add comment here. Type @ to mention users. Type # to mention tags"
-//                     style={{
-//                         control: {
-//                             backgroundColor: "#F2F4F4",
-//                             fontSize: 14,
-//                             fontWeight: "normal",
-//                         },
-//                         highlighter: {
-//                             overflow: "hidden",
-//                         },
-//                         input: {
-//                             margin: 0,
-//                             padding: "8px",
-//                             outline: "none",
-//                         },
-//                         suggestions: {
-//                             list: {
-//                                 backgroundColor: "white",
-//                                 border: "1px solid #ccc",
-//                                 fontSize: 14,
-//                                 zIndex: 100,
-//                                 position: "absolute",
-//                                 bottom: "100%",
-//                                 left: 0,
-//                                 width: "200px",
-//                                 maxHeight: "150px",
-//                                 overflowY: "auto",
-//                                 borderRadius: "4px",
-//                                 marginBottom: "4px",
-//                             },
-//                             item: {
-//                                 padding: "5px 10px",
-//                                 borderBottom: "1px solid #eee",
-//                                 cursor: "pointer",
-//                             },
-//                             itemFocused: {
-//                                 backgroundColor: "#f5f5f5",
-//                             },
-//                         },
-//                     }}
-//                 >
-//                     <Mention
-//                         trigger="@"
-//                         data={mentionData}
-//                         markup="@[__display__](__id__)"
-//                         displayTransform={(id, display) => `@${display}`}
-//                         appendSpaceOnAdd
-//                     />
-//                     <Mention
-//                         trigger="#"
-//                         data={tagData}
-//                         markup="#[__display__](__id__)"
-//                         displayTransform={(id, display) => `#${display}`}
-//                         appendSpaceOnAdd
-//                     />
-//                 </MentionsInput>
-//             </div>
-//             <div className="flex justify-end">
-//                 <button
-//                     type="submit"
-//                     className="bg-red text-white h-[30px] px-3 cursor-pointer p-1 mr-2"
-//                     onClick={handleAddComment}
-//                     disabled={loading || editLoading}
-//                 >
-//                     {editingCommentId ? "Update Comment" : "Add Comment"}
-//                 </button>
-//                 <button
-//                     className="border-2 border-[#C72030] h-[30px] cursor-pointer p-1 px-3"
-//                     onClick={handleCancel}
-//                 >
-//                     Cancel
-//                 </button>
-//             </div>
-//             {comments.map((comment) => (
-//                 <div key={comment.id} className="relative flex justify-start m-2 gap-5">
-//                     <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white text-center p-1.5">
-//                         <span className="">CB</span>
-//                     </div>
-//                     <div className="flex flex-col gap-2 w-full border-b-[2px] pb-3 border-[rgba(190, 190, 190, 1)]">
-//                         <h1 className="font-bold">{comment.commentor_full_name}</h1>
-//                         {comment.body
-//                             .replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
-//                             .replace(/#\[(.*?)\]\(\d+\)/g, '#$1')}
-//                         <div className="flex gap-2 text-[10px]">
-//                             <span>{formatToDDMMYYYY_AMPM(comment.created_at)}</span>
-//                             <span className="cursor-pointer" onClick={() => handleEdit(comment)}>
-//                                 Edit
-//                             </span>
-//                             <span className="cursor-pointer" onClick={() => handleDelete(comment.id)}>
-//                                 Delete
-//                             </span>
-//                         </div>
-//                     </div>
-//                 </div>
-//             ))}
-//         </div>
-//     );
-// };
-
-
 const Comments = ({ comments }) => {
     const token = localStorage.getItem("token");
     const { tid } = useParams();
@@ -553,12 +354,53 @@ const Comments = ({ comments }) => {
         }
     }, [success, editSuccess, deleteSuccess, dispatch, tid, token]);
 
+    const mentionStyles = {
+        control: {
+            fontSize: 14,
+            backgroundColor: "transparent",
+            border: "none",
+            outline: "none",
+            padding: 0,
+            margin: 0,
+        },
+        highlighter: { overflow: "hidden" },
+        input: {
+            font: "inherit",
+            backgroundColor: "transparent",
+            border: "none",
+            padding: 0,
+            margin: 0,
+            outline: "none",
+        },
+        suggestions: {
+            list: {
+                backgroundColor: "white",
+                border: "1px solid #ccc",
+                fontSize: 14,
+                zIndex: 100,
+                maxHeight: "150px",
+                overflowY: "auto",
+                borderRadius: "4px",
+            },
+            item: {
+                padding: "5px 10px",
+                borderBottom: "1px solid #eee",
+                cursor: "pointer",
+            },
+            itemFocused: {
+                backgroundColor: "#01569E", // ✅ Highlighted color
+                color: "white",
+                fontWeight: "bold",
+            },
+        },
+    };
+
     return (
         <div className="text-[14px] flex flex-col gap-2">
             {/* New Comment Input */}
             <div className="flex justify-start m-2 gap-5">
                 <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white text-center p-1.5">
-                    <span className="">CB</span>
+                    <span>CB</span>
                 </div>
                 <MentionsInput
                     inputRef={textareaRef}
@@ -572,7 +414,9 @@ const Comments = ({ comments }) => {
                             fontSize: 14,
                             fontWeight: "normal",
                         },
-                        highlighter: { overflow: "hidden" },
+                        highlighter: {
+                            overflow: "hidden",
+                        },
                         input: {
                             margin: 0,
                             padding: "8px",
@@ -644,27 +488,48 @@ const Comments = ({ comments }) => {
                 return (
                     <div key={cmt.id} className="relative flex justify-start m-2 gap-5">
                         <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white text-center p-1.5">
-                            <span className="">CB</span>
+                            <span>CB</span>
                         </div>
                         <div className="flex flex-col gap-2 w-full border-b-[2px] pb-3 border-[rgba(190, 190, 190, 1)]">
                             <h1 className="font-bold">{cmt.commentor_full_name}</h1>
 
                             {isEditing ? (
-                                <input
-                                    type="text"
-                                    autoFocus
-                                    className="w-full text-[14px] outline-none bg-transparent border-none p-0 m-0"
-                                    style={{ appearance: "none", font: "inherit" }}
+                                <MentionsInput
                                     value={editedCommentText}
-                                    onChange={(e) => setEditedCommentText(e.target.value)}
+                                    inputRef={(el) => {
+                                        if (el) {
+                                            const val = el.value;
+                                            el.focus();
+                                            el.setSelectionRange(val.length, val.length);
+                                        }
+                                    }}
+                                    onChange={(e, newValue) => setEditedCommentText(newValue)}
                                     onKeyDown={(e) => {
                                         if (e.key === "Enter") {
-                                            e.preventDefault();
-                                            handleEditSave();
+                                            setTimeout(() => {
+                                                handleEditSave();
+                                            }, 100);
                                         }
                                     }}
                                     onBlur={handleEditSave}
-                                />
+                                    className="mentions w-full bg-transparent p-0 m-0 border-none outline-none"
+                                    style={mentionStyles}
+                                >
+                                    <Mention
+                                        trigger="@"
+                                        data={mentionData}
+                                        markup="@[__display__](__id__)"
+                                        displayTransform={(id, display) => `@${display}`}
+                                        appendSpaceOnAdd
+                                    />
+                                    <Mention
+                                        trigger="#"
+                                        data={tagData}
+                                        markup="#[__display__](__id__)"
+                                        displayTransform={(id, display) => `#${display}`}
+                                        appendSpaceOnAdd
+                                    />
+                                </MentionsInput>
                             ) : (
                                 <div>
                                     {cmt.body
