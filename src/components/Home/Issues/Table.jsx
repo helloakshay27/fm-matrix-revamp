@@ -1,10 +1,4 @@
-import {
-  useState,
-  useEffect,
-  useMemo,
-  useRef,
-  useCallback,
-} from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -16,9 +10,7 @@ import {
 
 // Custom Components
 import StatusBadge from "../Projects/statusBadge";
-import {
-  ArrowPathIcon,
-} from "@heroicons/react/20/solid";
+import { ArrowPathIcon } from "@heroicons/react/20/solid";
 import SelectBox from "../../SelectBox";
 import qs from "qs";
 
@@ -62,7 +54,8 @@ const NewIssuesTextField = ({
       value={value || ""}
       onChange={onChange}
       onKeyDown={handleKeyDown}
-      className={`${validator ? "border border-red-500" : "border-none"} w-full p-1 focus:outline-none rounded text-[12px]`}
+      className={`${validator ? "border border-red-500" : "border-none"
+        } w-full p-1 focus:outline-none rounded text-[12px]`}
       style={{ background: "none" }}
     />
   );
@@ -90,7 +83,8 @@ const NewIssuesDateEditor = ({
       value={value || ""}
       onChange={onChange}
       onKeyDown={handleKeyDown}
-      className={`${validator ? "border border-red-500" : "border-none"} my-custom-date-editor w-full p-1 focus:outline-none rounded text-[13px]`}
+      className={`${validator ? "border border-red-500" : "border-none"
+        } my-custom-date-editor w-full p-1 focus:outline-none rounded text-[13px]`}
     />
   );
 };
@@ -160,7 +154,8 @@ const IssuesTable = () => {
     loading: loadingAllIssues,
     error: allIssuesError,
   } = useSelector(
-    (state) => state.fetchIssues || { fetchIssue: [], loading: false, error: null }
+    (state) =>
+      state.fetchIssues || { fetchIssue: [], loading: false, error: null }
   );
 
   const {
@@ -169,7 +164,8 @@ const IssuesTable = () => {
     error: filteredIssuesError,
     success: filterSuccess,
   } = useSelector(
-    (state) => state.filterIssue || { filterIssue: [], loading: false, error: null }
+    (state) =>
+      state.filterIssue || { filterIssue: [], loading: false, error: null }
   );
 
   const {
@@ -177,7 +173,8 @@ const IssuesTable = () => {
     loading: loadingUsers,
     error: usersFetchError,
   } = useSelector(
-    (state) => state.fetchUsers || { fetchUsers: [], loading: false, error: null }
+    (state) =>
+      state.fetchUsers || { fetchUsers: [], loading: false, error: null }
   );
 
   const {
@@ -185,7 +182,8 @@ const IssuesTable = () => {
     loading: loadingProjects,
     error: projectsFetchError,
   } = useSelector(
-    (state) => state.fetchProjects || { fetchProjects: [], loading: false, error: null }
+    (state) =>
+      state.fetchProjects || { fetchProjects: [], loading: false, error: null }
   );
 
   const {
@@ -193,7 +191,12 @@ const IssuesTable = () => {
     loading: loadingMilestone,
     error: milestoneFetchError,
   } = useSelector(
-    (state) => state.fetchMilestone || { fetchMilestone: [], loading: false, error: null }
+    (state) =>
+      state.fetchMilestone || {
+        fetchMilestone: [],
+        loading: false,
+        error: null,
+      }
   );
 
   const {
@@ -201,7 +204,8 @@ const IssuesTable = () => {
     loading: loadingTasks,
     error: tasksFetchError,
   } = useSelector(
-    (state) => state.fetchTasks || { fetchTasks: [], loading: false, error: null }
+    (state) =>
+      state.fetchTasks || { fetchTasks: [], loading: false, error: null }
   );
 
   const {
@@ -209,7 +213,12 @@ const IssuesTable = () => {
     loading: loadingIssueType,
     error: issueTypeFetchError,
   } = useSelector(
-    (state) => state.fetchIssueType || { fetchIssueType: [], loading: false, error: null }
+    (state) =>
+      state.fetchIssueType || {
+        fetchIssueType: [],
+        loading: false,
+        error: null,
+      }
   );
 
   const { fetchProjectDetails: projectDetails } = useSelector(
@@ -225,7 +234,8 @@ const IssuesTable = () => {
   const [isAddingNewIssues, setIsAddingNewIssues] = useState(false);
   const [newIssuesTitle, setNewIssuesTitle] = useState("");
   const [newIssuesStatus, setNewIssuesStatus] = useState("open");
-  const [newIssuesResponsiblePersonId, setNewIssuesResponsiblePersonId] = useState(null);
+  const [newIssuesResponsiblePersonId, setNewIssuesResponsiblePersonId] =
+    useState(null);
   const [newIssuesType, setNewIssuesType] = useState("");
   const [newIssuesStartDate, setNewIssuesStartDate] = useState("");
   const [newIssuesEndDate, setNewIssuesEndDate] = useState("");
@@ -278,7 +288,9 @@ const IssuesTable = () => {
   useEffect(() => {
     if (
       !loadingAllIssues &&
-      (!allIssuesFromStore || !Array.isArray(allIssuesFromStore) || allIssuesFromStore.length === 0) &&
+      (!allIssuesFromStore ||
+        !Array.isArray(allIssuesFromStore) ||
+        allIssuesFromStore.length === 0) &&
       !allIssuesError &&
       !allIssuesFetchInitiatedRef.current
     ) {
@@ -294,7 +306,13 @@ const IssuesTable = () => {
       setNewIssuesTaskId(null);
       setTaskOptions([]);
     }
-  }, [dispatch, loadingMilestone, milestoneFetchError, newIssuesMilestoneId, token]);
+  }, [
+    dispatch,
+    loadingMilestone,
+    milestoneFetchError,
+    newIssuesMilestoneId,
+    token,
+  ]);
 
   // Set task options
   useEffect(() => {
@@ -317,7 +335,13 @@ const IssuesTable = () => {
       setNewIssuesTaskId(null);
       setTaskOptions([]);
     }
-  }, [dispatch, newIssuesProjectId, loadingProjects, projectsFetchError, token]);
+  }, [
+    dispatch,
+    newIssuesProjectId,
+    loadingProjects,
+    projectsFetchError,
+    token,
+  ]);
 
   // Set milestone options
   // useEffect(() => {
@@ -346,7 +370,6 @@ const IssuesTable = () => {
       );
     }
   }, [milestone, loadingMilestone, milestoneFetchError]);
-
 
   // Fetch users
   useEffect(() => {
@@ -394,7 +417,12 @@ const IssuesTable = () => {
       allIssues = allIssuesFromStore.filter(
         (issue) => issue.project_management_id == parentId
       );
-    } else if (filterSuccess && filteredIssues && (localStorage.getItem("IssueFilters") || localStorage.getItem("issueStatus"))) {
+    } else if (
+      filterSuccess &&
+      filteredIssues &&
+      (localStorage.getItem("IssueFilters") ||
+        localStorage.getItem("issueStatus"))
+    ) {
       console.log("hi");
       allIssues = filteredIssues;
     } else {
@@ -490,14 +518,23 @@ const IssuesTable = () => {
 
     formData.append("issue[title]", newIssuesTitle.trim());
     formData.append("issue[status]", newIssuesStatus);
-    formData.append("issue[responsible_person_id]", newIssuesResponsiblePersonId || "");
-    formData.append("issue[project_management_id]", parentId || newIssuesProjectId || "");
+    formData.append(
+      "issue[responsible_person_id]",
+      newIssuesResponsiblePersonId || ""
+    );
+    formData.append(
+      "issue[project_management_id]",
+      parentId || newIssuesProjectId || ""
+    );
     formData.append("issue[milestone_id]", newIssuesMilestoneId || "");
     formData.append("issue[task_management_id]", newIssuesTaskId || "");
     formData.append("issue[start_date]", newIssuesStartDate || "");
     formData.append("issue[end_date]", newIssuesEndDate || "");
     formData.append("issue[priority]", newIssuesPriority);
-    formData.append("issue[created_by_id]", JSON.parse(localStorage.getItem("user"))?.id || "");
+    formData.append(
+      "issue[created_by_id]",
+      JSON.parse(localStorage.getItem("user"))?.id || ""
+    );
     formData.append("issue[issue_type]", newIssuesType);
     formData.append("issue[comment]", newIssuesComments);
 
@@ -540,7 +577,9 @@ const IssuesTable = () => {
   ]);
 
   const handleDeleteExistingIssues = useCallback((IssuesId) => {
-    alert(`API for deleting existing Issues ${IssuesId} needs to be implemented.`);
+    alert(
+      `API for deleting existing Issues ${IssuesId} needs to be implemented.`
+    );
   }, []);
 
   const handleUpdateIssues = useCallback(
@@ -556,34 +595,45 @@ const IssuesTable = () => {
           payload.responsible_person_id = newValue;
         }
         await dispatch(updateIssue({ token, id, payload })).unwrap();
-        if(localStorage.getItem("IssueFilters")){
+        if (localStorage.getItem("IssueFilters")) {
           const item = JSON.parse(localStorage.getItem("IssueFilters"));
           const newFilter = {
-                          "q[status_in][]": item.selectedStatuses.length > 0 ? item.selectedStatuses : [],
-                          "q[created_by_id_eq]": item.selectedCreators.length > 0 ? item.selectedCreators : [],
-                          "q[start_date_eq]": item.dates["Start Date"],
-                          "q[end_date_eq]": item.dates["End Date"],
-                          "q[responsible_person_id_in][]": item.selectedResponsible.length > 0 ? item.selectedResponsible : [],
-                          "q[issue_type_in][]": item.selectedTypes.length > 0 ? item.selectedTypes : [],
-                          "q[project_management_id_in][]": item.selectedProjects.length > 0 ? item.selectedProjects : [],
-                          "q[task_management_id_in][]": item.selectedTasks.length > 0 ? item.selectedTasks : [],
-                      }
-                      console.log(newFilter);
-                      if (newFilter) {
-                                  const queryString = qs.stringify(newFilter, { arrayFormat: 'repeat' });
-                      
-          await  dispatch(filterIssue({ token, filter: queryString })).unwrap();
+            "q[status_in][]":
+              item.selectedStatuses.length > 0 ? item.selectedStatuses : [],
+            "q[created_by_id_eq]":
+              item.selectedCreators.length > 0 ? item.selectedCreators : [],
+            "q[start_date_eq]": item.dates["Start Date"],
+            "q[end_date_eq]": item.dates["End Date"],
+            "q[responsible_person_id_in][]":
+              item.selectedResponsible.length > 0
+                ? item.selectedResponsible
+                : [],
+            "q[issue_type_in][]":
+              item.selectedTypes.length > 0 ? item.selectedTypes : [],
+            "q[project_management_id_in][]":
+              item.selectedProjects.length > 0 ? item.selectedProjects : [],
+            "q[task_management_id_in][]":
+              item.selectedTasks.length > 0 ? item.selectedTasks : [],
+          };
+          console.log(newFilter);
+          if (newFilter) {
+            const queryString = qs.stringify(newFilter, {
+              arrayFormat: "repeat",
+            });
+
+            await dispatch(
+              filterIssue({ token, filter: queryString })
+            ).unwrap();
+          }
+        } else if (localStorage.getItem("issueStatus")) {
+          const status = localStorage.getItem("issueStatus");
+          const filter = {
+            "q[status_eq]": status,
+          };
+          await dispatch(filterIssue({ token, filter })).unwrap();
+        } else {
+          await dispatch(fetchIssue({ token })).unwrap();
         }
-      }else if(localStorage.getItem("issueStatus")){
-        const status=localStorage.getItem("issueStatus");
-        const filter={
-          "q[status_eq]":status
-        }
-        await dispatch(filterIssue({ token, filter})).unwrap();
-      }
-      else{
-        await dispatch(fetchIssue({ token })).unwrap();
-      }
       } catch (error) {
         console.error("Failed to update issue:", error);
         const errorMessage =
@@ -686,7 +736,10 @@ const IssuesTable = () => {
         header: "Issue ID",
         size: 80,
         cell: ({ getValue }) => (
-          <Link to={`/issues/${getValue()}`} className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer">{`I-${getValue()?.toString().slice(-5)}`}</Link>
+          <Link
+            to={`/issues/${getValue()}`}
+            className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+          >{`I-${getValue()?.toString().slice(-5)}`}</Link>
         ),
       },
       {
@@ -709,6 +762,16 @@ const IssuesTable = () => {
         header: "Issues Title",
         size: 120,
         cell: (info) => info.getValue(),
+      },
+      {
+        accessorKey: "attachments",
+        header: "Attachments",
+        size: 120,
+        cell: ({ getValue }) => (
+          <div className="flex justify-center items-center w-full h-full">
+            <span>{getValue().length}</span>
+          </div>
+        ),
       },
       {
         accessorKey: "status",
@@ -827,12 +890,7 @@ const IssuesTable = () => {
           );
         },
       },
-      {
-        accessorKey: "attachments",
-        header: "Attachments",
-        size: 100,
-        cell: ({ getValue }) => <span>{getValue().length}</span>,
-      },
+
     ],
     [handleUpdateIssues, userOptionsForSelectBox, issueTypeOptions]
   );
@@ -864,7 +922,15 @@ const IssuesTable = () => {
   } else if (allIssuesError || usersFetchError) {
     pageContent = (
       <div className="p-4 text-red-600 bg-red-100 border border-red-400 rounded">
-        Error: {localError || String(allIssuesError?.message || allIssuesError || usersFetchError?.message || usersFetchError || "Could not load required data.")}
+        Error:{" "}
+        {localError ||
+          String(
+            allIssuesError?.message ||
+            allIssuesError ||
+            usersFetchError?.message ||
+            usersFetchError ||
+            "Could not load required data."
+          )}
       </div>
     );
   } else {
@@ -886,7 +952,9 @@ const IssuesTable = () => {
                       <th
                         key={header.id}
                         style={{
-                          width: header.getSize() ? `${header.getSize()}px` : undefined,
+                          width: header.getSize()
+                            ? `${header.getSize()}px`
+                            : undefined,
                           height: `${headerHeight}px`,
                         }}
                         className="border p-2 text-center text-gray-700 font-semibold sticky top-0"
@@ -904,7 +972,11 @@ const IssuesTable = () => {
                 {data.length === 0 && (
                   <tr>
                     <td colSpan={columns.length} className="text-center py-4">
-                      <i>{filterSuccess ? "Try adjusting the filters." : "No issues found"}</i>
+                      <i>
+                        {filterSuccess
+                          ? "Try adjusting the filters."
+                          : "No issues found"}
+                      </i>
                     </td>
                   </tr>
                 )}
@@ -917,7 +989,10 @@ const IssuesTable = () => {
                     {row.getVisibleCells().map((cell) => (
                       <td
                         key={cell.id}
-                        className={`border p-1 align-middle ${cell.column.id === "actions" ? "text-center" : "text-left"}`}
+                        className={`border p-1 align-middle ${cell.column.id === "actions"
+                          ? "text-center"
+                          : "text-left"
+                          }`}
                       >
                         <div className="p-1 h-full flex items-center">
                           {flexRender(
@@ -930,16 +1005,25 @@ const IssuesTable = () => {
                   </tr>
                 ))}
                 {isAddingNewIssues && (
-                  <tr ref={newIssueFormRowRef} style={{ height: `${rowHeight}px` }}>
-                    <td className="border p-1 text-xs text-gray-400 align-middle">NEW</td>
+                  <tr
+                    ref={newIssueFormRowRef}
+                    style={{ height: `${rowHeight}px` }}
+                  >
+                    <td className="border p-1 text-xs text-gray-400 align-middle">
+                      NEW
+                    </td>
                     <td className="border p-1 text-xs text-gray-400 align-middle">
                       {parentId ? (
-                        <span className="text-xs text-gray-600">{projectDetails?.title}</span>
+                        <span className="text-xs text-gray-600">
+                          {projectDetails?.title}
+                        </span>
                       ) : (
                         <SelectBox
                           options={projectOptions}
                           value={newIssuesProjectId}
-                          onChange={(selected) => setNewIssuesProjectId(selected)}
+                          onChange={(selected) =>
+                            setNewIssuesProjectId(selected)
+                          }
                           placeholder="Select Project"
                           table={true}
                           validator={validator}
@@ -950,7 +1034,9 @@ const IssuesTable = () => {
                       <SelectBox
                         options={milestoneOptions}
                         value={newIssuesMilestoneId}
-                        onChange={(selected) => setNewIssuesMilestoneId(selected)}
+                        onChange={(selected) =>
+                          setNewIssuesMilestoneId(selected)
+                        }
                         placeholder="Select Milestone"
                         table={true}
                         validator={validator}
@@ -1081,7 +1167,10 @@ const IssuesTable = () => {
                 const totalPages = table.getPageCount();
                 const currentPage = table.getState().pagination.pageIndex;
                 const visiblePages = 3;
-                let start = Math.max(0, currentPage - Math.floor(visiblePages / 2));
+                let start = Math.max(
+                  0,
+                  currentPage - Math.floor(visiblePages / 2)
+                );
                 let end = start + visiblePages;
                 if (end > totalPages) {
                   end = totalPages;
@@ -1094,7 +1183,8 @@ const IssuesTable = () => {
                     <button
                       key={page}
                       onClick={() => table.setPageIndex(page)}
-                      className={`px-3 py-1 ${isActive ? "bg-gray-200 font-semibold" : ""}`}
+                      className={`px-3 py-1 ${isActive ? "bg-gray-200 font-semibold" : ""
+                        }`}
                     >
                       {page + 1}
                     </button>

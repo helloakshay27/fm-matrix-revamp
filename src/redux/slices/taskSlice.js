@@ -1,8 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const access_token = localStorage.getItem("token");
-
 const createApiSlice = (name, fetchThunk) => createSlice({
     name,
     initialState: {
@@ -11,7 +9,13 @@ const createApiSlice = (name, fetchThunk) => createSlice({
         error: null,
         [name]: [],
     },
-    reducers: {},
+    reducers: {
+        resetCommentEdit: (state) => {
+            state.loading = false;
+            state.success = false;
+            state.error = null;
+        },
+    },
     extraReducers: (builder) => {
         builder
             .addCase(fetchThunk.pending, (state) => {
@@ -355,3 +359,5 @@ export const filterTaskReducer = filterTaskSlice.reducer;
 export const createDependancyReducer = createDependancySlice.reducer;
 export const updateDependancyReducer = updateDependancySlice.reducer;
 export const fetchMyTasksReducer = fetchMyTasksSlice.reducer;
+
+export const { resetCommentEdit } = editTaskCommentSlice.actions;
