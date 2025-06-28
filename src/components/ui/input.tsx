@@ -9,7 +9,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
       <input
         type={type}
         className={cn(
-          "flex w-full bg-white text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+          "flex w-full bg-white text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
           // Border radius: 0px as per design specs
           "rounded-none",
           // Border and shadows: None as per design specs  
@@ -21,9 +21,11 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           // Mobile spacing - 12px padding
           "sm:h-10 sm:px-3 sm:py-2",
           // Colors as per design specs
-          "text-gray-900 placeholder:text-gray-400",
-          // Focus states
-          "focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]",
+          "text-gray-900 placeholder:text-gray-500",
+          // Focus states - using the brand red color
+          "focus-visible:ring-2 focus-visible:ring-[#C72030] focus-visible:ring-offset-2 focus-visible:border-[#C72030]",
+          // Text size responsive
+          "text-sm md:text-sm",
           className
         )}
         ref={ref}
