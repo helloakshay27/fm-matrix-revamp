@@ -3,7 +3,7 @@ import { ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "lucide-react
 import { Fragment, useEffect, useRef, useState } from "react";
 import { redirect, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { changeTaskStatus, createTaskComment, editTaskComment, taskDetails, attachFiles, editTask } from "../../redux/slices/taskSlice";
+import { changeTaskStatus, createTaskComment, editTaskComment, taskDetails, attachFiles, editTask, deleteTaskComment } from "../../redux/slices/taskSlice";
 import gsap from "gsap";
 import SubtaskTable from "../../components/Home/Task/Modals/subtaskTable";
 import DependancyKanban from "../../components/Home/DependancyKanban";
@@ -272,6 +272,7 @@ const Comments = ({ comments }) => {
     const dispatch = useDispatch();
     const { loading, success } = useSelector((state) => state.createTaskComment);
     const { loading: editLoading, success: editSuccess } = useSelector((state) => state.editTaskComment);
+    const { success: deleteSuccess } = useSelector((state) => state.deleteTaskComment);
     const { fetchUsers: name } = useSelector((state) => state.fetchUsers);
     const { fetchActiveTags: tags } = useSelector((state) => state.fetchActiveTags);
 
@@ -331,18 +332,22 @@ const Comments = ({ comments }) => {
         }
     };
 
+    const handleDelete = (id) => {
+        dispatch(deleteTaskComment({ token, id }))
+    }
+
     const handleCancel = () => {
         setEditingCommentId(null);
         setComment("");
     };
 
     useEffect(() => {
-        if (success || editSuccess) {
+        if (success || editSuccess || deleteSuccess) {
             setComment("");
             setEditingCommentId(null);
             dispatch(taskDetails({ token, id: tid }));
         }
-    }, [success, editSuccess, dispatch, tid]);
+    }, [success, editSuccess, deleteSuccess, dispatch, tid]);
 
     return (
         <div className="text-[14px] flex flex-col gap-2">
@@ -443,7 +448,9 @@ const Comments = ({ comments }) => {
                             <span className="cursor-pointer" onClick={() => handleEdit(comment)}>
                                 Edit
                             </span>
-                            <span>Delete</span>
+                            <span className="cursor-pointer" onClick={() => handleDelete(comment.id)}>
+                                Delete
+                            </span>
                         </div>
                     </div>
                 </div>

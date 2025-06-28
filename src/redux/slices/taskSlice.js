@@ -87,7 +87,7 @@ export const fetchTasks = createAsyncThunk('fetchTasks', async ({ token, id }) =
     }
 });
 
-export const fetchMyTasks = createAsyncThunk('fetchMyTasks', async ({ token}) => {
+export const fetchMyTasks = createAsyncThunk('fetchMyTasks', async ({ token }) => {
     try {
         const response = await axios.get(`https://api-tasks.lockated.com/task_managements/my_tasks.json`, {
             headers: {
@@ -205,6 +205,22 @@ export const editTaskComment = createAsyncThunk('editTaskComment', async ({ toke
     }
 })
 
+export const deleteTaskComment = createAsyncThunk('deleteTaskComment', async ({ token, id }) => {
+    try {
+        const response = await axios.delete(`https://api-tasks.lockated.com/comments/${id}.json`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        return error.response.data;
+    }
+})
+
 export const changeTaskStatus = createAsyncThunk('changeTaskStatus', async ({ token, id, payload }) => {
     try {
         const response = await axios.put(`https://api-tasks.lockated.com/task_managements/${id}/update_status.json`, payload, {
@@ -310,6 +326,7 @@ export const editTaskSlice = createApiSlice('editTask', editTask);
 export const taskDetailsSlice = createApiSlice('taskDetails', taskDetails);
 export const createTaskCommentSlice = createApiSlice('createTaskComment', createTaskComment);
 export const editTaskCommentSlice = createApiSlice('editTaskComment', editTaskComment);
+export const deleteTaskCommentSlice = createApiSlice('deleteTaskComment', deleteTaskComment);
 export const changeTaskStatusSlice = createApiSlice('changeTaskStatus', changeTaskStatus);
 export const createSubtaskSlice = createApiSlice('createSubTask', createSubTask);
 export const deleteTaskSlice = createApiSlice('deleteTask', deleteTask);
@@ -327,6 +344,7 @@ export const editTaskReducer = editTaskSlice.reducer;
 export const taskDetailsReducer = taskDetailsSlice.reducer;
 export const createTaskCommentReducer = createTaskCommentSlice.reducer;
 export const editTaskCommentReducer = editTaskCommentSlice.reducer;
+export const deleteTaskCommentReducer = deleteTaskCommentSlice.reducer;
 export const changeTaskStatusReducer = changeTaskStatusSlice.reducer;
 export const createSubtaskReducer = createSubtaskSlice.reducer;
 export const deleteTaskReducer = deleteTaskSlice.reducer;
