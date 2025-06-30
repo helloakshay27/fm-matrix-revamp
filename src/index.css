@@ -438,22 +438,13 @@ input[placeholder*="Search..."]::placeholder {
   border-radius: 4px !important;
 }
 
-/* Go button styles - only for buttons associated with search bars */
+/* Go button styles */
 button[type="submit"]:has(+ input[type="search"]),
 button[type="submit"]:has(+ input[placeholder*="Search"]),
 button[type="submit"]:has(+ input[placeholder*="search"]),
 button:has(+ input[class*="search"]),
 .search-button,
-button[class*="go-button"],
-/* Target buttons that are siblings of search containers */
-.relative:has(input[type="search"]) + button,
-.relative:has(input[placeholder*="Search"]) + button,
-.relative:has(input[placeholder*="search"]) + button,
-.relative:has(input[class*="search"]) + button,
-.relative:has([data-search] input) + button,
-.relative:has(.search-input) + button,
-.relative:has(input[placeholder*="Search AMC"]) + button,
-.relative:has(input[placeholder*="Search..."]) + button {
+button[class*="go-button"] {
   background-color: #C4B8D0 !important;
   opacity: 0.35 !important;
 }
@@ -483,24 +474,6 @@ button[class*="go-button"],
   .relative:has(input[placeholder*="Search..."]) svg {
     padding: 12px 12px 10px 10px !important;
   }
-
-  /* Desktop padding for search-associated buttons */
-  button[type="submit"]:has(+ input[type="search"]),
-  button[type="submit"]:has(+ input[placeholder*="Search"]),
-  button[type="submit"]:has(+ input[placeholder*="search"]),
-  button:has(+ input[class*="search"]),
-  .search-button,
-  button[class*="go-button"],
-  .relative:has(input[type="search"]) + button,
-  .relative:has(input[placeholder*="Search"]) + button,
-  .relative:has(input[placeholder*="search"]) + button,
-  .relative:has(input[class*="search"]) + button,
-  .relative:has([data-search] input) + button,
-  .relative:has(.search-input) + button,
-  .relative:has(input[placeholder*="Search AMC"]) + button,
-  .relative:has(input[placeholder*="Search..."]) + button {
-    padding: 12px 12px 10px 10px !important;
-  }
 }
 
 /* Tablet Styles for Search Bars */
@@ -528,24 +501,6 @@ button[class*="go-button"],
   .relative:has(input[placeholder*="Search..."]) svg {
     padding: 12px 12px 10px 10px !important;
   }
-
-  /* Tablet padding for search-associated buttons */
-  button[type="submit"]:has(+ input[type="search"]),
-  button[type="submit"]:has(+ input[placeholder*="Search"]),
-  button[type="submit"]:has(+ input[placeholder*="search"]),
-  button:has(+ input[class*="search"]),
-  .search-button,
-  button[class*="go-button"],
-  .relative:has(input[type="search"]) + button,
-  .relative:has(input[placeholder*="Search"]) + button,
-  .relative:has(input[placeholder*="search"]) + button,
-  .relative:has(input[class*="search"]) + button,
-  .relative:has([data-search] input) + button,
-  .relative:has(.search-input) + button,
-  .relative:has(input[placeholder*="Search AMC"]) + button,
-  .relative:has(input[placeholder*="Search..."]) + button {
-    padding: 12px 12px 10px 10px !important;
-  }
 }
 
 /* Mobile Styles for Search Bars */
@@ -571,24 +526,6 @@ button[class*="go-button"],
   .relative:has(.search-input) svg,
   .relative:has(input[placeholder*="Search AMC"]) svg,
   .relative:has(input[placeholder*="Search..."]) svg {
-    padding: 12px 12px 10px 10px !important;
-  }
-
-  /* Mobile padding for search-associated buttons */
-  button[type="submit"]:has(+ input[type="search"]),
-  button[type="submit"]:has(+ input[placeholder*="Search"]),
-  button[type="submit"]:has(+ input[placeholder*="search"]),
-  button:has(+ input[class*="search"]),
-  .search-button,
-  button[class*="go-button"],
-  .relative:has(input[type="search"]) + button,
-  .relative:has(input[placeholder*="Search"]) + button,
-  .relative:has(input[placeholder*="search"]) + button,
-  .relative:has(input[class*="search"]) + button,
-  .relative:has([data-search] input) + button,
-  .relative:has(.search-input) + button,
-  .relative:has(input[placeholder*="Search AMC"]) + button,
-  .relative:has(input[placeholder*="Search..."]) + button {
     padding: 12px 12px 10px 10px !important;
   }
 }
