@@ -593,7 +593,7 @@ button[type="button"]:contains("Go!") {
   }
 }
 
-/* Global Stats Card Styles */
+/* Global Stats Card Styles - Updated for Responsive Grid */
 /* Target stats cards across all dashboard pages */
 .stats-card,
 [class*="bg-purple-500"],
@@ -653,7 +653,7 @@ div:has(p:contains("KRCC FORM LIST")) {
   box-shadow: 0 2px 4px rgba(196, 181, 213, 0.1), 0 0 18px rgba(199, 32, 48, 0.08) !important;
 }
 
-/* Desktop Styles */
+/* Desktop Styles - 3 columns */
 @media (min-width: 1024px) {
   .stats-card,
   [class*="bg-purple-500"],
@@ -706,9 +706,11 @@ div:has(p:contains("KRCC FORM LIST")) {
   div:has(p:contains("NON FTE USERS")),
   div:has(p:contains("KRCC FORM LIST")) {
     padding: 52px 52px 36px 36px !important;
-    width: 488px !important;
+    width: calc(33.333% - 16px) !important;
+    max-width: 400px !important;
     height: 132px !important;
     border-radius: 0px !important;
+    flex: 0 0 auto !important;
   }
 
   /* Title styles for desktop - removed color override */
@@ -780,7 +782,7 @@ div:has(p:contains("KRCC FORM LIST")) {
   }
 }
 
-/* Tablet Styles */
+/* Tablet Styles - 2 columns */
 @media (min-width: 768px) and (max-width: 1023px) {
   .stats-card,
   [class*="bg-purple-500"],
@@ -833,9 +835,11 @@ div:has(p:contains("KRCC FORM LIST")) {
   div:has(p:contains("NON FTE USERS")),
   div:has(p:contains("KRCC FORM LIST")) {
     padding: 28px 28px 40px 40px !important;
-    width: 300px !important;
+    width: calc(50% - 16px) !important;
+    max-width: 350px !important;
     height: 140px !important;
     border-radius: 0px !important;
+    flex: 0 0 auto !important;
   }
 
   /* Title styles for tablet - removed color override */
@@ -907,7 +911,7 @@ div:has(p:contains("KRCC FORM LIST")) {
   }
 }
 
-/* Mobile Styles */
+/* Mobile Styles - 2 columns */
 @media (max-width: 767px) {
   .stats-card,
   [class*="bg-purple-500"],
@@ -960,9 +964,11 @@ div:has(p:contains("KRCC FORM LIST")) {
   div:has(p:contains("NON FTE USERS")),
   div:has(p:contains("KRCC FORM LIST")) {
     padding: 18px 18px 28px 28px !important;
-    width: 170px !important;
+    width: calc(50% - 12px) !important;
+    max-width: 170px !important;
     height: 96px !important;
     border-radius: 20px !important;
+    flex: 0 0 auto !important;
   }
 
   /* Title styles for mobile - removed color override */
@@ -1031,5 +1037,18 @@ div:has(p:contains("KRCC FORM LIST")) {
     font-weight: 500 !important;
     letter-spacing: 0% !important;
     line-height: auto !important;
+  }
+}
+
+/* Grid Container Responsive Styles */
+div[class*="grid"] {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 16px !important;
+}
+
+@media (max-width: 767px) {
+  div[class*="grid"] {
+    gap: 12px !important; 
   }
 }
