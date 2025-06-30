@@ -68,6 +68,14 @@ const ExternalTable = () => {
         },
       },
       {
+        accessorKey: 'user_company_name',
+        header: 'Company',
+        size: 150,
+        cell: ({ row, getValue }) => {
+          return row.original ? getValue() : null;
+        },
+      },
+      {
         accessorKey: 'email',
         header: 'Email Id',
         size: 150,

@@ -11,6 +11,7 @@ import { createIssueReducer, fetchIssueReducer, updateIssueReducer, fetchIssueTy
 import { fetchStatusReducer, createStatusReducer, deleteStatusReducer, updateStatusReducer } from './slices/statusSlice'
 import { createMoMReducer, fetchMomDetailsReducer, fetchMoMReducer } from './slices/momSlice'
 import { createMessageReducer, fetchChannelByIdReducer, fetchChannelsReducer, fetchConversationsReducer, startConversationReducer } from './slices/channelSlice'
+import { createCompanyReducer, editCompanyReducer, fetchCompanyReducer } from './slices/companySlice'
 
 export const store = configureStore({
   reducer: {
@@ -107,6 +108,11 @@ export const store = configureStore({
     fetchOrganizations: fetchOrganizationsReducer,
     createOrganization: createOrganizationReducer,
     editOrganization: editOrganizationReducer,
+
+    //Company
+    createCompany: createCompanyReducer,
+    fetchCompany: fetchCompanyReducer,
+    editCompany: editCompanyReducer,
 
     //Spirints
     fetchSpirints: fetchSpirintsReducer,

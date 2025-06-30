@@ -1,14 +1,16 @@
 /* eslint-disable react/prop-types */
-import CloseIcon from '@mui/icons-material/Close';
-import SelectBox from '../../SelectBox';
-import { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchRoles } from '../../../redux/slices/roleSlice';
-import { fetchOrganizations } from '../../../redux/slices/organizationSlice';
-import { createExternalUser, fetchUpdateUser } from '../../../redux/slices/userSlice';
-import toast from 'react-hot-toast';
-import { Eye, EyeOff } from 'lucide-react';
-
+import CloseIcon from "@mui/icons-material/Close";
+import SelectBox from "../../SelectBox";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchRoles } from "../../../redux/slices/roleSlice";
+import { fetchOrganizations } from "../../../redux/slices/organizationSlice";
+import {
+  createExternalUser,
+  fetchUpdateUser,
+} from "../../../redux/slices/userSlice";
+import toast from "react-hot-toast";
+import { Eye, EyeOff } from "lucide-react";
 
 const AddExternalUserModal = ({
   open,
@@ -16,30 +18,32 @@ const AddExternalUserModal = ({
   placeholder,
   isEditMode = false,
   initialData = null,
-  onSuccess
+  onSuccess,
 }) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   const dispatch = useDispatch();
   const { fetchRoles: roles } = useSelector((state) => state.fetchRoles);
   const { fetchOrganizations: organizations } = useSelector(
     (state) => state.fetchOrganizations
   );
-  const { loading, success } = useSelector(
-    (state) => state.createExternalUser
+  const { loading, success } = useSelector((state) => state.createExternalUser);
+  const { loading: editLoading, success: editSuccess } = useSelector(
+    (state) => state.fetchUpdateUser
   );
-  const { loading: editLoading,
-    success: editSuccess, } = useSelector(state => state.fetchUpdateUser)
-  const [error, setError] = useState('');
+  const { fetchCompany: companies } = useSelector(
+    (state) => state.fetchCompany
+  );
+  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-
   const [formData, setFormData] = useState({
-    username: '',
+    username: "",
     organisation: null,
-    email: '',
-    mobile: '',
+    email: "",
+    mobile: "",
     password: "",
     role: null,
+    company: "",
   });
 
   useEffect(() => {
@@ -50,18 +54,20 @@ const AddExternalUserModal = ({
   useEffect(() => {
     if (isEditMode && initialData) {
       setFormData({
-        username: `${initialData.firstname} ${initialData.lastname || ''}`.trim(),
+        username: `${initialData.firstname} ${initialData.lastname || ""
+          }`.trim(),
         organisation: initialData.organization_id,
         email: initialData.email,
         mobile: initialData.mobile,
         role: initialData.role_id,
+        company: initialData.company_id
       });
     } else {
       setFormData({
-        username: '',
+        username: "",
         organisation: null,
-        email: '',
-        mobile: '',
+        email: "",
+        mobile: "",
         role: null,
       });
     }
@@ -75,11 +81,9 @@ const AddExternalUserModal = ({
     } else if (formData.mobile == "") {
       setError("Please enter mobile number");
       return;
-
     } else if (formData.email == "") {
       setError("Please enter email");
       return;
-
     }
 
     const nameParts = formData.username.trim().split(" ");
@@ -95,13 +99,20 @@ const AddExternalUserModal = ({
         email: formData.email,
         password: formData.password,
         role_id: formData.role,
-        user_type: 'external',
+        user_type: "external",
+        company_id: formData.company
       },
     };
     try {
       let response;
       if (isEditMode && initialData?.id) {
-        response = await dispatch(fetchUpdateUser({ token, userId: initialData.id, updatedData: payload }));
+        response = await dispatch(
+          fetchUpdateUser({
+            token,
+            userId: initialData.id,
+            updatedData: payload,
+          })
+        );
       } else {
         response = await dispatch(createExternalUser({ token, payload }));
       }
@@ -109,47 +120,48 @@ const AddExternalUserModal = ({
       if (response.payload?.errors) {
         setError(response.payload.errors);
       } else if (response.payload.user_exists) {
-        setError(response.payload.message)
+        setError(response.payload.message);
       } else {
-        toast.success(`User ${isEditMode ? 'updated' : 'created'} successfully`, {
-          iconTheme: {
-            primary: 'red', // This might directly change the color of the success icon
-            secondary: 'white', // The circle background
-          },
-        })
+        toast.success(
+          `User ${isEditMode ? "updated" : "created"} successfully`,
+          {
+            iconTheme: {
+              primary: "red", // This might directly change the color of the success icon
+              secondary: "white", // The circle background
+            },
+          }
+        );
         handleSuccess();
       }
     } catch (error) {
       console.log(error);
       setError(error.message);
-    };
+    }
   };
-
 
   const handleSuccess = () => {
     setFormData({
-      username: '',
+      username: "",
       organisation: null,
-      email: '',
-      mobile: '',
+      email: "",
+      mobile: "",
       role: null,
-    })
-    setError('');
+    });
+    setError("");
     onSuccess();
-  }
+  };
 
   const handleClose = () => {
     setFormData({
-      username: '',
+      username: "",
       organisation: null,
-      email: '',
-      mobile: '',
+      email: "",
+      mobile: "",
       role: null,
-    })
-    setError('');
+    });
+    setError("");
     onClose();
-
-  }
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
@@ -201,7 +213,7 @@ const AddExternalUserModal = ({
               onChange={(e) => {
                 const input = e.target.value;
                 if (/^\d{0,10}$/.test(input)) {
-                  setFormData({ ...formData, mobile: input })
+                  setFormData({ ...formData, mobile: input });
                 }
               }}
             />
@@ -213,17 +225,25 @@ const AddExternalUserModal = ({
             <input
               type={`${showPassword ? "" : "password"}`}
               className="border border-[#C0C0C0] w-full py-2 px-3 text-[#1B1B1B] text-[13px] focus:outline-none"
-              placeholder='Enter Password'
+              placeholder="Enter Password"
               value={formData.password}
-              onChange={e => setFormData({ ...formData, password: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
             />
-            {
-              showPassword ? (
-                <EyeOff size={20} className='absolute right-10 top-10 transform -translate-y-1/2 cursor-pointer' onClick={() => setShowPassword(false)} />
-              ) : (
-                <Eye size={20} className='absolute right-10 top-10 transform -translate-y-1/2 cursor-pointer' onClick={() => setShowPassword(true)} />
-              )
-            }
+            {showPassword ? (
+              <EyeOff
+                size={20}
+                className="absolute right-10 top-10 transform -translate-y-1/2 cursor-pointer"
+                onClick={() => setShowPassword(false)}
+              />
+            ) : (
+              <Eye
+                size={20}
+                className="absolute right-10 top-10 transform -translate-y-1/2 cursor-pointer"
+                onClick={() => setShowPassword(true)}
+              />
+            )}
           </div>
           <div className="px-6">
             <label className="block text-[11px] text-[#1B1B1B] mb-1">
@@ -238,6 +258,23 @@ const AddExternalUserModal = ({
               value={formData.organisation}
               onChange={(value) =>
                 setFormData({ ...formData, organisation: value })
+              }
+            />
+          </div>
+          <div className="px-6">
+            <label className="block text-[11px] text-[#1B1B1B] mb-1">
+              Company<span className="text-red-500 ml-1">*</span>
+            </label>
+            <SelectBox
+              options={
+                companies.map((org) => ({
+                  value: org.id,
+                  label: org.name,
+                }))}
+              className="w-full"
+              value={formData.company}
+              onChange={(value) =>
+                setFormData({ ...formData, company: value })
               }
             />
           </div>
@@ -273,7 +310,11 @@ const AddExternalUserModal = ({
             onClick={handleSubmit}
             disabled={loading || editLoading}
           >
-            {loading || editLoading ? 'Submitting...' : isEditMode ? 'Update' : 'Save'}
+            {loading || editLoading
+              ? "Submitting..."
+              : isEditMode
+                ? "Update"
+                : "Save"}
           </button>
           <button
             className="border border-[#C72030] text-[#1B1B1B] text-[13px] px-8 py-2"

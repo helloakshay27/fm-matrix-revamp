@@ -116,6 +116,16 @@ const ExternalTable = () => {
       size: 200,
     },
     {
+      accessorKey: 'user_company_name',
+      header: 'Company',
+      size: 200,
+      cell: ({ getValue }) => (
+        <div className="px-4"> {/* px-4 = horizontal padding */}
+          {getValue()}
+        </div>
+      ),
+    },
+    {
 
       accessorKey: 'mobile',
       header: 'Mobile No.',

@@ -11,6 +11,7 @@ import {
 } from '../../../redux/slices/userSlice';
 import { toast } from 'react-hot-toast';
 import { Eye, EyeOff } from 'lucide-react';
+import { fetchCompany } from '../../../redux/slices/companySlice';
 
 const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = false, selectedUser = null }) => {
     const token = localStorage.getItem("token");
@@ -21,7 +22,8 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
         email: "",
         password: "",
         role: null,
-        reportTo: ""
+        reportTo: "",
+        company: ""
     })
     const dispatch = useDispatch();
     const { success, loading } = useSelector(state => state.createInternalUser)
@@ -29,11 +31,13 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
     const { loading: editLoading,
         success: editSuccess, } = useSelector(state => state.fetchUpdateUser)
     const { fetchUsers: users } = useSelector(state => state.fetchUsers)
+    const { fetchCompany: companies } = useSelector((state) => state.fetchCompany);
     const [error, setError] = useState('');
 
     useEffect(() => {
         dispatch(fetchRoles({ token }));
         dispatch(fetchUsers({ token }));
+        dispatch(fetchCompany({ token }));
     }, [dispatch])
 
     useEffect(() => {
@@ -43,7 +47,8 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                 mobile: selectedUser.mobile || '',
                 email: selectedUser.email || '',
                 role: selectedUser.lock_role?.id || null,
-                reportTo: selectedUser.report_to_id
+                reportTo: selectedUser.report_to_id,
+                company: selectedUser.company_id
             });
         }
     }, [isEditMode, selectedUser]);
@@ -85,7 +90,8 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                 password: formData.password,
                 role_id: formData.role,
                 user_type: "internal",
-                report_to_id: formData.reportTo
+                report_to_id: formData.reportTo,
+                company_id: formData.company
             }
         }
         let response;
@@ -120,7 +126,8 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
             name: "",
             password: "",
             reportTo: "",
-            role: null
+            role: null,
+            company: ""
         })
         setError("");
         onClose();
@@ -214,6 +221,23 @@ const AddInternalUser = ({ open, onClose, placeholder, onSuccess, isEditMode = f
                                 <Eye size={20} className='absolute right-10 top-10 transform -translate-y-1/2 cursor-pointer' onClick={() => setShowPassword(true)} />
                             )
                         }
+                    </div>
+                    <div className="px-6">
+                        <label className="block text-[11px] text-[#1B1B1B] mb-1">
+                            Company<span className="text-red-500 ml-1">*</span>
+                        </label>
+                        <SelectBox
+                            options={
+                                companies.map((company) => ({
+                                    value: company.id,
+                                    label: company.name
+                                }))
+                            }
+                            className="w-full"
+                            value={formData.company}
+                            onChange={(value) => setFormData({ ...formData, company: value })}
+
+                        />
                     </div>
                     <div className="px-6">
                         <label className="block text-[11px] text-[#1B1B1B] mb-1">

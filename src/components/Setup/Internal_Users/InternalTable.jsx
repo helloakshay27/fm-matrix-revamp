@@ -135,6 +135,15 @@ const InternalTable = () => {
         }
       },
       {
+        accessorKey: 'user_company_name',
+        header: 'Company',
+        size: 200,
+        cell: ({ row, getValue }) => {
+          const value = row.original ? getValue() : null;
+          return <span className="pl-2">{value}</span>;
+        }
+      },
+      {
         accessorKey: 'lock_role.display_name',
         header: 'Role',
         size: 150,
@@ -166,7 +175,7 @@ const InternalTable = () => {
         cell: ({ row }) => <ActionIcons row={row} onEditClick={handleEditClick} />,
       },
     ],
-    [users,internalUser]
+    [users, internalUser]
   );
 
   return (
