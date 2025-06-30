@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { cn } from '@/lib/utils';
 
 interface StatsCardProps {
   title: string;
@@ -24,17 +23,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({ title, value, color, icon 
   };
 
   return (
-    <div className={cn(
-      "bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200",
-      // Remove border radius as per design specs
-      "rounded-none",
-      // Desktop spacing (default) - 24px padding
-      "p-6",
-      // Tablet spacing - 20px padding  
-      "md:p-5",
-      // Mobile spacing - 16px padding
-      "sm:p-4"
-    )}>
+    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
       <div className="flex items-center justify-between mb-4">
         <div className={`p-2 rounded-full bg-gray-50 ${getColorClasses()}`}>
           {icon}
