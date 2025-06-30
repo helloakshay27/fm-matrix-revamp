@@ -1,5 +1,6 @@
 
-import React from 'react';
+import React, { useState } from 'react';
+import { Input } from '@/components/ui/input';
 import { X } from 'lucide-react';
 
 interface AddAMCFormProps {
@@ -8,6 +9,21 @@ interface AddAMCFormProps {
 }
 
 export const AddAMCForm = ({ isOpen, onClose }: AddAMCFormProps) => {
+  const [formData, setFormData] = useState({
+    assetName: '',
+    vendor: ''
+  });
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('AMC Form Data:', formData);
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -23,26 +39,24 @@ export const AddAMCForm = ({ isOpen, onClose }: AddAMCFormProps) => {
           </button>
         </div>
         
-        <form className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[#1a1a1a] mb-1">
-              Asset Name
-            </label>
-            <input
+            <Input
+              label="Asset Name"
               type="text"
-              className="w-full px-3 py-2 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent"
               placeholder="Enter asset name"
+              value={formData.assetName}
+              onChange={(e) => handleInputChange('assetName', e.target.value)}
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-[#1a1a1a] mb-1">
-              Vendor
-            </label>
-            <input
+            <Input
+              label="Vendor"
               type="text"
-              className="w-full px-3 py-2 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent"
               placeholder="Enter vendor name"
+              value={formData.vendor}
+              onChange={(e) => handleInputChange('vendor', e.target.value)}
             />
           </div>
           
