@@ -14,12 +14,12 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-[#C72030] bg-white hover:bg-[#C72030] hover:text-white text-[#C72030]",
+          "border border-[#C72030] bg-white text-[#C72030] [&_svg]:text-[#C72030]",
         secondary:
-          "bg-gray-100 text-gray-900 hover:bg-gray-200",
-        ghost: "hover:bg-gray-100 hover:text-gray-900",
+          "bg-gray-100 text-gray-900",
+        ghost: "text-gray-900",
         link: "text-primary underline-offset-4 hover:underline",
-        primary: "bg-[#C72030] text-white hover:bg-[#A01B29]",
+        primary: "bg-[#C72030] text-white",
       },
       size: {
         default: "responsive-button",
