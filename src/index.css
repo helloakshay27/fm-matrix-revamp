@@ -472,7 +472,7 @@ button[type="button"]:contains("Go!") {
   input[placeholder*="Search..."],
   input[placeholder*="Enter Activity Name"],
   input[placeholder*="Search assets"] {
-    padding: 20px 20px 10px 10px !important;
+    padding: 8px 10px !important;
     width: 230px !important;
     height: 36px !important;
   }
@@ -517,7 +517,7 @@ button[type="button"]:contains("Go!") {
   input[placeholder*="Search..."],
   input[placeholder*="Enter Activity Name"],
   input[placeholder*="Search assets"] {
-    padding: 12px 12px 10px 10px !important;
+    padding: 7px 10px !important;
     width: 230px !important;
     height: 38px !important;
   }
@@ -561,7 +561,7 @@ button[type="button"]:contains("Go!") {
   input[placeholder*="Search..."],
   input[placeholder*="Enter Activity Name"],
   input[placeholder*="Search assets"] {
-    padding: 12px 12px 8px 8px !important;
+    padding: 6px 8px !important;
     width: 120px !important;
     height: 28px !important;
   }
