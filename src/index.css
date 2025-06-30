@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -210,4 +209,144 @@
 /* Custom grid columns for calendar layout */
 .grid-cols-30 {
   grid-template-columns: repeat(30, minmax(0, 1fr));
+}
+
+/* Button System Utilities */
+@layer utilities {
+  /* Button Base Styles */
+  .btn-base {
+    @apply inline-flex items-center justify-center whitespace-nowrap font-medium transition-all duration-200;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+    @apply disabled:pointer-events-none disabled:opacity-50;
+    border-radius: 0px;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+  }
+
+  /* Button Variants */
+  .btn-primary {
+    @apply bg-[#C48B9F] text-white hover:opacity-80 active:scale-[0.98];
+  }
+  
+  .btn-secondary {
+    @apply bg-transparent text-[#C48B9F] border border-[#C48B9F] hover:opacity-80 active:scale-[0.98];
+  }
+  
+  .btn-ghost {
+    @apply bg-transparent text-[#C48B9F] hover:opacity-80 active:scale-[0.98];
+  }
+
+  /* Button Sizes - Desktop */
+  .btn-desktop {
+    @apply h-9 min-w-[136px] px-5 py-2.5 text-sm gap-2.5;
+  }
+  
+  /* Button Sizes - Tablet */
+  .btn-tablet {
+    @apply h-9 min-w-[116px] px-4 py-2.5 text-xs gap-2.5;
+  }
+  
+  /* Button Sizes - Mobile */
+  .btn-mobile {
+    @apply h-7 min-w-[94px] px-3 py-1.5 gap-2;
+    font-size: 10px;
+  }
+
+  /* Icon Sizes */
+  .btn-icon-desktop [&_svg] {
+    @apply size-4; /* 16px */
+  }
+  
+  .btn-icon-tablet [&_svg] {
+    @apply size-4; /* 16px */
+  }
+  
+  .btn-icon-mobile [&_svg] {
+    @apply size-3.5; /* 14px */
+  }
+
+  /* Icon Positioning */
+  .btn-icon-left {
+    @apply flex-row;
+  }
+  
+  .btn-icon-right {
+    @apply flex-row-reverse;
+  }
+
+  /* Button States */
+  .btn-disabled {
+    @apply opacity-50 pointer-events-none;
+  }
+  
+  .btn-loading {
+    @apply cursor-not-allowed;
+  }
+
+  /* Button Groups */
+  .btn-group-horizontal {
+    @apply flex flex-wrap items-center gap-2 md:gap-3 xl:gap-3;
+  }
+  
+  .btn-group-vertical {
+    @apply flex flex-col gap-2;
+  }
+
+  /* Full Width */
+  .btn-full-width {
+    @apply w-full;
+  }
+
+  /* Responsive Button Sizing */
+  .btn-responsive {
+    @apply h-7 min-w-[94px] px-3 py-1.5 gap-2;
+    font-size: 10px;
+  }
+  
+  @screen md {
+    .btn-responsive {
+      @apply h-9 min-w-[116px] px-4 py-2.5 text-xs gap-2.5;
+    }
+  }
+  
+  @screen xl {
+    .btn-responsive {
+      @apply h-9 min-w-[136px] px-5 py-2.5 text-sm gap-2.5;
+    }
+  }
+
+  /* Touch Targets for Mobile */
+  .btn-touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Focus Indicators */
+  .btn-focus {
+    @apply focus-visible:ring-[#C48B9F] focus-visible:ring-offset-2;
+  }
+}
+
+/* Button Component Spacing */
+@layer components {
+  .button-spacing-horizontal {
+    margin-right: 8px;
+  }
+  
+  .button-spacing-horizontal:last-child {
+    margin-right: 0;
+  }
+  
+  @screen md {
+    .button-spacing-horizontal {
+      margin-right: 12px;
+    }
+  }
+  
+  .button-spacing-vertical {
+    margin-bottom: 8px;
+  }
+  
+  .button-spacing-vertical:last-child {
+    margin-bottom: 0;
+  }
 }
