@@ -12,6 +12,9 @@ switch (hostname) {
   case "projects.lockated.com":
     baseURL = "https://live-tasks.lockated.com";
     break;
+  case "uat-projects.lockated.com":
+    baseURL = "https://uat-tasks.lockated.com";
+    break;
   case "localhost":
     baseURL = "https://api-tasks.lockated.com";
     break;
