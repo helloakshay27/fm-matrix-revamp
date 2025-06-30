@@ -130,6 +130,53 @@
   .text-system-tertiary {
     @apply text-gray-500;
   }
+
+  /* Responsive Button Styles */
+  .responsive-button {
+    /* Mobile styles (default) - max-width: 767px */
+    padding: 12px 12px 8px 8px;
+    width: 94px;
+    height: 28px;
+    font-size: 12px;
+    gap: 8px;
+  }
+  
+  .responsive-button svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  /* Tablet styles - min-width: 768px and max-width: 1023px */
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .responsive-button {
+      padding: 16px 16px 12px 12px;
+      width: 138px;
+      height: 38px;
+      font-size: 12px;
+      gap: 10px;
+    }
+    
+    .responsive-button svg {
+      width: 12px;
+      height: 12px;
+    }
+  }
+
+  /* Desktop styles - min-width: 1024px */
+  @media (min-width: 1024px) {
+    .responsive-button {
+      padding: 20px 20px 10px 10px;
+      width: 138px;
+      height: 36px;
+      font-size: 14px;
+      gap: 10px;
+    }
+    
+    .responsive-button svg {
+      width: 12px;
+      height: 12px;
+    }
+  }
 }
 
 /* Custom grid columns for calendar layout */
