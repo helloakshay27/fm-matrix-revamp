@@ -4,6 +4,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { Layout } from './components/Layout';
 import { SetupLayout } from './components/SetupLayout';
+import { ButtonShowcase } from './components/ButtonShowcase';
 
 // Import existing pages
 import Index from './pages/Index';
@@ -352,7 +353,7 @@ function App() {
         <Router>
           <Routes>
             <Route path="/" element={<Layout><div /></Layout>}>
-              <Route index element={<Index />} />
+              <Route index element={<ButtonShowcase />} />
               
               {/* Settings Routes */}
               <Route path="/settings/users" element={<FMUsersDashboard />} />

@@ -163,6 +163,24 @@
   .col-mobile-wide {
     @apply col-span-1 md:col-span-3 xl:col-span-4;
   }
+
+  /* Button System Utilities */
+  .btn-spacing-horizontal {
+    @apply gap-2 md:gap-3 xl:gap-3;
+  }
+
+  .btn-spacing-vertical {
+    @apply gap-2;
+  }
+
+  .btn-icon-spacing {
+    @apply gap-2 xl:gap-2.5 md:gap-2.5;
+  }
+
+  /* Touch Target Utilities */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
 }
 
 /* Design System Utilities */
@@ -210,4 +228,51 @@
 /* Custom grid columns for calendar layout */
 .grid-cols-30 {
   grid-template-columns: repeat(30, minmax(0, 1fr));
+}
+
+/* Button Component Enhancements */
+@layer components {
+  .btn-base {
+    @apply inline-flex items-center justify-center whitespace-nowrap font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded-none border-0;
+  }
+
+  .btn-primary {
+    @apply bg-[#C48B9F] text-white hover:opacity-80 active:scale-98;
+  }
+
+  .btn-secondary {
+    @apply border border-[#C72030] bg-transparent text-[#C72030] hover:bg-[#C72030] hover:text-white;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-[#C72030] hover:bg-[#C72030]/10;
+  }
+
+  .btn-desktop {
+    @apply h-9 px-5 text-sm min-w-[136px];
+  }
+
+  .btn-tablet {
+    @apply h-9 px-4 text-xs min-w-[116px];
+  }
+
+  .btn-mobile {
+    @apply h-7 px-3 text-[10px] min-w-[94px];
+  }
+
+  .btn-icon-left {
+    @apply flex-row gap-2.5;
+  }
+
+  .btn-icon-right {
+    @apply flex-row-reverse gap-2.5;
+  }
+
+  .btn-loading {
+    @apply opacity-70 cursor-wait;
+  }
+
+  .btn-disabled {
+    @apply opacity-50 pointer-events-none;
+  }
 }
