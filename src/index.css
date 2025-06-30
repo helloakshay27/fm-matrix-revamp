@@ -773,7 +773,7 @@ div:has(p:contains("KRCC FORM LIST")) {
   .bg-white.p-4.rounded-lg .text-2xl,
   .bg-white.p-4.rounded-lg .text-lg {
     font-family: 'Work Sans', sans-serif !important;
-    font-size: 18px !important;
+    font-size: 24px !important;
     font-weight: 500 !important;
     letter-spacing: 0% !important;
     line-height: auto !important;
