@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
@@ -591,5 +590,452 @@ button[type="button"]:contains("Go!") {
   .relative:has(input[placeholder*="Enter Activity Name"]) button,
   .relative:has(input[placeholder*="Search assets"]) button {
     padding: 12px 12px 10px 10px !important;
+  }
+}
+
+/* Global Stats Card Styles */
+/* Target stats cards across all dashboard pages */
+.stats-card,
+[class*="bg-purple-500"],
+[class*="bg-orange-400"],
+[class*="bg-orange-500"],
+[class*="bg-red-500"],
+[class*="bg-green-500"],
+[class*="bg-blue-500"],
+[class*="bg-yellow-500"],
+[class*="bg-indigo-500"],
+[class*="bg-pink-500"],
+[class*="bg-gray-500"],
+.bg-white.p-6.rounded-lg.shadow-sm,
+.bg-white.p-4.rounded-lg,
+/* Target cards in specific dashboard contexts */
+div[class*="grid"]:has([class*="bg-purple-500"]) > div,
+div[class*="grid"]:has([class*="bg-orange-400"]) > div,
+div[class*="grid"]:has([class*="bg-red-500"]) > div,
+div[class*="grid"]:has([class*="bg-green-500"]) > div,
+/* Target cards with specific content patterns */
+div:has(p:contains("Total Asset")),
+div:has(p:contains("In Use")),
+div:has(p:contains("Breakdown")),
+div:has(p:contains("Total Tickets")),
+div:has(p:contains("Open")),
+div:has(p:contains("In Progress")),
+div:has(p:contains("Pending")),
+div:has(p:contains("Closed")),
+div:has(p:contains("Scheduled")),
+div:has(p:contains("Overdue")),
+div:has(p:contains("Completed")),
+div:has(p:contains("Total Permits")),
+div:has(p:contains("Draft Permits")),
+div:has(p:contains("Hold Permits")),
+div:has(p:contains("Open Permits")),
+div:has(p:contains("Approved Permits")),
+div:has(p:contains("Rejected Permits")),
+div:has(p:contains("Extended Permits")),
+div:has(p:contains("Closed Permits")),
+div:has(p:contains("Total Bills")),
+div:has(p:contains("Total Amount")),
+div:has(p:contains("Total Paid Amount")),
+div:has(p:contains("Total Pending Amount")),
+div:has(p:contains("All")),
+div:has(p:contains("Approved")),
+div:has(p:contains("Rejected")),
+div:has(p:contains("Total No. of Seats")),
+div:has(p:contains("Employee Schedules")),
+div:has(p:contains("Employee Check In")),
+div:has(p:contains("No of Requests")),
+div:has(p:contains("No of Waiting List")),
+div:has(p:contains("NON FTE USERS")),
+div:has(p:contains("KRCC FORM LIST")) {
+  background-color: #F6F4EE !important;
+  border: 1px solid rgba(176, 160, 160, 0.12) !important;
+  border-radius: 0px !important;
+  box-shadow: 0 2px 4px rgba(196, 181, 213, 0.1), 0 0 18px rgba(199, 32, 48, 0.08) !important;
+}
+
+/* Desktop Styles */
+@media (min-width: 1024px) {
+  .stats-card,
+  [class*="bg-purple-500"],
+  [class*="bg-orange-400"],
+  [class*="bg-orange-500"],
+  [class*="bg-red-500"],
+  [class*="bg-green-500"],
+  [class*="bg-blue-500"],
+  [class*="bg-yellow-500"],
+  [class*="bg-indigo-500"],
+  [class*="bg-pink-500"],
+  [class*="bg-gray-500"],
+  .bg-white.p-6.rounded-lg.shadow-sm,
+  .bg-white.p-4.rounded-lg,
+  div[class*="grid"]:has([class*="bg-purple-500"]) > div,
+  div[class*="grid"]:has([class*="bg-orange-400"]) > div,
+  div[class*="grid"]:has([class*="bg-red-500"]) > div,
+  div[class*="grid"]:has([class*="bg-green-500"]) > div,
+  div:has(p:contains("Total Asset")),
+  div:has(p:contains("In Use")),
+  div:has(p:contains("Breakdown")),
+  div:has(p:contains("Total Tickets")),
+  div:has(p:contains("Open")),
+  div:has(p:contains("In Progress")),
+  div:has(p:contains("Pending")),
+  div:has(p:contains("Closed")),
+  div:has(p:contains("Scheduled")),
+  div:has(p:contains("Overdue")),
+  div:has(p:contains("Completed")),
+  div:has(p:contains("Total Permits")),
+  div:has(p:contains("Draft Permits")),
+  div:has(p:contains("Hold Permits")),
+  div:has(p:contains("Open Permits")),
+  div:has(p:contains("Approved Permits")),
+  div:has(p:contains("Rejected Permits")),
+  div:has(p:contains("Extended Permits")),
+  div:has(p:contains("Closed Permits")),
+  div:has(p:contains("Total Bills")),
+  div:has(p:contains("Total Amount")),
+  div:has(p:contains("Total Paid Amount")),
+  div:has(p:contains("Total Pending Amount")),
+  div:has(p:contains("All")),
+  div:has(p:contains("Approved")),
+  div:has(p:contains("Rejected")),
+  div:has(p:contains("Total No. of Seats")),
+  div:has(p:contains("Employee Schedules")),
+  div:has(p:contains("Employee Check In")),
+  div:has(p:contains("No of Requests")),
+  div:has(p:contains("No of Waiting List")),
+  div:has(p:contains("NON FTE USERS")),
+  div:has(p:contains("KRCC FORM LIST")) {
+    padding: 52px 52px 36px 36px !important;
+    width: 488px !important;
+    height: 132px !important;
+    border-radius: 0px !important;
+  }
+
+  /* Title styles for desktop */
+  .stats-card h3,
+  .stats-card p:last-child,
+  [class*="bg-purple-500"] h3,
+  [class*="bg-purple-500"] p:last-child,
+  [class*="bg-orange-400"] h3,
+  [class*="bg-orange-400"] p:last-child,
+  [class*="bg-orange-500"] h3,
+  [class*="bg-orange-500"] p:last-child,
+  [class*="bg-red-500"] h3,
+  [class*="bg-red-500"] p:last-child,
+  [class*="bg-green-500"] h3,
+  [class*="bg-green-500"] p:last-child,
+  [class*="bg-blue-500"] h3,
+  [class*="bg-blue-500"] p:last-child,
+  [class*="bg-yellow-500"] h3,
+  [class*="bg-yellow-500"] p:last-child,
+  [class*="bg-indigo-500"] h3,
+  [class*="bg-indigo-500"] p:last-child,
+  [class*="bg-pink-500"] h3,
+  [class*="bg-pink-500"] p:last-child,
+  [class*="bg-gray-500"] h3,
+  [class*="bg-gray-500"] p:last-child,
+  .bg-white.p-6.rounded-lg.shadow-sm h3,
+  .bg-white.p-6.rounded-lg.shadow-sm p:last-child,
+  .bg-white.p-4.rounded-lg h3,
+  .bg-white.p-4.rounded-lg p:last-child {
+    font-family: 'Work Sans', sans-serif !important;
+    font-size: 24px !important;
+    font-weight: 600 !important;
+    color: rgba(199, 32, 48, 0.54) !important;
+    letter-spacing: 0% !important;
+    line-height: auto !important;
+  }
+
+  /* Value styles for desktop */
+  .stats-card .text-2xl,
+  .stats-card .text-lg,
+  [class*="bg-purple-500"] .text-2xl,
+  [class*="bg-purple-500"] .text-lg,
+  [class*="bg-orange-400"] .text-2xl,
+  [class*="bg-orange-400"] .text-lg,
+  [class*="bg-orange-500"] .text-2xl,
+  [class*="bg-orange-500"] .text-lg,
+  [class*="bg-red-500"] .text-2xl,
+  [class*="bg-red-500"] .text-lg,
+  [class*="bg-green-500"] .text-2xl,
+  [class*="bg-green-500"] .text-lg,
+  [class*="bg-blue-500"] .text-2xl,
+  [class*="bg-blue-500"] .text-lg,
+  [class*="bg-yellow-500"] .text-2xl,
+  [class*="bg-yellow-500"] .text-lg,
+  [class*="bg-indigo-500"] .text-2xl,
+  [class*="bg-indigo-500"] .text-lg,
+  [class*="bg-pink-500"] .text-2xl,
+  [class*="bg-pink-500"] .text-lg,
+  [class*="bg-gray-500"] .text-2xl,
+  [class*="bg-gray-500"] .text-lg,
+  .bg-white.p-6.rounded-lg.shadow-sm .text-2xl,
+  .bg-white.p-6.rounded-lg.shadow-sm .text-lg,
+  .bg-white.p-4.rounded-lg .text-2xl,
+  .bg-white.p-4.rounded-lg .text-lg {
+    font-family: 'Work Sans', sans-serif !important;
+    font-size: 18px !important;
+    font-weight: 500 !important;
+    color: rgba(199, 32, 48, 0.54) !important;
+    letter-spacing: 0% !important;
+    line-height: auto !important;
+  }
+}
+
+/* Tablet Styles */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .stats-card,
+  [class*="bg-purple-500"],
+  [class*="bg-orange-400"],
+  [class*="bg-orange-500"],
+  [class*="bg-red-500"],
+  [class*="bg-green-500"],
+  [class*="bg-blue-500"],
+  [class*="bg-yellow-500"],
+  [class*="bg-indigo-500"],
+  [class*="bg-pink-500"],
+  [class*="bg-gray-500"],
+  .bg-white.p-6.rounded-lg.shadow-sm,
+  .bg-white.p-4.rounded-lg,
+  div[class*="grid"]:has([class*="bg-purple-500"]) > div,
+  div[class*="grid"]:has([class*="bg-orange-400"]) > div,
+  div[class*="grid"]:has([class*="bg-red-500"]) > div,
+  div[class*="grid"]:has([class*="bg-green-500"]) > div,
+  div:has(p:contains("Total Asset")),
+  div:has(p:contains("In Use")),
+  div:has(p:contains("Breakdown")),
+  div:has(p:contains("Total Tickets")),
+  div:has(p:contains("Open")),
+  div:has(p:contains("In Progress")),
+  div:has(p:contains("Pending")),
+  div:has(p:contains("Closed")),
+  div:has(p:contains("Scheduled")),
+  div:has(p:contains("Overdue")),
+  div:has(p:contains("Completed")),
+  div:has(p:contains("Total Permits")),
+  div:has(p:contains("Draft Permits")),
+  div:has(p:contains("Hold Permits")),
+  div:has(p:contains("Open Permits")),
+  div:has(p:contains("Approved Permits")),
+  div:has(p:contains("Rejected Permits")),
+  div:has(p:contains("Extended Permits")),
+  div:has(p:contains("Closed Permits")),
+  div:has(p:contains("Total Bills")),
+  div:has(p:contains("Total Amount")),
+  div:has(p:contains("Total Paid Amount")),
+  div:has(p:contains("Total Pending Amount")),
+  div:has(p:contains("All")),
+  div:has(p:contains("Approved")),
+  div:has(p:contains("Rejected")),
+  div:has(p:contains("Total No. of Seats")),
+  div:has(p:contains("Employee Schedules")),
+  div:has(p:contains("Employee Check In")),
+  div:has(p:contains("No of Requests")),
+  div:has(p:contains("No of Waiting List")),
+  div:has(p:contains("NON FTE USERS")),
+  div:has(p:contains("KRCC FORM LIST")) {
+    padding: 28px 28px 40px 40px !important;
+    width: 300px !important;
+    height: 140px !important;
+    border-radius: 0px !important;
+  }
+
+  /* Title styles for tablet */
+  .stats-card h3,
+  .stats-card p:last-child,
+  [class*="bg-purple-500"] h3,
+  [class*="bg-purple-500"] p:last-child,
+  [class*="bg-orange-400"] h3,
+  [class*="bg-orange-400"] p:last-child,
+  [class*="bg-orange-500"] h3,
+  [class*="bg-orange-500"] p:last-child,
+  [class*="bg-red-500"] h3,
+  [class*="bg-red-500"] p:last-child,
+  [class*="bg-green-500"] h3,
+  [class*="bg-green-500"] p:last-child,
+  [class*="bg-blue-500"] h3,
+  [class*="bg-blue-500"] p:last-child,
+  [class*="bg-yellow-500"] h3,
+  [class*="bg-yellow-500"] p:last-child,
+  [class*="bg-indigo-500"] h3,
+  [class*="bg-indigo-500"] p:last-child,
+  [class*="bg-pink-500"] h3,
+  [class*="bg-pink-500"] p:last-child,
+  [class*="bg-gray-500"] h3,
+  [class*="bg-gray-500"] p:last-child,
+  .bg-white.p-6.rounded-lg.shadow-sm h3,
+  .bg-white.p-6.rounded-lg.shadow-sm p:last-child,
+  .bg-white.p-4.rounded-lg h3,
+  .bg-white.p-4.rounded-lg p:last-child {
+    font-family: 'Work Sans', sans-serif !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    color: rgba(199, 32, 48, 0.54) !important;
+    letter-spacing: 0% !important;
+    line-height: auto !important;
+  }
+
+  /* Value styles for tablet */
+  .stats-card .text-2xl,
+  .stats-card .text-lg,
+  [class*="bg-purple-500"] .text-2xl,
+  [class*="bg-purple-500"] .text-lg,
+  [class*="bg-orange-400"] .text-2xl,
+  [class*="bg-orange-400"] .text-lg,
+  [class*="bg-orange-500"] .text-2xl,
+  [class*="bg-orange-500"] .text-lg,
+  [class*="bg-red-500"] .text-2xl,
+  [class*="bg-red-500"] .text-lg,
+  [class*="bg-green-500"] .text-2xl,
+  [class*="bg-green-500"] .text-lg,
+  [class*="bg-blue-500"] .text-2xl,
+  [class*="bg-blue-500"] .text-lg,
+  [class*="bg-yellow-500"] .text-2xl,
+  [class*="bg-yellow-500"] .text-lg,
+  [class*="bg-indigo-500"] .text-2xl,
+  [class*="bg-indigo-500"] .text-lg,
+  [class*="bg-pink-500"] .text-2xl,
+  [class*="bg-pink-500"] .text-lg,
+  [class*="bg-gray-500"] .text-2xl,
+  [class*="bg-gray-500"] .text-lg,
+  .bg-white.p-6.rounded-lg.shadow-sm .text-2xl,
+  .bg-white.p-6.rounded-lg.shadow-sm .text-lg,
+  .bg-white.p-4.rounded-lg .text-2xl,
+  .bg-white.p-4.rounded-lg .text-lg {
+    font-family: 'Work Sans', sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    color: rgba(199, 32, 48, 0.54) !important;
+    letter-spacing: 0% !important;
+    line-height: auto !important;
+  }
+}
+
+/* Mobile Styles */
+@media (max-width: 767px) {
+  .stats-card,
+  [class*="bg-purple-500"],
+  [class*="bg-orange-400"],
+  [class*="bg-orange-500"],
+  [class*="bg-red-500"],
+  [class*="bg-green-500"],
+  [class*="bg-blue-500"],
+  [class*="bg-yellow-500"],
+  [class*="bg-indigo-500"],
+  [class*="bg-pink-500"],
+  [class*="bg-gray-500"],
+  .bg-white.p-6.rounded-lg.shadow-sm,
+  .bg-white.p-4.rounded-lg,
+  div[class*="grid"]:has([class*="bg-purple-500"]) > div,
+  div[class*="grid"]:has([class*="bg-orange-400"]) > div,
+  div[class*="grid"]:has([class*="bg-red-500"]) > div,
+  div[class*="grid"]:has([class*="bg-green-500"]) > div,
+  div:has(p:contains("Total Asset")),
+  div:has(p:contains("In Use")),
+  div:has(p:contains("Breakdown")),
+  div:has(p:contains("Total Tickets")),
+  div:has(p:contains("Open")),
+  div:has(p:contains("In Progress")),
+  div:has(p:contains("Pending")),
+  div:has(p:contains("Closed")),
+  div:has(p:contains("Scheduled")),
+  div:has(p:contains("Overdue")),
+  div:has(p:contains("Completed")),
+  div:has(p:contains("Total Permits")),
+  div:has(p:contains("Draft Permits")),
+  div:has(p:contains("Hold Permits")),
+  div:has(p:contains("Open Permits")),
+  div:has(p:contains("Approved Permits")),
+  div:has(p:contains("Rejected Permits")),
+  div:has(p:contains("Extended Permits")),
+  div:has(p:contains("Closed Permits")),
+  div:has(p:contains("Total Bills")),
+  div:has(p:contains("Total Amount")),
+  div:has(p:contains("Total Paid Amount")),
+  div:has(p:contains("Total Pending Amount")),
+  div:has(p:contains("All")),
+  div:has(p:contains("Approved")),
+  div:has(p:contains("Rejected")),
+  div:has(p:contains("Total No. of Seats")),
+  div:has(p:contains("Employee Schedules")),
+  div:has(p:contains("Employee Check In")),
+  div:has(p:contains("No of Requests")),
+  div:has(p:contains("No of Waiting List")),
+  div:has(p:contains("NON FTE USERS")),
+  div:has(p:contains("KRCC FORM LIST")) {
+    padding: 18px 18px 28px 28px !important;
+    width: 170px !important;
+    height: 96px !important;
+    border-radius: 20px !important;
+  }
+
+  /* Title styles for mobile */
+  .stats-card h3,
+  .stats-card p:last-child,
+  [class*="bg-purple-500"] h3,
+  [class*="bg-purple-500"] p:last-child,
+  [class*="bg-orange-400"] h3,
+  [class*="bg-orange-400"] p:last-child,
+  [class*="bg-orange-500"] h3,
+  [class*="bg-orange-500"] p:last-child,
+  [class*="bg-red-500"] h3,
+  [class*="bg-red-500"] p:last-child,
+  [class*="bg-green-500"] h3,
+  [class*="bg-green-500"] p:last-child,
+  [class*="bg-blue-500"] h3,
+  [class*="bg-blue-500"] p:last-child,
+  [class*="bg-yellow-500"] h3,
+  [class*="bg-yellow-500"] p:last-child,
+  [class*="bg-indigo-500"] h3,
+  [class*="bg-indigo-500"] p:last-child,
+  [class*="bg-pink-500"] h3,
+  [class*="bg-pink-500"] p:last-child,
+  [class*="bg-gray-500"] h3,
+  [class*="bg-gray-500"] p:last-child,
+  .bg-white.p-6.rounded-lg.shadow-sm h3,
+  .bg-white.p-6.rounded-lg.shadow-sm p:last-child,
+  .bg-white.p-4.rounded-lg h3,
+  .bg-white.p-4.rounded-lg p:last-child {
+    font-family: 'Work Sans', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: rgba(199, 32, 48, 0.54) !important;
+    letter-spacing: 0% !important;
+    line-height: auto !important;
+  }
+
+  /* Value styles for mobile */
+  .stats-card .text-2xl,
+  .stats-card .text-lg,
+  [class*="bg-purple-500"] .text-2xl,
+  [class*="bg-purple-500"] .text-lg,
+  [class*="bg-orange-400"] .text-2xl,
+  [class*="bg-orange-400"] .text-lg,
+  [class*="bg-orange-500"] .text-2xl,
+  [class*="bg-orange-500"] .text-lg,
+  [class*="bg-red-500"] .text-2xl,
+  [class*="bg-red-500"] .text-lg,
+  [class*="bg-green-500"] .text-2xl,
+  [class*="bg-green-500"] .text-lg,
+  [class*="bg-blue-500"] .text-2xl,
+  [class*="bg-blue-500"] .text-lg,
+  [class*="bg-yellow-500"] .text-2xl,
+  [class*="bg-yellow-500"] .text-lg,
+  [class*="bg-indigo-500"] .text-2xl,
+  [class*="bg-indigo-500"] .text-lg,
+  [class*="bg-pink-500"] .text-2xl,
+  [class*="bg-pink-500"] .text-lg,
+  [class*="bg-gray-500"] .text-2xl,
+  [class*="bg-gray-500"] .text-lg,
+  .bg-white.p-6.rounded-lg.shadow-sm .text-2xl,
+  .bg-white.p-6.rounded-lg.shadow-sm .text-lg,
+  .bg-white.p-4.rounded-lg .text-2xl,
+  .bg-white.p-4.rounded-lg .text-lg {
+    font-family: 'Work Sans', sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    color: rgba(199, 32, 48, 0.54) !important;
+    letter-spacing: 0% !important;
+    line-height: auto !important;
   }
 }
