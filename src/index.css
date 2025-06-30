@@ -1,4 +1,6 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -29,7 +31,7 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0rem;
+    --radius: 0.5rem;
   }
 
   .dark {
@@ -69,70 +71,497 @@
   }
 }
 
-/* Design System Utilities */
-@layer utilities {
-  /* Shadow System */
-  .shadow-system-sm {
-    box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.06);
-  }
-  
-  .shadow-system-md {
-    box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
-  }
-  
-  .shadow-system-lg {
-    box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.12);
-  }
-  
-  .shadow-system-xl {
-    box-shadow: 0px 8px 24px 0px rgba(0, 0, 0, 0.15);
-  }
+/* Global Button Width Override */
+button {
+  width: max-content !important;
+}
 
-  /* Spacing System */
-  .space-system-xs {
-    @apply space-y-1;
-  }
-  
-  .space-system-sm {
-    @apply space-y-2;
-  }
-  
-  .space-system-md {
-    @apply space-y-4;
-  }
-  
-  .space-system-lg {
-    @apply space-y-6;
-  }
-  
-  .space-system-xl {
-    @apply space-y-8;
-  }
+/* Ensure shadcn/ui buttons also use max-content */
+.btn, [data-testid*="button"], [class*="button"] {
+  width: max-content !important;
+}
 
-  /* Border System */
-  .border-system {
-    @apply border border-gray-200;
-  }
-  
-  .border-system-focus {
-    @apply border-blue-500;
-  }
-
-  /* Typography System */
-  .text-system-primary {
-    @apply text-gray-900;
-  }
-  
-  .text-system-secondary {
-    @apply text-gray-600;
-  }
-  
-  .text-system-tertiary {
-    @apply text-gray-500;
+/* Override any fixed button widths */
+@media (min-width: 1024px) {
+  button {
+    width: max-content !important;
   }
 }
 
-/* Custom grid columns for calendar layout */
-.grid-cols-30 {
-  grid-template-columns: repeat(30, minmax(0, 1fr));
+@media (min-width: 768px) and (max-width: 1023px) {
+  button {
+    width: max-content !important;
+  }
+}
+
+@media (max-width: 767px) {
+  button {
+    width: max-content !important;
+  }
+}
+
+/* Enhanced Global Select Menu Styles for Sidebar */
+/* Target all select elements within sidebar containers */
+.sidebar select,
+.sidebar [role="combobox"],
+.sidebar .select-trigger,
+.sidebar [data-state="closed"],
+.sidebar [data-state="open"],
+[data-sidebar] select,
+[data-sidebar] [role="combobox"],
+[data-sidebar] .select-trigger,
+[data-sidebar] [data-state="closed"],
+[data-sidebar] [data-state="open"],
+[class*="sidebar"] select,
+[class*="sidebar"] [role="combobox"],
+[class*="sidebar"] .select-trigger,
+[class*="sidebar"] [data-state="closed"],
+[class*="sidebar"] [data-state="open"],
+/* Also target by parent container background */
+div[style*="background"] select,
+div[style*="#f6f4ee"] select,
+/* Target by class names that might be on sidebar */
+.bg-\[#f6f4ee\] select,
+.bg-\[#f6f4ee\] [role="combobox"],
+.bg-\[#f6f4ee\] .select-trigger {
+  background-color: #C72030 !important;
+  color: #FFFFFF !important;
+  font-family: 'Service', sans-serif !important;
+  font-weight: 500 !important;
+  letter-spacing: 0% !important;
+  line-height: auto !important;
+  border: none !important;
+}
+
+/* Desktop Styles */
+@media (min-width: 1024px) {
+  .sidebar select,
+  .sidebar [role="combobox"],
+  .sidebar .select-trigger,
+  .sidebar [data-state="closed"],
+  .sidebar [data-state="open"],
+  [data-sidebar] select,
+  [data-sidebar] [role="combobox"],
+  [data-sidebar] .select-trigger,
+  [data-sidebar] [data-state="closed"],
+  [data-sidebar] [data-state="open"],
+  [class*="sidebar"] select,
+  [class*="sidebar"] [role="combobox"],
+  [class*="sidebar"] .select-trigger,
+  [class*="sidebar"] [data-state="closed"],
+  [class*="sidebar"] [data-state="open"],
+  div[style*="background"] select,
+  div[style*="#f6f4ee"] select,
+  .bg-\[#f6f4ee\] select,
+  .bg-\[#f6f4ee\] [role="combobox"],
+  .bg-\[#f6f4ee\] .select-trigger {
+    width: 48px !important;
+    height: 6px !important;
+    border-top-left-radius: 16px !important;
+    border-top-right-radius: 12px !important;
+    border-bottom-left-radius: 12px !important;
+    border-bottom-right-radius: 12px !important;
+  }
+
+  /* First item in select menu */
+  .sidebar select option:first-child,
+  .sidebar [role="combobox"] [role="option"]:first-child,
+  [data-sidebar] select option:first-child,
+  [data-sidebar] [role="combobox"] [role="option"]:first-child,
+  [class*="sidebar"] select option:first-child,
+  [class*="sidebar"] [role="combobox"] [role="option"]:first-child,
+  div[style*="background"] select option:first-child,
+  div[style*="#f6f4ee"] select option:first-child,
+  .bg-\[#f6f4ee\] select option:first-child,
+  .bg-\[#f6f4ee\] [role="combobox"] [role="option"]:first-child {
+    padding: 1px 16px 24px 1px !important;
+  }
+
+  /* Second item in select menu */
+  .sidebar select option:nth-child(2),
+  .sidebar [role="combobox"] [role="option"]:nth-child(2),
+  [data-sidebar] select option:nth-child(2),
+  [data-sidebar] [role="combobox"] [role="option"]:nth-child(2),
+  [class*="sidebar"] select option:nth-child(2),
+  [class*="sidebar"] [role="combobox"] [role="option"]:nth-child(2),
+  div[style*="background"] select option:nth-child(2),
+  div[style*="#f6f4ee"] select option:nth-child(2),
+  .bg-\[#f6f4ee\] select option:nth-child(2),
+  .bg-\[#f6f4ee\] [role="combobox"] [role="option"]:nth-child(2) {
+    padding: 22px 18px 24px 22px !important;
+  }
+
+  /* Third item in select menu */
+  .sidebar select option:nth-child(3),
+  .sidebar [role="combobox"] [role="option"]:nth-child(3),
+  [data-sidebar] select option:nth-child(3),
+  [data-sidebar] [role="combobox"] [role="option"]:nth-child(3),
+  [class*="sidebar"] select option:nth-child(3),
+  [class*="sidebar"] [role="combobox"] [role="option"]:nth-child(3),
+  div[style*="background"] select option:nth-child(3),
+  div[style*="#f6f4ee"] select option:nth-child(3),
+  .bg-\[#f6f4ee\] select option:nth-child(3),
+  .bg-\[#f6f4ee\] [role="combobox"] [role="option"]:nth-child(3) {
+    padding: 22px 12px 32px 22px !important;
+  }
+}
+
+/* Tablet Styles */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .sidebar select,
+  .sidebar [role="combobox"],
+  .sidebar .select-trigger,
+  .sidebar [data-state="closed"],
+  .sidebar [data-state="open"],
+  [data-sidebar] select,
+  [data-sidebar] [role="combobox"],
+  [data-sidebar] .select-trigger,
+  [data-sidebar] [data-state="closed"],
+  [data-sidebar] [data-state="open"],
+  [class*="sidebar"] select,
+  [class*="sidebar"] [role="combobox"],
+  [class*="sidebar"] .select-trigger,
+  [class*="sidebar"] [data-state="closed"],
+  [class*="sidebar"] [data-state="open"],
+  div[style*="background"] select,
+  div[style*="#f6f4ee"] select,
+  .bg-\[#f6f4ee\] select,
+  .bg-\[#f6f4ee\] [role="combobox"],
+  .bg-\[#f6f4ee\] .select-trigger {
+    width: 40px !important;
+    height: 5px !important;
+    border-radius: 0px !important;
+  }
+
+  /* First item in select menu */
+  .sidebar select option:first-child,
+  .sidebar [role="combobox"] [role="option"]:first-child,
+  [data-sidebar] select option:first-child,
+  [data-sidebar] [role="combobox"] [role="option"]:first-child,
+  [class*="sidebar"] select option:first-child,
+  [class*="sidebar"] [role="combobox"] [role="option"]:first-child,
+  div[style*="background"] select option:first-child,
+  div[style*="#f6f4ee"] select option:first-child,
+  .bg-\[#f6f4ee\] select option:first-child,
+  .bg-\[#f6f4ee\] [role="combobox"] [role="option"]:first-child {
+    padding: 1px 16px 20px 1px !important;
+  }
+
+  /* Second item in select menu */
+  .sidebar select option:nth-child(2),
+  .sidebar [role="combobox"] [role="option"]:nth-child(2),
+  [data-sidebar] select option:nth-child(2),
+  [data-sidebar] [role="combobox"] [role="option"]:nth-child(2),
+  [class*="sidebar"] select option:nth-child(2),
+  [class*="sidebar"] [role="combobox"] [role="option"]:nth-child(2),
+  div[style*="background"] select option:nth-child(2),
+  div[style*="#f6f4ee"] select option:nth-child(2),
+  .bg-\[#f6f4ee\] select option:nth-child(2),
+  .bg-\[#f6f4ee\] [role="combobox"] [role="option"]:nth-child(2) {
+    padding: 16px 12px 28px 16px !important;
+  }
+
+  /* Third item in select menu */
+  .sidebar select option:nth-child(3),
+  .sidebar [role="combobox"] [role="option"]:nth-child(3),
+  [data-sidebar] select option:nth-child(3),
+  [data-sidebar] [role="combobox"] [role="option"]:nth-child(3),
+  [class*="sidebar"] select option:nth-child(3),
+  [class*="sidebar"] [role="combobox"] [role="option"]:nth-child(3),
+  div[style*="background"] select option:nth-child(3),
+  div[style*="#f6f4ee"] select option:nth-child(3),
+  .bg-\[#f6f4ee\] select option:nth-child(3),
+  .bg-\[#f6f4ee\] [role="combobox"] [role="option"]:nth-child(3) {
+    padding: 12px 12px 30px 12px !important;
+  }
+}
+
+/* Mobile Styles */
+@media (max-width: 767px) {
+  .sidebar select,
+  .sidebar [role="combobox"],
+  .sidebar .select-trigger,
+  .sidebar [data-state="closed"],
+  .sidebar [data-state="open"],
+  [data-sidebar] select,
+  [data-sidebar] [role="combobox"],
+  [data-sidebar] .select-trigger,
+  [data-sidebar] [data-state="closed"],
+  [data-sidebar] [data-state="open"],
+  [class*="sidebar"] select,
+  [class*="sidebar"] [role="combobox"],
+  [class*="sidebar"] .select-trigger,
+  [class*="sidebar"] [data-state="closed"],
+  [class*="sidebar"] [data-state="open"],
+  div[style*="background"] select,
+  div[style*="#f6f4ee"] select,
+  .bg-\[#f6f4ee\] select,
+  .bg-\[#f6f4ee\] [role="combobox"],
+  .bg-\[#f6f4ee\] .select-trigger {
+    width: 32px !important;
+    height: 4px !important;
+    border-top-left-radius: 12px !important;
+    border-top-right-radius: 10px !important;
+    border-bottom-left-radius: 10px !important;
+    border-bottom-right-radius: 10px !important;
+  }
+
+  /* First item in select menu */
+  .sidebar select option:first-child,
+  .sidebar [role="combobox"] [role="option"]:first-child,
+  [data-sidebar] select option:first-child,
+  [data-sidebar] [role="combobox"] [role="option"]:first-child,
+  [class*="sidebar"] select option:first-child,
+  [class*="sidebar"] [role="combobox"] [role="option"]:first-child,
+  div[style*="background"] select option:first-child,
+  div[style*="#f6f4ee"] select option:first-child,
+  .bg-\[#f6f4ee\] select option:first-child,
+  .bg-\[#f6f4ee\] [role="combobox"] [role="option"]:first-child {
+    padding: 1px 12px 20px 1px !important;
+  }
+
+  /* Second item in select menu */
+  .sidebar select option:nth-child(2),
+  .sidebar [role="combobox"] [role="option"]:nth-child(2),
+  [data-sidebar] select option:nth-child(2),
+  [data-sidebar] [role="combobox"] [role="option"]:nth-child(2),
+  [class*="sidebar"] select option:nth-child(2),
+  [class*="sidebar"] [role="combobox"] [role="option"]:nth-child(2),
+  div[style*="background"] select option:nth-child(2),
+  div[style*="#f6f4ee"] select option:nth-child(2),
+  .bg-\[#f6f4ee\] select option:nth-child(2),
+  .bg-\[#f6f4ee\] [role="combobox"] [role="option"]:nth-child(2) {
+    padding: 12px 12px 28px 12px !important;
+  }
+
+  /* Third item in select menu */
+  .sidebar select option:nth-child(3),
+  .sidebar [role="combobox"] [role="option"]:nth-child(3),
+  [data-sidebar] select option:nth-child(3),
+  [data-sidebar] [role="combobox"] [role="option"]:nth-child(3),
+  [class*="sidebar"] select option:nth-child(3),
+  [class*="sidebar"] [role="combobox"] [role="option"]:nth-child(3),
+  div[style*="background"] select option:nth-child(3),
+  div[style*="#f6f4ee"] select option:nth-child(3),
+  .bg-\[#f6f4ee\] select option:nth-child(3),
+  .bg-\[#f6f4ee\] [role="combobox"] [role="option"]:nth-child(3) {
+    padding: 10px 10px 30px 10px !important;
+  }
+}
+
+/* Ensure dropdown content inherits the same styling */
+.sidebar .select-content,
+[data-sidebar] .select-content,
+[class*="sidebar"] .select-content,
+div[style*="background"] .select-content,
+div[style*="#f6f4ee"] .select-content,
+.bg-\[#f6f4ee\] .select-content {
+  background-color: #C72030 !important;
+  color: #FFFFFF !important;
+  font-family: 'Service', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.sidebar .select-item,
+[data-sidebar] .select-item,
+[class*="sidebar"] .select-item,
+div[style*="background"] .select-item,
+div[style*="#f6f4ee"] .select-item,
+.bg-\[#f6f4ee\] .select-item {
+  color: #FFFFFF !important;
+  font-family: 'Service', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.sidebar .select-item:hover,
+[data-sidebar] .select-item:hover,
+[class*="sidebar"] .select-item:hover,
+div[style*="background"] .select-item:hover,
+div[style*="#f6f4ee"] .select-item:hover,
+.bg-\[#f6f4ee\] .select-item:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Global Search Bar Styles */
+/* Target all search inputs and their containers */
+input[type="search"],
+input[placeholder*="Search"],
+input[placeholder*="search"],
+input[class*="search"],
+[data-search] input,
+.search-input,
+input[placeholder*="Search AMC"],
+input[placeholder*="Search..."],
+input[placeholder*="Enter Activity Name"],
+input[placeholder*="Search assets"] {
+  background-color: #FFFFFF !important;
+  border-color: #AAB9C5 !important;
+  color: #AAB9C5 !important;
+  border-radius: 5px !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+
+/* Search input placeholder styles */
+input[type="search"]::placeholder,
+input[placeholder*="Search"]::placeholder,
+input[placeholder*="search"]::placeholder,
+input[class*="search"]::placeholder,
+[data-search] input::placeholder,
+.search-input::placeholder,
+input[placeholder*="Search AMC"]::placeholder,
+input[placeholder*="Search..."]::placeholder,
+input[placeholder*="Enter Activity Name"]::placeholder,
+input[placeholder*="Search assets"]::placeholder {
+  color: #AAB9C5 !important;
+  opacity: 1 !important;
+}
+
+/* Search container styles */
+.relative:has(input[type="search"]),
+.relative:has(input[placeholder*="Search"]),
+.relative:has(input[placeholder*="search"]),
+.relative:has(input[class*="search"]),
+.relative:has([data-search] input),
+.relative:has(.search-input),
+.relative:has(input[placeholder*="Search AMC"]),
+.relative:has(input[placeholder*="Search..."]),
+.relative:has(input[placeholder*="Enter Activity Name"]),
+.relative:has(input[placeholder*="Search assets"]) {
+  position: relative !important;
+}
+
+/* Search icon styles */
+.relative:has(input[type="search"]) svg,
+.relative:has(input[placeholder*="Search"]) svg,
+.relative:has(input[placeholder*="search"]) svg,
+.relative:has(input[class*="search"]) svg,
+.relative:has([data-search] input) svg,
+.relative:has(.search-input) svg,
+.relative:has(input[placeholder*="Search AMC"]) svg,
+.relative:has(input[placeholder*="Search..."]) svg,
+.relative:has(input[placeholder*="Enter Activity Name"]) svg,
+.relative:has(input[placeholder*="Search assets"]) svg {
+  color: #AAB9C5 !important;
+  border-radius: 4px !important;
+}
+
+/* Go button styles for search bars */
+button:has(+ input[type="search"]),
+button:has(+ input[placeholder*="Search"]),
+button:has(+ input[placeholder*="search"]),
+button:has(+ input[class*="search"]),
+.search-button,
+button[class*="go-button"],
+/* Target "Go!" buttons specifically */
+button:contains("Go!"),
+button[type="button"]:contains("Go!") {
+  background-color: #C4B8D0 !important;
+  opacity: 0.35 !important;
+}
+
+/* Search bar button padding styles */
+.relative:has(input[type="search"]) button,
+.relative:has(input[placeholder*="Search"]) button,
+.relative:has(input[placeholder*="search"]) button,
+.relative:has(input[class*="search"]) button,
+.relative:has([data-search] input) button,
+.relative:has(.search-input) button,
+.relative:has(input[placeholder*="Search AMC"]) button,
+.relative:has(input[placeholder*="Search..."]) button,
+.relative:has(input[placeholder*="Enter Activity Name"]) button,
+.relative:has(input[placeholder*="Search assets"]) button {
+  padding: 12px 12px 10px 10px !important;
+}
+
+/* Desktop Styles for Search Bars */
+@media (min-width: 1024px) {
+  input[type="search"],
+  input[placeholder*="Search"],
+  input[placeholder*="search"],
+  input[class*="search"],
+  [data-search] input,
+  .search-input,
+  input[placeholder*="Search AMC"],
+  input[placeholder*="Search..."],
+  input[placeholder*="Enter Activity Name"],
+  input[placeholder*="Search assets"] {
+    padding: 12px 12px 10px 10px !important;
+    width: 230px !important;
+    height: 35px !important;
+  }
+
+  .relative:has(input[type="search"]) svg,
+  .relative:has(input[placeholder*="Search"]) svg,
+  .relative:has(input[placeholder*="search"]) svg,
+  .relative:has(input[class*="search"]) svg,
+  .relative:has([data-search] input) svg,
+  .relative:has(.search-input) svg,
+  .relative:has(input[placeholder*="Search AMC"]) svg,
+  .relative:has(input[placeholder*="Search..."]) svg,
+  .relative:has(input[placeholder*="Enter Activity Name"]) svg,
+  .relative:has(input[placeholder*="Search assets"]) svg {
+    padding: 12px 12px 10px 10px !important;
+  }
+}
+
+/* Tablet Styles for Search Bars */
+@media (min-width: 768px) and (max-width: 1023px) {
+  input[type="search"],
+  input[placeholder*="Search"],
+  input[placeholder*="search"],
+  input[class*="search"],
+  [data-search] input,
+  .search-input,
+  input[placeholder*="Search AMC"],
+  input[placeholder*="Search..."],
+  input[placeholder*="Enter Activity Name"],
+  input[placeholder*="Search assets"] {
+    padding: 12px 12px 10px 10px !important;
+    width: 230px !important;
+    height: 35px !important;
+  }
+
+  .relative:has(input[placeholder*="Search"]) svg,
+  .relative:has(input[placeholder*="search"]) svg,
+  .relative:has(input[class*="search"]) svg,
+  .relative:has([data-search] input) svg,
+  .relative:has(.search-input) svg,
+  .relative:has(input[placeholder*="Search AMC"]) svg,
+  .relative:has(input[placeholder*="Search..."]) svg,
+  .relative:has(input[placeholder*="Enter Activity Name"]) svg,
+  .relative:has(input[placeholder*="Search assets"]) svg {
+    padding: 12px 12px 10px 10px !important;
+  }
+}
+
+/* Mobile Styles for Search Bars */
+@media (max-width: 767px) {
+  input[type="search"],
+  input[placeholder*="Search"],
+  input[placeholder*="search"],
+  input[class*="search"],
+  [data-search] input,
+  .search-input,
+  input[placeholder*="Search AMC"],
+  input[placeholder*="Search..."],
+  input[placeholder*="Enter Activity Name"],
+  input[placeholder*="Search assets"] {
+    padding: 12px 12px 10px 10px !important;
+    width: 120px !important;
+    height: 24px !important;
+  }
+
+  .relative:has(input[type="search"]) svg,
+  .relative:has(input[placeholder*="Search"]) svg,
+  .relative:has(input[placeholder*="search"]) svg,
+  .relative:has(input[class*="search"]) svg,
+  .relative:has([data-search] input) svg,
+  .relative:has(.search-input) svg,
+  .relative:has(input[placeholder*="Search AMC"]) svg,
+  .relative:has(input[placeholder*="Search..."]) svg,
+  .relative:has(input[placeholder*="Enter Activity Name"]) svg,
+  .relative:has(input[placeholder*="Search assets"]) svg {
+    padding: 12px 12px 10px 10px !important;
+  }
 }
