@@ -11,7 +11,18 @@ const createApiSlice = (name, fetchThunk) => createSlice({
         error: null,
         [name]: [],
     },
-    reducers: {},
+    reducers: {
+        resetCreateSuccess: (state) => {
+            state.loading = false;
+            state.success = false;
+            state.error = null;
+        },
+        resetEditSuccess: (state) => {
+            state.loading = false;
+            state.success = false;
+            state.error = null;
+        },
+    },
     extraReducers: (builder) => {
         builder
             .addCase(fetchThunk.pending, (state) => {
@@ -48,6 +59,43 @@ export const fetchOrganizations = createAsyncThunk('fetchOrganizations', async (
     }
 })
 
+export const createOrganization = createAsyncThunk('createOrganization', async ({ token, payload }) => {
+    try {
+        const response = await axios.post(`https://api-tasks.lockated.com/organizations.json`, payload, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            }
+        })
+
+        return response.data
+    } catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
+export const editOrganization = createAsyncThunk('editOrganization', async ({ token, payload, id }) => {
+    try {
+        const response = await axios.put(`https://api-tasks.lockated.com/organizations/${id}.json`, payload, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            }
+        })
+
+        return response.data
+    } catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
 export const fetchOrganizationsSlice = createApiSlice('fetchOrganizations', fetchOrganizations);
+export const createOrganizationSlice = createApiSlice('createOrganization', createOrganization);
+export const editOrganizationSlice = createApiSlice('editOrganization', editOrganization);
 
 export const fetchOrganizationsReducer = fetchOrganizationsSlice.reducer;
+export const createOrganizationReducer = createOrganizationSlice.reducer;
+export const editOrganizationReducer = editOrganizationSlice.reducer;
+
+export const { resetCreateSuccess } = createOrganizationSlice.actions
+export const { resetEditSuccess } = editOrganizationSlice.actions
