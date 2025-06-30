@@ -2,25 +2,18 @@ const getToken = () => localStorage.getItem("token") || "";
 const apiDomain = "https://api-tasks.lockated.com/";
 
 let baseURL = "";
-
 const hostname = window.location.hostname;
 
-switch (hostname) {
-  case "task-management.lockated.com":
-    baseURL = "https://api-tasks.lockated.com";
-    break;
-  case "projects.lockated.com":
-    baseURL = "https://live-tasks.lockated.com";
-    break;
-  case "uat-projects.lockated.com":
-    baseURL = "https://uat-tasks.lockated.com";
-    break;
-  case "localhost":
-    baseURL = "https://api-tasks.lockated.com";
-    break;
-  default:
-    baseURL = "https://api-tasks.lockated.com";
-    break;
+if (hostname === "task-management.lockated.com") {
+  baseURL = "https://api-tasks.lockated.com";
+} else if (hostname === "projects.lockated.com") {
+  baseURL = "https://live-tasks.lockated.com";
+} else if (hostname === "uat-projects.lockated.com") {
+  baseURL = "https://uat-tasks.lockated.com";
+} else if (hostname === "localhost") {
+  baseURL = "https://api-tasks.lockated.com";
+} else {
+  baseURL = "https://api-tasks.lockated.com";
 }
 
 console.log("Base URL:", baseURL, " | Hostname:", hostname);
