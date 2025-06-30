@@ -73,118 +73,40 @@
 @layer utilities {
   /* Main Container Classes */
   .container-responsive {
-    @apply w-full mx-auto;
-    
-    /* Mobile: 16px padding */
-    @apply px-4;
-    
-    /* Tablet: 24px padding */
-    @screen md {
-      @apply px-6;
-    }
-    
-    /* Desktop: 80px padding, 1280px max-width */
-    @screen xl {
-      @apply px-20 max-w-screen-2xl;
-      max-width: calc(1280px + 160px); /* content + padding */
-    }
+    @apply w-full mx-auto px-4 md:px-6 xl:px-20 xl:max-w-screen-2xl;
+    max-width: calc(1280px + 160px); /* content + padding on desktop */
   }
 
   /* Content Area Classes */
   .content-area {
-    @apply w-full;
-    
-    /* Desktop: 1280px max content width */
-    @screen xl {
-      @apply max-w-screen-xl mx-auto;
-    }
+    @apply w-full xl:max-w-screen-xl xl:mx-auto;
   }
 
   /* Grid System Classes */
   .grid-responsive {
-    @apply grid gap-4;
-    
-    /* Mobile: 4 columns with 16px gutters */
-    @apply grid-cols-4;
-    
-    /* Tablet: 8 columns with 20px gutters */
-    @screen md {
-      @apply grid-cols-8 gap-5;
-    }
-    
-    /* Desktop: 12 columns with 24px gutters */
-    @screen xl {
-      @apply grid-cols-12 gap-6;
-    }
+    @apply grid gap-4 grid-cols-4 md:grid-cols-8 md:gap-5 xl:grid-cols-12 xl:gap-6;
   }
 
   /* Sidebar Layout Classes */
   .layout-with-sidebar {
-    @apply flex flex-col gap-10;
-    
-    /* Tablet and up: side-by-side layout */
-    @screen md {
-      @apply flex-row gap-16;
-    }
-    
-    /* Desktop: specific widths */
-    @screen xl {
-      @apply gap-20;
-    }
+    @apply flex flex-col gap-10 md:flex-row md:gap-16 xl:gap-20;
   }
 
   .main-content {
-    @apply flex-1;
-    
-    /* Desktop: ~880px width constraint */
-    @screen xl {
-      @apply max-w-4xl;
-    }
+    @apply flex-1 xl:max-w-4xl;
   }
 
   .sidebar-content {
-    @apply w-full;
-    
-    /* Tablet: full width in stacked layout */
-    @screen md {
-      @apply w-80;
-    }
-    
-    /* Desktop: ~320px width */
-    @screen xl {
-      @apply w-80;
-    }
+    @apply w-full md:w-80 xl:w-80;
   }
 
   /* Vertical Spacing Classes */
   .section-spacing {
-    /* Mobile: 40px top/bottom */
-    @apply my-10;
-    
-    /* Tablet: 60px top/bottom */
-    @screen md {
-      @apply my-15;
-    }
-    
-    /* Desktop: 80px top/bottom */
-    @screen xl {
-      @apply my-20;
-    }
+    @apply my-10 md:my-15 xl:my-20;
   }
 
   .component-spacing {
-    /* Mobile: 16px between elements */
-    @apply space-y-4;
-    
-    /* Tablet: 20px between elements */
-    @screen md {
-      @apply space-y-5;
-    }
-    
-    /* Desktop: 24px between elements */
-    @screen xl {
-      @apply space-y-6;
-    }
+    @apply space-y-4 md:space-y-5 xl:space-y-6;
   }
 
   /* Special Elements */
@@ -206,112 +128,40 @@
 
   /* Column Span Utilities for Responsive Grid */
   .col-span-responsive-1 {
-    @apply col-span-1;
-    
-    @screen md {
-      @apply col-span-1;
-    }
-    
-    @screen xl {
-      @apply col-span-1;
-    }
+    @apply col-span-1 md:col-span-1 xl:col-span-1;
   }
 
   .col-span-responsive-2 {
-    @apply col-span-2;
-    
-    @screen md {
-      @apply col-span-2;
-    }
-    
-    @screen xl {
-      @apply col-span-2;
-    }
+    @apply col-span-2 md:col-span-2 xl:col-span-2;
   }
 
   .col-span-responsive-3 {
-    @apply col-span-3;
-    
-    @screen md {
-      @apply col-span-3;
-    }
-    
-    @screen xl {
-      @apply col-span-3;
-    }
+    @apply col-span-3 md:col-span-3 xl:col-span-3;
   }
 
   .col-span-responsive-4 {
-    @apply col-span-4;
-    
-    @screen md {
-      @apply col-span-4;
-    }
-    
-    @screen xl {
-      @apply col-span-4;
-    }
+    @apply col-span-4 md:col-span-4 xl:col-span-4;
   }
 
   .col-span-responsive-6 {
-    @apply col-span-4;
-    
-    @screen md {
-      @apply col-span-4;
-    }
-    
-    @screen xl {
-      @apply col-span-6;
-    }
+    @apply col-span-4 md:col-span-4 xl:col-span-6;
   }
 
   .col-span-responsive-8 {
-    @apply col-span-4;
-    
-    @screen md {
-      @apply col-span-6;
-    }
-    
-    @screen xl {
-      @apply col-span-8;
-    }
+    @apply col-span-4 md:col-span-6 xl:col-span-8;
   }
 
   .col-span-responsive-full {
-    @apply col-span-4;
-    
-    @screen md {
-      @apply col-span-8;
-    }
-    
-    @screen xl {
-      @apply col-span-12;
-    }
+    @apply col-span-4 md:col-span-8 xl:col-span-12;
   }
 
   /* Mobile-specific column ratios (64px, 64px, 96px, 96px approximation) */
   .col-mobile-narrow {
-    @apply col-span-1;
-    
-    @screen md {
-      @apply col-span-2;
-    }
-    
-    @screen xl {
-      @apply col-span-3;
-    }
+    @apply col-span-1 md:col-span-2 xl:col-span-3;
   }
 
   .col-mobile-wide {
-    @apply col-span-1;
-    
-    @screen md {
-      @apply col-span-3;
-    }
-    
-    @screen xl {
-      @apply col-span-4;
-    }
+    @apply col-span-1 md:col-span-3 xl:col-span-4;
   }
 }
 
