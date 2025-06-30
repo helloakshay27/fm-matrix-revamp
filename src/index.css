@@ -474,7 +474,7 @@ button[type="button"]:contains("Go!") {
   input[placeholder*="Search assets"] {
     padding: 20px 20px 10px 10px !important;
     width: 230px !important;
-    height: 35px !important;
+    height: 36px !important;
   }
 
   .relative:has(input[type="search"]) svg,
@@ -519,7 +519,7 @@ button[type="button"]:contains("Go!") {
   input[placeholder*="Search assets"] {
     padding: 12px 12px 10px 10px !important;
     width: 230px !important;
-    height: 35px !important;
+    height: 38px !important;
   }
 
   .relative:has(input[placeholder*="Search"]) svg,
@@ -563,7 +563,7 @@ button[type="button"]:contains("Go!") {
   input[placeholder*="Search assets"] {
     padding: 12px 12px 8px 8px !important;
     width: 120px !important;
-    height: 24px !important;
+    height: 28px !important;
   }
 
   .relative:has(input[type="search"]) svg,
