@@ -133,8 +133,6 @@ const TeamModal = ({
             errors.teamName = "Team name is required"
         } else if (!formData.teamLead) {
             errors.teamLead = "Team lead is required"
-        } else if (!formData.project) {
-            errors.project = "Project is required"
         } else if (!formData.teamMembers.length) {
             errors.teamMembers = "Team members is required"
         }
@@ -146,22 +144,22 @@ const TeamModal = ({
         }
         return true
     }
-     
-            const handleCloseModal=()=>{
-                gsap.to(addTaskModalRef.current, {
+
+    const handleCloseModal = () => {
+        gsap.to(addTaskModalRef.current, {
             x: "100%",
             duration: 0.5,
             ease: "power3.in",
             onComplete: () => setIsModalOpen(false),
         });
-                setFormData({
-                    teamName: "",
-                    teamLead: "",
-                    project: "",
-                    teamMembers: [],
-                })
-                
-            }
+        setFormData({
+            teamName: "",
+            teamLead: "",
+            project: "",
+            teamMembers: [],
+        })
+
+    }
     const handleSubmit = () => {
         if (!validateForm()) return;
 
@@ -169,7 +167,7 @@ const TeamModal = ({
             project_team: {
                 name: formData.teamName,
                 team_lead_id: formData.teamLead,
-                project_management_id: formData.project,
+                // project_management_id: formData.project,
                 user_ids: formData.teamMembers.map((member) => member.value),
             },
         };
@@ -232,7 +230,7 @@ const TeamModal = ({
                             }))}
                         />
                     </div>
-                    <div className="flex flex-col gap-2 w-1/2">
+                    {/* <div className="flex flex-col gap-2 w-1/2">
                         <label>
                             Project<span>*</span>
                         </label>
@@ -245,7 +243,7 @@ const TeamModal = ({
                                 value: project.id,
                             }))}
                         />
-                    </div>
+                    </div> */}
                     <div className="flex flex-col gap-2">
                         <label>
                             Team Members<span>*</span>
