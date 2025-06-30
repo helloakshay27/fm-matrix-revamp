@@ -14,78 +14,49 @@ export const Header = () => {
 
   return (
     <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-10 w-100">
-      <div className="flex items-center justify-between h-full">
-        {/* Left side navigation items */}
-        <div className="flex items-center">
-          {/* Desktop spacing */}
-          <div className="hidden lg:flex items-center">
-            {/* Home Dashboard - 31px from left */}
-            <button className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors ml-[31px]">
-              <Home className="w-4 h-4" />
-              <span className="text-sm font-medium">Home</span>
-            </button>
+      <div className="flex items-center justify-between h-full px-6">
+        <div className="flex items-center gap-6">
+          {/* Home Dashboard */}
+          <button className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
+            <Home className="w-4 h-4" />
+            <span className="text-sm font-medium">Home </span>
+          </button>
 
-            {/* Dashboard - 64px gap */}
-            <button className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors ml-[64px]">
-              <span className="text-sm font-medium">Dashboard</span>
-            </button>
+          {/* Setup Link */}
+          <a href="/setup" className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
+            <Settings className="w-4 h-4" />
+            <span className="text-sm font-medium">Setup</span>
+          </a>
 
-            {/* Setup - 24px gap */}
-            <a href="/setup" className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors ml-[24px]">
-              <Settings className="w-4 h-4" />
-              <span className="text-sm font-medium">Setup</span>
-            </a>
+          {/* Project Change Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
+              <span className="text-sm font-medium">Project Change</span>
+              <ChevronDown className="w-3 h-3" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg">
+              <DropdownMenuItem>Project Alpha</DropdownMenuItem>
+              <DropdownMenuItem>Project Beta</DropdownMenuItem>
+              <DropdownMenuItem>Project Gamma</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-            {/* Executive Dashboard - 24px gap */}
-            <button className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors ml-[24px]">
-              <span className="text-sm font-medium">Executive Dashboard</span>
-            </button>
-          </div>
-
-          {/* Tablet spacing */}
-          <div className="hidden md:flex lg:hidden items-center">
-            {/* Home - 75px from left */}
-            <button className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors ml-[75px]">
-              <Home className="w-4 h-4" />
-              <span className="text-sm font-medium">Home</span>
-            </button>
-
-            {/* Dashboard - 60px gap */}
-            <button className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors ml-[60px]">
-              <span className="text-sm font-medium">Dashboard</span>
-            </button>
-
-            {/* Setup - 24px gap */}
-            <a href="/setup" className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors ml-[24px]">
-              <Settings className="w-4 h-4" />
-              <span className="text-sm font-medium">Setup</span>
-            </a>
-
-            {/* Executive Dashboard - 30px gap */}
-            <button className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors ml-[30px]">
-              <span className="text-sm font-medium">Executive Dashboard</span>
-            </button>
-          </div>
-
-          {/* Mobile - Dropdown menu */}
-          <div className="flex md:hidden items-center ml-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
-                <Home className="w-4 h-4" />
-                <span className="text-sm font-medium">Home</span>
-                <ChevronDown className="w-3 h-3" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg">
-                <DropdownMenuItem>Dashboard</DropdownMenuItem>
-                <DropdownMenuItem>Setup</DropdownMenuItem>
-                <DropdownMenuItem>Executive Dashboard</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          {/* Site Change Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
+              <MapPin className="w-4 h-4" />
+              <span className="text-sm font-medium">Lockastead Site 1</span>
+              <ChevronDown className="w-3 h-3" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg">
+              <DropdownMenuItem>Lockastead Site 1</DropdownMenuItem>
+              <DropdownMenuItem>Lockastead Site 2</DropdownMenuItem>
+              <DropdownMenuItem>Downtown Office</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         
-        {/* Right side items */}
-        <div className="flex items-center gap-4 pr-6">
+        <div className="flex items-center gap-4">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
