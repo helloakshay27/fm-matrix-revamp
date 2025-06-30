@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronDown, Plus, X } from 'lucide-react';
@@ -165,19 +166,24 @@ const AddSTPAssetDashboard = () => {
           <CollapsibleContent className="space-y-4 p-6">
             <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
               <div className="space-y-2">
-                <Input label="Asset Name*" placeholder="Enter Text" />
+                <Label htmlFor="assetName">Asset Name*</Label>
+                <Input id="assetName" placeholder="Enter Text" />
               </div>
               <div className="space-y-2">
-                <Input label="Asset No.*" placeholder="Enter Number" />
+                <Label htmlFor="assetNo">Asset No.*</Label>
+                <Input id="assetNo" placeholder="Enter Number" />
               </div>
               <div className="space-y-2">
-                <Input label="Equipment ID.*" placeholder="Enter Number" />
+                <Label htmlFor="equipmentId">Equipment ID.*</Label>
+                <Input id="equipmentId" placeholder="Enter Number" />
               </div>
               <div className="space-y-2">
-                <Input label="Model No." placeholder="Enter Number" />
+                <Label htmlFor="modelNo">Model No.</Label>
+                <Input id="modelNo" placeholder="Enter Number" />
               </div>
               <div className="space-y-2">
-                <Input label="Serial No." placeholder="Enter Number" />
+                <Label htmlFor="serialNo">Serial No.</Label>
+                <Input id="serialNo" placeholder="Enter Number" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="group">Group*</Label>
@@ -194,16 +200,20 @@ const AddSTPAssetDashboard = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
               <div className="space-y-2">
-                <Input label="Consumer No." placeholder="Enter Number" />
+                <Label htmlFor="consumerNo">Consumer No.</Label>
+                <Input id="consumerNo" placeholder="Enter Number" />
               </div>
               <div className="space-y-2">
-                <Input label="Purchase Cost*" placeholder="Enter Numeric value" />
+                <Label htmlFor="purchaseCost">Purchase Cost*</Label>
+                <Input id="purchaseCost" placeholder="Enter Numeric value" />
               </div>
               <div className="space-y-2">
-                <Input label="Capacity" placeholder="Enter Text" />
+                <Label htmlFor="capacity">Capacity</Label>
+                <Input id="capacity" placeholder="Enter Text" />
               </div>
               <div className="space-y-2">
-                <Input label="Unit" placeholder="Enter Text" />
+                <Label htmlFor="unit">Unit</Label>
+                <Input id="unit" placeholder="Enter Text" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="subgroup">Subgroup*</Label>
@@ -218,15 +228,18 @@ const AddSTPAssetDashboard = () => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Input label="Purchased ON Date" type="date" />
+                <Label htmlFor="purchaseDate">Purchased ON Date</Label>
+                <Input id="purchaseDate" type="date" />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
               <div className="space-y-2">
-                <Input label="Expiry date" type="date" />
+                <Label htmlFor="expiryDate">Expiry date</Label>
+                <Input id="expiryDate" type="date" />
               </div>
               <div className="space-y-2">
-                <Input label="Manufacturer" placeholder="Enter Text" />
+                <Label htmlFor="manufacturer">Manufacturer</Label>
+                <Input id="manufacturer" type="date" />
               </div>
             </div>
             <div className="space-y-4">
@@ -325,13 +338,16 @@ const AddSTPAssetDashboard = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Input label="Warranty Start Date" type="date" />
+                  <Label htmlFor="warrantyStart">Warranty Start Date</Label>
+                  <Input id="warrantyStart" type="date" />
                 </div>
                 <div className="space-y-2">
-                  <Input label="Warranty expires on" type="date" />
+                  <Label htmlFor="warrantyExpiry">Warranty expires on</Label>
+                  <Input id="warrantyExpiry" type="date" />
                 </div>
                 <div className="space-y-2">
-                  <Input label="Commissioning Date" type="date" />
+                  <Label htmlFor="commissioningDate">Commissioning Date</Label>
+                  <Input id="commissioningDate" type="date" />
                 </div>
               </div>
             </div>
@@ -418,7 +434,8 @@ const AddSTPAssetDashboard = () => {
             <div className="border rounded-lg p-4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div className="space-y-2">
-                  <Input label="Name" placeholder="Enter Text" />
+                  <Label htmlFor="name">Name</Label>
+                  <Input id="name" placeholder="Enter Text" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="unitType">Unit Type</Label>
@@ -433,21 +450,26 @@ const AddSTPAssetDashboard = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Input label="Min" placeholder="Enter Number" />
+                  <Label htmlFor="min">Min</Label>
+                  <Input id="min" placeholder="Enter Number" />
                 </div>
                 <div className="space-y-2">
-                  <Input label="Max" placeholder="Enter Number" />
+                  <Label htmlFor="max">Max</Label>
+                  <Input id="max" placeholder="Enter Number" />
                 </div>
                 <div className="space-y-2">
-                  <Input label="Alert Below Val." placeholder="Enter Value" />
+                  <Label htmlFor="alertBelow">Alert Below Val.</Label>
+                  <Input id="alertBelow" placeholder="Enter Value" />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Input label="Alert Above Val." placeholder="Enter Value" />
+                  <Label htmlFor="alertAbove">Alert Above Val.</Label>
+                  <Input id="alertAbove" placeholder="Enter Value" />
                 </div>
                 <div className="space-y-2">
-                  <Input label="Multiplier Factor" placeholder="Enter Text" />
+                  <Label htmlFor="multiplier">Multiplier Factor</Label>
+                  <Input id="multiplier" placeholder="Enter Text" />
                 </div>
                 <div className="flex items-center space-x-2 pt-6">
                   <Checkbox id="checkPrevious" />
@@ -484,7 +506,8 @@ const AddSTPAssetDashboard = () => {
             <div className="border rounded-lg p-4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div className="space-y-2">
-                  <Input label="Name" placeholder="Name" />
+                  <Label htmlFor="nonConsumptionName">Name</Label>
+                  <Input id="nonConsumptionName" placeholder="Name" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="nonConsumptionUnitType">Unit Type</Label>
@@ -499,21 +522,26 @@ const AddSTPAssetDashboard = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Input label="Min" placeholder="Min" />
+                  <Label htmlFor="nonConsumptionMin">Min</Label>
+                  <Input id="nonConsumptionMin" placeholder="Min" />
                 </div>
                 <div className="space-y-2">
-                  <Input label="Max" placeholder="Max" />
+                  <Label htmlFor="nonConsumptionMax">Max</Label>
+                  <Input id="nonConsumptionMax" placeholder="Max" />
                 </div>
                 <div className="space-y-2">
-                  <Input label="Alert Below Val." placeholder="Alert Below Value" />
+                  <Label htmlFor="nonConsumptionAlertBelow">Alert Below Val.</Label>
+                  <Input id="nonConsumptionAlertBelow" placeholder="Alert Below Value" />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Input label="Alert Above Val." placeholder="Alert Above Value" />
+                  <Label htmlFor="nonConsumptionAlertAbove">Alert Above Val.</Label>
+                  <Input id="nonConsumptionAlertAbove" placeholder="Alert Above Value" />
                 </div>
                 <div className="space-y-2">
-                  <Input label="Multiplier Factor" placeholder="Multiplier Factor" />
+                  <Label htmlFor="nonConsumptionMultiplier">Multiplier Factor</Label>
+                  <Input id="nonConsumptionMultiplier" placeholder="Multiplier Factor" />
                 </div>
                 <div className="flex items-center space-x-2 pt-6">
                   <Checkbox id="nonConsumptionCheckPrevious" />
