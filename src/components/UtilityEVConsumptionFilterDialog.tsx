@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -57,8 +56,8 @@ export const UtilityEVConsumptionFilterDialog = ({ isOpen, onClose }: UtilityEVC
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
             <Button
-              variant="icon"
-              size="icon-sm"
+              variant="ghost"
+              size="icon"
               onClick={onClose}
               className="h-8 w-8 p-1 bg-[#C72030] text-white hover:bg-[#C72030]/90 rounded-none shadow-none"
             >
