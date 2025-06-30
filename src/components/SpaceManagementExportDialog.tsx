@@ -55,6 +55,7 @@ export const SpaceManagementExportDialog: React.FC<SpaceManagementExportDialogPr
         <div className="space-y-4">
           <div>
             <Input
+              label="From Date"
               placeholder="01/06/2025"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
@@ -64,6 +65,7 @@ export const SpaceManagementExportDialog: React.FC<SpaceManagementExportDialogPr
           
           <div>
             <Input
+              label="To Date"
               placeholder="30/06/2025"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}

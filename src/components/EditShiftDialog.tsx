@@ -149,8 +149,8 @@ export const EditShiftDialog = ({ open, onOpenChange, shift }: EditShiftDialogPr
           <DialogTitle className="flex items-center justify-between">
             Edit Shift
             <Button
-              variant="ghost"
-              size="icon"
+              variant="icon"
+              size="icon-sm"
               onClick={handleClose}
               className="h-8 w-8 p-1 bg-[#C72030] text-white hover:bg-[#C72030]/90 rounded-none shadow-none"
             >

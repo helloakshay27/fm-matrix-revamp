@@ -204,11 +204,8 @@ export const AddMasterChecklistPage = () => {
             </div>
 
             <div>
-              <Label htmlFor="activityName" className="text-sm font-medium mb-2 block">
-                Activity Name <span className="text-red-500">*</span>
-              </Label>
               <Input
-                id="activityName"
+                label="Activity Name *"
                 placeholder="Enter Activity Name"
                 value={activityName}
                 onChange={(e) => setActivityName(e.target.value)}
@@ -217,9 +214,8 @@ export const AddMasterChecklistPage = () => {
             </div>
 
             <div>
-              <Label htmlFor="description" className="text-sm font-medium mb-2 block">Description</Label>
               <Textarea
-                id="description"
+                label="Description"
                 placeholder="Enter Description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -301,10 +297,8 @@ export const AddMasterChecklistPage = () => {
             {section.tasks.map((task, taskIndex) => (
               <div key={task.id} className="grid grid-cols-2 gap-4 mb-4 p-4 border rounded">
                 <div>
-                  <Label className="text-sm font-medium mb-2 block">
-                    Task <span className="text-red-500">*</span>
-                  </Label>
                   <Input
+                    label="Task *"
                     placeholder="Enter Task"
                     value={task.taskName}
                     onChange={(e) => updateTask(section.id, task.id, 'taskName', e.target.value)}

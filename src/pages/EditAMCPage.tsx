@@ -85,8 +85,8 @@ export const EditAMCPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Start Date *</label>
                 <Input 
+                  label="Start Date *"
                   type="date" 
                   value={formData.startDate}
                   onChange={(e) => handleInputChange('startDate', e.target.value)}
@@ -95,8 +95,8 @@ export const EditAMCPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">End Date *</label>
                 <Input 
+                  label="End Date *"
                   type="date" 
                   value={formData.endDate}
                   onChange={(e) => handleInputChange('endDate', e.target.value)}
@@ -105,8 +105,8 @@ export const EditAMCPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Cost</label>
                 <Input 
+                  label="Cost"
                   type="number" 
                   placeholder="Enter cost"
                   value={formData.cost}
@@ -130,8 +130,8 @@ export const EditAMCPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">First Service Date</label>
                 <Input 
+                  label="First Service Date"
                   type="date" 
                   value={formData.firstService}
                   onChange={(e) => handleInputChange('firstService', e.target.value)}
@@ -140,8 +140,8 @@ export const EditAMCPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Remarks</label>
               <Textarea 
+                label="Remarks"
                 placeholder="Enter remarks"
                 value={formData.remarks}
                 onChange={(e) => handleInputChange('remarks', e.target.value)}

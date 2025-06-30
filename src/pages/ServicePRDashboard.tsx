@@ -159,7 +159,7 @@ export const ServicePRDashboard = () => {
                   <Button 
                     size="sm" 
                     variant="ghost" 
-                    className="p-1 bg-gradient-to-b from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300"
+                    className="p-1"
                     onClick={() => navigate(`/finance/service-pr/details/${item.id}`)}
                   >
                     <Eye className="w-4 h-4" />

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -56,8 +57,8 @@ export const UtilitySolarGeneratorFilterDialog = ({ isOpen, onClose }: UtilitySo
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-semibold text-[#C72030]">FILTER BY</DialogTitle>
             <Button
-              variant="ghost"
-              size="icon"
+              variant="icon"
+              size="icon-sm"
               onClick={onClose}
               className="h-8 w-8 p-1 bg-[#C72030] text-white hover:bg-[#C72030]/90 rounded-none shadow-none"
             >

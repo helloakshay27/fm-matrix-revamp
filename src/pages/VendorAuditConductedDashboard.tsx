@@ -47,11 +47,7 @@ export const VendorAuditConductedDashboard = () => {
               conductedData.map((item, index) => (
                 <TableRow key={index}>
                   <TableCell>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="bg-gradient-to-b from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300"
-                    >
+                    <Button variant="ghost" size="sm">
                       <FileText className="w-4 h-4" />
                     </Button>
                   </TableCell>

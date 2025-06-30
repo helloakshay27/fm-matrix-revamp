@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Dialog,
@@ -41,8 +42,8 @@ export const UtilityFilterDialog: React.FC<UtilityFilterDialogProps> = ({ isOpen
           <div className="flex items-center justify-between">
             <DialogTitle>FILTER BY</DialogTitle>
             <Button
-              variant="ghost"
-              size="icon"
+              variant="icon"
+              size="icon-sm"
               onClick={onClose}
               className="h-8 w-8 p-1 bg-[#C72030] text-white hover:bg-[#C72030]/90 rounded-none shadow-none"
             >
