@@ -8,7 +8,7 @@ if (hostname === "task-management.lockated.com") {
   baseURL = "https://api-tasks.lockated.com";
 } else if (hostname === "projects.lockated.com") {
   baseURL = "https://live-tasks.lockated.com";
-} else if (hostname === "uat-projects.lockated.com") {
+} else if (hostname.includes("uat-projects")) {
   baseURL = "https://uat-tasks.lockated.com";
 } else if (hostname === "localhost") {
   baseURL = "https://api-tasks.lockated.com";
