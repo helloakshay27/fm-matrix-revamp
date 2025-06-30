@@ -22,13 +22,7 @@ const ActionIcons = ({ row }) => (
 );
 
 const defaultData = [
-  {
-    matrixTitle: "Developer task escalation",
-    triggerEvent: "Task Overdue",
-    level1EscalatesTo: "Team Lead",
-    level2EscalatesTo: "Project Manager",
-    notificationType: "Email",
-  }
+
 ];
 
 const EscalationTableWrapper = () => {
