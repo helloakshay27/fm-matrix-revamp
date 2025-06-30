@@ -18,13 +18,6 @@ export default {
 				'2xl': '1400px'
 			}
 		},
-		screens: {
-			'sm': '640px',
-			'md': '768px',
-			'lg': '1024px',
-			'xl': '1440px',
-			'2xl': '1536px',
-		},
 		extend: {
 			colors: {
 				border: 'hsl(var(--border))',
@@ -83,16 +76,7 @@ export default {
 				'system-lg': '24px',
 				'system-xl': '32px',
 				'system-2xl': '48px',
-				'system-3xl': '64px',
-				'15': '3.75rem', // 60px for tablet spacing
-				'18': '4.5rem',  // 72px
-				'22': '5.5rem',  // 88px
-			},
-			maxWidth: {
-				'content-desktop': '1280px',
-				'content-tablet': '1200px',
-				'main-content': '880px',
-				'sidebar': '320px',
+				'system-3xl': '64px'
 			},
 			boxShadow: {
 				'system-sm': '0px 1px 2px 0px rgba(0, 0, 0, 0.06)',

@@ -69,120 +69,6 @@
   }
 }
 
-/* Responsive Layout System */
-@layer utilities {
-  /* Main Container Classes */
-  .container-responsive {
-    @apply w-full mx-auto px-4 md:px-6 xl:px-20 xl:max-w-screen-2xl;
-    max-width: calc(1280px + 160px); /* content + padding on desktop */
-  }
-
-  /* Content Area Classes */
-  .content-area {
-    @apply w-full xl:max-w-screen-xl xl:mx-auto;
-  }
-
-  /* Grid System Classes */
-  .grid-responsive {
-    @apply grid gap-4 grid-cols-4 md:grid-cols-8 md:gap-5 xl:grid-cols-12 xl:gap-6;
-  }
-
-  /* Sidebar Layout Classes */
-  .layout-with-sidebar {
-    @apply flex flex-col gap-10 md:flex-row md:gap-16 xl:gap-20;
-  }
-
-  .main-content {
-    @apply flex-1 xl:max-w-4xl;
-  }
-
-  .sidebar-content {
-    @apply w-full md:w-80 xl:w-80;
-  }
-
-  /* Vertical Spacing Classes */
-  .section-spacing {
-    @apply my-10 md:my-15 xl:my-20;
-  }
-
-  .component-spacing {
-    @apply space-y-4 md:space-y-5 xl:space-y-6;
-  }
-
-  /* Special Elements */
-  .system-bar {
-    @apply h-6; /* 24px height */
-  }
-
-  .app-bar {
-    @apply h-14; /* 56px height */
-  }
-
-  .system-navigation {
-    @apply h-6; /* 24px height */
-  }
-
-  .system-element-margin {
-    @apply m-4; /* 16px margins around system elements */
-  }
-
-  /* Column Span Utilities for Responsive Grid */
-  .col-span-responsive-1 {
-    @apply col-span-1 md:col-span-1 xl:col-span-1;
-  }
-
-  .col-span-responsive-2 {
-    @apply col-span-2 md:col-span-2 xl:col-span-2;
-  }
-
-  .col-span-responsive-3 {
-    @apply col-span-3 md:col-span-3 xl:col-span-3;
-  }
-
-  .col-span-responsive-4 {
-    @apply col-span-4 md:col-span-4 xl:col-span-4;
-  }
-
-  .col-span-responsive-6 {
-    @apply col-span-4 md:col-span-4 xl:col-span-6;
-  }
-
-  .col-span-responsive-8 {
-    @apply col-span-4 md:col-span-6 xl:col-span-8;
-  }
-
-  .col-span-responsive-full {
-    @apply col-span-4 md:col-span-8 xl:col-span-12;
-  }
-
-  /* Mobile-specific column ratios (64px, 64px, 96px, 96px approximation) */
-  .col-mobile-narrow {
-    @apply col-span-1 md:col-span-2 xl:col-span-3;
-  }
-
-  .col-mobile-wide {
-    @apply col-span-1 md:col-span-3 xl:col-span-4;
-  }
-
-  /* Button System Utilities */
-  .btn-spacing-horizontal {
-    @apply gap-2 md:gap-3 xl:gap-3;
-  }
-
-  .btn-spacing-vertical {
-    @apply gap-2;
-  }
-
-  .btn-icon-spacing {
-    @apply gap-2 xl:gap-2.5 md:gap-2.5;
-  }
-
-  /* Touch Target Utilities */
-  .touch-target {
-    @apply min-h-[44px] min-w-[44px];
-  }
-}
-
 /* Design System Utilities */
 @layer utilities {
   /* Shadow System */
@@ -200,6 +86,27 @@
   
   .shadow-system-xl {
     box-shadow: 0px 8px 24px 0px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Spacing System */
+  .space-system-xs {
+    @apply space-y-1;
+  }
+  
+  .space-system-sm {
+    @apply space-y-2;
+  }
+  
+  .space-system-md {
+    @apply space-y-4;
+  }
+  
+  .space-system-lg {
+    @apply space-y-6;
+  }
+  
+  .space-system-xl {
+    @apply space-y-8;
   }
 
   /* Border System */
@@ -228,51 +135,4 @@
 /* Custom grid columns for calendar layout */
 .grid-cols-30 {
   grid-template-columns: repeat(30, minmax(0, 1fr));
-}
-
-/* Button Component Enhancements */
-@layer components {
-  .btn-base {
-    @apply inline-flex items-center justify-center whitespace-nowrap font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded-none border-0;
-  }
-
-  .btn-primary {
-    @apply bg-[#C48B9F] text-white hover:opacity-80 active:scale-98;
-  }
-
-  .btn-secondary {
-    @apply border border-[#C72030] bg-transparent text-[#C72030] hover:bg-[#C72030] hover:text-white;
-  }
-
-  .btn-ghost {
-    @apply bg-transparent text-[#C72030] hover:bg-[#C72030]/10;
-  }
-
-  .btn-desktop {
-    @apply h-9 px-5 text-sm min-w-[136px];
-  }
-
-  .btn-tablet {
-    @apply h-9 px-4 text-xs min-w-[116px];
-  }
-
-  .btn-mobile {
-    @apply h-7 px-3 text-[10px] min-w-[94px];
-  }
-
-  .btn-icon-left {
-    @apply flex-row gap-2.5;
-  }
-
-  .btn-icon-right {
-    @apply flex-row-reverse gap-2.5;
-  }
-
-  .btn-loading {
-    @apply opacity-70 cursor-wait;
-  }
-
-  .btn-disabled {
-    @apply opacity-50 pointer-events-none;
-  }
 }

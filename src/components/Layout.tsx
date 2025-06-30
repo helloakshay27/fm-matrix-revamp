@@ -17,11 +17,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <DynamicHeader />
       
       <main className="ml-64 pt-28">
-        <div className="container-responsive">
-          <div className="content-area">
-            <Outlet />
-          </div>
-        </div>
+        <Outlet />
       </main>
     </div>
   );

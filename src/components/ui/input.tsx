@@ -8,7 +8,7 @@ export interface InputProps
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, label, placeholder = "Text Fields", ...props }, ref) => {
+  ({ className, type, label, placeholder = "", ...props }, ref) => {
     const [isFocused, setIsFocused] = React.useState(false);
     const [hasValue, setHasValue] = React.useState(false);
 
@@ -38,14 +38,14 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
     if (label) {
       return (
-        <div className="relative">
+        <div className="field-group relative" style={{ margin: '20px 0' }}>
           <input
             type={type}
             className={cn(
-              "flex h-14 w-full rounded-md border border-gray-300 bg-transparent px-3 pt-4 pb-2 text-base transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50",
+              "floating-label w-full pt-4 pb-2 px-[15px] text-base border border-[#ccc] rounded transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-0 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50",
               className
             )}
-            placeholder={isFocused ? placeholder : ''}
+            placeholder=""
             ref={ref}
             onFocus={handleFocus}
             onBlur={handleBlur}
@@ -54,11 +54,14 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           />
           <label
             className={cn(
-              "absolute left-3 transition-all duration-200 pointer-events-none text-gray-500",
+              "absolute left-[15px] transition-all duration-150 ease-in text-[#676767] pointer-events-none",
               shouldFloatLabel
-                ? "top-1 text-xs bg-white px-1 text-blue-500"
+                ? "field-active -translate-y-[25px] text-[0.9em] text-black"
                 : "top-4 text-base"
             )}
+            style={{
+              textShadow: shouldFloatLabel ? '1px 0 0 #fff, -1px 0 0 #fff, 2px 0 0 #fff, -2px 0 0 #fff, 0 1px 0 #fff, 0 -1px 0 #fff, 0 2px 0 #fff, 0 -2px 0 #fff' : 'none'
+            }}
           >
             {label}
           </label>
