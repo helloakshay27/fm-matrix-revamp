@@ -1066,6 +1066,16 @@ const IssuesTable = () => {
                       />
                     </td>
                     <td className="border p-1 align-middle">
+                      <Attachments
+                        setAttachments={setAttachments}
+                        attachments={attachments}
+                        fileInputRef={newIssueAttachmentInputRef}
+                        containerRef={newIssueAttachmentContainerRef}
+                        setIsFileDialogOpen={setIsFileDialogOpen}
+                      />
+                    </td>
+                    
+                    <td className="border p-1 align-middle">
                       <StatusBadge
                         status={newIssuesStatus}
                         statusOptions={globalStatusOptions}
@@ -1124,15 +1134,6 @@ const IssuesTable = () => {
                         placeholder="Comments"
                       />
                     </td>
-                    <td className="border p-1 align-middle">
-                      <Attachments
-                        setAttachments={setAttachments}
-                        attachments={attachments}
-                        fileInputRef={newIssueAttachmentInputRef}
-                        containerRef={newIssueAttachmentContainerRef}
-                        setIsFileDialogOpen={setIsFileDialogOpen}
-                      />
-                    </td>
                   </tr>
                 )}
                 {!isAddingNewIssues && (
@@ -1143,7 +1144,7 @@ const IssuesTable = () => {
                     >
                       <button
                         onClick={handleShowNewIssuesForm}
-                        className="text-blue-500 hover:underline text-sm py-1"
+                        className="text-red-500 hover:underline text-sm py-1"
                         disabled={isSavingIssues || isUpdatingIssue}
                       >
                         + Add Issues
