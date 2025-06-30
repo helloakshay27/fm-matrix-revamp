@@ -71,52 +71,313 @@
   }
 }
 
-/* Responsive Button Styles */
-.responsive-button {
-  @apply flex items-center justify-center;
-  /* Mobile: max-width 767px */
-  padding: 8px 12px;
-  width: 94px;
-  height: 28px;
-  font-size: 12px;
-  letter-spacing: 0.5px;
-  line-height: 1;
+/* Global Button Width Override */
+button {
+  width: max-content !important;
 }
 
-.responsive-button [data-lucide] {
-  width: 10px;
-  height: 10px;
-  margin-right: 8px;
+/* Ensure shadcn/ui buttons also use max-content */
+.btn, [data-testid*="button"], [class*="button"] {
+  width: max-content !important;
 }
 
-/* Tablet: min-width 768px and max-width 1023px */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .responsive-button {
-    padding: 12px 16px;
-    width: 138px;
-    height: 38px;
-    font-size: 12px;
-  }
-  
-  .responsive-button [data-lucide] {
-    width: 12px;
-    height: 12px;
-    margin-right: 10px;
-  }
-}
-
-/* Desktop: min-width 1024px */
+/* Override any fixed button widths */
 @media (min-width: 1024px) {
-  .responsive-button {
-    padding: 10px 20px;
-    width: 138px;
-    height: 36px;
-    font-size: 14px;
+  button {
+    width: max-content !important;
   }
-  
-  .responsive-button [data-lucide] {
-    width: 12px;
-    height: 12px;
-    margin-right: 10px;
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  button {
+    width: max-content !important;
   }
+}
+
+@media (max-width: 767px) {
+  button {
+    width: max-content !important;
+  }
+}
+
+/* Enhanced Global Select Menu Styles for Sidebar */
+/* Target all select elements within sidebar containers */
+.sidebar select,
+.sidebar [role="combobox"],
+.sidebar .select-trigger,
+.sidebar [data-state="closed"],
+.sidebar [data-state="open"],
+[data-sidebar] select,
+[data-sidebar] [role="combobox"],
+[data-sidebar] .select-trigger,
+[data-sidebar] [data-state="closed"],
+[data-sidebar] [data-state="open"],
+[class*="sidebar"] select,
+[class*="sidebar"] [role="combobox"],
+[class*="sidebar"] .select-trigger,
+[class*="sidebar"] [data-state="closed"],
+[class*="sidebar"] [data-state="open"],
+/* Also target by parent container background */
+div[style*="background"] select,
+div[style*="#f6f4ee"] select,
+/* Target by class names that might be on sidebar */
+.bg-\[#f6f4ee\] select,
+.bg-\[#f6f4ee\] [role="combobox"],
+.bg-\[#f6f4ee\] .select-trigger {
+  background-color: #C72030 !important;
+  color: #FFFFFF !important;
+  font-family: 'Service', sans-serif !important;
+  font-weight: 500 !important;
+  letter-spacing: 0% !important;
+  line-height: auto !important;
+  border: none !important;
+}
+
+/* Desktop Styles */
+@media (min-width: 1024px) {
+  .sidebar select,
+  .sidebar [role="combobox"],
+  .sidebar .select-trigger,
+  .sidebar [data-state="closed"],
+  .sidebar [data-state="open"],
+  [data-sidebar] select,
+  [data-sidebar] [role="combobox"],
+  [data-sidebar] .select-trigger,
+  [data-sidebar] [data-state="closed"],
+  [data-sidebar] [data-state="open"],
+  [class*="sidebar"] select,
+  [class*="sidebar"] [role="combobox"],
+  [class*="sidebar"] .select-trigger,
+  [class*="sidebar"] [data-state="closed"],
+  [class*="sidebar"] [data-state="open"],
+  div[style*="background"] select,
+  div[style*="#f6f4ee"] select,
+  .bg-\[#f6f4ee\] select,
+  .bg-\[#f6f4ee\] [role="combobox"],
+  .bg-\[#f6f4ee\] .select-trigger {
+    width: 48px !important;
+    height: 6px !important;
+    border-top-left-radius: 16px !important;
+    border-top-right-radius: 12px !important;
+    border-bottom-left-radius: 12px !important;
+    border-bottom-right-radius: 12px !important;
+  }
+
+  /* First item in select menu */
+  .sidebar select option:first-child,
+  .sidebar [role="combobox"] [role="option"]:first-child,
+  [data-sidebar] select option:first-child,
+  [data-sidebar] [role="combobox"] [role="option"]:first-child,
+  [class*="sidebar"] select option:first-child,
+  [class*="sidebar"] [role="combobox"] [role="option"]:first-child,
+  div[style*="background"] select option:first-child,
+  div[style*="#f6f4ee"] select option:first-child,
+  .bg-\[#f6f4ee\] select option:first-child,
+  .bg-\[#f6f4ee\] [role="combobox"] [role="option"]:first-child {
+    padding: 1px 16px 24px 1px !important;
+  }
+
+  /* Second item in select menu */
+  .sidebar select option:nth-child(2),
+  .sidebar [role="combobox"] [role="option"]:nth-child(2),
+  [data-sidebar] select option:nth-child(2),
+  [data-sidebar] [role="combobox"] [role="option"]:nth-child(2),
+  [class*="sidebar"] select option:nth-child(2),
+  [class*="sidebar"] [role="combobox"] [role="option"]:nth-child(2),
+  div[style*="background"] select option:nth-child(2),
+  div[style*="#f6f4ee"] select option:nth-child(2),
+  .bg-\[#f6f4ee\] select option:nth-child(2),
+  .bg-\[#f6f4ee\] [role="combobox"] [role="option"]:nth-child(2) {
+    padding: 22px 18px 24px 22px !important;
+  }
+
+  /* Third item in select menu */
+  .sidebar select option:nth-child(3),
+  .sidebar [role="combobox"] [role="option"]:nth-child(3),
+  [data-sidebar] select option:nth-child(3),
+  [data-sidebar] [role="combobox"] [role="option"]:nth-child(3),
+  [class*="sidebar"] select option:nth-child(3),
+  [class*="sidebar"] [role="combobox"] [role="option"]:nth-child(3),
+  div[style*="background"] select option:nth-child(3),
+  div[style*="#f6f4ee"] select option:nth-child(3),
+  .bg-\[#f6f4ee\] select option:nth-child(3),
+  .bg-\[#f6f4ee\] [role="combobox"] [role="option"]:nth-child(3) {
+    padding: 22px 12px 32px 22px !important;
+  }
+}
+
+/* Tablet Styles */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .sidebar select,
+  .sidebar [role="combobox"],
+  .sidebar .select-trigger,
+  .sidebar [data-state="closed"],
+  .sidebar [data-state="open"],
+  [data-sidebar] select,
+  [data-sidebar] [role="combobox"],
+  [data-sidebar] .select-trigger,
+  [data-sidebar] [data-state="closed"],
+  [data-sidebar] [data-state="open"],
+  [class*="sidebar"] select,
+  [class*="sidebar"] [role="combobox"],
+  [class*="sidebar"] .select-trigger,
+  [class*="sidebar"] [data-state="closed"],
+  [class*="sidebar"] [data-state="open"],
+  div[style*="background"] select,
+  div[style*="#f6f4ee"] select,
+  .bg-\[#f6f4ee\] select,
+  .bg-\[#f6f4ee\] [role="combobox"],
+  .bg-\[#f6f4ee\] .select-trigger {
+    width: 40px !important;
+    height: 5px !important;
+    border-radius: 0px !important;
+  }
+
+  /* First item in select menu */
+  .sidebar select option:first-child,
+  .sidebar [role="combobox"] [role="option"]:first-child,
+  [data-sidebar] select option:first-child,
+  [data-sidebar] [role="combobox"] [role="option"]:first-child,
+  [class*="sidebar"] select option:first-child,
+  [class*="sidebar"] [role="combobox"] [role="option"]:first-child,
+  div[style*="background"] select option:first-child,
+  div[style*="#f6f4ee"] select option:first-child,
+  .bg-\[#f6f4ee\] select option:first-child,
+  .bg-\[#f6f4ee\] [role="combobox"] [role="option"]:first-child {
+    padding: 1px 16px 20px 1px !important;
+  }
+
+  /* Second item in select menu */
+  .sidebar select option:nth-child(2),
+  .sidebar [role="combobox"] [role="option"]:nth-child(2),
+  [data-sidebar] select option:nth-child(2),
+  [data-sidebar] [role="combobox"] [role="option"]:nth-child(2),
+  [class*="sidebar"] select option:nth-child(2),
+  [class*="sidebar"] [role="combobox"] [role="option"]:nth-child(2),
+  div[style*="background"] select option:nth-child(2),
+  div[style*="#f6f4ee"] select option:nth-child(2),
+  .bg-\[#f6f4ee\] select option:nth-child(2),
+  .bg-\[#f6f4ee\] [role="combobox"] [role="option"]:nth-child(2) {
+    padding: 16px 12px 28px 16px !important;
+  }
+
+  /* Third item in select menu */
+  .sidebar select option:nth-child(3),
+  .sidebar [role="combobox"] [role="option"]:nth-child(3),
+  [data-sidebar] select option:nth-child(3),
+  [data-sidebar] [role="combobox"] [role="option"]:nth-child(3),
+  [class*="sidebar"] select option:nth-child(3),
+  [class*="sidebar"] [role="combobox"] [role="option"]:nth-child(3),
+  div[style*="background"] select option:nth-child(3),
+  div[style*="#f6f4ee"] select option:nth-child(3),
+  .bg-\[#f6f4ee\] select option:nth-child(3),
+  .bg-\[#f6f4ee\] [role="combobox"] [role="option"]:nth-child(3) {
+    padding: 12px 12px 30px 12px !important;
+  }
+}
+
+/* Mobile Styles */
+@media (max-width: 767px) {
+  .sidebar select,
+  .sidebar [role="combobox"],
+  .sidebar .select-trigger,
+  .sidebar [data-state="closed"],
+  .sidebar [data-state="open"],
+  [data-sidebar] select,
+  [data-sidebar] [role="combobox"],
+  [data-sidebar] .select-trigger,
+  [data-sidebar] [data-state="closed"],
+  [data-sidebar] [data-state="open"],
+  [class*="sidebar"] select,
+  [class*="sidebar"] [role="combobox"],
+  [class*="sidebar"] .select-trigger,
+  [class*="sidebar"] [data-state="closed"],
+  [class*="sidebar"] [data-state="open"],
+  div[style*="background"] select,
+  div[style*="#f6f4ee"] select,
+  .bg-\[#f6f4ee\] select,
+  .bg-\[#f6f4ee\] [role="combobox"],
+  .bg-\[#f6f4ee\] .select-trigger {
+    width: 32px !important;
+    height: 4px !important;
+    border-top-left-radius: 12px !important;
+    border-top-right-radius: 10px !important;
+    border-bottom-left-radius: 10px !important;
+    border-bottom-right-radius: 10px !important;
+  }
+
+  /* First item in select menu */
+  .sidebar select option:first-child,
+  .sidebar [role="combobox"] [role="option"]:first-child,
+  [data-sidebar] select option:first-child,
+  [data-sidebar] [role="combobox"] [role="option"]:first-child,
+  [class*="sidebar"] select option:first-child,
+  [class*="sidebar"] [role="combobox"] [role="option"]:first-child,
+  div[style*="background"] select option:first-child,
+  div[style*="#f6f4ee"] select option:first-child,
+  .bg-\[#f6f4ee\] select option:first-child,
+  .bg-\[#f6f4ee\] [role="combobox"] [role="option"]:first-child {
+    padding: 1px 12px 20px 1px !important;
+  }
+
+  /* Second item in select menu */
+  .sidebar select option:nth-child(2),
+  .sidebar [role="combobox"] [role="option"]:nth-child(2),
+  [data-sidebar] select option:nth-child(2),
+  [data-sidebar] [role="combobox"] [role="option"]:nth-child(2),
+  [class*="sidebar"] select option:nth-child(2),
+  [class*="sidebar"] [role="combobox"] [role="option"]:nth-child(2),
+  div[style*="background"] select option:nth-child(2),
+  div[style*="#f6f4ee"] select option:nth-child(2),
+  .bg-\[#f6f4ee\] select option:nth-child(2),
+  .bg-\[#f6f4ee\] [role="combobox"] [role="option"]:nth-child(2) {
+    padding: 12px 12px 28px 12px !important;
+  }
+
+  /* Third item in select menu */
+  .sidebar select option:nth-child(3),
+  .sidebar [role="combobox"] [role="option"]:nth-child(3),
+  [data-sidebar] select option:nth-child(3),
+  [data-sidebar] [role="combobox"] [role="option"]:nth-child(3),
+  [class*="sidebar"] select option:nth-child(3),
+  [class*="sidebar"] [role="combobox"] [role="option"]:nth-child(3),
+  div[style*="background"] select option:nth-child(3),
+  div[style*="#f6f4ee"] select option:nth-child(3),
+  .bg-\[#f6f4ee\] select option:nth-child(3),
+  .bg-\[#f6f4ee\] [role="combobox"] [role="option"]:nth-child(3) {
+    padding: 10px 10px 30px 10px !important;
+  }
+}
+
+/* Ensure dropdown content inherits the same styling */
+.sidebar .select-content,
+[data-sidebar] .select-content,
+[class*="sidebar"] .select-content,
+div[style*="background"] .select-content,
+div[style*="#f6f4ee"] .select-content,
+.bg-\[#f6f4ee\] .select-content {
+  background-color: #C72030 !important;
+  color: #FFFFFF !important;
+  font-family: 'Service', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.sidebar .select-item,
+[data-sidebar] .select-item,
+[class*="sidebar"] .select-item,
+div[style*="background"] .select-item,
+div[style*="#f6f4ee"] .select-item,
+.bg-\[#f6f4ee\] .select-item {
+  color: #FFFFFF !important;
+  font-family: 'Service', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.sidebar .select-item:hover,
+[data-sidebar] .select-item:hover,
+[class*="sidebar"] .select-item:hover,
+div[style*="background"] .select-item:hover,
+div[style*="#f6f4ee"] .select-item:hover,
+.bg-\[#f6f4ee\] .select-item:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
 }
