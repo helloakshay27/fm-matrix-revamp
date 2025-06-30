@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -149,8 +150,8 @@ export const EditShiftDialog = ({ open, onOpenChange, shift }: EditShiftDialogPr
           <DialogTitle className="flex items-center justify-between">
             Edit Shift
             <Button
-              variant="icon"
-              size="icon-sm"
+              variant="ghost"
+              size="icon"
               onClick={handleClose}
               className="h-8 w-8 p-1 bg-[#C72030] text-white hover:bg-[#C72030]/90 rounded-none shadow-none"
             >
