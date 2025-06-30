@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -330,30 +328,20 @@ export const Sidebar = () => {
 
   const currentModules = modulesByPackage[currentSection] || [];
 
-  const isActiveRoute = (href: string) => {
-    return location.pathname === href || location.pathname.startsWith(href + '/');
-  };
-
   const renderMenuItem = (item: any, level: number = 0) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isExpanded = expandedItems.includes(item.name);
     const showDropdowns = item.hasDropdowns && location.pathname === item.href;
-    const isActive = isActiveRoute(item.href);
     
     if (hasSubItems) {
       return (
         <div key={item.name}>
           <button
             onClick={() => toggleExpanded(item.name)}
-            className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
+            className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
           >
             <div className="flex items-center gap-3">
-              {level === 0 && (
-                <>
-                  {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
-                  <item.icon className="w-5 h-5" />
-                </>
-              )}
+              {level === 0 && <item.icon className="w-5 h-5" />}
               {item.name}
             </div>
             {isExpanded ? 
@@ -369,9 +357,8 @@ export const Sidebar = () => {
                     <div>
                       <button
                         onClick={() => toggleExpanded(subItem.name)}
-                        className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
+                        className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
                       >
-                        {isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
                         <span>{subItem.name}</span>
                         {expandedItems.includes(subItem.name) ? 
                           <ChevronDown className="w-4 h-4" /> : 
@@ -384,11 +371,10 @@ export const Sidebar = () => {
                             <button
                               key={nestedItem.name}
                               onClick={() => handleNavigation(nestedItem.href, currentSection)}
-                              className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${
+                              className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] ${
                                 nestedItem.color || 'text-[#1a1a1a]'
                               }`}
                             >
-                              {isActiveRoute(nestedItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
                               {nestedItem.name}
                             </button>
                           ))}
@@ -398,11 +384,10 @@ export const Sidebar = () => {
                   ) : (
                     <button
                       onClick={() => handleNavigation(subItem.href, currentSection)}
-                      className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
+                      className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] ${
                         subItem.color || 'text-[#1a1a1a]'
                       }`}
                     >
-                      {isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
                       {subItem.name}
                     </button>
                   )}
@@ -418,16 +403,11 @@ export const Sidebar = () => {
       <div key={item.name}>
         <button
           onClick={() => handleNavigation(item.href, currentSection)}
-          className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
+          className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] ${
             item.color || 'text-[#1a1a1a]'
           }`}
         >
-          {level === 0 && (
-            <>
-              {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
-              <item.icon className="w-5 h-5" />
-            </>
-          )}
+          {level === 0 && <item.icon className="w-5 h-5" />}
           {item.name}
         </button>
         
@@ -499,4 +479,3 @@ export const Sidebar = () => {
     </div>
   );
 };
-
