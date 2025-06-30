@@ -198,8 +198,8 @@ export const AddAMCPage = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
+                <label className="block text-sm font-medium mb-2">Cost</label>
                 <Input 
-                  label="Cost"
                   type="number" 
                   placeholder="Enter Cost"
                   value={formData.cost}
@@ -208,8 +208,8 @@ export const AddAMCPage = () => {
               </div>
 
               <div>
+                <label className="block text-sm font-medium mb-2">Start Date*</label>
                 <Input 
-                  label="Start Date *"
                   type="date" 
                   value={formData.startDate}
                   onChange={(e) => handleInputChange('startDate', e.target.value)}
@@ -218,8 +218,8 @@ export const AddAMCPage = () => {
               </div>
 
               <div>
+                <label className="block text-sm font-medium mb-2">First Service Date*</label>
                 <Input 
-                  label="First Service Date *"
                   type="date" 
                   value={formData.firstService}
                   onChange={(e) => handleInputChange('firstService', e.target.value)}
@@ -243,8 +243,8 @@ export const AddAMCPage = () => {
               </div>
 
               <div>
+                <label className="block text-sm font-medium mb-2">End Date*</label>
                 <Input 
-                  label="End Date *"
                   type="date" 
                   value={formData.endDate}
                   onChange={(e) => handleInputChange('endDate', e.target.value)}
@@ -253,8 +253,8 @@ export const AddAMCPage = () => {
               </div>
 
               <div>
+                <label className="block text-sm font-medium mb-2">No. of Visits</label>
                 <Input 
-                  label="No. of Visits"
                   type="number" 
                   placeholder="Enter No. of Visit"
                   value={formData.noOfVisits}
@@ -264,8 +264,8 @@ export const AddAMCPage = () => {
             </div>
 
             <div>
+              <label className="block text-sm font-medium mb-2">Remarks</label>
               <Textarea 
-                label="Remarks"
                 placeholder="Enter Remarks"
                 value={formData.remarks}
                 onChange={(e) => handleInputChange('remarks', e.target.value)}
