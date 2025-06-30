@@ -6,20 +6,20 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 font-[Work_Sans] border-0 rounded-none bg-[#C4B8D0] bg-opacity-35 text-white font-medium tracking-[0.5px] [&_svg]:text-[#C72030]",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 font-[Work_Sans] border-0 rounded-none bg-[#C4B8D0] bg-opacity-35 text-white font-medium tracking-[0.5px] [&_svg]:text-white",
   {
     variants: {
       variant: {
-        default: "bg-[#C4B8D0] bg-opacity-35 text-white [&_svg]:text-[#C72030]",
+        default: "bg-[#C4B8D0] bg-opacity-35 text-white [&_svg]:text-white",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 [&_svg]:text-white",
         outline:
-          "border border-[#C72030] bg-white text-[#C72030] [&_svg]:text-[#C72030]",
+          "border border-[#C72030] bg-white text-[#C72030] [&_svg]:text-white",
         secondary:
-          "bg-gray-100 text-gray-900",
-        ghost: "text-gray-900",
-        link: "text-primary underline-offset-4 hover:underline",
-        primary: "bg-[#C72030] text-white",
+          "bg-gray-100 text-gray-900 [&_svg]:text-white",
+        ghost: "text-gray-900 [&_svg]:text-white",
+        link: "text-primary underline-offset-4 hover:underline [&_svg]:text-white",
+        primary: "bg-[#C72030] text-white [&_svg]:text-white",
       },
       size: {
         default: "responsive-button",
