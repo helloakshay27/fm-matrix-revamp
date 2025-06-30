@@ -6,9 +6,6 @@ const Navbar = () => {
     const [openDropdown, setOpenDropdown] = useState(false);
     const [selectedOption, setSelectedOption] = useState("Lockated");
     const [notifications, setNotifications] = useState([
-        // Example structure; fetch from API in real use
-        { id: 1, message: "You have a new message from Sarah", read: false },
-        { id: 2, message: "Project Alpha deadline is approaching", read: false },
     ]);
 
     const [showNotifications, setShowNotifications] = useState(false);
