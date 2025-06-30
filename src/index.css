@@ -71,6 +71,126 @@
   }
 }
 
+/* Global Search Bar Styles */
+.global-search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background-color: #FFFFFF;
+  border: 1px solid #AAB9C5;
+  border-radius: 5px;
+  transition: all 0.2s ease-in-out;
+}
+
+.global-search-bar input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #666666;
+  font-size: 14px;
+}
+
+.global-search-bar input::placeholder {
+  color: #AAB9C5;
+}
+
+.global-search-bar .search-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 12px 10px 10px;
+  border-radius: 4px;
+  color: #AAB9C5;
+  cursor: pointer;
+  transition: color 0.2s ease-in-out;
+}
+
+.global-search-bar .search-button {
+  background-color: #C4B8D0;
+  background-color: rgba(196, 184, 208, 0.35);
+  border: none;
+  border-radius: 4px;
+  color: #666666;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  white-space: nowrap;
+}
+
+.global-search-bar .search-button:hover {
+  background-color: rgba(196, 184, 208, 0.5);
+}
+
+.global-search-bar:focus-within {
+  border-color: #C72030;
+  box-shadow: 0 0 0 2px rgba(199, 32, 48, 0.1);
+}
+
+/* Mobile: max-width 767px */
+.global-search-bar {
+  padding: 12px 12px 10px 10px;
+  width: 120px;
+  height: 24px;
+}
+
+.global-search-bar input {
+  font-size: 12px;
+  padding: 0 4px;
+}
+
+.global-search-bar .search-button {
+  padding: 2px 6px;
+  font-size: 10px;
+}
+
+/* Tablet: min-width 768px and max-width 1023px */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .global-search-bar {
+    padding: 12px 12px 10px 10px;
+    width: 230px;
+    height: 35px;
+  }
+  
+  .global-search-bar input {
+    font-size: 14px;
+    padding: 0 8px;
+  }
+  
+  .global-search-bar .search-button {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+}
+
+/* Desktop: min-width 1024px */
+@media (min-width: 1024px) {
+  .global-search-bar {
+    padding: 12px 12px 10px 10px;
+    width: 230px;
+    height: 35px;
+  }
+  
+  .global-search-bar input {
+    font-size: 14px;
+    padding: 0 8px;
+  }
+  
+  .global-search-bar .search-button {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+}
+
+/* Apply to existing search inputs */
+input[type="text"][placeholder*="Search"],
+input[type="search"],
+.search-input,
+input[placeholder*="search" i] {
+  @apply global-search-bar;
+}
+
 /* Responsive Button Styles */
 .responsive-button {
   @apply flex items-center justify-center;
