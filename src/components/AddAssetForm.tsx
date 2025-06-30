@@ -1,7 +1,6 @@
+
 import React, { useState } from 'react';
 import { X, ChevronDown, ChevronUp } from 'lucide-react';
-import { Input } from './ui/input';
-import { Textarea } from './ui/textarea';
 
 interface AddAssetFormProps {
   isOpen: boolean;
@@ -122,37 +121,82 @@ export const AddAssetForm: React.FC<AddAssetFormProps> = ({ isOpen, onClose }) =
               <div className="bg-[#f6f4ee] p-6 rounded-lg">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <div>
-                    <Input label="Asset Name*" placeholder="Enter Text" />
+                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Asset Name*</label>
+                    <input 
+                      type="text" 
+                      placeholder="Enter Text"
+                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    />
                   </div>
                   <div>
-                    <Input label="Asset No.*" placeholder="Enter Number" />
+                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Asset No.*</label>
+                    <input 
+                      type="text" 
+                      placeholder="Enter Number"
+                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    />
                   </div>
                   <div>
-                    <Input label="Equipment ID*" placeholder="Enter Number" />
+                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Equipment ID*</label>
+                    <input 
+                      type="text" 
+                      placeholder="Enter Number"
+                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    />
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <div>
-                    <Input label="Model No." placeholder="Enter Number" />
+                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Model No.</label>
+                    <input 
+                      type="text" 
+                      placeholder="Enter Number"
+                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    />
                   </div>
                   <div>
-                    <Input label="Serial No." placeholder="Enter Number" />
+                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Serial No.</label>
+                    <input 
+                      type="text" 
+                      placeholder="Enter Number"
+                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    />
                   </div>
                   <div>
-                    <Input label="Consumer No." placeholder="Enter Number" />
+                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Consumer No.</label>
+                    <input 
+                      type="text" 
+                      placeholder="Enter Number"
+                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <div>
-                    <Input label="Purchase Cost*" placeholder="Enter Numeric value" />
+                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Purchase Cost*</label>
+                    <input 
+                      type="text" 
+                      placeholder="Enter Numeric value"
+                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    />
                   </div>
                   <div>
-                    <Input label="Capacity" placeholder="Enter Text" />
+                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Capacity</label>
+                    <input 
+                      type="text" 
+                      placeholder="Enter Text"
+                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    />
                   </div>
                   <div>
-                    <Input label="Unit" placeholder="Enter Text" />
+                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Unit</label>
+                    <input 
+                      type="text" 
+                      placeholder="Enter Text"
+                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    />
                   </div>
                 </div>
 
@@ -170,16 +214,28 @@ export const AddAssetForm: React.FC<AddAssetFormProps> = ({ isOpen, onClose }) =
                     </select>
                   </div>
                   <div>
-                    <Input label="Purchased ON Date" type="date" />
+                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Purchased ON Date</label>
+                    <input 
+                      type="date" 
+                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <div>
-                    <Input label="Expiry date" type="date" />
+                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Expiry date</label>
+                    <input 
+                      type="date" 
+                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    />
                   </div>
                   <div>
-                    <Input label="Manufacturer" placeholder="Enter Text" />
+                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Manufacturer</label>
+                    <input 
+                      type="date" 
+                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    />
                   </div>
                 </div>
 
@@ -287,13 +343,25 @@ export const AddAssetForm: React.FC<AddAssetFormProps> = ({ isOpen, onClose }) =
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Input label="Warranty Start Date" type="date" />
+                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Warranty Start Date</label>
+                    <input 
+                      type="date" 
+                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    />
                   </div>
                   <div>
-                    <Input label="Warranty expires on" type="date" />
+                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Warranty expires on</label>
+                    <input 
+                      type="date" 
+                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    />
                   </div>
                   <div>
-                    <Input label="Commissioning Date" type="date" />
+                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Commissioning Date</label>
+                    <input 
+                      type="date" 
+                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    />
                   </div>
                 </div>
               </div>
