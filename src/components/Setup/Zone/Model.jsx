@@ -21,12 +21,7 @@ const AddZoneModel = ({
 }) => {
   const token = localStorage.getItem("token");
   const dispatch = useDispatch();
-  const { fetchOrganizations: organizations } = useSelector(
-    (state) => state.fetchOrganizations
-  );
-  const { fetchCompany: companies } = useSelector(
-    (state) => state.fetchCompany
-  );
+
 
   const {fetchRegion: region} = useSelector((state) => state.fetchRegion);
   const { loading, success } = useSelector((state) => state.createZone);
@@ -38,14 +33,11 @@ const AddZoneModel = ({
 
   const [formData, setFormData] = useState({
     name: "",
-    organisation: null,
     region:"",
-    company: null,
+    // country: "",
   });
 
   useEffect(() => {
-    dispatch(fetchOrganizations({ token }));
-    dispatch(fetchCompany({ token }));
     dispatch(fetchRegion({ token }));
   }, [dispatch]);
 
@@ -53,16 +45,15 @@ const AddZoneModel = ({
     if (isEditMode && initialData) {
       setFormData({
         name: initialData.name,
-        organisation: initialData.organization_id,
         region: initialData.region_id,
-        company: initialData.company_id
+        // country: initialData.country_id,
+
       });
     } else {
       setFormData({
         name: "",
-        organisation: null,
         region: "",
-        company: "",
+        // country: "",
       });
     }
   }, [isEditMode, initialData]);
@@ -79,9 +70,8 @@ const AddZoneModel = ({
     const payload = {
       zone: {
         name: formData.name,
-        organization_id: formData.organisation,
         region_id: formData.region || "",
-        company_id: formData.company,
+        // country_id: formData.country || "",
         active: true
       },
     };
@@ -124,9 +114,8 @@ const AddZoneModel = ({
   const handleSuccess = () => {
     setFormData({
       name: "",
-      organisation: null,
       region: "",
-      company: null,
+      // country: "",
     });
     setError("");
     onSuccess();
@@ -135,9 +124,8 @@ const AddZoneModel = ({
   const handleClose = () => {
     setFormData({
       name: "",
-      organisation: null,
       region: "",
-      company: null,
+      // country: "",
     });
     setError("");
     setOpenModal(false);
@@ -167,39 +155,7 @@ const AddZoneModel = ({
               }
             />
           </div>
-          <div className="px-6">
-            <label className="block text-[11px] text-[#1B1B1B] mb-1">
-              Organisation<span className="text-red-500 ml-1">*</span>
-            </label>
-            <SelectBox
-              options={organizations.map((org) => ({
-                value: org.id,
-                label: org.name,
-              }))}
-              className="w-full"
-              value={formData.organisation}
-              onChange={(value) =>
-                setFormData({ ...formData, organisation: value })
-              }
-            />
-          </div>
-          <div className="px-6">
-            <label className="block text-[11px] text-[#1B1B1B] mb-1">
-              Company<span className="text-red-500 ml-1">*</span>
-            </label>
-            <SelectBox
-              options={
-                companies.map((org) => ({
-                  value: org.id,
-                  label: org.name,
-                }))}
-              className="w-full"
-              value={formData.company}
-              onChange={(value) =>
-                setFormData({ ...formData, company: value })
-              }
-            />
-          </div>
+
           <div className="px-6">
             <label className="block text-[11px] text-[#1B1B1B] mb-1">
               Region<span className="text-red-500 ml-1">*</span>
@@ -215,6 +171,22 @@ const AddZoneModel = ({
             />
           </div>
         </div>
+{/* 
+          <div className="px-6">
+            <label className="block text-[11px] text-[#1B1B1B] mb-1">
+              Country<span className="text-red-500 ml-1">*</span>
+            </label>
+            <SelectBox
+              options={country.map((region) => ({
+                value: region.id,
+                label: region.name,
+              }))}
+              className="w-full"
+              value={formData.country}
+              onChange={(value) => setFormData({ ...formData, country: value })}
+            />
+          </div>
+        </div> */}
 
         <div>
           {error && (

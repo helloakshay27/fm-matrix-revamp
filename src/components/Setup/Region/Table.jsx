@@ -24,8 +24,6 @@ const RegionTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
 
   const dispatch = useDispatch();
   const { fetchRegion: Region } = useSelector((state) => state.fetchRegion);
-  const { fetchOrganizations: organizations } = useSelector((state) => state.fetchOrganizations);
-  const { fetchCompany: companies } = useSelector((state) => state.fetchCompany);
 
 
   // Initial fetch of project types
@@ -144,41 +142,23 @@ const RegionTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
 
   const columns = useMemo(
     () => [
-      {
-        accessorKey: 'name',
-        header: 'Region Name',
-        size: 450,
-        cell: ({ row, getValue }) => {
-          const value = getValue();
-          if (!value) return null;
-          return value.charAt(0).toUpperCase() + value.slice(1);
-        },
-      },
-          {
-        accessorKey: 'organization_id',
-        header: 'Organization',
-        size: 150,
-        cell: ({ getValue }) => {
-         const value=organizations.find(org => org.id == getValue());
-          return value ? <span className="pl-2">{value.name}</span> : null;
-      }
-          },
-          {
-        accessorKey: 'company_id',
-        header: 'Company',
-        size: 150,
-        cell: ({ getValue }) => {
-          const value=companies.find(org => org.id == getValue());
-          return value ? <span className="pl-2">{value.name}</span> : null;
-        },
-      },
-          {
+           {
         accessorKey: 'country_id',
         header: 'Country',
         size: 150,
         cell: ({ getValue }) => {
         //   const value=countries.find(org => org.id === getValue());
         //   return value ? <span className="pl-2">{value.name}</span> : null;
+        },
+      },
+      {
+        accessorKey: 'name',
+        header: 'Region',
+        size: 150,
+        cell: ({ row, getValue }) => {
+          const value = getValue();
+          if (!value) return null;
+          return value.charAt(0).toUpperCase() + value.slice(1);
         },
       },
       {
@@ -189,7 +169,7 @@ const RegionTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
           const isActive = row.original.active;
 
           return (
-            <div className="flex gap-4">
+            <div className="flex gap-4 pl-2">
               <span>Inactive</span>
               <Switch
                 color={`${isActive ? 'success' : 'danger'}`}
@@ -204,15 +184,6 @@ const RegionTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
         },
       },
       {
-        accessorKey: 'created_at',
-        header: 'CreatedOn',
-        size: 150,
-        cell: ({ getValue }) => {
-          const rawDate = getValue();
-          return rawDate ? <span className="pl-2">{formatToDDMMYYYY(rawDate)} </span> : null;
-        },
-      },
-      {
         id: 'actions',
         header: 'Actions',
         size: 60,
@@ -222,7 +193,7 @@ const RegionTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
         },
       },
     ],
-    [organizations,companies,Region]
+    [Region]
   );
 
   const [pagination, setPagination] = useState({

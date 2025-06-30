@@ -10,8 +10,7 @@ import {
   getPaginationRowModel,
 } from '@tanstack/react-table';
 import { useDispatch, useSelector } from 'react-redux';
-import {fetchOrganizations} from '../../../redux/slices/organizationSlice';
-import {fetchCompany} from '../../../redux/slices/companySlice';
+
 import { fetchRegion } from '../../../redux/slices/regionSlice';
 import {fetchZone, updateZone, deleteZone} from '../../../redux/slices/zoneSlice';
 import AddZoneModel from './Model';
@@ -26,15 +25,12 @@ const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
   const dispatch = useDispatch();
   const { fetchRegion: Region } = useSelector((state) => state.fetchRegion);
   const { fetchZone: Zone } = useSelector((state) => state.fetchZone);
-  const { fetchOrganizations: organizations } = useSelector((state) => state.fetchOrganizations);
-  const { fetchCompany: companies } = useSelector((state) => state.fetchCompany);
+
 
 
   // Initial fetch of project types
   useEffect(() => {
     dispatch(fetchRegion({ token }));
-    dispatch(fetchOrganizations({ token }));
-    dispatch(fetchCompany({ token }));
     dispatch(fetchZone({ token }));
   }, [dispatch]);
 
@@ -148,9 +144,9 @@ const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
   const columns = useMemo(
     () => [
       {
-        accessorKey: 'name',
-        header: 'Zone Name',
-        size: 450,
+        accessorKey: 'country_id',
+        header: 'Country',
+        size: 150,
         cell: ({ row, getValue }) => {
           const value = getValue();
           if (!value) return null;
@@ -158,30 +154,22 @@ const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
         },
       },
           {
-        accessorKey: 'organization_id',
-        header: 'Organization',
+        accessorKey: 'region_id',
+        header: 'Region',
         size: 150,
         cell: ({ getValue }) => {
-         const value=organizations.find(org => org.id == getValue());
-          return value ? <span className="pl-2">{value.name}</span> : null;
-      }
-          },
-          {
-        accessorKey: 'company_id',
-        header: 'Company',
-        size: 150,
-        cell: ({ getValue }) => {
-          const value=companies.find(org => org.id == getValue());
-          return value ? <span className="pl-2">{value.name}</span> : null;
+          const value=Region.find(org => org.id === getValue()).name;
+          return value ? <span className="">{value.charAt(0).toUpperCase() + value.slice(1)}</span> : null;
         },
       },
-          {
-        accessorKey: 'region_id',
-        header: 'region',
+           {
+        accessorKey: 'name',
+        header: 'Zone',
         size: 150,
-        cell: ({ getValue }) => {
-          const value=Region.find(org => org.id === getValue());
-          return value ? <span className="pl-2">{value.name}</span> : null;
+        cell: ({ row, getValue }) => {
+          const value = getValue();
+          if (!value) return null;
+          return <span className="pl-2">{value.charAt(0).toUpperCase() + value.slice(1)}</span>;
         },
       },
       {
@@ -207,15 +195,6 @@ const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
         },
       },
       {
-        accessorKey: 'created_at',
-        header: 'CreatedOn',
-        size: 150,
-        cell: ({ getValue }) => {
-          const rawDate = getValue();
-          return rawDate ? <span className="pl-2">{formatToDDMMYYYY(rawDate)} </span> : null;
-        },
-      },
-      {
         id: 'actions',
         header: 'Actions',
         size: 60,
@@ -225,7 +204,7 @@ const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
         },
       },
     ],
-    [organizations,companies,Zone]
+    [Zone]
   );
 
   const [pagination, setPagination] = useState({

@@ -36,9 +36,7 @@ const AddRegionModel = ({
 
   const [formData, setFormData] = useState({
     name: "",
-    organisation: null,
     country:"",
-    company: null,
   });
 
   useEffect(() => {
@@ -50,16 +48,12 @@ const AddRegionModel = ({
     if (isEditMode && initialData) {
       setFormData({
         name: initialData.name,
-        organisation: initialData.organization_id,
         country: initialData.country_id,
-        company: initialData.company_id
       });
     } else {
       setFormData({
         name: "",
-        organisation: null,
         country: "",
-        company: "",
       });
     }
   }, [isEditMode, initialData]);
@@ -76,10 +70,7 @@ const AddRegionModel = ({
     const payload = {
       region: {
         name: formData.name,
-        organization_id: formData.organisation,
         country_id: formData.country || "",
-        company_id: formData.company,
-        active: true
       },
     };
     try {
@@ -121,9 +112,7 @@ const AddRegionModel = ({
   const handleSuccess = () => {
     setFormData({
       name: "",
-      organisation: null,
       country: "",
-      company: null,
     });
     setError("");
     onSuccess();
@@ -132,9 +121,7 @@ const AddRegionModel = ({
   const handleClose = () => {
     setFormData({
       name: "",
-      organisation: null,
       country: "",
-      company: null,
     });
     setError("");
     setOpenModal(false);
@@ -161,39 +148,6 @@ const AddRegionModel = ({
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
-              }
-            />
-          </div>
-          <div className="px-6">
-            <label className="block text-[11px] text-[#1B1B1B] mb-1">
-              Organisation<span className="text-red-500 ml-1">*</span>
-            </label>
-            <SelectBox
-              options={organizations.map((org) => ({
-                value: org.id,
-                label: org.name,
-              }))}
-              className="w-full"
-              value={formData.organisation}
-              onChange={(value) =>
-                setFormData({ ...formData, organisation: value })
-              }
-            />
-          </div>
-          <div className="px-6">
-            <label className="block text-[11px] text-[#1B1B1B] mb-1">
-              Company<span className="text-red-500 ml-1">*</span>
-            </label>
-            <SelectBox
-              options={
-                companies.map((org) => ({
-                  value: org.id,
-                  label: org.name,
-                }))}
-              className="w-full"
-              value={formData.company}
-              onChange={(value) =>
-                setFormData({ ...formData, company: value })
               }
             />
           </div>
