@@ -3,6 +3,7 @@ import axios from "axios";
 import "dhtmlx-gantt";
 import "dhtmlx-gantt/codebase/dhtmlxgantt.css";
 import { useParams } from "react-router-dom";
+import { baseURL } from './../../apiDomain'
 
 const GanttChart = () => {
     const { id } = useParams()
@@ -157,7 +158,7 @@ const GanttChart = () => {
         const fetchMilestones = async () => {
             try {
                 const response = await axios.get(
-                    `https://api-tasks.lockated.com/milestones.json?q[project_management_id_eq]=${id}`,
+                    `${baseURL}/milestones.json?q[project_management_id_eq]=${id}`,
                     {
                         headers: {
                             Authorization: `Bearer ${localStorage.getItem("token")}`,

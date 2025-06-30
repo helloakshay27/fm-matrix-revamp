@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { baseURL } from '../../../apiDomain';
 
 const createApiSlice = (name, fetchThunk) => createSlice({
     name,
@@ -39,7 +40,7 @@ const createApiSlice = (name, fetchThunk) => createSlice({
 
 export const createTask = createAsyncThunk('createTask', async ({ token, payload }) => {
     try {
-        const response = await axios.post(`https://api-tasks.lockated.com/task_managements.json`,
+        const response = await axios.post(`${baseURL}/task_managements.json`,
             { task_management: payload },
             {
                 headers: {
@@ -57,7 +58,7 @@ export const createTask = createAsyncThunk('createTask', async ({ token, payload
 
 export const createSubTask = createAsyncThunk('createSubTask', async ({ token, payload }) => {
     try {
-        const response = await axios.post(`https://api-tasks.lockated.com/task_managements.json`,
+        const response = await axios.post(`${baseURL}/task_managements.json`,
             { task_management: payload },
             {
                 headers: {
@@ -76,7 +77,7 @@ export const createSubTask = createAsyncThunk('createSubTask', async ({ token, p
 
 export const fetchTasks = createAsyncThunk('fetchTasks', async ({ token, id }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/task_managements.json?q[milestone_id_eq]=${id}`, {
+        const response = await axios.get(`${baseURL}/task_managements.json?q[milestone_id_eq]=${id}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -93,7 +94,7 @@ export const fetchTasks = createAsyncThunk('fetchTasks', async ({ token, id }) =
 
 export const fetchMyTasks = createAsyncThunk('fetchMyTasks', async ({ token }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/task_managements/my_tasks.json`, {
+        const response = await axios.get(`${baseURL}/task_managements/my_tasks.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -111,7 +112,7 @@ export const fetchMyTasks = createAsyncThunk('fetchMyTasks', async ({ token }) =
 
 export const updateTask = createAsyncThunk('updateTask', async ({ token, id, payload }) => {
     try {
-        const response = await axios.put(`https://api-tasks.lockated.com/task_managements/${id}.json`,
+        const response = await axios.put(`${baseURL}/task_managements/${id}.json`,
             payload,
             {
                 headers: {
@@ -129,7 +130,7 @@ export const updateTask = createAsyncThunk('updateTask', async ({ token, id, pay
 
 export const taskDetails = createAsyncThunk('taskDetails', async ({ token, id }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/task_managements/${id}.json`, {
+        const response = await axios.get(`${baseURL}/task_managements/${id}.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -144,7 +145,7 @@ export const taskDetails = createAsyncThunk('taskDetails', async ({ token, id })
 
 export const editTask = createAsyncThunk('editTask', async ({ token, id, payload }) => {
     try {
-        const response = await axios.put(`https://api-tasks.lockated.com/task_managements/${id}.json`,
+        const response = await axios.put(`${baseURL}/task_managements/${id}.json`,
             { task_management: payload },
             {
                 headers: {
@@ -162,7 +163,7 @@ export const editTask = createAsyncThunk('editTask', async ({ token, id, payload
 
 export const deleteTask = createAsyncThunk('deleteTask', async ({ token, id }) => {
     try {
-        const response = await axios.delete(`https://api-tasks.lockated.com/task_managements/${id}.json`,
+        const response = await axios.delete(`${baseURL}/task_managements/${id}.json`,
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -179,7 +180,7 @@ export const deleteTask = createAsyncThunk('deleteTask', async ({ token, id }) =
 
 export const createTaskComment = createAsyncThunk('createTaskComment', async ({ token, payload }) => {
     try {
-        const response = await axios.post(`https://api-tasks.lockated.com/comments.json`, payload, {
+        const response = await axios.post(`${baseURL}/comments.json`, payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -195,7 +196,7 @@ export const createTaskComment = createAsyncThunk('createTaskComment', async ({ 
 export const editTaskComment = createAsyncThunk('editTaskComment', async ({ token, id, payload }) => {
     console.log(payload)
     try {
-        const response = await axios.put(`https://api-tasks.lockated.com/comments/${id}.json`, payload, {
+        const response = await axios.put(`${baseURL}/comments/${id}.json`, payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'Multipart/form-data'
@@ -211,7 +212,7 @@ export const editTaskComment = createAsyncThunk('editTaskComment', async ({ toke
 
 export const deleteTaskComment = createAsyncThunk('deleteTaskComment', async ({ token, id }) => {
     try {
-        const response = await axios.delete(`https://api-tasks.lockated.com/comments/${id}.json`, {
+        const response = await axios.delete(`${baseURL}/comments/${id}.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json'
@@ -227,7 +228,7 @@ export const deleteTaskComment = createAsyncThunk('deleteTaskComment', async ({ 
 
 export const changeTaskStatus = createAsyncThunk('changeTaskStatus', async ({ token, id, payload }) => {
     try {
-        const response = await axios.put(`https://api-tasks.lockated.com/task_managements/${id}/update_status.json`, payload, {
+        const response = await axios.put(`${baseURL}/task_managements/${id}/update_status.json`, payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -242,7 +243,7 @@ export const changeTaskStatus = createAsyncThunk('changeTaskStatus', async ({ to
 
 export const attachFiles = createAsyncThunk('attachFiles', async ({ token, id, payload }) => {
     try {
-        const response = await axios.put(`https://api-tasks.lockated.com/task_managements/${id}.json`,
+        const response = await axios.put(`${baseURL}/task_managements/${id}.json`,
             payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -259,7 +260,7 @@ export const attachFiles = createAsyncThunk('attachFiles', async ({ token, id, p
 
 export const fetchTasksOfProject = createAsyncThunk('fetchTasksOfProject', async ({ token, id }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/task_managements.json?q[project_management_id_eq]=${id}`, {
+        const response = await axios.get(`${baseURL}/task_managements.json?q[project_management_id_eq]=${id}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -278,7 +279,7 @@ export const filterTask = createAsyncThunk('filterTask',
             const params = new URLSearchParams(filter).toString();
             console.log(params);
             const response = await axios.get(
-                `https://api-tasks.lockated.com/task_managements.json?${params}`,
+                `${baseURL}/task_managements.json?${params}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -295,7 +296,7 @@ export const filterTask = createAsyncThunk('filterTask',
 
 export const createDependancy = createAsyncThunk('createDependancy', async ({ token, payload }) => {
     try {
-        const response = await axios.post(`https://api-tasks.lockated.com/task_dependencies.json`, payload, {
+        const response = await axios.post(`${baseURL}/task_dependencies.json`, payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -310,7 +311,7 @@ export const createDependancy = createAsyncThunk('createDependancy', async ({ to
 
 export const updateDependancy = createAsyncThunk('updateDependancy', async ({ token, id, payload }) => {
     try {
-        const response = await axios.put(`https://api-tasks.lockated.com/task_dependencies/${id}.json`, payload, {
+        const response = await axios.put(`${baseURL}/task_dependencies/${id}.json`, payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }

@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-
-const access_token = localStorage.getItem("token");
+import { baseURL } from '../../../apiDomain';
 
 const createApiSlice = (name, fetchThunk) => createSlice({
     name,
@@ -35,7 +34,7 @@ const createApiSlice = (name, fetchThunk) => createSlice({
 
 export const fetchSpirints = createAsyncThunk('fetchSpirints', async ({ token }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/sprints.json`, {
+        const response = await axios.get(`${baseURL}/sprints.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -51,7 +50,7 @@ export const fetchSpirints = createAsyncThunk('fetchSpirints', async ({ token })
 
 export const fetchSpirintById = createAsyncThunk('fetchSpirintById', async ({ token, id }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/sprints/${id}.json`, {
+        const response = await axios.get(`${baseURL}/sprints/${id}.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -69,7 +68,7 @@ export const fetchSpirintById = createAsyncThunk('fetchSpirintById', async ({ to
 export const postSprint = createAsyncThunk('postSprint', async ({ token, payload }) => {
     try {
         const response = await axios.post(
-            'https://api-tasks.lockated.com/sprints.json',
+            `${baseURL}/sprints.json`,
             payload,
             {
                 headers: {
@@ -87,7 +86,7 @@ export const postSprint = createAsyncThunk('postSprint', async ({ token, payload
 export const putSprint = createAsyncThunk('putSprint', async ({ token, id, payload }, { rejectWithValue }) => {
     try {
         const response = await axios.put(
-            `https://api-tasks.lockated.com/sprints/${id}.json`,
+            `${baseURL}/sprints/${id}.json`,
             payload,
             {
                 headers: {
@@ -103,10 +102,6 @@ export const putSprint = createAsyncThunk('putSprint', async ({ token, id, paylo
     }
 });
 
-
-
-
-
 export const fetchSpirintsSlice = createApiSlice('fetchSpirints', fetchSpirints);
 export const postSprintSlice = createApiSlice('postSprint', postSprint);
 export const putSprintSlice = createApiSlice('putSprint', putSprint);
@@ -116,9 +111,3 @@ export const fetchSpirintsReducer = fetchSpirintsSlice.reducer;
 export const postSprintReducer = postSprintSlice.reducer;
 export const putSprintReducer = putSprintSlice.reducer;
 export const fetchSpirintByIdReducer = fetchSpirintByIdSlice.reducer;
-
-
-
-
-
-

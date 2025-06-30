@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-
-const access_token = localStorage.getItem("token");
+import { baseURL } from '../../../apiDomain';
 
 const createApiSlice = (name, fetchThunk) => createSlice({
     name,
@@ -35,7 +34,7 @@ const createApiSlice = (name, fetchThunk) => createSlice({
 
 export const fetchStatus = createAsyncThunk("fetchStatus", async ({ token }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/project_statuses.json`, {
+        const response = await axios.get(`${baseURL}/project_statuses.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -49,7 +48,7 @@ export const fetchStatus = createAsyncThunk("fetchStatus", async ({ token }) => 
 
 export const createStatus = createAsyncThunk("createStatus", async ({ token, payload }) => {
     try {
-        const response = await axios.post(`https://api-tasks.lockated.com/project_statuses.json`, payload, {
+        const response = await axios.post(`${baseURL}/project_statuses.json`, payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -63,7 +62,7 @@ export const createStatus = createAsyncThunk("createStatus", async ({ token, pay
 
 export const updateStatus = createAsyncThunk("updateStatus", async ({ token, id, payload }) => {
     try {
-        const response = await axios.put(`https://api-tasks.lockated.com/project_statuses/${id}.json`, payload, {
+        const response = await axios.put(`${baseURL}/project_statuses/${id}.json`, payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -77,7 +76,7 @@ export const updateStatus = createAsyncThunk("updateStatus", async ({ token, id,
 
 export const deleteStatus = createAsyncThunk("deleteStatus", async ({ token, id }) => {
     try {
-        const response = await axios.delete(`https://api-tasks.lockated.com/project_statuses/${id}.json`, {
+        const response = await axios.delete(`${baseURL}/project_statuses/${id}.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }

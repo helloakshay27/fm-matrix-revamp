@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { baseURL } from '../../../apiDomain';
 
 const createApiSlice = (name, fetchThunk) => createSlice({
     name,
@@ -44,7 +45,7 @@ const createApiSlice = (name, fetchThunk) => createSlice({
 
 export const fetchChannels = createAsyncThunk('fetchChannels', async ({ token }) => {
     try {
-        const response = await axios.get('https://api-tasks.lockated.com/project_spaces.json', {
+        const response = await axios.get(`${baseURL}/project_spaces.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -56,7 +57,7 @@ export const fetchChannels = createAsyncThunk('fetchChannels', async ({ token })
 })
 export const fetchConversations = createAsyncThunk('fetchConversations', async ({ token }) => {
     try {
-        const response = await axios.get('https://api-tasks.lockated.com/conversations.json', {
+        const response = await axios.get(`${baseURL}/conversations.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -70,7 +71,7 @@ export const fetchConversations = createAsyncThunk('fetchConversations', async (
 export const fetchChannelById = createAsyncThunk('fetchChannelById', async ({ id, token, type }) => {
     if (type === 'group') {
         try {
-            const response = await axios.get(`https://api-tasks.lockated.com/project_spaces/${id}.json`, {
+            const response = await axios.get(`${baseURL}/project_spaces/${id}.json`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -81,7 +82,7 @@ export const fetchChannelById = createAsyncThunk('fetchChannelById', async ({ id
         }
     } else if (type === 'chat') {
         try {
-            const response = await axios.get(`https://api-tasks.lockated.com/conversations/${id}.json`, {
+            const response = await axios.get(`${baseURL}/conversations/${id}.json`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -95,7 +96,7 @@ export const fetchChannelById = createAsyncThunk('fetchChannelById', async ({ id
 
 export const createMessage = createAsyncThunk('createMessage', async ({ token, payload }) => {
     try {
-        const response = await axios.post(`https://api-tasks.lockated.com/messages.json`, { message: payload }, {
+        const response = await axios.post(`${baseURL}/messages.json`, { message: payload }, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -108,7 +109,7 @@ export const createMessage = createAsyncThunk('createMessage', async ({ token, p
 
 export const startConversation = createAsyncThunk('startConversation', async ({ token, payload }) => {
     try {
-        const response = await axios.post(`https://api-tasks.lockated.com/conversations.json`, payload, {
+        const response = await axios.post(`${baseURL}/conversations.json`, payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },

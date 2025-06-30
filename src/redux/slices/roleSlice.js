@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-
-const access_token = localStorage.getItem("token");
+import { baseURL } from '../../../apiDomain';
 
 const createApiSlice = (name, fetchThunk) => createSlice({
     name,
@@ -35,7 +34,7 @@ const createApiSlice = (name, fetchThunk) => createSlice({
 
 export const createRole = createAsyncThunk('createRole', async ({ token, payload }) => {
     try {
-        const response = await axios.post(`https://api-tasks.lockated.com/lock_roles.json`, payload, {
+        const response = await axios.post(`${baseURL}/lock_roles.json`, payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -50,7 +49,7 @@ export const createRole = createAsyncThunk('createRole', async ({ token, payload
 
 export const fetchRoles = createAsyncThunk('fetchRoles', async ({ token }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/lock_roles.json`, {
+        const response = await axios.get(`${baseURL}/lock_roles.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -66,7 +65,7 @@ export const fetchRoles = createAsyncThunk('fetchRoles', async ({ token }) => {
 export const editRole = createAsyncThunk('editRole', async ({ token, id, payload }) => {
     console.log(payload)
     try {
-        const response = await axios.patch(`https://api-tasks.lockated.com/lock_roles/${id}.json`, payload, {
+        const response = await axios.patch(`${baseURL}/lock_roles/${id}.json`, payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -80,7 +79,7 @@ export const editRole = createAsyncThunk('editRole', async ({ token, id, payload
 
 export const deleteRole = createAsyncThunk('deleteRole', async ({ token, id }) => {
     try {
-        const response = await axios.delete(`https://api-tasks.lockated.com/lock_roles/${id}.json`, {
+        const response = await axios.delete(`${baseURL}/lock_roles/${id}.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }

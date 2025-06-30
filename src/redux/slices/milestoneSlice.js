@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { baseURL } from '../../../apiDomain';
 
 const access_token = localStorage.getItem("token");
 
@@ -35,7 +36,7 @@ const createApiSlice = (name, fetchThunk) => createSlice({
 
 export const createMilestone = createAsyncThunk('createMilestone', async ({ token, payload }) => {
     try {
-        const response = await axios.post(`https://api-tasks.lockated.com/milestones.json`, payload, {
+        const response = await axios.post(`${baseURL}/milestones.json`, payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -50,7 +51,7 @@ export const createMilestone = createAsyncThunk('createMilestone', async ({ toke
 
 export const fetchMilestone = createAsyncThunk("fetchMilestone", async ({ token, id }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/milestones.json?q[project_management_id_eq]=${id}`, {
+        const response = await axios.get(`${baseURL}/milestones.json?q[project_management_id_eq]=${id}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -64,7 +65,7 @@ export const fetchMilestone = createAsyncThunk("fetchMilestone", async ({ token,
 
 export const fetchMilestoneById = createAsyncThunk("fetchMilestone", async ({ token, id }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/milestones/${id}.json`, {
+        const response = await axios.get(`${baseURL}/milestones/${id}.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }

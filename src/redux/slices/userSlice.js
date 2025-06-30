@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-
-const access_token = localStorage.getItem("token");
+import { baseURL } from '../../../apiDomain';
 
 // Generic slice factory
 const createApiSlice = (name, fetchThunk) => createSlice({
@@ -37,7 +36,7 @@ const createApiSlice = (name, fetchThunk) => createSlice({
 // Fetch users thunk
 export const fetchUsers = createAsyncThunk('fetchUsers', async ({ token }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/users.json?q[active_eq]=true`, {
+        const response = await axios.get(`${baseURL}/users.json?q[active_eq]=true`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -51,7 +50,7 @@ export const fetchUsers = createAsyncThunk('fetchUsers', async ({ token }) => {
 
 export const createInternalUser = createAsyncThunk('createInternalUser', async ({ token, payload }) => {
     try {
-        const response = await axios.post(`https://api-tasks.lockated.com/users.json`, payload, {
+        const response = await axios.post(`${baseURL}/users.json`, payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -65,7 +64,7 @@ export const createInternalUser = createAsyncThunk('createInternalUser', async (
 
 export const fetchInternalUser = createAsyncThunk('fetchInternalUser', async ({ token }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/users.json?q[user_type_eq]=internal`, {
+        const response = await axios.get(`${baseURL}/users.json?q[user_type_eq]=internal`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -79,7 +78,7 @@ export const fetchInternalUser = createAsyncThunk('fetchInternalUser', async ({ 
 
 export const createExternalUser = createAsyncThunk('createExternalUser', async ({ token, payload }) => {
     try {
-        const response = await axios.post(`https://api-tasks.lockated.com/users.json`, payload, {
+        const response = await axios.post(`${baseURL}/users.json`, payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -93,7 +92,7 @@ export const createExternalUser = createAsyncThunk('createExternalUser', async (
 
 export const fetchInternalUserDetails = createAsyncThunk('fetchInternalUserDetails', async ({ token, id }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/user_details/${id}.json`, {
+        const response = await axios.get(`${baseURL}/user_details/${id}.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -107,7 +106,7 @@ export const fetchInternalUserDetails = createAsyncThunk('fetchInternalUserDetai
 
 export const fetchExternalUser = createAsyncThunk('fetchExternalUser', async ({ token }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/users.json?q[user_type_eq]=external`, {
+        const response = await axios.get(`${baseURL}/users.json?q[user_type_eq]=external`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -124,7 +123,7 @@ export const fetchUpdateUser = createAsyncThunk(
     async ({ token, userId, updatedData }, { rejectWithValue }) => {
         try {
             const response = await axios.put(
-                `https://api-tasks.lockated.com/users/${userId}.json`,
+                `${baseURL}/users/${userId}.json`,
                 updatedData,
                 {
                     headers: {
@@ -143,7 +142,7 @@ export const fetchUpdateUser = createAsyncThunk(
 
 export const LoginUser = createAsyncThunk('LoginUser', async (payload) => {
     try {
-        const response = await axios.post('https://api-tasks.lockated.com/users/login.json', payload);
+        const response = await axios.post('${baseURL}/users/login.json', payload);
         return response.data;
     } catch (error) {
         console.log(error);
@@ -152,7 +151,7 @@ export const LoginUser = createAsyncThunk('LoginUser', async (payload) => {
 
 export const removeUserFromProject = createAsyncThunk('removeUserFromProject', async ({ token, id }) => {
     try {
-        const response = await axios.delete(`https://api-tasks.lockated.com/task_users/${id}.json`, {
+        const response = await axios.delete(`${baseURL}/task_users/${id}.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -167,7 +166,7 @@ export const removeUserFromProject = createAsyncThunk('removeUserFromProject', a
 
 export const fetchAssociatedProjects = createAsyncThunk('fetchAssociatedProjects', async ({ token, id }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/users/${id}/asssoicated_projects.json`, {
+        const response = await axios.get(`${baseURL}/users/${id}/asssoicated_projects.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { baseURL } from '../../../apiDomain';
 
 const access_token = localStorage.getItem("token");
 
@@ -39,7 +40,7 @@ const createApiSlice = (name, fetchThunk) => createSlice({
 
 export const fetchTags = createAsyncThunk('fetchTags', async ({ token }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/company_tags.json`, {
+        const response = await axios.get(`${baseURL}/company_tags.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -52,7 +53,7 @@ export const fetchTags = createAsyncThunk('fetchTags', async ({ token }) => {
 
 export const fetchActiveTags = createAsyncThunk('fetchActiveTags', async ({ token }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/company_tags.json?q[active_eq]=true`, {
+        const response = await axios.get(`${baseURL}/company_tags.json?q[active_eq]=true`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -65,7 +66,7 @@ export const fetchActiveTags = createAsyncThunk('fetchActiveTags', async ({ toke
 
 export const createTag = createAsyncThunk('createTag', async ({ token, payload }) => {
     try {
-        const response = await axios.post(`https://api-tasks.lockated.com/company_tags.json`, payload, {
+        const response = await axios.post(`${baseURL}/company_tags.json`, payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -81,7 +82,7 @@ export const updateTag = createAsyncThunk(
     async ({ token, id, data }, { rejectWithValue }) => {
         try {
             const response = await axios.patch(
-                `https://api-tasks.lockated.com/company_tags/${id}.json`,
+                `${baseURL}/company_tags/${id}.json`,
                 data,
                 {
                     headers: {
@@ -100,7 +101,7 @@ export const deleteTag = createAsyncThunk(
     'deleteTag',
     async ({ token, id }, { rejectWithValue }) => {
         try {
-            await axios.delete(`https://api-tasks.lockated.com/company_tags/${id}.json`, {
+            await axios.delete(`${baseURL}/company_tags/${id}.json`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

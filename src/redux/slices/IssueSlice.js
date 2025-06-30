@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { baseURL } from '../../../apiDomain';
 
 const access_token = localStorage.getItem("token");
 
@@ -39,10 +40,10 @@ const createApiSlice = (name, fetchThunk) => createSlice({
 
 export const createIssue = createAsyncThunk("createIssue", async ({ token, payload }) => {
     try {
-        const response = await axios.post("https://api-tasks.lockated.com/issues.json", payload , {
+        const response = await axios.post(`${baseURL}/issues.json`, payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
-                "Content-Type":"Multipart/form-data"
+                "Content-Type": "Multipart/form-data"
             },
 
         });
@@ -56,7 +57,7 @@ export const createIssue = createAsyncThunk("createIssue", async ({ token, paylo
 
 export const fetchIssue = createAsyncThunk("fetchIssue", async ({ token }) => {
     try {
-        const response = await axios.get("https://api-tasks.lockated.com/issues.json", {
+        const response = await axios.get(`${baseURL}/issues.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -72,8 +73,8 @@ export const fetchIssue = createAsyncThunk("fetchIssue", async ({ token }) => {
 
 export const updateIssue = createAsyncThunk("updateIssue", async ({ token, id, payload }) => {
     try {
-        const response = await axios.put(`https://api-tasks.lockated.com/issues/${id}.json`, 
-         {issue:payload}, {
+        const response = await axios.put(`${baseURL}/issues/${id}.json`,
+            { issue: payload }, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -89,11 +90,11 @@ export const updateIssue = createAsyncThunk("updateIssue", async ({ token, id, p
 
 export const attachFile = createAsyncThunk("updateIssue", async ({ token, id, payload }) => {
     try {
-        const response = await axios.put(`https://api-tasks.lockated.com/issues/${id}.json`, 
-         payload, {
+        const response = await axios.put(`${baseURL}/issues/${id}.json`,
+            payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
-                "Content-Type":"Multipart/form-data"
+                "Content-Type": "Multipart/form-data"
             },
 
         });
@@ -107,7 +108,7 @@ export const attachFile = createAsyncThunk("updateIssue", async ({ token, id, pa
 
 export const fetchIssueType = createAsyncThunk("fetchIssueType", async ({ token }) => {
     try {
-        const response = await axios.get("https://api-tasks.lockated.com/issue_types.json", {
+        const response = await axios.get(`${baseURL}/issue_types.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -123,7 +124,7 @@ export const fetchIssueType = createAsyncThunk("fetchIssueType", async ({ token 
 
 export const createIssueType = createAsyncThunk("createIssueType", async ({ token, payload }) => {
     try {
-        const response = await axios.post("https://api-tasks.lockated.com/issue_types.json", {
+        const response = await axios.post(`${baseURL}/issue_types.json`, {
             issue_type: payload
         }, {
             headers: {
@@ -139,9 +140,9 @@ export const createIssueType = createAsyncThunk("createIssueType", async ({ toke
     }
 })
 
-export const updateIssueType= createAsyncThunk("updateIssueType", async ({ token, id, payload }) => {
+export const updateIssueType = createAsyncThunk("updateIssueType", async ({ token, id, payload }) => {
     try {
-        const response = await axios.put(`https://api-tasks.lockated.com/issue_types/${id}.json`, {
+        const response = await axios.put(`${baseURL}/issue_types/${id}.json`, {
             issue_type: payload
         }, {
             headers: {
@@ -159,7 +160,7 @@ export const updateIssueType= createAsyncThunk("updateIssueType", async ({ token
 
 export const deleteIssueType = createAsyncThunk("deleteIssueType", async ({ token, id }) => {
     try {
-        const response = await axios.delete(`https://api-tasks.lockated.com/issue_types/${id}.json`, {
+        const response = await axios.delete(`${baseURL}/issue_types/${id}.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -178,7 +179,7 @@ export const filterIssue = createAsyncThunk('filterIssue',
             const params = new URLSearchParams(filter).toString();
             console.log(params);
             const response = await axios.get(
-                `https://api-tasks.lockated.com/issues.json?${params}`,
+                `${baseURL}/issues.json?${params}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,

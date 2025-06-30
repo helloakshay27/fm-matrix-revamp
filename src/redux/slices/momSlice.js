@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { baseURL } from '../../../apiDomain';
 
 const createApiSlice = (name, fetchThunk) => createSlice({
     name,
@@ -37,7 +38,7 @@ const createApiSlice = (name, fetchThunk) => createSlice({
 
 export const fetchMoM = createAsyncThunk('fetchMoM', async ({ token }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/mom_details.json`, {
+        const response = await axios.get(`${baseURL}/mom_details.json`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
@@ -51,7 +52,7 @@ export const fetchMoM = createAsyncThunk('fetchMoM', async ({ token }) => {
 
 export const createMoM = createAsyncThunk('createMoM', async ({ token, payload }) => {
     try {
-        const response = await axios.post(`https://api-tasks.lockated.com/mom_details.json`, {
+        const response = await axios.post(`${baseURL}/mom_details.json`, {
             mom_detail: payload
         }, {
             headers: {
@@ -67,7 +68,7 @@ export const createMoM = createAsyncThunk('createMoM', async ({ token, payload }
 
 export const fetchMomDetails = createAsyncThunk('fetchMomDetails', async ({ token, id }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/mom_details/${id}.json`, {
+        const response = await axios.get(`${baseURL}/mom_details/${id}.json`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { baseURL } from '../../../apiDomain';
 
 const createApiSlice = (name, fetchThunk) => createSlice({
     name,
@@ -44,7 +45,7 @@ const createApiSlice = (name, fetchThunk) => createSlice({
 
 export const createCompany = createAsyncThunk('createCompany', async ({ token, payload }) => {
     try {
-        const response = await axios.post(`https://api-tasks.lockated.com/company_setups.json`, { company_setup: payload }, {
+        const response = await axios.post(`${baseURL}/company_setups.json`, { company_setup: payload }, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -59,7 +60,7 @@ export const createCompany = createAsyncThunk('createCompany', async ({ token, p
 
 export const fetchCompany = createAsyncThunk('fetchCompany', async ({ token }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/company_setups.json`, {
+        const response = await axios.get(`${baseURL}/company_setups.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -74,7 +75,7 @@ export const fetchCompany = createAsyncThunk('fetchCompany', async ({ token }) =
 
 export const editCompany = createAsyncThunk('editCompany', async ({ token, payload, id }) => {
     try {
-        const response = await axios.put(`https://api-tasks.lockated.com/company_setups/${id}.json`, { company_setup: payload }, {
+        const response = await axios.put(`${baseURL}/company_setups/${id}.json`, { company_setup: payload }, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }

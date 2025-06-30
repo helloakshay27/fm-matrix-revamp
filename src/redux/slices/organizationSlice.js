@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { baseURL } from '../../../apiDomain';
 
 const createApiSlice = (name, fetchThunk) => createSlice({
     name,
@@ -44,7 +45,7 @@ const createApiSlice = (name, fetchThunk) => createSlice({
 
 export const fetchOrganizations = createAsyncThunk('fetchOrganizations', async ({ token }) => {
     try {
-        const response = await axios.get(`https://api-tasks.lockated.com/organizations.json`, {
+        const response = await axios.get(`${baseURL}/organizations.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -59,7 +60,7 @@ export const fetchOrganizations = createAsyncThunk('fetchOrganizations', async (
 
 export const createOrganization = createAsyncThunk('createOrganization', async ({ token, payload }) => {
     try {
-        const response = await axios.post(`https://api-tasks.lockated.com/organizations.json`, payload, {
+        const response = await axios.post(`${baseURL}/organizations.json`, payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
@@ -74,7 +75,7 @@ export const createOrganization = createAsyncThunk('createOrganization', async (
 
 export const editOrganization = createAsyncThunk('editOrganization', async ({ token, payload, id }) => {
     try {
-        const response = await axios.put(`https://api-tasks.lockated.com/organizations/${id}.json`, payload, {
+        const response = await axios.put(`${baseURL}/organizations/${id}.json`, payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
