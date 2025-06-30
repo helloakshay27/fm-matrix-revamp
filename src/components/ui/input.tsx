@@ -42,7 +42,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <input
             type={type}
             className={cn(
-              "flex h-14 w-full rounded border border-gray-400 bg-white px-3 py-4 text-base transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-gray-600 disabled:cursor-not-allowed disabled:opacity-50",
+              "flex h-14 w-full rounded border-2 border-gray-500 bg-white px-3 py-4 text-base transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-gray-700 disabled:cursor-not-allowed disabled:opacity-50",
               className
             )}
             placeholder={shouldFloatLabel ? placeholder : ''}
@@ -54,7 +54,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           />
           <label
             className={cn(
-              "absolute left-3 transition-all duration-200 pointer-events-none bg-white px-1 text-gray-600",
+              "absolute left-3 transition-all duration-200 pointer-events-none bg-white px-1 text-gray-700 font-medium",
               shouldFloatLabel
                 ? "top-0 text-sm transform -translate-y-1/2"
                 : "top-1/2 text-base transform -translate-y-1/2"
@@ -70,7 +70,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <input
         type={type}
         className={cn(
-          "flex h-14 w-full rounded border border-gray-400 bg-white px-3 py-4 text-base transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-gray-600 disabled:cursor-not-allowed disabled:opacity-50",
+          "flex h-14 w-full rounded border-2 border-gray-500 bg-white px-3 py-4 text-base transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-gray-700 disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
         placeholder={placeholder}
