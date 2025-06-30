@@ -99,3 +99,102 @@ button {
     width: max-content !important;
   }
 }
+
+/* Global Card Styles */
+.card, [data-testid*="card"], [class*="card"], .stats-card {
+  background-color: #F5F4F2 !important;
+  border: 1px solid rgba(11, 10, 58, 0.12) !important;
+  box-shadow: 0px 2px 18px 0px rgba(70, 79, 101, 0.1) !important;
+  border-radius: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  font-family: 'Work Sans', sans-serif !important;
+}
+
+/* Card Icon Container */
+.card .icon-container, .stats-card .icon-container, .card > div:first-child, .stats-card > div:first-child {
+  width: 50px !important;
+  height: 50px !important;
+  background-color: rgba(199, 32, 48, 0.06) !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+/* Card Value Text */
+.card .value-text, .stats-card .value-text, .card .text-2xl, .stats-card .text-2xl {
+  font-family: 'Work Sans', sans-serif !important;
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  color: #C72030 !important;
+  margin: 0 !important;
+}
+
+/* Card Label Text */
+.card .label-text, .stats-card .label-text, .card .text-sm, .stats-card .text-sm {
+  font-family: 'Work Sans', sans-serif !important;
+  font-weight: 500 !important;
+  color: rgba(26, 26, 26, 0.54) !important;
+  margin: 0 !important;
+}
+
+/* Mobile Styles (max-width: 767px) */
+@media (max-width: 767px) {
+  .card, [data-testid*="card"], [class*="card"], .stats-card {
+    width: 170px !important;
+    height: 96px !important;
+    padding: 28px 18px !important;
+    gap: 8px !important;
+  }
+  
+  .card .label-text, .stats-card .label-text, .card .text-sm, .stats-card .text-sm {
+    font-size: 14px !important;
+  }
+}
+
+/* Tablet Styles (min-width: 768px and max-width: 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .card, [data-testid*="card"], [class*="card"], .stats-card {
+    width: 300px !important;
+    height: 140px !important;
+    padding: 40px 28px !important;
+    gap: 30px !important;
+  }
+  
+  .card .label-text, .stats-card .label-text, .card .text-sm, .stats-card .text-sm {
+    font-size: 14px !important;
+  }
+}
+
+/* Desktop Styles (min-width: 1024px) */
+@media (min-width: 1024px) {
+  .card, [data-testid*="card"], [class*="card"], .stats-card {
+    width: 488px !important;
+    height: 132px !important;
+    padding: 52px 36px !important;
+    gap: 30px !important;
+  }
+  
+  .card .label-text, .stats-card .label-text, .card .text-sm, .stats-card .text-sm {
+    font-size: 12px !important;
+  }
+}
+
+/* Additional targeting for shadcn/ui Card components */
+[data-sonner-toaster] .card,
+.bg-card,
+.rounded-lg.border.bg-card {
+  background-color: #F5F4F2 !important;
+  border: 1px solid rgba(11, 10, 58, 0.12) !important;
+  box-shadow: 0px 2px 18px 0px rgba(70, 79, 101, 0.1) !important;
+}
+
+/* Ensure StatsCard component follows the global styles */
+.stats-card-container {
+  background-color: #F5F4F2 !important;
+  border: 1px solid rgba(11, 10, 58, 0.12) !important;
+  box-shadow: 0px 2px 18px 0px rgba(70, 79, 101, 0.1) !important;
+  border-radius: 8px !important;
+}
