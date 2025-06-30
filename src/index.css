@@ -711,7 +711,7 @@ div:has(p:contains("KRCC FORM LIST")) {
     border-radius: 0px !important;
   }
 
-  /* Title styles for desktop */
+  /* Title styles for desktop - removed color override */
   .stats-card h3,
   .stats-card p:last-child,
   [class*="bg-purple-500"] h3,
@@ -741,12 +741,11 @@ div:has(p:contains("KRCC FORM LIST")) {
     font-family: 'Work Sans', sans-serif !important;
     font-size: 24px !important;
     font-weight: 600 !important;
-    color: rgba(199, 32, 48, 0.54) !important;
     letter-spacing: 0% !important;
     line-height: auto !important;
   }
 
-  /* Value styles for desktop */
+  /* Value styles for desktop - removed color override */
   .stats-card .text-2xl,
   .stats-card .text-lg,
   [class*="bg-purple-500"] .text-2xl,
@@ -776,7 +775,6 @@ div:has(p:contains("KRCC FORM LIST")) {
     font-family: 'Work Sans', sans-serif !important;
     font-size: 18px !important;
     font-weight: 500 !important;
-    color: rgba(199, 32, 48, 0.54) !important;
     letter-spacing: 0% !important;
     line-height: auto !important;
   }
@@ -840,7 +838,7 @@ div:has(p:contains("KRCC FORM LIST")) {
     border-radius: 0px !important;
   }
 
-  /* Title styles for tablet */
+  /* Title styles for tablet - removed color override */
   .stats-card h3,
   .stats-card p:last-child,
   [class*="bg-purple-500"] h3,
@@ -870,12 +868,11 @@ div:has(p:contains("KRCC FORM LIST")) {
     font-family: 'Work Sans', sans-serif !important;
     font-size: 18px !important;
     font-weight: 600 !important;
-    color: rgba(199, 32, 48, 0.54) !important;
     letter-spacing: 0% !important;
     line-height: auto !important;
   }
 
-  /* Value styles for tablet */
+  /* Value styles for tablet - removed color override */
   .stats-card .text-2xl,
   .stats-card .text-lg,
   [class*="bg-purple-500"] .text-2xl,
@@ -905,7 +902,6 @@ div:has(p:contains("KRCC FORM LIST")) {
     font-family: 'Work Sans', sans-serif !important;
     font-size: 16px !important;
     font-weight: 500 !important;
-    color: rgba(199, 32, 48, 0.54) !important;
     letter-spacing: 0% !important;
     line-height: auto !important;
   }
@@ -969,7 +965,7 @@ div:has(p:contains("KRCC FORM LIST")) {
     border-radius: 20px !important;
   }
 
-  /* Title styles for mobile */
+  /* Title styles for mobile - removed color override */
   .stats-card h3,
   .stats-card p:last-child,
   [class*="bg-purple-500"] h3,
@@ -999,12 +995,11 @@ div:has(p:contains("KRCC FORM LIST")) {
     font-family: 'Work Sans', sans-serif !important;
     font-size: 14px !important;
     font-weight: 600 !important;
-    color: rgba(199, 32, 48, 0.54) !important;
     letter-spacing: 0% !important;
     line-height: auto !important;
   }
 
-  /* Value styles for mobile */
+  /* Value styles for mobile - removed color override */
   .stats-card .text-2xl,
   .stats-card .text-lg,
   [class*="bg-purple-500"] .text-2xl,
@@ -1034,7 +1029,6 @@ div:has(p:contains("KRCC FORM LIST")) {
     font-family: 'Work Sans', sans-serif !important;
     font-size: 12px !important;
     font-weight: 500 !important;
-    color: rgba(199, 32, 48, 0.54) !important;
     letter-spacing: 0% !important;
     line-height: auto !important;
   }
