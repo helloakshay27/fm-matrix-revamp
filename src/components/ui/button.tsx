@@ -10,7 +10,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-[#C8B8A0] text-[#C72030] border-[#C8B8A0] hover:bg-[#B8A890] hover:border-[#B8A890]",
+        default: "bg-[#C72030] text-white border-[#C72030] hover:bg-[#A01B29] hover:border-[#A01B29]",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90 border-destructive",
         outline:
@@ -19,15 +19,15 @@ const buttonVariants = cva(
           "bg-gray-100 text-gray-900 hover:bg-gray-200 border-gray-100",
         ghost: "hover:bg-gray-100 hover:text-gray-900 border-transparent",
         link: "text-primary underline-offset-4 hover:underline border-transparent",
-        icon: "bg-[#C8B8A0] text-[#C72030] border-[#C8B8A0] hover:bg-[#B8A890] hover:border-[#B8A890]",
+        icon: "bg-[#C72030] text-white border-[#C72030] hover:bg-[#A01B29] hover:border-[#A01B29]",
       },
       size: {
-        default: "h-10 px-4 py-2 min-w-[120px] text-sm",
-        sm: "h-8 px-3 py-1.5 min-w-[100px] text-xs",
-        lg: "h-12 px-6 py-3 min-w-[140px] text-base",
-        icon: "h-10 w-10 p-2",
+        default: "h-9 px-4 py-2 min-w-[100px] text-sm",
+        sm: "h-8 px-3 py-1.5 min-w-[80px] text-xs",
+        lg: "h-10 px-6 py-3 min-w-[120px] text-base",
+        icon: "h-9 w-9 p-2",
         "icon-sm": "h-8 w-8 p-1.5",
-        "icon-lg": "h-12 w-12 p-2.5",
+        "icon-lg": "h-10 w-10 p-2.5",
       },
     },
     defaultVariants: {
