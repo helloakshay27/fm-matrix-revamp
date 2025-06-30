@@ -29,7 +29,7 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0rem;
+    --radius: 0.5rem;
   }
 
   .dark {
@@ -69,70 +69,33 @@
   }
 }
 
-/* Design System Utilities */
-@layer utilities {
-  /* Shadow System */
-  .shadow-system-sm {
-    box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.06);
-  }
-  
-  .shadow-system-md {
-    box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
-  }
-  
-  .shadow-system-lg {
-    box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.12);
-  }
-  
-  .shadow-system-xl {
-    box-shadow: 0px 8px 24px 0px rgba(0, 0, 0, 0.15);
-  }
-
-  /* Spacing System */
-  .space-system-xs {
-    @apply space-y-1;
-  }
-  
-  .space-system-sm {
-    @apply space-y-2;
-  }
-  
-  .space-system-md {
-    @apply space-y-4;
-  }
-  
-  .space-system-lg {
-    @apply space-y-6;
-  }
-  
-  .space-system-xl {
-    @apply space-y-8;
-  }
-
-  /* Border System */
-  .border-system {
-    @apply border border-gray-200;
-  }
-  
-  .border-system-focus {
-    @apply border-blue-500;
-  }
-
-  /* Typography System */
-  .text-system-primary {
-    @apply text-gray-900;
-  }
-  
-  .text-system-secondary {
-    @apply text-gray-600;
-  }
-  
-  .text-system-tertiary {
-    @apply text-gray-500;
-  }
+/* Floating Label Styles */
+.field-group {
+  position: relative;
+  margin: 20px 0;
 }
 
-/* Custom grid columns for calendar layout */
-.grid-cols-30 {
-  grid-template-columns: repeat(30, minmax(0, 1fr));
+.field-group label {
+  position: absolute;
+  left: 15px;
+  top: 16px;
+  transition: all 150ms ease-in;
+  color: #676767;
+  pointer-events: none;
+}
+
+.field-active {
+  transform: translateY(-25px);
+  font-size: 0.9em;
+  color: #000;
+  text-shadow: 1px 0 0 #fff, -1px 0 0 #fff, 2px 0 0 #fff, -2px 0 0 #fff,
+    0 1px 0 #fff, 0 -1px 0 #fff, 0 2px 0 #fff, 0 -2px 0 #fff;
+}
+
+.floating-label {
+  width: 100%;
+  padding: 16px 15px 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
