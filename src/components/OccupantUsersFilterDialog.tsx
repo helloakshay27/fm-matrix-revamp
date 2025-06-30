@@ -60,12 +60,9 @@ export const OccupantUsersFilterDialog = ({ open, onOpenChange }: OccupantUsersF
         <div className="px-6 py-4 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             {/* Name */}
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm font-medium text-gray-700">
-                Name
-              </Label>
+            <div>
               <Input
-                id="name"
+                label="Name"
                 value={filters.name}
                 onChange={(e) => handleFilterChange('name', e.target.value)}
                 className="w-full"
@@ -73,12 +70,9 @@ export const OccupantUsersFilterDialog = ({ open, onOpenChange }: OccupantUsersF
             </div>
 
             {/* Email */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                Email
-              </Label>
+            <div>
               <Input
-                id="email"
+                label="Email"
                 value={filters.email}
                 onChange={(e) => handleFilterChange('email', e.target.value)}
                 className="w-full"
@@ -88,12 +82,9 @@ export const OccupantUsersFilterDialog = ({ open, onOpenChange }: OccupantUsersF
 
           <div className="grid grid-cols-2 gap-4">
             {/* Mobile Number */}
-            <div className="space-y-2">
-              <Label htmlFor="mobileNumber" className="text-sm font-medium text-gray-700">
-                Mobile Number
-              </Label>
+            <div>
               <Input
-                id="mobileNumber"
+                label="Mobile Number"
                 value={filters.mobileNumber}
                 onChange={(e) => handleFilterChange('mobileNumber', e.target.value)}
                 className="w-full"
