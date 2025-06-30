@@ -10,41 +10,36 @@ import {
   getPaginationRowModel,
 } from '@tanstack/react-table';
 import { useDispatch, useSelector } from 'react-redux';
-
-import { fetchRegion } from '../../../redux/slices/regionSlice';
-import {fetchZone, updateZone, deleteZone} from '../../../redux/slices/zoneSlice';
-import AddZoneModel from './Model';
+import { fetchCountry , updateCountry, deleteCountry} from '../../../redux/slices/countrySlice';
+import AddCountryModel from './Modal';
 import toast from 'react-hot-toast';
 
-const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
+const CountryTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
   const token = localStorage.getItem('token');
   const [selectedData, setSelectedData] = useState(null);
 
   const [data, setData] = useState([]);
 
   const dispatch = useDispatch();
-  const { fetchRegion: Region } = useSelector((state) => state.fetchRegion);
-  const { fetchZone: Zone } = useSelector((state) => state.fetchZone);
-
+  const { fetchCountry: Country } = useSelector((state) => state.fetchCountry);
 
 
   // Initial fetch of project types
   useEffect(() => {
-    dispatch(fetchRegion({ token }));
-    dispatch(fetchZone({ token }));
+    dispatch(fetchCountry({ token }));
   }, [dispatch]);
 
-  // Update table data when Region changes
+  // Update table data when Country changes
   useEffect(() => {
-    if (Zone && Array.isArray(Zone)) {
-      setData(Zone);
+    if (Country && Array.isArray(Country)) {
+      setData(Country);
     }
-  }, [Zone]);
+  }, [Country]);
 
   // Fetch data when modal closes to ensure table is refreshed
   useEffect(() => {
     if (!openModal) {
-      dispatch(fetchZone({ token }));
+      dispatch(fetchCountry({ token }));
     }
   }, [openModal, dispatch]);
 
@@ -56,24 +51,24 @@ const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
   };
 
  const onSuccess = () => {
-    dispatch(fetchZone({ token }));
+    dispatch(fetchCountry({ token }));
     setOpenModal(false);
   };
 
   const handleDeleteClick = async (id) => {
     try {
-      await dispatch(deleteZone({ token, id })).unwrap(); // unwrap to handle async correctly
+      await dispatch(deleteCountry({ token, id })).unwrap(); // unwrap to handle async correctly
       toast.dismiss();
-      toast.success('Zone deleted successfully', {
+      toast.success('Country deleted successfully', {
         iconTheme: {
           primary: 'red', // This might directly change the color of the success icon
           secondary: 'white', // The circle background
         },
       });
-      dispatch(fetchZone({ token })); // refetch data after successful delete
+      await dispatch(fetchCountry({ token })).unwrap(); // refetch data after successful delete
     } catch (error) {
       console.error('Failed to delete:', error);
-      toast.error('Failed to delete Zone.', {
+      toast.error('Failed to delete Country.', {
         iconTheme: {
           primary: 'red', // This might directly change the color of the error icon
           secondary: 'white', // The circle background
@@ -90,7 +85,7 @@ const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
     };
 
     try {
-      await dispatch(updateZone({ token, id: row.original.id, payload })).unwrap();
+      await dispatch(updateCountry({ token, id: row.original.id, payload })).unwrap();
       toast.dismiss();
       toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
         iconTheme: {
@@ -98,7 +93,7 @@ const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
           secondary: 'white', // The circle background
         },
       });
-      dispatch(fetchZone({ token }));
+      dispatch(fetchCountry({ token }));
     } catch (error) {
       console.error('Failed to update toggle:', error, {
         iconTheme: {
@@ -143,36 +138,17 @@ const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
 
   const columns = useMemo(
     () => [
-           {
+        {
         accessorKey: 'name',
-        header: 'Zone',
-        size: 150,
-        cell: ({ row, getValue }) => {
-          const value = getValue();
-          if (!value) return null;
-          return <span className="pl-2">{value.charAt(0).toUpperCase() + value.slice(1)}</span>;
-        },
-      },
-      {
-        accessorKey: 'country_id',
         header: 'Country',
         size: 150,
         cell: ({ row, getValue }) => {
           const value = getValue();
           if (!value) return null;
-          return value.charAt(0).toUpperCase() + value.slice(1);
+          return <span className=''>{value.charAt(0).toUpperCase() + value.slice(1)}</span>;
         },
       },
-          {
-        accessorKey: 'region_id',
-        header: 'Region',
-        size: 150,
-        cell: ({ getValue }) => {
-          const value=Region.find(org => org.id === getValue())?.name;
-          return value ? <span className="pl-2">{value.charAt(0).toUpperCase() + value.slice(1)}</span> : null;
-        },
-      },
-        
+      
       {
         accessorKey: 'status',
         header: 'Status',
@@ -181,7 +157,7 @@ const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
           const isActive = row.original.active;
 
           return (
-            <div className="flex gap-4">
+            <div className="flex gap-4 pl-2">
               <span>Inactive</span>
               <Switch
                 color={`${isActive ? 'success' : 'danger'}`}
@@ -205,7 +181,7 @@ const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
         },
       },
     ],
-    [Zone]
+    [Country]
   );
 
   const [pagination, setPagination] = useState({
@@ -366,7 +342,7 @@ const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
         )}
       </div>
       {openModal && (
-        <AddZoneModel
+        <AddCountryModel
           openModal={openModal}
           setOpenModal={setOpenModal}
           isEditMode={editMode}
@@ -378,4 +354,4 @@ const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
   );
 };
 
-export default ZoneTable;
+export default CountryTable;

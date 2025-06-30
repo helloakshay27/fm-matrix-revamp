@@ -13,6 +13,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import {fetchOrganizations} from '../../../redux/slices/organizationSlice';
 import {fetchCompany} from '../../../redux/slices/companySlice';
 import { fetchRegion , updateRegion, deleteRegion} from '../../../redux/slices/regionSlice';
+import { fetchCountry } from '../../../redux/slices/countrySlice';
 import AddRegionModel from './Model';
 import toast from 'react-hot-toast';
 
@@ -24,18 +25,20 @@ const RegionTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
 
   const dispatch = useDispatch();
   const { fetchRegion: Region } = useSelector((state) => state.fetchRegion);
+  const {fetchCountry: countries}=useSelector((state) => state.fetchCountry);
 
 
   // Initial fetch of project types
   useEffect(() => {
     dispatch(fetchRegion({ token }));
+    dispatch(fetchCountry({ token }));
     dispatch(fetchOrganizations({ token }));
     dispatch(fetchCompany({ token }));
   }, [dispatch]);
 
   // Update table data when Region changes
   useEffect(() => {
-    if (Region && Region.length > 0) {
+    if (Region && Array.isArray(Region)) {
       setData(Region);
     }
   }, [Region]);
@@ -157,8 +160,8 @@ const RegionTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
         header: 'Country',
         size: 150,
         cell: ({ getValue }) => {
-        //   const value=countries.find(org => org.id === getValue());
-        //   return value ? <span className="pl-2">{value.name}</span> : null;
+          const value=countries.find(org => org.id == getValue())?.name;
+          return value ? <span className="pl-1">{value.charAt(0).toUpperCase() + value.slice(1)}</span> : null;
         },
       },
       

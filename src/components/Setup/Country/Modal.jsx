@@ -5,14 +5,13 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchOrganizations } from "../../../redux/slices/organizationSlice";
 import { fetchCompany } from "../../../redux/slices/companySlice";
-import{updateRegion, createRegion} from "../../../redux/slices/regionSlice";
-import { fetchCountry } from "../../../redux/slices/countrySlice";
+import{updateCountry, createCountry} from "../../../redux/slices/countrySlice";
 // import {fetchCountry} from "../../../redux/slices/countrySlice";
 
 import toast from "react-hot-toast";
 import { set } from "react-hook-form";
 
-const AddRegionModel = ({
+const AddCountryModel = ({
   openModal,
   setOpenModal,
   isEditMode = false,
@@ -21,42 +20,28 @@ const AddRegionModel = ({
 }) => {
   const token = localStorage.getItem("token");
   const dispatch = useDispatch();
-  const { fetchOrganizations: organizations } = useSelector(
-    (state) => state.fetchOrganizations
-  );
-  const { loading, success } = useSelector((state) => state.createRegion);
+  
+  const { loading, success } = useSelector((state) => state.createCountry);
   const { loading: editLoading, success: editSuccess } = useSelector(
-    (state) => state.updateRegion
+    (state) => state.updateCountry
   );
-  const { fetchCompany: companies } = useSelector(
-    (state) => state.fetchCompany
-  );
-const {fetchCountry: countries} = useSelector((state) => state.fetchCountry);
+  
 //   const {fetchCountry: countries} = useSelector((state) => state.fetchCountry);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
-    country:"",
   });
-
-  useEffect(() => {
-    dispatch(fetchOrganizations({ token }));
-    dispatch(fetchCompany({ token }));
-    dispatch(fetchCountry({ token }));
-  }, [dispatch]);
 
   useEffect(() => {
     if (isEditMode && initialData) {
       setFormData({
         name: initialData.name,
-        country: initialData.country_id,
       });
     } else {
       setFormData({
         name: "",
-        country: "",
       });
     }
   }, [isEditMode, initialData]);
@@ -71,23 +56,23 @@ const {fetchCountry: countries} = useSelector((state) => state.fetchCountry);
     
 
     const payload = {
-      region: {
+      country: {
         name: formData.name,
-        country_id: formData.country || "",
+        active: true
       },
     };
     try {
       let response;
       if (isEditMode && initialData?.id) {
         response = await dispatch(
-          updateRegion({
+          updateCountry({
              token,
              id: initialData.id,
              payload,
           })
         );
       } else {
-        response = await dispatch(createRegion({ token, payload }));
+        response = await dispatch(createCountry({ token, payload }));
       }
       console.log(response);
       if (response.payload?.errors) {
@@ -96,7 +81,7 @@ const {fetchCountry: countries} = useSelector((state) => state.fetchCountry);
         setError(response.payload.message);
       } else {
         toast.success(
-          `Region ${isEditMode ? "updated" : "created"} successfully`,
+          `Country ${isEditMode ? "updated" : "created"} successfully`,
           {
             iconTheme: {
               primary: "red", // This might directly change the color of the success icon
@@ -115,7 +100,6 @@ const {fetchCountry: countries} = useSelector((state) => state.fetchCountry);
   const handleSuccess = () => {
     setFormData({
       name: "",
-      country: "",
     });
     setError("");
     onSuccess();
@@ -124,7 +108,6 @@ const {fetchCountry: countries} = useSelector((state) => state.fetchCountry);
   const handleClose = () => {
     setFormData({
       name: "",
-      country: "",
     });
     setError("");
     setOpenModal(false);
@@ -152,20 +135,6 @@ const {fetchCountry: countries} = useSelector((state) => state.fetchCountry);
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-            />
-          </div>
-          <div className="px-6">
-            <label className="block text-[11px] text-[#1B1B1B] mb-1">
-              Country<span className="text-red-500 ml-1">*</span>
-            </label>
-            <SelectBox
-              options={countries.map((country) => ({
-                value: country.id,
-                label: country.name,
-              }))}
-              className="w-full"
-              value={formData.country}
-              onChange={(value) => setFormData({ ...formData, country: value })}
             />
           </div>
         </div>
@@ -204,4 +173,4 @@ const {fetchCountry: countries} = useSelector((state) => state.fetchCountry);
   );
 };
 
-export default AddRegionModel;
+export default AddCountryModel;

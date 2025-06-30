@@ -14,6 +14,7 @@ import { createMessageReducer, fetchChannelByIdReducer, fetchChannelsReducer, fe
 import { createCompanyReducer, editCompanyReducer, fetchCompanyReducer } from './slices/companySlice'
 import { createRegionReducer, updateRegionReducer, fetchRegionReducer , deleteRegionReducer} from './slices/regionSlice'
 import { createZoneReducer, updateZoneReducer, fetchZoneReducer, deleteZoneReducer } from './slices/zoneSlice'
+import { createCountryReducer, updateCountryReducer, fetchCountryReducer, deleteCountryReducer } from './slices/countrySlice'
 
 export const store = configureStore({
   reducer: {
@@ -127,6 +128,12 @@ export const store = configureStore({
     createCompany: createCompanyReducer,
     fetchCompany: fetchCompanyReducer,
     editCompany: editCompanyReducer,
+
+    //Country
+    fetchCountry: fetchCountryReducer,
+    createCountry: createCountryReducer,
+    updateCountry: updateCountryReducer,
+    deleteCountry: deleteCountryReducer,
 
     //Spirints
     fetchSpirints: fetchSpirintsReducer,
