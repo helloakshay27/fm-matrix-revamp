@@ -6,20 +6,20 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 font-[Work_Sans] border-0 rounded-none bg-[#C4B8D0] bg-opacity-35 text-white font-medium tracking-[0.5px] [&_svg]:text-white [&_svg.lucide-eye]:text-black",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 font-[Work_Sans] border-0 rounded-none bg-[#C4B8D0] bg-opacity-35 text-white font-medium tracking-[0.5px] [&_svg]:text-black",
   {
     variants: {
       variant: {
-        default: "bg-[#C4B8D0] bg-opacity-35 text-white [&_svg]:text-white [&_svg.lucide-eye]:text-black",
+        default: "bg-[#C4B8D0] bg-opacity-35 text-white [&_svg]:text-black",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90 [&_svg]:text-white [&_svg.lucide-eye]:text-black",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 [&_svg]:text-black",
         outline:
-          "border border-[#C72030] bg-white text-[#C72030] [&_svg]:text-white [&_svg.lucide-eye]:text-black",
+          "border border-[#C72030] bg-white text-[#C72030] [&_svg]:text-black",
         secondary:
-          "bg-gray-100 text-gray-900 [&_svg]:text-white [&_svg.lucide-eye]:text-black",
-        ghost: "text-gray-900 [&_svg]:text-white [&_svg.lucide-eye]:text-black",
-        link: "text-primary underline-offset-4 hover:underline [&_svg]:text-white [&_svg.lucide-eye]:text-black",
-        primary: "bg-[#C72030] text-white [&_svg]:text-white [&_svg.lucide-eye]:text-black",
+          "bg-gray-100 text-gray-900 [&_svg]:text-black",
+        ghost: "text-gray-900 [&_svg]:text-black",
+        link: "text-primary underline-offset-4 hover:underline [&_svg]:text-black",
+        primary: "bg-[#C72030] text-white [&_svg]:text-black",
       },
       size: {
         default: "responsive-button",
