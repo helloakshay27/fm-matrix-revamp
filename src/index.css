@@ -381,3 +381,151 @@ div[style*="#f6f4ee"] .select-item:hover,
 .bg-\[#f6f4ee\] .select-item:hover {
   background-color: rgba(255, 255, 255, 0.1) !important;
 }
+
+/* Global Search Bar Styles */
+/* Target all search inputs and their containers */
+input[type="search"],
+input[placeholder*="Search"],
+input[placeholder*="search"],
+input[class*="search"],
+[data-search] input,
+.search-input,
+input[placeholder*="Search AMC"],
+input[placeholder*="Search..."] {
+  background-color: #FFFFFF !important;
+  border-color: #AAB9C5 !important;
+  color: #AAB9C5 !important;
+  border-radius: 5px !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+
+/* Search input placeholder styles */
+input[type="search"]::placeholder,
+input[placeholder*="Search"]::placeholder,
+input[placeholder*="search"]::placeholder,
+input[class*="search"]::placeholder,
+[data-search] input::placeholder,
+.search-input::placeholder,
+input[placeholder*="Search AMC"]::placeholder,
+input[placeholder*="Search..."]::placeholder {
+  color: #AAB9C5 !important;
+  opacity: 1 !important;
+}
+
+/* Search container styles */
+.relative:has(input[type="search"]),
+.relative:has(input[placeholder*="Search"]),
+.relative:has(input[placeholder*="search"]),
+.relative:has(input[class*="search"]),
+.relative:has([data-search] input),
+.relative:has(.search-input),
+.relative:has(input[placeholder*="Search AMC"]),
+.relative:has(input[placeholder*="Search..."]) {
+  position: relative !important;
+}
+
+/* Search icon styles */
+.relative:has(input[type="search"]) svg,
+.relative:has(input[placeholder*="Search"]) svg,
+.relative:has(input[placeholder*="search"]) svg,
+.relative:has(input[class*="search"]) svg,
+.relative:has([data-search] input) svg,
+.relative:has(.search-input) svg,
+.relative:has(input[placeholder*="Search AMC"]) svg,
+.relative:has(input[placeholder*="Search..."]) svg {
+  color: #AAB9C5 !important;
+  border-radius: 4px !important;
+}
+
+/* Go button styles */
+button[type="submit"]:has(+ input[type="search"]),
+button[type="submit"]:has(+ input[placeholder*="Search"]),
+button[type="submit"]:has(+ input[placeholder*="search"]),
+button:has(+ input[class*="search"]),
+.search-button,
+button[class*="go-button"] {
+  background-color: #C4B8D0 !important;
+  opacity: 0.35 !important;
+}
+
+/* Desktop Styles for Search Bars */
+@media (min-width: 1024px) {
+  input[type="search"],
+  input[placeholder*="Search"],
+  input[placeholder*="search"],
+  input[class*="search"],
+  [data-search] input,
+  .search-input,
+  input[placeholder*="Search AMC"],
+  input[placeholder*="Search..."] {
+    padding: 12px 12px 10px 10px !important;
+    width: 230px !important;
+    height: 35px !important;
+  }
+
+  .relative:has(input[type="search"]) svg,
+  .relative:has(input[placeholder*="Search"]) svg,
+  .relative:has(input[placeholder*="search"]) svg,
+  .relative:has(input[class*="search"]) svg,
+  .relative:has([data-search] input) svg,
+  .relative:has(.search-input) svg,
+  .relative:has(input[placeholder*="Search AMC"]) svg,
+  .relative:has(input[placeholder*="Search..."]) svg {
+    padding: 12px 12px 10px 10px !important;
+  }
+}
+
+/* Tablet Styles for Search Bars */
+@media (min-width: 768px) and (max-width: 1023px) {
+  input[type="search"],
+  input[placeholder*="Search"],
+  input[placeholder*="search"],
+  input[class*="search"],
+  [data-search] input,
+  .search-input,
+  input[placeholder*="Search AMC"],
+  input[placeholder*="Search..."] {
+    padding: 12px 12px 10px 10px !important;
+    width: 230px !important;
+    height: 35px !important;
+  }
+
+  .relative:has(input[type="search"]) svg,
+  .relative:has(input[placeholder*="Search"]) svg,
+  .relative:has(input[placeholder*="search"]) svg,
+  .relative:has(input[class*="search"]) svg,
+  .relative:has([data-search] input) svg,
+  .relative:has(.search-input) svg,
+  .relative:has(input[placeholder*="Search AMC"]) svg,
+  .relative:has(input[placeholder*="Search..."]) svg {
+    padding: 12px 12px 10px 10px !important;
+  }
+}
+
+/* Mobile Styles for Search Bars */
+@media (max-width: 767px) {
+  input[type="search"],
+  input[placeholder*="Search"],
+  input[placeholder*="search"],
+  input[class*="search"],
+  [data-search] input,
+  .search-input,
+  input[placeholder*="Search AMC"],
+  input[placeholder*="Search..."] {
+    padding: 12px 12px 10px 10px !important;
+    width: 120px !important;
+    height: 24px !important;
+  }
+
+  .relative:has(input[type="search"]) svg,
+  .relative:has(input[placeholder*="Search"]) svg,
+  .relative:has(input[placeholder*="search"]) svg,
+  .relative:has(input[class*="search"]) svg,
+  .relative:has([data-search] input) svg,
+  .relative:has(.search-input) svg,
+  .relative:has(input[placeholder*="Search AMC"]) svg,
+  .relative:has(input[placeholder*="Search..."]) svg {
+    padding: 12px 12px 10px 10px !important;
+  }
+}
