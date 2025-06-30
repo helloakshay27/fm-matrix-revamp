@@ -71,52 +71,31 @@
   }
 }
 
-/* Responsive Button Styles */
-.responsive-button {
-  @apply flex items-center justify-center;
-  /* Mobile: max-width 767px */
-  padding: 8px 12px;
-  width: 94px;
-  height: 28px;
-  font-size: 12px;
-  letter-spacing: 0.5px;
-  line-height: 1;
+/* Global Button Width Override */
+button {
+  width: max-content !important;
 }
 
-.responsive-button [data-lucide] {
-  width: 10px;
-  height: 10px;
-  margin-right: 8px;
+/* Ensure shadcn/ui buttons also use max-content */
+.btn, [data-testid*="button"], [class*="button"] {
+  width: max-content !important;
 }
 
-/* Tablet: min-width 768px and max-width 1023px */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .responsive-button {
-    padding: 12px 16px;
-    width: 138px;
-    height: 38px;
-    font-size: 12px;
-  }
-  
-  .responsive-button [data-lucide] {
-    width: 12px;
-    height: 12px;
-    margin-right: 10px;
-  }
-}
-
-/* Desktop: min-width 1024px */
+/* Override any fixed button widths */
 @media (min-width: 1024px) {
-  .responsive-button {
-    padding: 10px 20px;
-    width: 138px;
-    height: 36px;
-    font-size: 14px;
+  button {
+    width: max-content !important;
   }
-  
-  .responsive-button [data-lucide] {
-    width: 12px;
-    height: 12px;
-    margin-right: 10px;
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  button {
+    width: max-content !important;
+  }
+}
+
+@media (max-width: 767px) {
+  button {
+    width: max-content !important;
   }
 }
