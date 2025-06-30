@@ -41,6 +41,11 @@ import Issues from "./pages/Home/Issues.jsx";
 import Documents from "./pages/Home/Documents.jsx";
 import IssueDetails from "./pages/Home/IssueDetails.jsx";
 import MomDetails from "./pages/Home/MomDetails.jsx";
+import Zone from "./pages/Setup/Zone.jsx";
+import Region from "./pages/Setup/Region.jsx";
+import Country from "./pages/Setup/Country.jsx";
+import Company from "./pages/Setup/Company.jsx";
+import Organizations from "./pages/Setup/Organizations.jsx";
 
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -130,6 +135,11 @@ const App = () => {
                   <Route path="/setup/types" element={<ProjectTypes />} />
                   <Route path="/setup/tags" element={<ProjectTags />} />
                   <Route path="/setup/status" element={<Status />} />
+                  <Route path="/setup/zone" element={<Zone />} />
+                  <Route path="/setup/region" element={<Region />} />
+                  <Route path="/setup/country" element={<Country />} />
+                  <Route path="/setup/company" element={<Company />} />
+                  <Route path="/setup/organizations" element={<Organizations />} />
                   <Route
                     path="/setup/project-group"
                     element={<ProjectGroup />}

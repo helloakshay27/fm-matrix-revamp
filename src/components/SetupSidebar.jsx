@@ -142,6 +142,56 @@ const SetupSidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
                             <>
                                 <li className="text-[14px] ms-[60px] mb-4 mt-2">
                                     <NavLink
+                                        to="/setup/organizations"
+                                        className={({ isActive }) =>
+                                            `${isActive ? "text-red font-bold" : "text-gray-700"}`
+                                        }
+                                    >
+                                        Organizations
+                                    </NavLink>
+                                </li>
+                                <li className="text-[14px] ms-[60px] mb-4 mt-2">
+                                    <NavLink
+                                        to="/setup/company"
+                                        className={({ isActive }) =>
+                                            `${isActive ? "text-red font-bold" : "text-gray-700"}`
+                                        }
+                                    >
+                                        Company
+                                    </NavLink>
+                                </li>
+                                <li className="text-[14px] ms-[60px] mb-4 mt-2">
+                                    <NavLink
+                                        to="/setup/country"
+                                        className={({ isActive }) =>
+                                            `${isActive ? "text-red font-bold" : "text-gray-700"}`
+                                        }
+                                    >
+                                        Country
+                                    </NavLink>
+                                </li>
+                                <li className="text-[14px] ms-[60px] mb-4 mt-2">
+                                    <NavLink
+                                        to="/setup/region"
+                                        className={({ isActive }) =>
+                                            `${isActive ? "text-red font-bold" : "text-gray-700"}`
+                                        }
+                                    >
+                                        Region
+                                    </NavLink>
+                                </li>
+                                <li className="text-[14px] ms-[60px] mb-4 mt-2">
+                                    <NavLink
+                                        to="/setup/zone"
+                                        className={({ isActive }) =>
+                                            `${isActive ? "text-red font-bold" : "text-gray-700"}`
+                                        }
+                                    >
+                                        Zone
+                                    </NavLink>
+                                </li>
+                                <li className="text-[14px] ms-[60px] mb-4 mt-2">
+                                    <NavLink
                                         to="/setup/types"
                                         className={({ isActive }) =>
                                             `${isActive ? "text-red font-bold" : "text-gray-700"}`
