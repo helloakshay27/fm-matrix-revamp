@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { changeProjectStatusReducer, deleteProjectGroupReducer, deleteProjectTeamReducer, createProject, createProjectReducer, createProjectTypesReducer, deleteProjectReducer, editProjectReducer, fetchProjectDetailsReducer, fetchProjectsReducer, fetchProjectTypeReducer, fetchTemplatesReducer, filterProjectsReducer, updateProjectTypeReducer, fetchProjectGroupReducer, createProjectGroupReducer, updateProjectGroupReducer, createProjectTeamReducer, fetchProjectTeamsReducer, fetchProjectTeamReducer, updateProjectTeamReducer, removeTagFromProjectReducer, removeMembersFromTeamReducer, deleteProject, fetchActiveProjectTypesReducer } from './slices/projectSlice'
-import { createExternalUserReducer, createInternalUserReducer, fetchAssociatedProjectsReducer, fetchExternalUserReducer, fetchInternalUserDetailsReducer, fetchInternalUserReducer, fetchUpdatelUserReducer, removeUserFromProjectReducer, userReducer } from './slices/userSlice'
+import { createExternalUserReducer, createInternalUserReducer, fetchAssociatedProjectsReducer, fetchExternalUserReducer, fetchInternalUserDetailsReducer, fetchInternalUserReducer, fetchUpdatelUserReducer, reassignProjectsReducer, removeUserFromProjectReducer, userReducer } from './slices/userSlice'
 import { createTagReducer, deleteTagReducer, fetchActiveTagsReducer, fetchTagsReducer, updateTagReducer } from './slices/tagsSlice'
 import { createRoleReducer, deleteRoleReducer, editRoleReducer, fetchRolesReducer } from './slices/roleSlice'
 import { changeTaskStatusReducer, createDependancyReducer, createTaskCommentReducer, fetchMyTasksReducer, createTaskReducer, editTaskCommentReducer, editTaskReducer, fetchTasksOfProjectReducer, fetchTasksReducer, filterTaskReducer, taskDetailsReducer, updateDependancyReducer, deleteTaskCommentReducer } from './slices/taskSlice'
@@ -12,7 +12,7 @@ import { fetchStatusReducer, createStatusReducer, deleteStatusReducer, updateSta
 import { createMoMReducer, fetchMomDetailsReducer, fetchMoMReducer } from './slices/momSlice'
 import { createMessageReducer, fetchChannelByIdReducer, fetchChannelsReducer, fetchConversationsReducer, startConversationReducer } from './slices/channelSlice'
 import { createCompanyReducer, editCompanyReducer, fetchCompanyReducer } from './slices/companySlice'
-import { createRegionReducer, updateRegionReducer, fetchRegionReducer , deleteRegionReducer} from './slices/regionSlice'
+import { createRegionReducer, updateRegionReducer, fetchRegionReducer, deleteRegionReducer } from './slices/regionSlice'
 import { createZoneReducer, updateZoneReducer, fetchZoneReducer, deleteZoneReducer } from './slices/zoneSlice'
 import { createCountryReducer, updateCountryReducer, fetchCountryReducer, deleteCountryReducer } from './slices/countrySlice'
 
@@ -111,6 +111,7 @@ export const store = configureStore({
     fetchInternalUserDetails: fetchInternalUserDetailsReducer,
     removeUserFromProject: removeUserFromProjectReducer,
     fetchAssociatedProjects: fetchAssociatedProjectsReducer,
+    reassignProjects: reassignProjectsReducer,
 
     //tags
     fetchTags: fetchTagsReducer,
