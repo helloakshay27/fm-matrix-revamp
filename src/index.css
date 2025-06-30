@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
@@ -390,7 +391,9 @@ input[class*="search"],
 [data-search] input,
 .search-input,
 input[placeholder*="Search AMC"],
-input[placeholder*="Search..."] {
+input[placeholder*="Search..."],
+input[placeholder*="Enter Activity Name"],
+input[placeholder*="Search assets"] {
   background-color: #FFFFFF !important;
   border-color: #AAB9C5 !important;
   color: #AAB9C5 !important;
@@ -407,7 +410,9 @@ input[class*="search"]::placeholder,
 [data-search] input::placeholder,
 .search-input::placeholder,
 input[placeholder*="Search AMC"]::placeholder,
-input[placeholder*="Search..."]::placeholder {
+input[placeholder*="Search..."]::placeholder,
+input[placeholder*="Enter Activity Name"]::placeholder,
+input[placeholder*="Search assets"]::placeholder {
   color: #AAB9C5 !important;
   opacity: 1 !important;
 }
@@ -420,7 +425,9 @@ input[placeholder*="Search..."]::placeholder {
 .relative:has([data-search] input),
 .relative:has(.search-input),
 .relative:has(input[placeholder*="Search AMC"]),
-.relative:has(input[placeholder*="Search..."]) {
+.relative:has(input[placeholder*="Search..."]),
+.relative:has(input[placeholder*="Enter Activity Name"]),
+.relative:has(input[placeholder*="Search assets"]) {
   position: relative !important;
 }
 
@@ -432,7 +439,9 @@ input[placeholder*="Search..."]::placeholder {
 .relative:has([data-search] input) svg,
 .relative:has(.search-input) svg,
 .relative:has(input[placeholder*="Search AMC"]) svg,
-.relative:has(input[placeholder*="Search..."]) svg {
+.relative:has(input[placeholder*="Search..."]) svg,
+.relative:has(input[placeholder*="Enter Activity Name"]) svg,
+.relative:has(input[placeholder*="Search assets"]) svg {
   color: #AAB9C5 !important;
   border-radius: 4px !important;
 }
@@ -443,8 +452,12 @@ button:has(+ input[placeholder*="Search"]),
 button:has(+ input[placeholder*="search"]),
 button:has(+ input[class*="search"]),
 .search-button,
-button[class*="go-button"] {
+button[class*="go-button"],
+/* Target "Go!" buttons specifically */
+button:contains("Go!"),
+button[type="button"]:contains("Go!") {
   background-color: #C4B8D0 !important;
+  opacity: 0.35 !important;
 }
 
 /* Search bar button padding styles */
@@ -455,7 +468,9 @@ button[class*="go-button"] {
 .relative:has([data-search] input) button,
 .relative:has(.search-input) button,
 .relative:has(input[placeholder*="Search AMC"]) button,
-.relative:has(input[placeholder*="Search..."]) button {
+.relative:has(input[placeholder*="Search..."]) button,
+.relative:has(input[placeholder*="Enter Activity Name"]) button,
+.relative:has(input[placeholder*="Search assets"]) button {
   padding: 12px 12px 10px 10px !important;
 }
 
@@ -468,7 +483,9 @@ button[class*="go-button"] {
   [data-search] input,
   .search-input,
   input[placeholder*="Search AMC"],
-  input[placeholder*="Search..."] {
+  input[placeholder*="Search..."],
+  input[placeholder*="Enter Activity Name"],
+  input[placeholder*="Search assets"] {
     padding: 12px 12px 10px 10px !important;
     width: 230px !important;
     height: 35px !important;
@@ -481,7 +498,9 @@ button[class*="go-button"] {
   .relative:has([data-search] input) svg,
   .relative:has(.search-input) svg,
   .relative:has(input[placeholder*="Search AMC"]) svg,
-  .relative:has(input[placeholder*="Search..."]) svg {
+  .relative:has(input[placeholder*="Search..."]) svg,
+  .relative:has(input[placeholder*="Enter Activity Name"]) svg,
+  .relative:has(input[placeholder*="Search assets"]) svg {
     padding: 12px 12px 10px 10px !important;
   }
 }
@@ -495,7 +514,9 @@ button[class*="go-button"] {
   [data-search] input,
   .search-input,
   input[placeholder*="Search AMC"],
-  input[placeholder*="Search..."] {
+  input[placeholder*="Search..."],
+  input[placeholder*="Enter Activity Name"],
+  input[placeholder*="Search assets"] {
     padding: 12px 12px 10px 10px !important;
     width: 230px !important;
     height: 35px !important;
@@ -507,7 +528,9 @@ button[class*="go-button"] {
   .relative:has([data-search] input) svg,
   .relative:has(.search-input) svg,
   .relative:has(input[placeholder*="Search AMC"]) svg,
-  .relative:has(input[placeholder*="Search..."]) svg {
+  .relative:has(input[placeholder*="Search..."]) svg,
+  .relative:has(input[placeholder*="Enter Activity Name"]) svg,
+  .relative:has(input[placeholder*="Search assets"]) svg {
     padding: 12px 12px 10px 10px !important;
   }
 }
@@ -521,7 +544,9 @@ button[class*="go-button"] {
   [data-search] input,
   .search-input,
   input[placeholder*="Search AMC"],
-  input[placeholder*="Search..."] {
+  input[placeholder*="Search..."],
+  input[placeholder*="Enter Activity Name"],
+  input[placeholder*="Search assets"] {
     padding: 12px 12px 10px 10px !important;
     width: 120px !important;
     height: 24px !important;
@@ -534,7 +559,9 @@ button[class*="go-button"] {
   .relative:has([data-search] input) svg,
   .relative:has(.search-input) svg,
   .relative:has(input[placeholder*="Search AMC"]) svg,
-  .relative:has(input[placeholder*="Search..."]) svg {
+  .relative:has(input[placeholder*="Search..."]) svg,
+  .relative:has(input[placeholder*="Enter Activity Name"]) svg,
+  .relative:has(input[placeholder*="Search assets"]) svg {
     padding: 12px 12px 10px 10px !important;
   }
 }
