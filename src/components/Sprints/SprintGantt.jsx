@@ -157,7 +157,7 @@ const SprintGantt = () => {
         const fetchMilestones = async () => {
             try {
                 const response = await axios.get(
-                    `https://api-tasks.lockated.com/sprints.json
+                    `${baseURL}/sprints.json
 `,
                     {
                         headers: {
