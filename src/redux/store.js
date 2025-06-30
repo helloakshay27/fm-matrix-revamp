@@ -12,6 +12,8 @@ import { fetchStatusReducer, createStatusReducer, deleteStatusReducer, updateSta
 import { createMoMReducer, fetchMomDetailsReducer, fetchMoMReducer } from './slices/momSlice'
 import { createMessageReducer, fetchChannelByIdReducer, fetchChannelsReducer, fetchConversationsReducer, startConversationReducer } from './slices/channelSlice'
 import { createCompanyReducer, editCompanyReducer, fetchCompanyReducer } from './slices/companySlice'
+import { createRegionReducer, updateRegionReducer, fetchRegionReducer , deleteRegionReducer} from './slices/regionSlice'
+import { createZoneReducer, updateZoneReducer, fetchZoneReducer, deleteZoneReducer } from './slices/zoneSlice'
 
 export const store = configureStore({
   reducer: {
@@ -73,6 +75,18 @@ export const store = configureStore({
     createMilestone: createMilestoneReducer,
     fetchMilestone: fetchMilestoneReducer,
     fetchMilestoneById: fetchMilestoneByIdReducer,
+
+    //region
+    createRegion: createRegionReducer,
+    fetchRegion: fetchRegionReducer,
+    updateRegion: updateRegionReducer,
+    deleteRegion: deleteRegionReducer,
+
+    //zones
+    createZone: createZoneReducer,
+    fetchZone: fetchZoneReducer,
+    updateZone: updateZoneReducer,
+    deleteZone: deleteZoneReducer,
 
     //roles
     createRole: createRoleReducer,

@@ -150,7 +150,7 @@ const SetupSidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
                                         Organizations
                                     </NavLink>
                                 </li>
-                                <li className="text-[14px] ms-[60px] mb-4 mt-2">
+                                <li className="text-[14px] ms-[60px] mb-4 ">
                                     <NavLink
                                         to="/setup/company"
                                         className={({ isActive }) =>
@@ -160,7 +160,7 @@ const SetupSidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
                                         Company
                                     </NavLink>
                                 </li>
-                                <li className="text-[14px] ms-[60px] mb-4 mt-2">
+                                <li className="text-[14px] ms-[60px] mb-4">
                                     <NavLink
                                         to="/setup/country"
                                         className={({ isActive }) =>
@@ -170,7 +170,7 @@ const SetupSidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
                                         Country
                                     </NavLink>
                                 </li>
-                                <li className="text-[14px] ms-[60px] mb-4 mt-2">
+                                <li className="text-[14px] ms-[60px] mb-4">
                                     <NavLink
                                         to="/setup/region"
                                         className={({ isActive }) =>
@@ -180,7 +180,7 @@ const SetupSidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
                                         Region
                                     </NavLink>
                                 </li>
-                                <li className="text-[14px] ms-[60px] mb-4 mt-2">
+                                <li className="text-[14px] ms-[60px] mb-4">
                                     <NavLink
                                         to="/setup/zone"
                                         className={({ isActive }) =>
@@ -190,7 +190,7 @@ const SetupSidebar = ({ isSidebarOpen, setIsSidebarOpen }) => {
                                         Zone
                                     </NavLink>
                                 </li>
-                                <li className="text-[14px] ms-[60px] mb-4 mt-2">
+                                <li className="text-[14px] ms-[60px] mb-4">
                                     <NavLink
                                         to="/setup/types"
                                         className={({ isActive }) =>
