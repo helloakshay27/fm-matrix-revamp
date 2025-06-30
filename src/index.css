@@ -438,15 +438,27 @@ input[placeholder*="Search..."]::placeholder {
   border-radius: 4px !important;
 }
 
-/* Go button styles */
-button[type="submit"]:has(+ input[type="search"]),
-button[type="submit"]:has(+ input[placeholder*="Search"]),
-button[type="submit"]:has(+ input[placeholder*="search"]),
+/* Go button styles for search bars */
+button:has(+ input[type="search"]),
+button:has(+ input[placeholder*="Search"]),
+button:has(+ input[placeholder*="search"]),
 button:has(+ input[class*="search"]),
 .search-button,
 button[class*="go-button"] {
   background-color: #C4B8D0 !important;
   opacity: 0.35 !important;
+}
+
+/* Search bar button padding styles */
+.relative:has(input[type="search"]) button,
+.relative:has(input[placeholder*="Search"]) button,
+.relative:has(input[placeholder*="search"]) button,
+.relative:has(input[class*="search"]) button,
+.relative:has([data-search] input) button,
+.relative:has(.search-input) button,
+.relative:has(input[placeholder*="Search AMC"]) button,
+.relative:has(input[placeholder*="Search..."]) button {
+  padding: 12px 12px 10px 10px !important;
 }
 
 /* Desktop Styles for Search Bars */
@@ -491,7 +503,6 @@ button[class*="go-button"] {
     height: 35px !important;
   }
 
-  .relative:has(input[type="search"]) svg,
   .relative:has(input[placeholder*="Search"]) svg,
   .relative:has(input[placeholder*="search"]) svg,
   .relative:has(input[class*="search"]) svg,
