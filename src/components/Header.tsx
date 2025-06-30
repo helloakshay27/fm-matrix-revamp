@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Bell, User, MapPin, ChevronDown, Home, Settings } from 'lucide-react';
+import { Bell, Search, User, MapPin, ChevronDown, Home, Settings } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,20 +8,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SearchWithSuggestions } from './SearchWithSuggestions';
 
 export const Header = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-
-  const handleSearch = (query: string) => {
-    console.log('Searching for:', query);
-    // Add your search logic here
-  };
-
-  const handleSuggestionSelect = (suggestion: any) => {
-    console.log('Selected suggestion:', suggestion);
-    // Add navigation logic here based on suggestion type
-  };
 
   return (
     <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-10 w-100">
@@ -68,12 +57,14 @@ export const Header = () => {
         </div>
         
         <div className="flex items-center gap-4">
-          <SearchWithSuggestions
-            placeholder="Search assets..."
-            onSearch={handleSearch}
-            onSuggestionSelect={handleSuggestionSelect}
-            className="w-64"
-          />
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search assets..."
+              className="pl-10 pr-4 py-2 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+            />
+          </div>
           
           <button className="p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors">
             <Bell className="w-5 h-5 text-[#1a1a1a]" />
