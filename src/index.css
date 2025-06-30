@@ -99,3 +99,194 @@ button {
     width: max-content !important;
   }
 }
+
+/* Global Select Menu Styles for Sidebar */
+/* Base styles for all select menus in sidebar */
+.sidebar select,
+.sidebar [role="combobox"],
+.sidebar .select-trigger,
+[data-sidebar] select,
+[data-sidebar] [role="combobox"],
+[data-sidebar] .select-trigger,
+[class*="sidebar"] select,
+[class*="sidebar"] [role="combobox"],
+[class*="sidebar"] .select-trigger {
+  background-color: #C72030 !important;
+  color: #FFFFFF !important;
+  font-family: 'Service', sans-serif !important;
+  font-weight: 500 !important;
+  letter-spacing: 0% !important;
+  line-height: auto !important;
+  border: none !important;
+}
+
+/* Desktop Styles */
+@media (min-width: 1024px) {
+  .sidebar select,
+  .sidebar [role="combobox"],
+  .sidebar .select-trigger,
+  [data-sidebar] select,
+  [data-sidebar] [role="combobox"],
+  [data-sidebar] .select-trigger,
+  [class*="sidebar"] select,
+  [class*="sidebar"] [role="combobox"],
+  [class*="sidebar"] .select-trigger {
+    width: 48px !important;
+    height: 6px !important;
+    border-top-left-radius: 16px !important;
+    border-top-right-radius: 12px !important;
+    border-bottom-left-radius: 12px !important;
+    border-bottom-right-radius: 12px !important;
+  }
+
+  /* First item in select menu */
+  .sidebar select option:first-child,
+  .sidebar [role="combobox"] [role="option"]:first-child,
+  [data-sidebar] select option:first-child,
+  [data-sidebar] [role="combobox"] [role="option"]:first-child,
+  [class*="sidebar"] select option:first-child,
+  [class*="sidebar"] [role="combobox"] [role="option"]:first-child {
+    padding: 1px 16px 24px 1px !important;
+  }
+
+  /* Second item in select menu */
+  .sidebar select option:nth-child(2),
+  .sidebar [role="combobox"] [role="option"]:nth-child(2),
+  [data-sidebar] select option:nth-child(2),
+  [data-sidebar] [role="combobox"] [role="option"]:nth-child(2),
+  [class*="sidebar"] select option:nth-child(2),
+  [class*="sidebar"] [role="combobox"] [role="option"]:nth-child(2) {
+    padding: 22px 18px 24px 22px !important;
+  }
+
+  /* Third item in select menu */
+  .sidebar select option:nth-child(3),
+  .sidebar [role="combobox"] [role="option"]:nth-child(3),
+  [data-sidebar] select option:nth-child(3),
+  [data-sidebar] [role="combobox"] [role="option"]:nth-child(3),
+  [class*="sidebar"] select option:nth-child(3),
+  [class*="sidebar"] [role="combobox"] [role="option"]:nth-child(3) {
+    padding: 22px 12px 32px 22px !important;
+  }
+}
+
+/* Tablet Styles */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .sidebar select,
+  .sidebar [role="combobox"],
+  .sidebar .select-trigger,
+  [data-sidebar] select,
+  [data-sidebar] [role="combobox"],
+  [data-sidebar] .select-trigger,
+  [class*="sidebar"] select,
+  [class*="sidebar"] [role="combobox"],
+  [class*="sidebar"] .select-trigger {
+    width: 40px !important;
+    height: 5px !important;
+    border-radius: 0px !important;
+  }
+
+  /* First item in select menu */
+  .sidebar select option:first-child,
+  .sidebar [role="combobox"] [role="option"]:first-child,
+  [data-sidebar] select option:first-child,
+  [data-sidebar] [role="combobox"] [role="option"]:first-child,
+  [class*="sidebar"] select option:first-child,
+  [class*="sidebar"] [role="combobox"] [role="option"]:first-child {
+    padding: 1px 16px 20px 1px !important;
+  }
+
+  /* Second item in select menu */
+  .sidebar select option:nth-child(2),
+  .sidebar [role="combobox"] [role="option"]:nth-child(2),
+  [data-sidebar] select option:nth-child(2),
+  [data-sidebar] [role="combobox"] [role="option"]:nth-child(2),
+  [class*="sidebar"] select option:nth-child(2),
+  [class*="sidebar"] [role="combobox"] [role="option"]:nth-child(2) {
+    padding: 16px 12px 28px 16px !important;
+  }
+
+  /* Third item in select menu */
+  .sidebar select option:nth-child(3),
+  .sidebar [role="combobox"] [role="option"]:nth-child(3),
+  [data-sidebar] select option:nth-child(3),
+  [data-sidebar] [role="combobox"] [role="option"]:nth-child(3),
+  [class*="sidebar"] select option:nth-child(3),
+  [class*="sidebar"] [role="combobox"] [role="option"]:nth-child(3) {
+    padding: 12px 12px 30px 12px !important;
+  }
+}
+
+/* Mobile Styles */
+@media (max-width: 767px) {
+  .sidebar select,
+  .sidebar [role="combobox"],
+  .sidebar .select-trigger,
+  [data-sidebar] select,
+  [data-sidebar] [role="combobox"],
+  [data-sidebar] .select-trigger,
+  [class*="sidebar"] select,
+  [class*="sidebar"] [role="combobox"],
+  [class*="sidebar"] .select-trigger {
+    width: 32px !important;
+    height: 4px !important;
+    border-top-left-radius: 12px !important;
+    border-top-right-radius: 10px !important;
+    border-bottom-left-radius: 10px !important;
+    border-bottom-right-radius: 10px !important;
+  }
+
+  /* First item in select menu */
+  .sidebar select option:first-child,
+  .sidebar [role="combobox"] [role="option"]:first-child,
+  [data-sidebar] select option:first-child,
+  [data-sidebar] [role="combobox"] [role="option"]:first-child,
+  [class*="sidebar"] select option:first-child,
+  [class*="sidebar"] [role="combobox"] [role="option"]:first-child {
+    padding: 1px 12px 20px 1px !important;
+  }
+
+  /* Second item in select menu */
+  .sidebar select option:nth-child(2),
+  .sidebar [role="combobox"] [role="option"]:nth-child(2),
+  [data-sidebar] select option:nth-child(2),
+  [data-sidebar] [role="combobox"] [role="option"]:nth-child(2),
+  [class*="sidebar"] select option:nth-child(2),
+  [class*="sidebar"] [role="combobox"] [role="option"]:nth-child(2) {
+    padding: 12px 12px 28px 12px !important;
+  }
+
+  /* Third item in select menu */
+  .sidebar select option:nth-child(3),
+  .sidebar [role="combobox"] [role="option"]:nth-child(3),
+  [data-sidebar] select option:nth-child(3),
+  [data-sidebar] [role="combobox"] [role="option"]:nth-child(3),
+  [class*="sidebar"] select option:nth-child(3),
+  [class*="sidebar"] [role="combobox"] [role="option"]:nth-child(3) {
+    padding: 10px 10px 30px 10px !important;
+  }
+}
+
+/* Ensure dropdown content inherits the same styling */
+.sidebar .select-content,
+[data-sidebar] .select-content,
+[class*="sidebar"] .select-content {
+  background-color: #C72030 !important;
+  color: #FFFFFF !important;
+  font-family: 'Service', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.sidebar .select-item,
+[data-sidebar] .select-item,
+[class*="sidebar"] .select-item {
+  color: #FFFFFF !important;
+  font-family: 'Service', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.sidebar .select-item:hover,
+[data-sidebar] .select-item:hover,
+[class*="sidebar"] .select-item:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
