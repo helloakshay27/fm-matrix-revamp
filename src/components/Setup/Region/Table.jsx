@@ -142,6 +142,16 @@ const RegionTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
 
   const columns = useMemo(
     () => [
+        {
+        accessorKey: 'name',
+        header: 'Region',
+        size: 150,
+        cell: ({ row, getValue }) => {
+          const value = getValue();
+          if (!value) return null;
+          return <span className=''>{value.charAt(0).toUpperCase() + value.slice(1)}</span>;
+        },
+      },
            {
         accessorKey: 'country_id',
         header: 'Country',
@@ -151,16 +161,7 @@ const RegionTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
         //   return value ? <span className="pl-2">{value.name}</span> : null;
         },
       },
-      {
-        accessorKey: 'name',
-        header: 'Region',
-        size: 150,
-        cell: ({ row, getValue }) => {
-          const value = getValue();
-          if (!value) return null;
-          return value.charAt(0).toUpperCase() + value.slice(1);
-        },
-      },
+      
       {
         accessorKey: 'status',
         header: 'Status',

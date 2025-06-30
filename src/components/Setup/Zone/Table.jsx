@@ -143,6 +143,16 @@ const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
 
   const columns = useMemo(
     () => [
+           {
+        accessorKey: 'name',
+        header: 'Zone',
+        size: 150,
+        cell: ({ row, getValue }) => {
+          const value = getValue();
+          if (!value) return null;
+          return <span className="pl-2">{value.charAt(0).toUpperCase() + value.slice(1)}</span>;
+        },
+      },
       {
         accessorKey: 'country_id',
         header: 'Country',
@@ -159,19 +169,10 @@ const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
         size: 150,
         cell: ({ getValue }) => {
           const value=Region.find(org => org.id === getValue()).name;
-          return value ? <span className="">{value.charAt(0).toUpperCase() + value.slice(1)}</span> : null;
+          return value ? <span className="pl-2">{value.charAt(0).toUpperCase() + value.slice(1)}</span> : null;
         },
       },
-           {
-        accessorKey: 'name',
-        header: 'Zone',
-        size: 150,
-        cell: ({ row, getValue }) => {
-          const value = getValue();
-          if (!value) return null;
-          return <span className="pl-2">{value.charAt(0).toUpperCase() + value.slice(1)}</span>;
-        },
-      },
+        
       {
         accessorKey: 'status',
         header: 'Status',
