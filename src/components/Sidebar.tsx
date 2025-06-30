@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -329,10 +330,15 @@ export const Sidebar = () => {
 
   const currentModules = modulesByPackage[currentSection] || [];
 
+  const isActiveRoute = (href: string) => {
+    return location.pathname === href || location.pathname.startsWith(href + '/');
+  };
+
   const renderMenuItem = (item: any, level: number = 0) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isExpanded = expandedItems.includes(item.name);
     const showDropdowns = item.hasDropdowns && location.pathname === item.href;
+    const isActive = isActiveRoute(item.href);
     
     if (hasSubItems) {
       return (
@@ -344,7 +350,7 @@ export const Sidebar = () => {
             <div className="flex items-center gap-3">
               {level === 0 && (
                 <>
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
+                  {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
                   <item.icon className="w-5 h-5" />
                 </>
               )}
@@ -365,7 +371,7 @@ export const Sidebar = () => {
                         onClick={() => toggleExpanded(subItem.name)}
                         className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
                       >
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
+                        {isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
                         <span>{subItem.name}</span>
                         {expandedItems.includes(subItem.name) ? 
                           <ChevronDown className="w-4 h-4" /> : 
@@ -382,7 +388,7 @@ export const Sidebar = () => {
                                 nestedItem.color || 'text-[#1a1a1a]'
                               }`}
                             >
-                              <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
+                              {isActiveRoute(nestedItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
                               {nestedItem.name}
                             </button>
                           ))}
@@ -396,7 +402,7 @@ export const Sidebar = () => {
                         subItem.color || 'text-[#1a1a1a]'
                       }`}
                     >
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
+                      {isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
                       {subItem.name}
                     </button>
                   )}
@@ -418,7 +424,7 @@ export const Sidebar = () => {
         >
           {level === 0 && (
             <>
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
+              {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
               <item.icon className="w-5 h-5" />
             </>
           )}
@@ -493,3 +499,4 @@ export const Sidebar = () => {
     </div>
   );
 };
+
