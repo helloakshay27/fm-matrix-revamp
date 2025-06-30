@@ -381,3 +381,101 @@ div[style*="#f6f4ee"] .select-item:hover,
 .bg-\[#f6f4ee\] .select-item:hover {
   background-color: rgba(255, 255, 255, 0.1) !important;
 }
+
+/* Global Search Bar Styles */
+/* Desktop Search Bar Styles */
+@media (min-width: 1024px) {
+  /* Search input fields */
+  input[type="text"], input[placeholder*="Search"], input[placeholder*="search"], input[placeholder*="Enter"], .search-input {
+    padding: 12px 12px 10px 10px !important;
+    width: 230px !important;
+    height: 35px !important;
+    border-radius: 5px !important;
+    background-color: #FFFFFF !important;
+    background-opacity: 100% !important;
+    border: 1px solid #AAB9C5 !important;
+    color: #AAB9C5 !important;
+    font-size: 14px !important;
+  }
+
+  /* Search icon styling */
+  .search-icon, [class*="search"] svg, input + svg {
+    padding: 12px 12px 10px 10px !important;
+    border-radius: 4px !important;
+  }
+
+  /* Go button styling */
+  button[style*="background"]:contains("Go"), button:contains("Go!"), .go-button {
+    background-color: #C4B8D0 !important;
+    opacity: 0.35 !important;
+  }
+}
+
+/* Tablet Search Bar Styles */
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Search input fields */
+  input[type="text"], input[placeholder*="Search"], input[placeholder*="search"], input[placeholder*="Enter"], .search-input {
+    padding: 12px 12px 10px 10px !important;
+    width: 230px !important;
+    height: 35px !important;
+    border-radius: 5px !important;
+    background-color: #FFFFFF !important;
+    background-opacity: 100% !important;
+    border: 1px solid #AAB9C5 !important;
+    color: #AAB9C5 !important;
+    font-size: 14px !important;
+  }
+
+  /* Search icon styling */
+  .search-icon, [class*="search"] svg, input + svg {
+    padding: 12px 12px 10px 10px !important;
+    border-radius: 4px !important;
+  }
+
+  /* Go button styling */
+  button[style*="background"]:contains("Go"), button:contains("Go!"), .go-button {
+    background-color: #C4B8D0 !important;
+    opacity: 0.35 !important;
+  }
+}
+
+/* Mobile Search Bar Styles */
+@media (max-width: 767px) {
+  /* Search input fields */
+  input[type="text"], input[placeholder*="Search"], input[placeholder*="search"], input[placeholder*="Enter"], .search-input {
+    padding: 12px 12px 10px 10px !important;
+    width: 120px !important;
+    height: 24px !important;
+    border-radius: 5px !important;
+    background-color: #FFFFFF !important;
+    background-opacity: 100% !important;
+    border: 1px solid #AAB9C5 !important;
+    color: #AAB9C5 !important;
+    font-size: 12px !important;
+  }
+
+  /* Search icon styling */
+  .search-icon, [class*="search"] svg, input + svg {
+    padding: 12px 12px 10px 10px !important;
+    border-radius: 4px !important;
+  }
+
+  /* Go button styling */
+  button[style*="background"]:contains("Go"), button:contains("Go!"), .go-button {
+    background-color: #C4B8D0 !important;
+    opacity: 0.35 !important;
+  }
+}
+
+/* Placeholder text styling for search bars */
+input::placeholder {
+  color: #AAB9C5 !important;
+  opacity: 1 !important;
+}
+
+/* Focus states for search inputs */
+input[type="text"]:focus, input[placeholder*="Search"]:focus, input[placeholder*="search"]:focus, input[placeholder*="Enter"]:focus, .search-input:focus {
+  outline: none !important;
+  border-color: #AAB9C5 !important;
+  box-shadow: none !important;
+}
