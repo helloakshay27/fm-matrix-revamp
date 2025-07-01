@@ -67,7 +67,8 @@ export const InActiveAssetsDashboard = () => {
       <div className="flex items-center gap-3 mb-6">
         <Button 
           onClick={handleExportAll}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+          style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+          className="hover:bg-[#F2EEE9]/90"
         >
           <Download className="w-4 h-4 mr-2 text-white stroke-white" />
           Export All
@@ -97,7 +98,8 @@ export const InActiveAssetsDashboard = () => {
           </div>
           <Button 
             onClick={handleSearch}
-            className="bg-green-600 hover:bg-green-700 text-white"
+            style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+            className="hover:bg-[#F2EEE9]/90"
           >
             Go!
           </Button>

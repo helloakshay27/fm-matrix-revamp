@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -277,12 +278,13 @@ export const AssetDashboard = () => {
       {/* First Row of Action Buttons */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <Button 
-  onClick={handleAddAsset}
-  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6"
->
-  <Plus className="w-4 h-4 mr-2 text-white stroke-white" />
-  Add
-</Button>
+          onClick={handleAddAsset}
+          style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+          className="hover:bg-[#F2EEE9]/90 text-white px-6"
+        >
+          <Plus className="w-4 h-4 mr-2 text-white stroke-white" />
+          Add
+        </Button>
 
         <Button 
           onClick={handleImport}
@@ -328,8 +330,8 @@ export const AssetDashboard = () => {
           />
         </div>
         <Button 
-          style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }}
-          className="hover:opacity-90 px-4"
+          style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+          className="hover:bg-[#F2EEE9]/90 px-4"
         >
           Go!
         </Button>

@@ -104,7 +104,8 @@ export const AssetDetailsPage = () => {
             
             <Button 
               onClick={handleCreateChecklist}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+              className="hover:bg-[#F2EEE9]/90"
             >
               Create a Checklist
             </Button>
