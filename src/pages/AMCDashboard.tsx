@@ -128,7 +128,7 @@ export const AMCDashboard = () => {
           style={{ backgroundColor: '#C72030' }} 
           className="text-white hover:bg-[#C72030]/90"
         >
-          <Plus className="w-4 h-4 mr-2" />
+<Plus className="w-4 h-4 mr-2 text-white" />
           Add
         </Button>
         <div className="ml-auto flex items-center gap-3">
