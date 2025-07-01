@@ -48,7 +48,7 @@ export const EditZoneDialog = ({ open, onOpenChange }: EditZoneDialogProps) => {
                 id={zone}
                 checked={selectedZones.includes(zone)}
                 onCheckedChange={(checked) => handleZoneSelect(zone, checked as boolean)}
-                className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                style={{ backgroundColor: selectedZones.includes(zone) ? '#F2EEE9' : '', borderColor: selectedZones.includes(zone) ? '#BF213E' : '' }}
               />
               <label htmlFor={zone} className="text-sm text-gray-700">
                 {zone}
@@ -59,7 +59,8 @@ export const EditZoneDialog = ({ open, onOpenChange }: EditZoneDialogProps) => {
           <div className="flex justify-end">
             <Button
               onClick={handleSubmit}
-              className="bg-[#C72030] hover:bg-[#A01020] text-white"
+              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+              className="hover:bg-[#F2EEE9]/90"
             >
               Edit Selected Zone
             </Button>

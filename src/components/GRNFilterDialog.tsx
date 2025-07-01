@@ -82,7 +82,8 @@ export const GRNFilterDialog: React.FC<GRNFilterDialogProps> = ({
           <div className="flex gap-3 justify-end pt-4">
             <Button
               onClick={handleApply}
-              className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
+              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+              className="hover:bg-[#F2EEE9]/90 px-8"
             >
               Apply
             </Button>

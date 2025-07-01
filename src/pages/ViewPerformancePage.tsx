@@ -83,8 +83,8 @@ export const ViewPerformancePage = () => {
             </Button>
             <Button 
               onClick={handleDownloadPdf}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#C72030]/90"
+              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+              className="hover:bg-[#F2EEE9]/90"
             >
               Download Pdf
             </Button>
@@ -160,8 +160,8 @@ export const ViewPerformancePage = () => {
         </Button>
         <Button 
           onClick={() => navigate(`/maintenance/schedule/view/${id}`)}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90 px-8"
+          style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+          className="hover:bg-[#F2EEE9]/90 px-8"
         >
           Back to View
         </Button>

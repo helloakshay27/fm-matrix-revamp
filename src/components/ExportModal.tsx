@@ -51,8 +51,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
 
           <div className="flex justify-end pt-4">
             <Button 
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:bg-[#C72030]/90 text-white px-8"
+              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+              className="hover:bg-[#F2EEE9]/90 px-8"
               onClick={handleSubmit}
             >
               Submit
