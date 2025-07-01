@@ -18,7 +18,10 @@ export const DynamicHeader = () => {
   const { currentSection, setCurrentSection } = useLayout();
 
   return (
-    <div className="h-12 bg-white border-b border-[#D5DbDB] fixed top-16 right-0 left-64 z-10">
+    <div
+      className="h-12 border-b border-[#D5DbDB] fixed top-16 right-0 left-64 z-10"
+      style={{ backgroundColor: '#f6f4ee' }}
+    >
       <div className="flex items-center h-full px-4">
         <div className="w-full overflow-x-auto md:overflow-visible no-scrollbar">
           {/* Mobile: scroll + spacing; Desktop: full width and justify-between */}
