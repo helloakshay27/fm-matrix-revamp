@@ -101,14 +101,15 @@ export const CustomerBillsFilterDialog: React.FC<CustomerBillsFilterDialogProps>
         <div className="flex gap-3 pt-4">
           <Button 
             onClick={handleApply}
-            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+            style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+            className="flex-1 text-[#BF213E] hover:bg-[#F2EEE9]/90"
           >
             Apply
           </Button>
           <Button 
             onClick={handleReset}
-            variant="outline"
-            className="flex-1"
+            style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+            className="flex-1 text-[#BF213E] hover:bg-[#F2EEE9]/90"
           >
             Reset
           </Button>

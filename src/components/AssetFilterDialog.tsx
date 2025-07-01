@@ -205,9 +205,9 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
               Export
             </Button>
             <Button 
-              variant="outline" 
               onClick={handleReset}
-              className="flex-1 h-11"
+              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+              className="flex-1 h-11 text-[#BF213E] hover:bg-[#F2EEE9]/90"
             >
               Reset
             </Button>

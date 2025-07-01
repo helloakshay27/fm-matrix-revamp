@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -58,15 +57,15 @@ export const ViewPerformancePage = () => {
           <div className="flex gap-3">
             <Button 
               onClick={handleApply}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#C72030]/90"
+              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+              className="text-[#BF213E] hover:bg-[#F2EEE9]/90"
             >
               Apply
             </Button>
             <Button 
               onClick={handleReset}
-              variant="outline"
-              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+              className="text-[#BF213E] hover:bg-[#F2EEE9]/90"
             >
               Reset
             </Button>

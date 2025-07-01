@@ -56,15 +56,15 @@ export const RVehicleFilterModal = ({ isOpen, onClose }: RVehicleFilterModalProp
           <div className="flex justify-end gap-3">
             <Button
               onClick={handleReset}
-              variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2"
+              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+              className="text-[#BF213E] hover:bg-[#F2EEE9]/90 px-6 py-2"
             >
               Reset
             </Button>
             <Button
               onClick={handleApply}
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:opacity-90 text-white px-6 py-2"
+              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+              className="text-[#BF213E] hover:bg-[#F2EEE9]/90 px-6 py-2"
             >
               Apply
             </Button>

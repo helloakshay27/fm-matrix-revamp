@@ -62,7 +62,8 @@ export const ServicePRFilterDialog: React.FC<ServicePRFilterDialogProps> = ({
           
           <div className="flex gap-2 pt-4">
             <Button 
-              className="flex-1 bg-[#C72030] hover:bg-[#A01020] text-white"
+              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+              className="flex-1 text-[#BF213E] hover:bg-[#F2EEE9]/90"
               onClick={() => onOpenChange(false)}
             >
               Apply
