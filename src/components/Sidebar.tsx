@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -13,7 +11,7 @@ import {
   Star, MessageSquare, Coffee, Wifi, Home, ChevronDown,
   ChevronRight, Plus, Search, Filter, Download, Upload,
   Briefcase, BookOpen, FileSpreadsheet, Target,
-  Archive, TreePine, FlaskConical, Wallet
+  Archive, TreePine, FlaskConical
 } from 'lucide-react';
 
 const modulesByPackage = {
@@ -221,8 +219,7 @@ const modulesByPackage = {
         }
       ]
     },
-    { name: 'Redemption Marketplace', icon: Globe, href: '/vas/redemonection-marketplace' },
-    { name: 'Cold Wallet', icon: Wallet, href: '/vas/cold-wallet' }
+    { name: 'Redemption Marketplace', icon: Globe, href: '/vas/redemonection-marketplace' }
   ],
   'Market Place': [
     { name: 'Lease Management', icon: FileText, href: '/market-place/lease-management' },
@@ -499,4 +496,3 @@ export const Sidebar = () => {
     </div>
   );
 };
-
