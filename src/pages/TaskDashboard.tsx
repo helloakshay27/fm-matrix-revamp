@@ -470,8 +470,11 @@ export const TaskDashboard = () => {
               className="w-64"
             />
             <Button 
-              style={{ backgroundColor: '#C72030' }} 
-              className="text-white px-6"
+
+style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }}
+  className="hover:opacity-90 px-4"
+
+
               onClick={handleSearch}
             >
               GO
