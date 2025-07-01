@@ -319,7 +319,8 @@ export const AssetDashboard = () => {
           />
         </div>
         <Button 
-          className="bg-green-600 hover:bg-green-700 text-white px-4"
+          style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }}
+          className="hover:opacity-90 px-4"
         >
           Go!
         </Button>
