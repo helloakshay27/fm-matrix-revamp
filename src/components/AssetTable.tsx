@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Eye, Download, Filter, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -188,6 +189,12 @@ export const AssetTable = ({ searchTerm = '' }: AssetTableProps) => {
           suggestions={suggestions}
           className="w-80"
         />
+        <Button 
+          style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }}
+          className="hover:opacity-90 px-4"
+        >
+          Go!
+        </Button>
         <Button variant="outline" size="sm">
           <Filter className="w-4 h-4 mr-2" />
           Filters
