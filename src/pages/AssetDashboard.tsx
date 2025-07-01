@@ -271,7 +271,7 @@ export const AssetDashboard = () => {
           onClick={handleAddAsset}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4 mr-2 text-white" />
           Add
         </Button>
         <Button 
