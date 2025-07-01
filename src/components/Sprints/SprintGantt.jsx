@@ -3,6 +3,7 @@ import axios from "axios";
 import "dhtmlx-gantt";
 import "dhtmlx-gantt/codebase/dhtmlxgantt.css";
 import { useParams } from "react-router-dom";
+import { baseURL } from "../../../apiDomain";
 
 const SprintGantt = () => {
     const { id } = useParams()
