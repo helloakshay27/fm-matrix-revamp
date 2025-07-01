@@ -107,7 +107,7 @@ export const InvoicesFilterDialog: React.FC<InvoicesFilterDialogProps> = ({
             <Button 
               onClick={handleApply}
               className="flex-1"
-              style={{ backgroundColor: '#C72030' }}
+              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
             >
               Apply
             </Button>

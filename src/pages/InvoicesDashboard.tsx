@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -168,7 +169,7 @@ export const InvoicesDashboard = () => {
         <Button 
           variant="outline" 
           onClick={() => setIsFilterDialogOpen(true)}
-          className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+          className="flex items-center gap-2"
         >
           <Filter className="w-4 h-4" />
           Filters
@@ -187,8 +188,8 @@ export const InvoicesDashboard = () => {
           </div>
           <Button 
             onClick={handleSearch}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
+            style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+            className="hover:bg-[#F2EEE9]/90"
           >
             Go!
           </Button>
@@ -248,7 +249,6 @@ export const InvoicesDashboard = () => {
                         variant="outline" 
                         size="sm"
                         onClick={() => handleViewInvoice(invoice.id)}
-                        className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white"
                       >
                         View
                       </Button>
