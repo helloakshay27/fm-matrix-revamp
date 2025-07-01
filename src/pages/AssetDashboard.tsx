@@ -268,12 +268,13 @@ export const AssetDashboard = () => {
       {/* First Row of Action Buttons */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <Button 
-          onClick={handleAddAsset}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6"
-        >
-          <Plus className="w-4 h-4 mr-2 text-white" />
-          Add
-        </Button>
+  onClick={handleAddAsset}
+  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6"
+>
+  <Plus className="w-4 h-4 mr-2 text-white stroke-white" />
+  Add
+</Button>
+
         <Button 
           onClick={handleImport}
           variant="outline" 
