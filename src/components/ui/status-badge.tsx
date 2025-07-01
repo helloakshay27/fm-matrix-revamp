@@ -8,13 +8,21 @@ const statusBadgeVariants = cva(
   {
     variants: {
       variant: {
-        pending: "bg-yellow-100 text-yellow-800 border border-yellow-200",
-        rejected: "bg-red-100 text-red-800 border border-red-200", 
-        accepted: "bg-green-100 text-green-800 border border-green-200",
+        pending: "bg-[#D9CA20] text-black border border-[#D9CA20]",
+        rejected: "bg-[#D92E14] text-white border border-[#D92E14]", 
+        accepted: "bg-[#16B364] text-white border border-[#16B364]",
         // Alternative spellings for flexibility
-        yellow: "bg-yellow-100 text-yellow-800 border border-yellow-200",
-        red: "bg-red-100 text-red-800 border border-red-200",
-        green: "bg-green-100 text-green-800 border border-green-200",
+        yellow: "bg-[#D9CA20] text-black border border-[#D9CA20]",
+        red: "bg-[#D92E14] text-white border border-[#D92E14]",
+        green: "bg-[#16B364] text-white border border-[#16B364]",
+        // Additional status variants
+        open: "bg-[#16B364] text-white border border-[#16B364]",
+        closed: "bg-[#D92E14] text-white border border-[#D92E14]",
+        "in-progress": "bg-[#D9CA20] text-black border border-[#D9CA20]",
+        active: "bg-[#16B364] text-white border border-[#16B364]",
+        inactive: "bg-[#D92E14] text-white border border-[#D92E14]",
+        breakdown: "bg-[#D92E14] text-white border border-[#D92E14]",
+        "in-use": "bg-[#16B364] text-white border border-[#16B364]",
       },
       size: {
         default: "px-2.5 py-0.5 text-xs",
@@ -32,7 +40,7 @@ const statusBadgeVariants = cva(
 export interface StatusBadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof statusBadgeVariants> {
-  status?: "pending" | "rejected" | "accepted" | "yellow" | "red" | "green"
+  status?: "pending" | "rejected" | "accepted" | "yellow" | "red" | "green" | "open" | "closed" | "in-progress" | "active" | "inactive" | "breakdown" | "in-use"
 }
 
 function StatusBadge({ className, variant, size, status, children, ...props }: StatusBadgeProps) {

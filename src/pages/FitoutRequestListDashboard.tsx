@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Filter } from "lucide-react";
@@ -6,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useNavigate } from 'react-router-dom';
 import { FitoutRequestFilterDialog } from '@/components/FitoutRequestFilterDialog';
 import { EditProjectModal } from '@/components/EditProjectModal';
+import { StatusBadge } from '@/components/ui/status-badge';
 
 interface FitoutProject {
   id: number;
@@ -65,6 +67,20 @@ export const FitoutRequestListDashboard = () => {
       setSelectedProjects(projects.map(p => p.id));
     } else {
       setSelectedProjects([]);
+    }
+  };
+
+  const getStatusVariant = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'pending';
+      case 'approved':
+      case 'active':
+        return 'accepted';
+      case 'rejected':
+        return 'rejected';
+      default:
+        return 'pending';
     }
   };
 
@@ -150,9 +166,9 @@ export const FitoutRequestListDashboard = () => {
                   <TableCell>{project.unit}</TableCell>
                   <TableCell>{project.supplier}</TableCell>
                   <TableCell>
-                    <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
+                    <StatusBadge status={getStatusVariant(project.masterStatus)}>
                       {project.masterStatus}
-                    </span>
+                    </StatusBadge>
                   </TableCell>
                   <TableCell>{project.createdOn}</TableCell>
                 </TableRow>

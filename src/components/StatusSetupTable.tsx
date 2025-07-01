@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -29,7 +30,7 @@ const mockStatusData: StatusItem[] = [
     mail: false,
     sms: false,
     canCancel: false,
-    color: '#000000'
+    color: '#16B364'
   }
 ];
 
@@ -69,6 +70,19 @@ export const StatusSetupTable = () => {
     ));
   };
 
+  const getStatusVariant = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return 'accepted';
+      case 'inactive':
+        return 'rejected';
+      case 'pending':
+        return 'pending';
+      default:
+        return 'pending';
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-start">
@@ -76,7 +90,7 @@ export const StatusSetupTable = () => {
           onClick={() => setIsAddModalOpen(true)}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4 text-white stroke-white" />
           Add
         </Button>
       </div>
@@ -121,9 +135,7 @@ export const StatusSetupTable = () => {
                 </TableCell>
                 <TableCell className="text-center">{item.order}</TableCell>
                 <TableCell className="text-center">
-                  <StatusBadge 
-                    status={item.status.toLowerCase() === 'active' ? 'accepted' : 'pending'}
-                  >
+                  <StatusBadge status={getStatusVariant(item.status)}>
                     {item.status}
                   </StatusBadge>
                 </TableCell>

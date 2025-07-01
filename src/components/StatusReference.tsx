@@ -20,7 +20,7 @@ export const StatusReference = () => {
           <h3 className="text-sm font-medium text-gray-900 mb-3">References</h3>
           <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
             <p className="text-xs text-gray-600 mb-3">
-              Status refers to the current state or condition of an item, process, or entity, such as "NEW", "REJECT", "YELLOW", "PENDING" or "GREEN-Accepted".
+              Status refers to the current state or condition of an item, process, or entity, such as "RED - Reject," "YELLOW - Pending," or "GREEN - Accepted."
             </p>
             <div className="flex gap-2">
               <StatusBadge status="pending">Pending</StatusBadge>
@@ -40,16 +40,16 @@ export const StatusReference = () => {
           <h3 className="text-sm font-medium text-gray-900 mb-3">Colors</h3>
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-yellow-400"></div>
+              <div className="w-4 h-4 rounded-full bg-[#D9CA20]"></div>
               <span className="text-sm text-gray-600">D9CA20</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-red-500"></div>
+              <div className="w-4 h-4 rounded-full bg-[#D92E14]"></div>
               <span className="text-sm text-gray-600">D92E14</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-green-500"></div>
-              <span className="text-sm text-gray-600">168364</span>
+              <div className="w-4 h-4 rounded-full bg-[#16B364]"></div>
+              <span className="text-sm text-gray-600">16B364</span>
             </div>
           </div>
         </div>

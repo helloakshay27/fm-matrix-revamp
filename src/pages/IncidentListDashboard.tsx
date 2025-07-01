@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Search, Eye } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { StatusBadge } from '@/components/ui/status-badge';
 
 export const IncidentListDashboard = () => {
   const navigate = useNavigate();
@@ -172,13 +173,11 @@ export const IncidentListDashboard = () => {
                 <TableCell>{incident.supportRequired}</TableCell>
                 <TableCell>{incident.assignedTo}</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-1 text-xs rounded ${
-                    incident.currentStatus === 'Open' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
+                  <StatusBadge 
+                    status={incident.currentStatus === 'Open' ? 'accepted' : 'closed'}
+                  >
                     {incident.currentStatus}
-                  </span>
+                  </StatusBadge>
                 </TableCell>
               </TableRow>
             ))}
