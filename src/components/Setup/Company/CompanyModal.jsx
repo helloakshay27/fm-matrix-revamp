@@ -49,6 +49,7 @@ const CompanyModal = ({ open, setOpenModal, editData, onEditSubmit }) => {
 
     const handleSubmit = () => {
         if (!formData.companyName || !formData.organizationId) {
+            toast.dismiss();
             toast.error("Please fill in all required fields.");
             return;
         }

@@ -1,4 +1,4 @@
-import { useEffect, useState , useRef} from "react";
+import { useEffect, useState, useRef } from "react";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import SelectBox from "../../../SelectBox";
 import { useDispatch, useSelector } from "react-redux";
@@ -54,7 +54,7 @@ const AddMilestoneModal = ({
           <DeleteOutlinedIcon
             className="text-red-600 cursor-pointer"
             onClick={
-              ()=>{
+              () => {
                 setFormData({});
                 setIsDelete(true);
               }
@@ -79,7 +79,7 @@ const AddMilestoneModal = ({
       <div className="flex items-start gap-4 mt-3">
         <div className="w-1/2 flex flex-col justify-between">
           <label className="block mb-2">
-            Project Owner <span className="text-red-600">*</span>
+            Milestone Owner <span className="text-red-600">*</span>
           </label>
           <SelectBox
             options={users.map((user) => ({
@@ -169,7 +169,7 @@ const Milestones = () => {
   const { fetchProjectDetails: projectDetail } = useSelector(state => state.fetchProjectDetails);
 
   const [nextId, setNextId] = useState(1);
-  const [isDelete,setIsDelete]=useState(false);
+  const [isDelete, setIsDelete] = useState(false);
   const [savedMilestones, setSavedMilestones] = useState([]);
   const isSubmittingRef = useRef(false);
   const [formData, setFormData] = useState({
@@ -246,35 +246,35 @@ const Milestones = () => {
 
   const handleAddMilestone = async (e) => {
     e.preventDefault();
-    if(isDelete){
+    if (isDelete) {
       setIsDelete(false);
       return
     }
     if (!validateForm(formData)) return;
-    
-    if(isSubmittingRef.current) return;
+
+    if (isSubmittingRef.current) return;
     const payload = createMilestonePayload(formData);
 
     isSubmittingRef.current = true;
 
     try {
       await dispatch(createMilestone({ token, payload })).unwrap();
-        toast.success("Milestone created successfully.");
-        setSavedMilestones([...savedMilestones, { id: nextId, formData }]);
-        setFormData({
-          title: "",
-          ownerId: null,
-          startDate: "",
-          endDate: "",
-          dependsOnId: null,
-        });
-        setNextId(nextId + 1);
-        await dispatch(fetchMilestone({ token, id })).unwrap(); // Refresh milestones
-      
+      toast.success("Milestone created successfully.");
+      setSavedMilestones([...savedMilestones, { id: nextId, formData }]);
+      setFormData({
+        title: "",
+        ownerId: null,
+        startDate: "",
+        endDate: "",
+        dependsOnId: null,
+      });
+      setNextId(nextId + 1);
+      await dispatch(fetchMilestone({ token, id })).unwrap(); // Refresh milestones
+
     } catch (error) {
       console.error("Error creating milestone:", error);
       toast.error("Error creating milestone.");
-    }finally{
+    } finally {
       isSubmittingRef.current = false
     }
   };
@@ -289,16 +289,17 @@ const Milestones = () => {
     const payload = createMilestonePayload(formData);
 
     try {
-      if(!isDelete){
-       await dispatch(createMilestone({ token, payload }));}
-        toast.success("Milestone created successfully.");
-        await dispatch(fetchMilestone({ token, id }));
-        window.location.reload();
-      
+      if (!isDelete) {
+        await dispatch(createMilestone({ token, payload }));
+      }
+      toast.success("Milestone created successfully.");
+      await dispatch(fetchMilestone({ token, id }));
+      window.location.reload();
+
     } catch (error) {
       console.error("Error creating milestone:", error);
       toast.error("Error creating milestone.");
-    }finally{
+    } finally {
       isSubmittingRef.current = false
       setIsDelete(false);
     }
@@ -330,20 +331,20 @@ const Milestones = () => {
             }
           />
         ))}
-        {!isDelete &&(
-        <AddMilestoneModal
-          id={nextId}
-          deleteMilestone={handleDeleteMilestone}
-          users={users}
-          formData={formData}
-          setIsDelete={setIsDelete}
-          setFormData={setFormData}
-          isReadOnly={false}
-          milestoneOptions={milestone}
-          hasSavedMilestones={savedMilestones.length > 0}
-          projectStartDate={project && !Array.isArray(project) ? project.start_date : projectDetail.start_date}
-          projectEndDate={project && !Array.isArray(project) ? project.end_date : projectDetail.end_date}
-        />
+        {!isDelete && (
+          <AddMilestoneModal
+            id={nextId}
+            deleteMilestone={handleDeleteMilestone}
+            users={users}
+            formData={formData}
+            setIsDelete={setIsDelete}
+            setFormData={setFormData}
+            isReadOnly={false}
+            milestoneOptions={milestone}
+            hasSavedMilestones={savedMilestones.length > 0}
+            projectStartDate={project && !Array.isArray(project) ? project.start_date : projectDetail.start_date}
+            projectEndDate={project && !Array.isArray(project) ? project.end_date : projectDetail.end_date}
+          />
         )}
 
         <div className="relative">
@@ -360,7 +361,7 @@ const Milestones = () => {
           <button
             type="submit"
             className="flex items-center justify-center border-2 text-[black] border-[red] px-4 py-2 w-[100px]"
-            disabled={loading }
+            disabled={loading}
           >
             {loading ? "Processing..." : "Save"}
           </button>

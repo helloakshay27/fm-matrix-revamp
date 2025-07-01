@@ -214,6 +214,7 @@ const OrganizationModal = ({ open, setOpenModal, editData, onEditSubmit }) => {
 
     const handleSubmit = () => {
         if (!orgName || !orgDomain || (!orgLogo && !editData)) {
+            toast.dismiss()
             toast.error("All fields are required");
             return;
         }
