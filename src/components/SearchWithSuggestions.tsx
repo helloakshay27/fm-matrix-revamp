@@ -108,7 +108,12 @@ export const SearchWithSuggestions = ({
       {showSuggestions && filteredSuggestions.length > 0 && (
         <div
           ref={suggestionsRef}
-          className="absolute top-full left-0 right-0 bg-white border border-[#AAB9C5] rounded-lg shadow-lg z-[9999] mt-1 max-h-48 overflow-y-auto"
+          className="fixed bg-white border border-[#AAB9C5] rounded-lg shadow-xl z-[99999] mt-1 max-h-48 overflow-y-auto"
+          style={{
+            top: inputRef.current ? inputRef.current.getBoundingClientRect().bottom + window.scrollY + 4 : 0,
+            left: inputRef.current ? inputRef.current.getBoundingClientRect().left + window.scrollX : 0,
+            width: inputRef.current ? inputRef.current.getBoundingClientRect().width : 'auto',
+          }}
         >
           {filteredSuggestions.map((suggestion, index) => (
             <div
