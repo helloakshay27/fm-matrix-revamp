@@ -50,9 +50,11 @@ const PaginationLink = ({
     aria-current={isActive ? "page" : undefined}
     className={cn(
       "inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-9 w-9 rounded-none border-0 shadow-none",
+      "bg-transparent text-[#C72030] opacity-100",
+      "hover:border hover:border-dashed hover:border-purple-500 lg:hover:border-dashed lg:hover:border-purple-500",
       isActive 
         ? "bg-[#C72030] text-white" 
-        : "bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900",
+        : "bg-transparent text-[#C72030]",
       className
     )}
     {...props}
@@ -67,12 +69,13 @@ const PaginationPrevious = ({
   <PaginationLink
     aria-label="Go to previous page"
     className={cn(
-      "gap-1 pl-2.5 pr-2.5 w-auto h-9 rounded-none bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900 border-0 shadow-none",
+      "gap-1 pl-2.5 pr-2.5 w-auto h-9 rounded-none bg-transparent text-[#C72030] opacity-100 border-0 shadow-none",
+      "hover:bg-transparent hover:text-[#C72030] hover:border hover:border-dashed hover:border-purple-500 lg:hover:border-dashed lg:hover:border-purple-500",
       className
     )}
     {...props}
   >
-    <ChevronLeft className="h-4 w-4" />
+    <ChevronLeft className="h-4 w-4 text-[#C72030]" />
     <span className="hidden sm:inline">Previous</span>
   </PaginationLink>
 )
@@ -85,13 +88,14 @@ const PaginationNext = ({
   <PaginationLink
     aria-label="Go to next page"
     className={cn(
-      "gap-1 pl-2.5 pr-2.5 w-auto h-9 rounded-none bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900 border-0 shadow-none",
+      "gap-1 pl-2.5 pr-2.5 w-auto h-9 rounded-none bg-transparent text-[#C72030] opacity-100 border-0 shadow-none",
+      "hover:bg-transparent hover:text-[#C72030] hover:border hover:border-dashed hover:border-purple-500 lg:hover:border-dashed lg:hover:border-purple-500",
       className
     )}
     {...props}
   >
     <span className="hidden sm:inline">Next</span>
-    <ChevronRight className="h-4 w-4" />
+    <ChevronRight className="h-4 w-4 text-[#C72030]" />
   </PaginationLink>
 )
 PaginationNext.displayName = "PaginationNext"
@@ -102,10 +106,10 @@ const PaginationEllipsis = ({
 }: React.ComponentProps<"span">) => (
   <span
     aria-hidden
-    className={cn("flex h-9 w-9 items-center justify-center rounded-none", className)}
+    className={cn("flex h-9 w-9 items-center justify-center rounded-none text-[#C72030]", className)}
     {...props}
   >
-    <MoreHorizontal className="h-4 w-4" />
+    <MoreHorizontal className="h-4 w-4 text-[#C72030]" />
     <span className="sr-only">More pages</span>
   </span>
 )
