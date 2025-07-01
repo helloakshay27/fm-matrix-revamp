@@ -69,7 +69,7 @@ export const InActiveAssetsDashboard = () => {
           onClick={handleExportAll}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
         >
-          <Download className="w-4 h-4 mr-2" />
+          <Download className="w-4 h-4 mr-2 text-white stroke-white" />
           Export All
         </Button>
         <Button 
@@ -77,7 +77,7 @@ export const InActiveAssetsDashboard = () => {
           variant="outline" 
           className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
         >
-          <Filter className="w-4 h-4 mr-2" />
+          <Filter className="w-4 h-4 mr-2 text-white stroke-white" />
           Filters
         </Button>
         <div className="ml-auto flex items-center gap-3">

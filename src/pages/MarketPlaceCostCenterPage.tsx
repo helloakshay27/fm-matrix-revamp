@@ -56,7 +56,7 @@ export const MarketPlaceCostCenterPage = () => {
               onClick={handleAdd}
               className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded flex items-center gap-2"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 text-white stroke-white" />
               Add
             </Button>
             
@@ -70,7 +70,7 @@ export const MarketPlaceCostCenterPage = () => {
               
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm" className="p-2" onClick={handleRefresh}>
-                  <RefreshCw className="w-4 h-4" />
+                  <RefreshCw className="w-4 h-4 text-white stroke-white" />
                 </Button>
                 <ColumnVisibilityDropdown
                   columns={columns}

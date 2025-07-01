@@ -95,7 +95,7 @@ export const IncidentListDashboard = () => {
           style={{ backgroundColor: '#C72030' }} 
           className="text-white hover:opacity-90"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4 mr-2 text-white stroke-white" />
           Add
         </Button>
 
