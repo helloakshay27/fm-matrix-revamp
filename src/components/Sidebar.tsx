@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -342,7 +343,7 @@ export const Sidebar = () => {
         <div key={item.name}>
           <button
             onClick={() => toggleExpanded(item.name)}
-            className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
+            className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
           >
             <div className="flex items-center gap-3">
               {level === 0 && (
@@ -366,7 +367,7 @@ export const Sidebar = () => {
                     <div>
                       <button
                         onClick={() => toggleExpanded(subItem.name)}
-                        className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
+                        className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
                       >
                         {isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
                         <span>{subItem.name}</span>
@@ -381,7 +382,7 @@ export const Sidebar = () => {
                             <button
                               key={nestedItem.name}
                               onClick={() => handleNavigation(nestedItem.href, currentSection)}
-                              className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${
+                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${
                                 nestedItem.color || 'text-[#1a1a1a]'
                               }`}
                             >
@@ -395,7 +396,7 @@ export const Sidebar = () => {
                   ) : (
                     <button
                       onClick={() => handleNavigation(subItem.href, currentSection)}
-                      className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
+                      className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
                         subItem.color || 'text-[#1a1a1a]'
                       }`}
                     >
@@ -415,7 +416,7 @@ export const Sidebar = () => {
       <div key={item.name}>
         <button
           onClick={() => handleNavigation(item.href, currentSection)}
-          className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
+          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
             item.color || 'text-[#1a1a1a]'
           }`}
         >
