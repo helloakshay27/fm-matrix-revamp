@@ -108,7 +108,7 @@ export const SearchWithSuggestions = ({
       {showSuggestions && filteredSuggestions.length > 0 && (
         <div
           ref={suggestionsRef}
-          className="absolute top-full left-0 right-0 bg-white border border-[#AAB9C5] rounded-lg shadow-lg z-50 mt-1 max-h-48 overflow-y-auto"
+          className="absolute top-full left-0 right-0 bg-white border border-[#AAB9C5] rounded-lg shadow-lg z-[9999] mt-1 max-h-48 overflow-y-auto"
         >
           {filteredSuggestions.map((suggestion, index) => (
             <div
