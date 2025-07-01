@@ -275,7 +275,7 @@ const OrganizationModal = ({ open, setOpenModal, editData, onEditSubmit }) => {
                             </label>
                             <input
                                 type="text"
-                                placeholder="Organization Name"
+                                placeholder="Enter Organization Name"
                                 value={orgName}
                                 onChange={(e) => setOrgName(e.target.value)}
                                 className="w-full border px-3 py-2 text-sm text-[#1B1B1B] border-[#C0C0C0] focus:outline-none"
@@ -301,7 +301,7 @@ const OrganizationModal = ({ open, setOpenModal, editData, onEditSubmit }) => {
                             </label>
                             <input
                                 type="text"
-                                placeholder="Organization Domain"
+                                placeholder="Enter Organization Domain"
                                 value={orgDomain}
                                 onChange={(e) => setOrgDomain(e.target.value)}
                                 className="w-full border px-3 py-2 text-sm text-[#1B1B1B] border-[#C0C0C0] focus:outline-none"

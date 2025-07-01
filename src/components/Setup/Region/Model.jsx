@@ -74,6 +74,7 @@ const AddRegionModel = ({
       region: {
         name: formData.name,
         country_id: formData.country || "",
+        active: true
       },
     };
     try {

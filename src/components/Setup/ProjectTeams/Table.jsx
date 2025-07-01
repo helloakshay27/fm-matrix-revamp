@@ -116,19 +116,13 @@ const TeamsTable = () => {
         },
       },
       {
-        accessorKey: 'associatedProjects',
-        header: 'Associated Projects',
-        size: 150,
-        cell: ({ row, getValue }) => {
-          return row.original ? <span className="ml-2">{getValue()}</span> : null;
-        },
-      },
-      {
         accessorKey: 'TeamMember',
         header: () => <div>Team Members (<i>TL+Members</i>)</div>,
         size: 150,
         cell: ({ row, getValue }) => {
-          return row.original ? <span>{getValue()}</span> : null;
+          return row.original ? (
+            <span style={{ paddingLeft: '12px' }}>{getValue()}</span>
+          ) : null;
         },
       },
       {

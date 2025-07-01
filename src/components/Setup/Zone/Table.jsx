@@ -42,11 +42,11 @@ const ZoneTable = ({ openModal, setOpenModal, editMode, setEditMode }) => {
   }, [Zone]);
 
   // Fetch data when modal closes to ensure table is refreshed
-  useEffect(() => {
-    if (!openModal) {
-      dispatch(fetchZone({ token }));
-    }
-  }, [openModal, dispatch]);
+  // useEffect(() => {
+  //   if (!openModal) {
+  //     dispatch(fetchZone({ token }));
+  //   }
+  // }, [openModal, dispatch]);
 
   const handleEditClick = (row) => {
     setSelectedData(row.original);

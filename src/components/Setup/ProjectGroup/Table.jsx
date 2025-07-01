@@ -69,7 +69,7 @@ const GroupTable = () => {
     const handleDeleteClick = async (id) => {
       try {
         await dispatch(deleteProjectGroup({ token, id })).unwrap(); // unwrap to handle async correctly
-        dispatch(fetchProjectGroup({ token })); // refetch data after successful delete
+        await dispatch(fetchProjectGroup({ token })).unwrap(); // refetch data after successful delete
         toast.dismiss();
         toast.success('Project Group deleted successfully', {
           iconTheme: {

@@ -44,11 +44,11 @@ const RegionTable = ({ openModal, setOpenModal, editMode, setEditMode }) => {
   }, [Region]);
 
   // Fetch data when modal closes to ensure table is refreshed
-  useEffect(() => {
-    if (!openModal) {
-      dispatch(fetchRegion({ token }));
-    }
-  }, [openModal, dispatch]);
+  // useEffect(() => {
+  //   if (!openModal) {
+  //     dispatch(fetchRegion({ token }));
+  //   }
+  // }, [openModal, dispatch]);
 
   const handleEditClick = (row) => {
     setSelectedData(row.original);
@@ -115,8 +115,6 @@ const RegionTable = ({ openModal, setOpenModal, editMode, setEditMode }) => {
     }
   };
 
-
-
   const ActionIcons = ({ row }) => (
     <div className="action-icons flex justify-between gap-5">
       <div>
@@ -132,19 +130,6 @@ const RegionTable = ({ openModal, setOpenModal, editMode, setEditMode }) => {
       </div>
     </div>
   );
-
-
-
-
-  function formatToDDMMYYYY(dateString) {
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  }
-
-
 
   const fixedRowsPerPage = 13;
 
