@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus, Edit } from "lucide-react";
+import { Plus, Edit, Upload } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AddCategoryModal } from "@/components/AddCategoryModal";
 import { EditCategoryModal } from "@/components/EditCategoryModal";
@@ -10,7 +10,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Category {
@@ -41,7 +40,7 @@ export const FitoutSetupDashboard = () => {
   const [isAddStatusOpen, setIsAddStatusOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const { toast } = useToast();
-  
+
   const [categories, setCategories] = useState<Category[]>([
     { id: 1, category: 'ho', amount: '', active: true },
     { id: 2, category: 'Furniture', amount: '', active: true },
@@ -69,7 +68,7 @@ export const FitoutSetupDashboard = () => {
   };
 
   const handleUpdateCategory = (updatedCategory: Category) => {
-    setCategories(categories.map(cat => 
+    setCategories(categories.map(cat =>
       cat.id === updatedCategory.id ? updatedCategory : cat
     ));
     setEditingCategory(null);
@@ -79,8 +78,7 @@ export const FitoutSetupDashboard = () => {
     setCategories(categories.map(cat =>
       cat.id === id ? { ...cat, active: !cat.active } : cat
     ));
-    
-    // Show success toast
+
     toast({
       title: "Updated successfully.",
       className: "bg-green-500 text-white border-green-500",
@@ -108,7 +106,7 @@ export const FitoutSetupDashboard = () => {
         };
         setUploadedFiles(prev => [...prev, newFile]);
       });
-      
+
       toast({
         title: "File uploaded successfully.",
         className: "bg-green-500 text-white border-green-500",
@@ -119,11 +117,11 @@ export const FitoutSetupDashboard = () => {
   const renderCategoryTab = () => (
     <div>
       <div className="mb-6">
-        <Button 
+        <Button
           onClick={() => setIsAddCategoryOpen(true)}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4 mr-2 text-white stroke-white" />
           Add
         </Button>
       </div>
@@ -142,16 +140,16 @@ export const FitoutSetupDashboard = () => {
             {categories.map((category) => (
               <TableRow key={category.id}>
                 <TableCell>
-                  <Edit 
-                    className="w-4 h-4 text-blue-500 cursor-pointer" 
+                  <Edit
+                    className="w-4 h-4 text-blue-500 cursor-pointer"
                     onClick={() => handleEditCategory(category)}
                   />
                 </TableCell>
                 <TableCell>{category.category}</TableCell>
                 <TableCell>{category.amount}</TableCell>
                 <TableCell>
-                  <Checkbox 
-                    checked={category.active} 
+                  <Checkbox
+                    checked={category.active}
                     onCheckedChange={() => handleToggleActive(category.id)}
                   />
                 </TableCell>
@@ -167,20 +165,11 @@ export const FitoutSetupDashboard = () => {
     <div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <div>
-          <Label htmlFor="status" className="text-sm font-medium mb-2 block">
-            Status
-          </Label>
-          <Input
-            id="status"
-            placeholder="Enter status"
-            className="w-full"
-          />
+          <Label htmlFor="status">Status</Label>
+          <Input id="status" placeholder="Enter status" />
         </div>
-
         <div>
-          <Label htmlFor="fixedState" className="text-sm font-medium mb-2 block">
-            Fixed State
-          </Label>
+          <Label htmlFor="fixedState">Fixed State</Label>
           <Select>
             <SelectTrigger>
               <SelectValue placeholder="Select Fixed State" />
@@ -191,36 +180,22 @@ export const FitoutSetupDashboard = () => {
             </SelectContent>
           </Select>
         </div>
-
         <div>
-          <Label htmlFor="color" className="text-sm font-medium mb-2 block">
-            Color
-          </Label>
-          <Input
-            id="color"
-            type="color"
-            className="w-full h-10"
-          />
+          <Label htmlFor="color">Color</Label>
+          <Input id="color" type="color" className="h-10" />
         </div>
-
         <div>
-          <Label htmlFor="statusOrder" className="text-sm font-medium mb-2 block">
-            Status Order
-          </Label>
-          <Input
-            id="statusOrder"
-            placeholder="Enter status order"
-            className="w-full"
-          />
+          <Label htmlFor="statusOrder">Status Order</Label>
+          <Input id="statusOrder" placeholder="Enter status order" />
         </div>
       </div>
 
       <div className="mb-6">
-        <Button 
+        <Button
           onClick={() => setIsAddStatusOpen(true)}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4 mr-2 text-white stroke-white" />
           Add
         </Button>
       </div>
@@ -229,11 +204,11 @@ export const FitoutSetupDashboard = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold">Actions</TableHead>
-              <TableHead className="font-semibold">Order</TableHead>
-              <TableHead className="font-semibold">Status</TableHead>
-              <TableHead className="font-semibold">Fixed State</TableHead>
-              <TableHead className="font-semibold">Color</TableHead>
+              <TableHead>Actions</TableHead>
+              <TableHead>Order</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Fixed State</TableHead>
+              <TableHead>Color</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -253,10 +228,7 @@ export const FitoutSetupDashboard = () => {
                   <TableCell>{status.status}</TableCell>
                   <TableCell>{status.fixedState}</TableCell>
                   <TableCell>
-                    <div 
-                      className="w-6 h-6 rounded border" 
-                      style={{ backgroundColor: status.color }}
-                    />
+                    <div className="w-6 h-6 rounded border" style={{ backgroundColor: status.color }} />
                   </TableCell>
                 </TableRow>
               ))
@@ -276,10 +248,7 @@ export const FitoutSetupDashboard = () => {
             <span className="text-gray-500 ml-2">No file chosen</span>
           </div>
           <label htmlFor="file-upload">
-            <Button 
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white cursor-pointer"
-              asChild
-            >
+            <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white cursor-pointer" asChild>
               <span>
                 <Upload className="w-4 h-4 mr-2" />
                 Upload
@@ -300,9 +269,9 @@ export const FitoutSetupDashboard = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold">Actions</TableHead>
-              <TableHead className="font-semibold">SR No.</TableHead>
-              <TableHead className="font-semibold">File Name</TableHead>
+              <TableHead>Actions</TableHead>
+              <TableHead>SR No.</TableHead>
+              <TableHead>File Name</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -332,11 +301,11 @@ export const FitoutSetupDashboard = () => {
   const renderDeviationStatusTab = () => (
     <div>
       <div className="mb-6">
-        <Button 
+        <Button
           onClick={() => setIsAddDeviationOpen(true)}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4 mr-2 text-white stroke-white" />
           Add
         </Button>
       </div>
@@ -345,9 +314,9 @@ export const FitoutSetupDashboard = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold">Actions</TableHead>
-              <TableHead className="font-semibold">Category</TableHead>
-              <TableHead className="font-semibold">Active/Inactive</TableHead>
+              <TableHead>Actions</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Active/Inactive</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -364,30 +333,22 @@ export const FitoutSetupDashboard = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'Category':
-        return renderCategoryTab();
-      case 'Status':
-        return renderStatusTab();
-      case 'Fitout Guide':
-        return renderFitoutGuideTab();
-      case 'Deviation Status':
-        return renderDeviationStatusTab();
-      default:
-        return renderCategoryTab();
+      case 'Category': return renderCategoryTab();
+      case 'Status': return renderStatusTab();
+      case 'Fitout Guide': return renderFitoutGuideTab();
+      case 'Deviation Status': return renderDeviationStatusTab();
+      default: return renderCategoryTab();
     }
   };
 
   return (
     <div className="p-6">
-      {/* Breadcrumb */}
       <div className="mb-4">
         <span className="text-sm text-gray-600">Fitout &gt; Fitout Request</span>
       </div>
 
-      {/* Page Title */}
       <h1 className="text-2xl font-bold mb-6">FITOUT SETUP</h1>
 
-      {/* Tabs */}
       <div className="flex gap-1 mb-6">
         {tabs.map((tab) => (
           <button
@@ -404,19 +365,18 @@ export const FitoutSetupDashboard = () => {
         ))}
       </div>
 
-      {/* Tab Content */}
       {renderTabContent()}
 
       {/* Modals */}
-      <AddCategoryModal 
+      <AddCategoryModal
         isOpen={isAddCategoryOpen}
         onClose={() => setIsAddCategoryOpen(false)}
         onSubmit={handleAddCategory}
         showTimings={false}
         showAmount={true}
       />
-      
-      <EditCategoryModal 
+
+      <EditCategoryModal
         isOpen={isEditCategoryOpen}
         onClose={() => setIsEditCategoryOpen(false)}
         category={editingCategory}
@@ -424,13 +384,13 @@ export const FitoutSetupDashboard = () => {
         showTimings={false}
         showAmount={true}
       />
-      
-      <AddDeviationStatusModal 
+
+      <AddDeviationStatusModal
         isOpen={isAddDeviationOpen}
         onClose={() => setIsAddDeviationOpen(false)}
       />
 
-      <AddStatusModal 
+      <AddStatusModal
         isOpen={isAddStatusOpen}
         onClose={() => setIsAddStatusOpen(false)}
         onSubmit={handleAddStatus}
@@ -438,3 +398,5 @@ export const FitoutSetupDashboard = () => {
     </div>
   );
 };
+
+export default FitoutSetupDashboard;
