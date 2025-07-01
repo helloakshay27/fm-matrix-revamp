@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -300,7 +299,8 @@ export const AddPODashboard = () => {
           <Button 
             type="button"
             onClick={addItem}
-            className="bg-[#C72030] hover:bg-[#A01020] text-white mb-4"
+            style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+            className="hover:bg-[#F2EEE9]/90 mb-4"
           >
             Add Item
           </Button>
@@ -405,7 +405,8 @@ export const AddPODashboard = () => {
         <div className="flex justify-center">
           <Button 
             type="submit"
-            className="bg-[#C72030] hover:bg-[#A01020] text-white px-8 py-2"
+            style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+            className="hover:bg-[#F2EEE9]/90 px-8 py-2"
           >
             Submit
           </Button>
