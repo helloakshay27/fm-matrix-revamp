@@ -2,7 +2,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import SelectBox from "../../SelectBox";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
-import { fetchRoles } from "../../../redux/slices/roleSlice";
+import { fetchActiveRoles } from "../../../redux/slices/roleSlice";
 import {
     createInternalUser,
     fetchUpdateUser,
@@ -35,7 +35,7 @@ const AddInternalUser = ({
     });
 
     const { success, loading } = useSelector((state) => state.createInternalUser);
-    const { fetchRoles: roles = [] } = useSelector((state) => state.fetchRoles);
+    const { fetchActiveRoles: roles = [] } = useSelector((state) => state.fetchActiveRoles);
     const { loading: editLoading, success: editSuccess } = useSelector(
         (state) => state.fetchUpdateUser
     );
@@ -48,7 +48,7 @@ const AddInternalUser = ({
     useEffect(() => {
         const fetchData = async () => {
             try {
-                await dispatch(fetchRoles({ token })).unwrap();
+                await dispatch(fetchActiveRoles({ token })).unwrap();
                 await dispatch(fetchUsers({ token })).unwrap();
                 await dispatch(fetchCompany({ token })).unwrap();
             } catch (err) {
@@ -85,8 +85,11 @@ const AddInternalUser = ({
         if (!formData.name.trim()) return setError("Please enter name");
         if (!formData.mobile) return setError("Please enter mobile number");
         if (!formData.email.trim()) return setError("Please enter email");
+        if (!formData.password) return setError("Please enter password");
+        if (!formData.company) return setError("Please select company");
         if (!formData.role) return setError("Please select role");
         if (!formData.reportTo) return setError("Please select report to");
+
 
         const nameParts = formData.name.trim().split(" ");
         const firstname = nameParts[0] || "";

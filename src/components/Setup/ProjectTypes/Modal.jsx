@@ -41,6 +41,7 @@ const Modal = ({ openModal, setOpenModal, editMode = false, existingData = {} })
       else
         response = await dispatch(createProjectType({ token, payload })).unwrap();
       if (response.name[0] != "has already been taken") {
+        toast.dismiss()
         toast.success(`Type ${editMode ? 'Updated' : 'Created'} successfully`, {
           iconTheme: {
             primary: 'green', // This might directly change the color of the success icon

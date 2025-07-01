@@ -62,6 +62,21 @@ export const fetchRoles = createAsyncThunk('fetchRoles', async ({ token }) => {
     }
 })
 
+export const fetchActiveRoles = createAsyncThunk('fetchActiveRoles', async ({ token }) => {
+    try {
+        const response = await axios.get(`${baseURL}/lock_roles.json?q[active_eq]=true`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            }
+        })
+
+        return response.data
+    } catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
 export const editRole = createAsyncThunk('editRole', async ({ token, id, payload }) => {
     console.log(payload)
     try {
@@ -93,10 +108,12 @@ export const deleteRole = createAsyncThunk('deleteRole', async ({ token, id }) =
 
 export const createRoleSlice = createApiSlice('createRole', createRole);
 export const fetchRoleSlice = createApiSlice('fetchRoles', fetchRoles);
+export const fetchActiveRolesSlice = createApiSlice('fetchActiveRoles', fetchActiveRoles);
 export const editRoleSlice = createApiSlice('editRole', editRole);
 export const deleteRoleSlice = createApiSlice('deleteRole', deleteRole);
 
 export const createRoleReducer = createRoleSlice.reducer;
 export const fetchRolesReducer = fetchRoleSlice.reducer;
+export const fetchActiveRolesReducer = fetchActiveRolesSlice.reducer;
 export const editRoleReducer = editRoleSlice.reducer;
 export const deleteRoleReducer = deleteRoleSlice.reducer;
