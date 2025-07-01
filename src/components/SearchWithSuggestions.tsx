@@ -28,7 +28,7 @@ export const SearchWithSuggestions = ({
         .filter(suggestion =>
           suggestion.toLowerCase().includes(searchValue.toLowerCase())
         )
-        .slice(0, 5); // Limit to 5
+        .slice(0, 5); // Limit to 5 suggestions
       setFilteredSuggestions(filtered);
       setShowSuggestions(filtered.length > 0);
     } else {
@@ -110,7 +110,7 @@ export const SearchWithSuggestions = ({
       {showSuggestions && filteredSuggestions.length > 0 && (
         <div
           ref={suggestionsRef}
-          className="absolute left-0 right-0 bg-white border border-[#AAB9C5] rounded-lg shadow-xl z-50 mt-1 max-h-48 overflow-y-auto"
+          className="absolute left-0 right-0 bg-white border border-[#AAB9C5] rounded-lg shadow-xl z-[9999] mt-1 max-h-48 overflow-y-auto"
         >
           {filteredSuggestions.map((suggestion, index) => (
             <div

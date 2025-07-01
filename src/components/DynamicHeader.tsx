@@ -18,7 +18,7 @@ export const DynamicHeader = () => {
   const { currentSection, setCurrentSection } = useLayout();
 
   return (
-    <div className="h-12 bg-white border-b border-[#D5DbDB] fixed top-16 right-0 left-64 z-0">
+    <div className="h-12 bg-white border-b border-[#D5DbDB] fixed top-16 right-0 left-64 z-10">
       <div className="flex items-center h-full px-6">
         <div className="flex items-center gap-6">
           {packages.map((packageName) => (
