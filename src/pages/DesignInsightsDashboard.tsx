@@ -108,7 +108,7 @@ export const DesignInsightsDashboard = () => {
             onClick={handleAddClick}
             className="bg-[#C72030] hover:bg-[#A61B28] text-white"
           >
-  <Plus className="w-4 h-4 mr-2 text-white stroke-white" />
+            <Plus className="w-4 h-4 mr-2 text-white stroke-white" />
             Add
           </Button>
           <Button 
@@ -145,7 +145,7 @@ export const DesignInsightsDashboard = () => {
             variant="outline" 
             className="bg-[#C72030] text-white hover:bg-[#A61B28]"
           >
-  <RotateCcw className="w-4 h-4 mr-2 text-white stroke-white" />
+            <RotateCcw className="w-4 h-4 mr-2 text-white stroke-white" />
             Reset
           </Button>
         </div>

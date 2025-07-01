@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Filter } from "lucide-react";
@@ -85,7 +84,7 @@ export const FitoutRequestListDashboard = () => {
           onClick={handleAddClick}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4 mr-2 text-white stroke-white" />
           Add
         </Button>
         <Button 
