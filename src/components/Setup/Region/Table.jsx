@@ -10,14 +10,14 @@ import {
   getPaginationRowModel,
 } from '@tanstack/react-table';
 import { useDispatch, useSelector } from 'react-redux';
-import {fetchOrganizations} from '../../../redux/slices/organizationSlice';
-import {fetchCompany} from '../../../redux/slices/companySlice';
-import { fetchRegion , updateRegion, deleteRegion} from '../../../redux/slices/regionSlice';
+import { fetchOrganizations } from '../../../redux/slices/organizationSlice';
+import { fetchCompany } from '../../../redux/slices/companySlice';
+import { fetchRegion, updateRegion, deleteRegion } from '../../../redux/slices/regionSlice';
 import { fetchCountry } from '../../../redux/slices/countrySlice';
 import AddRegionModel from './Model';
 import toast from 'react-hot-toast';
 
-const RegionTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
+const RegionTable = ({ openModal, setOpenModal, editMode, setEditMode }) => {
   const token = localStorage.getItem('token');
   const [selectedData, setSelectedData] = useState(null);
 
@@ -25,7 +25,7 @@ const RegionTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
 
   const dispatch = useDispatch();
   const { fetchRegion: Region } = useSelector((state) => state.fetchRegion);
-  const {fetchCountry: countries}=useSelector((state) => state.fetchCountry);
+  const { fetchCountry: countries } = useSelector((state) => state.fetchCountry);
 
 
   // Initial fetch of project types
@@ -57,7 +57,7 @@ const RegionTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
     setOpenModal(true);
   };
 
- const onSuccess = () => {
+  const onSuccess = () => {
     dispatch(fetchRegion({ token }));
     setOpenModal(false);
   };
@@ -94,22 +94,27 @@ const RegionTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
     try {
       await dispatch(updateRegion({ token, id: row.original.id, payload })).unwrap();
       toast.dismiss();
-      toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
+
+      toast.success(`Status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
         iconTheme: {
-          primary: 'red', // This might directly change the color of the success icon
-          secondary: 'white', // The circle background
+          primary: updatedValue ? 'green' : 'red',
+          secondary: 'white',
         },
       });
+
       dispatch(fetchRegion({ token }));
     } catch (error) {
-      console.error('Failed to update toggle:', error, {
+      console.error('Failed to update toggle:', error);
+      toast.dismiss();
+      toast.error(error?.message || 'Failed to update status', {
         iconTheme: {
-          primary: 'red', // This might directly change the color of the error icon
-          secondary: 'white', // The circle background
-        },
+          primary: 'red',
+          secondary: 'white',
+        }
       });
     }
   };
+
 
 
   const ActionIcons = ({ row }) => (
@@ -145,7 +150,7 @@ const RegionTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
 
   const columns = useMemo(
     () => [
-        {
+      {
         accessorKey: 'name',
         header: 'Region',
         size: 150,
@@ -155,16 +160,16 @@ const RegionTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
           return <span className=''>{value.charAt(0).toUpperCase() + value.slice(1)}</span>;
         },
       },
-           {
+      {
         accessorKey: 'country_id',
         header: 'Country',
         size: 150,
         cell: ({ getValue }) => {
-          const value=countries.find(org => org.id == getValue())?.name;
+          const value = countries.find(org => org.id == getValue())?.name;
           return value ? <span className="pl-1">{value.charAt(0).toUpperCase() + value.slice(1)}</span> : null;
         },
       },
-      
+
       {
         accessorKey: 'status',
         header: 'Status',

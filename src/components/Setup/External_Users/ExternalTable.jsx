@@ -22,31 +22,34 @@ const ActionIcons = ({ row, onEdit }) => {
 
     const userData = row.original;
 
-
     const payload = {
       user: {
         active: updatedValue ? 1 : 0,
       },
     };
+
     try {
       await dispatch(fetchUpdateUser({ token, userId: userData.id, updatedData: payload })).unwrap();
       toast.dismiss();
       toast.success(`Status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
         iconTheme: {
-          primary: 'red', // This might directly change the color of the success icon
-          secondary: 'white', // The circle background
+          primary: updatedValue ? 'green' : 'red',
+          secondary: 'white',
+        }
+      });
+    } catch (error) {
+      toast.dismiss();
+      toast.error(error?.message || 'Failed to update status', {
+        iconTheme: {
+          primary: 'red',
+          secondary: 'white',
+        },
+        style: {
+          background: '#f8d7da',
+          color: '#721c24',
         },
       });
     }
-    catch (error) {
-      toast.dismiss();
-      toast.error('Failed to update status:', error, {
-        iconTheme: {
-          primary: 'red', // This might directly change the color of the error icon
-          secondary: 'white', // The circle background
-        },
-      });
-    };
   };
 
   return (

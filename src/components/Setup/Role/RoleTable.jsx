@@ -14,7 +14,7 @@ const ActionIcons = ({ row, onEdit }) => {
   const [isActive, setIsActive] = useState(row.original.active);
   const dispatch = useDispatch();
 
-  const handleToggle = async() => {
+  const handleToggle = async () => {
     const updatedValue = !isActive;
     setIsActive(updatedValue);
 
@@ -31,9 +31,9 @@ const ActionIcons = ({ row, onEdit }) => {
     toast.dismiss();
     toast.success(`Status ${updatedValue ? "activated" : "deactivated"} successfully`, {
       iconTheme: {
-        primary: 'red', // This might directly change the color of the success icon
-        secondary: 'white', // The circle background
-      },
+        primary: updatedValue ? 'green' : 'red',
+        secondary: 'white',
+      }
     });
   };
 

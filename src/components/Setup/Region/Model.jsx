@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchOrganizations } from "../../../redux/slices/organizationSlice";
 import { fetchCompany } from "../../../redux/slices/companySlice";
-import{updateRegion, createRegion} from "../../../redux/slices/regionSlice";
+import { updateRegion, createRegion } from "../../../redux/slices/regionSlice";
 import { fetchCountry } from "../../../redux/slices/countrySlice";
 // import {fetchCountry} from "../../../redux/slices/countrySlice";
 
@@ -31,14 +31,16 @@ const AddRegionModel = ({
   const { fetchCompany: companies } = useSelector(
     (state) => state.fetchCompany
   );
-const {fetchCountry: countries} = useSelector((state) => state.fetchCountry);
-//   const {fetchCountry: countries} = useSelector((state) => state.fetchCountry);
+  const { fetchCountry: countries } = useSelector(
+    (state) => state.fetchCountry
+  );
+  //   const {fetchCountry: countries} = useSelector((state) => state.fetchCountry);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
-    country:"",
+    country: "",
   });
 
   useEffect(() => {
@@ -66,9 +68,7 @@ const {fetchCountry: countries} = useSelector((state) => state.fetchCountry);
     if (formData.name === "") {
       setError("Please enter name");
       return;
-    } 
-
-    
+    }
 
     const payload = {
       region: {
@@ -81,9 +81,9 @@ const {fetchCountry: countries} = useSelector((state) => state.fetchCountry);
       if (isEditMode && initialData?.id) {
         response = await dispatch(
           updateRegion({
-             token,
-             id: initialData.id,
-             payload,
+            token,
+            id: initialData.id,
+            payload,
           })
         );
       } else {
@@ -99,9 +99,9 @@ const {fetchCountry: countries} = useSelector((state) => state.fetchCountry);
           `Region ${isEditMode ? "updated" : "created"} successfully`,
           {
             iconTheme: {
-              primary: "red", // This might directly change the color of the success icon
+              primary: "green", // This might directly change the color of the success icon
               secondary: "white", // The circle background
-            },
+            }
           }
         );
         handleSuccess();

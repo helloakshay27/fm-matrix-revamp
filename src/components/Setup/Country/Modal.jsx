@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchOrganizations } from "../../../redux/slices/organizationSlice";
 import { fetchCompany } from "../../../redux/slices/companySlice";
-import{updateCountry, createCountry} from "../../../redux/slices/countrySlice";
+import { updateCountry, createCountry } from "../../../redux/slices/countrySlice";
 // import {fetchCountry} from "../../../redux/slices/countrySlice";
 
 import toast from "react-hot-toast";
@@ -20,13 +20,13 @@ const AddCountryModel = ({
 }) => {
   const token = localStorage.getItem("token");
   const dispatch = useDispatch();
-  
+
   const { loading, success } = useSelector((state) => state.createCountry);
   const { loading: editLoading, success: editSuccess } = useSelector(
     (state) => state.updateCountry
   );
-  
-//   const {fetchCountry: countries} = useSelector((state) => state.fetchCountry);
+
+  //   const {fetchCountry: countries} = useSelector((state) => state.fetchCountry);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -51,9 +51,7 @@ const AddCountryModel = ({
     if (formData.name === "") {
       setError("Please enter name");
       return;
-    } 
-
-    
+    }
 
     const payload = {
       country: {
@@ -66,9 +64,9 @@ const AddCountryModel = ({
       if (isEditMode && initialData?.id) {
         response = await dispatch(
           updateCountry({
-             token,
-             id: initialData.id,
-             payload,
+            token,
+            id: initialData.id,
+            payload,
           })
         );
       } else {
@@ -84,8 +82,8 @@ const AddCountryModel = ({
           `Country ${isEditMode ? "updated" : "created"} successfully`,
           {
             iconTheme: {
-              primary: "red", // This might directly change the color of the success icon
-              secondary: "white", // The circle background
+              primary: "green",
+              secondary: "white",
             },
           }
         );

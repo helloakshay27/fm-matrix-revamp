@@ -89,8 +89,8 @@ const TagsTable = () => {
       toast.dismiss();
       toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
         iconTheme: {
-          primary: 'red', // This might directly change the color of the success icon
-          secondary: 'white', // The circle background
+          primary: updatedValue ? 'green' : 'red',
+          secondary: 'white',
         },
       });
       dispatch(fetchTags({ token }));

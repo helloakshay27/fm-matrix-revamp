@@ -10,11 +10,11 @@ import {
   getPaginationRowModel,
 } from '@tanstack/react-table';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchCountry , updateCountry, deleteCountry} from '../../../redux/slices/countrySlice';
+import { fetchCountry, updateCountry, deleteCountry } from '../../../redux/slices/countrySlice';
 import AddCountryModel from './Modal';
 import toast from 'react-hot-toast';
 
-const CountryTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
+const CountryTable = ({ openModal, setOpenModal, editMode, setEditMode }) => {
   const token = localStorage.getItem('token');
   const [selectedData, setSelectedData] = useState(null);
 
@@ -22,7 +22,6 @@ const CountryTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
 
   const dispatch = useDispatch();
   const { fetchCountry: Country } = useSelector((state) => state.fetchCountry);
-
 
   // Initial fetch of project types
   useEffect(() => {
@@ -50,7 +49,7 @@ const CountryTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
     setOpenModal(true);
   };
 
- const onSuccess = () => {
+  const onSuccess = () => {
     dispatch(fetchCountry({ token }));
     setOpenModal(false);
   };
@@ -77,7 +76,6 @@ const CountryTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
     }
   };
 
-
   const handleToggle = async (row) => {
     const updatedValue = !row.original.active;
     const payload = {
@@ -87,23 +85,24 @@ const CountryTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
     try {
       await dispatch(updateCountry({ token, id: row.original.id, payload })).unwrap();
       toast.dismiss();
-      toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
+      toast.success(`Status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
         iconTheme: {
-          primary: 'red', // This might directly change the color of the success icon
-          secondary: 'white', // The circle background
+          primary: updatedValue ? 'green' : 'red',
+          secondary: 'white',
         },
       });
       dispatch(fetchCountry({ token }));
     } catch (error) {
-      console.error('Failed to update toggle:', error, {
+      console.error('Failed to update toggle:', error);
+      toast.dismiss();
+      toast.error(error?.message || 'Failed to update status', {
         iconTheme: {
-          primary: 'red', // This might directly change the color of the error icon
-          secondary: 'white', // The circle background
+          primary: 'red',
+          secondary: 'white',
         },
       });
     }
   };
-
 
   const ActionIcons = ({ row }) => (
     <div className="action-icons flex justify-between gap-5">
@@ -138,7 +137,7 @@ const CountryTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
 
   const columns = useMemo(
     () => [
-        {
+      {
         accessorKey: 'name',
         header: 'Country',
         size: 150,
@@ -148,7 +147,7 @@ const CountryTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
           return <span className=''>{value.charAt(0).toUpperCase() + value.slice(1)}</span>;
         },
       },
-      
+
       {
         accessorKey: 'status',
         header: 'Status',

@@ -55,7 +55,7 @@ const Modal = ({ open, setOpenModal, editData }) => {
       if (response.name[0] != "has already been taken") {
         toast.success(`Tag ${editData?.id ? 'updated' : 'created'} successfully`, {
           iconTheme: {
-            primary: 'red', // This might directly change the color of the success icon
+            primary: 'green', // This might directly change the color of the success icon
             secondary: 'white', // The circle background
           },
         })

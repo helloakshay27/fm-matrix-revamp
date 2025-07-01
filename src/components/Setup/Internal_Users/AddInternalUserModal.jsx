@@ -119,7 +119,13 @@ const AddInternalUser = ({
 
             if (!response.user_exists && !response.error) {
                 toast.success(
-                    `User ${isEditMode ? "updated" : "created"} successfully`
+                    `User ${isEditMode ? "updated" : "created"} successfully`,
+                    {
+                        iconTheme: {
+                            primary: 'green', // This might directly change the color of the success icon
+                            secondary: 'white', // The circle background
+                        },
+                    }
                 );
                 handleSuccess();
             } else {

@@ -97,8 +97,8 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
       toast.dismiss();
       toast.success(`Status ${payload.active ? 'activated' : 'deactivated'} successfully`, {
         iconTheme: {
-          primary: 'red', // This might directly change the color of the success icon
-          secondary: 'white', // The circle background
+          primary: payload.active ? 'green' : 'red',
+          secondary: 'white',
         },
       });
       dispatch(fetchStatus({ token })); // Re-fetch all statuses to update the table

@@ -39,7 +39,12 @@ const Modal = ({ setOpenModal, openModal, isEdit, existingData = {} }) => {
         await dispatch(createStatus({ token, payload })).unwrap();
       }
 
-      toast.success(`Status ${isEdit ? 'updated' : 'created'} successfully`)
+      toast.success(`Status ${isEdit ? 'updated' : 'created'} successfully`, {
+        iconTheme: {
+          primary: 'green', // This might directly change the color of the success icon
+          secondary: 'white',
+        },
+      })
       handleSuccess();
     } catch (error) {
       console.log(error);

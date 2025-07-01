@@ -102,8 +102,8 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
         priority: templateDetails.priority || "",
         tags: mappedTags,
         projectTeam: templateDetails.project_team_id || "",
-        createChannel: templateDetails.createChannel || false,
-        createTemplate: templateDetails.createTemplate || false,
+        createChannel: templateDetails.create_channel || false,
+        createTemplate: templateDetails.is_template || false,
       });
     }
   }, [templateDetails])
@@ -134,8 +134,8 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
         priority: editData.priority || "",
         tags: mappedTags,
         projectTeam: editData.project_team_id || "",
-        createChannel: editData.createChannel || false,
-        createTemplate: editData.createTemplate || false,
+        createChannel: editData.create_channel || false,
+        createTemplate: editData.is_template || false,
       });
 
       setPrevTags(mappedTags);

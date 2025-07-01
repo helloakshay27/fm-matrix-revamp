@@ -28,7 +28,13 @@ const ActionIcons = ({ row, onEditClick }) => {
       await dispatch(fetchInternalUser({ token })).unwrap();
       setIsActive(updatedValue);
       toast.dismiss();
-      toast.success(`Status ${updatedValue ? 'activated' : 'deactivated'} successfully`);
+
+      toast.success(`Status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
+        iconTheme: {
+          primary: updatedValue ? 'green' : 'red',
+          secondary: 'white',
+        }
+      });
     } catch (error) {
       console.error('Toggle failed:', error);
       toast.error(error?.message || error?.errors || 'Failed to update status', {
@@ -39,6 +45,7 @@ const ActionIcons = ({ row, onEditClick }) => {
       });
     }
   };
+
 
   return (
     <div className="action-icons flex justify-start gap-5">

@@ -81,7 +81,7 @@ const Modal = ({ openModal, setOpenModal, editMode, existingData }) => {
       } else {
         toast.success(`Group ${editMode ? 'updated' : 'created'} successfully`, {
           iconTheme: {
-            primary: 'red', // This might directly change the color of the success icon
+            primary: 'green', // This might directly change the color of the success icon
             secondary: 'white', // The circle background
           },
         });

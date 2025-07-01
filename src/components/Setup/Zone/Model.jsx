@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchOrganizations } from "../../../redux/slices/organizationSlice";
 import { fetchCompany } from "../../../redux/slices/companySlice";
-import{updateZone, createZone} from "../../../redux/slices/zoneSlice";
+import { updateZone, createZone } from "../../../redux/slices/zoneSlice";
 // import {fetchregion} from "../../../redux/slices/regionSlice";
 
 import toast from "react-hot-toast";
@@ -23,17 +23,17 @@ const AddZoneModel = ({
   const dispatch = useDispatch();
 
 
-  const {fetchRegion: region} = useSelector((state) => state.fetchRegion);
+  const { fetchRegion: region } = useSelector((state) => state.fetchRegion);
   const { loading, success } = useSelector((state) => state.createZone);
   const { loading: editLoading, success: editSuccess } = useSelector(
     (state) => state.updateZone
   )
-//   const {fetchregion: countries} = useSelector((state) => state.fetchregion);
+  //   const {fetchregion: countries} = useSelector((state) => state.fetchregion);
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
-    region:"",
+    region: "",
     // country: "",
   });
 
@@ -63,9 +63,9 @@ const AddZoneModel = ({
     if (formData.name === "") {
       setError("Please enter name");
       return;
-    } 
+    }
 
-    
+
 
     const payload = {
       zone: {
@@ -80,9 +80,9 @@ const AddZoneModel = ({
       if (isEditMode && initialData?.id) {
         response = await dispatch(
           updateZone({
-             token,
-             id: initialData.id,
-             payload,
+            token,
+            id: initialData.id,
+            payload,
           })
         );
       } else {
@@ -98,7 +98,7 @@ const AddZoneModel = ({
           `Zone ${isEditMode ? "updated" : "created"} successfully`,
           {
             iconTheme: {
-              primary: "red", // This might directly change the color of the success icon
+              primary: "green", // This might directly change the color of the success icon
               secondary: "white", // The circle background
             },
           }
@@ -171,7 +171,7 @@ const AddZoneModel = ({
             />
           </div>
         </div>
-{/* 
+        {/* 
           <div className="px-6">
             <label className="block text-[11px] text-[#1B1B1B] mb-1">
               Country<span className="text-red-500 ml-1">*</span>

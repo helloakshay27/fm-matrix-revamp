@@ -18,9 +18,9 @@ const ActionIcons = ({ row, onEdit }) => (
             className="cursor-pointer"
             onClick={() => onEdit(row.original)}
         />
-        <button title="Delete">
+        {/* <button title="Delete">
             <DeleteOutlineOutlinedIcon sx={{ fontSize: 20 }} />
-        </button>
+        </button> */}
     </div>
 );
 
@@ -29,23 +29,37 @@ const Organizations = () => {
     const token = localStorage.getItem("token");
 
     const { fetchOrganizations: organizations } = useSelector(state => state.fetchOrganizations);
-    const { success: statusSuccess } = useSelector(state => state.editOrganization);
+    const { success: editSuccess } = useSelector(state => state.editOrganization); // Renamed for clarity
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editData, setEditData] = useState(null);
+    const [lastAction, setLastAction] = useState(null); // Track action: 'toggle' or 'modalEdit'
 
     useEffect(() => {
         dispatch(fetchOrganizations({ token }));
     }, [dispatch, token]);
 
     useEffect(() => {
-        if (statusSuccess) {
+        if (editSuccess && lastAction) {
             toast.dismiss();
-            toast.success("Organization updated successfully", {
-                iconTheme: { primary: "red", secondary: "white" }
-            });
+            if (lastAction.type === 'toggle') {
+                toast.success(`Organization ${lastAction.status ? 'activated' : 'deactivated'}`, {
+                    iconTheme: {
+                        primary: lastAction.status ? 'green' : 'red',
+                        secondary: 'white',
+                    },
+                });
+            } else if (lastAction.type === 'modalEdit') {
+                toast.success("Organization updated successfully", {
+                    iconTheme: {
+                        primary: 'green',
+                        secondary: 'white',
+                    },
+                });
+            }
+            setLastAction(null); // Reset
         }
-    }, [statusSuccess]);
+    }, [editSuccess, lastAction]);
 
     const handleEditClick = useCallback((data) => {
         setEditData(data);
@@ -56,8 +70,13 @@ const Organizations = () => {
         const updatedStatus = !row.original.active;
         const payload = new FormData();
         payload.append("organization[active]", updatedStatus);
-
+        setLastAction({ type: 'toggle', status: updatedStatus }); // Set action type and status
         dispatch(editOrganization({ token, payload, id: row.original.id }));
+    }, [dispatch, token]);
+
+    const handleModalEdit = useCallback((payload, id) => {
+        setLastAction({ type: 'modalEdit' }); // Set action type
+        dispatch(editOrganization({ token, payload, id }));
     }, [dispatch, token]);
 
     const formatToDDMMYYYY = (dateString) => {
@@ -144,6 +163,7 @@ const Organizations = () => {
                 open={isModalOpen}
                 setOpenModal={setIsModalOpen}
                 editData={editData}
+                onEditSubmit={handleModalEdit} // Pass handleModalEdit
             />
         </div>
     );

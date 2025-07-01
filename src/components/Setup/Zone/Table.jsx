@@ -12,11 +12,11 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 
 import { fetchRegion } from '../../../redux/slices/regionSlice';
-import {fetchZone, updateZone, deleteZone} from '../../../redux/slices/zoneSlice';
+import { fetchZone, updateZone, deleteZone } from '../../../redux/slices/zoneSlice';
 import AddZoneModel from './Model';
 import toast from 'react-hot-toast';
 
-const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
+const ZoneTable = ({ openModal, setOpenModal, editMode, setEditMode }) => {
   const token = localStorage.getItem('token');
   const [selectedData, setSelectedData] = useState(null);
 
@@ -55,7 +55,7 @@ const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
     setOpenModal(true);
   };
 
- const onSuccess = () => {
+  const onSuccess = () => {
     dispatch(fetchZone({ token }));
     setOpenModal(false);
   };
@@ -94,8 +94,8 @@ const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
       toast.dismiss();
       toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
         iconTheme: {
-          primary: 'red', // This might directly change the color of the success icon
-          secondary: 'white', // The circle background
+          primary: updatedValue ? 'green' : 'red',
+          secondary: 'white',
         },
       });
       dispatch(fetchZone({ token }));
@@ -143,7 +143,7 @@ const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
 
   const columns = useMemo(
     () => [
-           {
+      {
         accessorKey: 'name',
         header: 'Zone',
         size: 150,
@@ -163,16 +163,16 @@ const ZoneTable = ({ openModal, setOpenModal ,editMode, setEditMode}) => {
           return value.charAt(0).toUpperCase() + value.slice(1);
         },
       },
-          {
+      {
         accessorKey: 'region_id',
         header: 'Region',
         size: 150,
         cell: ({ getValue }) => {
-          const value=Region.find(org => org.id === getValue())?.name;
+          const value = Region.find(org => org.id === getValue())?.name;
           return value ? <span className="pl-2">{value.charAt(0).toUpperCase() + value.slice(1)}</span> : null;
         },
       },
-        
+
       {
         accessorKey: 'status',
         header: 'Status',

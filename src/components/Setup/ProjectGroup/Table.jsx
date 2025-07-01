@@ -101,7 +101,7 @@ const GroupTable = () => {
         toast.dismiss();
         toast.success(`status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
           iconTheme: {
-            primary: 'red', // This might directly change the color of the success icon
+            primary: updatedValue ? 'green' : 'red', // This might directly change the color of the success icon
             secondary: 'white', // The circle background
           },
         });
