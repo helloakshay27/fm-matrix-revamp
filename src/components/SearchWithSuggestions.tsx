@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -10,9 +9,9 @@ interface SearchWithSuggestionsProps {
   className?: string;
 }
 
-export const SearchWithSuggestions = ({ 
-  placeholder = "Search...", 
-  onSearch, 
+export const SearchWithSuggestions = ({
+  placeholder = "Search...",
+  onSearch,
   suggestions = [],
   className = ""
 }: SearchWithSuggestionsProps) => {
@@ -25,9 +24,11 @@ export const SearchWithSuggestions = ({
 
   useEffect(() => {
     if (searchValue.length > 0) {
-      const filtered = suggestions.filter(suggestion =>
-        suggestion.toLowerCase().includes(searchValue.toLowerCase())
-      ).slice(0, 5); // Limit to 5 suggestions
+      const filtered = suggestions
+        .filter(suggestion =>
+          suggestion.toLowerCase().includes(searchValue.toLowerCase())
+        )
+        .slice(0, 5); // Limit to 5
       setFilteredSuggestions(filtered);
       setShowSuggestions(filtered.length > 0);
     } else {
@@ -55,12 +56,12 @@ export const SearchWithSuggestions = ({
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setActiveSuggestion(prev => 
+      setActiveSuggestion(prev =>
         prev < filteredSuggestions.length - 1 ? prev + 1 : prev
       );
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setActiveSuggestion(prev => prev > 0 ? prev - 1 : -1);
+      setActiveSuggestion(prev => (prev > 0 ? prev - 1 : -1));
     } else if (e.key === 'Enter') {
       e.preventDefault();
       if (activeSuggestion >= 0) {
@@ -79,7 +80,6 @@ export const SearchWithSuggestions = ({
   };
 
   const handleInputBlur = (e: React.FocusEvent) => {
-    // Delay hiding suggestions to allow for clicks
     setTimeout(() => {
       if (!suggestionsRef.current?.contains(e.relatedTarget as Node)) {
         setShowSuggestions(false);
@@ -90,6 +90,7 @@ export const SearchWithSuggestions = ({
 
   return (
     <div className={`relative ${className}`}>
+      {/* Input with Icon */}
       <div className="relative">
         <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-[#AAB9C5]" />
         <Input
@@ -101,28 +102,28 @@ export const SearchWithSuggestions = ({
           onKeyDown={handleKeyDown}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
-          className="pl-10 pr-4 py-2 border border-[#AAB9C5] rounded-lg bg-white text-[#AAB9C5] placeholder:text-[#AAB9C5] focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+          className="peer pl-10 pr-4 py-2 border border-[#AAB9C5] rounded-lg bg-white text-[#1F2937] placeholder:text-[#AAB9C5] focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
         />
       </div>
-      
+
+      {/* Suggestions Dropdown */}
       {showSuggestions && filteredSuggestions.length > 0 && (
         <div
           ref={suggestionsRef}
-          className="fixed bg-white border border-[#AAB9C5] rounded-lg shadow-xl z-[99999] mt-1 max-h-48 overflow-y-auto"
-          style={{
-            top: inputRef.current ? inputRef.current.getBoundingClientRect().bottom + window.scrollY + 4 : 0,
-            left: inputRef.current ? inputRef.current.getBoundingClientRect().left + window.scrollX : 0,
-            width: inputRef.current ? inputRef.current.getBoundingClientRect().width : 'auto',
-          }}
+          className="absolute left-0 right-0 bg-white border border-[#AAB9C5] rounded-lg shadow-xl z-50 mt-1 max-h-48 overflow-y-auto"
         >
           {filteredSuggestions.map((suggestion, index) => (
             <div
               key={index}
               onClick={() => handleSuggestionClick(suggestion)}
               className={`px-4 py-2 cursor-pointer hover:bg-gray-100 ${
-                index === activeSuggestion ? 'bg-[#C72030] text-white' : 'text-gray-700'
+                index === activeSuggestion
+                  ? 'bg-[#C72030] text-white'
+                  : 'text-gray-700'
               } ${index === 0 ? 'rounded-t-lg' : ''} ${
-                index === filteredSuggestions.length - 1 ? 'rounded-b-lg' : 'border-b border-gray-100'
+                index === filteredSuggestions.length - 1
+                  ? 'rounded-b-lg'
+                  : 'border-b border-gray-100'
               }`}
             >
               {suggestion}
