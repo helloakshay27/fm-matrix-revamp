@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -171,7 +170,7 @@ export const AddChecklistDashboard = () => {
               onClick={handleAddQuestion}
               className="w-8 h-8 rounded-full bg-green-600 hover:bg-green-700 text-white p-0"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 text-white stroke-white" />
             </Button>
             <span className="text-lg">{questions.length}</span>
           </div>

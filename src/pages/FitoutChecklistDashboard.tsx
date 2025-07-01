@@ -39,7 +39,7 @@ export const FitoutChecklistDashboard = () => {
           onClick={handleAddChecklist}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4 mr-2 text-white stroke-white" />
           Add Checklist
         </Button>
         <Button variant="outline" className="border-gray-300">
