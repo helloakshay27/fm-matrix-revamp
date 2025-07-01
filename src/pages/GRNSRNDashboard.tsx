@@ -6,6 +6,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { GRNFilterDialog } from "@/components/GRNFilterDialog";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 export const GRNSRNDashboard = () => {
   const navigate = useNavigate();
@@ -322,15 +330,34 @@ export const GRNSRNDashboard = () => {
 
       {/* Pagination */}
       <div className="flex items-center justify-center mt-6">
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="bg-[#C72030] text-white">1</Button>
-          <Button variant="outline" size="sm">2</Button>
-          <Button variant="outline" size="sm">3</Button>
-          <Button variant="outline" size="sm">4</Button>
-          <Button variant="outline" size="sm">5</Button>
-          <Button variant="outline" size="sm">6</Button>
-          <Button variant="outline" size="sm">Last ≫</Button>
-        </div>
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious href="#" />
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#" isActive>1</PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">2</PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">3</PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">4</PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">5</PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">6</PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext href="#" />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
 
       <GRNFilterDialog 
