@@ -116,12 +116,12 @@ export const SearchWithSuggestions = ({
         createPortal(
           <div
             className="absolute bg-white border border-[#AAB9C5] rounded-lg shadow-xl z-[9999] max-h-48 overflow-y-auto"
-            style={{
-              position: 'absolute',
-              top: `${getSuggestionBoxPosition().top}px`,
-              left: `${getSuggestionBoxPosition().left}px`,
-              width: `${getSuggestionBoxPosition().width}px`,
-            }}
+           style={{
+  position: 'absolute',
+  top: `${getSuggestionBoxPosition().top + 8}px`,
+  left: `${getSuggestionBoxPosition().left}px`,
+  width: `${getSuggestionBoxPosition().width}px`,
+}}
           >
             {filteredSuggestions.map((suggestion, index) => (
               <div
