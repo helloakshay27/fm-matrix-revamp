@@ -250,7 +250,7 @@ export const FitoutSetupDashboard = () => {
           <label htmlFor="file-upload">
             <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white cursor-pointer" asChild>
               <span>
-                <Upload className="w-4 h-4 mr-2" />
+                <Upload className="w-4 h-4 mr-2 text-white stroke-white" />
                 Upload
               </span>
             </Button>
