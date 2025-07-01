@@ -151,7 +151,11 @@ export const ScheduleListDashboard = () => {
             onChange={(e) => handleSearch(e.target.value)}
             className="w-64"
           />
-          <Button style={{ backgroundColor: '#C72030' }} className="text-white">
+          <Button 
+style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }}
+className="hover:opacity-90 px-4"
+
+>
             Go!
           </Button>
           <Button variant="outline" className="border-[#C72030] text-[#C72030]">
