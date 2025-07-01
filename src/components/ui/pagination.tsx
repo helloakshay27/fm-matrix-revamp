@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
 
@@ -9,7 +8,10 @@ const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
   <nav
     role="navigation"
     aria-label="pagination"
-    className={cn("mx-auto flex w-full justify-center", className)}
+    className={cn(
+      "mx-auto flex w-full justify-center overflow-x-auto sm:overflow-visible", // enable horizontal scroll on mobile
+      className
+    )}
     {...props}
   />
 )
@@ -21,7 +23,11 @@ const PaginationContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ul
     ref={ref}
-    className={cn("flex flex-row items-center gap-1", className)}
+    className={cn(
+      "flex flex-row items-center gap-1 sm:flex-row sm:gap-1", // flex-row for desktop, can stack if needed for mobile
+      "min-w-max sm:min-w-0", // prevent wrapping cutoff on mobile
+      className
+    )}
     {...props}
   />
 ))
@@ -101,7 +107,10 @@ const PaginationEllipsis = ({
 }: React.ComponentProps<"span">) => (
   <span
     aria-hidden
-    className={cn("flex h-8 min-w-[32px] items-center justify-center rounded-none text-black px-2", className)}
+    className={cn(
+      "flex h-8 min-w-[32px] items-center justify-center rounded-none text-black px-2",
+      className
+    )}
     {...props}
   >
     <MoreHorizontal className="h-4 w-4 text-black" />
