@@ -135,7 +135,7 @@ export const POFeedsPage = () => {
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Enter your comment..."
-                className="min-h-[100px] focus:ring-[#C72030] focus:border-[#C72030]"
+                className="min-h-[100px] focus:ring-[#BF213E] focus:border-[#BF213E]"
               />
             </div>
 
@@ -190,7 +190,8 @@ export const POFeedsPage = () => {
             <div className="flex justify-end">
               <Button
                 onClick={handleSubmit}
-                className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+                className="hover:bg-[#F2EEE9]/90"
               >
                 Submit Comment
               </Button>

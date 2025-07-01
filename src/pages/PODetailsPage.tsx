@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from 'react-router-dom';
@@ -108,7 +107,8 @@ export const PODetailsPage = () => {
           </div>
           <Button
             onClick={handleFeeds}
-            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+            className="hover:bg-[#F2EEE9]/90"
           >
             <MessageSquare className="w-4 h-4 mr-2" />
             Feeds
@@ -121,7 +121,8 @@ export const PODetailsPage = () => {
             Print
           </Button>
           <Button
-            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+            className="hover:bg-[#F2EEE9]/90"
           >
             Debit/Credit Note
           </Button>
