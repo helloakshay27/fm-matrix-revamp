@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
@@ -451,10 +452,7 @@ button:has(+ input[placeholder*="Search"]),
 button:has(+ input[placeholder*="search"]),
 button:has(+ input[class*="search"]),
 .search-button,
-button[class*="go-button"],
-/* Target "Go!" buttons specifically */
-button:contains("Go!"),
-button[type="button"]:contains("Go!") {
+button[class*="go-button"] {
   background-color: #C4B8D0 !important;
   opacity: 0.35 !important;
 }
