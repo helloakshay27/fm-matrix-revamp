@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import { useDispatch, useSelector } from 'react-redux';
-import { createTag, fetchActiveTags, resetSuccess, updateTag } from '../../../redux/slices/tagsSlice';
+import { createTag, fetchActiveTags, fetchTags, resetSuccess, updateTag } from '../../../redux/slices/tagsSlice';
 import { toast } from 'react-hot-toast';
 
 const Modal = ({ open, setOpenModal, editData }) => {
@@ -39,7 +39,7 @@ const Modal = ({ open, setOpenModal, editData }) => {
 
     const payload = {
       company_tag: {
-        name: name.trim().toLowerCase(),
+        name: name,
         tag_type: type,
         active: active
       }
@@ -59,6 +59,7 @@ const Modal = ({ open, setOpenModal, editData }) => {
             secondary: 'white', // The circle background
           },
         })
+        await dispatch(fetchTags({ token })).unwrap();
         handleSuccess();
       }
       else {

@@ -35,7 +35,7 @@ const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
 
     const payload = {
       lock_role: {
-        name: roleInput.toLowerCase().replace(' ', '_').trim(),
+        name: roleInput,
         display_name: roleInput,
         active: 1,
       },
@@ -47,7 +47,6 @@ const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
       } else {
         response = await dispatch(createRole({ token, payload })).unwrap();
       }
-      console.log(response);
       if (response.name[0] != "has already been taken") {
         toast.success(`Role ${mode === 'edit' ? 'updated' : 'created'} successfully`, {
           iconTheme: {
@@ -68,6 +67,7 @@ const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
 
 
   const handleSuccess = () => {
+    setRoleInput("");
     setError("");
     onSuccess();
   }

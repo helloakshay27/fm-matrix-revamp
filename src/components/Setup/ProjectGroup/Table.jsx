@@ -178,12 +178,7 @@ const GroupTable = () => {
         size: 100,
         cell: ({ row, getValue }) => {
           const raw = row.original ? getValue() : '';
-          if (!raw) return null;
-          // Title-case every word
           return raw
-            .split(' ')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-            .join(' ');
         },
       },
       {

@@ -115,9 +115,10 @@ const RoleTable = () => {
       size: 650,
       cell: ({ row, getValue }) => {
         const value = row.original ? getValue() : null;
-        if (!value) return null;
-        const formattedValue = value.replace(/_/g, ' ');
-        return formattedValue.charAt(0).toUpperCase() + formattedValue.slice(1);
+        // if (!value) return null;
+        // const formattedValue = value.replace(/_/g, ' ');
+        // return formattedValue.charAt(0).toUpperCase() + formattedValue.slice(1);
+        return value
       },
     },
     {

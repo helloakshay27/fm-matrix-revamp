@@ -108,7 +108,7 @@ const TypesTable = () => {
         cell: ({ row, getValue }) => {
           const value = getValue();
           return row.original && value
-            ? value.charAt(0).toUpperCase() + value.slice(1)
+            ? value
             : null;
         },
       },

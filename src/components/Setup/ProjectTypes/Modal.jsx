@@ -28,8 +28,9 @@ const Modal = ({ openModal, setOpenModal, editMode = false, existingData = {} })
     if (!trimmedType) return;
 
     const payload = {
-      name: trimmedType.toLowerCase(),
+      name: trimmedType,
       created_by_id: JSON.parse(localStorage.getItem('user'))?.id || '',
+      active: true
     };
 
     try {

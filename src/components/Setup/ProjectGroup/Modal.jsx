@@ -61,7 +61,7 @@ const Modal = ({ openModal, setOpenModal, editMode, existingData }) => {
     console.log(selectedUsers);
 
     const payload = {
-      name: trimmedName.toLowerCase(),
+      name: trimmedName,
       created_by_id: JSON.parse(localStorage.getItem('user')).id,
       user_ids: selectedUsers.map((user) => user.value),
       active: existingData?.active || true,

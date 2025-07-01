@@ -140,8 +140,9 @@ const TypesTable = () => {
         size: 450,
         cell: ({ row, getValue }) => {
           const value = getValue();
-          if (!value) return null;
-          return value.charAt(0).toUpperCase() + value.slice(1);
+          // if (!value) return null;
+          // return value.charAt(0).toUpperCase() + value.slice(1);
+          return value
         },
       },
       {
