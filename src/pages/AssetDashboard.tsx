@@ -7,6 +7,15 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Upload, Download, FileText, Search, Filter, Eye } from 'lucide-react';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { AssetFilterDialog } from '@/components/AssetFilterDialog';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const assetData = [
   {
@@ -430,26 +439,66 @@ export const AssetDashboard = () => {
         </div>
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-center gap-2 mt-6">
-        <Button
-          variant="default"
-          size="sm"
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-3 py-2"
-        >
-          1
-        </Button>
-        {[2, 3, 4, 5, 6, 7, 8].map((page) => (
-          <Button
-            key={page}
-            variant="outline"
-            size="sm"
-            className="bg-white hover:bg-gray-50 border-gray-300 px-3 py-2"
-          >
-            {page}
-          </Button>
-        ))}
-        <Button variant="outline" size="sm" className="bg-white hover:bg-gray-50 border-gray-300 px-3 py-2">Last »</Button>
+      {/* Updated Pagination */}
+      <div className="mt-6">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious href="#" />
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#" isActive>
+                1
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">
+                2
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">
+                3
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">
+                4
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">
+                5
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">
+                6
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">
+                7
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">
+                8
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationEllipsis />
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">
+                Last
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext href="#" />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
 
       {/* Modals */}
