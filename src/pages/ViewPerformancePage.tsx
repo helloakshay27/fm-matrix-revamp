@@ -56,16 +56,14 @@ export const ViewPerformancePage = () => {
           <h1 className="text-2xl font-bold text-[#1a1a1a]">meter reading</h1>
           <div className="flex gap-3">
             <Button 
+              variant="secondary"
               onClick={handleApply}
-              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-              className="text-[#BF213E] hover:bg-[#F2EEE9]/90"
             >
               Apply
             </Button>
             <Button 
+              variant="outline"
               onClick={handleReset}
-              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-              className="text-[#BF213E] hover:bg-[#F2EEE9]/90"
             >
               Reset
             </Button>

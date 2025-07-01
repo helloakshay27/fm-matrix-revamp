@@ -67,8 +67,8 @@ export const WOFilterDialog: React.FC<WOFilterDialogProps> = ({
           
           <div className="flex gap-2 pt-4">
             <Button 
-              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-              className="flex-1 text-[#BF213E] hover:bg-[#F2EEE9]/90"
+              variant="secondary"
+              className="flex-1"
               onClick={() => onOpenChange(false)}
             >
               Apply

@@ -193,21 +193,23 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
           {/* Action Buttons */}
           <div className="flex gap-4 pt-6">
             <Button 
+              variant="secondary"
               onClick={handleSubmit}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex-1 h-11"
+              className="flex-1 h-11"
             >
               Submit
             </Button>
             <Button 
+              variant="outline"
               onClick={handleExport}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex-1 h-11"
+              className="flex-1 h-11"
             >
               Export
             </Button>
             <Button 
+              variant="outline"
               onClick={handleReset}
-              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-              className="flex-1 h-11 text-[#BF213E] hover:bg-[#F2EEE9]/90"
+              className="flex-1 h-11"
             >
               Reset
             </Button>

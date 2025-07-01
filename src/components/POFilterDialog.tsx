@@ -76,16 +76,16 @@ export const POFilterDialog: React.FC<POFilterDialogProps> = ({
 
         <div className="flex gap-3 pt-4">
           <Button 
+            variant="secondary"
             onClick={handleApply}
-            style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-            className="flex-1 text-[#BF213E] hover:bg-[#F2EEE9]/90"
+            className="flex-1"
           >
             Apply
           </Button>
           <Button 
+            variant="outline"
             onClick={handleReset}
-            style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-            className="flex-1 text-[#BF213E] hover:bg-[#F2EEE9]/90"
+            className="flex-1"
           >
             Reset
           </Button>
