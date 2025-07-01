@@ -1,12 +1,12 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Download, Mail, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { NonFTEImportModal } from '@/components/NonFTEImportModal';
 import { NonFTEEmailModal } from '@/components/NonFTEEmailModal';
 import { NonFTEFiltersModal } from '@/components/NonFTEFiltersModal';
+import { SearchWithSuggestions } from '@/components/SearchWithSuggestions';
+import { useSearchSuggestions } from '@/hooks/useSearchSuggestions';
 
 export const NonFTEUsersDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -14,6 +14,7 @@ export const NonFTEUsersDashboard = () => {
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [filtersModalOpen, setFiltersModalOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const users = [
     { name: "Anand Babu Pawar", gender: "Male", mobile: "8355857800", email: "anandpawar54136@gmail.com", department: "FM", role: "Shift Engineer" },
@@ -38,9 +39,28 @@ export const NonFTEUsersDashboard = () => {
     { name: "Devendra Kumar", gender: "", mobile: "8104781760", email: "devendra.kumar@tuvindia.co.in", department: "", role: "" },
   ];
 
+  // Generate search suggestions from user data
+  const suggestions = useSearchSuggestions({
+    data: users,
+    searchFields: ['name', 'email', 'department', 'role', 'mobile']
+  });
+
+  // Filter users based on search term
+  const filteredUsers = users.filter(user =>
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.mobile.includes(searchTerm)
+  );
+
   const handleApplyFilters = (filters: any) => {
     setAppliedFilters(filters);
     console.log('Applied filters:', filters);
+  };
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
   };
 
   return (
@@ -80,6 +100,16 @@ export const NonFTEUsersDashboard = () => {
         </Button>
       </div>
 
+      {/* Search Bar */}
+      <div className="mb-6">
+        <SearchWithSuggestions
+          placeholder="Search users by name, email, department..."
+          onSearch={handleSearch}
+          suggestions={suggestions}
+          className="w-96"
+        />
+      </div>
+
       {appliedFilters && (
         <div className="bg-blue-50 p-3 rounded-md mb-4">
           <p className="text-sm text-blue-800">
@@ -110,7 +140,7 @@ export const NonFTEUsersDashboard = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user, index) => (
+            {filteredUsers.map((user, index) => (
               <TableRow key={index} className="hover:bg-gray-50">
                 <TableCell className="font-medium">{user.name}</TableCell>
                 <TableCell>{user.gender}</TableCell>
@@ -127,6 +157,13 @@ export const NonFTEUsersDashboard = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Show message when no users found */}
+      {filteredUsers.length === 0 && (
+        <div className="text-center py-8">
+          <p className="text-gray-500">No users found matching your search.</p>
+        </div>
+      )}
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

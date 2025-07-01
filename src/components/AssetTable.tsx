@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Eye, Download, Filter, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { EditStatusModal } from '@/components/EditStatusModal';
+import { SearchWithSuggestions } from './SearchWithSuggestions';
+import { useSearchSuggestions } from '@/hooks/useSearchSuggestions';
 
 interface AssetTableProps {
   searchTerm?: string;
@@ -14,6 +14,7 @@ export const AssetTable = ({ searchTerm = '' }: AssetTableProps) => {
   const navigate = useNavigate();
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
   const [selectedAssetId, setSelectedAssetId] = useState<string>('');
+  const [currentSearchTerm, setCurrentSearchTerm] = useState(searchTerm);
 
   // Sample data matching the screenshot
   const allAssets = [
@@ -138,15 +139,25 @@ export const AssetTable = ({ searchTerm = '' }: AssetTableProps) => {
     }
   ];
 
+  // Generate search suggestions from asset data
+  const suggestions = useSearchSuggestions({
+    data: allAssets,
+    searchFields: ['assetName', 'assetId', 'assetCode', 'assetNo', 'building', 'equipmentId', 'status', 'site', 'meterType', 'assetType']
+  });
+
   // Filter assets based on search term
   const filteredAssets = allAssets.filter(asset => 
-    asset.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    asset.assetId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    asset.assetCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    asset.assetNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    asset.building.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    asset.equipmentId.toLowerCase().includes(searchTerm.toLowerCase())
+    asset.assetName.toLowerCase().includes(currentSearchTerm.toLowerCase()) ||
+    asset.assetId.toLowerCase().includes(currentSearchTerm.toLowerCase()) ||
+    asset.assetCode.toLowerCase().includes(currentSearchTerm.toLowerCase()) ||
+    asset.assetNo.toLowerCase().includes(currentSearchTerm.toLowerCase()) ||
+    asset.building.toLowerCase().includes(currentSearchTerm.toLowerCase()) ||
+    asset.equipmentId.toLowerCase().includes(currentSearchTerm.toLowerCase())
   );
+
+  const handleSearch = (searchTerm: string) => {
+    setCurrentSearchTerm(searchTerm);
+  };
 
   const getStatusBadge = (status: string) => {
     if (status === 'In Use') {
@@ -168,124 +179,144 @@ export const AssetTable = ({ searchTerm = '' }: AssetTableProps) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-[#D5DbDB]">
+    <div className="space-y-4">
+      {/* Search Bar */}
+      <div className="flex items-center gap-4 mb-6">
+        <SearchWithSuggestions
+          placeholder="Search assets..."
+          onSearch={handleSearch}
+          suggestions={suggestions}
+          className="w-80"
+        />
+        <Button variant="outline" size="sm">
+          <Filter className="w-4 h-4 mr-2" />
+          Filters
+        </Button>
+        <Button variant="outline" size="sm">
+          <Download className="w-4 h-4 mr-2" />
+          Export
+        </Button>
+      </div>
+
       {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-[#f6f4ee]">
-            <tr>
-              <th className="px-4 py-3 text-left">
-                <input
-                  type="checkbox"
-                  className="rounded border-[#D5DbDB] text-[#C72030] focus:ring-[#C72030]"
-                />
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Actions
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Asset Name
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Asset ID
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Asset Code
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Asset No.
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Asset Status
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Equipment Id
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Site
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Building
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Wing
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Floor
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Area
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Room
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Meter Type
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
-                Asset Type
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-[#D5DbDB]">
-            {filteredAssets.map((asset) => (
-              <tr key={asset.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3">
+      <div className="bg-white rounded-xl shadow-sm border border-[#D5DbDB]">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-[#f6f4ee]">
+              <tr>
+                <th className="px-4 py-3 text-left">
                   <input
                     type="checkbox"
                     className="rounded border-[#D5DbDB] text-[#C72030] focus:ring-[#C72030]"
                   />
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleEyeClick(asset.assetId)}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleEditClick(asset.assetId)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.assetName}</td>
-                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.assetId}</td>
-                <td className="px-4 py-3 text-sm text-[#1a1a1a] font-mono text-xs">{asset.assetCode}</td>
-                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.assetNo}</td>
-                <td className="px-4 py-3">{getStatusBadge(asset.status)}</td>
-                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.equipmentId}</td>
-                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.site}</td>
-                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.building}</td>
-                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.wing}</td>
-                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.floor}</td>
-                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.area}</td>
-                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.room}</td>
-                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.meterType}</td>
-                <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.assetType}</td>
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+                  Actions
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+                  Asset Name
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+                  Asset ID
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+                  Asset Code
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+                  Asset No.
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+                  Asset Status
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+                  Equipment Id
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+                  Site
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+                  Building
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+                  Wing
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+                  Floor
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+                  Area
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+                  Room
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+                  Meter Type
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">
+                  Asset Type
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Show message when no assets found */}
-      {filteredAssets.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-gray-500">No assets found matching your search.</p>
+            </thead>
+            <tbody className="bg-white divide-y divide-[#D5DbDB]">
+              {filteredAssets.map((asset) => (
+                <tr key={asset.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      className="rounded border-[#D5DbDB] text-[#C72030] focus:ring-[#C72030]"
+                    />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEyeClick(asset.assetId)}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEditClick(asset.assetId)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.assetName}</td>
+                  <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.assetId}</td>
+                  <td className="px-4 py-3 text-sm text-[#1a1a1a] font-mono text-xs">{asset.assetCode}</td>
+                  <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.assetNo}</td>
+                  <td className="px-4 py-3">{getStatusBadge(asset.status)}</td>
+                  <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.equipmentId}</td>
+                  <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.site}</td>
+                  <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.building}</td>
+                  <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.wing}</td>
+                  <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.floor}</td>
+                  <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.area}</td>
+                  <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.room}</td>
+                  <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.meterType}</td>
+                  <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.assetType}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
 
-      {/* Edit Status Modal */}
-      <EditStatusModal 
-        isOpen={isEditStatusOpen}
-        onClose={() => setIsEditStatusOpen(false)}
-      />
+        {/* Show message when no assets found */}
+        {filteredAssets.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No assets found matching your search.</p>
+          </div>
+        )}
+
+        {/* Edit Status Modal */}
+        <EditStatusModal 
+          isOpen={isEditStatusOpen}
+          onClose={() => setIsEditStatusOpen(false)}
+        />
+      </div>
     </div>
   );
 };
