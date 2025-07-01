@@ -19,15 +19,14 @@ export const DynamicHeader = () => {
 
   return (
     <div className="h-12 bg-white border-b border-[#D5DbDB] fixed top-16 right-0 left-64 z-10">
-      <div className="flex items-center h-full px-6">
-        {/* Enable horizontal scroll on mobile only */}
-        <div className="flex w-full overflow-x-auto md:overflow-visible no-scrollbar">
-          <div className="flex md:justify-between w-max md:w-full">
+      <div className="flex items-center h-full px-4">
+        <div className="w-full overflow-x-auto md:overflow-visible no-scrollbar">
+          <div className="flex w-max whitespace-nowrap md:justify-between md:w-full">
             {packages.map((packageName) => (
               <button
                 key={packageName}
                 onClick={() => setCurrentSection(packageName)}
-                className={`whitespace-nowrap pb-3 transition-colors text-sm ${
+                className={`px-3 pb-3 text-sm transition-colors whitespace-nowrap ${
                   currentSection === packageName
                     ? 'text-[#C72030] border-b-2 border-[#C72030] font-medium'
                     : 'text-[#1a1a1a] opacity-70 hover:opacity-100'
