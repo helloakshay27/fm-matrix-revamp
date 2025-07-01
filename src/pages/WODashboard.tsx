@@ -70,8 +70,7 @@ export const WODashboard = () => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex gap-3">
           <Button 
-            style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-            className="hover:bg-[#F2EEE9]/90"
+            className="bg-[#C72030] hover:bg-[#A01020] text-white"
             onClick={() => navigate('/finance/wo/add')}
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -93,12 +92,11 @@ export const WODashboard = () => {
               placeholder="Search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BF213E] focus:border-transparent w-64"
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent w-64"
             />
           </div>
           <Button 
-            style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-            className="hover:bg-[#F2EEE9]/90 px-4"
+            className="bg-[#C72030] hover:bg-[#A01020] text-white px-4"
           >
             Go!
           </Button>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -93,31 +92,31 @@ Reported By: ${incident.reportedBy}
           <div className="flex gap-3">
             <Button
               onClick={handleEditDetails}
-              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-              className="hover:bg-[#F2EEE9]/90"
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:opacity-90"
             >
               <Edit className="w-4 h-4 mr-2" />
               Edit Details
             </Button>
             <Button
               onClick={() => setShowUpdateModal(true)}
-              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-              className="hover:bg-[#F2EEE9]/90"
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:opacity-90"
             >
               Update Status
             </Button>
             <Button
               onClick={() => setShowInjuryModal(true)}
-              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-              className="hover:bg-[#F2EEE9]/90"
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:opacity-90"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Injury
             </Button>
             <Button
               onClick={handleDownloadReport}
-              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-              className="hover:bg-[#F2EEE9]/90"
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:opacity-90"
             >
               <Download className="w-4 h-4 mr-2" />
               Download Report

@@ -102,8 +102,8 @@ export const IncidentListDashboard = () => {
       <div className="flex justify-between items-center mb-6">
         <Button 
           onClick={handleAddIncident}
-          style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-          className="hover:bg-[#F2EEE9]/90"
+          style={{ backgroundColor: '#C72030' }} 
+          className="text-white hover:opacity-90"
         >
           <Plus className="w-4 h-4 mr-2 text-white stroke-white" />
           Add
@@ -122,8 +122,8 @@ export const IncidentListDashboard = () => {
           </div>
           <Button 
             onClick={handleSearch} 
-            style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-            className="hover:bg-[#F2EEE9]/90"
+            style={{ backgroundColor: '#C72030' }} 
+            className="text-white hover:opacity-90"
           >
             Go!
           </Button>
