@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
@@ -382,25 +381,8 @@ div[style*="#f6f4ee"] .select-item:hover,
   background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-/* Global Search Bar with Suggestions Styles */
-/* Target all search inputs with suggestions */
-.search-with-suggestions,
-[class*="SearchWithSuggestions"],
-.relative:has(input[type="search"]),
-.relative:has(input[placeholder*="Search"]),
-.relative:has(input[placeholder*="search"]),
-.relative:has(input[class*="search"]),
-.relative:has([data-search] input),
-.relative:has(.search-input),
-.relative:has(input[placeholder*="Search AMC"]),
-.relative:has(input[placeholder*="Search..."]),
-.relative:has(input[placeholder*="Enter Activity Name"]),
-.relative:has(input[placeholder*="Search assets"]),
-.relative:has(input[placeholder*="Search users"]) {
-  position: relative !important;
-}
-
-/* Search Bar Styles */
+/* Global Search Bar Styles */
+/* Target all search inputs and their containers */
 input[type="search"],
 input[placeholder*="Search"],
 input[placeholder*="search"],
@@ -410,11 +392,11 @@ input[class*="search"],
 input[placeholder*="Search AMC"],
 input[placeholder*="Search..."],
 input[placeholder*="Enter Activity Name"],
-input[placeholder*="Search assets"],
-input[placeholder*="Search users"] {
+input[placeholder*="Search assets"] {
   background-color: #FFFFFF !important;
   border-color: #AAB9C5 !important;
   color: #AAB9C5 !important;
+  border-radius: 5px !important;
   border-width: 1px !important;
   border-style: solid !important;
 }
@@ -429,10 +411,23 @@ input[class*="search"]::placeholder,
 input[placeholder*="Search AMC"]::placeholder,
 input[placeholder*="Search..."]::placeholder,
 input[placeholder*="Enter Activity Name"]::placeholder,
-input[placeholder*="Search assets"]::placeholder,
-input[placeholder*="Search users"]::placeholder {
+input[placeholder*="Search assets"]::placeholder {
   color: #AAB9C5 !important;
   opacity: 1 !important;
+}
+
+/* Search container styles */
+.relative:has(input[type="search"]),
+.relative:has(input[placeholder*="Search"]),
+.relative:has(input[placeholder*="search"]),
+.relative:has(input[class*="search"]),
+.relative:has([data-search] input),
+.relative:has(.search-input),
+.relative:has(input[placeholder*="Search AMC"]),
+.relative:has(input[placeholder*="Search..."]),
+.relative:has(input[placeholder*="Enter Activity Name"]),
+.relative:has(input[placeholder*="Search assets"]) {
+  position: relative !important;
 }
 
 /* Search icon styles */
@@ -445,210 +440,9 @@ input[placeholder*="Search users"]::placeholder {
 .relative:has(input[placeholder*="Search AMC"]) svg,
 .relative:has(input[placeholder*="Search..."]) svg,
 .relative:has(input[placeholder*="Enter Activity Name"]) svg,
-.relative:has(input[placeholder*="Search assets"]) svg,
-.relative:has(input[placeholder*="Search users"]) svg {
+.relative:has(input[placeholder*="Search assets"]) svg {
   color: #AAB9C5 !important;
   border-radius: 4px !important;
-}
-
-/* Suggestion Box Styles - Global targeting */
-.suggestions-dropdown,
-.fixed.bg-white.border,
-[class*="suggestions"],
-[class*="dropdown"]:has([class*="suggestion"]),
-div[class*="fixed"][class*="bg-white"][class*="border"][class*="shadow"],
-div[style*="position: fixed"][style*="background-color: white"] {
-  background-color: #FFFFFF !important;
-  background-opacity: 100% !important;
-  border-color: #AAB9C5 !important;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1) !important;
-}
-
-/* Suggestion items */
-.suggestions-dropdown div,
-.fixed.bg-white.border div,
-[class*="suggestions"] div,
-[class*="dropdown"]:has([class*="suggestion"]) div,
-div[class*="fixed"][class*="bg-white"][class*="border"][class*="shadow"] div,
-div[style*="position: fixed"][style*="background-color: white"] div {
-  color: #1A1A1A !important;
-}
-
-/* Desktop Styles for Search with Suggestions */
-@media (min-width: 1024px) {
-  /* Search Bar */
-  input[type="search"],
-  input[placeholder*="Search"],
-  input[placeholder*="search"],
-  input[class*="search"],
-  [data-search] input,
-  .search-input,
-  input[placeholder*="Search AMC"],
-  input[placeholder*="Search..."],
-  input[placeholder*="Enter Activity Name"],
-  input[placeholder*="Search assets"],
-  input[placeholder*="Search users"] {
-    padding: 12px 12px 12px 12px !important;
-    width: 290px !important;
-    height: 35px !important;
-    border-radius: 2px !important;
-  }
-
-  /* Search Icon */
-  .relative:has(input[type="search"]) svg,
-  .relative:has(input[placeholder*="Search"]) svg,
-  .relative:has(input[placeholder*="search"]) svg,
-  .relative:has(input[class*="search"]) svg,
-  .relative:has([data-search] input) svg,
-  .relative:has(.search-input) svg,
-  .relative:has(input[placeholder*="Search AMC"]) svg,
-  .relative:has(input[placeholder*="Search..."]) svg,
-  .relative:has(input[placeholder*="Enter Activity Name"]) svg,
-  .relative:has(input[placeholder*="Search assets"]) svg,
-  .relative:has(input[placeholder*="Search users"]) svg {
-    padding: 12px 12px 10px 12px !important;
-  }
-
-  /* Suggestion Box */
-  .suggestions-dropdown,
-  .fixed.bg-white.border,
-  [class*="suggestions"],
-  [class*="dropdown"]:has([class*="suggestion"]),
-  div[class*="fixed"][class*="bg-white"][class*="border"][class*="shadow"],
-  div[style*="position: fixed"][style*="background-color: white"] {
-    padding: 12px 12px 12px 12px !important;
-    width: 290px !important;
-    height: 150px !important;
-    border-radius: 2px !important;
-  }
-
-  /* Suggestion Items */
-  .suggestions-dropdown div,
-  .fixed.bg-white.border div,
-  [class*="suggestions"] div,
-  [class*="dropdown"]:has([class*="suggestion"]) div,
-  div[class*="fixed"][class*="bg-white"][class*="border"][class*="shadow"] div,
-  div[style*="position: fixed"][style*="background-color: white"] div {
-    padding: 12px 12px 12px 12px !important;
-  }
-}
-
-/* Tablet Styles for Search with Suggestions */
-@media (min-width: 768px) and (max-width: 1023px) {
-  /* Search Bar */
-  input[type="search"],
-  input[placeholder*="Search"],
-  input[placeholder*="search"],
-  input[class*="search"],
-  [data-search] input,
-  .search-input,
-  input[placeholder*="Search AMC"],
-  input[placeholder*="Search..."],
-  input[placeholder*="Enter Activity Name"],
-  input[placeholder*="Search assets"],
-  input[placeholder*="Search users"] {
-    padding: 12px 12px 12px 12px !important;
-    width: 290px !important;
-    height: 35px !important;
-    border-radius: 0px !important;
-  }
-
-  /* Search Icon */
-  .relative:has(input[type="search"]) svg,
-  .relative:has(input[placeholder*="Search"]) svg,
-  .relative:has(input[placeholder*="search"]) svg,
-  .relative:has(input[class*="search"]) svg,
-  .relative:has([data-search] input) svg,
-  .relative:has(.search-input) svg,
-  .relative:has(input[placeholder*="Search AMC"]) svg,
-  .relative:has(input[placeholder*="Search..."]) svg,
-  .relative:has(input[placeholder*="Enter Activity Name"]) svg,
-  .relative:has(input[placeholder*="Search assets"]) svg,
-  .relative:has(input[placeholder*="Search users"]) svg {
-    padding: 12px 12px 10px 12px !important;
-  }
-
-  /* Suggestion Box */
-  .suggestions-dropdown,
-  .fixed.bg-white.border,
-  [class*="suggestions"],
-  [class*="dropdown"]:has([class*="suggestion"]),
-  div[class*="fixed"][class*="bg-white"][class*="border"][class*="shadow"],
-  div[style*="position: fixed"][style*="background-color: white"] {
-    padding: 12px 12px 12px 12px !important;
-    width: 290px !important;
-    height: 150px !important;
-    border-radius: 0px !important;
-  }
-
-  /* Suggestion Items */
-  .suggestions-dropdown div,
-  .fixed.bg-white.border div,
-  [class*="suggestions"] div,
-  [class*="dropdown"]:has([class*="suggestion"]) div,
-  div[class*="fixed"][class*="bg-white"][class*="border"][class*="shadow"] div,
-  div[style*="position: fixed"][style*="background-color: white"] div {
-    padding: 12px 12px 12px 12px !important;
-  }
-}
-
-/* Mobile Styles for Search with Suggestions */
-@media (max-width: 767px) {
-  /* Search Bar */
-  input[type="search"],
-  input[placeholder*="Search"],
-  input[placeholder*="search"],
-  input[class*="search"],
-  [data-search] input,
-  .search-input,
-  input[placeholder*="Search AMC"],
-  input[placeholder*="Search..."],
-  input[placeholder*="Enter Activity Name"],
-  input[placeholder*="Search assets"],
-  input[placeholder*="Search users"] {
-    padding: 12px 12px 12px 12px !important;
-    width: 170px !important;
-    height: 24px !important;
-    border-radius: 0px !important;
-  }
-
-  /* Search Icon */
-  .relative:has(input[type="search"]) svg,
-  .relative:has(input[placeholder*="Search"]) svg,
-  .relative:has(input[placeholder*="search"]) svg,
-  .relative:has(input[class*="search"]) svg,
-  .relative:has([data-search] input) svg,
-  .relative:has(.search-input) svg,
-  .relative:has(input[placeholder*="Search AMC"]) svg,
-  .relative:has(input[placeholder*="Search..."]) svg,
-  .relative:has(input[placeholder*="Enter Activity Name"]) svg,
-  .relative:has(input[placeholder*="Search assets"]) svg,
-  .relative:has(input[placeholder*="Search users"]) svg {
-    padding: 12px 12px 10px 12px !important;
-  }
-
-  /* Suggestion Box */
-  .suggestions-dropdown,
-  .fixed.bg-white.border,
-  [class*="suggestions"],
-  [class*="dropdown"]:has([class*="suggestion"]),
-  div[class*="fixed"][class*="bg-white"][class*="border"][class*="shadow"],
-  div[style*="position: fixed"][style*="background-color: white"] {
-    padding: 12px 12px 12px 12px !important;
-    width: 170px !important;
-    height: 60px !important;
-    border-radius: 0px !important;
-  }
-
-  /* Suggestion Items */
-  .suggestions-dropdown div,
-  .fixed.bg-white.border div,
-  [class*="suggestions"] div,
-  [class*="dropdown"]:has([class*="suggestion"]) div,
-  div[class*="fixed"][class*="bg-white"][class*="border"][class*="shadow"] div,
-  div[style*="position: fixed"][style*="background-color: white"] div {
-    padding: 12px 12px 12px 12px !important;
-  }
 }
 
 /* Go button styles for search bars */
@@ -665,8 +459,142 @@ button[type="button"]:contains("Go!") {
   opacity: 0.35 !important;
 }
 
+/* Desktop Styles for Search Bars */
+@media (min-width: 1024px) {
+  input[type="search"],
+  input[placeholder*="Search"],
+  input[placeholder*="search"],
+  input[class*="search"],
+  [data-search] input,
+  .search-input,
+  input[placeholder*="Search AMC"],
+  input[placeholder*="Search..."],
+  input[placeholder*="Enter Activity Name"],
+  input[placeholder*="Search assets"] {
+    padding: 8px 10px !important;
+    width: 230px !important;
+    height: 42px !important;
+  }
+
+  .relative:has(input[type="search"]) svg,
+  .relative:has(input[placeholder*="Search"]) svg,
+  .relative:has(input[placeholder*="search"]) svg,
+  .relative:has(input[class*="search"]) svg,
+  .relative:has([data-search] input) svg,
+  .relative:has(.search-input) svg,
+  .relative:has(input[placeholder*="Search AMC"]) svg,
+  .relative:has(input[placeholder*="Search..."]) svg,
+  .relative:has(input[placeholder*="Enter Activity Name"]) svg,
+  .relative:has(input[placeholder*="Search assets"]) svg {
+    padding: 12px 12px 10px 10px !important;
+  }
+
+  /* Search bar button padding styles */
+  .relative:has(input[type="search"]) button,
+  .relative:has(input[placeholder*="Search"]) button,
+  .relative:has(input[placeholder*="search"]) button,
+  .relative:has(input[class*="search"]) button,
+  .relative:has([data-search] input) button,
+  .relative:has(.search-input) button,
+  .relative:has(input[placeholder*="Search AMC"]) button,
+  .relative:has(input[placeholder*="Search..."]) button,
+  .relative:has(input[placeholder*="Enter Activity Name"]) button,
+  .relative:has(input[placeholder*="Search assets"]) button {
+    padding: 12px 12px 10px 10px !important;
+  }
+}
+
+/* Tablet Styles for Search Bars */
+@media (min-width: 768px) and (max-width: 1023px) {
+  input[type="search"],
+  input[placeholder*="Search"],
+  input[placeholder*="search"],
+  input[class*="search"],
+  [data-search] input,
+  .search-input,
+  input[placeholder*="Search AMC"],
+  input[placeholder*="Search..."],
+  input[placeholder*="Enter Activity Name"],
+  input[placeholder*="Search assets"] {
+    padding: 7px 10px !important;
+    width: 230px !important;
+    height: 42px !important;
+  }
+
+  .relative:has(input[placeholder*="Search"]) svg,
+  .relative:has(input[placeholder*="search"]) svg,
+  .relative:has(input[class*="search"]) svg,
+  .relative:has([data-search] input) svg,
+  .relative:has(.search-input) svg,
+  .relative:has(input[placeholder*="Search AMC"]) svg,
+  .relative:has(input[placeholder*="Search..."]) svg,
+  .relative:has(input[placeholder*="Enter Activity Name"]) svg,
+  .relative:has(input[placeholder*="Search assets"]) svg {
+    padding: 12px 12px 10px 10px !important;
+  }
+
+  /* Search bar button padding styles */
+  .relative:has(input[type="search"]) button,
+  .relative:has(input[placeholder*="Search"]) button,
+  .relative:has(input[placeholder*="search"]) button,
+  .relative:has(input[class*="search"]) button,
+  .relative:has([data-search] input) button,
+  .relative:has(.search-input) button,
+  .relative:has(input[placeholder*="Search AMC"]) button,
+  .relative:has(input[placeholder*="Search..."]) button,
+  .relative:has(input[placeholder*="Enter Activity Name"]) button,
+  .relative:has(input[placeholder*="Search assets"]) button {
+    padding: 12px 12px 10px 10px !important;
+  }
+}
+
+/* Mobile Styles for Search Bars */
+@media (max-width: 767px) {
+  input[type="search"],
+  input[placeholder*="Search"],
+  input[placeholder*="search"],
+  input[class*="search"],
+  [data-search] input,
+  .search-input,
+  input[placeholder*="Search AMC"],
+  input[placeholder*="Search..."],
+  input[placeholder*="Enter Activity Name"],
+  input[placeholder*="Search assets"] {
+    padding: 6px 8px !important;
+    width: 120px !important;
+    height: 42px !important;
+  }
+
+  .relative:has(input[type="search"]) svg,
+  .relative:has(input[placeholder*="Search"]) svg,
+  .relative:has(input[placeholder*="search"]) svg,
+  .relative:has(input[class*="search"]) svg,
+  .relative:has([data-search] input) svg,
+  .relative:has(.search-input) svg,
+  .relative:has(input[placeholder*="Search AMC"]) svg,
+  .relative:has(input[placeholder*="Search..."]) svg,
+  .relative:has(input[placeholder*="Enter Activity Name"]) svg,
+  .relative:has(input[placeholder*="Search assets"]) svg {
+    padding: 12px 12px 10px 10px !important;
+  }
+
+  /* Search bar button padding styles */
+  .relative:has(input[type="search"]) button,
+  .relative:has(input[placeholder*="Search"]) button,
+  .relative:has(input[placeholder*="search"]) button,
+  .relative:has(input[class*="search"]) button,
+  .relative:has([data-search] input) button,
+  .relative:has(.search-input) button,
+  .relative:has(input[placeholder*="Search AMC"]) button,
+  .relative:has(input[placeholder*="Search..."]) button,
+  .relative:has(input[placeholder*="Enter Activity Name"]) button,
+  .relative:has(input[placeholder*="Search assets"]) button {
+    padding: 12px 12px 10px 10px !important;
+  }
+}
+
 /* Global Stats Card Styles */
-/* ... keep existing code (stats card styles) the same ... */
+/* Target stats cards across all dashboard pages */
 .stats-card,
 [class*="bg-purple-500"],
 [class*="bg-orange-400"],
