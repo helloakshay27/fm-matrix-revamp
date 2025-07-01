@@ -124,13 +124,13 @@ export const AMCDashboard = () => {
       {/* Action Buttons */}
       <div className="flex items-center gap-3 mb-6">
         <Button 
-          onClick={handleAddClick}
-          style={{ backgroundColor: '#C72030' }} 
-          className="text-white hover:bg-[#C72030]/90"
-        >
-<Plus className="w-4 h-4 mr-2 text-white" />
-          Add
-        </Button>
+  onClick={handleAddClick}
+  className="text-white bg-[#C72030] hover:bg-[#C72030]/90 [&_svg]:text-white"
+>
+  <Plus className="w-4 h-4 mr-2" />
+  Add
+</Button>
+
         <div className="ml-auto flex items-center gap-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
