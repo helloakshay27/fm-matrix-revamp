@@ -28,7 +28,8 @@ const TaskForm = ({
   milestoneStartDate,
   milestoneEndDate,
   token,
-  allUsers
+  allUsers,
+  calculateDuration // Add calculateDuration as a prop
 }) => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -71,47 +72,8 @@ const TaskForm = ({
     setFormData((prev) => ({ ...prev, [name]: selectedOptions }));
   };
 
-  const calculateDuration = (startDateStr, endDateStr) => {
-    if (!startDateStr || !endDateStr) return "";
-    const start = new Date(startDateStr);
-    const end = new Date(endDateStr);
-    if (end < start) return "Invalid: End date before start date";
-
-    const ms = end - start;
-    const totalMinutes = Math.floor(ms / (1000 * 60));
-    const days = Math.floor(ms / (1000 * 60 * 60 * 24)) + 1;
-    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-    const minutes = totalMinutes % 60;
-    return `${days}d : ${hours}h : ${minutes}m`;
-  };
-
   return (
     <div className="p-4 bg-white">
-      {/* <div className="flex items-center justify-between gap-3">
-        <div className="mt-4 space-y-2">
-          <label className="block ms-2">
-            Project <span className="text-red-600">*</span>
-          </label>
-          <input
-            type="text"
-            value={project?.title || ""}
-            className="w-full border h-[40px] outline-none border-gray-300 p-2 text-[13px] bg-gray-200"
-            readOnly
-          />
-        </div>
-        <div className="mt-4 space-y-2 w-auto">
-          <label className="block ms-2">
-            Milestone <span className="text-red-600">*</span>
-          </label>
-          <input
-            type="text"
-            value={milestone?.title || ""}
-            readOnly
-            className="w-full border h-[40px] outline-none border-gray-300 p-2 text-[13px] bg-gray-200"
-          />
-        </div>
-      </div> */}
-
       {project && milestone &&
         !Array.isArray(project) &&
         !Array.isArray(milestone) &&
@@ -331,6 +293,21 @@ const Tasks = ({ isEdit }) => {
   const [prevTags, setPrevTags] = useState([]);
   const [prevObservers, setPrevObservers] = useState([]);
 
+  // Move calculateDuration to Tasks
+  const calculateDuration = (startDateStr, endDateStr) => {
+    if (!startDateStr || !endDateStr) return "";
+    const start = new Date(startDateStr);
+    const end = new Date(endDateStr);
+    if (end < start) return "Invalid: End date before start date";
+
+    const ms = end - start;
+    const totalMinutes = Math.floor(ms / (1000 * 60));
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24)) + 1;
+    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+    const minutes = totalMinutes % 60;
+    return `${days}d : ${hours}h : ${minutes}m`;
+  };
+
   useEffect(() => {
     dispatch(fetchUsers({ token }));
     dispatch(fetchTags({ token }));
@@ -356,7 +333,6 @@ const Tasks = ({ isEdit }) => {
         label: observer?.user_name,
         id: observer.id
       })) || [];
-      console.log(task.expected_start_date.split("T")[0]);
 
       setFormData({
         project: id,
@@ -390,6 +366,7 @@ const Tasks = ({ isEdit }) => {
     project_management_id: id,
     milestone_id: mid,
     active: true,
+    estimated_hour: 0
   });
 
   const handleAddTask = async (e) => {
@@ -408,29 +385,36 @@ const Tasks = ({ isEdit }) => {
       return;
     }
 
+    // Validate dates
+    const duration = calculateDuration(formData.expected_start_date, formData.target_date);
+    if (duration.startsWith("Invalid")) {
+      toast.dismiss();
+      toast.error("End date cannot be before start date.");
+      return;
+    }
+
     const payload = createTaskPayload(formData);
 
     try {
       const resultAction = await dispatch(createTask({ token, payload })).unwrap();
-        toast.dismiss();
-        toast.success("Task created successfully.");
-        setSavedTasks([...savedTasks, { id: nextId, formData }]);
-        setFormData({
-          project: id,
-          milestone: mid,
-          taskTitle: "",
-          description: "",
-          responsiblePerson: "",
-          department: "",
-          priority: "",
-          duration: "",
-          expected_start_date: null,
-          target_date: null,
-          observer: [],
-          tags: [],
-        });
-        setNextId(nextId + 1);
-      
+      toast.dismiss();
+      toast.success("Task created successfully.");
+      setSavedTasks([...savedTasks, { id: nextId, formData }]);
+      setFormData({
+        project: id,
+        milestone: mid,
+        taskTitle: "",
+        description: "",
+        responsiblePerson: "",
+        department: "",
+        priority: "",
+        duration: "",
+        expected_start_date: null,
+        target_date: null,
+        observer: [],
+        tags: [],
+      });
+      setNextId(nextId + 1);
     } catch (error) {
       console.error("Error creating task:", error);
       toast.dismiss();
@@ -451,6 +435,14 @@ const Tasks = ({ isEdit }) => {
     ) {
       toast.dismiss();
       toast.error("Please fill all required fields.");
+      return;
+    }
+
+    // Validate dates
+    const duration = calculateDuration(formData.expected_start_date, formData.target_date);
+    if (duration.startsWith("Invalid")) {
+      toast.dismiss();
+      toast.error("End date cannot be before start date.");
       return;
     }
 
@@ -507,6 +499,7 @@ const Tasks = ({ isEdit }) => {
             milestoneEndDate={milestone?.end_date}
             token={token}
             allUsers={users}
+            calculateDuration={calculateDuration} // Pass calculateDuration
           />
         ))}
         <TaskForm
@@ -527,6 +520,7 @@ const Tasks = ({ isEdit }) => {
           milestoneEndDate={milestone?.end_date}
           token={token}
           allUsers={users}
+          calculateDuration={calculateDuration} // Pass calculateDuration
         />
         {!isEdit && (
           <div className="relative">
