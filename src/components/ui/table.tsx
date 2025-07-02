@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
@@ -6,10 +5,10 @@ const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
+  <div className="relative w-full overflow-x-auto">
     <table
       ref={ref}
-      className={cn("w-full caption-bottom text-sm border-separate border-spacing-0", className)}
+      className={cn("min-w-[1200px] caption-bottom text-sm border-separate border-spacing-0", className)}
       {...props}
     />
   </div>
@@ -46,10 +45,7 @@ const TableFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <tfoot
     ref={ref}
-    className={cn(
-      "border-t bg-muted/50 font-medium",
-      className
-    )}
+    className={cn("border-t bg-muted/50 font-medium", className)}
     {...props}
   />
 ));
@@ -77,7 +73,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 [&:has([role=checkbox])]:pr-0",
+      "h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap [&:has([role=checkbox])]:pr-0",
       className
     )}
     style={{ backgroundColor: "#f6f4ee" }}
