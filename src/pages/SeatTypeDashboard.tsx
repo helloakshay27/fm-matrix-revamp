@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -49,7 +50,7 @@ export const SeatTypeDashboard = () => {
   const handleUpdateSeatType = (data: { categoryName: string; file?: File }) => {
     if (editingSeatType) {
       setSeatTypes(seatTypes.map(seat =>
-        seat.id === editingSeatType.id
+        seat.id === editingSeatType.id 
           ? { ...seat, name: data.categoryName }
           : seat
       ));
@@ -65,20 +66,14 @@ export const SeatTypeDashboard = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar (Fixed Width) */}
-      <div className="w-64 bg-white border-r">
-        {/* You can place actual sidebar nav here */}
-        <div className="p-4 font-bold">Sidebar</div>
-      </div>
-
       {/* Main Content */}
-      <div className="flex-1 p-6 overflow-x-auto">
-        {/* Breadcrumb and Title */}
+      <div className="flex-1 p-6">
+        {/* Header */}
         <div className="mb-6">
           <div className="text-sm text-gray-500 mb-2">Space &gt; Seat Type</div>
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-800">SEAT TYPE</h1>
-            <Button
+            <Button 
               onClick={() => setIsAddDialogOpen(true)}
               className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
             >
@@ -88,9 +83,9 @@ export const SeatTypeDashboard = () => {
           </div>
         </div>
 
-        {/* Scrollable Table Wrapper */}
-        <div className="bg-white rounded-lg border shadow-sm overflow-auto">
-          <Table className="min-w-[800px]">
+        {/* Table */}
+        <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+          <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
                 <TableHead className="font-semibold text-gray-700 w-20">Actions</TableHead>
@@ -103,9 +98,9 @@ export const SeatTypeDashboard = () => {
               {seatTypes.map((seat) => (
                 <TableRow key={seat.id} className="border-b">
                   <TableCell>
-                    <Button
-                      size="sm"
-                      variant="ghost"
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
                       className="p-1"
                       onClick={() => handleEditSeatType(seat)}
                     >
@@ -114,8 +109,8 @@ export const SeatTypeDashboard = () => {
                   </TableCell>
                   <TableCell className="font-medium">{seat.name}</TableCell>
                   <TableCell>
-                    <Switch
-                      checked={seat.active}
+                    <Switch 
+                      checked={seat.active} 
                       onCheckedChange={() => handleToggleActive(seat.id)}
                       className="data-[state=checked]:bg-green-500"
                     />
@@ -127,15 +122,15 @@ export const SeatTypeDashboard = () => {
           </Table>
         </div>
 
-        {/* Add Dialog */}
-        <AddSeatTypeDialog
+        {/* Add Seat Type Dialog */}
+        <AddSeatTypeDialog 
           open={isAddDialogOpen}
           onOpenChange={setIsAddDialogOpen}
           onSubmit={handleAddSeatType}
         />
 
-        {/* Edit Dialog */}
-        <EditSeatTypeDialog
+        {/* Edit Seat Type Dialog */}
+        <EditSeatTypeDialog 
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
           seatType={editingSeatType}
