@@ -117,14 +117,15 @@ const UtilityWasteGenerationSetupDashboard = () => {
                     Commodity*
                   </Label>
                   <div className="flex gap-2 mt-2">
-                    <Input
-                      id="commodity"
-                      value={commodityName}
-                      onChange={(e) => setCommodityName(e.target.value)}
-                      placeholder="Enter commodity name"
-                      className="flex-1"
-                      onKeyPress={(e) => e.key === 'Enter' && handleAddCommodity()}
-                    />
+                   <Input
+  id="commodity"
+  value={commodityName}
+  onChange={(e) => setCommodityName(e.target.value)}
+  placeholder="Enter commodity name"
+  className="flex-1 h-9 text-sm"
+  onKeyPress={(e) => e.key === 'Enter' && handleAddCommodity()}
+/>
+
                     <Button 
                       onClick={handleAddCommodity}
                       style={{ backgroundColor: '#C72030' }}
