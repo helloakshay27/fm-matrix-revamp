@@ -1,4 +1,3 @@
-// components/Calendar.tsx
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
@@ -35,18 +34,28 @@ export function Calendar({
         head_cell:
           "text-muted-foreground w-9 font-normal text-[0.8rem] rounded-none",
         row: "flex w-full mt-2",
-        cell: "h-9 w-9 text-center text-sm p-0 relative bg-white rounded-full",
+
+        // ⬇️ Ensure the container cell has centered square space
+        cell: "relative w-10 h-10 text-center text-sm p-0",
+
+        // ⬇️ Circular red background for selected day
         day: cn(
-          "h-9 w-9 p-0 font-normal rounded-full border-0 shadow-none hover:bg-gray-100"
+          "w-full h-full flex items-center justify-center font-normal border-0 shadow-none rounded-full hover:bg-gray-100"
         ),
-        day_range_end: "day-range-end",
+
+        // ⬇️ Red circle for selected
         day_selected:
           "bg-[#C72030] text-white hover:bg-[#C72030] hover:text-white focus:bg-[#C72030] focus:text-white rounded-full",
+
+        // ⬇️ Today outline with red border
         day_today:
           "border border-[#C72030] text-[#C72030] font-semibold rounded-full",
+
+        // ⬇️ Muted/disabled styles
         day_outside:
           "text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
         day_disabled: "text-muted-foreground opacity-50",
+        day_range_end: "day-range-end",
         day_range_middle:
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
