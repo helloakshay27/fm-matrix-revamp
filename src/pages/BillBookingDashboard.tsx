@@ -36,8 +36,8 @@ export const BillBookingDashboard = () => {
   <div className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-6 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]">
     <div className="flex items-center justify-between">
       <div>
-        <p className="text-sm opacity-80">₹ 0</p>
         <p className="text-lg font-semibold">Total Amount</p>
+        <p className="text-3xl font-bold">0</p>
       </div>
       <Banknote className="w-8 h-8 opacity-60" />
     </div>
@@ -46,8 +46,8 @@ export const BillBookingDashboard = () => {
   <div className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-6 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]">
     <div className="flex items-center justify-between">
       <div>
-        <p className="text-sm opacity-80">₹ 0</p>
         <p className="text-lg font-semibold">Total Paid Amount</p>
+        <p className="text-3xl font-bold">0</p>
       </div>
       <CreditCard className="w-8 h-8 opacity-60" />
     </div>
@@ -56,8 +56,8 @@ export const BillBookingDashboard = () => {
   <div className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-6 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]">
     <div className="flex items-center justify-between">
       <div>
-        <p className="text-sm opacity-80">₹ 0</p>
         <p className="text-lg font-semibold">Total Pending Amount</p>
+        <p className="text-3xl font-bold">0</p>
       </div>
       <Clock className="w-8 h-8 opacity-60" />
     </div>
