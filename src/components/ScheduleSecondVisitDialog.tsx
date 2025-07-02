@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MaterialDatePicker } from '@/components/ui/material-date-picker';
 import { X } from 'lucide-react';
 
 interface ScheduleSecondVisitDialogProps {
@@ -43,12 +43,10 @@ export const ScheduleSecondVisitDialog = ({ open, onOpenChange, onSubmit }: Sche
             <Label htmlFor="selectDate" className="text-sm font-medium mb-2 block">
               Select Date
             </Label>
-            <Input
-              id="selectDate"
-              type="date"
+            <MaterialDatePicker
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full"
+              onChange={setSelectedDate}
+              placeholder="Select Date"
             />
           </div>
 

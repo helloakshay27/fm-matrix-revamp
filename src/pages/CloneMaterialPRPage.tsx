@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 import { X } from "lucide-react";
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -138,10 +138,10 @@ export const CloneMaterialPRPage = () => {
 
           <div>
             <Label className="text-sm font-medium">PR Date*</Label>
-            <Input
-              type="date"
+            <MaterialDatePicker
               value={supplierDetails.prDate}
-              onChange={(e) => updateSupplierDetail('prDate', e.target.value)}
+              onChange={(value) => updateSupplierDetail('prDate', value)}
+              placeholder="Select PR Date"
               className="mt-1"
             />
           </div>
@@ -320,10 +320,10 @@ export const CloneMaterialPRPage = () => {
 
                 <div>
                   <Label className="text-sm font-medium">Expected Date*</Label>
-                  <Input
-                    type="date"
+                  <MaterialDatePicker
                     value={item.expectedDate}
-                    onChange={(e) => updateItemDetail(item.id, 'expectedDate', e.target.value)}
+                    onChange={(value) => updateItemDetail(item.id, 'expectedDate', value)}
+                    placeholder="Select Expected Date"
                     className="mt-1"
                   />
                 </div>

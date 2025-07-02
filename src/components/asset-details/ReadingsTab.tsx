@@ -1,16 +1,19 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { MaterialDatePicker } from '@/components/ui/material-date-picker';
 
 export const ReadingsTab = () => {
-  const [dateRange, setDateRange] = useState('05/19/2025 - 06/17/2025');
+  const [fromDate, setFromDate] = useState('2025-05-19');
+  const [toDate, setToDate] = useState('2025-06-17');
 
   const handleApply = () => {
-    console.log('Apply date range:', dateRange);
+    console.log('Apply date range:', { fromDate, toDate });
   };
 
   const handleReset = () => {
-    setDateRange('');
+    setFromDate('');
+    setToDate('');
   };
 
   const tableHeaders = [
@@ -23,13 +26,21 @@ export const ReadingsTab = () => {
     <div className="space-y-6">
       {/* Date Range and Controls */}
       <div className="flex items-center gap-4">
-        <input
-          type="text"
-          value={dateRange}
-          onChange={(e) => setDateRange(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-2 min-w-64"
-          placeholder="Select date range"
-        />
+        <div className="flex items-center gap-2">
+          <MaterialDatePicker
+            value={fromDate}
+            onChange={setFromDate}
+            placeholder="From Date"
+            className="w-48"
+          />
+          <span className="text-gray-500">-</span>
+          <MaterialDatePicker
+            value={toDate}
+            onChange={setToDate}
+            placeholder="To Date"
+            className="w-48"
+          />
+        </div>
         <Button 
           onClick={handleApply}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"

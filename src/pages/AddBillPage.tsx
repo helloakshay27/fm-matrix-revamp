@@ -1,9 +1,9 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -179,10 +179,10 @@ export const AddBillPage = () => {
                   <label className="block text-sm font-medium mb-1">
                     Bill Date<span className="text-[#C72030]">*</span>
                   </label>
-                  <Input 
-                    type="date"
+                  <MaterialDatePicker
                     value={formData.billDate}
-                    onChange={(e) => updateFormData('billDate', e.target.value)}
+                    onChange={(value) => updateFormData('billDate', value)}
+                    placeholder="Select Bill Date"
                   />
                 </div>
 

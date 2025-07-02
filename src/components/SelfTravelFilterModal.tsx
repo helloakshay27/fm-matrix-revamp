@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 import { X } from "lucide-react";
 
 interface SelfTravelFilterModalProps {
@@ -74,11 +75,10 @@ export const SelfTravelFilterModal = ({ isOpen, onClose }: SelfTravelFilterModal
 
           <div className="space-y-2">
             <Label>Booked On</Label>
-            <Input
-              type="date"
-              placeholder="Booked on"
+            <MaterialDatePicker
               value={filters.bookedOn}
-              onChange={(e) => setFilters(prev => ({ ...prev, bookedOn: e.target.value }))}
+              onChange={(value) => setFilters(prev => ({ ...prev, bookedOn: value }))}
+              placeholder="Select Booked Date"
             />
           </div>
         </div>
