@@ -23,46 +23,47 @@ export const BillBookingDashboard = () => {
         
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-purple-100 text-sm">Total Bills</p>
-                <p className="text-3xl font-bold">0</p>
-              </div>
-              <Settings className="w-8 h-8 text-purple-200" />
-            </div>
-          </div>
+  <div className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-6 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm opacity-80">Total Bills</p>
+        <p className="text-3xl font-bold">0</p>
+      </div>
+      <Settings className="w-8 h-8 opacity-60" />
+    </div>
+  </div>
 
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-blue-100 text-sm">₹ 0</p>
-                <p className="text-lg font-semibold">Total Amount</p>
-              </div>
-              <Banknote className="w-8 h-8 text-blue-200" />
-            </div>
-          </div>
+  <div className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-6 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm opacity-80">₹ 0</p>
+        <p className="text-lg font-semibold">Total Amount</p>
+      </div>
+      <Banknote className="w-8 h-8 opacity-60" />
+    </div>
+  </div>
 
-          <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-orange-100 text-sm">₹ 0</p>
-                <p className="text-lg font-semibold">Total Paid Amount</p>
-              </div>
-              <CreditCard className="w-8 h-8 text-orange-200" />
-            </div>
-          </div>
+  <div className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-6 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm opacity-80">₹ 0</p>
+        <p className="text-lg font-semibold">Total Paid Amount</p>
+      </div>
+      <CreditCard className="w-8 h-8 opacity-60" />
+    </div>
+  </div>
 
-          <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-red-100 text-sm">₹ 0</p>
-                <p className="text-lg font-semibold">Total Pending Amount</p>
-              </div>
-              <Clock className="w-8 h-8 text-red-200" />
-            </div>
-          </div>
-        </div>
+  <div className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-6 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm opacity-80">₹ 0</p>
+        <p className="text-lg font-semibold">Total Pending Amount</p>
+      </div>
+      <Clock className="w-8 h-8 opacity-60" />
+    </div>
+  </div>
+</div>
+
 
         {/* Add Button */}
         <div className="mb-6">
