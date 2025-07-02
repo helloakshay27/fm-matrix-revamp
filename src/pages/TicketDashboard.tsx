@@ -163,25 +163,53 @@ export const TicketDashboard = () => {
       </div>
 
       {/* Status Cards */}
-     <div className="grid grid-cols-5 gap-4 mb-6">
-  {[
-    { label: 'Total Tickets', value: totalTickets },
-    { label: 'Open', value: openTickets },
-    { label: 'In Progress', value: inProgressTickets },
-    { label: 'Pending', value: pendingTickets },
-    { label: 'Closed', value: closedTickets },
-  ].map((item, i) => (
-    <div
-      key={i}
-      className="p-4 rounded-lg text-center shadow-[0px_2px_18px_rgba(45,45,45,0.1)] bg-[#F2F0EB] text-[#D92818]"
-    >
-      <div className="text-2xl font-bold">{item.value}</div>
-      <div className="text-sm">{item.label}</div>
-    </div>
-  ))}
-</div>
-
-
+      <div className="grid grid-cols-5 gap-4 mb-6">
+        <div 
+          className={`p-4 rounded-lg text-center cursor-pointer transition-all ${
+            statusFilter === 'all' ? 'bg-blue-600' : 'bg-blue-500 hover:bg-blue-600'
+          } text-white`}
+          onClick={() => handleStatusFilter('all')}
+        >
+          <div className="text-2xl font-bold">{totalTickets}</div>
+          <div className="text-sm">Total Tickets</div>
+        </div>
+        <div 
+          className={`p-4 rounded-lg text-center cursor-pointer transition-all ${
+            statusFilter === 'open' ? 'bg-green-600' : 'bg-green-500 hover:bg-green-600'
+          } text-white`}
+          onClick={() => handleStatusFilter('open')}
+        >
+          <div className="text-2xl font-bold">{openTickets}</div>
+          <div className="text-sm">Open</div>
+        </div>
+        <div 
+          className={`p-4 rounded-lg text-center cursor-pointer transition-all ${
+            statusFilter === 'in progress' ? 'bg-orange-600' : 'bg-orange-500 hover:bg-orange-600'
+          } text-white`}
+          onClick={() => handleStatusFilter('in progress')}
+        >
+          <div className="text-2xl font-bold">{inProgressTickets}</div>
+          <div className="text-sm">In Progress</div>
+        </div>
+        <div 
+          className={`p-4 rounded-lg text-center cursor-pointer transition-all ${
+            statusFilter === 'pending' ? 'bg-yellow-600' : 'bg-yellow-500 hover:bg-yellow-600'
+          } text-white`}
+          onClick={() => handleStatusFilter('pending')}
+        >
+          <div className="text-2xl font-bold">{pendingTickets}</div>
+          <div className="text-sm">Pending</div>
+        </div>
+        <div 
+          className={`p-4 rounded-lg text-center cursor-pointer transition-all ${
+            statusFilter === 'closed' ? 'bg-red-600' : 'bg-red-500 hover:bg-red-600'
+          } text-white`}
+          onClick={() => handleStatusFilter('closed')}
+        >
+          <div className="text-2xl font-bold">{closedTickets}</div>
+          <div className="text-sm">Closed</div>
+        </div>
+      </div>
 
       {/* Action Buttons */}
       <div className="flex items-center gap-3 mb-6">

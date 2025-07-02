@@ -223,9 +223,14 @@ const modulesByPackage = {
     { name: 'Redemption Marketplace', icon: Globe, href: '/vas/redemonection-marketplace' }
   ],
   'Market Place': [
-    { name: 'All', icon: Package, href: '/market-place/all' },
-    { name: 'Installed', icon: CheckSquare, href: '/market-place/installed' },
-    { name: 'Updates', icon: Download, href: '/market-place/updates' }
+    { name: 'Lease Management', icon: FileText, href: '/market-place/lease-management' },
+    { name: 'Loyalty Rule Engine', icon: Settings, href: '/market-place/loyalty-rule-engine' },
+    { name: 'Cloud Telephony', icon: Phone, href: '/market-place/cloud-telephony' },
+    { 
+      name: 'Accounting', 
+      icon: Calculator, 
+      href: '/market-place/accounting'
+    }
   ],
   'Settings': [
     { name: 'General', icon: Settings, href: '/settings/general' },
@@ -413,11 +418,11 @@ export const Sidebar = () => {
           onClick={() => handleNavigation(item.href, currentSection)}
           className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
             item.color || 'text-[#1a1a1a]'
-          } ${isActive ? 'bg-[#C72030] text-white hover:bg-[#C72030] hover:text-white' : ''}`}
+          }`}
         >
           {level === 0 && (
             <>
-              {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-white"></div>}
+              {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
               <item.icon className="w-5 h-5" />
             </>
           )}
