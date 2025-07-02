@@ -222,9 +222,10 @@ const modulesByPackage = {
     { name: 'Redemption Marketplace', icon: Globe, href: '/vas/redemonection-marketplace' }
   ],
   'Market Place': [
-    { name: 'All', icon: Globe, href: '/market-place/all', color: 'text-white', bgColor: 'bg-[#C72030]' },
-    { name: 'Installed', icon: CheckSquare, href: '/market-place/installed', color: 'text-[#1a1a1a]' },
-    { name: 'Updates', icon: Download, href: '/market-place/updates', color: 'text-[#1a1a1a]' }
+    { name: 'Lease Management', icon: FileText, href: '/market-place/lease-management' },
+    { name: 'Loyalty Rule Engine', icon: Settings, href: '/market-place/loyalty-rule-engine' },
+    { name: 'Cloud Telephony', icon: Phone, href: '/market-place/cloud-telephony' },
+    { name: 'Accounting', icon: Calculator, href: '/market-place/accounting' }
   ],
   'Settings': [
     { name: 'General', icon: Settings, href: '/settings/general' },
