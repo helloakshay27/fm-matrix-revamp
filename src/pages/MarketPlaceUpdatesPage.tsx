@@ -1,10 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building, Target, Phone, Calculator, Download } from 'lucide-react';
+import { Building, Target, Download } from 'lucide-react';
+import { SearchWithSuggestions } from '@/components/SearchWithSuggestions';
+import { useSearchSuggestions } from '@/hooks/useSearchSuggestions';
 
 export const MarketPlaceUpdatesPage = () => {
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
 
   const availableUpdates = [
     {
@@ -31,14 +34,35 @@ export const MarketPlaceUpdatesPage = () => {
     }
   ];
 
+  const suggestions = useSearchSuggestions({
+    data: availableUpdates,
+    searchFields: ['name', 'description']
+  });
+
+  const filteredUpdates = availableUpdates.filter(app =>
+    app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    app.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const handleCardClick = (route: string) => {
     navigate(route);
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
   };
 
   const handleUpdate = (e: React.MouseEvent, appId: string) => {
     e.stopPropagation();
     // Handle update logic here
     console.log(`Updating app: ${appId}`);
+    // You could show a toast notification here
+    alert(`Updating ${appId}...`);
+  };
+
+  const handleUpdateAll = () => {
+    console.log('Updating all apps...');
+    alert('Updating all apps...');
   };
 
   return (
@@ -47,18 +71,19 @@ export const MarketPlaceUpdatesPage = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">App Updates</h1>
         <div className="flex items-center space-x-4">
-          <button className="text-[#C72030] hover:text-[#A01A28] text-sm font-medium">
+          <button 
+            onClick={handleUpdateAll}
+            className="text-[#C72030] hover:text-[#A01A28] text-sm font-medium transition-colors"
+          >
             Update All
           </button>
-          <div className="relative">
-            <input
-              type="text"
+          <div className="w-80">
+            <SearchWithSuggestions
               placeholder="Search updates"
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+              onSearch={handleSearch}
+              suggestions={suggestions}
+              className="w-full"
             />
-            <div className="absolute left-3 top-2.5 text-gray-400">
-              🔍
-            </div>
           </div>
         </div>
       </div>
@@ -67,29 +92,31 @@ export const MarketPlaceUpdatesPage = () => {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Available Updates</h2>
-          <span className="text-sm text-gray-600">{availableUpdates.length} updates available</span>
+          <span className="text-sm text-gray-600">{filteredUpdates.length} updates available</span>
         </div>
         
-        {availableUpdates.length > 0 ? (
+        {filteredUpdates.length > 0 ? (
           <div className="space-y-4">
-            {availableUpdates.map((app) => (
+            {filteredUpdates.map((app) => (
               <div
                 key={app.id}
-                className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow duration-200"
+                className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow duration-200"
               >
                 <div className="flex items-center justify-between">
                   <div 
                     className="flex items-center space-x-4 cursor-pointer flex-1"
                     onClick={() => handleCardClick(app.route)}
                   >
-                    <app.icon className="w-12 h-12 text-[#C72030]" />
+                    <div className="w-12 h-12 bg-[#C72030] rounded-lg flex items-center justify-center">
+                      <app.icon className="w-6 h-6 text-white" />
+                    </div>
                     <div className="flex-1">
-                      <h3 className="font-medium text-gray-900 mb-1">{app.name}</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">{app.name}</h3>
                       <p className="text-sm text-gray-600 mb-2">{app.description}</p>
-                      <div className="flex items-center space-x-4 text-xs text-gray-500">
-                        <span>Current: v{app.currentVersion}</span>
+                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <span>Current: <span className="font-medium">v{app.currentVersion}</span></span>
                         <span>→</span>
-                        <span className="text-[#C72030] font-medium">New: v{app.newVersion}</span>
+                        <span>New: <span className="text-[#C72030] font-medium">v{app.newVersion}</span></span>
                         <span>•</span>
                         <span>{app.updateSize}</span>
                         <span>•</span>
@@ -97,11 +124,11 @@ export const MarketPlaceUpdatesPage = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">UPDATE AVAILABLE</span>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded font-medium">UPDATE AVAILABLE</span>
                     <button
                       onClick={(e) => handleUpdate(e, app.id)}
-                      className="bg-[#C72030] text-white px-4 py-2 rounded-lg hover:bg-[#A01A28] transition-colors flex items-center space-x-2"
+                      className="bg-[#C72030] text-white px-4 py-2 rounded-lg hover:bg-[#A01A28] transition-colors flex items-center space-x-2 font-medium"
                     >
                       <Download className="w-4 h-4" />
                       <span>Update</span>
@@ -116,8 +143,15 @@ export const MarketPlaceUpdatesPage = () => {
             <div className="text-gray-400 mb-4">
               <Download className="w-16 h-16 mx-auto" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">All apps are up to date</h3>
-            <p className="text-gray-600">Your installed applications are running the latest versions.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {searchTerm ? 'No updates found' : 'All apps are up to date'}
+            </h3>
+            <p className="text-gray-600">
+              {searchTerm 
+                ? 'No updates match your search criteria.' 
+                : 'Your installed applications are running the latest versions.'
+              }
+            </p>
           </div>
         )}
       </div>
