@@ -171,7 +171,6 @@ export const IncidentListDashboard = () => {
                     variant="ghost" 
                     size="sm"
                     onClick={() => handleViewIncident(incident.id)}
-                    className="bg-gradient-to-b from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300"
                   >
                     <Eye className="w-4 h-4" />
                   </Button>
