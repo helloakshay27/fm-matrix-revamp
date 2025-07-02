@@ -1,4 +1,6 @@
+
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 
 const packages = [
@@ -16,11 +18,13 @@ const packages = [
 
 export const DynamicHeader = () => {
   const { currentSection, setCurrentSection } = useLayout();
+  const navigate = useNavigate();
 
-  // Set "Maintenance" as the default section when the component mounts
+  // Set "Maintenance" as the default section and navigate to assets when the component mounts
   useEffect(() => {
     setCurrentSection('Maintenance');
-  }, [setCurrentSection]);
+    navigate('/maintenance/asset');
+  }, [setCurrentSection, navigate]);
 
   return (
     <div
