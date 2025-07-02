@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -76,98 +75,72 @@ export const FnBRestaurantDashboard = () => {
 
       {/* Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                View
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Open Days
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Booking Allowed
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Order Allowed
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Active
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {restaurants.map((restaurant) => (
-              <tr key={restaurant.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <button 
-                    className="text-gray-400 hover:text-gray-600"
-                    onClick={() => handleViewRestaurant(restaurant.id)}
-                  >
-                    <Eye className="w-5 h-5" />
-                  </button>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {restaurant.name}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {restaurant.openDays}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div
-                      className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-                        restaurant.bookingAllowed ? 'bg-green-500' : 'bg-gray-300'
-                      }`}
-                      onClick={() => toggleBookingAllowed(restaurant.id)}
-                    >
-                      <span
-                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                          restaurant.bookingAllowed ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div
-                      className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-                        restaurant.orderAllowed ? 'bg-green-500' : 'bg-gray-300'
-                      }`}
-                      onClick={() => toggleOrderAllowed(restaurant.id)}
-                    >
-                      <span
-                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                          restaurant.orderAllowed ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div
-                      className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-                        restaurant.active ? 'bg-green-500' : 'bg-gray-300'
-                      }`}
-                      onClick={() => toggleActive(restaurant.id)}
-                    >
-                      <span
-                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                          restaurant.active ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </div>
-                  </div>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">View</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Open Days</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking Allowed</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Allowed</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {restaurants.map((restaurant) => (
+                <tr key={restaurant.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button 
+                      className="text-gray-400 hover:text-gray-600"
+                      onClick={() => handleViewRestaurant(restaurant.id)}
+                    >
+                      <Eye className="w-5 h-5" />
+                    </button>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{restaurant.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{restaurant.openDays}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div
+                        className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${restaurant.bookingAllowed ? 'bg-green-500' : 'bg-gray-300'}`}
+                        onClick={() => toggleBookingAllowed(restaurant.id)}
+                      >
+                        <span
+                          className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${restaurant.bookingAllowed ? 'translate-x-6' : 'translate-x-1'}`}
+                        />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div
+                        className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${restaurant.orderAllowed ? 'bg-green-500' : 'bg-gray-300'}`}
+                        onClick={() => toggleOrderAllowed(restaurant.id)}
+                      >
+                        <span
+                          className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${restaurant.orderAllowed ? 'translate-x-6' : 'translate-x-1'}`}
+                        />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div
+                        className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${restaurant.active ? 'bg-green-500' : 'bg-gray-300'}`}
+                        onClick={() => toggleActive(restaurant.id)}
+                      >
+                        <span
+                          className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${restaurant.active ? 'translate-x-6' : 'translate-x-1'}`}
+                        />
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Add Restaurant Form Modal */}
