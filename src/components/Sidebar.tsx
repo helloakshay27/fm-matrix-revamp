@@ -222,9 +222,9 @@ const modulesByPackage = {
     { name: 'Redemption Marketplace', icon: Globe, href: '/vas/redemonection-marketplace' }
   ],
   'Market Place': [
-    { name: 'All', icon: FileText, href: '/market-place/all', color: 'text-[#C72030]' },
-    { name: 'Installed', icon: Settings, href: '/market-place/installed' },
-    { name: 'Updates', icon: Phone, href: '/market-place/updates' }
+    { name: 'All', icon: Globe, href: '/market-place/all', color: 'text-white', bgColor: 'bg-[#C72030]' },
+    { name: 'Installed', icon: CheckSquare, href: '/market-place/installed', color: 'text-[#1a1a1a]' },
+    { name: 'Updates', icon: Download, href: '/market-place/updates', color: 'text-[#1a1a1a]' }
   ],
   'Settings': [
     { name: 'General', icon: Settings, href: '/settings/general' },
