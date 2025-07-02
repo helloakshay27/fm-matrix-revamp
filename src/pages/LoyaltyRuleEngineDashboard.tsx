@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, X } from 'lucide-react';
+import { Plus, X, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface Condition {
   id: string;
@@ -22,6 +22,7 @@ interface RewardOutcome {
 }
 
 export const LoyaltyRuleEngineDashboard = () => {
+  const navigate = useNavigate();
   const [ruleName, setRuleName] = useState('');
   const [conditions, setConditions] = useState<Condition[]>([
     {
@@ -121,6 +122,10 @@ export const LoyaltyRuleEngineDashboard = () => {
     });
   };
 
+  const handleBack = () => {
+    navigate('/rule-engine/rule-list');
+  };
+
   return (
     <div className="p-6 bg-white min-h-screen">
       {/* Breadcrumb */}
@@ -128,8 +133,17 @@ export const LoyaltyRuleEngineDashboard = () => {
         Rule Engine &gt; New Rule
       </div>
 
-      {/* Page Title */}
-      <h1 className="text-2xl font-bold text-[#C72030] mb-6">New Rule</h1>
+      {/* Back Button and Page Title */}
+      <div className="flex items-center gap-4 mb-6">
+        <Button
+          onClick={handleBack}
+          variant="ghost"
+          className="text-[#C72030] hover:bg-[#C72030]/10 p-2"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <h1 className="text-2xl font-bold text-[#C72030]">New Rule</h1>
+      </div>
 
       {/* Rule Name Section */}
       <div className="mb-8">
