@@ -113,7 +113,7 @@ export const fetchMyTasks = createAsyncThunk('fetchMyTasks', async ({ token }) =
 export const updateTask = createAsyncThunk('updateTask', async ({ token, id, payload }) => {
     try {
         const response = await axios.put(`${baseURL}/task_managements/${id}.json`,
-            payload,
+            { task_management: payload },
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -273,6 +273,21 @@ export const fetchTasksOfProject = createAsyncThunk('fetchTasksOfProject', async
     }
 });
 
+export const fetchTasksOfMilestone = createAsyncThunk('fetchTasksOfMilestone', async ({ token, id }) => {
+    try {
+        const response = await axios.get(`${baseURL}/task_managements.json?q[milestone_id_eq]=${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            }
+        });
+
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        return error.response.data;
+    }
+});
+
 export const filterTask = createAsyncThunk('filterTask',
     async ({ token, filter }, { rejectWithValue }) => {
         try {
@@ -342,6 +357,7 @@ export const filterTaskSlice = createApiSlice('filterTask', filterTask);
 export const createDependancySlice = createApiSlice('createDependancy', createDependancy);
 export const updateDependancySlice = createApiSlice('updateDependancy', updateDependancy);
 export const fetchMyTasksSlice = createApiSlice('fetchMyTasks', fetchMyTasks);
+export const fetchTasksOfMilestoneSlice = createApiSlice('fetchTasksOfMilestone', fetchTasksOfMilestone);
 
 export const createTaskReducer = createTaskSlice.reducer;
 export const fetchTasksReducer = fetchTasksSlice.reducer;
@@ -360,5 +376,6 @@ export const filterTaskReducer = filterTaskSlice.reducer;
 export const createDependancyReducer = createDependancySlice.reducer;
 export const updateDependancyReducer = updateDependancySlice.reducer;
 export const fetchMyTasksReducer = fetchMyTasksSlice.reducer;
+export const fetchTasksOfMilestoneReducer = fetchTasksOfMilestoneSlice.reducer;
 
 export const { resetCommentEdit } = editTaskCommentSlice.actions;

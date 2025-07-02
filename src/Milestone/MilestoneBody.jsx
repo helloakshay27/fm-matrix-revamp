@@ -2,14 +2,33 @@ import React, { useEffect, useRef } from "react";
 import axios from "axios";
 import "dhtmlx-gantt";
 import "dhtmlx-gantt/codebase/dhtmlxgantt.css";
-import { useParams } from "react-router-dom";
-import { baseURL } from './../../apiDomain'
+import { useParams, useNavigate } from "react-router-dom";
+import { baseURL } from "./../../apiDomain";
 
 const GanttChart = () => {
-    const { id } = useParams()
+    const { id } = useParams();
     const ganttContainer = useRef(null);
     const [scale, setScale] = React.useState("week");
+    const navigate = useNavigate();
 
+    useEffect(() => {
+        const handleGanttButtonClick = (e) => {
+            const btn = e.target.closest(".gantt-open-task");
+            if (btn) {
+                const id = btn.getAttribute("data-id");
+                if (id) {
+                    navigate(`${id}/tasks`); // ✅ navigate without reload
+                }
+            }
+        };
+
+        const container = ganttContainer.current;
+        container?.addEventListener("click", handleGanttButtonClick);
+
+        return () => {
+            container?.removeEventListener("click", handleGanttButtonClick);
+        };
+    }, [navigate]);
 
     useEffect(() => {
         // Columns
@@ -48,15 +67,20 @@ const GanttChart = () => {
                 template: function (task) {
                     // Use Tailwind classes for flex and gap
                     return `
-                <span class="flex items-center justify-center gap-3 mt-2 text-gray-500">
-                    <a href="milestones/${task.navigationid}/tasks" title="Open in new tab">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 14.875H11.5417C12.4257 14.875 13.2736 14.5238 13.8987 13.8987C14.5238 13.2736 14.875 12.4257 14.875 11.5417V9.45833M8 14.875H4.45833C3.57428 14.875 2.72643 14.5238 2.10131 13.8987C1.47619 13.2736 1.125 12.4257 1.125 11.5417V8M8 14.875V10.5C8 9.83696 7.73661 9.20107 7.26777 8.73223C6.79893 8.26339 6.16304 8 5.5 8H1.125M1.125 8V4.45833C1.125 3.57428 1.47619 2.72643 2.10131 2.10131C2.72643 1.47619 3.57428 1.125 4.45833 1.125H6.54167M9.45833 1.125H14.0417C14.2717 1.125 14.48 1.21833 14.6308 1.36917M14.6308 1.36917C14.7871 1.52541 14.875 1.73734 14.875 1.95833V6.54167M14.6308 1.36917L14.0417 1.95833L9.45833 6.54167" stroke="black" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    </a>
-
-                </span>
-            `;
+                        <span class="flex items-center justify-center gap-3 mt-2 text-gray-500">
+                            <button 
+                            class="gantt-open-task" 
+                            data-id="${task.navigationid}" 
+                            title="View Tasks"
+                            style="background: none; border: none; cursor: pointer;"
+                            >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path d="M8 14.875H11.5417C12.4257 14.875 13.2736 14.5238 13.8987 13.8987C14.5238 13.2736 14.875 12.4257 14.875 11.5417V9.45833M8 14.875H4.45833C3.57428 14.875 2.72643 14.5238 2.10131 13.8987C1.47619 13.2736 1.125 12.4257 1.125 11.5417V8M8 14.875V10.5C8 9.83696 7.73661 9.20107 7.26777 8.73223C6.79893 8.26339 6.16304 8 5.5 8H1.125M1.125 8V4.45833C1.125 3.57428 1.47619 2.72643 2.10131 2.10131C2.72643 1.47619 3.57428 1.125 4.45833 1.125H6.54167M9.45833 1.125H14.0417C14.2717 1.125 14.48 1.21833 14.6308 1.36917M14.6308 1.36917C14.7871 1.52541 14.875 1.73734 14.875 1.95833V6.54167M14.6308 1.36917L14.0417 1.95833L9.45833 6.54167" stroke="black" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            </button>
+                        </span>
+                    `;
                 },
             },
         ];
@@ -80,7 +104,9 @@ const GanttChart = () => {
                     format: function (date) {
                         const start = gantt.date.week_start(new Date(date));
                         const end = gantt.date.add(start, 7, "day");
-                        return `${weekDateFormatter(start)} - ${weekDateFormatter(end)} , ${start.getFullYear()}`;
+                        return `${weekDateFormatter(start)} - ${weekDateFormatter(
+                            end
+                        )} , ${start.getFullYear()}`;
                     },
                 },
                 {
@@ -158,8 +184,6 @@ const GanttChart = () => {
 
                 const rawData = response.data;
 
-
-
                 console.log("Fetched milestones:", rawData);
                 // Map milestones and their tasks to Gantt format
                 const tasksData = [];
@@ -179,7 +203,9 @@ const GanttChart = () => {
                 function calculateDuration(startStr, endStr) {
                     const startParts = startStr.split("-");
                     const endParts = endStr.split("-");
-                    const start = new Date(`${startParts[2]}-${startParts[1]}-${startParts[0]}`);
+                    const start = new Date(
+                        `${startParts[2]}-${startParts[1]}-${startParts[0]}`
+                    );
                     const end = new Date(`${endParts[2]}-${endParts[1]}-${endParts[0]}`);
                     if (!start || !end) return 1;
                     const diffTime = end.getTime() - start.getTime();
@@ -189,8 +215,12 @@ const GanttChart = () => {
 
                 rawData.forEach((item) => {
                     const milestoneId = `milestone-${item.id}`;
-                    const formattedStart = item.start_date ? formatDateDMYFromISO(item.start_date) : "";
-                    const formattedEnd = item.end_date ? formatDateDMYFromISO(item.end_date) : "";
+                    const formattedStart = item.start_date
+                        ? formatDateDMYFromISO(item.start_date)
+                        : "";
+                    const formattedEnd = item.end_date
+                        ? formatDateDMYFromISO(item.end_date)
+                        : "";
 
                     tasksData.push({
                         navigationid: item.id,
@@ -198,12 +228,15 @@ const GanttChart = () => {
                         text: item.title,
                         start_date: formattedStart,
                         end_date: formattedEnd,
-                        duration: (formattedStart && formattedEnd)
-                            ? calculateDuration(formattedStart, formattedEnd)
-                            : 1,
+                        duration:
+                            formattedStart && formattedEnd
+                                ? calculateDuration(formattedStart, formattedEnd)
+                                : 1,
                         progress: 0.0,
                         status: "Open",
-                        depends: item.depends_on_id ? `milestone-${item.depends_on_id}` : null,
+                        depends: item.depends_on_id
+                            ? `milestone-${item.depends_on_id}`
+                            : null,
                         type: "milestone",
                         owner: item.owner_id,
                         parent: 0,
@@ -236,11 +269,13 @@ const GanttChart = () => {
                                 ? formatDateDMYFromISO(task.target_date)
                                 : "";
 
-                            const taskDuration = (formattedStartTask && formattedEndTask)
-                                ? calculateDuration(formattedStartTask, formattedEndTask)
-                                : (task.estimated_hour
-                                    ? task.estimated_hour + (task.estimated_min ? task.estimated_min / 60 : 0)
-                                    : 1);
+                            const taskDuration =
+                                formattedStartTask && formattedEndTask
+                                    ? calculateDuration(formattedStartTask, formattedEndTask)
+                                    : task.estimated_hour
+                                        ? task.estimated_hour +
+                                        (task.estimated_min ? task.estimated_min / 60 : 0)
+                                        : 1;
 
                             tasksData.push({
                                 id: uniqueTaskId,
@@ -250,7 +285,9 @@ const GanttChart = () => {
                                 duration: taskDuration,
                                 progress: 0.0,
                                 status: task.status || "Open",
-                                owner: task.responsible_person ? task.responsible_person.name : "",
+                                owner: task.responsible_person
+                                    ? task.responsible_person.name
+                                    : "",
                                 parent: milestoneId,
                                 type: "task",
                             });
@@ -267,11 +304,16 @@ const GanttChart = () => {
                                         ? formatDateDMYFromISO(subTask.target_date)
                                         : "";
 
-                                    const subTaskDuration = (formattedStartSubTask && formattedEndSubTask)
-                                        ? calculateDuration(formattedStartSubTask, formattedEndSubTask)
-                                        : (subTask.estimated_hour
-                                            ? subTask.estimated_hour + (subTask.estimated_min ? subTask.estimated_min / 60 : 0)
-                                            : 1);
+                                    const subTaskDuration =
+                                        formattedStartSubTask && formattedEndSubTask
+                                            ? calculateDuration(
+                                                formattedStartSubTask,
+                                                formattedEndSubTask
+                                            )
+                                            : subTask.estimated_hour
+                                                ? subTask.estimated_hour +
+                                                (subTask.estimated_min ? subTask.estimated_min / 60 : 0)
+                                                : 1;
 
                                     tasksData.push({
                                         id: subTaskId,
@@ -281,7 +323,9 @@ const GanttChart = () => {
                                         duration: subTaskDuration,
                                         progress: 0.0,
                                         status: subTask.status || "Open",
-                                        owner: subTask.responsible_person ? subTask.responsible_person.name : "",
+                                        owner: subTask.responsible_person
+                                            ? subTask.responsible_person.name
+                                            : "",
                                         parent: uniqueTaskId, // 📌 parent is the task
                                         type: "sub_task",
                                     });
@@ -289,10 +333,7 @@ const GanttChart = () => {
                             }
                         });
                     }
-
                 });
-
-
 
                 console.log("Parsed tasks data:", tasksData);
                 const tasks = {
@@ -328,7 +369,6 @@ const GanttChart = () => {
             //   });
         });
 
-
         gantt.attachEvent("onAfterLinkAdd", function (id, links) {
             console.log("Link updated:", links);
 
@@ -345,7 +385,6 @@ const GanttChart = () => {
             //         console.error('Error sending mock API PUT request for link:', error);
             //     });
         });
-
 
         return () => {
             gantt.clearAll();

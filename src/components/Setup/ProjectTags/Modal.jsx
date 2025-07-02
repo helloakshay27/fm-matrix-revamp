@@ -3,6 +3,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useDispatch, useSelector } from 'react-redux';
 import { createTag, fetchActiveTags, fetchTags, resetSuccess, updateTag } from '../../../redux/slices/tagsSlice';
 import { toast } from 'react-hot-toast';
+import SelectBox from '../../SelectBox';
 
 const Modal = ({ open, setOpenModal, editData }) => {
   const token = localStorage.getItem('token')
@@ -113,14 +114,18 @@ const Modal = ({ open, setOpenModal, editData }) => {
             <div className="px-6">
               <label className="block text-[14px] text-[#1B1B1B] mb-1">
                 Tag Type
-                <span className="text-red-500 ml-1">*</span>
+                <span className="text-red-500 ml-1 mb-2">*</span>
               </label>
-              <input
-                type="text"
-                placeholder="Tag Type"
-                className="border border-[#C0C0C0] w-full px-3 py-2 text-[#1B1B1B] text-[13px]"
+              <SelectBox
+                options={
+                  [
+                    { value: "Client Tag", label: "Client Tag" },
+                    { value: "Product Tag", label: "Product Tag" },
+                  ]
+                }
                 value={type}
-                onChange={e => setType(e.target.value)}
+                onChange={(e) => setType(e)}
+                placeholder={"Tag Type"}
               />
             </div>
           </div>

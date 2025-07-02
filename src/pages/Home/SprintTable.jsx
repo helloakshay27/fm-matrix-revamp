@@ -97,9 +97,6 @@ const SprintTable = (setIsSidebarOpen) => {
             setData(newSpirints);
         }
     }, [newSpirints]);
-    let layout = "block";
-
-    const isInline = layout === "inline";
 
     const columns = useMemo(
         () => [

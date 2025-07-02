@@ -9,11 +9,8 @@ import {
 } from "../../../../redux/slices/milestoneSlice";
 import { useLocation, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { set } from "react-hook-form";
 
 const AddMilestoneModal = ({
-  id,
-  deleteMilestone,
   users,
   formData,
   setFormData,
@@ -24,7 +21,6 @@ const AddMilestoneModal = ({
   projectStartDate,
   projectEndDate,
 }) => {
-  console.log(projectStartDate, projectEndDate)
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -53,12 +49,10 @@ const AddMilestoneModal = ({
         <div className="absolute right-2 top-2">
           <DeleteOutlinedIcon
             className="text-red-600 cursor-pointer"
-            onClick={
-              () => {
-                setFormData({});
-                setIsDelete(true);
-              }
-            }
+            onClick={() => {
+              setFormData({});
+              setIsDelete(true);
+            }}
           />
         </div>
       )}
@@ -157,7 +151,7 @@ const AddMilestoneModal = ({
 };
 
 const Milestones = () => {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('token');
   const location = useLocation();
   const dispatch = useDispatch();
   const { id } = useParams();
@@ -165,7 +159,7 @@ const Milestones = () => {
   const { fetchUsers: users = [] } = useSelector((state) => state.fetchUsers);
   const { fetchMilestone: milestone = [] } = useSelector((state) => state.fetchMilestone);
   const { createProject: project = {} } = useSelector((state) => state.createProject);
-  const { loading, success, error } = useSelector((state) => state.createMilestone);
+  const { loading } = useSelector((state) => state.createMilestone);
   const { fetchProjectDetails: projectDetail } = useSelector(state => state.fetchProjectDetails);
 
   const [nextId, setNextId] = useState(1);
@@ -191,7 +185,6 @@ const Milestones = () => {
         ]);
       } catch (error) {
         toast.error("Failed to load data.");
-        console.error("Error fetching data:", error);
       } finally {
         setIsLoading(false);
       }
@@ -200,30 +193,14 @@ const Milestones = () => {
   }, [dispatch, id]);
 
   const validateForm = (data) => {
-    if (!data.title) {
-      toast.error("Milestone title is required.");
-      return false;
-    }
-    if (!data.ownerId) {
-      toast.error("Select project owner.");
-      return false;
-    }
-    if (!data.startDate) {
-      toast.error("Milestone start date is required.");
-      return false;
-    }
-    if (!data.endDate) {
-      toast.error("Milestone end date is required.");
-      return false;
-    }
-    if (data.startDate < projectDetail.startDate || data.startDate > projectDetail.endDate) {
-      toast.error("Start date must be within project duration.");
-      return false;
-    }
-    if (data.endDate < projectDetail.startDate || data.endDate > projectDetail.endDate) {
-      toast.error("End date must be within project duration.");
-      return false;
-    }
+    if (!data.title) return toast.error("Milestone title is required.") && false;
+    if (!data.ownerId) return toast.error("Select project owner.") && false;
+    if (!data.startDate) return toast.error("Milestone start date is required.") && false;
+    if (!data.endDate) return toast.error("Milestone end date is required.") && false;
+    if (data.startDate < projectDetail.startDate || data.startDate > projectDetail.endDate)
+      return toast.error("Start date must be within project duration.") && false;
+    if (data.endDate < projectDetail.startDate || data.endDate > projectDetail.endDate)
+      return toast.error("End date must be within project duration.") && false;
     return true;
   };
 
@@ -238,24 +215,18 @@ const Milestones = () => {
     },
   });
 
-  const handleDeleteMilestone = (id) => {
-    console.log(id);
-    console.log(savedMilestones);
-    setSavedMilestones(savedMilestones.filter((milestone) => milestone.id !== id));
-  };
-
   const handleAddMilestone = async (e) => {
     e.preventDefault();
     if (isDelete) {
       setIsDelete(false);
-      return
+      return;
     }
-    if (!validateForm(formData)) return;
 
+    if (!validateForm(formData)) return;
     if (isSubmittingRef.current) return;
-    const payload = createMilestonePayload(formData);
 
     isSubmittingRef.current = true;
+    const payload = createMilestonePayload(formData);
 
     try {
       await dispatch(createMilestone({ token, payload })).unwrap();
@@ -269,23 +240,20 @@ const Milestones = () => {
         dependsOnId: null,
       });
       setNextId(nextId + 1);
-      await dispatch(fetchMilestone({ token, id })).unwrap(); // Refresh milestones
-
-    } catch (error) {
-      console.error("Error creating milestone:", error);
+      await dispatch(fetchMilestone({ token, id }));
+    } catch {
       toast.error("Error creating milestone.");
     } finally {
-      isSubmittingRef.current = false
+      isSubmittingRef.current = false;
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isDelete && !validateForm(formData)) return;
-
     if (isSubmittingRef.current) return;
-    isSubmittingRef.current = true;
 
+    isSubmittingRef.current = true;
     const payload = createMilestonePayload(formData);
 
     try {
@@ -295,68 +263,49 @@ const Milestones = () => {
       toast.success("Milestone created successfully.");
       await dispatch(fetchMilestone({ token, id }));
       window.location.reload();
-
-    } catch (error) {
-      console.error("Error creating milestone:", error);
+    } catch {
       toast.error("Error creating milestone.");
     } finally {
-      isSubmittingRef.current = false
+      isSubmittingRef.current = false;
       setIsDelete(false);
     }
   };
 
-  if (isLoading) {
-    return <div className="text-center py-4">Loading...</div>;
-  }
+  const isFormEmpty =
+    !formData.title && !formData.ownerId && !formData.startDate && !formData.endDate;
+
+  if (isLoading) return <div className="text-center py-4">Loading...</div>;
 
   return (
-    <form className="pt-2 pb-12 h-full text-[12px]" onSubmit={handleSubmit}>
-      <div
-        id="addTask"
-        className="max-w-[90%] mx-auto h-[calc(100%-4rem)] overflow-y-auto pr-3"
-      >
-        {savedMilestones.map((milestone) => (
+    <form className="pb-12 h-full text-[12px]" onSubmit={handleSubmit}>
+      <div id="addTask" className="max-w-[90%] mx-auto h-[calc(100%-4rem)] overflow-y-auto pr-3">
+        {savedMilestones.map((m) => (
           <AddMilestoneModal
-            key={milestone.id}
-            id={milestone.id}
-            deleteMilestone={handleDeleteMilestone}
+            key={m.id}
             users={users}
-            formData={milestone.formData}
+            formData={m.formData}
             setFormData={() => { }}
             isReadOnly={true}
             milestoneOptions={milestone}
             hasSavedMilestones={savedMilestones.length > 0}
-            projectStartDate={project?.length > 0 ? project[0].start_date : projectDetail?.start_date}
-            projectEndDate={project?.length > 0 ? project[0].end_date : projectDetail?.end_date
-            }
+            projectStartDate={project?.start_date || projectDetail.start_date}
+            projectEndDate={project?.end_date || projectDetail.end_date}
           />
         ))}
         {!isDelete && (
           <AddMilestoneModal
-            id={nextId}
-            deleteMilestone={handleDeleteMilestone}
             users={users}
             formData={formData}
-            setIsDelete={setIsDelete}
             setFormData={setFormData}
+            setIsDelete={setIsDelete}
             isReadOnly={false}
             milestoneOptions={milestone}
             hasSavedMilestones={savedMilestones.length > 0}
-            projectStartDate={project && !Array.isArray(project) ? project.start_date : projectDetail.start_date}
-            projectEndDate={project && !Array.isArray(project) ? project.end_date : projectDetail.end_date}
+            projectStartDate={project?.start_date || projectDetail.start_date}
+            projectEndDate={project?.end_date || projectDetail.end_date}
           />
         )}
 
-        <div className="relative">
-          <button
-            type="button"
-            onClick={handleAddMilestone}
-            className="absolute text-[12px] text-[red] right-2 top-[10px] cursor-pointer"
-            disabled={loading}
-          >
-            <i>Add Milestone</i>
-          </button>
-        </div>
         <div className="flex items-center justify-center gap-4 w-full bottom-0 bg-white mt-16">
           <button
             type="submit"
@@ -365,6 +314,39 @@ const Milestones = () => {
           >
             {loading ? "Processing..." : "Save"}
           </button>
+
+          {isFormEmpty ? (
+            <button
+              type="button"
+              className="flex items-center justify-center border-2 text-[black] border-[red] px-4 py-2 w-max"
+              disabled={loading}
+              onClick={() => {
+                if (savedMilestones.length === 0) {
+                  setIsDelete(true);
+                  setFormData({
+                    title: "",
+                    ownerId: null,
+                    startDate: "",
+                    endDate: "",
+                    dependsOnId: null,
+                  });
+                } else {
+                  window.location.reload();
+                }
+              }}
+            >
+              Cancel
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="flex items-center justify-center border-2 text-[black] border-[red] px-4 py-2 w-max"
+              disabled={loading}
+              onClick={handleAddMilestone}
+            >
+              Save & Add New
+            </button>
+          )}
         </div>
       </div>
     </form>

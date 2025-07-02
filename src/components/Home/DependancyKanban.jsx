@@ -2,22 +2,22 @@ import { useEffect, useState } from "react";
 import DependancyBoardCard from "../Home/DependancyBoardCard";
 import DependancyKanbanBoard from "../Home/DependancyKanbanBoard";
 import { useDispatch, useSelector } from 'react-redux';
-import { createDependancy, fetchTasksOfProject, updateDependancy } from "../../redux/slices/taskSlice";
+import { createDependancy, fetchTasksOfMilestone, updateDependancy } from "../../redux/slices/taskSlice";
 
 const DependancyKanban = () => {
     const token = localStorage.getItem("token");
     const dispatch = useDispatch();
 
-    const { fetchTasksOfProject: tasks = [] } = useSelector(state => state.fetchTasksOfProject);
+    const { fetchTasksOfMilestone: tasks = [] } = useSelector(state => state.fetchTasksOfMilestone);
     const { taskDetails: task } = useSelector(state => state.taskDetails);
 
     const [taskData, setTaskData] = useState([]);
 
     useEffect(() => {
-        if (task?.project_management_id) {
-            dispatch(fetchTasksOfProject({ token, id: task.project_management_id }));
+        if (task?.milestone_id) {
+            dispatch(fetchTasksOfMilestone({ token, id: task.milestone_id }));
         }
-    }, [dispatch, task?.project_management_id]);
+    }, [dispatch, task?.milestone_id]);
 
     useEffect(() => {
         if (tasks.length > 0 && task?.id) {

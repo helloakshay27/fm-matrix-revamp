@@ -120,17 +120,17 @@ const ActionIcons = ({ row }) => {
                 <OpenInFullIcon sx={{ fontSize: "1.2em" }} />
             </button>
             <button
-                onClick={() => alert(`Some other action for: ${row.original.title}`)}
+                onClick={() => navigate(`/projects/${row.original.actualId}/milestones`)}
                 title="View Tasks"
             >
                 <LoginTwoToneIcon sx={{ fontSize: "1.2em" }} />
             </button>
-            <button
+            {/* <button
                 onClick={() => alert(`Archiving: ${row.original.title}`)}
                 title="Archive"
             >
                 <ArchiveOutlinedIcon sx={{ fontSize: "1.2em" }} />
-            </button>
+            </button> */}
             <button
                 onClick={() => handleDelete(row.original.id)}
                 title="Delete"
@@ -250,19 +250,19 @@ const ProjectList = () => {
 
     useEffect(() => {
         filterProjectsSuccess ? setIsFiltered(true) : setIsFiltered(false)
-    }, [filterProjectsSuccess,filteredProjects]);
+    }, [filterProjectsSuccess, filteredProjects]);
 
     const transformedData = useMemo(() => {
-let projectsSource;
+        let projectsSource;
 
-const hasFilter = isFiltered ||
-    (localStorage.getItem("projectFilters") || localStorage.getItem("projectStatus"));
+        const hasFilter = isFiltered ||
+            (localStorage.getItem("projectFilters") || localStorage.getItem("projectStatus"));
 
-if (hasFilter) {
-    projectsSource = filteredProjects?.length > 0 ? filteredProjects : [];
-} else {
-    projectsSource = initialProjects;
-}
+        if (hasFilter) {
+            projectsSource = filteredProjects?.length > 0 ? filteredProjects : [];
+        } else {
+            projectsSource = initialProjects;
+        }
 
         if (!projectsSource) return [];
         if (!Array.isArray(projectsSource)) {
@@ -370,32 +370,32 @@ if (hasFilter) {
                         payload: { project_management: { [name]: apiCompatibleValue } },
                     })
                 ).unwrap();
-                if(localStorage.getItem("projectFilters")){ 
+                if (localStorage.getItem("projectFilters")) {
                     console.log("hoe");
-                    const saved= JSON.parse(localStorage.getItem("projectFilters"));
+                    const saved = JSON.parse(localStorage.getItem("projectFilters"));
                     const newFilters = {
-                                "q[status_in][]": saved.selectedStatuses, // Use array for multiple selections
-                                "q[owner_id_in][]": saved.selectedManagers,
-                                "q[created_by_id_in][]": saved.selectedCreators,
-                                "q[project_type_id_in][]": saved.selectedTypes,
-                                "q[title_cont]": "",
-                                "q[is_template_eq]": "",
-                                "q[start_date_eq]": saved.dates.startDate || "", // Ensure date is sent or empty string
-                                "q[end_date_eq]": saved.dates.endDate || "",
-                            };
-                            const queryString = qs.stringify(newFilters, { arrayFormat: 'repeat' });
-                            dispatch(filterProjects({ token, filters: queryString }));
-                            
-                }else if( localStorage.getItem("projectStatus")){
-                    const status= localStorage.getItem("projectStatus");
-                    const filter={
+                        "q[status_in][]": saved.selectedStatuses, // Use array for multiple selections
+                        "q[owner_id_in][]": saved.selectedManagers,
+                        "q[created_by_id_in][]": saved.selectedCreators,
+                        "q[project_type_id_in][]": saved.selectedTypes,
+                        "q[title_cont]": "",
+                        "q[is_template_eq]": "",
+                        "q[start_date_eq]": saved.dates.startDate || "", // Ensure date is sent or empty string
+                        "q[end_date_eq]": saved.dates.endDate || "",
+                    };
+                    const queryString = qs.stringify(newFilters, { arrayFormat: 'repeat' });
+                    dispatch(filterProjects({ token, filters: queryString }));
+
+                } else if (localStorage.getItem("projectStatus")) {
+                    const status = localStorage.getItem("projectStatus");
+                    const filter = {
                         "q[status_eq]": status
                     }
                     dispatch(filterProjects({ token, filters: filter }));
 
                 }
-                else{
-                dispatch(fetchProjects({ token }));
+                else {
+                    dispatch(fetchProjects({ token }));
                 }
             } catch (err) {
                 console.error(

@@ -11,7 +11,7 @@ import {
   getCoreRowModel,
   flexRender,
   getExpandedRowModel,
-  getPaginationRowModel, // Import getPaginationRowModel
+  getPaginationRowModel,
 } from "@tanstack/react-table";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -30,7 +30,7 @@ import {
   changeTaskStatus,
   updateTask,
   filterTask,
-  fetchMyTasks
+  fetchMyTasks,
 } from "../../../redux/slices/taskSlice";
 import { fetchUsers } from "../../../redux/slices/userSlice";
 import SelectBox from "../../SelectBox";
@@ -39,7 +39,13 @@ import { useLocation } from "react-router-dom";
 import qs from "qs";
 
 const globalPriorityOptions = ["None", "Low", "Medium", "High", "Urgent"];
-const globalStatusOptions = ["open", "in_progress", "completed", "on_hold", "overdue"];
+const globalStatusOptions = [
+  "open",
+  "in_progress",
+  "completed",
+  "on_hold",
+  "overdue",
+];
 
 const EditableTextField = ({
   value,
@@ -48,7 +54,7 @@ const EditableTextField = ({
   isNewRow,
   onEnterPress,
   validator,
-  table
+  table,
 }) => {
   const [localValue, setLocalValue] = useState(value);
   useEffect(() => {
@@ -72,9 +78,16 @@ const EditableTextField = ({
       onChange={(e) => setLocalValue(e.target.value)}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
-      className={`${validator ? ' border border-red-600' : 'border-none'} focus:outline-none w-full h-full p-1 rounded text-[12px] bg-transparent`}
+      className={`${validator ? " border border-red-600" : "border-none"
+        } focus:outline-none w-full h-full p-1 rounded text-[12px] bg-transparent`}
     />
   );
+};
+
+const formatDate = (input) => {
+  if (!input) return "";
+  const d = new Date(input);
+  return d.toISOString().split("T")[0]; // YYYY-MM-DD
 };
 
 const DateEditor = ({
@@ -86,16 +99,13 @@ const DateEditor = ({
   placeholder = "Select date",
   validator,
   min,
-  max
+  max,
 }) => {
-  const [date, setDate] = useState(
-    propValue ? new Date(propValue).toISOString().split("T")[0] : ""
-  );
+  const [date, setDate] = useState(formatDate(propValue));
   const inputRef = useRef(null);
 
   useEffect(() => {
-    const initialDate = propValue ? new Date(propValue).toISOString().split("T")[0] : "";
-    setDate(initialDate);
+    setDate(formatDate(propValue));
   }, [propValue]);
 
   const performUpdate = (dateValue) => {
@@ -123,14 +133,16 @@ const DateEditor = ({
   };
 
   const handleInputClick = () => {
-    if (inputRef.current && typeof inputRef.current.showPicker === 'function') {
+    if (inputRef.current && typeof inputRef.current.showPicker === "function") {
       try {
         inputRef.current.showPicker();
       } catch (error) {
-        console.error("Error trying to show picker:", error);
+        console.error("Error showing picker:", error);
       }
     }
   };
+
+  const isInvalid = typeof validator === "function" ? !validator(date) : false;
 
   return (
     <input
@@ -141,16 +153,19 @@ const DateEditor = ({
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       onClick={handleInputClick}
-      className={`${validator ? 'border border-red-400' : 'border-none'} w-full focus:outline-none rounded text-[12px] p-1 my-custom-date-editor  `}
+      className={`${isInvalid ? "border border-red-400" : "border-none"
+        } w-full focus:outline-none rounded text-[12px] p-1 ${className || ""}`}
       placeholder={placeholder}
-      min={min || null}
-      max={max || null}
+      min={formatDate(min)}
+      max={formatDate(max)}
     />
   );
 };
 
 const calculateDuration = (startDateStr, endDateStr) => {
-  if (!startDateStr || !endDateStr) { return '0d:0h:0m'; }
+  if (!startDateStr || !endDateStr) {
+    return "0d:0h:0m";
+  }
   const start = new Date(startDateStr);
   const end = new Date(endDateStr);
   if (end < start) return "Invalid: End date before start date";
@@ -162,7 +177,6 @@ const calculateDuration = (startDateStr, endDateStr) => {
   const minutes = totalMinutes % 60;
   return `${days}d : ${hours}h : ${minutes}m`;
 };
-
 
 const processTaskData = (task) => {
   if (typeof task !== "object" || task === null) {
@@ -197,8 +211,8 @@ const processTaskData = (task) => {
     endDate: task.target_date?.split("T")[0],
     priority: task.priority,
     duration: calculateDuration(task.expected_start_date, task.target_date),
-    predecessor: task.predecessor || "",
-    successor: task.successor || "",
+    predecessor: task.predecessor_task.length || 0,
+    successor: task.successor_task.length || 0,
     hasSubtasks: hasSubtasks,
     subRows: subRows,
     subRowsLoaded: true,
@@ -221,12 +235,11 @@ const TaskTable = () => {
     fetchMyTasks: myTasksFromStore,
     loading: loadingMyTasks,
     error: myTasksError,
-    success: myTaskSuccess
+    success: myTaskSuccess,
   } = useSelector((state) => state.fetchMyTasks);
 
-
   const {
-    fetchUsers: users, // Assuming 'users' is the array here based on your previous code structure
+    fetchUsers: users,
     loading: loadingUsers,
     error: usersFetchError,
   } = useSelector(
@@ -237,11 +250,11 @@ const TaskTable = () => {
     filterTask: filterTasks,
     loading: loadingFilterTasks,
     error: filterTasksError,
-    success: filterSuccess
-  } = useSelector(
-    (state) => state.filterTask
-  )
-  const { fetchMilestoneById: milestone } = useSelector((state) => state.fetchMilestoneById);
+    success: filterSuccess,
+  } = useSelector((state) => state.filterTask);
+  const { fetchMilestoneById: milestone } = useSelector(
+    (state) => state.fetchMilestoneById
+  );
 
   const userFetchInitiatedRef = useRef(false);
 
@@ -266,10 +279,9 @@ const TaskTable = () => {
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [isUpdatingTask, setIsUpdatingTask] = useState(false);
 
-  // Pagination states
   const [pagination, setPagination] = useState({
     pageIndex: 0,
-    pageSize: 10, // Default page size
+    pageSize: 10,
   });
 
   const MIN_DISPLAY_ROWS = 10;
@@ -293,8 +305,7 @@ const TaskTable = () => {
       localStorage.removeItem("taskFilters");
     };
 
-    window.addEventListener("beforeunload", handleBeforeUnload); console.log("Resetting filters at", new Date().toISOString());
-
+    window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
@@ -306,16 +317,11 @@ const TaskTable = () => {
   }, [filterSuccess, filterTasks]);
 
   useEffect(() => {
-    if (
-      !isCreatingTask &&
-      !isUpdatingTask
-    ) {
-      if (mid)
-        dispatch(fetchTasks({ token, id: mid }));
-      else
-        dispatch(fetchTasks({ token, id: "" }));
+    if (!isCreatingTask && !isUpdatingTask) {
+      if (mid) dispatch(fetchTasks({ token, id: mid }));
+      else dispatch(fetchTasks({ token, id: "" }));
     }
-  }, [dispatch, isCreatingTask, isUpdatingTask, location.pathname]);
+  }, [dispatch, isCreatingTask, isUpdatingTask, location.pathname, mid, token]);
 
   useEffect(() => {
     if (
@@ -335,12 +341,12 @@ const TaskTable = () => {
     }
   }, [
     dispatch,
-    // Check if users is an array before accessing length
-    users && users.length, // More robust dependency for length
+    users,
     loadingUsers,
     usersFetchError,
     isCreatingTask,
     isUpdatingTask,
+    token,
   ]);
 
   useEffect(() => {
@@ -350,30 +356,49 @@ const TaskTable = () => {
     const myTasks = localStorage.getItem("myTasks");
 
     if (myTasks === "false") {
-      console.log("hi");
-      // All Tasks mode
-      if (filterSuccess && Array.isArray(filterTasks) && (localStorage.getItem("taskFilters") || localStorage.getItem("taskStatus"))) {
-        console.log("All Tasks mode: Using filtered tasks");
+      if (
+        filterSuccess &&
+        Array.isArray(filterTasks) &&
+        (localStorage.getItem("taskFilters") ||
+          localStorage.getItem("taskStatus"))
+      ) {
         newProcessedData = filterTasks.map((task) => processTaskData(task));
-      } else if (tasksFromStore && Array.isArray(tasksFromStore) && tasksFromStore.length > 0) {
-        console.log("All Tasks mode: Using all tasks");
+      } else if (
+        tasksFromStore &&
+        Array.isArray(tasksFromStore) &&
+        tasksFromStore.length > 0
+      ) {
         newProcessedData = tasksFromStore.map((task) => processTaskData(task));
       }
     } else {
-      // My Tasks mode
-      if (filterSuccess && Array.isArray(filterTasks) && (localStorage.getItem("taskFilters") || localStorage.getItem("taskStatus"))) {
-        console.log("My Tasks mode: Using filtered tasks");
+      if (
+        filterSuccess &&
+        Array.isArray(filterTasks) &&
+        (localStorage.getItem("taskFilters") ||
+          localStorage.getItem("taskStatus"))
+      ) {
         newProcessedData = filterTasks.map((task) => processTaskData(task));
       } else if (myTaskSuccess && Array.isArray(myTasksFromStore)) {
-        console.log("My Tasks mode: Using my tasks");
-        newProcessedData = myTasksFromStore.map((task) => processTaskData(task));
+        newProcessedData = myTasksFromStore.map((task) =>
+          processTaskData(task)
+        );
       }
     }
 
     setData(newProcessedData);
     setLocalError(null);
-    console.log(newProcessedData);
-  }, [tasksFromStore, tasksError, isCreatingTask, isUpdatingTask, filterTasksError, filterTasks, myTasksFromStore, myTasksError, myTaskSuccess]);
+  }, [
+    tasksFromStore,
+    tasksError,
+    isCreatingTask,
+    isUpdatingTask,
+    filterTasksError,
+    filterTasks,
+    myTasksFromStore,
+    myTasksError,
+    myTaskSuccess,
+    filterSuccess,
+  ]);
 
   useEffect(() => {
     if (isAddingNewTask && newTaskTitleInputRef.current) {
@@ -405,11 +430,52 @@ const TaskTable = () => {
   };
 
   const handleSaveNewTask = useCallback(() => {
-    if (!newTaskTitle || newTaskTitle.trim() === "" || !newTaskEndDate || !newTaskStartDate) {
-      setLocalError("Fill all required fields");
+    // Validation for required fields
+    if (!newTaskTitle || newTaskTitle.trim() === "") {
+      setLocalError("Task title is required");
       setValidator(true);
       return;
     }
+    if (!newTaskStartDate) {
+      setLocalError("Start date is required");
+      setValidator(true);
+      return;
+    }
+    if (!newTaskEndDate) {
+      setLocalError("End date is required");
+      setValidator(true);
+      return;
+    }
+
+    // Additional date validation
+    const start = new Date(newTaskStartDate);
+    const end = new Date(newTaskEndDate);
+    const milestoneStart = milestone?.start_date
+      ? new Date(milestone.start_date)
+      : new Date();
+    const milestoneEnd = milestone?.end_date ? new Date(milestone.end_date) : null;
+
+    if (start < milestoneStart) {
+      setLocalError("Start date cannot be before milestone start date");
+      setValidator(true);
+      return;
+    }
+    if (milestoneEnd && start > milestoneEnd) {
+      setLocalError("Start date cannot be after milestone end date");
+      setValidator(true);
+      return;
+    }
+    if (end < start) {
+      setLocalError("End date cannot be before start date");
+      setValidator(true);
+      return;
+    }
+    if (milestoneEnd && end > milestoneEnd) {
+      setLocalError("End date cannot be after milestone end date");
+      setValidator(true);
+      return;
+    }
+
     setLocalError(null);
     setValidator(false);
     const taskAttributes = {
@@ -420,7 +486,7 @@ const TaskTable = () => {
       expected_start_date: newTaskStartDate || null,
       target_date: newTaskEndDate || null,
       priority: newTaskPriority,
-      milestone_id: mid
+      milestone_id: mid,
     };
     setIsCreatingTask(true);
     setIsAddingNewTask(false);
@@ -450,6 +516,10 @@ const TaskTable = () => {
     newTaskEndDate,
     newTaskPriority,
     resetNewTaskForm,
+    id,
+    mid,
+    token,
+    milestone,
   ]);
 
   useEffect(() => {
@@ -482,7 +552,6 @@ const TaskTable = () => {
     const handleEscape = (event) => {
       if (!isAddingNewTask) return;
       if (event.key === "Escape") {
-        console.log("Escape key pressed!");
         handleCancelNewTask();
       }
     };
@@ -497,59 +566,54 @@ const TaskTable = () => {
   const handleFetchTasks = async () => {
     const myTasks = localStorage.getItem("myTasks");
 
-    console.log(tasksFromStore, myTasks);
     if (localStorage.getItem("taskFilters")) {
-      console.log("hoe");
       const saved = JSON.parse(localStorage.getItem("taskFilters"));
       const newFilter = {
-        "q[status_in][]": saved.selectedStatuses.length > 0 ? saved.selectedStatuses : [],
-        "q[created_by_id_eq]": saved.selectedCreators.length > 0 ? saved.selectedCreators : [],
+        "q[status_in][]":
+          saved.selectedStatuses.length > 0 ? saved.selectedStatuses : [],
+        "q[created_by_id_eq]":
+          saved.selectedCreators.length > 0 ? saved.selectedCreators : [],
         "q[start_date_eq]": saved.dates["Start Date"],
         "q[end_date_eq]": saved.dates["End Date"],
-        "q[responsible_person_id_in][]": saved.selectedResponsible.length > 0 ? saved.selectedResponsible : [],
-        "q[milestone_id_eq]": mid
-      }
-      const queryString = qs.stringify(newFilter, { arrayFormat: 'repeat' });
+        "q[responsible_person_id_in][]":
+          saved.selectedResponsible.length > 0 ? saved.selectedResponsible : [],
+        "q[milestone_id_eq]": mid,
+      };
+      const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
       await dispatch(filterTask({ token, filter: queryString })).unwrap();
       return;
     }
     if (localStorage.getItem("taskStatus")) {
       const saved = localStorage.getItem("taskStatus");
       const filter = {
-        "q[status_eq]": saved
-      }
+        "q[status_eq]": saved,
+      };
       await dispatch(filterTask({ token, filter })).unwrap();
       return;
     }
     if (mid != undefined && mid != null) {
       await dispatch(fetchTasks({ token, id: mid })).unwrap();
-    }
-    else {
+    } else {
       if (myTasks === "false") {
         await dispatch(fetchTasks({ token, id: "" })).unwrap();
       } else {
         await dispatch(fetchMyTasks({ token })).unwrap();
       }
     }
-
-  }
-
+  };
 
   const handleUpdateTaskFieldCell = useCallback(
     async (taskId, fieldName, newValue) => {
-      console.log(taskId, fieldName, newValue)
       if (isUpdatingTask) return;
       const payload = { [fieldName]: newValue };
       setIsUpdatingTask(true);
       setLocalError(null);
       try {
         if (fieldName === "status") {
-          await dispatch(changeTaskStatus({ token, id: taskId, payload })) // Using changeTaskStatus as per import
-            .unwrap()
-        }
-        else {
-          await dispatch(updateTask({ token, id: taskId, payload }))
-            .unwrap()
+          await dispatch(changeTaskStatus({ token, id: taskId, payload }))
+            .unwrap();
+        } else {
+          await dispatch(updateTask({ token, id: taskId, payload })).unwrap();
         }
         handleFetchTasks();
       } catch (error) {
@@ -561,12 +625,11 @@ const TaskTable = () => {
           `Update failed: ${error?.response?.data?.errors || error?.message || "Server error"
           }`
         );
-      }
-      finally {
+      } finally {
         setIsUpdatingTask(false);
       }
     },
-    [dispatch, isUpdatingTask]
+    [dispatch, isUpdatingTask, token]
   );
 
   const mainTableColumns = useMemo(
@@ -576,10 +639,10 @@ const TaskTable = () => {
         header: () => null,
         size: 40,
         cell: ({ row }) => {
-          const canExpand = row.original.hasSubtasks; // Relies on hasSubtasks from processTaskData
+          const canExpand = row.original.hasSubtasks;
           return canExpand ? (
             <button
-              onClick={row.getToggleExpandedHandler()} // Just toggle, subRows are already loaded
+              onClick={row.getToggleExpandedHandler()}
               style={{ cursor: "pointer", paddingLeft: `${row.depth * 1}rem` }}
               className="flex items-center justify-center w-full h-full"
               aria-label={row.getIsExpanded() ? "Collapse" : "Expand"}
@@ -595,7 +658,7 @@ const TaskTable = () => {
               style={{ paddingLeft: `${row.depth * 1 + 0.5}rem` }}
               className="flex items-center justify-center w-full h-full"
             >
-              &nbsp;
+
             </span>
           );
         },
@@ -605,7 +668,6 @@ const TaskTable = () => {
         header: "Task Id",
         size: 100,
         cell: ({ getValue, row }) => {
-          // Added row for depth
           let originalId = String(getValue() || "");
           let displayId = "";
           let linkIdPart = originalId;
@@ -618,8 +680,8 @@ const TaskTable = () => {
           return (
             <Link
               to={`${linkIdPart}`}
-              className="text-xs text-blue-600 hover:text-blue-800 hover:underline p-1 block" // Added block for padding
-              style={{ paddingLeft: `${row.depth * 1.5}rem` }} // Indentation for subtask IDs
+              className="text-xs text-blue-600 hover:text-blue-800 hover:underline p-1 block"
+              style={{ paddingLeft: `${row.depth * 1.5}rem` }}
             >
               <span>{displayId}</span>
             </Link>
@@ -631,11 +693,17 @@ const TaskTable = () => {
         header: "Task Title",
         size: 200,
         cell: ({ getValue, row }) => {
-
           const [editTitle, setEditTitle] = useState(getValue());
           return (
-            < EditableTextField value={editTitle} onUpdate={(title) => setEditTitle(title)} onEnterPress={() => handleUpdateTaskFieldCell(row.original.id, "title", editTitle)} />)
-        }
+            <EditableTextField
+              value={editTitle}
+              onUpdate={(title) => setEditTitle(title)}
+              onEnterPress={() =>
+                handleUpdateTaskFieldCell(row.original.id, "title", editTitle)
+              }
+            />
+          );
+        },
       },
       {
         accessorKey: "status",
@@ -658,45 +726,57 @@ const TaskTable = () => {
         cell: ({ getValue, row }) => {
           return (
             <SelectBox
-              options={users.map((user) => ({ value: user.id, label: `${user.firstname} ${user.lastname}` }))}
+              options={users.map((user) => ({
+                value: user.id,
+                label: `${user.firstname} ${user.lastname}`,
+              }))}
               value={getValue()}
-              onChange={(newValue) => handleUpdateTaskFieldCell(row.original.id, "responsible_person_id", newValue)}
-              style={
-                {
-                  border: "none",
-                  width: "100%",
-                  height: "100%",
-                  padding: "0.5rem"
-                }
+              onChange={(newValue) =>
+                handleUpdateTaskFieldCell(
+                  row.original.id,
+                  "responsible_person_id",
+                  newValue
+                )
               }
+              style={{
+                border: "none",
+                width: "100%",
+                height: "100%",
+                padding: "0.5rem",
+              }}
               table={true}
             />
-          )
+          );
         },
       },
       {
         accessorKey: "startDate",
         header: "Start Date",
         size: 130,
-        cell: ({ getValue, row }) =>
-        (
+        cell: ({ getValue, row }) => (
           <DateEditor
             value={getValue()}
-            onUpdate={(date) => handleUpdateTaskFieldCell(row.original.id, "expected_start_date", date)}
+            onUpdate={(date) =>
+              handleUpdateTaskFieldCell(
+                row.original.id,
+                "expected_start_date",
+                date
+              )
+            }
             className="text-[12px]"
           />
-        )
-
+        ),
       },
       {
         accessorKey: "endDate",
         header: "End Date",
         size: 130,
-        cell: ({ getValue, row }) =>
-        (
+        cell: ({ getValue, row }) => (
           <DateEditor
             value={getValue()}
-            onUpdate={(date) => handleUpdateTaskFieldCell(row.original.id, "target_date", date)}
+            onUpdate={(date) =>
+              handleUpdateTaskFieldCell(row.original.id, "target_date", date)
+            }
             className="text-[12px]"
             min={row.original.startDate}
           />
@@ -730,20 +810,16 @@ const TaskTable = () => {
         accessorKey: "predecessor",
         header: "Predecessor",
         size: 100,
-        cell: ({ getValue }) => (
-          <span className="text-xs p-1">{getValue()}</span>
-        ),
+        cell: ({ getValue }) => <span className="text-xs">{getValue()}</span>,
       },
       {
         accessorKey: "successor",
         header: "Successor",
         size: 100,
-        cell: ({ getValue }) => (
-          <span className="text-xs p-1">{getValue()}</span>
-        ),
+        cell: ({ getValue }) => <span className="text-xs">{getValue()}</span>,
       },
     ],
-    [handleUpdateTaskFieldCell, users, data]
+    [handleUpdateTaskFieldCell, users]
   );
 
   const table = useReactTable({
@@ -751,14 +827,14 @@ const TaskTable = () => {
     columns: mainTableColumns,
     state: {
       expanded,
-      pagination, // Add pagination state
+      pagination,
     },
     onExpandedChange: setExpanded,
-    onPaginationChange: setPagination, // Add pagination handler
+    onPaginationChange: setPagination,
     getSubRows: (row) => row.subRows,
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(), // Enable pagination
+    getPaginationRowModel: getPaginationRowModel(),
   });
 
   const showTopLevelAddTaskButton =
@@ -787,17 +863,15 @@ const TaskTable = () => {
   if (
     isCreatingTask ||
     isUpdatingTask ||
-    loadingFilterTasks
-    || loadingMyTasks ||
+    loadingFilterTasks ||
+    loadingMyTasks ||
     loadingTasks
   ) {
     let loadingMessage = "Loading tasks...";
     if (isCreatingTask) loadingMessage = "Creating task...";
     if (isUpdatingTask) loadingMessage = "Updating task...";
-    if (loadingFilterTasks) loadingMessage = "Filtering tasks..."
-    content = (
-      <Loader message={loadingMessage} error={tasksError} />
-    )
+    if (loadingFilterTasks) loadingMessage = "Filtering tasks...";
+    content = <Loader message={loadingMessage} error={tasksError} />;
   } else {
     content = (
       <>
@@ -809,11 +883,8 @@ const TaskTable = () => {
             overflowY: "auto",
           }}
         >
-          {" "}
           <table className="w-full text-sm table-fixed">
-            {" "}
             <thead className="sticky top-0 bg-gray-50 z-30">
-              {" "}
               {table.getHeaderGroups().map((hg) => (
                 <tr key={hg.id}>
                   {hg.headers.map((h) => (
@@ -829,38 +900,32 @@ const TaskTable = () => {
                   ))}
                 </tr>
               ))}
-              {" "}
             </thead>
-            {" "}
             <tbody className="bg-white">
-              {" "}
-              {data.length == 0 &&
+              {data.length === 0 &&
                 !isAddingNewTask &&
                 !showTopLevelAddTaskButton &&
                 !loadingTasks &&
                 !isCreatingTask &&
-                !isUpdatingTask && !loadingFilterTasks && (
+                !isUpdatingTask &&
+                !loadingFilterTasks && (
                   <tr style={{ height: `${ROW_HEIGHT * 2}px` }}>
                     <td
                       colSpan={mainTableColumns.length}
                       className="text-center text-gray-500 p-4"
                     >
-                      {isFiltered ? "Try adjusting Filters" : ""
-                      }
+                      {isFiltered ? "Try adjusting Filters" : ""}
                       "No tasks available"
                     </td>
                   </tr>
                 )}
-              {" "}
-              {table.getRowModel().rows.map((row) => ( // Use table.getRowModel().rows for paginated rows
+              {table.getRowModel().rows.map((row) => (
                 <Fragment key={row.id}>
-                  {" "}
                   <tr
                     className={`hover:bg-gray-50 ${row.getIsExpanded() ? "bg-gray-100" : "even:bg-[#D5DBDB4D]"
                       } font-[300] relative z-1`}
                     style={{ height: `${ROW_HEIGHT}px` }}
                   >
-                    {" "}
                     {row.getVisibleCells().map((cell) => (
                       <td
                         key={cell.id}
@@ -875,30 +940,23 @@ const TaskTable = () => {
                         </div>
                       </td>
                     ))}
-                    {" "}
                   </tr>
-                  {" "}
                 </Fragment>
               ))}
-              {" "}
               {isAddingNewTask && (
                 <tr
                   ref={newTaskFormRowRef}
                   style={{ height: `${ROW_HEIGHT}px` }}
                   className="border-b relative z-1"
                 >
-                  {" "}
                   <td className="p-0 align-middle border-r-2 text-gray-400">
-                    <div className="h-full w-full flex items-center px-1">
-                    </div>
+                    <div className="h-full w-full flex items-center px-1"></div>
                   </td>
-                  {" "}
                   <td className="p-0 align-middle border-r-2 text-gray-400">
                     <div className="h-full w-full flex items-center px-1">
                       ---
                     </div>
                   </td>
-                  {" "}
                   <td className="pl-2 p-0 align-middle border-r-2">
                     <EditableTextField
                       value={newTaskTitle}
@@ -906,56 +964,64 @@ const TaskTable = () => {
                       inputRef={newTaskTitleInputRef}
                       isNewRow={true}
                       onEnterPress={handleSaveNewTask}
-                      validator={validator}
+                      validator={!newTaskTitle || newTaskTitle.trim() === ""}
                     />
                   </td>
-                  {" "}
                   <td className="pl-2 p-0 align-middle border-r-2">
-                    {" "}
                     <StatusBadge
                       status={newTaskStatus}
                       statusOptions={globalStatusOptions}
                       onStatusChange={setNewTaskStatus}
                     />
                   </td>
-                  {" "}
                   <td className="p-0 align-middle border-r-2">
-                    {" "}
                     <SelectBox
                       options={[
                         { value: null, label: "Unassigned" },
                         ...(Array.isArray(users)
                           ? users.map((u) => ({
                             value: u.id,
-                            label: `${u.firstname || ""} ${u.lastname || ""
-                              }`.trim(),
+                            label: `${u.firstname || ""} ${u.lastname || ""}`.trim(),
                           }))
                           : []),
                       ]}
                       value={newTaskResponsiblePersonId}
                       onChange={(selectedId) => {
                         setNewTaskResponsiblePersonId(selectedId);
-                        console.log(selectedId);
-                      }
-                      }
+                      }}
                       placeholder="Select Person..."
                       table={true}
                     />
-                    {" "}
                   </td>
-                  {" "}
                   <td className="p-0 align-middle border-r-2">
                     <DateEditor
                       value={newTaskStartDate}
                       onUpdate={setNewTaskStartDate}
                       isNewRow={true}
                       onEnterPress={handleSaveNewTask}
-                      validator={validator}
-                      min={milestone?.start_date || new Date().toISOString().split("T")[0]}
-                      max={milestone?.end_date}
+                      validator={(date) => {
+                        if (!date) return false;
+                        const start = new Date(date);
+                        const milestoneStart = milestone?.start_date
+                          ? new Date(milestone.start_date)
+                          : new Date();
+                        const milestoneEnd = milestone?.end_date
+                          ? new Date(milestone.end_date)
+                          : null;
+                        return (
+                          start >= milestoneStart &&
+                          (!milestoneEnd || start <= milestoneEnd) &&
+                          (!newTaskEndDate || start <= new Date(newTaskEndDate))
+                        );
+                      }}
+                      min={
+                        milestone?.start_date
+                          ? milestone.start_date
+                          : new Date().toISOString().split("T")[0]
+                      }
+                      max={milestone?.end_date || undefined}
                     />
                   </td>
-                  {" "}
                   <td className="p-0 align-middle border-r-2">
                     <DateEditor
                       value={newTaskEndDate}
@@ -963,17 +1029,27 @@ const TaskTable = () => {
                       isNewRow={true}
                       onEnterPress={handleSaveNewTask}
                       className="text-[12px]"
-                      validator={validator}
+                      validator={(date) => {
+                        if (!date) return false;
+                        const end = new Date(date);
+                        const start = newTaskStartDate ? new Date(newTaskStartDate) : null;
+                        const milestoneEnd = milestone?.end_date
+                          ? new Date(milestone.end_date)
+                          : null;
+                        return (
+                          (!start || end >= start) &&
+                          (!milestoneEnd || end <= milestoneEnd)
+                        );
+                      }}
                       min={newTaskStartDate}
+                      max={milestone?.end_date || undefined}
                     />
                   </td>
-                  {" "}
                   <td className="p-0 align-middle border-r-2 text-xs">
                     <div className="h-full w-full flex items-center px-2">
                       {calculateDuration(newTaskStartDate, newTaskEndDate)}
                     </div>
                   </td>
-                  {" "}
                   <td className="p-0 pl-2 align-middle border-r-2">
                     <StatusBadge
                       status={newTaskPriority}
@@ -981,14 +1057,10 @@ const TaskTable = () => {
                       onStatusChange={setNewTaskPriority}
                     />
                   </td>
-                  {" "}
                   <td className="p-0 align-middle border-r-2"></td>
-                  {""}
                   <td className="p-0 align-middle border-r-2"></td>
-                  {" "}
                 </tr>
               )}
-              {" "}
               {showTopLevelAddTaskButton && (
                 <tr style={{ height: `${ROW_HEIGHT}px` }}>
                   <td
@@ -1004,31 +1076,25 @@ const TaskTable = () => {
                   </td>
                 </tr>
               )}
-              {" "}
               {Array.from({ length: numEmptyRowsToFill }).map((_, i) => (
                 <tr key={`empty-${i}`} style={{ height: `${ROW_HEIGHT}px` }}>
                   <td
                     colSpan={mainTableColumns.length}
                     className="border-r-2 p-2"
                   >
-                    &nbsp;
+
                   </td>
                 </tr>
               ))}
-              {" "}
             </tbody>
-            {" "}
           </table>
-          {" "}
         </div>
       </>
     );
   }
 
   const renderError = localError ? (
-    <div className="mt-2 p-2 text-red-700 b text-sm">
-      {String(localError)}
-    </div>
+    <div className="mt-2 p-2 text-red-700 b text-sm">{String(localError)}</div>
   ) : null;
 
   if (usersFetchError && (!Array.isArray(users) || users.length === 0)) {
@@ -1043,10 +1109,8 @@ const TaskTable = () => {
       {renderError}
       {content}
 
-      {/* Pagination Controls */}
       {data.length > 0 && (
         <div className=" flex items-center justify-start gap-4 mt-4 text-[12px]">
-          {/* Previous Button */}
           <button
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
@@ -1055,7 +1119,6 @@ const TaskTable = () => {
             {"<"}
           </button>
 
-          {/* Page Numbers (Sliding Window of 3) */}
           {(() => {
             const totalPages = table.getPageCount();
             const currentPage = table.getState().pagination.pageIndex;
@@ -1064,7 +1127,6 @@ const TaskTable = () => {
             let start = Math.max(0, currentPage - Math.floor(visiblePages / 2));
             let end = start + visiblePages;
 
-            // Ensure end does not exceed total pages
             if (end > totalPages) {
               end = totalPages;
               start = Math.max(0, end - visiblePages);
@@ -1086,7 +1148,6 @@ const TaskTable = () => {
             });
           })()}
 
-          {/* Next Button */}
           <button
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}

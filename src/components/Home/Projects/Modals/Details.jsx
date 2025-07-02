@@ -266,7 +266,7 @@ const Details = ({
     <form className="pt-2 pb-12 h-full" onSubmit={handleSubmit}>
       <div className="max-w-[90%] mx-auto h-[calc(100%-4rem)] overflow-y-auto pr-3">
         <div className="mt-4 space-y-2">
-          <label className="block ms-2">
+          <label className="block">
             Project Title <span className="text-red-600">*</span>
           </label>
           <input
@@ -298,14 +298,14 @@ const Details = ({
         </div>
 
         <div className="mt-4 space-y-2 h-[100px]">
-          <label className="block ms-2">Description</label>
+          <label className="block">Description</label>
           <textarea
             name="description"
             value={formData.description}
             onChange={handleInputChange}
             rows={5}
             placeholder="Enter Description"
-            className="w-full border outline-none border-gray-300 p-2 text-sm h-[70%]"
+            className="w-full border outline-none border-gray-300 p-2 text-[13px] h-[75px] overflow-y-auto resize-none"
           />
         </div>
 
@@ -343,7 +343,7 @@ const Details = ({
         <div className="flex gap-2 mt-4 text-[12px]">
           {["startDate", "endDate"].map((field) => (
             <div key={field} className="w-full space-y-2">
-              <label className="block ms-2">
+              <label className="block">
                 {field === "startDate" ? "Start Date" : "End Date"}{" "}
                 <span className="text-red-600">*</span>
               </label>
@@ -367,7 +367,7 @@ const Details = ({
           ))}
 
           <div className="w-[300px] space-y-2">
-            <label className="block ms-2">Duration</label>
+            <label className="block">Duration</label>
             <input
               value={handleDuration()}
               readOnly
@@ -377,20 +377,19 @@ const Details = ({
           </div>
         </div>
 
-        <div className="relative">
-          <label
-            className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer"
-            onClick={() => setOpenTeamModal(true)}
-          >
-            <i>Create new team</i>
-          </label>
-        </div>
-
         <div className="flex flex-col gap-4 my-10">
           <div>
-            <label className="block mb-2">
-              Project Team <span className="text-red-600">*</span>
-            </label>
+            <div className="flex justify-between">
+              <label className="block mb-2">
+                Project Team <span className="text-red-600">*</span>
+              </label>
+              <label
+                className="text-[12px] text-[red] cursor-pointer"
+                onClick={() => setOpenTeamModal(true)}
+              >
+                <i>Create new team</i>
+              </label>
+            </div>
             <SelectBox
               options={
                 teams
@@ -446,7 +445,7 @@ const Details = ({
               placeholder="Select Tags"
             />
             <div
-              className="text-[12px] text-[red] text-right cursor-pointer"
+              className="text-[12px] text-[red] text-right cursor-pointer mt-2"
               onClick={() => setOpenTagModal(true)}
             >
               <i>Create new tag</i>

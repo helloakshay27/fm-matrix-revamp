@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUsers, removeUserFromProject } from "../../../../redux/slices/userSlice";
+import { fetchUserAvailability, fetchUsers, removeUserFromProject } from "../../../../redux/slices/userSlice";
 import { fetchTags } from "../../../../redux/slices/tagsSlice";
 import WeekProgressPicker from "../../../../Milestone/weekProgressPicker";
 import MultiSelectBox from "../../../MultiSelectBox";
@@ -31,6 +31,7 @@ const TaskForm = ({
   allUsers,
   calculateDuration // Add calculateDuration as a prop
 }) => {
+  const { fetchUserAvailability: userAvailability } = useSelector(state => state.fetchUserAvailability)
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -127,7 +128,7 @@ const TaskForm = ({
           name="description"
           rows={5}
           placeholder="Enter Description"
-          className="w-full border outline-none border-gray-300 p-2 text-[13px] h-[70%]"
+          className="w-full border outline-none border-gray-300 p-2 text-[13px] h-[80px] overflow-y-auto resize-none"
           value={formData.description}
           onChange={handleInputChange}
           disabled={isReadOnly}
@@ -146,9 +147,12 @@ const TaskForm = ({
             }))}
             placeholder="Select Person"
             value={formData.responsiblePerson}
-            onChange={(value) =>
-              setFormData({ ...formData, responsiblePerson: value })
-            }
+            onChange={(value) => {
+              setFormData({ ...formData, responsiblePerson: value });
+              if (!isReadOnly && value) {
+                dispatch(fetchUserAvailability({ token, id: value }));
+              }
+            }}
             disabled={isReadOnly}
           />
         </div>
@@ -170,12 +174,12 @@ const TaskForm = ({
 
       <div className="flex justify-between mt-1 gap-2 text-[12px]">
         <div className="space-y-2 w-full">
-          <label className="block ms-2">Priority</label>
+          <label className="block ms-2">Priority <span className="text-red-600">*</span></label>
           <SelectBox
             options={[
-              { label: "High", value: "high" },
-              { label: "Medium", value: "medium" },
-              { label: "Low", value: "low" },
+              { label: "High", value: "High" },
+              { label: "Medium", value: "Medium" },
+              { label: "Low", value: "Low" },
             ]}
             placeholder="Select Priority"
             value={formData.priority}
@@ -207,6 +211,7 @@ const TaskForm = ({
           disabled={isReadOnly}
           minDate={milestoneStartDate}
           maxDate={milestoneEndDate}
+          availabilityData={userAvailability}
         />
       </div>
 
@@ -218,6 +223,7 @@ const TaskForm = ({
           disabled={isReadOnly}
           minDate={milestoneStartDate}
           maxDate={milestoneEndDate}
+          availabilityData={userAvailability}
         />
       </div>
 
@@ -257,7 +263,7 @@ const TaskForm = ({
   );
 };
 
-const Tasks = ({ isEdit }) => {
+const Tasks = ({ isEdit, onCloseModal }) => {
   const token = localStorage.getItem("token");
   const { id, mid, tid } = useParams();
   const dispatch = useDispatch();
@@ -293,7 +299,6 @@ const Tasks = ({ isEdit }) => {
   const [prevTags, setPrevTags] = useState([]);
   const [prevObservers, setPrevObservers] = useState([]);
 
-  // Move calculateDuration to Tasks
   const calculateDuration = (startDateStr, endDateStr) => {
     if (!startDateStr || !endDateStr) return "";
     const start = new Date(startDateStr);
@@ -369,6 +374,30 @@ const Tasks = ({ isEdit }) => {
     estimated_hour: 0
   });
 
+  const isFormEmpty = () => {
+    return (
+      !formData.taskTitle &&
+      !formData.responsiblePerson &&
+      !formData.priority &&
+      !formData.expected_start_date &&
+      !formData.target_date &&
+      formData.observer.length === 0 &&
+      formData.tags.length === 0
+    );
+  };
+
+  const handleCancel = () => {
+    if (savedTasks.length === 0) {
+      if (onCloseModal) {
+        onCloseModal(); // Trigger modal close from parent
+      } else {
+        console.log("Modal closed (onCloseModal not provided)");
+      }
+    } else {
+      window.location.reload();
+    }
+  };
+
   const handleAddTask = async (e) => {
     e.preventDefault();
     if (
@@ -385,7 +414,6 @@ const Tasks = ({ isEdit }) => {
       return;
     }
 
-    // Validate dates
     const duration = calculateDuration(formData.expected_start_date, formData.target_date);
     if (duration.startsWith("Invalid")) {
       toast.dismiss();
@@ -396,7 +424,7 @@ const Tasks = ({ isEdit }) => {
     const payload = createTaskPayload(formData);
 
     try {
-      const resultAction = await dispatch(createTask({ token, payload })).unwrap();
+      await dispatch(createTask({ token, payload })).unwrap();
       toast.dismiss();
       toast.success("Task created successfully.");
       setSavedTasks([...savedTasks, { id: nextId, formData }]);
@@ -438,7 +466,6 @@ const Tasks = ({ isEdit }) => {
       return;
     }
 
-    // Validate dates
     const duration = calculateDuration(formData.expected_start_date, formData.target_date);
     if (duration.startsWith("Invalid")) {
       toast.dismiss();
@@ -452,6 +479,7 @@ const Tasks = ({ isEdit }) => {
       const resultAction = isEdit
         ? await dispatch(editTask({ token, id: editId, payload }))
         : await dispatch(createTask({ token, payload }));
+
       if (
         (isEdit && editTask.fulfilled.match(resultAction)) ||
         (!isEdit && createTask.fulfilled.match(resultAction))
@@ -483,7 +511,7 @@ const Tasks = ({ isEdit }) => {
           <TaskForm
             key={task.id}
             formData={task.formData}
-            setFormData={() => { }} // No-op for read-only forms
+            setFormData={() => { }}
             isReadOnly={true}
             project={project}
             milestone={milestone}
@@ -499,9 +527,10 @@ const Tasks = ({ isEdit }) => {
             milestoneEndDate={milestone?.end_date}
             token={token}
             allUsers={users}
-            calculateDuration={calculateDuration} // Pass calculateDuration
+            calculateDuration={calculateDuration}
           />
         ))}
+
         <TaskForm
           formData={formData}
           setFormData={setFormData}
@@ -520,23 +549,13 @@ const Tasks = ({ isEdit }) => {
           milestoneEndDate={milestone?.end_date}
           token={token}
           allUsers={users}
-          calculateDuration={calculateDuration} // Pass calculateDuration
+          calculateDuration={calculateDuration}
         />
-        {!isEdit && (
-          <div className="relative">
-            <button
-              type="button"
-              onClick={handleAddTask}
-              className="absolute text-[12px] text-[red] right-2 top-[10px] cursor-pointer"
-            >
-              Add New Task
-            </button>
-          </div>
-        )}
+
         <div className="flex items-center justify-center gap-4 w-full bottom-0 py-3 bg-white mt-10 text-[12px]">
           <button
             type="submit"
-            className="flex items-center justify-center border-2 text-[white] border-[red] px-4 py-2 w-[100px] bg-[red]"
+            className="flex items-center justify-center border-2 text-[red] border-[red] px-4 py-2 w-[100px]"
           >
             {loading || editLoading
               ? "Processing..."
@@ -544,6 +563,25 @@ const Tasks = ({ isEdit }) => {
                 ? "Update"
                 : "Create"}
           </button>
+
+          {!isEdit &&
+            (isFormEmpty() ? (
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="flex items-center justify-center border-2 text-gray-600 border-gray-400 px-4 py-2 w-max"
+              >
+                Cancel
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="flex items-center justify-center border-2 text-[red] border-[red] px-4 py-2 w-max"
+                onClick={handleAddTask}
+              >
+                Save & Add New
+              </button>
+            ))}
         </div>
       </div>
     </form>

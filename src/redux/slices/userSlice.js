@@ -194,6 +194,21 @@ export const reassignProjects = createAsyncThunk('reassignProjects', async ({ to
     }
 })
 
+export const fetchUserAvailability = createAsyncThunk('fetchUserAvailability', async ({ token, id }) => {
+    try {
+        const response = await axios.get(`${baseURL}/users/${id}/daily_task_load_report.json`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
+        return response.data;
+    }
+    catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
 // Create slices
 export const userSlice = createApiSlice('fetchUsers', fetchUsers);
 export const createInternalUserSlice = createApiSlice('createInternalUser', createInternalUser);
@@ -205,7 +220,7 @@ export const fetchInternalUserDetailsSlice = createApiSlice('fetchInternalUserDe
 export const removeUserFromProjectSlice = createApiSlice('removeUserFromProject', removeUserFromProject);
 export const fetchAssociatedProjectsSlice = createApiSlice('fetchAssociatedProjects', fetchAssociatedProjects);
 export const reassignProjectsSlice = createApiSlice('reassignProjects', reassignProjects);
-
+export const fetchUserAvailabilitySlice = createApiSlice('fetchUserAvailability', fetchUserAvailability);
 
 // Export reducers
 export const userReducer = userSlice.reducer;
@@ -218,3 +233,4 @@ export const fetchInternalUserDetailsReducer = fetchInternalUserDetailsSlice.red
 export const removeUserFromProjectReducer = removeUserFromProjectSlice.reducer;
 export const fetchAssociatedProjectsReducer = fetchAssociatedProjectsSlice.reducer;
 export const reassignProjectsReducer = reassignProjectsSlice.reducer;
+export const fetchUserAvailabilityReducer = fetchUserAvailabilitySlice.reducer;

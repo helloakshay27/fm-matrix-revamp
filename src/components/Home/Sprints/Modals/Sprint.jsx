@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import SelectBox from "../../../SelectBox";
 import { useDispatch, useSelector } from "react-redux";
@@ -6,17 +6,16 @@ import {
   fetchSpirints,
   postSprint,
 } from "../../../../redux/slices/spirintSlice";
-import { fetchUsers } from "../../../../redux/slices/userSlice";
 import toast from "react-hot-toast";
 
-const AddSprintsModal = ({ id, deleteSprint, formData, setFormData, isReadOnly = false, hasSavedSprints ,setIsDelete}) => {
-  const token = localStorage.getItem("token");
-  const dispatch = useDispatch();
+const AddSprintsModal = ({
+  formData,
+  setFormData,
+  isReadOnly = false,
+  hasSavedSprints,
+  setIsDelete,
+}) => {
   const { fetchUsers: users = [] } = useSelector((state) => state.fetchUsers);
-
-  useEffect(() => {
-    dispatch(fetchUsers({ token }));
-  }, [dispatch]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -40,9 +39,8 @@ const AddSprintsModal = ({ id, deleteSprint, formData, setFormData, isReadOnly =
     return `${days}d:${hours}h:${minutes}m`;
   };
 
-
   return (
-    <div className="flex flex-col relative justify-start gap-4 w-full bottom-0 py-3 bg-white my-10">
+    <div className="flex flex-col relative justify-start gap-4 w-full bottom-0 py-3 bg-white mb-10">
       {!isReadOnly && hasSavedSprints && (
         <DeleteOutlinedIcon
           onClick={() => {
@@ -87,7 +85,9 @@ const AddSprintsModal = ({ id, deleteSprint, formData, setFormData, isReadOnly =
 
       <div className="flex items-start gap-4 mt-1 text-[12px]">
         <div className="w-1/3 space-y-2">
-          <label className="block">Start Date <span className="text-red-600">*</span></label>
+          <label className="block">
+            Start Date <span className="text-red-600">*</span>
+          </label>
           <input
             type="date"
             name="startDate"
@@ -100,7 +100,9 @@ const AddSprintsModal = ({ id, deleteSprint, formData, setFormData, isReadOnly =
         </div>
 
         <div className="w-1/3 space-y-2">
-          <label className="block">End Date <span className="text-red-600">*</span></label>
+          <label className="block">
+            End Date <span className="text-red-600">*</span>
+          </label>
           <input
             type="date"
             name="endDate"
@@ -122,7 +124,6 @@ const AddSprintsModal = ({ id, deleteSprint, formData, setFormData, isReadOnly =
           />
         </div>
       </div>
-
 
       <div className="flex items-start gap-4 mt-1">
         <div className="w-1/2 flex flex-col justify-between">
@@ -158,13 +159,9 @@ const Sprints = ({ closeModal }) => {
   });
   const [savedSprints, setSavedSprints] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isDelete,setIsDelete]=useState(false);
+  const [isDelete, setIsDelete] = useState(false);
   const isSubmittingRef = useRef(false);
   const dispatch = useDispatch();
-
-  useEffect(() => {
-    dispatch(fetchUsers({ token }));
-  }, [dispatch]);
 
   const handleDeleteSprint = (id) => {
     setSprints(sprints.filter((sprint) => sprint.id !== id));
@@ -198,35 +195,37 @@ const Sprints = ({ closeModal }) => {
 
   const handleAddSprints = async (e) => {
     e.preventDefault();
-    if(isDelete){
+    if (isDelete) {
       setIsDelete(false);
-      return
+      return;
     }
-    if (!formData.title || !formData.ownerId || !formData.startDate || !formData.endDate || !formData.priority) {
-      toast.dismiss()
+    if (
+      !formData.title ||
+      !formData.ownerId ||
+      !formData.startDate ||
+      !formData.endDate ||
+      !formData.priority
+    ) {
+      toast.dismiss();
       toast.error("Please fill all required fields.");
       return;
     }
-    
 
     const payload = createSprintPayload(formData);
 
     try {
-      const resultAction = await dispatch(postSprint({ token, payload }));
-      if (postSprint.fulfilled.match(resultAction)) {
-        setSavedSprints([...savedSprints, { id: nextId, formData }]);
-        setSprints([...sprints, { id: nextId }]);
-        setFormData({
-          title: "",
-          ownerId: "",
-          startDate: "",
-          endDate: "",
-          priority: "",
-        });
-        setNextId(nextId + 1);
-      } else {
-        toast.error("Failed to create sprint.");
-      }
+      await dispatch(postSprint({ token, payload }));
+      toast.success("Sprint created successfully.");
+      setSavedSprints([...savedSprints, { id: nextId, formData }]);
+      setSprints([...sprints, { id: nextId }]);
+      setFormData({
+        title: "",
+        ownerId: "",
+        startDate: "",
+        endDate: "",
+        priority: "",
+      });
+      setNextId(nextId + 1);
     } catch (error) {
       console.error("Error creating sprint:", error);
       toast.error("Error creating sprint.");
@@ -237,7 +236,13 @@ const Sprints = ({ closeModal }) => {
     e.preventDefault();
     if (isSubmittingRef.current) return;
 
-    if (!formData.title || !formData.ownerId || !formData.startDate || !formData.endDate || !formData.priority && !isDelete) {
+    if (
+      !formData.title ||
+      !formData.ownerId ||
+      !formData.startDate ||
+      !formData.endDate ||
+      (!formData.priority && !isDelete)
+    ) {
       toast.error("Please fill all required fields.");
       return;
     }
@@ -248,11 +253,12 @@ const Sprints = ({ closeModal }) => {
     const payload = createSprintPayload(formData);
 
     try {
-      if(!isDelete){
-         await dispatch(postSprint({ token, payload })).unwrap();}
-        toast.success("Sprint created successfully.");
-        dispatch(fetchSpirints({ token }));
-        closeModal();
+      if (!isDelete) {
+        await dispatch(postSprint({ token, payload })).unwrap();
+      }
+      toast.success("Sprint created successfully.");
+      dispatch(fetchSpirints({ token }));
+      closeModal();
     } catch (error) {
       console.error("Error submitting sprint:", error);
       toast.error("Error submitting sprint.");
@@ -260,6 +266,13 @@ const Sprints = ({ closeModal }) => {
       setIsSubmitting(false);
     }
   };
+
+  const isFormEmpty =
+    !formData.title &&
+    !formData.ownerId &&
+    !formData.startDate &&
+    !formData.endDate &&
+    !formData.priority
 
   return (
     <form className="pt-2 pb-12 h-full overflow-y-auto" onSubmit={handleSubmit}>
@@ -279,17 +292,17 @@ const Sprints = ({ closeModal }) => {
           />
         ))}
         {!isDelete && (
-        <AddSprintsModal
-          id={nextId}
-          formData={formData}
-          setFormData={setFormData}
-          deleteSprint={handleDeleteSprint}
-          isReadOnly={false}
-          hasSavedSprints={savedSprints.length > 0}
-          setIsDelete={setIsDelete}
-        />
+          <AddSprintsModal
+            id={nextId}
+            formData={formData}
+            setFormData={setFormData}
+            deleteSprint={handleDeleteSprint}
+            isReadOnly={false}
+            hasSavedSprints={savedSprints.length > 0}
+            setIsDelete={setIsDelete}
+          />
         )}
-        <div className="relative">
+        {/* <div className="relative">
           <button
             type="button"
             onClick={handleAddSprints}
@@ -298,8 +311,8 @@ const Sprints = ({ closeModal }) => {
           >
             Add Sprints
           </button>
-        </div>
-        <div className="flex items-center justify-between gap-4 w-full bottom-0 py-4 bg-white mt-10">
+        </div> */}
+        <div className="flex items-center justify-center gap-4 w-full bottom-0 py-4 bg-white mt-10">
           <button
             type="submit"
             className="flex items-center justify-center border-2 text-[black] border-[red] px-4 py-2 w-[100px]"
@@ -307,6 +320,39 @@ const Sprints = ({ closeModal }) => {
           >
             Submit
           </button>
+
+          {isFormEmpty ? (
+            <button
+              type="button"
+              className="flex items-center justify-center border-2 text-[black] border-[red] px-4 py-2 w-max"
+              disabled={isSubmitting}
+              onClick={() => {
+                if (savedSprints.length === 0) {
+                  setIsDelete(true);
+                  setFormData({
+                    title: "",
+                    ownerId: "",
+                    startDate: "",
+                    endDate: "",
+                    priority: "",
+                  });
+                } else {
+                  window.location.reload();
+                }
+              }}
+            >
+              Cancel
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="flex items-center justify-center border-2 text-[black] border-[red] px-4 py-2 w-max"
+              disabled={isSubmitting}
+              onClick={handleAddSprints}
+            >
+              Save & Add New
+            </button>
+          )}
         </div>
       </div>
     </form>
@@ -314,4 +360,3 @@ const Sprints = ({ closeModal }) => {
 };
 
 export default Sprints;
-

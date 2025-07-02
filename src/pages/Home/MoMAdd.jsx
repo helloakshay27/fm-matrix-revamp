@@ -357,7 +357,7 @@ const MoMAdd = () => {
                                     } after:duration-300 after:bg-white peer-checked:after:bg-white after:rounded-full after:absolute after:h-5 after:w-5 after:top-0 after:left-0 after:flex after:justify-center after:items-center peer-checked:after:translate-x-5 peer-hover:after:scale-95`}
                             />
                         </label>
-                        <span className="text-[12px]">External</span>
+                        <span className="text-[12px]">Client</span>
                     </div>
 
                     <div
