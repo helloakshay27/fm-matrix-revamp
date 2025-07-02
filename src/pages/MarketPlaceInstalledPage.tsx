@@ -23,7 +23,7 @@ export const MarketPlaceInstalledPage = () => {
       name: 'Loyalty Rule Engine',
       description: 'Advanced loyalty program management',
       icon: Target,
-      route: '/create-rule-engine',
+      route: '/market-place/loyalty-rule-engine',
       installedDate: 'Nov 28, 2023'
     }
   ];
