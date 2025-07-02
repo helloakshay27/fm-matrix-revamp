@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Upload } from 'lucide-react';
+import { ArrowLeft, Upload, Paperclip, FileText } from 'lucide-react';
 
 const mockUsers = [
   { id: '1', name: 'Ankit Gupta', type: 'occupant' },
@@ -56,7 +56,6 @@ export const AddTicketDashboard = () => {
       formData,
       attachedFiles
     });
-    // Here you would typically send the data to your backend
     alert('Ticket submitted successfully!');
     navigate('/maintenance/ticket');
   };
@@ -68,8 +67,8 @@ export const AddTicketDashboard = () => {
     : [];
 
   return (
-    <div className="p-6 bg-white min-h-screen">
-      <div className="max-w-4xl mx-auto">
+    <div className="p-4 sm:p-6 bg-white min-h-screen">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
           <Button 
@@ -89,10 +88,10 @@ export const AddTicketDashboard = () => {
         </div>
 
         {/* Ticket Details Section */}
-        <div className="bg-orange-50 p-4 rounded-lg mb-6">
+        <div className="p-4 rounded-lg mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-bold">📋</span>
+            <div className="w-6 h-6 rounded-full flex items-center justify-center">
+             <FileText className="w-4 h-4 text-[#C72030]" />
             </div>
             <h2 className="text-lg font-semibold text-orange-800">TICKET DETAILS</h2>
           </div>
@@ -100,7 +99,7 @@ export const AddTicketDashboard = () => {
           {/* On Behalf Of */}
           <div className="mb-4">
             <Label className="text-sm font-medium">On Behalf of</Label>
-            <RadioGroup value={onBehalfOf} onValueChange={setOnBehalfOf} className="flex gap-6 mt-2">
+            <RadioGroup value={onBehalfOf} onValueChange={setOnBehalfOf} className="flex flex-wrap gap-4 mt-2">
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="self" id="self" />
                 <Label htmlFor="self">Self</Label>
@@ -137,7 +136,7 @@ export const AddTicketDashboard = () => {
 
           {/* Requestor Details */}
           <h3 className="font-medium mb-3">Requestor Details</h3>
-          <div className="grid grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div>
               <Label className="text-sm">Name</Label>
               <Input 
@@ -171,7 +170,7 @@ export const AddTicketDashboard = () => {
               />
             </div>
           </div>
-          <div className="grid grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div>
               <Label className="text-sm">Unit</Label>
               <Input 
@@ -185,7 +184,7 @@ export const AddTicketDashboard = () => {
           {/* Ticket Type */}
           <div className="mb-4">
             <Label className="text-sm font-medium">Ticket Type</Label>
-            <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex gap-6 mt-2">
+            <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex flex-wrap gap-4 mt-2">
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="request" id="request" />
                 <Label htmlFor="request">Request</Label>
@@ -202,7 +201,7 @@ export const AddTicketDashboard = () => {
           </div>
 
           {/* Category and Other Fields */}
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
             <div>
               <Label className="text-sm">Category Type*</Label>
               <Select value={formData.categoryType} onValueChange={(value) => setFormData({...formData, categoryType: value})}>
@@ -247,7 +246,7 @@ export const AddTicketDashboard = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
             <div>
               <Label className="text-sm">Assigned To</Label>
               <Select value={formData.assignedTo} onValueChange={(value) => setFormData({...formData, assignedTo: value})}>
@@ -283,7 +282,7 @@ export const AddTicketDashboard = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
               <Label className="text-sm">Description*</Label>
               <Textarea 
@@ -311,10 +310,11 @@ export const AddTicketDashboard = () => {
         </div>
 
         {/* Attachment Section */}
-        <div className="bg-orange-50 p-4 rounded-lg mb-6">
+        <div className="p-4 rounded-lg mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-bold">📎</span>
+            <div className="w-6 h-6 rounded-full flex items-center justify-center">
+                 <Paperclip className="w-4 h-4 text-[#C72030]" />
+
             </div>
             <h2 className="text-lg font-semibold text-orange-800">ATTACHMENT</h2>
           </div>
@@ -343,7 +343,7 @@ export const AddTicketDashboard = () => {
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-center gap-3">
+        <div className="flex flex-col sm:flex-row justify-center gap-3">
           <Button 
             onClick={handleSubmit}
             style={{ backgroundColor: '#C72030' }}
