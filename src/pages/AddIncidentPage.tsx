@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,7 +74,7 @@ export const AddIncidentPage = () => {
           <span className="mx-2">{'>'}</span>
           <span>Add Incident</span>
         </nav>
-        <h1 className="text-2xl font-bold text-gray-900">ADD INCIDENT</h1>
+        <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">ADD INCIDENT</h1>
       </div>
 
       <div className="space-y-4 max-w-full">

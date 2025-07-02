@@ -87,7 +87,7 @@ Reported By: ${incident.reportedBy}
         </nav>
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Detail ({incident.id})</h1>
+            <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">Detail ({incident.id})</h1>
           </div>
           <div className="flex gap-3">
             <Button

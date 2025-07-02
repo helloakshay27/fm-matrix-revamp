@@ -29,7 +29,7 @@ export const IncidentSetupDashboard = () => {
           <span className="mx-2">{'>'}</span>
           <span>Incidents</span>
         </nav>
-        <h1 className="text-2xl font-bold text-gray-900">Incidents Setup</h1>
+        <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">Incidents Setup</h1>
       </div>
 
       {/* Form Section */}
