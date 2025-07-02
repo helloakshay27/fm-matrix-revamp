@@ -35,7 +35,7 @@ const statusBadgeVariants = cva(
   }
 )
 
-type StatusVariantKey = keyof typeof statusBadgeVariants
+type StatusVariant = "pending" | "rejected" | "accepted" | "yellow" | "red" | "green" | "open" | "closed" | "in-progress" | "active" | "inactive" | "breakdown" | "in-use"
 
 export interface StatusBadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
@@ -45,14 +45,17 @@ export interface StatusBadgeProps
 
 function StatusBadge({ className, variant, size, status, children, ...props }: StatusBadgeProps) {
   // Convert status string to valid variant key
-  const getVariantFromStatus = (statusValue?: string): StatusVariantKey => {
+  const getVariantFromStatus = (statusValue?: string): StatusVariant => {
     if (!statusValue) return "pending"
     
     const normalizedStatus = statusValue.toLowerCase().replace(/\s+/g, '-')
-    const validVariants = Object.keys((statusBadgeVariants as any).config.variants.variant)
+    const validVariants: StatusVariant[] = [
+      "pending", "rejected", "accepted", "yellow", "red", "green", 
+      "open", "closed", "in-progress", "active", "inactive", "breakdown", "in-use"
+    ]
     
-    if (validVariants.includes(normalizedStatus)) {
-      return normalizedStatus as StatusVariantKey
+    if (validVariants.includes(normalizedStatus as StatusVariant)) {
+      return normalizedStatus as StatusVariant
     }
     
     // Map common status values
