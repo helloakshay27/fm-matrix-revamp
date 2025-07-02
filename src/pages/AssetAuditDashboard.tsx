@@ -114,67 +114,28 @@ export const AssetAuditDashboard = () => {
         <h1 className="text-2xl font-bold text-gray-900 mb-6">AUDIT LIST</h1>
         
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-          <div 
-            className={`${getStatusColor('Scheduled')} rounded-lg p-4 text-white cursor-pointer hover:opacity-90 transition-opacity`}
-            onClick={() => setSelectedStatus('Scheduled')}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                <span className="text-2xl font-bold">{stats.scheduled}</span>
-              </div>
-              <span className="font-medium">Scheduled</span>
-            </div>
-          </div>
-
-          <div 
-            className={`${getStatusColor('In Progress')} rounded-lg p-4 text-white cursor-pointer hover:opacity-90 transition-opacity`}
-            onClick={() => setSelectedStatus('In Progress')}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                <span className="text-2xl font-bold">{stats.inProgress}</span>
-              </div>
-              <span className="font-medium">In Progress</span>
-            </div>
-          </div>
-
-          <div 
-            className={`${getStatusColor('Completed')} rounded-lg p-4 text-white cursor-pointer hover:opacity-90 transition-opacity`}
-            onClick={() => setSelectedStatus('Completed')}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                <span className="text-2xl font-bold">{stats.completed}</span>
-              </div>
-              <span className="font-medium">Completed</span>
-            </div>
-          </div>
-
-          <div 
-            className={`${getStatusColor('Overdue')} rounded-lg p-4 text-white cursor-pointer hover:opacity-90 transition-opacity`}
-            onClick={() => setSelectedStatus('Overdue')}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                <span className="text-2xl font-bold">{stats.overdue}</span>
-              </div>
-              <span className="font-medium">Overdue</span>
-            </div>
-          </div>
-
-          <div 
-            className={`${getStatusColor('Closed')} rounded-lg p-4 text-white cursor-pointer hover:opacity-90 transition-opacity`}
-            onClick={() => setSelectedStatus('Closed')}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                <span className="text-2xl font-bold">{stats.closed}</span>
-              </div>
-              <span className="font-medium">Closed</span>
-            </div>
-          </div>
+       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+  {[
+    { label: 'Scheduled', value: stats.scheduled },
+    { label: 'In Progress', value: stats.inProgress },
+    { label: 'Completed', value: stats.completed },
+    { label: 'Overdue', value: stats.overdue },
+    { label: 'Closed', value: stats.closed },
+  ].map((item, index) => (
+    <div
+      key={index}
+      className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]"
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 bg-[#D92818] bg-opacity-10 rounded-lg flex items-center justify-center">
+          <span className="text-2xl font-bold">{item.value}</span>
         </div>
+        <span className="font-medium">{item.label}</span>
+      </div>
+    </div>
+  ))}
+</div>
+
 
         {/* Action Buttons */}
         <div className="flex gap-4 mb-6">
