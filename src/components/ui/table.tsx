@@ -15,12 +15,21 @@ const Table = React.forwardRef<
 ));
 Table.displayName = "Table";
 
-const TableHeader = React.forwardRef<
-  HTMLTableSectionElement,
-  React.HTMLAttributes<HTMLTableSectionElement>
+const TableHead = React.forwardRef<
+  HTMLTableCellElement,
+  React.ThHTMLAttributes<HTMLTableCellElement>
 >(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn("", className)} {...props} />
+  <th
+    ref={ref}
+    className={cn(
+      "h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap",
+      className
+    )}
+    style={{ backgroundColor: "#f6f4ee" }}
+    {...props}
+  />
 ));
+
 TableHeader.displayName = "TableHeader";
 
 const TableBody = React.forwardRef<
