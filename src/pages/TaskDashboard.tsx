@@ -351,11 +351,11 @@ export const TaskDashboard = () => {
           </div>
 
           {/* Status Cards */}
-<div className="grid grid-cols-5 gap-4 mb-6">
+<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
   {Object.entries(statusCounts).map(([status, count]) => (
     <div
       key={status}
-      className="bg-[#F2F0EB] text-[#D92818] p-4 rounded-lg text-center shadow-[0px_2px_18px_rgba(45,45,45,0.1)]"
+      className="bg-[#F2F0EB] text-[#D92818] p-4 rounded-lg text-center shadow-[0px_2px_18px_rgba(45,45,45,0.1)] md:h-[132px] flex flex-col items-center justify-center"
     >
       <div className="text-2xl font-bold">{count}</div>
       <div className="text-sm">{status}</div>
