@@ -255,11 +255,8 @@ export const AssetDashboard = () => {
   ].map((item, i) => (
     <div
       key={i}
-      className="relative bg-[#F2F0EB] text-[#D92818] p-6 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)]"
+      className="bg-[#F2F0EB] text-[#D92818] p-6 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)]"
     >
-      {/* Decorative circle */}
-      <div className="absolute top-4 right-4 w-[50px] h-[50px] rounded-full bg-[rgba(199,32,48,0.08)]"></div>
-
       <div className="flex items-center justify-between">
         <div>
           <div className="text-3xl font-bold mb-1">{item.value}</div>
@@ -269,6 +266,7 @@ export const AssetDashboard = () => {
     </div>
   ))}
 </div>
+
 
 
       {/* First Row of Action Buttons */}
