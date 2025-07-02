@@ -45,7 +45,7 @@ export const AssetAuditDashboard = () => {
       endDate: '30/06/2025',
       status: 'In Progress',
       conductedBy: 'Abdul Ghaffar',
-      report: false
+      report: true
     },
     {
       id: 4,
@@ -56,7 +56,7 @@ export const AssetAuditDashboard = () => {
       endDate: '30/06/2025',
       status: 'Scheduled',
       conductedBy: 'Vinayak Mane',
-      report: false
+      report: true
     }
   ];
 
@@ -191,7 +191,7 @@ export const AssetAuditDashboard = () => {
                   <TableCell>
                     <button
                       onClick={() => handleAuditNameClick(audit.auditId)}
-                      className="text-blue-600 hover:underline font-medium"
+                      className="text-black hover:underline font-medium"
                     >
                       {audit.auditName}
                     </button>
