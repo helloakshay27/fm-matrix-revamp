@@ -32,24 +32,28 @@ export const FitoutViolationDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-red-500">
-          <h3 className="text-sm font-medium text-gray-600">Total Violations</h3>
-          <p className="text-2xl font-bold text-red-600">0</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-yellow-500">
-          <h3 className="text-sm font-medium text-gray-600">Pending</h3>
-          <p className="text-2xl font-bold text-yellow-600">0</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
-          <h3 className="text-sm font-medium text-gray-600">In Progress</h3>
-          <p className="text-2xl font-bold text-blue-600">0</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
-          <h3 className="text-sm font-medium text-gray-600">Resolved</h3>
-          <p className="text-2xl font-bold text-green-600">0</p>
-        </div>
-      </div>
+     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+  <div className="bg-[#F2F0EB] p-4 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] text-[#D92818] md:h-[132px] flex flex-col justify-center">
+    <h3 className="text-sm font-medium text-gray-500">Total Violations</h3>
+    <p className="text-2xl font-bold">0</p>
+  </div>
+
+  <div className="bg-[#F2F0EB] p-4 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] text-[#D92818] md:h-[132px] flex flex-col justify-center">
+    <h3 className="text-sm font-medium text-gray-500">Pending</h3>
+    <p className="text-2xl font-bold">0</p>
+  </div>
+
+  <div className="bg-[#F2F0EB] p-4 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] text-[#D92818] md:h-[132px] flex flex-col justify-center">
+    <h3 className="text-sm font-medium text-gray-500">In Progress</h3>
+    <p className="text-2xl font-bold">0</p>
+  </div>
+
+  <div className="bg-[#F2F0EB] p-4 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] text-[#D92818] md:h-[132px] flex flex-col justify-center">
+    <h3 className="text-sm font-medium text-gray-500">Resolved</h3>
+    <p className="text-2xl font-bold">0</p>
+  </div>
+</div>
+
 
       {/* Table */}
       <div className="bg-white rounded-lg shadow">
