@@ -8,7 +8,7 @@ const headingVariants = cva(
   {
     variants: {
       level: {
-        h1: "text-4xl lg:text-5xl font-bold",
+        h1: "font-['Work_Sans'] font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal",
         h2: "text-3xl lg:text-4xl font-semibold", 
         h3: "text-2xl lg:text-3xl font-semibold",
         h4: "text-xl lg:text-2xl font-medium",
@@ -33,11 +33,11 @@ const headingVariants = cva(
       }
     },
     compoundVariants: [
-      // Desktop specific styles
+      // Desktop specific styles for h1
       {
         responsive: true,
         level: "h1",
-        class: "text-2xl sm:text-3xl lg:text-4xl xl:text-5xl"
+        class: "font-['Work_Sans'] font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal"
       },
       {
         responsive: true,

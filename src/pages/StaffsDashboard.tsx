@@ -340,7 +340,7 @@ export const StaffsDashboard = () => {
         <div className="bg-white rounded-none border border-gray-200 shadow-sm">
           {/* Header */}
           <div className="p-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold mb-4 text-[#1a1a1a] uppercase">SOCIETY STAFFS</h2>
+            <h2 className="font-work-sans font-semibold text-base sm:text-lg lg:text-xl leading-auto tracking-normal mb-4 text-[#1a1a1a] uppercase">SOCIETY STAFFS</h2>
             
             {/* Action Buttons */}
             <div className="flex gap-3 mb-4">

@@ -84,7 +84,7 @@ export const AddTicketDashboard = () => {
             <span>&gt;</span>
             <span>New Ticket</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">NEW TICKET</h1>
+          <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">NEW TICKET</h1>
         </div>
 
         {/* Ticket Details Section */}

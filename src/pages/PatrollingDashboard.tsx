@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -97,7 +96,7 @@ export const PatrollingDashboard = () => {
           <span>Patrolling</span>
         </div>
         
-        <h1 className="text-2xl font-bold text-[#1a1a1a] mb-6 uppercase">PATROLLING LIST</h1>
+        <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a] mb-6 uppercase">PATROLLING LIST</h1>
         
         {/* Action Buttons */}
         <div className="flex gap-3 mb-6">
