@@ -1,8 +1,16 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { 
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import { Download, Search, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -113,6 +121,8 @@ export const AttendanceDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredAttendance, setFilteredAttendance] = useState(attendanceData);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -148,6 +158,15 @@ export const AttendanceDashboard = () => {
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", "attendance_list.csv");
     link.click();
+  };
+
+  const totalPages = Math.ceil(filteredAttendance.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentItems = filteredAttendance.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -199,7 +218,7 @@ export const AttendanceDashboard = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredAttendance.map((person) => (
+            {currentItems.map((person) => (
               <TableRow key={person.id}>
                 <TableCell>
                   <Button 
@@ -219,19 +238,54 @@ export const AttendanceDashboard = () => {
         </Table>
 
         {/* Pagination */}
-        <div className="flex items-center justify-center gap-2 p-4">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((page) => (
-            <Button
-              key={page}
-              variant={page === 1 ? "default" : "outline"}
-              size="sm"
-              style={page === 1 ? { backgroundColor: '#C72030' } : {}}
-              className={page === 1 ? "text-white hover:bg-[#C72030]/90" : ""}
-            >
-              {page}
-            </Button>
-          ))}
-          <Button variant="outline" size="sm">Last »</Button>
+        <div className="flex items-center justify-center p-4">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage > 1) handlePageChange(currentPage - 1);
+                  }}
+                />
+              </PaginationItem>
+              
+              {[...Array(Math.min(totalPages, 8))].map((_, index) => {
+                const pageNumber = index + 1;
+                return (
+                  <PaginationItem key={pageNumber}>
+                    <PaginationLink
+                      href="#"
+                      isActive={currentPage === pageNumber}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handlePageChange(pageNumber);
+                      }}
+                    >
+                      {pageNumber}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              })}
+              
+              {totalPages > 8 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+              
+              <PaginationItem>
+                <PaginationNext 
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage < totalPages) handlePageChange(currentPage + 1);
+                  }}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       </div>
 
