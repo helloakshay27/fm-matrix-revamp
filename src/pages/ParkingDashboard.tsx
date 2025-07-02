@@ -45,7 +45,7 @@ const ParkingDashboard = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-[#f6f4ee] min-h-screen">
+    <div className="p-6 space-y-6  min-h-screen">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">PARKING BOOKING LIST</h1>
         <div className="flex gap-2">
@@ -73,19 +73,18 @@ const ParkingDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-        {parkingStats.map((stat, index) => (
-          <Card key={index} className="relative overflow-hidden">
-            <CardContent className="p-4">
-              <div className={`absolute top-0 left-0 w-full h-1 ${stat.color}`}></div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900 mb-1">{stat.count}</div>
-                <div className="text-sm text-gray-600 leading-tight">{stat.title}</div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-4">
+  {parkingStats.map((stat, index) => (
+    <Card key={index} className="flex items-center gap-3 px-4 py-3 shadow-sm border rounded-xl">
+      <div className={`h-10 w-1.5 rounded-full ${stat.color}`} />
+      <div className="flex flex-col">
+        <span className="text-xl font-bold text-gray-900">{stat.count}</span>
+        <span className="text-sm text-muted-foreground">{stat.title}</span>
       </div>
+    </Card>
+  ))}
+</div>
+
 
       {/* Data Table */}
       <Card>
