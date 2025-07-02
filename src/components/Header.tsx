@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Bell, User, MapPin, ChevronDown, Home, Settings } from 'lucide-react';
 import {
@@ -13,7 +12,8 @@ import { SearchWithSuggestions } from './SearchWithSuggestions';
 export const Header = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  // Common asset search suggestions
+  const currentPath = window.location.pathname;
+
   const assetSuggestions = [
     'sdcdsc', 'test', 'asus zenbook', 'Diesel Generator', 'A.c', 'Energy Meter 23',
     'Located', 'sebc', 'Hay', 'ktta', 'demo', 'jyoti tower', 'jyoti',
@@ -25,22 +25,32 @@ export const Header = () => {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-10 w-100">
+    <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-10 w-full">
       <div className="flex items-center justify-between h-full px-6">
         <div className="flex items-center gap-6">
           {/* Home Dashboard */}
-          <button className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
+          <a
+            href="/"
+            className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+              currentPath === '/' ? 'text-[#C72030]' : 'text-[#1a1a1a] hover:text-[#C72030]'
+            }`}
+          >
             <Home className="w-4 h-4" />
-            <span className="text-sm font-medium">Home </span>
-          </button>
-
-          {/* Setup Link */}
-          <a href="/setup" className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
-            <Settings className="w-4 h-4" />
-            <span className="text-sm font-medium">Setup</span>
+            Home
           </a>
 
-          {/* Project Change Dropdown */}
+          {/* Setup Link */}
+          <a
+            href="/setup"
+            className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+              currentPath === '/setup' ? 'text-[#C72030]' : 'text-[#1a1a1a] hover:text-[#C72030]'
+            }`}
+          >
+            <Settings className="w-4 h-4" />
+            Setup
+          </a>
+
+          {/* Project Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
               <span className="text-sm font-medium">Project Change</span>
@@ -53,7 +63,7 @@ export const Header = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Site Change Dropdown */}
+          {/* Site Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
               <MapPin className="w-4 h-4" />
@@ -67,7 +77,7 @@ export const Header = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        
+
         <div className="flex items-center gap-4">
           <SearchWithSuggestions
             placeholder="Search assets..."
@@ -75,12 +85,11 @@ export const Header = () => {
             suggestions={assetSuggestions}
             className="w-64"
           />
-          
+
           <button className="p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors">
             <Bell className="w-5 h-5 text-[#1a1a1a]" />
           </button>
-          
-          {/* Profile Dropdown */}
+
           <DropdownMenu open={isProfileOpen} onOpenChange={setIsProfileOpen}>
             <DropdownMenuTrigger className="flex items-center gap-2">
               <div className="w-8 h-8 bg-[#C4b89D] rounded-full flex items-center justify-center">
