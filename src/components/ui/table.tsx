@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
@@ -15,21 +16,16 @@ const Table = React.forwardRef<
 ));
 Table.displayName = "Table";
 
-const TableHead = React.forwardRef<
-  HTMLTableCellElement,
-  React.ThHTMLAttributes<HTMLTableCellElement>
+const TableHeader = React.forwardRef<
+  HTMLTableSectionElement,
+  React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <th
+  <thead
     ref={ref}
-    className={cn(
-      "h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap",
-      className
-    )}
-    style={{ backgroundColor: "#f6f4ee" }}
+    className={cn("", className)}
     {...props}
   />
 ));
-
 TableHeader.displayName = "TableHeader";
 
 const TableBody = React.forwardRef<
