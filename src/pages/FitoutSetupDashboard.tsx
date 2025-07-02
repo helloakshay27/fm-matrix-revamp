@@ -116,12 +116,12 @@ export const FitoutSetupDashboard = () => {
 
   const renderCategoryTab = () => (
     <div>
-      <div className="mb-6">
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <Button
           onClick={() => setIsAddCategoryOpen(true)}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
         >
-          <Plus className="w-4 h-4 mr-2 text-white stroke-white" />
+          <Plus className="w-4 h-4 mr-2 stroke-[#C72030] text-white" />
           Add
         </Button>
       </div>
@@ -140,10 +140,7 @@ export const FitoutSetupDashboard = () => {
             {categories.map((category) => (
               <TableRow key={category.id}>
                 <TableCell>
-                  <Edit
-                    className="w-4 h-4 text-blue-500 cursor-pointer"
-                    onClick={() => handleEditCategory(category)}
-                  />
+                  <Edit className="w-4 h-4 stroke-[#C72030] cursor-pointer" onClick={() => handleEditCategory(category)} />
                 </TableCell>
                 <TableCell>{category.category}</TableCell>
                 <TableCell>{category.amount}</TableCell>
@@ -190,12 +187,12 @@ export const FitoutSetupDashboard = () => {
         </div>
       </div>
 
-      <div className="mb-6">
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <Button
           onClick={() => setIsAddStatusOpen(true)}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
         >
-          <Plus className="w-4 h-4 mr-2 text-white stroke-white" />
+          <Plus className="w-4 h-4 mr-2 stroke-[#C72030] text-white" />
           Add
         </Button>
       </div>
@@ -222,7 +219,7 @@ export const FitoutSetupDashboard = () => {
               statuses.map((status) => (
                 <TableRow key={status.id}>
                   <TableCell>
-                    <Edit className="w-4 h-4 text-blue-500 cursor-pointer" />
+                    <Edit className="w-4 h-4 stroke-[#C72030] cursor-pointer" />
                   </TableCell>
                   <TableCell>{status.order}</TableCell>
                   <TableCell>{status.status}</TableCell>
@@ -250,7 +247,7 @@ export const FitoutSetupDashboard = () => {
           <label htmlFor="file-upload">
             <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white cursor-pointer" asChild>
               <span>
-                <Upload className="w-4 h-4 mr-2 text-white stroke-white" />
+                <Upload className="w-4 h-4 mr-2 stroke-[#C72030] text-white" />
                 Upload
               </span>
             </Button>
@@ -285,7 +282,7 @@ export const FitoutSetupDashboard = () => {
               uploadedFiles.map((file, index) => (
                 <TableRow key={file.id}>
                   <TableCell>
-                    <Edit className="w-4 h-4 text-blue-500 cursor-pointer" />
+                    <Edit className="w-4 h-4 stroke-[#C72030] cursor-pointer" />
                   </TableCell>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{file.fileName}</TableCell>
@@ -300,12 +297,12 @@ export const FitoutSetupDashboard = () => {
 
   const renderDeviationStatusTab = () => (
     <div>
-      <div className="mb-6">
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <Button
           onClick={() => setIsAddDeviationOpen(true)}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
         >
-          <Plus className="w-4 h-4 mr-2 text-white stroke-white" />
+          <Plus className="w-4 h-4 mr-2 stroke-[#C72030] text-white" />
           Add
         </Button>
       </div>
@@ -349,12 +346,12 @@ export const FitoutSetupDashboard = () => {
 
       <h1 className="text-2xl font-bold mb-6">FITOUT SETUP</h1>
 
-      <div className="flex gap-1 mb-6">
+      <div className="flex gap-1 mb-6 overflow-x-auto">
         {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-6 py-2 font-medium border-b-2 ${
+            className={`px-6 py-2 font-medium border-b-2 whitespace-nowrap ${
               activeTab === tab
                 ? 'text-orange-500 border-orange-500'
                 : 'text-gray-500 border-transparent hover:text-gray-700'
@@ -367,7 +364,6 @@ export const FitoutSetupDashboard = () => {
 
       {renderTabContent()}
 
-      {/* Modals */}
       <AddCategoryModal
         isOpen={isAddCategoryOpen}
         onClose={() => setIsAddCategoryOpen(false)}

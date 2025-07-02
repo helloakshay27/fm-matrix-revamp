@@ -33,19 +33,19 @@ export const FitoutViolationDashboard = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-  <div className="bg-[#F2F0EB] p-4 rounded-xl shadow-[0px_2px_18px_rgba(45,45,45,0.1)]  md:h-[132px] flex items-center justify-between">
+  <div className="bg-[#F2F0EB] p-4  shadow-[0px_2px_18px_rgba(45,45,45,0.1)]  md:h-[132px] flex items-center justify-between">
     <p className="text-2xl font-bold text-[#D92818]">0</p>
     <h3 className="text-sm font-medium text-gray-600 text-right">Total Violations</h3>
   </div>
-  <div className="bg-[#F2F0EB] p-4 rounded-xl shadow-[0px_2px_18px_rgba(45,45,45,0.1)] border-l-4  md:h-[132px] flex items-center justify-between">
+  <div className="bg-[#F2F0EB] p-4  shadow-[0px_2px_18px_rgba(45,45,45,0.1)] border-l-4  md:h-[132px] flex items-center justify-between">
     <p className="text-2xl font-bold text-[#D92818]">0</p>
     <h3 className="text-sm font-medium text-gray-600 text-right">Pending</h3>
   </div>
-  <div className="bg-[#F2F0EB] p-4 rounded-xl shadow-[0px_2px_18px_rgba(45,45,45,0.1)] border-l-4  md:h-[132px] flex items-center justify-between">
+  <div className="bg-[#F2F0EB] p-4  shadow-[0px_2px_18px_rgba(45,45,45,0.1)] border-l-4  md:h-[132px] flex items-center justify-between">
     <p className="text-2xl font-bold text-[#D92818]">0</p>
     <h3 className="text-sm font-medium text-gray-600 text-right">In Progress</h3>
   </div>
-  <div className="bg-[#F2F0EB] p-4 rounded-xl shadow-[0px_2px_18px_rgba(45,45,45,0.1)] border-l-4  md:h-[132px] flex items-center justify-between">
+  <div className="bg-[#F2F0EB] p-4  shadow-[0px_2px_18px_rgba(45,45,45,0.1)] border-l-4  md:h-[132px] flex items-center justify-between">
     <p className="text-2xl font-bold text-[#D92818]">0</p>
     <h3 className="text-sm font-medium text-gray-600 text-right">Resolved</h3>
   </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Filter } from "lucide-react";
@@ -39,7 +38,6 @@ export const FitoutRequestListDashboard = () => {
   const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
 
   useEffect(() => {
-    // Load projects from localStorage
     const savedProjects = JSON.parse(localStorage.getItem('fitoutProjects') || '[]');
     setProjects(savedProjects);
   }, []);
@@ -54,9 +52,7 @@ export const FitoutRequestListDashboard = () => {
   };
 
   const handleEditSubmit = (updatedProject: FitoutProject) => {
-    const updatedProjects = projects.map(p => 
-      p.id === updatedProject.id ? updatedProject : p
-    );
+    const updatedProjects = projects.map(p => p.id === updatedProject.id ? updatedProject : p);
     setProjects(updatedProjects);
     localStorage.setItem('fitoutProjects', JSON.stringify(updatedProjects));
     setShowEditModal(false);
@@ -94,22 +90,22 @@ export const FitoutRequestListDashboard = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6">
       {/* Breadcrumb */}
-      <div className="mb-4">
+      <div className="mb-2 md:mb-4">
         <span className="text-sm text-gray-600">Fitout Requests &gt; Fitout Request List</span>
       </div>
 
       {/* Page Title */}
-      <h1 className="text-2xl font-bold mb-6">FITOUT REQUEST LIST</h1>
+      <h1 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">FITOUT REQUEST LIST</h1>
 
       {/* Action Buttons */}
-      <div className="flex gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <Button 
           onClick={handleAddClick}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
         >
-          <Plus className="w-4 h-4 mr-2 text-white stroke-white" />
+          <Plus className="w-4 h-4 mr-2 stroke-[#C72030]" />
           Add
         </Button>
         <Button 
@@ -123,11 +119,11 @@ export const FitoutRequestListDashboard = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white rounded-lg shadow overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold w-12">
+              <TableHead className="w-12">
                 <Checkbox 
                   checked={selectedProjects.length === projects.length && projects.length > 0}
                   onCheckedChange={handleSelectAll}

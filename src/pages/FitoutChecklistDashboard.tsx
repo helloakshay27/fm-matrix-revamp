@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Filter, Search } from "lucide-react";
@@ -24,42 +23,43 @@ export const FitoutChecklistDashboard = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6">
       {/* Breadcrumb */}
-      <div className="mb-4">
+      <div className="mb-2 md:mb-4">
         <span className="text-sm text-gray-600">Fitout &gt; Fitout Checklist</span>
       </div>
 
       {/* Page Title */}
-      <h1 className="text-2xl font-bold mb-6">FITOUT CHECKLIST</h1>
+      <h1 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">FITOUT CHECKLIST</h1>
 
-      {/* Search and Action Buttons */}
-      <div className="flex gap-4 mb-6 items-center">
-        <div className="relative flex-1 max-w-md">
+      {/* Search and Action Buttons - Responsive */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
+        <div className="relative w-full md:max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
             placeholder="Search checklists..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 h-[36px]"
-            style={{ height: '36px' }}
           />
         </div>
-        <Button 
-          onClick={handleAddChecklist}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-        >
-          <Plus className="w-4 h-4 mr-2 text-white stroke-white" />
-          Add Checklist
-        </Button>
-        <Button variant="outline" className="border-gray-300">
-          <Filter className="w-4 h-4 mr-2" />
-          Filters
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button 
+            onClick={handleAddChecklist}
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2 stroke-[#C72030]" />
+            Add Checklist
+          </Button>
+          <Button variant="outline" className="border-gray-300">
+            <Filter className="w-4 h-4 mr-2" />
+            Filters
+          </Button>
+        </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white rounded-lg shadow overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
