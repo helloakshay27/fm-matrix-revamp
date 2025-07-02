@@ -108,7 +108,7 @@ export const DesignInsightsDashboard = () => {
             onClick={handleAddClick}
             className="bg-[#C72030] hover:bg-[#A61B28] text-white"
           >
-<Plus className="w-4 h-4 mr-2 text-[#D92818] stroke-[#D92818]" />
+<Plus className="w-4 h-4 mr-2 text-[#C72030] stroke-[#C72030]" />
             Add
           </Button>
           <Button 
