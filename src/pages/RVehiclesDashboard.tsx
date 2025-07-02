@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Download, SlidersHorizontal, Edit, Search } from 'lucide-react';
@@ -178,6 +179,18 @@ export const RVehiclesDashboard = () => {
     console.log('Vehicle updated:', updatedVehicle);
   };
 
+  const handleStatusToggle = (vehicleId: number) => {
+    console.log(`Toggling status for Vehicle ${vehicleId}`);
+    
+    setVehicleData(prev => 
+      prev.map(vehicle => 
+        vehicle.id === vehicleId 
+          ? { ...vehicle, statusCode: vehicle.statusCode === 'Active' ? 'Inactive' : 'Active' }
+          : vehicle
+      )
+    );
+  };
+
   return (
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
       <div className="mb-6">
@@ -287,13 +300,20 @@ export const RVehiclesDashboard = () => {
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.insuranceValidTill}</td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.staffName}</td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        vehicle.statusCode === 'Active' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {vehicle.statusCode}
-                      </span>
+                      <div className="flex items-center">
+                        <div
+                          className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
+                            vehicle.statusCode === 'Active' ? 'bg-green-500' : 'bg-gray-300'
+                          }`}
+                          onClick={() => handleStatusToggle(vehicle.id)}
+                        >
+                          <span
+                            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                              vehicle.statusCode === 'Active' ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </div>
+                      </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.qrCode}</td>
                   </tr>
