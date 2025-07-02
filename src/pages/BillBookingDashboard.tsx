@@ -24,7 +24,7 @@ export const BillBookingDashboard = () => {
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
   {/* Card 1 */}
-  <div className="bg-[#F9F7F2] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4">
+  <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
     <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
       <Settings className="w-5 h-5 text-[#D92818]" />
     </div>
@@ -35,7 +35,7 @@ export const BillBookingDashboard = () => {
   </div>
 
   {/* Card 2 */}
-  <div className="bg-[#F9F7F2] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4">
+  <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
     <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
       <Banknote className="w-5 h-5 text-[#D92818]" />
     </div>
@@ -46,7 +46,7 @@ export const BillBookingDashboard = () => {
   </div>
 
   {/* Card 3 */}
-  <div className="bg-[#F9F7F2] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4">
+  <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
     <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
       <CreditCard className="w-5 h-5 text-[#D92818]" />
     </div>
@@ -57,7 +57,7 @@ export const BillBookingDashboard = () => {
   </div>
 
   {/* Card 4 */}
-  <div className="bg-[#F9F7F2] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4">
+  <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
     <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
       <Clock className="w-5 h-5 text-[#D92818]" />
     </div>
