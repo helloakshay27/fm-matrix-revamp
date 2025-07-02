@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Switch } from '@/components/ui/switch';
 import { Plus, Search, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -92,18 +91,18 @@ export const AMCDashboard = () => {
     navigate(`/maintenance/amc/details/${id}`);
   };
 
-  const handleStatusToggle = (id: string, checked: boolean) => {
-    console.log(`Toggling status for AMC ${id} to ${checked}`);
+  const handleStatusToggle = (id: string) => {
+    console.log(`Toggling status for AMC ${id}`);
     
     // Update the main data array
     const updatedAmcData = amcData.map(amc => 
-      amc.id === id ? { ...amc, status: checked } : amc
+      amc.id === id ? { ...amc, status: !amc.status } : amc
     );
     setAmcData(updatedAmcData);
     
     // Update the filtered data array
     const updatedFilteredData = filteredAMC.map(amc => 
-      amc.id === id ? { ...amc, status: checked } : amc
+      amc.id === id ? { ...amc, status: !amc.status } : amc
     );
     setFilteredAMC(updatedFilteredData);
   };
@@ -188,10 +187,16 @@ export const AMCDashboard = () => {
                 <TableCell>{amc.endDate}</TableCell>
                 <TableCell>{amc.firstService}</TableCell>
                 <TableCell>
-                  <Switch
-                    checked={amc.status}
-                    onCheckedChange={(checked) => handleStatusToggle(amc.id, checked)}
-                  />
+                  <div className="flex items-center">
+                    <div
+                      className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${amc.status ? 'bg-green-500' : 'bg-gray-300'}`}
+                      onClick={() => handleStatusToggle(amc.id)}
+                    >
+                      <span
+                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${amc.status ? 'translate-x-6' : 'translate-x-1'}`}
+                      />
+                    </div>
+                  </div>
                 </TableCell>
                 <TableCell>{amc.createdOn}</TableCell>
               </TableRow>
