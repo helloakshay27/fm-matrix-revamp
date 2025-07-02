@@ -80,7 +80,6 @@ const ParkingDashboard = () => {
       className="flex items-center justify-between gap-4 px-4 py-3 bg-[#F2F0EB] shadow-[0px_2px_18px_rgba(45,45,45,0.1)] rounded-xl md:h-[132px]"
     >
       <div className="flex items-center gap-3">
-        <div className={`h-10 w-1.5 rounded-full ${stat.color}`} />
         <span className="text-2xl font-bold text-[#D92818]">{stat.count}</span>
       </div>
       <div className="text-sm text-gray-600 text-right leading-tight">{stat.title}</div>
