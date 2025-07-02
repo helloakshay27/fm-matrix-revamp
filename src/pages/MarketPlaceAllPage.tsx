@@ -1,10 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building, Target, Phone, Calculator } from 'lucide-react';
+import { SearchWithSuggestions } from '@/components/SearchWithSuggestions';
+import { useSearchSuggestions } from '@/hooks/useSearchSuggestions';
 
 const MarketPlaceAllPage = () => {
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
 
   const featuredApps = [
     {
@@ -37,8 +40,22 @@ const MarketPlaceAllPage = () => {
     }
   ];
 
+  const suggestions = useSearchSuggestions({
+    data: featuredApps,
+    searchFields: ['name', 'description']
+  });
+
+  const filteredApps = featuredApps.filter(app =>
+    app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    app.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const handleCardClick = (route: string) => {
     navigate(route);
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
   };
 
   return (
@@ -46,20 +63,18 @@ const MarketPlaceAllPage = () => {
       {/* Header with filters */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <span className="text-sm text-gray-600">Edition: All</span>
-          <span className="text-sm text-gray-600">Price: All</span>
-          <span className="text-sm text-gray-600">Rating: All</span>
-          <span className="text-sm text-gray-600">Deployment type: All</span>
+          <span className="text-sm text-gray-600">Edition: <span className="text-blue-600 underline">All</span></span>
+          <span className="text-sm text-gray-600">Price: <span className="text-blue-600 underline">All</span></span>
+          <span className="text-sm text-gray-600">Rating: <span className="text-blue-600 underline">All</span></span>
+          <span className="text-sm text-gray-600">Deployment type: <span className="text-blue-600 underline">All</span></span>
         </div>
-        <div className="relative">
-          <input
-            type="text"
+        <div className="w-80">
+          <SearchWithSuggestions
             placeholder="Search apps"
-            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+            onSearch={handleSearch}
+            suggestions={suggestions}
+            className="w-full"
           />
-          <div className="absolute left-3 top-2.5 text-gray-400">
-            🔍
-          </div>
         </div>
       </div>
 
@@ -67,7 +82,7 @@ const MarketPlaceAllPage = () => {
       <div className="bg-[#C72030] rounded-lg p-6">
         <h2 className="text-white text-xl font-semibold mb-4">Featured apps</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {featuredApps.map((app) => (
+          {filteredApps.map((app) => (
             <div
               key={app.id}
               onClick={() => handleCardClick(app.route)}
@@ -75,10 +90,10 @@ const MarketPlaceAllPage = () => {
             >
               <div className="flex items-center justify-between mb-3">
                 <app.icon className="w-8 h-8 text-[#C72030]" />
-                <span className="text-xs bg-gray-100 px-2 py-1 rounded">FREE</span>
+                <span className="text-xs bg-gray-100 px-2 py-1 rounded font-medium">FREE</span>
               </div>
-              <h3 className="font-medium text-gray-900 mb-2">{app.name}</h3>
-              <p className="text-sm text-gray-600">{app.description}</p>
+              <h3 className="font-semibold text-gray-900 mb-2 text-base">{app.name}</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">{app.description}</p>
             </div>
           ))}
         </div>
@@ -88,7 +103,7 @@ const MarketPlaceAllPage = () => {
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Editor's pick</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {featuredApps.map((app) => (
+          {filteredApps.map((app) => (
             <div
               key={`editor-${app.id}`}
               onClick={() => handleCardClick(app.route)}
@@ -96,10 +111,10 @@ const MarketPlaceAllPage = () => {
             >
               <div className="flex items-center justify-between mb-3">
                 <app.icon className="w-8 h-8 text-[#C72030]" />
-                <span className="text-xs bg-gray-100 px-2 py-1 rounded">FREE</span>
+                <span className="text-xs bg-gray-100 px-2 py-1 rounded font-medium">FREE</span>
               </div>
-              <h3 className="font-medium text-gray-900 mb-2">{app.name}</h3>
-              <p className="text-sm text-gray-600">{app.description}</p>
+              <h3 className="font-semibold text-gray-900 mb-2 text-base">{app.name}</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">{app.description}</p>
             </div>
           ))}
         </div>
