@@ -182,7 +182,7 @@ export const StaffsDashboard = () => {
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="bg-[#f6f4ee]">
+            <TableRow >
               <TableHead className="w-12">
                 <input type="checkbox" className="rounded-none" />
               </TableHead>
