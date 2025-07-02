@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -68,8 +67,6 @@ export const ScheduleListDashboard = () => {
   };
 
   const handleToggleActive = (scheduleId: string) => {
-    console.log(`Toggling active status for Schedule ${scheduleId}`);
-    
     setSchedules(prev => 
       prev.map(schedule => 
         schedule.id === scheduleId 
@@ -77,7 +74,7 @@ export const ScheduleListDashboard = () => {
           : schedule
       )
     );
-    
+
     setFilteredSchedules(prev => 
       prev.map(schedule => 
         schedule.id === scheduleId 
@@ -100,73 +97,47 @@ export const ScheduleListDashboard = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       {/* Header */}
       <div className="mb-6">
         <p className="text-[#1a1a1a] opacity-70 mb-2">Schedule</p>
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">Schedule List</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Schedule List</h1>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-3 mb-6">
-        <Button 
-          onClick={handleAddSchedule}
-          style={{ backgroundColor: '#C72030' }} 
-          className="text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add
+      <div className="flex flex-wrap gap-3 items-center mb-6">
+        <Button onClick={handleAddSchedule} className="bg-[#C72030] text-white hover:bg-[#A61B2A]">
+          <Plus className="w-4 h-4 mr-2" /> Add
         </Button>
-        <Button 
-          onClick={() => setShowImportModal(true)}
-          variant="outline" 
-          className="border-[#C72030] text-[#C72030]"
-        >
-          <Upload className="w-4 h-4 mr-2" />
-          Import
+        <Button onClick={() => setShowImportModal(true)} variant="outline" className="border-[#C72030] text-[#C72030]">
+          <Upload className="w-4 h-4 mr-2" /> Import
         </Button>
-        <Button 
-          onClick={() => setShowFilterDialog(true)}
-          variant="outline" 
-          className="border-[#C72030] text-[#C72030]"
-        >
-          <Filter className="w-4 h-4 mr-2" />
-          Filters
+        <Button onClick={() => setShowFilterDialog(true)} variant="outline" className="border-[#C72030] text-[#C72030]">
+          <Filter className="w-4 h-4 mr-2" /> Filters
         </Button>
-        <Button 
-          onClick={handleExport}
-          variant="outline" 
-          className="border-[#C72030] text-[#C72030]"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Export
+        <Button onClick={handleExport} variant="outline" className="border-[#C72030] text-[#C72030]">
+          <Download className="w-4 h-4 mr-2" /> Export
         </Button>
         <div className="flex items-center gap-2">
           <input type="checkbox" id="allowMapping" />
           <label htmlFor="allowMapping" className="text-sm">Allow Automatic Mapping</label>
         </div>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto w-full sm:w-64 flex gap-2 items-center">
           <Input
             placeholder="Enter Activity Name"
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
-            className="w-64"
+            className="w-full"
           />
-          <Button 
-style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }}
-className="hover:opacity-90 px-4"
-
->
+          <Button style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }} className="hover:opacity-90 px-4">
             Go!
           </Button>
-          <Button variant="outline" className="border-[#C72030] text-[#C72030]">
-            Reset
-          </Button>
+          <Button variant="outline" className="border-[#C72030] text-[#C72030]">Reset</Button>
         </div>
       </div>
 
-      {/* Schedule Table */}
-      <div className="bg-white rounded-lg border">
+      {/* Table */}
+      <div className="overflow-x-auto bg-white rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -189,33 +160,9 @@ className="hover:opacity-90 px-4"
           <TableBody>
             {filteredSchedules.map((schedule) => (
               <TableRow key={schedule.id}>
-                <TableCell>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleEditSchedule(schedule.id)}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                </TableCell>
-                <TableCell>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleCopySchedule(schedule.id)}
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </TableCell>
-                <TableCell>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleViewSchedule(schedule.id)}
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                </TableCell>
+                <TableCell><Button variant="ghost" size="sm" onClick={() => handleEditSchedule(schedule.id)}><Edit className="w-4 h-4" /></Button></TableCell>
+                <TableCell><Button variant="ghost" size="sm" onClick={() => handleCopySchedule(schedule.id)}><Copy className="w-4 h-4" /></Button></TableCell>
+                <TableCell><Button variant="ghost" size="sm" onClick={() => handleViewSchedule(schedule.id)}><Eye className="w-4 h-4" /></Button></TableCell>
                 <TableCell className="font-medium">{schedule.id}</TableCell>
                 <TableCell>{schedule.activityName}</TableCell>
                 <TableCell>{schedule.amcId}</TableCell>
@@ -225,21 +172,12 @@ className="hover:opacity-90 px-4"
                 <TableCell>{schedule.validFrom}</TableCell>
                 <TableCell>{schedule.validTill}</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-1 rounded text-xs ${
-                    schedule.category === 'Technical' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
-                  }`}>
-                    {schedule.category}
-                  </span>
+                  <span className={`px-2 py-1 rounded text-xs ${schedule.category === 'Technical' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>{schedule.category}</span>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center">
-                    <div
-                      className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${schedule.active ? 'bg-green-500' : 'bg-gray-300'}`}
-                      onClick={() => handleToggleActive(schedule.id)}
-                    >
-                      <span
-                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${schedule.active ? 'translate-x-6' : 'translate-x-1'}`}
-                      />
+                    <div className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${schedule.active ? 'bg-green-500' : 'bg-gray-300'}`} onClick={() => handleToggleActive(schedule.id)}>
+                      <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${schedule.active ? 'translate-x-6' : 'translate-x-1'}`} />
                     </div>
                   </div>
                 </TableCell>
@@ -251,16 +189,8 @@ className="hover:opacity-90 px-4"
       </div>
 
       {/* Modals */}
-      <BulkUploadDialog
-        open={showImportModal}
-        onOpenChange={setShowImportModal}
-        title="Bulk Upload"
-      />
-
-      <ScheduleFilterDialog
-        open={showFilterDialog}
-        onOpenChange={setShowFilterDialog}
-      />
+      <BulkUploadDialog open={showImportModal} onOpenChange={setShowImportModal} title="Bulk Upload" />
+      <ScheduleFilterDialog open={showFilterDialog} onOpenChange={setShowFilterDialog} />
     </div>
   );
 };
