@@ -84,19 +84,16 @@ export const UtilityDashboard = () => {
         <StatsCard
           title="Total Asset"
           value="2"
-          color="orange"
           icon={<Package className="w-8 h-8" />}
         />
         <StatsCard
           title="In Use"
           value="2"
-          color="green"
           icon={<CheckCircle className="w-8 h-8" />}
         />
         <StatsCard
           title="Breakdown"
           value="0"
-          color="red"
           icon={<AlertTriangle className="w-8 h-8" />}
         />
       </div>
