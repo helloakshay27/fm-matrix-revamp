@@ -1,41 +1,21 @@
-
 import React from 'react';
 
 interface StatsCardProps {
   title: string;
   value: string | number;
-  color: 'orange' | 'green' | 'red';
   icon: React.ReactNode;
 }
 
-export const StatsCard: React.FC<StatsCardProps> = ({ title, value, color, icon }) => {
-  const getColorClasses = () => {
-    switch (color) {
-      case 'orange':
-        return 'text-orange-500';
-      case 'green':
-        return 'text-green-500';
-      case 'red':
-        return 'text-red-500';
-      default:
-        return 'text-gray-500';
-    }
-  };
-
+export const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon }) => {
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
-      <div className="flex items-center justify-between mb-4">
-        <div className={`p-2 rounded-full bg-gray-50 ${getColorClasses()}`}>
-          {icon}
-        </div>
-        <div className={`text-2xl font-bold ${getColorClasses()}`}>
-          {value}
-        </div>
+    <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
+      <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
+        {/* Icon passed as prop */}
+        <div className="text-[#D92818]">{icon}</div>
       </div>
-      <div className="text-center">
-        <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">
-          {title}
-        </p>
+      <div>
+        <p className="text-[#D92818] font-bold text-lg">{value}</p>
+        <p className="text-sm text-gray-500">{title}</p>
       </div>
     </div>
   );
