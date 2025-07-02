@@ -163,26 +163,24 @@ export const TicketDashboard = () => {
       </div>
 
       {/* Status Cards */}
-      <div className="grid grid-cols-5 gap-4 mb-6">
+     <div className="grid grid-cols-5 gap-4 mb-6">
   {[
-    { key: 'all', label: 'Total Tickets', value: totalTickets },
-    { key: 'open', label: 'Open', value: openTickets },
-    { key: 'in progress', label: 'In Progress', value: inProgressTickets },
-    { key: 'pending', label: 'Pending', value: pendingTickets },
-    { key: 'closed', label: 'Closed', value: closedTickets },
-  ].map((item) => (
+    { label: 'Total Tickets', value: totalTickets },
+    { label: 'Open', value: openTickets },
+    { label: 'In Progress', value: inProgressTickets },
+    { label: 'Pending', value: pendingTickets },
+    { label: 'Closed', value: closedTickets },
+  ].map((item, i) => (
     <div
-      key={item.key}
-      className={`p-4 rounded-lg text-center cursor-pointer transition-all shadow-[0px_2px_18px_rgba(45,45,45,0.1)] ${
-        statusFilter === item.key ? 'ring-2 ring-[#D92818]' : ''
-      } bg-[#F2F0EB] text-[#D92818]`}
-      onClick={() => handleStatusFilter(item.key)}
+      key={i}
+      className="p-4 rounded-lg text-center shadow-[0px_2px_18px_rgba(45,45,45,0.1)] bg-[#F2F0EB] text-[#D92818]"
     >
       <div className="text-2xl font-bold">{item.value}</div>
       <div className="text-sm">{item.label}</div>
     </div>
   ))}
 </div>
+
 
 
       {/* Action Buttons */}
