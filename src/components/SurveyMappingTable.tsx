@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Download } from 'lucide-react';
 import {
   Table,
@@ -40,6 +40,32 @@ const mockMappingData = [
 ];
 
 export const SurveyMappingTable = () => {
+  const [mappings, setMappings] = useState(mockMappingData);
+
+  const handleStatusToggle = (mappingId: number) => {
+    console.log(`Toggling status for Survey Mapping ${mappingId}`);
+    
+    setMappings(prev => 
+      prev.map(mapping => 
+        mapping.id === mappingId 
+          ? { ...mapping, status: mapping.status === 'Active' ? 'Inactive' : 'Active' }
+          : mapping
+      )
+    );
+  };
+
+  const handleActiveToggle = (mappingId: number) => {
+    console.log(`Toggling active status for Survey Mapping ${mappingId}`);
+    
+    setMappings(prev => 
+      prev.map(mapping => 
+        mapping.id === mappingId 
+          ? { ...mapping, active: !mapping.active }
+          : mapping
+      )
+    );
+  };
+
   return (
     <div className="space-y-4">
       {/* Action Buttons */}
@@ -71,7 +97,7 @@ export const SurveyMappingTable = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockMappingData.map((mapping) => (
+            {mappings.map((mapping) => (
               <TableRow key={mapping.id}>
                 <TableCell>
                   <input type="checkbox" className="rounded" />
@@ -84,24 +110,36 @@ export const SurveyMappingTable = () => {
                 <TableCell>{mapping.floor}</TableCell>
                 <TableCell>{mapping.room}</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    mapping.status === 'Active' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {mapping.status}
-                  </span>
+                  <div className="flex items-center">
+                    <div
+                      className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
+                        mapping.status === 'Active' ? 'bg-green-500' : 'bg-gray-300'
+                      }`}
+                      onClick={() => handleStatusToggle(mapping.id)}
+                    >
+                      <span
+                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                          mapping.status === 'Active' ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </div>
+                  </div>
                 </TableCell>
                 <TableCell>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={mapping.active}
-                      className="sr-only peer"
-                      onChange={() => {}}
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C72030]"></div>
-                  </label>
+                  <div className="flex items-center">
+                    <div
+                      className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
+                        mapping.active ? 'bg-green-500' : 'bg-gray-300'
+                      }`}
+                      onClick={() => handleActiveToggle(mapping.id)}
+                    >
+                      <span
+                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                          mapping.active ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </div>
+                  </div>
                 </TableCell>
                 <TableCell>{mapping.qrCode}</TableCell>
               </TableRow>
