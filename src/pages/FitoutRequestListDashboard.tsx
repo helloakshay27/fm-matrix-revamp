@@ -109,7 +109,7 @@ export const FitoutRequestListDashboard = () => {
           onClick={handleAddClick}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
         >
-          <Plus className="w-4 h-4 mr-2" style={{ color: '#BF213E' }} />
+          <Plus className="w-4 h-4 mr-2 text-white stroke-white" />
           Add
         </Button>
         <Button 

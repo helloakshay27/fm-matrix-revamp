@@ -105,9 +105,9 @@ export const SurveyListTable = ({ onAddSurvey }: SurveyListTableProps) => {
       <div className="flex items-center gap-4">
         <button
           onClick={handleAddSurvey}
-          className="flex items-center gap-2 bg-[#f6f4ee] text-white px-4 py-2 rounded-lg hover:bg-[#f6f4ee]/90 transition-colors"
+          className="flex items-center gap-2 bg-[#C72030] text-white px-4 py-2 rounded-lg hover:bg-[#C72030]/90 transition-colors"
         >
-         <Plus className="w-4 h-4 mr-2" style={{ color: '#BF213E' }} />
+          <Plus className="w-4 h-4" />
           Add
         </button>
       </div>
