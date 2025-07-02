@@ -1,15 +1,12 @@
 /* eslint-disable react/prop-types */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import Switch from '@mui/joy/Switch';
 import CustomTable from '../CustomTable';
 import AddExternalUserModal from './AddExternalUserModal';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchExternalUser, fetchUpdateUser } from '../../../redux/slices/userSlice';
-import { editRole } from '../../../redux/slices/roleSlice';
 import toast from 'react-hot-toast';
-
 
 const ActionIcons = ({ row, onEdit }) => {
   const token = localStorage.getItem('token');
@@ -78,8 +75,20 @@ const ExternalTable = () => {
   const { fetchExternalUser: externalUsers } = useSelector(state => state.fetchExternalUser);
 
   useEffect(() => {
-    dispatch(fetchExternalUser({ token }));
-  }, [dispatch]);
+    const fetchUsers = async () => {
+      try {
+        await dispatch(fetchExternalUser({ token })).unwrap();
+      } catch (error) {
+        console.error("Error fetching external users:", error);
+        toast.error("Failed to load external users");
+      }
+    };
+
+    if (token) {
+      fetchUsers();
+    }
+  }, [dispatch, token]);
+
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -96,7 +105,6 @@ const ExternalTable = () => {
     setSelectedUser(user);
     setIsModalOpen(true);
   };
-
 
   const handleSuccess = useCallback(() => {
     dispatch(fetchExternalUser({ token })); // refresh roles list
@@ -182,7 +190,7 @@ const ExternalTable = () => {
   return (
     <div>
       <CustomTable
-        data={externalUsers}
+        data={externalUsers || []}
         columns={columns}
         title="User Table"
         layout="inline"

@@ -49,11 +49,11 @@ const MinutesOfMeeting = () => {
     }, [activeTab]);
 
     // Pagination logic
-    const totalItems = mom.length;
+    const totalItems = mom?.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
     const startIndex = currentPage * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const currentItems = [...mom].reverse().slice(startIndex, endIndex);
+    const currentItems = mom && [...mom].reverse().slice(startIndex, endIndex);
 
     const handlePreviousPage = () => {
         if (currentPage > 0) {
@@ -133,7 +133,7 @@ const MinutesOfMeeting = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {currentItems.length > 0 ? (
+                            {currentItems?.length > 0 ? (
                                 currentItems.map((item) => (
                                     <tr key={item.id}>
                                         <td className="p-4">{item.id}</td>
@@ -177,7 +177,7 @@ const MinutesOfMeeting = () => {
                 </div>
             </div>
 
-            {mom.length > 0 && (
+            {mom?.length > 0 && (
                 <div className="flex items-center justify-start gap-4 mt-4 mx-8 text-[12px]">
                     <button
                         onClick={handlePreviousPage}

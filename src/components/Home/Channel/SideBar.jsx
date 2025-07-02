@@ -82,7 +82,7 @@ const SideBar = () => {
                     {openSections.dms && (
                         <ul className="mt-2 space-y-4 text-gray-800 font-normal">
                             {
-                                conversations.map(conversation => (
+                                conversations && conversations.map(conversation => (
                                     <li key={conversation.id} className="text-xs cursor-pointer" onClick={() => navigate(`/channels/chat/${conversation.id}`)}>
                                         {conversation.receiver_name}
                                     </li>
@@ -102,7 +102,7 @@ const SideBar = () => {
                     {openSections.groups && (
                         <ul className="mt-2 space-y-4 text-gray-800 font-normal">
                             {
-                                channels.map(channel => (
+                                channels && channels.map(channel => (
                                     <li key={channel.id} className="text-xs cursor-pointer" onClick={() => navigate(`/channels/group/${channel.id}`)}>{channel.name}</li>
                                 ))
                             }
@@ -120,7 +120,7 @@ const SideBar = () => {
                     {openSections.users && (
                         <ul className="mt-2 space-y-4 text-gray-800 font-normal overflow-y-scroll max-h-60">
                             {
-                                users
+                                users ? users
                                     .filter(user => {
                                         // Exclude users already in conversations
                                         return !conversations.some(
@@ -138,7 +138,7 @@ const SideBar = () => {
                                             {user.firstname + ' ' + user.lastname}
                                         </li>
                                     ))
-
+                                    : []
                             }
                         </ul>
                     )}

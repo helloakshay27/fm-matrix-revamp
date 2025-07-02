@@ -466,11 +466,13 @@ const MoMAdd = () => {
                                             <SelectBox
                                                 className="w-full"
                                                 placeholder="Select Internal User"
-                                                options={internalUsers.map((user) => ({
-                                                    value: user.id,
-                                                    label: user.firstname + " " + user.lastname,
-                                                    user: user,
-                                                }))}
+                                                options={
+                                                    internalUsers ? internalUsers.map((user) => ({
+                                                        value: user.id,
+                                                        label: user.firstname + " " + user.lastname,
+                                                        user: user,
+                                                    })) : []
+                                                }
                                                 value={formData.users[i]?.value || null}
                                                 onChange={(value) => {
                                                     const newUsers = [...formData.users];
@@ -585,11 +587,13 @@ const MoMAdd = () => {
                             <div className="space-y-2">
                                 <label className="text-[12px]">Responsible Person</label>
                                 <SelectBox
-                                    options={users.map((user) => ({
-                                        value: user.id,
-                                        label: user.firstname + " " + user.lastname,
-                                        user: user,
-                                    }))}
+                                    options={
+                                        users ? users.map((user) => ({
+                                            value: user.id,
+                                            label: user.firstname + " " + user.lastname,
+                                            user: user,
+                                        })) : []
+                                    }
                                     className="w-full"
                                     value={formData.points[index]?.responsiblePerson?.value || ""}
                                     onChange={(e) => {
@@ -606,11 +610,13 @@ const MoMAdd = () => {
                             <div className="space-y-2">
                                 <label className="text-[12px]">Tags</label>
                                 <SelectBox
-                                    options={tags.map((tag) => ({
-                                        value: tag.id,
-                                        label: tag.name,
-                                        user: tag,
-                                    }))}
+                                    options={
+                                        tags ? tags.map((tag) => ({
+                                            value: tag.id,
+                                            label: tag.name,
+                                            user: tag,
+                                        })) : []
+                                    }
                                     className="w-full"
                                     value={formData.points[index]?.tag?.value || ""}
                                     onChange={(e) => {

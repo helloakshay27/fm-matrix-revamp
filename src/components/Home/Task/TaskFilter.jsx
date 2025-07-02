@@ -4,7 +4,7 @@ import { X, Search, ChevronRight, ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { useSelector, useDispatch } from "react-redux";
-import { filterTask, fetchTasks } from "../../../redux/slices/taskSlice";
+import { filterTask } from "../../../redux/slices/taskSlice";
 import { useParams } from "react-router-dom";
 import qs from "qs";
 
@@ -53,7 +53,6 @@ const TaskFilter = ({ isModalOpen, setIsModalOpen }) => {
     // Selected options
     const [selectedStatuses, setSelectedStatuses] = useState(getInitialFilters().selectedStatuses);
     const [selectedResponsible, setSelectedResponsible] = useState(getInitialFilters().selectedResponsible);
-    // const [selectedManagers, setSelectedManagers] = useState([]);
     const [selectedCreators, setSelectedCreators] = useState(getInitialFilters().selectedCreators);
     const [dates, setDates] = useState({ "Start Date": "", "End Date": "" });
     const [responsiblePersonOptions, setResponsiblePersonOptions] = useState([]);
@@ -64,7 +63,6 @@ const TaskFilter = ({ isModalOpen, setIsModalOpen }) => {
     const [statusSearch, setStatusSearch] = useState("");
     const [ResponsiblePersonSearch, setResponsiblePersonSearch] = useState("");
     const [creatorSearch, setCreatorSearch] = useState("");
-    // Dropdown open/close state (only one open at a time)
     const [dropdowns, setDropdowns] = useState({
         status: false,
         ResponsiblePerson: false,
@@ -92,7 +90,7 @@ const TaskFilter = ({ isModalOpen, setIsModalOpen }) => {
     // }=useSelector(state=>state.filterTask)
 
     useEffect(() => {
-        if (tasksFromStore.length > 0) {
+        if (tasksFromStore?.length > 0) {
             const uniqueMap = new Map();
 
             tasksFromStore.forEach((task) => {
@@ -109,7 +107,7 @@ const TaskFilter = ({ isModalOpen, setIsModalOpen }) => {
             setStatusOptions(Array.from(uniqueMap.values()));
         }
 
-        if (tasksFromStore.length > 0) {
+        if (tasksFromStore?.length > 0) {
             const uniqueMap = new Map();
 
             tasksFromStore.forEach((task) => {
@@ -124,7 +122,7 @@ const TaskFilter = ({ isModalOpen, setIsModalOpen }) => {
             setResponsiblePersonOptions(Array.from(uniqueMap.values()));
         }
 
-        if (users.length > 0) {
+        if (users?.length > 0) {
             setCreatedByOptions(users.map(user => ({ label: user.firstname + " " + user.lastname, value: user.id })));
         }
     }, [tasksFromStore, users])
@@ -140,7 +138,7 @@ const TaskFilter = ({ isModalOpen, setIsModalOpen }) => {
             ResponsiblePersonSearch,
             creatorSearch,
         };
-        if (selectedStatuses.length > 0 || selectedResponsible.length > 0 || selectedCreators.length > 0 || dates["Start Date"] || dates["End Date"] || statusSearch || ResponsiblePersonSearch || creatorSearch) {
+        if (selectedStatuses?.length > 0 || selectedResponsible?.length > 0 || selectedCreators?.length > 0 || dates["Start Date"] || dates["End Date"] || statusSearch || ResponsiblePersonSearch || creatorSearch) {
 
             localStorage.setItem("taskFilters", JSON.stringify(filters));
         }
@@ -159,16 +157,16 @@ const TaskFilter = ({ isModalOpen, setIsModalOpen }) => {
         console.log(dates);
         try {
             const newFilter = {
-                "q[status_in][]": selectedStatuses.length > 0 ? selectedStatuses : [],
-                "q[created_by_id_eq]": selectedCreators.length > 0 ? selectedCreators : [],
+                "q[status_in][]": selectedStatuses?.length > 0 ? selectedStatuses : [],
+                "q[created_by_id_eq]": selectedCreators?.length > 0 ? selectedCreators : [],
                 "q[start_date_eq]": dates["Start Date"],
                 "q[end_date_eq]": dates["End Date"],
-                "q[responsible_person_id_in][]": selectedResponsible.length > 0 ? selectedResponsible : [],
+                "q[responsible_person_id_in][]": selectedResponsible?.length > 0 ? selectedResponsible : [],
                 "q[milestone_id_eq]": mid
             }
             if (newFilter) {
-                        const queryString = qs.stringify(newFilter, { arrayFormat: 'repeat' });
-                
+                const queryString = qs.stringify(newFilter, { arrayFormat: 'repeat' });
+
                 dispatch(filterTask({ token, filter: overideFilters ? overideFilters : queryString }));
                 setIsModalOpen(false);
             }
@@ -255,7 +253,7 @@ const TaskFilter = ({ isModalOpen, setIsModalOpen }) => {
                         </label>
                     );
                 })}
-                {filtered.length === 0 && (
+                {filtered?.length === 0 && (
                     <div className="text-center text-gray-400 text-sm py-2">No results found</div>
                 )}
             </div>

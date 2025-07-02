@@ -3,17 +3,10 @@ import CloseIcon from "@mui/icons-material/Close";
 import SelectBox from "../../SelectBox";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchOrganizations } from "../../../redux/slices/organizationSlice";
-import { fetchCompany } from "../../../redux/slices/companySlice";
 import { updateRegion, createRegion } from "../../../redux/slices/regionSlice";
-import { fetchCountry } from "../../../redux/slices/countrySlice";
-// import {fetchCountry} from "../../../redux/slices/countrySlice";
-
 import toast from "react-hot-toast";
-import { set } from "react-hook-form";
 
 const AddRegionModel = ({
-  openModal,
   setOpenModal,
   isEditMode = false,
   initialData = null,
@@ -21,39 +14,24 @@ const AddRegionModel = ({
 }) => {
   const token = localStorage.getItem("token");
   const dispatch = useDispatch();
-  const { fetchOrganizations: organizations } = useSelector(
-    (state) => state.fetchOrganizations
-  );
-  const { loading, success } = useSelector((state) => state.createRegion);
-  const { loading: editLoading, success: editSuccess } = useSelector(
-    (state) => state.updateRegion
-  );
-  const { fetchCompany: companies } = useSelector(
-    (state) => state.fetchCompany
-  );
+
+  const { loading } = useSelector((state) => state.createRegion);
+  const { loading: editLoading } = useSelector((state) => state.updateRegion);
   const { fetchCountry: countries } = useSelector(
     (state) => state.fetchCountry
   );
-  //   const {fetchCountry: countries} = useSelector((state) => state.fetchCountry);
-  const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
 
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     country: "",
   });
 
   useEffect(() => {
-    dispatch(fetchOrganizations({ token }));
-    dispatch(fetchCompany({ token }));
-    dispatch(fetchCountry({ token }));
-  }, [dispatch]);
-
-  useEffect(() => {
     if (isEditMode && initialData) {
       setFormData({
-        name: initialData.name,
-        country: initialData.country_id,
+        name: initialData.name || "",
+        country: Number(initialData.country_id) || "",
       });
     } else {
       setFormData({
@@ -61,109 +39,116 @@ const AddRegionModel = ({
         country: "",
       });
     }
+    setError("");
   }, [isEditMode, initialData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.name === "") {
-      setError("Please enter name");
+    setError("");
+
+    if (!formData.name.trim()) {
+      setError("Please enter a region name.");
+      return;
+    }
+
+    if (!formData.country) {
+      setError("Please select a country.");
       return;
     }
 
     const payload = {
       region: {
-        name: formData.name,
-        country_id: formData.country || "",
-        active: true
+        name: formData.name.trim(),
+        country_id: formData.country,
+        active: true,
       },
     };
+
     try {
-      let response;
+      let result;
       if (isEditMode && initialData?.id) {
-        response = await dispatch(
-          updateRegion({
-            token,
-            id: initialData.id,
-            payload,
-          })
-        );
+        result = await dispatch(
+          updateRegion({ token, id: initialData.id, payload })
+        ).unwrap();
       } else {
-        response = await dispatch(createRegion({ token, payload }));
+        result = await dispatch(createRegion({ token, payload })).unwrap();
       }
-      console.log(response);
-      if (response.payload?.errors) {
-        setError(response.payload.errors);
-      } else if (response.payload.user_exists) {
-        setError(response.payload.message);
+
+      if (result?.errors) {
+        setError(
+          typeof result.errors === "string"
+            ? result.errors
+            : "Validation error occurred."
+        );
+      } else if (result?.user_exists) {
+        setError(result.message || "Region already exists.");
       } else {
         toast.success(
           `Region ${isEditMode ? "updated" : "created"} successfully`,
           {
             iconTheme: {
-              primary: "green", // This might directly change the color of the success icon
-              secondary: "white", // The circle background
-            }
+              primary: "green",
+              secondary: "white",
+            },
           }
         );
         handleSuccess();
       }
-    } catch (error) {
-      console.log(error);
-      setError(error.message);
+    } catch (err) {
+      console.error("Region submit error:", err);
+      setError(err?.message || "Something went wrong.");
     }
   };
 
   const handleSuccess = () => {
-    setFormData({
-      name: "",
-      country: "",
-    });
+    setFormData({ name: "", country: "" });
     setError("");
     onSuccess();
   };
 
   const handleClose = () => {
-    setFormData({
-      name: "",
-      country: "",
-    });
+    setFormData({ name: "", country: "" });
     setError("");
     setOpenModal(false);
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
-      <div className="w-[560px] h-max bg-white transform border border-[#C0C0C0]">
+      <div className="w-[560px] h-max bg-white border border-[#C0C0C0]">
         {/* Close Icon */}
         <div className="flex justify-end p-4">
           <CloseIcon className="cursor-pointer" onClick={handleClose} />
         </div>
 
-        {/* Input Section */}
-        <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto pb-4">
-          <div className="px-6">
+        {/* Form Fields */}
+        <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto pb-4 px-6">
+          {/* Name */}
+          <div>
             <label className="block text-[11px] text-[#1B1B1B] mb-1">
               Name<span className="text-red-500 ml-1">*</span>
             </label>
             <input
               type="text"
-              placeholder="Enter name here"
-              className="border border-[#C0C0C0] w-full py-2 px-3 text-[#1B1B1B] text-[13px] focus:outline-none"
+              placeholder="Enter region name"
+              className="border border-[#C0C0C0] w-full py-2 px-3 text-[13px] text-[#1B1B1B] focus:outline-none"
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
             />
           </div>
-          <div className="px-6">
+
+          {/* Country */}
+          <div>
             <label className="block text-[11px] text-[#1B1B1B] mb-1">
               Country<span className="text-red-500 ml-1">*</span>
             </label>
             <SelectBox
-              options={countries.map((country) => ({
-                value: country.id,
-                label: country.name,
-              }))}
+              options={
+                countries
+                  ? countries.map((c) => ({ value: c.id, label: c.name }))
+                  : []
+              }
               className="w-full"
               value={formData.country}
               onChange={(value) => setFormData({ ...formData, country: value })}
@@ -171,19 +156,18 @@ const AddRegionModel = ({
           </div>
         </div>
 
-        <div>
-          {error && (
-            <div className="flex justify-end mt-1 mr-5 align-center">
-              <p className="text-red-500 text-[12px]">{error}</p>
-            </div>
-          )}
-        </div>
+        {/* Error Message */}
+        {error && (
+          <div className="text-right text-red-500 text-[12px] mt-1 mr-5">
+            {error}
+          </div>
+        )}
 
         {/* Footer Buttons */}
-        <div className="bottom-0 left-0 right-0 bg-[#D5DBDB] h-[70px] flex justify-center items-center gap-4">
+        <div className="bg-[#D5DBDB] h-[70px] flex justify-center items-center gap-4 mt-4">
           <button
             type="button"
-            className="border border-[#C72030] text-[#1B1B1B] text-[13px] px-8 py-2"
+            className="border border-[#C72030] text-[13px] text-[#1B1B1B] px-8 py-2"
             onClick={handleSubmit}
             disabled={loading || editLoading}
           >
@@ -194,7 +178,8 @@ const AddRegionModel = ({
                 : "Save"}
           </button>
           <button
-            className="border border-[#C72030] text-[#1B1B1B] text-[13px] px-8 py-2"
+            type="button"
+            className="border border-[#C72030] text-[13px] text-[#1B1B1B] px-8 py-2"
             onClick={handleClose}
           >
             Cancel

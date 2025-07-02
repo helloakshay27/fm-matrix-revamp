@@ -85,8 +85,8 @@ const DateEditor = ({
   className,
   placeholder = "Select date",
   validator,
-  min
-
+  min,
+  max
 }) => {
   const [date, setDate] = useState(
     propValue ? new Date(propValue).toISOString().split("T")[0] : ""
@@ -144,22 +144,23 @@ const DateEditor = ({
       className={`${validator ? 'border border-red-400' : 'border-none'} w-full focus:outline-none rounded text-[12px] p-1 my-custom-date-editor  `}
       placeholder={placeholder}
       min={min || null}
+      max={max || null}
     />
   );
 };
 
 const calculateDuration = (startDateStr, endDateStr) => {
   if (!startDateStr || !endDateStr) { return '0d:0h:0m'; }
-     const start = new Date(startDateStr);
-     const end = new Date(endDateStr);
-    if (end < start) return "Invalid: End date before start date";
+  const start = new Date(startDateStr);
+  const end = new Date(endDateStr);
+  if (end < start) return "Invalid: End date before start date";
 
-    const ms = end - start;
-    const totalMinutes = Math.floor(ms / (1000 * 60));
-    const days = Math.floor(ms / (1000 * 60 * 60 * 24)) + 1;
-    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-    const minutes = totalMinutes % 60;
-    return `${days}d : ${hours}h : ${minutes}m`;
+  const ms = end - start;
+  const totalMinutes = Math.floor(ms / (1000 * 60));
+  const days = Math.floor(ms / (1000 * 60 * 60 * 24)) + 1;
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+  return `${days}d : ${hours}h : ${minutes}m`;
 };
 
 
@@ -240,6 +241,7 @@ const TaskTable = () => {
   } = useSelector(
     (state) => state.filterTask
   )
+  const { fetchMilestoneById: milestone } = useSelector((state) => state.fetchMilestoneById);
 
   const userFetchInitiatedRef = useRef(false);
 
@@ -350,7 +352,7 @@ const TaskTable = () => {
     if (myTasks === "false") {
       console.log("hi");
       // All Tasks mode
-      if (filterSuccess && Array.isArray(filterTasks) && ( localStorage.getItem("taskFilters") || localStorage.getItem("taskStatus"))) {
+      if (filterSuccess && Array.isArray(filterTasks) && (localStorage.getItem("taskFilters") || localStorage.getItem("taskStatus"))) {
         console.log("All Tasks mode: Using filtered tasks");
         newProcessedData = filterTasks.map((task) => processTaskData(task));
       } else if (tasksFromStore && Array.isArray(tasksFromStore) && tasksFromStore.length > 0) {
@@ -359,7 +361,7 @@ const TaskTable = () => {
       }
     } else {
       // My Tasks mode
-      if (filterSuccess && Array.isArray(filterTasks) && ( localStorage.getItem("taskFilters") || localStorage.getItem("taskStatus"))) {
+      if (filterSuccess && Array.isArray(filterTasks) && (localStorage.getItem("taskFilters") || localStorage.getItem("taskStatus"))) {
         console.log("My Tasks mode: Using filtered tasks");
         newProcessedData = filterTasks.map((task) => processTaskData(task));
       } else if (myTaskSuccess && Array.isArray(myTasksFromStore)) {
@@ -511,10 +513,10 @@ const TaskTable = () => {
       await dispatch(filterTask({ token, filter: queryString })).unwrap();
       return;
     }
-    if(localStorage.getItem("taskStatus")) {
-      const saved=localStorage.getItem("taskStatus");
-      const filter={
-        "q[status_eq]":saved      
+    if (localStorage.getItem("taskStatus")) {
+      const saved = localStorage.getItem("taskStatus");
+      const filter = {
+        "q[status_eq]": saved
       }
       await dispatch(filterTask({ token, filter })).unwrap();
       return;
@@ -949,7 +951,8 @@ const TaskTable = () => {
                       isNewRow={true}
                       onEnterPress={handleSaveNewTask}
                       validator={validator}
-                      min={new Date().toISOString().split("T")[0]}
+                      min={milestone?.start_date || new Date().toISOString().split("T")[0]}
+                      max={milestone?.end_date}
                     />
                   </td>
                   {" "}

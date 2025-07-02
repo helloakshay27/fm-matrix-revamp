@@ -1,15 +1,10 @@
 /* eslint-disable react/prop-types */
 import CloseIcon from "@mui/icons-material/Close";
-import SelectBox from "../../SelectBox";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchOrganizations } from "../../../redux/slices/organizationSlice";
-import { fetchCompany } from "../../../redux/slices/companySlice";
 import { updateCountry, createCountry } from "../../../redux/slices/countrySlice";
-// import {fetchCountry} from "../../../redux/slices/countrySlice";
 
 import toast from "react-hot-toast";
-import { set } from "react-hook-form";
 
 const AddCountryModel = ({
   openModal,
@@ -21,14 +16,13 @@ const AddCountryModel = ({
   const token = localStorage.getItem("token");
   const dispatch = useDispatch();
 
-  const { loading, success } = useSelector((state) => state.createCountry);
-  const { loading: editLoading, success: editSuccess } = useSelector(
+  const { loading } = useSelector((state) => state.createCountry);
+  const { loading: editLoading } = useSelector(
     (state) => state.updateCountry
   );
 
   //   const {fetchCountry: countries} = useSelector((state) => state.fetchCountry);
   const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",

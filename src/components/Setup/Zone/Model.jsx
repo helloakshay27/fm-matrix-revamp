@@ -3,17 +3,10 @@ import CloseIcon from "@mui/icons-material/Close";
 import SelectBox from "../../SelectBox";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchOrganizations } from "../../../redux/slices/organizationSlice";
-import { fetchCompany } from "../../../redux/slices/companySlice";
 import { updateZone, createZone } from "../../../redux/slices/zoneSlice";
-// import {fetchregion} from "../../../redux/slices/regionSlice";
-
 import toast from "react-hot-toast";
-import { set } from "react-hook-form";
-import { fetchRegion } from "../../../redux/slices/regionSlice";
 
 const AddZoneModel = ({
-  openModal,
   setOpenModal,
   isEditMode = false,
   initialData = null,
@@ -24,11 +17,10 @@ const AddZoneModel = ({
 
 
   const { fetchRegion: region } = useSelector((state) => state.fetchRegion);
-  const { loading, success } = useSelector((state) => state.createZone);
-  const { loading: editLoading, success: editSuccess } = useSelector(
+  const { loading } = useSelector((state) => state.createZone);
+  const { loading: editLoading } = useSelector(
     (state) => state.updateZone
   )
-  //   const {fetchregion: countries} = useSelector((state) => state.fetchregion);
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
@@ -36,10 +28,6 @@ const AddZoneModel = ({
     region: "",
     // country: "",
   });
-
-  useEffect(() => {
-    dispatch(fetchRegion({ token }));
-  }, [dispatch]);
 
   useEffect(() => {
     if (isEditMode && initialData) {
@@ -65,8 +53,6 @@ const AddZoneModel = ({
       return;
     }
 
-
-
     const payload = {
       zone: {
         name: formData.name,
@@ -83,10 +69,10 @@ const AddZoneModel = ({
             token,
             id: initialData.id,
             payload,
-          })
+          }).unwrap()
         );
       } else {
-        response = await dispatch(createZone({ token, payload }));
+        response = await dispatch(createZone({ token, payload })).unwrap();
       }
       console.log(response);
       if (response.payload?.errors) {
@@ -161,10 +147,12 @@ const AddZoneModel = ({
               Region<span className="text-red-500 ml-1">*</span>
             </label>
             <SelectBox
-              options={region.map((region) => ({
-                value: region.id,
-                label: region.name,
-              }))}
+              options={
+                region ? region.map((region) => ({
+                  value: region.id,
+                  label: region.name,
+                })) : []
+              }
               className="w-full"
               value={formData.region}
               onChange={(value) => setFormData({ ...formData, region: value })}

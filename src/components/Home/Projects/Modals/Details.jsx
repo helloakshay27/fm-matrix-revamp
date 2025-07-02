@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import SelectBox from "../../../SelectBox";
 import MultiSelectBox from "../../../MultiSelectBox";
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector } from "react-redux";
 import {
   createProject,
   editProject,
@@ -13,13 +13,20 @@ import {
   removeTagFromProject,
   resetEditSuccess,
   resetProjectSuccess,
-} from '../../../../redux/slices/projectSlice';
-import { fetchUsers } from '../../../../redux/slices/userSlice';
-import { fetchActiveTags, fetchTags } from '../../../../redux/slices/tagsSlice';
+} from "../../../../redux/slices/projectSlice";
+import { fetchUsers } from "../../../../redux/slices/userSlice";
+import { fetchActiveTags, fetchTags } from "../../../../redux/slices/tagsSlice";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 
-const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", isEdit = false, templateDetails }) => {
+const Details = ({
+  setTab,
+  setOpenTagModal,
+  setOpenTeamModal,
+  endText = "Next",
+  isEdit = false,
+  templateDetails,
+}) => {
   const token = localStorage.getItem("token");
   const { id } = useParams();
   const dispatch = useDispatch();
@@ -32,21 +39,24 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
     editProject: { success: editsuccess },
     fetchActiveProjectTypes: projectTypes = [],
     fetchTemplates: templates = [],
-    fetchProjectTeams: teams = []
+    fetchProjectTeams: teams = [],
   } = useSelector((state) => ({
     fetchUsers: state.fetchUsers.fetchUsers,
     fetchActiveTags: state.fetchActiveTags.fetchActiveTags,
     fetchProjectDetails: state.fetchProjectDetails.fetchProjectDetails,
     createProject: state.createProject,
     editProject: state.editProject,
-    fetchActiveProjectTypes: state.fetchActiveProjectTypes.fetchActiveProjectTypes,
+    fetchActiveProjectTypes:
+      state.fetchActiveProjectTypes.fetchActiveProjectTypes,
     fetchTemplates: state.fetchTemplates.fetchTemplates,
-    fetchProjectTeams: state.fetchProjectTeams.fetchProjectTeams
+    fetchProjectTeams: state.fetchProjectTeams.fetchProjectTeams,
   }));
 
-  const { createProject: project = {} } = useSelector((state) => state.createProject);
+  const { createProject: project = {} } = useSelector(
+    (state) => state.createProject
+  );
 
-  const [isEditAllowed, setIsEditAllowed] = useState(false)
+  const [isEditAllowed, setIsEditAllowed] = useState(false);
   const [formData, setFormData] = useState({
     projectTitle: "",
     description: "",
@@ -73,7 +83,7 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
     if (isEdit) {
       setIsEditAllowed(true);
     }
-  }, [isEdit])
+  }, [isEdit]);
 
   useEffect(() => {
     dispatch(fetchUsers({ token }));
@@ -85,11 +95,12 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
 
   useEffect(() => {
     if (templateDetails) {
-      const mappedTags = templateDetails.project_tags?.map((tag) => ({
-        value: tag?.company_tag?.id,
-        label: getTagName(tag?.company_tag?.id),
-        id: tag.id
-      })) || [];
+      const mappedTags =
+        templateDetails.project_tags?.map((tag) => ({
+          value: tag?.company_tag?.id,
+          label: getTagName(tag?.company_tag?.id),
+          id: tag.id,
+        })) || [];
 
       setFormData({
         projectTitle: templateDetails.title || "",
@@ -106,22 +117,23 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
         createTemplate: templateDetails.is_template || false,
       });
     }
-  }, [templateDetails])
+  }, [templateDetails]);
 
   useEffect(() => {
     if (!Array.isArray(project) && !isEdit) {
       dispatch(fetchProjectDetails({ token, id: project.id }));
       setIsEditAllowed(true);
     }
-  }, [project])
+  }, [project]);
 
   useEffect(() => {
-    if ((isEdit && editData?.id) || project && project.id) {
-      const mappedTags = editData.project_tags?.map((tag) => ({
-        value: tag?.company_tag?.id, // used for MultiSelectBox
-        label: getTagName(tag?.company_tag?.id),
-        id: tag.id // project_tag.id used for deletion
-      })) || [];
+    if ((isEdit && editData?.id) || (project && project.id)) {
+      const mappedTags =
+        editData.project_tags?.map((tag) => ({
+          value: tag?.company_tag?.id, // used for MultiSelectBox
+          label: getTagName(tag?.company_tag?.id),
+          id: tag.id, // project_tag.id used for deletion
+        })) || [];
 
       setFormData({
         projectTitle: editData.title || "",
@@ -172,11 +184,14 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.projectTitle) errors.projectTitle = "Project title is required.";
-    else if (!formData.projectOwner) errors.projectOwner = "Project owner is required.";
+    if (!formData.projectTitle)
+      errors.projectTitle = "Project title is required.";
+    else if (!formData.projectOwner)
+      errors.projectOwner = "Project owner is required.";
     else if (!formData.startDate) errors.startDate = "Start date is required.";
     else if (!formData.endDate) errors.endDate = "End date is required.";
-    else if (!formData.projectTeam) errors.projectTeam = "Project team is required.";
+    else if (!formData.projectTeam)
+      errors.projectTeam = "Project team is required.";
 
     if (Object.keys(errors).length) {
       toast.error(Object.values(errors)[0]);
@@ -198,7 +213,6 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
     const minutes = totalMinutes % 60;
     return `${days}d : ${hours}h : ${minutes}m`;
   };
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -222,7 +236,7 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
       task_tag_ids: formData.tags.map((tag) => tag.value),
     };
 
-    console.log(isEditAllowed)
+    console.log(isEditAllowed);
     if (isEdit || isEditAllowed) {
       dispatch(editProject({ token, id: id || project.id, payload }));
     } else {
@@ -232,17 +246,17 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
 
   useEffect(() => {
     if (success) {
-      setTab('Milestone')
-      dispatch(resetProjectSuccess())
+      setTab("Milestone");
+      dispatch(resetProjectSuccess());
     }
-  }, [success])
+  }, [success]);
 
   useEffect(() => {
     if (editsuccess) {
       if (isEdit) {
         window.location.reload();
       } else {
-        setTab('Milestone');
+        setTab("Milestone");
         dispatch(resetEditSuccess());
       }
     }
@@ -252,7 +266,9 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
     <form className="pt-2 pb-12 h-full" onSubmit={handleSubmit}>
       <div className="max-w-[90%] mx-auto h-[calc(100%-4rem)] overflow-y-auto pr-3">
         <div className="mt-4 space-y-2">
-          <label className="block ms-2">Project Title <span className="text-red-600">*</span></label>
+          <label className="block ms-2">
+            Project Title <span className="text-red-600">*</span>
+          </label>
           <input
             type="text"
             name="projectTitle"
@@ -274,7 +290,9 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
                 onChange={handleInputChange}
                 className="mx-2 my-0.5"
               />
-              <label htmlFor={name}>Create a {name === "createChannel" ? "Channel" : "Template"}</label>
+              <label htmlFor={name}>
+                Create a {name === "createChannel" ? "Channel" : "Template"}
+              </label>
             </div>
           ))}
         </div>
@@ -293,14 +311,16 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
 
         <div className="flex items-start gap-4 mt-3">
           <div className="w-full">
-            <label className="block mb-2">Project Owner <span className="text-red-600">*</span></label>
+            <label className="block mb-2">
+              Project Owner <span className="text-red-600">*</span>
+            </label>
             <SelectBox
-              options={users.map(user => ({
+              options={users.map((user) => ({
                 value: user.id,
                 label: `${user.firstname} ${user.lastname}`,
               }))}
               value={formData.projectOwner}
-              onChange={value => handleSelectChange("projectOwner", value)}
+              onChange={(value) => handleSelectChange("projectOwner", value)}
               placeholder="Select Owner"
             />
           </div>
@@ -324,7 +344,8 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
           {["startDate", "endDate"].map((field) => (
             <div key={field} className="w-full space-y-2">
               <label className="block ms-2">
-                {field === "startDate" ? "Start Date" : "End Date"} <span className="text-red-600">*</span>
+                {field === "startDate" ? "Start Date" : "End Date"}{" "}
+                <span className="text-red-600">*</span>
               </label>
 
               <input
@@ -335,13 +356,15 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
                 className="w-full border outline-none border-gray-300 p-2"
                 min={
                   field === "startDate"
-                    ? (!isEdit ? new Date().toISOString().split("T")[0] : undefined)
-                    : formData.startDate || new Date().toISOString().split("T")[0]
+                    ? !isEdit
+                      ? new Date().toISOString().split("T")[0]
+                      : undefined
+                    : formData.startDate ||
+                    new Date().toISOString().split("T")[0]
                 }
               />
             </div>
           ))}
-
 
           <div className="w-[300px] space-y-2">
             <label className="block ms-2">Duration</label>
@@ -355,18 +378,27 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
         </div>
 
         <div className="relative">
-          <label className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer" onClick={() => setOpenTeamModal(true)}>
+          <label
+            className="absolute text-[12px] text-[red] top-2 right-2 mt-2 cursor-pointer"
+            onClick={() => setOpenTeamModal(true)}
+          >
             <i>Create new team</i>
           </label>
         </div>
 
         <div className="flex flex-col gap-4 my-10">
           <div>
-            <label className="block mb-2">Project Team <span className="text-red-600">*</span></label>
+            <label className="block mb-2">
+              Project Team <span className="text-red-600">*</span>
+            </label>
             <SelectBox
-              options={teams.map(team => ({ value: team.id, label: team.name }))}
+              options={
+                teams
+                  ? teams.map((team) => ({ value: team.id, label: team.name }))
+                  : []
+              }
               value={formData.projectTeam}
-              onChange={value => handleSelectChange("projectTeam", value)}
+              onChange={(value) => handleSelectChange("projectTeam", value)}
               placeholder="Select Team"
             />
           </div>
@@ -375,12 +407,18 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
             <div className="w-1/2">
               <label className="block mb-2">Project Type</label>
               <SelectBox
-                options={projectTypes.map(type => ({
-                  value: type.id,
-                  label: type.name.charAt(0).toUpperCase() + type.name.slice(1)
-                }))}
+                options={
+                  projectTypes
+                    ? projectTypes.map((type) => ({
+                      value: type.id,
+                      label:
+                        type.name.charAt(0).toUpperCase() +
+                        type.name.slice(1),
+                    }))
+                    : []
+                }
                 value={formData.projectType}
-                onChange={value => handleSelectChange("projectType", value)}
+                onChange={(value) => handleSelectChange("projectType", value)}
                 placeholder="Select Type"
               />
             </div>
@@ -393,7 +431,7 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
                   { value: "low", label: "Low" },
                 ]}
                 value={formData.priority}
-                onChange={value => handleSelectChange("priority", value)}
+                onChange={(value) => handleSelectChange("priority", value)}
                 placeholder="Select Priority"
               />
             </div>
@@ -402,18 +440,25 @@ const Details = ({ setTab, setOpenTagModal, setOpenTeamModal, endText = "Next", 
           <div>
             <label className="block mb-2">Tags</label>
             <MultiSelectBox
-              options={tags.map(tag => ({ value: tag.id, label: tag.name }))}
+              options={tags.map((tag) => ({ value: tag.id, label: tag.name }))}
               value={formData.tags}
-              onChange={values => handleMultiSelectChange("tags", values)}
+              onChange={(values) => handleMultiSelectChange("tags", values)}
               placeholder="Select Tags"
             />
-            <div className="text-[12px] text-[red] text-right cursor-pointer" onClick={() => setOpenTagModal(true)}>
+            <div
+              className="text-[12px] text-[red] text-right cursor-pointer"
+              onClick={() => setOpenTagModal(true)}
+            >
               <i>Create new tag</i>
             </div>
           </div>
 
           <div className="flex items-center justify-center">
-            <button type="submit" className="border-2 border-red-500 px-4 py-2 text-black w-[100px]" disabled={success || editsuccess}>
+            <button
+              type="submit"
+              className="border-2 border-red-500 px-4 py-2 text-black w-[100px]"
+              disabled={success || editsuccess}
+            >
               {endText}
             </button>
           </div>

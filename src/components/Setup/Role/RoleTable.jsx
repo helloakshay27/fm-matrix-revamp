@@ -18,45 +18,58 @@ const ActionIcons = ({ row, onEdit }) => {
     const updatedValue = !isActive;
     setIsActive(updatedValue);
 
-    const payload = {
-      lock_role: {
-        name: row.original.name,
-        display_name: row.original.display_name,
-        active: updatedValue ? 1 : 0,
-      },
-    };
+    try {
+      const payload = {
+        lock_role: {
+          name: row.original.name,
+          display_name: row.original.display_name,
+          active: updatedValue ? 1 : 0,
+        },
+      };
 
-    await dispatch(editRole({ token, id: row.original.id, payload })).unwrap();
-    await dispatch(fetchRoles({ token })).unwrap();
-    toast.dismiss();
-    toast.success(`Status ${updatedValue ? "activated" : "deactivated"} successfully`, {
-      iconTheme: {
-        primary: updatedValue ? 'green' : 'red',
-        secondary: 'white',
-      }
-    });
+      await dispatch(editRole({ token, id: row.original.id, payload })).unwrap();
+      await dispatch(fetchRoles({ token })).unwrap();
+
+      toast.dismiss();
+      toast.success(`Status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
+        iconTheme: {
+          primary: updatedValue ? 'green' : 'red',
+          secondary: 'white',
+        },
+      });
+    } catch (error) {
+      setIsActive(!updatedValue); // Revert UI on failure
+      toast.dismiss();
+      toast.error('Failed to update status', {
+        iconTheme: {
+          primary: 'red',
+          secondary: 'white',
+        },
+      });
+      console.error('Toggle failed:', error);
+    }
   };
 
   const handleDeleteClick = async (id) => {
     try {
-      await dispatch(deleteRole({ token, id })).unwrap(); // unwrap to handle async correctly
-      dispatch(fetchRoles({ token })); // refetch data after successful delete
+      await dispatch(deleteRole({ token, id })).unwrap();
+      await dispatch(fetchRoles({ token }));
       toast.dismiss();
       toast.success('Role deleted successfully', {
         iconTheme: {
-          primary: 'red', // This might directly change the color of the success icon
-          secondary: 'white', // The circle background
+          primary: 'red',
+          secondary: 'white',
         },
       });
-
     } catch (error) {
-      console.error('Failed to delete:', error);
+      toast.dismiss();
       toast.error('Failed to delete Role.', {
         iconTheme: {
-          primary: 'red', // This might directly change the color of the success icon
-          secondary: 'white', // The circle background
+          primary: 'red',
+          secondary: 'white',
         },
       });
+      console.error('Failed to delete:', error);
     }
   };
 
@@ -91,11 +104,19 @@ const RoleTable = () => {
   const [modalMode, setModalMode] = useState('create');
 
   const dispatch = useDispatch();
-  const { fetchRoles: roles } = useSelector((state) => state.fetchRoles);
+  const { fetchRoles: roles = [] } = useSelector((state) => state.fetchRoles);
 
   useEffect(() => {
-    dispatch(fetchRoles({ token }));
-  }, [dispatch]);
+    const fetchData = async () => {
+      try {
+        await dispatch(fetchRoles({ token })).unwrap();
+      } catch (error) {
+        console.error('Failed to fetch roles:', error);
+        toast.error('Error loading roles.');
+      }
+    };
+    fetchData();
+  }, [dispatch, token]);
 
   const handleEdit = useCallback((role) => {
     setSelectedRole(role);
@@ -103,10 +124,15 @@ const RoleTable = () => {
     setIsModalOpen(true);
   }, []);
 
-  const handleSuccess = useCallback(() => {
-    dispatch(fetchRoles({ token })); // refresh roles list
-    setIsModalOpen(false);  // close modal
-  }, [dispatch]);
+  const handleSuccess = useCallback(async () => {
+    try {
+      await dispatch(fetchRoles({ token })).unwrap();
+      setIsModalOpen(false);
+    } catch (error) {
+      toast.error('Failed to refresh roles.');
+      console.error('Refetch failed after modal success:', error);
+    }
+  }, [dispatch, token]);
 
   const columns = useMemo(() => [
     {
@@ -114,11 +140,13 @@ const RoleTable = () => {
       header: 'Roles',
       size: 650,
       cell: ({ row, getValue }) => {
-        const value = row.original ? getValue() : null;
-        // if (!value) return null;
-        // const formattedValue = value.replace(/_/g, ' ');
-        // return formattedValue.charAt(0).toUpperCase() + formattedValue.slice(1);
-        return value
+        try {
+          const value = row.original ? getValue() : null;
+          return value || '-';
+        } catch (error) {
+          console.error('Error rendering display_name:', error);
+          return '-';
+        }
       },
     },
     {
@@ -126,13 +154,19 @@ const RoleTable = () => {
       header: 'Created On',
       size: 100,
       cell: ({ getValue }) => {
-        const rawDate = getValue();
-        const date = new Date(rawDate);
-        return date.toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-        });
+        try {
+          const rawDate = getValue();
+          if (!rawDate) return '-';
+          const date = new Date(rawDate);
+          return date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          });
+        } catch (error) {
+          console.error('Error formatting date:', error);
+          return '-';
+        }
       },
     },
     {
@@ -149,7 +183,7 @@ const RoleTable = () => {
   return (
     <>
       <CustomTable
-        data={[...roles].reverse()}
+        data={[...(roles || [])].reverse()}
         columns={columns}
         title="Roles"
         buttonText="Add Role"

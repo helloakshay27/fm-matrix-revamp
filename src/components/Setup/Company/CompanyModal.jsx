@@ -26,11 +26,20 @@ const CompanyModal = ({ open, setOpenModal, editData, onEditSubmit }) => {
         organizationId: "",
     });
 
+    // ✅ Try/catch added here for fetching organizations
     useEffect(() => {
-        dispatch(fetchOrganizations({ token }));
+        const fetchData = async () => {
+            try {
+                await dispatch(fetchOrganizations({ token })).unwrap();
+            } catch (error) {
+                console.error("Error fetching organizations:", error);
+                toast.dismiss();
+                toast.error("Failed to fetch organizations");
+            }
+        };
+        fetchData();
     }, [dispatch, token]);
 
-    // Fill form if editData is present
     useEffect(() => {
         if (editData) {
             setFormData({
@@ -64,7 +73,7 @@ const CompanyModal = ({ open, setOpenModal, editData, onEditSubmit }) => {
         };
 
         if (editData) {
-            onEditSubmit(payload, editData.id); // Use onEditSubmit prop
+            onEditSubmit(payload, editData.id);
         } else {
             dispatch(createCompany({ token, payload }));
         }
@@ -75,8 +84,8 @@ const CompanyModal = ({ open, setOpenModal, editData, onEditSubmit }) => {
             toast.dismiss();
             toast.success("Company created successfully", {
                 iconTheme: {
-                    primary: 'green', // This might directly change the color of the success icon
-                    secondary: 'white',
+                    primary: "green",
+                    secondary: "white",
                 },
             });
             handleClose();
@@ -108,10 +117,7 @@ const CompanyModal = ({ open, setOpenModal, editData, onEditSubmit }) => {
             <div className="w-[560px] h-max pb-[6rem] bg-white absolute top-1/2 left-1/2 flex flex-col translate-x-[-50%] translate-y-[-50%] border border-[#C0C0C0] shadow-md">
                 <div className="flex flex-col gap-4 p-4">
                     <div className="flex justify-end">
-                        <CloseIcon
-                            className="cursor-pointer"
-                            onClick={() => setOpenModal(false)}
-                        />
+                        <CloseIcon className="cursor-pointer" onClick={handleClose} />
                     </div>
                     <div className="space-y-4 px-6">
                         <div>
@@ -133,10 +139,12 @@ const CompanyModal = ({ open, setOpenModal, editData, onEditSubmit }) => {
                             </label>
                             <SelectBox
                                 value={formData.organizationId}
-                                options={organizations.map((organization) => ({
-                                    value: organization.id,
-                                    label: organization.name,
-                                }))}
+                                options={
+                                    organizations ? organizations.map((organization) => ({
+                                        value: organization.id,
+                                        label: organization.name,
+                                    })) : []
+                                }
                                 onChange={(value) =>
                                     setFormData({ ...formData, organizationId: value })
                                 }
@@ -155,7 +163,7 @@ const CompanyModal = ({ open, setOpenModal, editData, onEditSubmit }) => {
                     </button>
                     <button
                         className="border border-[#C72030] text-sm px-8 py-2"
-                        onClick={() => setOpenModal(false)}
+                        onClick={handleClose}
                     >
                         Cancel
                     </button>

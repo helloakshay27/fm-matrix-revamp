@@ -10,10 +10,7 @@ import toast from 'react-hot-toast';
 
 const ActionIcons = ({ row, onEdit }) => {
   const token = localStorage.getItem('token');
-  const [isActive, setIsActive] = useState(row.original.active);
   const dispatch = useDispatch();
-
-
 
   const handleDeleteClick = async () => {
     try {
@@ -21,8 +18,8 @@ const ActionIcons = ({ row, onEdit }) => {
       toast.dismiss();
       toast.success('Tag deleted successfully', {
         iconTheme: {
-          primary: 'red', // This might directly change the color of the success icon
-          secondary: 'white', // The circle background
+          primary: 'red',
+          secondary: 'white',
         },
       });
       dispatch(fetchTags({ token }));
@@ -30,12 +27,11 @@ const ActionIcons = ({ row, onEdit }) => {
       console.error('Failed to delete:', error);
       toast.error('Failed to delete tag.', {
         iconTheme: {
-          primary: 'red', // This might directly change the color of the error icon
-          secondary: 'white', // The circle background
+          primary: 'red',
+          secondary: 'white',
         },
-      })
+      });
     }
-
   };
 
   return (
@@ -52,18 +48,26 @@ const ActionIcons = ({ row, onEdit }) => {
   );
 };
 
-
 const TagsTable = () => {
   const token = localStorage.getItem('token');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTag, setSelectedTag] = useState(null);
 
   const dispatch = useDispatch();
-  const { fetchTags: tags, loading, error } = useSelector((state) => state.fetchTags); // Adjust to your tag slice
+  const { fetchTags: tags } = useSelector((state) => state.fetchTags);
 
   useEffect(() => {
-    dispatch(fetchTags({ token }));
-  }, [dispatch]);
+    const fetchData = async () => {
+      try {
+        await dispatch(fetchTags({ token })).unwrap();
+      } catch (error) {
+        console.error('Failed to fetch tags:', error);
+        toast.error('Error fetching tags');
+      }
+    };
+
+    fetchData();
+  }, [dispatch, token]);
 
   const handleEdit = useCallback((tag) => {
     setSelectedTag(tag);
@@ -95,10 +99,11 @@ const TagsTable = () => {
       });
       dispatch(fetchTags({ token }));
     } catch (error) {
-      console.error('Failed to update toggle:', error, {
+      console.error('Failed to update toggle:', error);
+      toast.error('Failed to update status.', {
         iconTheme: {
-          primary: 'red', // This might directly change the color of the error icon
-          secondary: 'white', // The circle background
+          primary: 'red',
+          secondary: 'white',
         },
       });
     }
@@ -162,7 +167,7 @@ const TagsTable = () => {
   return (
     <>
       <CustomTable
-        data={tags} // Ensure tags is defined
+        data={tags || []}
         columns={columns}
         title="Tags"
         buttonText="Add Tag"

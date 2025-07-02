@@ -1,25 +1,29 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import Switch from '@mui/joy/Switch';
-// import axios from 'axios'; // Not used, can remove
-import { fetchStatus, updateStatus, createStatus, deleteStatus } from '../../../redux/slices/statusSlice.js';
-import { useDispatch } from 'react-redux';
+import { useEffect, useMemo, useState } from "react";
+import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import Switch from "@mui/joy/Switch";
+import {
+  fetchStatus,
+  updateStatus,
+  deleteStatus,
+} from "../../../redux/slices/statusSlice.js";
+import { useDispatch } from "react-redux";
 
 import {
   useReactTable,
   getCoreRowModel,
   flexRender,
   getPaginationRowModel,
-} from '@tanstack/react-table';
-import { useSelector } from 'react-redux';
-import toast from 'react-hot-toast';
-
+} from "@tanstack/react-table";
+import { useSelector } from "react-redux";
+import toast from "react-hot-toast";
 
 const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   const dispatch = useDispatch();
-  const statusList = useSelector(state => state.fetchStatus.fetchStatus || []); // <-- Assuming state.status.list is your array of statuses
+  const statusList = useSelector(
+    (state) => state.fetchStatus.fetchStatus || []
+  );
   const fixedRowsPerPage = 13;
 
   const [pagination, setPagination] = useState({
@@ -28,17 +32,23 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
   });
 
   useEffect(() => {
-    if (statusList.length === 0) { // Optional: only fetch if data is not already there
-      dispatch(fetchStatus({ token }));
-    }
-  }, [dispatch]);
+    const fetchData = async () => {
+      try {
+        await dispatch(fetchStatus({ token })).unwrap();
+      } catch (error) {
+        console.error('Failed to fetch status:', error);
+        toast.error('Failed to load status list');
+      }
+    };
+
+    fetchData();
+  }, [dispatch, token]);
 
   const ActionIcons = ({ row, setOpenModal, setIsEdit, setExistingData }) => {
     const handleEditClick = () => {
       setIsEdit(true);
       setExistingData(row.original);
       setOpenModal(true);
-      console.log(row.original);
     };
 
     const handleDeleteClick = async (id) => {
@@ -46,19 +56,18 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
         await dispatch(deleteStatus({ token, id })).unwrap(); // unwrap to handle async correctly
         dispatch(fetchStatus({ token })); // refetch data after successful delete
         toast.dismiss();
-        toast.success('Status deleted successfully', {
+        toast.success("Status deleted successfully", {
           iconTheme: {
-            primary: 'red', // This might directly change the color of the success icon
-            secondary: 'white', // The circle background
+            primary: "red", // This might directly change the color of the success icon
+            secondary: "white", // The circle background
           },
         });
-
       } catch (error) {
-        console.error('Failed to delete:', error);
-        toast.error('Failed to delete Status.', {
+        console.error("Failed to delete:", error);
+        toast.error("Failed to delete Status.", {
           iconTheme: {
-            primary: 'red', // This might directly change the color of the success icon
-            secondary: 'white', // The circle background
+            primary: "red", // This might directly change the color of the success icon
+            secondary: "white", // The circle background
           },
         });
       }
@@ -69,83 +78,84 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
         <div>
           <EditOutlinedIcon
             onClick={handleEditClick}
-            sx={{ fontSize: '20px', cursor: 'pointer' }}
+            sx={{ fontSize: "20px", cursor: "pointer" }}
           />
           <button
-            // You had 'data.title' here, which is undefined in this component's scope
-            // Use row.original.status or row.original.name for deletion
             onClick={() => handleDeleteClick(row.original.id)}
             title="Delete"
             className="ml-2"
           >
-            <DeleteOutlineOutlinedIcon sx={{ fontSize: '20px' }} />
+            <DeleteOutlineOutlinedIcon sx={{ fontSize: "20px" }} />
           </button>
         </div>
       </div>
     );
   };
 
-
-
   // Handler to toggle status
   const toggleStatus = async (row) => {
     try {
       const payload = {
-        active: !row.original.active
+        active: !row.original.active,
       };
-      await dispatch(updateStatus({ token, id: row.original.id, payload })).unwrap(); // Use 'data' as key for payload if your thunk expects it
+      await dispatch(
+        updateStatus({ token, id: row.original.id, payload })
+      ).unwrap(); // Use 'data' as key for payload if your thunk expects it
       toast.dismiss();
-      toast.success(`Status ${payload.active ? 'activated' : 'deactivated'} successfully`, {
-        iconTheme: {
-          primary: payload.active ? 'green' : 'red',
-          secondary: 'white',
-        },
-      });
-      dispatch(fetchStatus({ token })); // Re-fetch all statuses to update the table
+      toast.success(
+        `Status ${payload.active ? "activated" : "deactivated"} successfully`,
+        {
+          iconTheme: {
+            primary: payload.active ? "green" : "red",
+            secondary: "white",
+          },
+        }
+      );
+      dispatch(fetchStatus({ token }));
     } catch (error) {
-      console.error("Failed to toggle status:", error); // Use console.error for errors
+      console.error("Failed to toggle status:", error);
       toast.error("Failed to update status.", {
         iconTheme: {
-          primary: 'red', // This might directly change the color of the error icon
-          secondary: 'white', // The circle background
+          primary: "red",
+          secondary: "white",
         },
-      }); // Provide user feedback
+      });
     }
   };
 
   const columns = useMemo(
     () => [
       {
-        accessorKey: 'status', // Assuming 'status' is the property in your status object
-        header: 'Status Name',
+        accessorKey: "status", // Assuming 'status' is the property in your status object
+        header: "Status Name",
         size: 250,
         cell: ({ getValue }) => getValue(),
       },
       {
-        accessorKey: 'color_code',
-        header: 'Color',
+        accessorKey: "color_code",
+        header: "Color",
         size: 150,
         cell: ({ getValue }) => (
           <span
             style={{
               backgroundColor: getValue(),
-              width: '100%',
-              height: '30px',
-              display: 'block',
-              borderRadius: '4px',
+              width: "100%",
+              height: "30px",
+              display: "block",
+              borderRadius: "4px",
             }}
           />
         ),
       },
       {
-        accessorKey: 'active',
-        header: 'Status',
+        accessorKey: "active",
+        header: "Status",
         size: 150,
         cell: ({ row, getValue }) => (
           <div className="flex gap-4 items-center justify-center">
             <span>Inactive</span>
             <Switch
-              color={`${getValue() ? 'success' : 'danger'}`}
+              color={`${getValue() ? "success" : "danger"}`}
               checked={getValue()}
               onChange={() => toggleStatus(row)}
             />
@@ -154,17 +164,17 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
         ),
       },
       {
-        accessorKey: 'created_at',
-        header: 'Created On',
+        accessorKey: "created_at",
+        header: "Created On",
         size: 150,
         cell: ({ getValue }) => {
           const date = new Date(getValue());
-          return date.toLocaleDateString('en-GB'); // DD/MM/YYYY
+          return date.toLocaleDateString("en-GB"); // DD/MM/YYYY
         },
       },
       {
-        id: 'actions',
-        header: 'Actions',
+        id: "actions",
+        header: "Actions",
         size: 60,
         cell: ({ row }) =>
           // Pass the necessary props to ActionIcons
@@ -177,7 +187,7 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
             />
           ) : null,
         meta: {
-          cellClassName: 'actions-cell-content',
+          cellClassName: "actions-cell-content",
         },
       },
     ],
@@ -237,25 +247,28 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
               const isEmpty =
                 !row.original ||
                 Object.values(row.original).every(
-                  (v) => v === null || v === ''
+                  (v) => v === null || v === ""
                 );
 
               return (
                 <tr
                   key={row.id}
-                  className={`hover:bg-gray-50 even:bg-[#D5DBDB4D] ${isEmpty ? 'pointer-events-none text-transparent' : ''
+                  className={`hover:bg-gray-50 even:bg-[#D5DBDB4D] ${isEmpty ? "pointer-events-none text-transparent" : ""
                     }`}
                   style={{ height: `${rowHeight}px` }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}
-                      style={{ width: cell.column.getSize(), padding: '10px' }}
-                      className={`whitespace-nowrap px-3 py-2 border-r-2 ${cell.column.columnDef.meta?.cellClassName || ''
+                      style={{ width: cell.column.getSize(), padding: "10px" }}
+                      className={`whitespace-nowrap px-3 py-2 border-r-2 ${cell.column.columnDef.meta?.cellClassName || ""
                         }`}
                     >
                       {!isEmpty
-                        ? flexRender(cell.column.columnDef.cell, cell.getContext())
+                        ? flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )
                         : null}
                     </td>
                   ))}
@@ -292,7 +305,7 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
             disabled={!table.getCanPreviousPage()}
             className="text-red-600 disabled:opacity-30"
           >
-            {'<'}
+            {"<"}
           </button>
 
           {/* Page Numbers (Sliding Window of 3) */}
@@ -317,7 +330,7 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
                 <button
                   key={page}
                   onClick={() => table.setPageIndex(page)}
-                  className={`px-3 py-1 ${isActive ? 'bg-gray-200 font-bold' : ''
+                  className={`px-3 py-1 ${isActive ? "bg-gray-200 font-bold" : ""
                     }`}
                 >
                   {page + 1}
@@ -332,7 +345,7 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
             disabled={!table.getCanNextPage()}
             className="text-red-600 disabled:opacity-30"
           >
-            {'>'}
+            {">"}
           </button>
         </div>
       )}

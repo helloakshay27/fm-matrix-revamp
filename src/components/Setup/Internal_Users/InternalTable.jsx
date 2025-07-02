@@ -195,7 +195,7 @@ const InternalTable = () => {
   return (
     <>
       <CustomTable
-        data={internalUser}
+        data={internalUser || []}
         columns={columns}
         title="Active Users"
         buttonText="Add User"

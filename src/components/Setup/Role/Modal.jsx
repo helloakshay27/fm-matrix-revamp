@@ -8,7 +8,12 @@ import { toast } from 'react-hot-toast';
 const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
   const token = localStorage.getItem('token');
 
-  const [roleInput, setRoleInput] = useState();
+  const [roleInput, setRoleInput] = useState('');
+  const [error, setError] = useState('');
+
+  const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.createRole);
+  const { loading: editLoading } = useSelector((state) => state.editRole);
 
   useEffect(() => {
     if (role?.display_name) {
@@ -16,81 +21,81 @@ const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
       const capitalized =
         formattedValue.charAt(0).toUpperCase() + formattedValue.slice(1);
       setRoleInput(capitalized);
+    } else {
+      setRoleInput('');
     }
+    setError('');
   }, [role]);
-  const [error, setError] = useState('');
-
-  const dispatch = useDispatch();
-  const { loading, success } = useSelector((state) => state.createRole);
-  const {
-    loading: editLoading,
-    success: editSuccess,
-
-  } = useSelector((state) => state.editRole);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (roleInput === "") { setError("Please enter role name"); return; }
 
+    if (!roleInput || roleInput.trim() === '') {
+      setError('Please enter role name');
+      return;
+    }
+
+    const trimmedRoleName = roleInput.trim();
     const payload = {
       lock_role: {
-        name: roleInput,
-        display_name: roleInput,
+        name: trimmedRoleName,
+        display_name: trimmedRoleName,
         active: 1,
       },
     };
-    let response;
+
     try {
+      let response;
       if (mode === 'edit' && role?.id) {
         response = await dispatch(editRole({ token, id: role.id, payload })).unwrap();
       } else {
         response = await dispatch(createRole({ token, payload })).unwrap();
       }
-      if (response.name[0] != "has already been taken") {
-        toast.success(`Role ${mode === 'edit' ? 'updated' : 'created'} successfully`, {
-          iconTheme: {
-            primary: 'green', // This might directly change the color of the success icon
-            secondary: 'white', // The circle background
-          },
-        });
-        handleSuccess();
+
+      // If API returns validation message like `name: ["has already been taken"]`
+      if (response?.name?.[0] === 'has already been taken') {
+        setError('Role name already exists');
+        return;
       }
-      else {
-        setError("Role name already exists");
-      }
-    }
-    catch (error) {
-      console.log(error);
+
+      toast.success(`Role ${mode === 'edit' ? 'updated' : 'created'} successfully`, {
+        iconTheme: {
+          primary: 'green',
+          secondary: 'white',
+        },
+      });
+
+      handleSuccess();
+    } catch (error) {
+      console.error('Error creating/editing role:', error);
+      toast.error('Something went wrong. Please try again.', {
+        iconTheme: {
+          primary: 'red',
+          secondary: 'white',
+        },
+      });
     }
   };
 
-
   const handleSuccess = () => {
-    setRoleInput("");
-    setError("");
+    setRoleInput('');
+    setError('');
     onSuccess();
-  }
+  };
 
   const handleClose = () => {
-    setError("");
+    setError('');
     setRoleInput('');
     onClose();
-  }
-  // }
-  // useEffect(() => {
-  //   if (role && mode === 'edit') {
-  //     setRoleInput(role.display_name);
-  //   } else {
-  //     setRoleInput('');
-  //   }
-  // }, [role, mode]);
+  };
 
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 z-50">
       <div className="w-[560px] h-[280px] bg-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-[#C0C0C0]">
+
         {/* Close Icon */}
         <div className="flex justify-end p-4">
           <CloseIcon className="cursor-pointer" onClick={handleClose} />
@@ -120,6 +125,7 @@ const RoleModal = ({ open, onClose, onSuccess, role, mode }) => {
           <button
             className="border border-[#C72030] text-[#1B1B1B] text-[14px] px-8 py-2"
             onClick={handleSubmit}
+            disabled={loading || editLoading}
           >
             {loading || editLoading ? 'Submitting...' : mode === 'edit' ? 'Update' : 'Save'}
           </button>

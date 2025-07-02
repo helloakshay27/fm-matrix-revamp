@@ -40,10 +40,10 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                     statusSearch: "",
                     ResponsiblePersonSearch: "",
                     creatorSearch: "",
-                    typeSearch:"",
-                    projectSearch:"",
-                    milestoneSearch:"",
-                    taskSearch:""
+                    typeSearch: "",
+                    projectSearch: "",
+                    milestoneSearch: "",
+                    taskSearch: "",
                 };
         } catch (error) {
             console.error("Error parsing projectFilters from localStorage:", error);
@@ -59,40 +59,54 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                 statusSearch: "",
                 ResponsiblePersonSearch: "",
                 creatorSearch: "",
-                typeSearch:"",
-                projectSearch:"",
-                    milestoneSearch:"",
-                    taskSearch:""
+                typeSearch: "",
+                projectSearch: "",
+                milestoneSearch: "",
+                taskSearch: "",
             };
         }
     };
 
     // Selected options
-    const [selectedStatuses, setSelectedStatuses] = useState(getInitialFilters().selectedStatuses);
-    const [selectedResponsible, setSelectedResponsible] = useState(getInitialFilters().selectedResponsible);
-    const [selectedTypes, setSelectedTypes] = useState(getInitialFilters().selectedTypes);
-    const [selectedProjects, setSelectedProjects] = useState(getInitialFilters().selectedProjects);
-    const [selectedMilestones, setSelectedMilestones] = useState(getInitialFilters().selectedMilestones);
-    const [selectedTasks, setSelectedTasks] = useState(getInitialFilters().selectedTasks);
+    const [selectedStatuses, setSelectedStatuses] = useState(
+        getInitialFilters().selectedStatuses
+    );
+    const [selectedResponsible, setSelectedResponsible] = useState(
+        getInitialFilters().selectedResponsible
+    );
+    const [selectedTypes, setSelectedTypes] = useState(
+        getInitialFilters().selectedTypes
+    );
+    const [selectedProjects, setSelectedProjects] = useState(
+        getInitialFilters().selectedProjects
+    );
+    const [selectedMilestones, setSelectedMilestones] = useState(
+        getInitialFilters().selectedMilestones
+    );
+    const [selectedTasks, setSelectedTasks] = useState(
+        getInitialFilters().selectedTasks
+    );
     // const [selectedManagers, setSelectedManagers] = useState([]);
-    const [selectedCreators, setSelectedCreators] = useState(getInitialFilters().selectedCreators);
+    const [selectedCreators, setSelectedCreators] = useState(
+        getInitialFilters().selectedCreators
+    );
     const [dates, setDates] = useState({ "Start Date": "", "End Date": "" });
     const [responsiblePersonOptions, setResponsiblePersonOptions] = useState([]);
     const [createdByOptions, setCreatedByOptions] = useState([]);
     const [statusOptions, setStatusOptions] = useState([]);
-    const[typeOptions,setTypeOptions]=useState([])
-    const [projectOptions,setProjectOptions]=useState([])
-    const[milestoneOptions,setMilestoneOptions]=useState([])
-    const[taskOptions,setTaskOptions]=useState([])
+    const [typeOptions, setTypeOptions] = useState([]);
+    const [projectOptions, setProjectOptions] = useState([]);
+    const [milestoneOptions, setMilestoneOptions] = useState([]);
+    const [taskOptions, setTaskOptions] = useState([]);
 
     // Search inputs inside dropdowns
     const [statusSearch, setStatusSearch] = useState("");
     const [ResponsiblePersonSearch, setResponsiblePersonSearch] = useState("");
     const [creatorSearch, setCreatorSearch] = useState("");
-    const [typeSearch,setTypeSearch]=useState("")
-    const [projectSearch,setProjectSearch]=useState("")
-    const [milestoneSearch,setMilestoneSearch]=useState("")
-    const [taskSearch,setTaskSearch]=useState("")
+    const [typeSearch, setTypeSearch] = useState("");
+    const [projectSearch, setProjectSearch] = useState("");
+    const [milestoneSearch, setMilestoneSearch] = useState("");
+    const [taskSearch, setTaskSearch] = useState("");
     // Dropdown open/close state (only one open at a time)
     const [dropdowns, setDropdowns] = useState({
         status: false,
@@ -100,40 +114,38 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
         startDate: false,
         endDate: false,
         creator: false,
-        type:false,
+        type: false,
         projects: false,
         milestone: false,
-        task: false
-
+        task: false,
     });
     const dispatch = useDispatch();
-     
 
     const {
         fetchUsers: users,
         loading: usersLoading,
         error,
-    } = useSelector(state => state.fetchUsers)
-
+    } = useSelector((state) => state.fetchUsers);
 
     const {
         fetchIssue: IssuesFromStore,
         loading: loadingIssues,
         error: issuesError,
-    } = useSelector(state => state.fetchIssues);
-
+    } = useSelector((state) => state.fetchIssues);
 
     useEffect(() => {
-        if (IssuesFromStore.length > 0) {
+        if (IssuesFromStore?.length > 0) {
             const uniqueMap = new Map();
 
             IssuesFromStore.forEach((Issue) => {
-                const color = colorOptions.find((option) => option.value === Issue.status);
+                const color = colorOptions.find(
+                    (option) => option.value === Issue.status
+                );
                 if (color && !uniqueMap.has(color.value)) {
                     uniqueMap.set(color.value, {
                         label: color.label,
                         color: color.color,
-                        value: color.value
+                        value: color.value,
                     });
                 }
             });
@@ -141,14 +153,17 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
             setStatusOptions(Array.from(uniqueMap.values()));
         }
 
-        if (IssuesFromStore.length > 0) {
+        if (IssuesFromStore?.length > 0) {
             const uniqueMap = new Map();
 
             IssuesFromStore.forEach((Issue) => {
-                if (Issue.responsible_person && !uniqueMap.has(Issue.responsible_person.id)) {
+                if (
+                    Issue.responsible_person &&
+                    !uniqueMap.has(Issue.responsible_person.id)
+                ) {
                     uniqueMap.set(Issue.responsible_person.id, {
                         label: Issue.responsible_person.name,
-                        value: Issue.responsible_person.id
+                        value: Issue.responsible_person.id,
                     });
                 }
             });
@@ -156,18 +171,24 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
             setResponsiblePersonOptions(Array.from(uniqueMap.values()));
         }
 
-        if (users.length > 0) {
-            setCreatedByOptions(users.map(user => ({ label: user.firstname + " " + user.lastname, value: user.id })));
+        if (users?.length > 0) {
+            setCreatedByOptions(
+                users.map((user) => ({
+                    label: user.firstname + " " + user.lastname,
+                    value: user.id,
+                }))
+            );
         }
-        
-        
-        if (IssuesFromStore.length > 0) {
+
+        if (IssuesFromStore?.length > 0) {
             const uniqueMap = new Map();
 
             IssuesFromStore.forEach((Issue, index) => {
                 if (Issue.issue_type && !uniqueMap.has(Issue.issue_type)) {
                     uniqueMap.set(Issue.issue_type, {
-                        label: Issue.issue_type.charAt(0).toUpperCase() + Issue.issue_type.slice(1),
+                        label:
+                            Issue.issue_type.charAt(0).toUpperCase() +
+                            Issue.issue_type.slice(1),
                         value: Issue.issue_type,
                     });
                 }
@@ -176,11 +197,15 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
             setTypeOptions(Array.from(uniqueMap.values()));
         }
 
-        if (IssuesFromStore.length > 0) {
+        if (IssuesFromStore?.length > 0) {
             const uniqueMap = new Map();
 
             IssuesFromStore.forEach((Issue, index) => {
-                if (Issue.project_management_id && Issue.project_management_name && !uniqueMap.has(Issue.project_management_id)) {
+                if (
+                    Issue.project_management_id &&
+                    Issue.project_management_name &&
+                    !uniqueMap.has(Issue.project_management_id)
+                ) {
                     uniqueMap.set(Issue.project_management_id, {
                         label: Issue.project_management_name,
                         value: Issue.project_management_id,
@@ -190,11 +215,15 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
 
             setProjectOptions(Array.from(uniqueMap.values()));
         }
-        if (IssuesFromStore.length > 0) {
+        if (IssuesFromStore?.length > 0) {
             const uniqueMap = new Map();
 
             IssuesFromStore.forEach((Issue, index) => {
-                if (Issue.milestone_id && Issue.milstone_name && !uniqueMap.has(Issue.milestone_id)) {
+                if (
+                    Issue.milestone_id &&
+                    Issue.milstone_name &&
+                    !uniqueMap.has(Issue.milestone_id)
+                ) {
                     uniqueMap.set(Issue.milestone_id, {
                         label: Issue.milstone_name,
                         value: Issue.milestone_id,
@@ -204,11 +233,15 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
 
             setMilestoneOptions(Array.from(uniqueMap.values()));
         }
-        if (IssuesFromStore.length > 0) {
+        if (IssuesFromStore?.length > 0) {
             const uniqueMap = new Map();
 
             IssuesFromStore.forEach((Issue, index) => {
-                if (Issue.task_management_id && Issue.task_management_name && !uniqueMap.has(Issue.task_management_id)) {
+                if (
+                    Issue.task_management_id &&
+                    Issue.task_management_name &&
+                    !uniqueMap.has(Issue.task_management_id)
+                ) {
                     uniqueMap.set(Issue.task_management_id, {
                         label: Issue.task_management_name,
                         value: Issue.task_management_id,
@@ -218,8 +251,7 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
 
             setTaskOptions(Array.from(uniqueMap.values()));
         }
-
-    }, [IssuesFromStore, users])
+    }, [IssuesFromStore, users]);
 
     // Save filter state to localStorage whenever it changes
     useEffect(() => {
@@ -238,10 +270,26 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
             typeSearch,
             projectSearch,
             milestoneSearch,
-            taskSearch
+            taskSearch,
         };
-        if (selectedStatuses.length > 0 || selectedResponsible.length > 0 || selectedCreators.length > 0 || dates["Start Date"] || dates["End Date"] || statusSearch || ResponsiblePersonSearch || creatorSearch || typeSearch || projectSearch || milestoneSearch || taskSearch || selectedTypes.length > 0 || selectedProjects.length > 0 || selectedMilestones.length > 0 || selectedTasks.length > 0) {
-
+        if (
+            selectedStatuses?.length > 0 ||
+            selectedResponsible?.length > 0 ||
+            selectedCreators?.length > 0 ||
+            dates["Start Date"] ||
+            dates["End Date"] ||
+            statusSearch ||
+            ResponsiblePersonSearch ||
+            creatorSearch ||
+            typeSearch ||
+            projectSearch ||
+            milestoneSearch ||
+            taskSearch ||
+            selectedTypes?.length > 0 ||
+            selectedProjects?.length > 0 ||
+            selectedMilestones?.length > 0 ||
+            selectedTasks?.length > 0
+        ) {
             localStorage.setItem("IssueFilters", JSON.stringify(filters));
         }
     }, [
@@ -259,37 +307,43 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
         typeSearch,
         projectSearch,
         milestoneSearch,
-        taskSearch
+        taskSearch,
     ]);
-
 
     const handleApplyFilter = (overideFilters) => {
         console.log(dates);
         try {
             const newFilter = {
-                "q[status_in][]": selectedStatuses.length > 0 ? selectedStatuses : [],
-                "q[created_by_id_eq]": selectedCreators.length > 0 ? selectedCreators : [],
+                "q[status_in][]": selectedStatuses?.length > 0 ? selectedStatuses : [],
+                "q[created_by_id_eq]":
+                    selectedCreators?.length > 0 ? selectedCreators : [],
                 "q[start_date_eq]": dates["Start Date"],
                 "q[end_date_eq]": dates["End Date"],
-                "q[responsible_person_id_in][]": selectedResponsible.length > 0 ? selectedResponsible : [],
-                "q[issue_type_in][]": selectedTypes.length > 0 ? selectedTypes : [],
-                "q[project_management_id_in][]": selectedProjects.length > 0 ? selectedProjects : [],
-                "q[task_management_id_in][]": selectedTasks.length > 0 ? selectedTasks : [],
-                "q[milestone_id_in][]": selectedMilestones.length > 0 ? selectedMilestones : [],
-            }
+                "q[responsible_person_id_in][]":
+                    selectedResponsible?.length > 0 ? selectedResponsible : [],
+                "q[issue_type_in][]": selectedTypes?.length > 0 ? selectedTypes : [],
+                "q[project_management_id_in][]":
+                    selectedProjects?.length > 0 ? selectedProjects : [],
+                "q[task_management_id_in][]":
+                    selectedTasks?.length > 0 ? selectedTasks : [],
+                "q[milestone_id_in][]":
+                    selectedMilestones?.length > 0 ? selectedMilestones : [],
+            };
             if (newFilter) {
-                        const queryString = qs.stringify(newFilter, { arrayFormat: 'repeat' });
-                
-                dispatch(filterIssue({ token, filter: overideFilters ? overideFilters : queryString }));
+                const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
+
+                dispatch(
+                    filterIssue({
+                        token,
+                        filter: overideFilters ? overideFilters : queryString,
+                    })
+                );
                 setIsModalOpen(false);
             }
         } catch (e) {
             console.log(e);
         }
-    }
-
-
-
+    };
 
     const toggleDropdown = (key) => {
         setDropdowns((prev) => {
@@ -335,7 +389,12 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
     }, [isModalOpen]);
 
     // Render checkbox list with search filtering
-    const renderCheckboxList = (options, selected, setSelected, searchTerm = "") => {
+    const renderCheckboxList = (
+        options,
+        selected,
+        setSelected,
+        searchTerm = ""
+    ) => {
         const filtered = options.filter((opt) =>
             typeof opt === "string"
                 ? opt.toLowerCase().includes(searchTerm.toLowerCase())
@@ -347,7 +406,7 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                 {filtered.map((option) => {
                     const label = typeof option === "string" ? option : option.label;
                     const color = typeof option === "string" ? null : option.color;
-                    const value = typeof option === "string" ? option : option.value
+                    const value = typeof option === "string" ? option : option.value;
 
                     return (
                         <label
@@ -362,12 +421,16 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                                 />
                                 <span>{label}</span>
                             </div>
-                            {color && <span className={clsx("w-2 h-2 rounded-full", color)}></span>}
+                            {color && (
+                                <span className={clsx("w-2 h-2 rounded-full", color)}></span>
+                            )}
                         </label>
                     );
                 })}
-                {filtered.length === 0 && (
-                    <div className="text-center text-gray-400 text-sm py-2">No results found</div>
+                {filtered?.length === 0 && (
+                    <div className="text-center text-gray-400 text-sm py-2">
+                        No results found
+                    </div>
                 )}
             </div>
         );
@@ -391,11 +454,9 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
         setCreatorSearch("");
         setTypeSearch("");
         localStorage.removeItem("IssueFilters");
-        handleApplyFilter({
-        });
+        handleApplyFilter({});
         // dispatch(fetchIssues({ token }));
     };
-
 
     return (
         <div className="fixed inset-0 z-50 flex items-start justify-end bg-black bg-opacity-50">
@@ -411,7 +472,10 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
 
                 <div className="px-6 py-4 border-b">
                     <div className="relative">
-                        <Search className="absolute left-3 top-2.5 text-red-400" size={18} />
+                        <Search
+                            className="absolute left-3 top-2.5 text-red-400"
+                            size={18}
+                        />
                         <input
                             type="text"
                             placeholder="Filter search..."
@@ -436,7 +500,10 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                         {dropdowns.status && (
                             <div className="mt-4 border">
                                 <div className="relative border-b">
-                                    <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                    <Search
+                                        className="absolute left-3 top-2.5 text-red-400"
+                                        size={16}
+                                    />
                                     <input
                                         type="text"
                                         placeholder="Filter status..."
@@ -445,7 +512,12 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                                         onChange={(e) => setStatusSearch(e.target.value)}
                                     />
                                 </div>
-                                {renderCheckboxList(statusOptions, selectedStatuses, setSelectedStatuses, statusSearch)}
+                                {renderCheckboxList(
+                                    statusOptions,
+                                    selectedStatuses,
+                                    setSelectedStatuses,
+                                    statusSearch
+                                )}
                             </div>
                         )}
                     </div>
@@ -465,7 +537,10 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                         {dropdowns.projects && (
                             <div className="mt-4 border">
                                 <div className="relative border-b">
-                                    <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                    <Search
+                                        className="absolute left-3 top-2.5 text-red-400"
+                                        size={16}
+                                    />
                                     <input
                                         type="text"
                                         placeholder="Filter project type..."
@@ -474,12 +549,17 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                                         onChange={(e) => setProjectSearch(e.target.value)}
                                     />
                                 </div>
-                                {renderCheckboxList(projectOptions, selectedProjects, setSelectedProjects, projectSearch)}
+                                {renderCheckboxList(
+                                    projectOptions,
+                                    selectedProjects,
+                                    setSelectedProjects,
+                                    projectSearch
+                                )}
                             </div>
                         )}
                     </div>
 
-<div className="p-6 py-3">
+                    <div className="p-6 py-3">
                         <div
                             className="flex items-center justify-between cursor-pointer"
                             onClick={() => toggleDropdown("milestone")}
@@ -494,7 +574,10 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                         {dropdowns.milestone && (
                             <div className="mt-4 border">
                                 <div className="relative border-b">
-                                    <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                    <Search
+                                        className="absolute left-3 top-2.5 text-red-400"
+                                        size={16}
+                                    />
                                     <input
                                         type="text"
                                         placeholder="Filter project type..."
@@ -503,12 +586,17 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                                         onChange={(e) => setMilestoneSearch(e.target.value)}
                                     />
                                 </div>
-                                {renderCheckboxList(milestoneOptions, selectedMilestones, setSelectedMilestones, milestoneSearch)}
+                                {renderCheckboxList(
+                                    milestoneOptions,
+                                    selectedMilestones,
+                                    setSelectedMilestones,
+                                    milestoneSearch
+                                )}
                             </div>
                         )}
                     </div>
 
-<div className="p-6 py-3">
+                    <div className="p-6 py-3">
                         <div
                             className="flex items-center justify-between cursor-pointer"
                             onClick={() => toggleDropdown("task")}
@@ -523,7 +611,10 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                         {dropdowns.task && (
                             <div className="mt-4 border">
                                 <div className="relative border-b">
-                                    <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                    <Search
+                                        className="absolute left-3 top-2.5 text-red-400"
+                                        size={16}
+                                    />
                                     <input
                                         type="text"
                                         placeholder="Filter project type..."
@@ -532,11 +623,15 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                                         onChange={(e) => setTaskSearch(e.target.value)}
                                     />
                                 </div>
-                                {renderCheckboxList(taskOptions, selectedTasks, setSelectedTasks, taskSearch)}
+                                {renderCheckboxList(
+                                    taskOptions,
+                                    selectedTasks,
+                                    setSelectedTasks,
+                                    taskSearch
+                                )}
                             </div>
                         )}
                     </div>
-
 
                     {/* Project Type */}
                     <div className="p-6 py-3">
@@ -544,7 +639,9 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                             className="flex items-center justify-between cursor-pointer"
                             onClick={() => toggleDropdown("ResponsiblePerson")}
                         >
-                            <span className="font-medium text-sm select-none">Responsible Person</span>
+                            <span className="font-medium text-sm select-none">
+                                Responsible Person
+                            </span>
                             {dropdowns.ResponsiblePerson ? (
                                 <ChevronDown className="text-gray-400" />
                             ) : (
@@ -554,7 +651,10 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                         {dropdowns.ResponsiblePerson && (
                             <div className="mt-4 border">
                                 <div className="relative border-b">
-                                    <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                    <Search
+                                        className="absolute left-3 top-2.5 text-red-400"
+                                        size={16}
+                                    />
                                     <input
                                         type="text"
                                         placeholder="Filter project type..."
@@ -563,7 +663,12 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                                         onChange={(e) => setResponsiblePersonSearch(e.target.value)}
                                     />
                                 </div>
-                                {renderCheckboxList(responsiblePersonOptions, selectedResponsible, setSelectedResponsible, ResponsiblePersonSearch)}
+                                {renderCheckboxList(
+                                    responsiblePersonOptions,
+                                    selectedResponsible,
+                                    setSelectedResponsible,
+                                    ResponsiblePersonSearch
+                                )}
                             </div>
                         )}
                     </div>
@@ -584,7 +689,10 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                         {dropdowns.type && (
                             <div className="mt-4 border">
                                 <div className="relative border-b">
-                                    <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                    <Search
+                                        className="absolute left-3 top-2.5 text-red-400"
+                                        size={16}
+                                    />
                                     <input
                                         type="text"
                                         placeholder="Filter project manager..."
@@ -593,13 +701,18 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                                         onChange={(e) => setTypeSearch(e.target.value)}
                                     />
                                 </div>
-                                {renderCheckboxList(typeOptions, selectedTypes, setSelectedTypes, typeSearch)}
+                                {renderCheckboxList(
+                                    typeOptions,
+                                    selectedTypes,
+                                    setSelectedTypes,
+                                    typeSearch
+                                )}
                             </div>
                         )}
                     </div>
 
                     {["startDate", "endDate"].map((key) => {
-                        const label = (key === "startDate") ? "Start Date" : "End Date";
+                        const label = key === "startDate" ? "Start Date" : "End Date";
                         return (
                             <div key={key} className="p-6 py-3">
                                 <div
@@ -609,7 +722,6 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                                     <span className="font-medium text-sm select-none">
                                         {label}
                                     </span>
-
 
                                     {dropdowns[key] ? (
                                         <ChevronDown className="text-gray-400" />
@@ -643,7 +755,9 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                             className="flex items-center justify-between cursor-pointer"
                             onClick={() => toggleDropdown("createdBy")}
                         >
-                            <span className="font-medium text-sm select-none">Created By</span>
+                            <span className="font-medium text-sm select-none">
+                                Created By
+                            </span>
                             {dropdowns.createdBy ? (
                                 <ChevronDown className="text-gray-400" />
                             ) : (
@@ -653,7 +767,10 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                         {dropdowns.createdBy && (
                             <div className="mt-4 border">
                                 <div className="relative border-b">
-                                    <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                    <Search
+                                        className="absolute left-3 top-2.5 text-red-400"
+                                        size={16}
+                                    />
                                     <input
                                         type="text"
                                         placeholder="Filter created by..."
@@ -662,7 +779,12 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                                         onChange={(e) => setCreatorSearch(e.target.value)}
                                     />
                                 </div>
-                                {renderCheckboxList(createdByOptions, selectedCreators, setSelectedCreators, creatorSearch)}
+                                {renderCheckboxList(
+                                    createdByOptions,
+                                    selectedCreators,
+                                    setSelectedCreators,
+                                    creatorSearch
+                                )}
                             </div>
                         )}
                     </div>
@@ -682,7 +804,6 @@ const IssueFilter = ({ isModalOpen, setIsModalOpen }) => {
                         Reset
                     </button>
                 </div>
-
             </div>
         </div>
     );

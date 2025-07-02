@@ -11,28 +11,32 @@ import {
 } from "../../../redux/slices/userSlice";
 import toast from "react-hot-toast";
 import { Eye, EyeOff } from "lucide-react";
+import { fetchCompany } from "../../../redux/slices/companySlice";
 
 const AddExternalUserModal = ({
   open,
   onClose,
-  placeholder,
   isEditMode = false,
   initialData = null,
   onSuccess,
 }) => {
   const token = localStorage.getItem("token");
   const dispatch = useDispatch();
-  const { fetchRoles: roles } = useSelector((state) => state.fetchRoles);
-  const { fetchOrganizations: organizations } = useSelector(
-    (state) => state.fetchOrganizations
+
+  const { fetchRoles: roles = [] } = useSelector(
+    (state) => state.fetchRoles || {}
   );
-  const { loading, success } = useSelector((state) => state.createExternalUser);
-  const { loading: editLoading, success: editSuccess } = useSelector(
-    (state) => state.fetchUpdateUser
+  const { fetchOrganizations: organizations = [] } = useSelector(
+    (state) => state.fetchOrganizations || {}
   );
-  const { fetchCompany: companies } = useSelector(
-    (state) => state.fetchCompany
+  const { fetchCompany: companies = [] } = useSelector(
+    (state) => state.fetchCompany || {}
   );
+  const { loading } = useSelector((state) => state.createExternalUser || {});
+  const { loading: editLoading } = useSelector(
+    (state) => state.fetchUpdateUser || {}
+  );
+
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -43,24 +47,36 @@ const AddExternalUserModal = ({
     mobile: "",
     password: "",
     role: null,
-    company: "",
+    company: null,
   });
 
   useEffect(() => {
-    dispatch(fetchRoles({ token }));
-    dispatch(fetchOrganizations({ token }));
-  }, [dispatch]);
+    const fetchInitialData = async () => {
+      try {
+        if (token) {
+          await dispatch(fetchRoles({ token })).unwrap();
+          await dispatch(fetchOrganizations({ token })).unwrap();
+          await dispatch(fetchCompany({ token })).unwrap();
+        }
+      } catch (error) {
+        toast.error("Failed to load dropdown data");
+      }
+    };
+
+    fetchInitialData();
+  }, [dispatch, token]);
 
   useEffect(() => {
     if (isEditMode && initialData) {
       setFormData({
-        username: `${initialData.firstname} ${initialData.lastname || ""
+        username: `${initialData?.firstname || ""} ${initialData?.lastname || ""
           }`.trim(),
-        organisation: initialData.organization_id,
-        email: initialData.email,
-        mobile: initialData.mobile,
-        role: initialData.role_id,
-        company: initialData.company_id
+        organisation: initialData?.organization_id || null,
+        email: initialData?.email || "",
+        mobile: initialData?.mobile || "",
+        role: initialData?.role_id || null,
+        password: "",
+        company: initialData?.company_id || null,
       });
     } else {
       setFormData({
@@ -68,20 +84,47 @@ const AddExternalUserModal = ({
         organisation: null,
         email: "",
         mobile: "",
+        password: "",
         role: null,
+        company: null,
       });
     }
   }, [isEditMode, initialData, open]);
 
+  const resetForm = () => {
+    setFormData({
+      username: "",
+      organisation: null,
+      email: "",
+      mobile: "",
+      password: "",
+      role: null,
+      company: null,
+    });
+    setError("");
+  };
+
+  const handleSuccess = () => {
+    resetForm();
+    onSuccess?.();
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose?.();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.username === "") {
+    if (!formData.username.trim()) {
       setError("Please enter name");
       return;
-    } else if (formData.mobile == "") {
+    }
+    if (!formData.mobile.trim()) {
       setError("Please enter mobile number");
       return;
-    } else if (formData.email == "") {
+    }
+    if (!formData.email.trim()) {
       setError("Please enter email");
       return;
     }
@@ -92,17 +135,18 @@ const AddExternalUserModal = ({
 
     const payload = {
       user: {
-        firstname: firstname,
-        lastname: lastname,
+        firstname,
+        lastname,
         organization_id: formData.organisation,
         mobile: formData.mobile,
         email: formData.email,
         password: formData.password,
         role_id: formData.role,
         user_type: "external",
-        company_id: formData.company
+        company_id: formData.company,
       },
     };
+
     try {
       let response;
       if (isEditMode && initialData?.id) {
@@ -116,51 +160,26 @@ const AddExternalUserModal = ({
       } else {
         response = await dispatch(createExternalUser({ token, payload }));
       }
-      console.log(response);
-      if (response.payload?.errors) {
-        setError(response.payload.errors);
-      } else if (response.payload.user_exists) {
-        setError(response.payload.message);
+
+      const res = response?.payload;
+
+      if (res?.errors) {
+        setError(res.errors);
+      } else if (res?.user_exists) {
+        setError(res.message);
       } else {
         toast.success(
           `User ${isEditMode ? "updated" : "created"} successfully`,
           {
-            iconTheme: {
-              primary: "green", // This might directly change the color of the success icon
-              secondary: "white", // The circle background
-            },
+            iconTheme: { primary: "green", secondary: "white" },
           }
         );
         handleSuccess();
       }
-    } catch (error) {
-      console.log(error);
-      setError(error.message);
+    } catch (err) {
+      console.error(err);
+      setError(err?.message || "Something went wrong");
     }
-  };
-
-  const handleSuccess = () => {
-    setFormData({
-      username: "",
-      organisation: null,
-      email: "",
-      mobile: "",
-      role: null,
-    });
-    setError("");
-    onSuccess();
-  };
-
-  const handleClose = () => {
-    setFormData({
-      username: "",
-      organisation: null,
-      email: "",
-      mobile: "",
-      role: null,
-    });
-    setError("");
-    onClose();
   };
 
   return (
@@ -187,6 +206,7 @@ const AddExternalUserModal = ({
               }
             />
           </div>
+
           <div className="px-6">
             <label className="block text-[11px] text-[#1B1B1B] mb-1">
               Email Id<span className="text-red-500 ml-1">*</span>
@@ -201,6 +221,7 @@ const AddExternalUserModal = ({
               }
             />
           </div>
+
           <div className="px-6">
             <label className="block text-[11px] text-[#1B1B1B] mb-1">
               Mobile<span className="text-red-500 ml-1">*</span>
@@ -218,12 +239,13 @@ const AddExternalUserModal = ({
               }}
             />
           </div>
+
           <div className="px-6 relative">
             <label className="block text-[11px] text-[#1B1B1B] mb-1">
               Password<span className="text-red-500 ml-1">*</span>
             </label>
             <input
-              type={`${showPassword ? "" : "password"}`}
+              type={showPassword ? "text" : "password"}
               className="border border-[#C0C0C0] w-full py-2 px-3 text-[#1B1B1B] text-[13px] focus:outline-none"
               placeholder="Enter Password"
               value={formData.password}
@@ -245,14 +267,15 @@ const AddExternalUserModal = ({
               />
             )}
           </div>
+
           <div className="px-6">
             <label className="block text-[11px] text-[#1B1B1B] mb-1">
               Organisation<span className="text-red-500 ml-1">*</span>
             </label>
             <SelectBox
-              options={organizations.map((org) => ({
-                value: org.id,
-                label: org.name,
+              options={(organizations || []).map((org) => ({
+                value: org?.id,
+                label: org?.name,
               }))}
               className="w-full"
               value={formData.organisation}
@@ -261,31 +284,30 @@ const AddExternalUserModal = ({
               }
             />
           </div>
+
           <div className="px-6">
             <label className="block text-[11px] text-[#1B1B1B] mb-1">
               Company<span className="text-red-500 ml-1">*</span>
             </label>
             <SelectBox
-              options={
-                companies.map((org) => ({
-                  value: org.id,
-                  label: org.name,
-                }))}
+              options={(companies || []).map((comp) => ({
+                value: comp?.id,
+                label: comp?.name,
+              }))}
               className="w-full"
               value={formData.company}
-              onChange={(value) =>
-                setFormData({ ...formData, company: value })
-              }
+              onChange={(value) => setFormData({ ...formData, company: value })}
             />
           </div>
+
           <div className="px-6">
             <label className="block text-[11px] text-[#1B1B1B] mb-1">
               Role<span className="text-red-500 ml-1">*</span>
             </label>
             <SelectBox
-              options={roles.map((role) => ({
-                value: role.id,
-                label: role.display_name,
+              options={(roles || []).map((role) => ({
+                value: role?.id,
+                label: role?.display_name,
               }))}
               className="w-full"
               value={formData.role}
@@ -294,13 +316,11 @@ const AddExternalUserModal = ({
           </div>
         </div>
 
-        <div>
-          {error && (
-            <div className="flex justify-end mt-1 mr-5 align-center">
-              <p className="text-red-500 text-[12px]">{error}</p>
-            </div>
-          )}
-        </div>
+        {error && (
+          <div className="flex justify-end mt-1 mr-5 align-center">
+            <p className="text-red-500 text-[12px]">{error}</p>
+          </div>
+        )}
 
         {/* Footer Buttons */}
         <div className="bottom-0 left-0 right-0 bg-[#D5DBDB] h-[70px] flex justify-center items-center gap-4">

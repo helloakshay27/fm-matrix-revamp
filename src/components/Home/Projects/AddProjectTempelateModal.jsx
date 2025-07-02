@@ -9,9 +9,6 @@ import AddProjectModal from "./AddProjectModal.jsx";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProjectDetails, fetchTemplates } from "../../../redux/slices/projectSlice.js";
 
-
-
-
 const AddProjectTemplate = ({ isModalOpen, setIsModalOpen }) => {
   const token = localStorage.getItem('token')
   const dispatch = useDispatch();
@@ -128,7 +125,7 @@ const AddProjectTemplate = ({ isModalOpen, setIsModalOpen }) => {
                 <i>Predefined Project Templates</i>
               </div>
 
-              {templates?.map((template) => (
+              {(templates || []).map((template) => (
                 <React.Fragment key={template.id}>
                   <div className="flex justify-between gap-3 cursor-pointer mt-2 border-b border-gray-300 pb-2" onClick={() => handleOpenTemplate(template.id)}>
                     <div className="flex items-center gap-2 w-2/3">

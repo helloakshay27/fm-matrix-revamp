@@ -268,7 +268,7 @@ const IssuesTable = () => {
   useEffect(() => {
     if (
       !loadingIssueType &&
-      issueType.length === 0 &&
+      issueType?.length === 0 &&
       !issueTypeFetchError &&
       !issueTypeFetchInitiatedRef.current
     ) {
@@ -279,7 +279,7 @@ const IssuesTable = () => {
 
   // Set issue type options
   useEffect(() => {
-    if (!loadingIssueType && issueType.length > 0 && !issueTypeFetchError) {
+    if (!loadingIssueType && issueType?.length > 0 && !issueTypeFetchError) {
       setIssueTypeOptions(issueType.map((i) => i.name));
     }
   }, [issueType, loadingIssueType, issueTypeFetchError]);
@@ -342,18 +342,6 @@ const IssuesTable = () => {
     projectsFetchError,
     token,
   ]);
-
-  // Set milestone options
-  // useEffect(() => {
-  //   if (milestone && !loadingMilestone && !milestoneFetchError && milestone.length > 0) {
-  //     setMilestoneOptions(
-  //       milestone?.map((m) => ({
-  //         value: m.id,
-  //         label: m.title,
-  //       }))
-  //     );
-  //   }
-  // }, [milestone, loadingMilestone, milestoneFetchError]);
 
   useEffect(() => {
     if (
@@ -1074,7 +1062,7 @@ const IssuesTable = () => {
                         setIsFileDialogOpen={setIsFileDialogOpen}
                       />
                     </td>
-                    
+
                     <td className="border p-1 align-middle">
                       <StatusBadge
                         status={newIssuesStatus}

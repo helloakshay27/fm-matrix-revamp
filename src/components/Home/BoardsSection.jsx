@@ -263,11 +263,11 @@ const BoardsSection = ({ section }) => {
         {cardsTitle.map((card) => {
           const cardStatus = card.title.toLowerCase().replace(" ", "_");
 
-          const filteredTasks = taskData.filter((task) =>
+          const filteredTasks = (taskData || []).filter((task) =>
             cardStatus === "active" ? task.status === "open" : task.status === cardStatus
           );
 
-          const filteredSubtasks = taskData.flatMap((task) =>
+          const filteredSubtasks = (taskData || []).flatMap((task) =>
             (task.sub_tasks_managements || [])
               .filter((subtask) => subtask.status !== task.status)
               .map((subtask) => ({
@@ -276,7 +276,7 @@ const BoardsSection = ({ section }) => {
               }))
           ).filter((subtask) => subtask.status === cardStatus);
 
-          const filteredProjects = projects.filter(
+          const filteredProjects = projects && projects.filter(
             (project) => cardStatus === "open" ? project.status === "active" : project.status === cardStatus
           );
 
@@ -400,7 +400,7 @@ const BoardsSection = ({ section }) => {
                   <img src="/draganddrop.svg" alt="svg" className="w-full" />
                 )
               ) : (
-                filteredProjects.map((project) => (
+                (filteredProjects || []).map((project) => (
                   <div key={project.id} id={`project-${project.id}`} className="relative">
                     <ProjectCard project={project} />
                   </div>

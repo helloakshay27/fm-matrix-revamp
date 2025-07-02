@@ -267,10 +267,12 @@ const AddInternalUser = ({
                             Company<span className="text-red-500 ml-1">*</span>
                         </label>
                         <SelectBox
-                            options={companies.map((company) => ({
-                                value: company.id,
-                                label: company.name,
-                            }))}
+                            options={
+                                companies ? companies.map((company) => ({
+                                    value: company.id,
+                                    label: company.name,
+                                })) : []
+                            }
                             value={formData.company}
                             onChange={(val) => setFormData({ ...formData, company: val })}
                             className="w-full"
@@ -283,12 +285,14 @@ const AddInternalUser = ({
                             Role<span className="text-red-500 ml-1">*</span>
                         </label>
                         <SelectBox
-                            options={roles.map((role) => ({
-                                value: role.id,
-                                label: role.display_name
-                                    .replace(/_/g, ' ')                      // Replace underscores with spaces
-                                    .replace(/\b\w/g, (char) => char.toUpperCase()) // Capitalize first letter of each word
-                            }))}
+                            options={
+                                roles ? roles.map((role) => ({
+                                    value: role.id,
+                                    label: role.display_name
+                                        .replace(/_/g, ' ')                      // Replace underscores with spaces
+                                        .replace(/\b\w/g, (char) => char.toUpperCase()) // Capitalize first letter of each word
+                                })) : []
+                            }
                             value={formData.role}
                             onChange={(val) => setFormData({ ...formData, role: val })}
                             className="w-full"
@@ -301,10 +305,12 @@ const AddInternalUser = ({
                             Reports To<span className="text-red-500 ml-1">*</span>
                         </label>
                         <SelectBox
-                            options={users.map((user) => ({
-                                value: user.id,
-                                label: `${user.firstname || ""} ${user.lastname || ""}`,
-                            }))}
+                            options={
+                                users ? users.map((user) => ({
+                                    value: user.id,
+                                    label: `${user.firstname || ""} ${user.lastname || ""}`,
+                                })) : []
+                            }
                             value={formData.reportTo}
                             onChange={(val) => setFormData({ ...formData, reportTo: val })}
                             className="w-full"

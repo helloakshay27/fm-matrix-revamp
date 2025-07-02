@@ -128,7 +128,6 @@ const Attachments = ({ attachments, id }) => {
             formData.append("project_management[attachments][]", file);
         });
 
-
         try {
             const result = await dispatch(attachFiles({ token, id, payload: formData })).unwrap();
             console.log(result);

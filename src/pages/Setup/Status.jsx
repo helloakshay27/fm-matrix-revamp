@@ -1,20 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import StatusTable from '../../components/Setup/Status/Table.jsx';
 import Modal from '../../components/Setup/Status/Modal.jsx';
-import { useDispatch } from 'react-redux';
-import { fetchStatus } from '../../redux/slices/statusSlice';
 
 const Status = () => {
-    const token = localStorage.getItem("token");
     const [openModal, setOpenModal] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
     const [existingData, setExistingData] = useState(null);
-    const dispatch = useDispatch();
-    useEffect(() => {
-        if (!openModal) {
-            dispatch(fetchStatus({ token }));
-        }
-    }, [openModal]);
     return (
         <div className="flex flex-col gap-2 p-5 text-[14px]">
             <div className="flex justify-end ">

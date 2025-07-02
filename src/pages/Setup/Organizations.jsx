@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import CustomTable from "../../components/Setup/CustomTable";
-import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import Switch from '@mui/joy/Switch';
 import toast from "react-hot-toast";
@@ -18,9 +17,6 @@ const ActionIcons = ({ row, onEdit }) => (
             className="cursor-pointer"
             onClick={() => onEdit(row.original)}
         />
-        {/* <button title="Delete">
-            <DeleteOutlineOutlinedIcon sx={{ fontSize: 20 }} />
-        </button> */}
     </div>
 );
 
@@ -29,14 +25,23 @@ const Organizations = () => {
     const token = localStorage.getItem("token");
 
     const { fetchOrganizations: organizations } = useSelector(state => state.fetchOrganizations);
-    const { success: editSuccess } = useSelector(state => state.editOrganization); // Renamed for clarity
+    const { success: editSuccess } = useSelector(state => state.editOrganization);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editData, setEditData] = useState(null);
-    const [lastAction, setLastAction] = useState(null); // Track action: 'toggle' or 'modalEdit'
+    const [lastAction, setLastAction] = useState(null); // { type: 'toggle' | 'modalEdit', status?: boolean }
 
     useEffect(() => {
-        dispatch(fetchOrganizations({ token }));
+        const loadOrganizations = async () => {
+            try {
+                await dispatch(fetchOrganizations({ token })).unwrap();
+            } catch (err) {
+                toast.error("Failed to fetch organizations.");
+                console.error(err);
+            }
+        };
+
+        if (token) loadOrganizations();
     }, [dispatch, token]);
 
     useEffect(() => {
@@ -57,7 +62,7 @@ const Organizations = () => {
                     },
                 });
             }
-            setLastAction(null); // Reset
+            setLastAction(null);
         }
     }, [editSuccess, lastAction]);
 
@@ -70,12 +75,13 @@ const Organizations = () => {
         const updatedStatus = !row.original.active;
         const payload = new FormData();
         payload.append("organization[active]", updatedStatus);
-        setLastAction({ type: 'toggle', status: updatedStatus }); // Set action type and status
+        setLastAction({ type: 'toggle', status: updatedStatus });
+
         dispatch(editOrganization({ token, payload, id: row.original.id }));
     }, [dispatch, token]);
 
     const handleModalEdit = useCallback((payload, id) => {
-        setLastAction({ type: 'modalEdit' }); // Set action type
+        setLastAction({ type: 'modalEdit' });
         dispatch(editOrganization({ token, payload, id }));
     }, [dispatch, token]);
 
@@ -163,7 +169,7 @@ const Organizations = () => {
                 open={isModalOpen}
                 setOpenModal={setIsModalOpen}
                 editData={editData}
-                onEditSubmit={handleModalEdit} // Pass handleModalEdit
+                onEditSubmit={handleModalEdit}
             />
         </div>
     );
