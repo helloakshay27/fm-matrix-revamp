@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -222,7 +223,7 @@ const modulesByPackage = {
     { name: 'Redemption Marketplace', icon: Globe, href: '/vas/redemonection-marketplace' }
   ],
   'Market Place': [
-    { name: 'All', icon: Globe, href: '/market-place/all', color: 'text-white', bgColor: 'bg-[#C72030]' },
+    { name: 'All', icon: Globe, href: '/market-place/all', color: 'text-[#1a1a1a]' },
     { name: 'Installed', icon: CheckSquare, href: '/market-place/installed', color: 'text-[#1a1a1a]' },
     { name: 'Updates', icon: Download, href: '/market-place/updates', color: 'text-[#1a1a1a]' }
   ],
@@ -392,8 +393,7 @@ export const Sidebar = () => {
                       onClick={() => handleNavigation(subItem.href, currentSection)}
                       className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
                         subItem.color || 'text-[#1a1a1a]'
-                      } ${subItem.bgColor || ''}`}
-                      style={subItem.bgColor ? { backgroundColor: subItem.bgColor.replace('bg-[', '').replace(']', '') } : {}}
+                      }`}
                     >
                       {isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
                       {subItem.name}
@@ -413,8 +413,7 @@ export const Sidebar = () => {
           onClick={() => handleNavigation(item.href, currentSection)}
           className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
             item.color || 'text-[#1a1a1a]'
-          } ${item.bgColor || ''}`}
-          style={item.bgColor ? { backgroundColor: item.bgColor.replace('bg-[', '').replace(']', '') } : {}}
+          }`}
         >
           {level === 0 && (
             <>
