@@ -127,7 +127,7 @@ export const AssetAuditDashboard = () => {
       className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]"
     >
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 bg-[rgba(217,40,24,0.1)] rounded-lg flex items-center justify-center">
+        <div className="w-12 h-12  rounded-lg flex items-center justify-center">
           <span className="text-2xl font-bold">{item.value}</span>
         </div>
         <span className="font-medium">{item.label}</span>
