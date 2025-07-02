@@ -340,6 +340,27 @@ import { HotelBookingPage } from './pages/HotelBookingPage';
 import CRMPollsPage from './pages/CRMPollsPage';
 import AddPollPage from './pages/AddPollPage';
 
+// Import Market Place All page
+import MarketPlaceAllPage from './pages/MarketPlaceAllPage';
+
+// Import Market Place Installed page
+import { MarketPlaceInstalledPage } from './pages/MarketPlaceInstalledPage';
+
+// Import Market Place Updates page
+import { MarketPlaceUpdatesPage } from './pages/MarketPlaceUpdatesPage';
+
+// Import Lease Management Detail page
+import LeaseManagementDetailPage from './pages/LeaseManagementDetailPage';
+
+// Import Loyalty Rule Engine Detail page
+import LoyaltyRuleEngineDetailPage from './pages/LoyaltyRuleEngineDetailPage';
+
+// Import Cloud Telephony Detail page
+import CloudTelephonyDetailPage from './pages/CloudTelephonyDetailPage';
+
+// Import Accounting Detail page
+import AccountingDetailPage from './pages/AccountingDetailPage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -615,13 +636,13 @@ function App() {
               <Route path="/maintenance/m-safe/krcc-form-list" element={<KRCCFormListDashboard />} />
               
               {/* Market Place Routes */}
-              <Route path="/market-place/lease-management" element={<div>Lease Management</div>} />
-              <Route path="/market-place/loyalty-rule-engine" element={<LoyaltyRuleEngineDashboard />} />
-              <Route path="/market-place/cloud-telephony" element={<div>Cloud Telephony</div>} />
-              <Route path="/market-place/accounting" element={<MarketPlaceAccountingPage />} />
-              <Route path="/market-place/accounting/details" element={<MarketPlaceAccountingDetailsPage />} />
-              <Route path="/market-place/accounting/edit" element={<MarketPlaceAccountingEditPage />} />
-              <Route path="/market-place/accounting/cost-center" element={<MarketPlaceCostCenterPage />} />
+              <Route path="/market-place/all" element={<MarketPlaceAllPage />} />
+              <Route path="/market-place/installed" element={<MarketPlaceInstalledPage />} />
+              <Route path="/market-place/updates" element={<MarketPlaceUpdatesPage />} />
+              <Route path="/market-place/lease-management" element={<LeaseManagementDetailPage />} />
+              <Route path="/market-place/loyalty-rule-engine" element={<LoyaltyRuleEngineDetailPage />} />
+              <Route path="/market-place/cloud-telephony" element={<CloudTelephonyDetailPage />} />
+              <Route path="/market-place/accounting" element={<AccountingDetailPage />} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
