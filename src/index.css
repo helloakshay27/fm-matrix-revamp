@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
@@ -395,7 +396,6 @@ input[placeholder*="Search assets"] {
   background-color: #FFFFFF !important;
   border-color: #AAB9C5 !important;
   color: #AAB9C5 !important;
-  border-radius: 5px !important;
   border-width: 1px !important;
   border-style: solid !important;
 }
