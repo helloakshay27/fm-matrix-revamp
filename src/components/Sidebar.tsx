@@ -1,496 +1,152 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useLayout } from '../contexts/LayoutContext';
+
+import React from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { 
-  Users, Settings, FileText, Building, Car, Shield, DollarSign, 
-  Clipboard, AlertTriangle, Bell, Package, Wrench, BarChart3,
-  Calendar, Clock, CheckSquare, MapPin, Truck, Phone, Globe,
-  CreditCard, Receipt, Calculator, PieChart, UserCheck, 
-  Database, Zap, Droplets, Trash2, Sun, Battery, Gauge,
-  Video, Lock, Key, Eye, ShieldCheck, Headphones, Gift,
-  Star, MessageSquare, Coffee, Wifi, Home, ChevronDown,
-  ChevronRight, Plus, Search, Filter, Download, Upload,
-  Briefcase, BookOpen, FileSpreadsheet, Target,
-  Archive, TreePine, FlaskConical
+  Home, 
+  Settings, 
+  Building, 
+  Users, 
+  FileText, 
+  BarChart3, 
+  Shield, 
+  DollarSign,
+  UserCheck,
+  Wrench,
+  Globe,
+  Download,
+  CheckCircle
 } from 'lucide-react';
 
-const modulesByPackage = {
-  'Transitioning': [
-    { name: 'HOTO', icon: FileText, href: '/transitioning/hoto' },
-    { 
-      name: 'Snagging', 
-      icon: CheckSquare, 
-      href: '/transitioning/snagging',
-      subItems: [
-        { name: 'User Snag', href: '/transitioning/snagging?view=user', color: 'text-[#1a1a1a]' },
-        { name: 'My Snags', href: '/transitioning/snagging?view=my', color: 'text-[#1a1a1a]' }
-      ]
-    },
-    { name: 'Design Insight', icon: BarChart3, href: '/transitioning/design-insight' },
-    { 
-      name: 'Fitout', 
-      icon: Wrench, 
-      href: '/transitioning/fitout',
-      subItems: [
-        { name: 'Fitout Setup', href: '/transitioning/fitout/setup', color: 'text-[#1a1a1a]' },
-        { name: 'Fitout Request', href: '/transitioning/fitout/request', color: 'text-[#1a1a1a]' },
-        { name: 'Fitout Checklist', href: '/transitioning/fitout/checklist', color: 'text-[#1a1a1a]' },
-        { name: 'Fitout Violation', href: '/transitioning/fitout/violation', color: 'text-[#1a1a1a]' }
-      ]
-    }
-  ],
-  'Maintenance': [
-    { name: 'Assets', icon: Building, href: '/maintenance/asset' },
-    { name: 'AMC', icon: FileText, href: '/maintenance/amc' },
-    { name: 'Services', icon: Wrench, href: '/maintenance/services' },
-    { name: 'Attendance', icon: Clock, href: '/maintenance/attendance' },
-    { name: 'Inventory', icon: Package, href: '/maintenance/inventory' },
-    { name: 'Ticket', icon: FileText, href: '/maintenance/ticket' },
-    { name: 'Task', icon: CheckSquare, href: '/maintenance/task' },
-    { name: 'Schedule', icon: Calendar, href: '/maintenance/schedule' },
-    { 
-      name: 'Audit', 
-      icon: Clipboard, 
-      href: '/maintenance/audit',
-      subItems: [
-        { 
-          name: 'Operational', 
-          href: '/maintenance/audit/operational', 
-          color: 'text-[#1a1a1a]',
-          subItems: [
-            { name: 'Scheduled', href: '/maintenance/audit/operational/scheduled', color: 'text-[#1a1a1a]' },
-            { name: 'Conducted', href: '/maintenance/audit/operational/conducted', color: 'text-[#1a1a1a]' },
-            { name: 'Master Checklists', href: '/maintenance/audit/operational/master-checklists', color: 'text-[#1a1a1a]' }
-          ]
-        },
-        { 
-          name: 'Vendor', 
-          href: '/maintenance/audit/vendor', 
-          color: 'text-[#1a1a1a]',
-          subItems: [
-            { name: 'Scheduled', href: '/maintenance/audit/vendor/scheduled', color: 'text-[#1a1a1a]' },
-            { name: 'Conducted', href: '/maintenance/audit/vendor/conducted', color: 'text-[#1a1a1a]' }
-          ]
-        },
-        { name: 'Assets', href: '/maintenance/audit/assets', color: 'text-[#1a1a1a]' }
-      ]
-    },
-    {
-      name: 'Waste',
-      icon: Trash2,
-      href: '/maintenance/audit/waste',
-      subItems: [
-        { name: 'Waste Generation', href: '/maintenance/audit/waste/generation', color: 'text-[#1a1a1a]' },
-        { name: 'Setup', href: '/maintenance/audit/waste/setup', color: 'text-[#1a1a1a]' }
-      ]
-    },
-    {
-      name: 'Survey',
-      icon: FileSpreadsheet,
-      href: '/maintenance/audit/survey',
-      subItems: [
-        { name: 'Survey List', href: '/maintenance/audit/survey/list', color: 'text-[#1a1a1a]' },
-        { name: 'Mapping', href: '/maintenance/audit/survey/mapping', color: 'text-[#1a1a1a]' },
-        { name: 'Response', href: '/maintenance/audit/survey/response', color: 'text-[#1a1a1a]' }
-      ]
-    }
-  ],
-  'Safety': [
-    { name: 'Incident', icon: AlertTriangle, href: '/safety/incident' },
-    { name: 'Permit to Work', icon: FileText, href: '/safety/permit' },
-    { name: 'M Safe', icon: Shield, href: '/safety/m-safe' },
-    { name: 'Training List', icon: BookOpen, href: '/safety/training-list' }
-  ],
-  'Finance': [
-    { 
-      name: 'Procurement', 
-      icon: Briefcase, 
-      href: '/finance/procurement',
-      subItems: [
-        { 
-          name: 'PR/ SR', 
-          href: '/finance/pr-sr', 
-          color: 'text-[#1a1a1a]',
-          subItems: [
-            { name: 'Material PR', href: '/finance/material-pr', color: 'text-[#1a1a1a]' },
-            { name: 'Service PR', href: '/finance/service-pr', color: 'text-[#1a1a1a]' }
-          ]
-        },
-        { 
-          name: 'PO/WO', 
-          href: '/finance/po-wo', 
-          color: 'text-[#1a1a1a]',
-          subItems: [
-            { name: 'PO', href: '/finance/po', color: 'text-[#1a1a1a]' },
-            { name: 'WO', href: '/finance/wo', color: 'text-[#1a1a1a]' }
-          ]
-        },
-        { name: 'GRN/ SRN', href: '/finance/grn-srn', color: 'text-[#1a1a1a]' },
-        { name: 'Auto Saved PR', href: '/finance/auto-saved-pr', color: 'text-[#1a1a1a]' }
-      ]
-    },
-    { name: 'Invoices', icon: Receipt, href: '/finance/invoices' },
-    { name: 'Bill Booking', icon: Receipt, href: '/finance/bill-booking' },
-    { 
-      name: 'Accounting', 
-      icon: Calculator, 
-      href: '/finance/accounting',
-      subItems: [
-        { name: 'Cost Center', href: '/finance/cost-center', color: 'text-[#1a1a1a]' },
-        { name: 'Budgeting', href: '/finance/budgeting', color: 'text-[#1a1a1a]' },
-        { name: 'Pending Approvals', href: '/finance/pending-approvals', color: 'text-[#1a1a1a]' }
-      ]
-    },
-    { name: 'WBS', icon: BarChart3, href: '/finance/wbs' }
-  ],
-  'CRM': [
-    { name: 'Lead', icon: Target, href: '/crm/lead' },
-    { name: 'Opportunity', icon: Star, href: '/crm/opportunity' },
-    { name: 'CRM', icon: Users, href: '/crm/crm' },
-    { name: 'Events', icon: Calendar, href: '/crm/events' },
-    { name: 'Broadcast', icon: Bell, href: '/crm/broadcast' },
-    { name: 'Groups', icon: Users, href: '/crm/groups' },
-    { name: 'Polls', icon: BarChart3, href: '/crm/polls' },
-    { name: 'Campaign', icon: Target, href: '/crm/campaign' }
-  ],
-  'Utility': [
-    { name: 'Energy', icon: Zap, href: '/utility/energy' },
-    { name: 'Water', icon: Droplets, href: '/utility/water' },
-    { name: 'STP', icon: Database, href: '/utility/stp' },
-    { name: 'EV Consumption', icon: Car, href: '/utility/ev-consumption' },
-    { name: 'Solar Generator', icon: Sun, href: '/utility/solar-generator' }
-  ],
-  'Security': [
-    { 
-      name: 'Gate Pass', 
-      icon: Shield, 
-      href: '/security/gate-pass',
-      subItems: [
-        { name: 'Inwards', href: '/security/gate-pass/inwards', color: 'text-[#1a1a1a]' },
-        { name: 'Outwards', href: '/security/gate-pass/outwards', color: 'text-[#1a1a1a]' }
-      ]
-    },
-    { name: 'Visitor', icon: Users, href: '/security/visitor' },
-    { name: 'Staff', icon: Users, href: '/security/staff' },
-    { 
-      name: 'Vehicle', 
-      icon: Car, 
-      href: '/security/vehicle',
-      subItems: [
-        { 
-          name: 'R Vehicles', 
-          href: '/security/vehicle/r-vehicles', 
-          color: 'text-[#1a1a1a]',
-          subItems: [
-            { name: 'All', href: '/security/vehicle/r-vehicles', color: 'text-[#1a1a1a]' },
-            { name: 'History', href: '/security/vehicle/r-vehicles/history', color: 'text-[#1a1a1a]' }
-          ]
-        },
-        { name: 'G Vehicles', href: '/security/vehicle/g-vehicles', color: 'text-[#1a1a1a]' }
-      ]
-    },
-    { name: 'Patrolling', icon: Shield, href: '/security/patrolling' }
-  ],
-  'Value Added Services': [
-    { name: 'F&B', icon: Coffee, href: '/vas/fnb' },
-    { name: 'Parking', icon: Car, href: '/vas/parking' },
-    { name: 'OSR', icon: TreePine, href: '/vas/osr' },
-    { 
-      name: 'Space Management', 
-      icon: Building, 
-      href: '/vas/space-management',
-      subItems: [
-        { name: 'Bookings', href: '/vas/space-management/bookings', color: 'text-[#1a1a1a]' },
-        { name: 'Seat Requests', href: '/vas/space-management/seat-requests', color: 'text-[#1a1a1a]' },
-        { 
-          name: 'Setup', 
-          href: '/vas/space-management/setup', 
-          color: 'text-[#1a1a1a]',
-          subItems: [
-            { name: 'Seat Type', href: '/vas/space-management/setup/seat-type', color: 'text-[#1a1a1a]' },
-            { name: 'Seat Setup', href: '/vas/space-management/setup/seat-setup', color: 'text-[#1a1a1a]' },
-            { name: 'Shift', href: '/vas/space-management/setup/shift', color: 'text-[#1a1a1a]' },
-            { name: 'Roster', href: '/vas/space-management/setup/roster', color: 'text-[#1a1a1a]' },
-            { name: 'Employees', href: '/vas/space-management/setup/employees', color: 'text-[#1a1a1a]' },
-            { name: 'Check in Margin', href: '/vas/space-management/setup/check-in-margin', color: 'text-[#1a1a1a]' },
-            { name: 'Roster Calendar', href: '/vas/space-management/setup/roster-calendar', color: 'text-[#1a1a1a]' },
-            { name: 'Export', href: '/vas/space-management/setup/export', color: 'text-[#1a1a1a]' }
-          ]
-        }
-      ]
-    },
-    { name: 'Redemption Marketplace', icon: Globe, href: '/vas/redemonection-marketplace' }
-  ],
-  'Market Place': [
-    { name: 'All', icon: Globe, href: '/market-place/all', color: 'text-white', bgColor: 'bg-[#C72030]' },
-    { name: 'Installed', icon: CheckSquare, href: '/market-place/installed', color: 'text-[#1a1a1a]' },
-    { name: 'Updates', icon: Download, href: '/market-place/updates', color: 'text-[#1a1a1a]' }
-  ],
-  'Settings': [
-    { name: 'General', icon: Settings, href: '/settings/general' },
-    { name: 'Account', icon: Users, href: '/settings/account' },
-    { name: 'Users', icon: Users, href: '/settings/users' },
-    { 
-      name: 'Roles (RACI)', 
-      icon: UserCheck, 
-      href: '/settings/roles',
-      hasDropdowns: true,
-      subItems: [
-        { name: 'Department', href: '/settings/roles/department', color: 'text-[#1a1a1a]' },
-        { name: 'Role', href: '/settings/roles/role', color: 'text-[#1a1a1a]' }
-      ]
-    },
-    { name: 'Approval Matrix', icon: CheckSquare, href: '/settings/approval-matrix' },
-    { 
-      name: 'Module 1', 
-      icon: Package, 
-      href: '/settings/module1',
-      subItems: [
-        { name: 'Function 1', href: '/settings/module1/function1', color: 'text-orange-600' },
-        { name: 'Function 2', href: '/settings/module1/function2', color: 'text-orange-600' }
-      ]
-    },
-    { 
-      name: 'Module 2', 
-      icon: Package, 
-      href: '/settings/module2',
-      subItems: [
-        { name: 'Function 1', href: '/settings/module2/function1', color: 'text-orange-600' },
-        { name: 'Function 2', href: '/settings/module2/function2', color: 'text-orange-600' }
-      ]
-    },
-    { 
-      name: 'Masters', 
-      icon: Archive, 
-      href: '/settings/masters',
-      subItems: [
-        { name: 'Checklist Master', href: '/settings/masters/checklist', color: 'text-orange-600' },
-        { name: 'Unit Master', href: '/settings/masters/unit', color: 'text-orange-600' },
-        { name: 'Address Master', href: '/settings/masters/address', color: 'text-orange-600' }
-      ]
-    }
-  ]
-};
-
-export const Sidebar = () => {
-  const navigate = useNavigate();
+const Sidebar = () => {
   const location = useLocation();
-  const { currentSection, setCurrentSection } = useLayout();
-  const [expandedItems, setExpandedItems] = useState<string[]>([]);
-  const [selectedDepartment, setSelectedRole] = useState('');
-  const [selectedRole, setSelectedDepartment] = useState('');
+  
+  const menuItems = [
+    {
+      title: 'Transitioning',
+      icon: Home,
+      path: '/transitioning',
+    },
+    {
+      title: 'Maintenance',
+      icon: Wrench,
+      path: '/maintenance',
+    },
+    {
+      title: 'Safety',
+      icon: Shield,
+      path: '/safety',
+    },
+    {
+      title: 'Finance',
+      icon: DollarSign,
+      path: '/finance',
+    },
+    {
+      title: 'CRM',
+      icon: Users,
+      path: '/crm',
+    },
+    {
+      title: 'Utility',
+      icon: Building,
+      path: '/utility',
+    },
+    {
+      title: 'Security',
+      icon: Shield,
+      path: '/security',
+    },
+    {
+      title: 'Value Added Services',
+      icon: BarChart3,
+      path: '/value-added-services',
+    },
+    {
+      title: 'Market Place',
+      icon: Globe,
+      path: '/market-place',
+      subItems: [
+        {
+          title: 'All',
+          icon: Globe,
+          path: '/market-place/all',
+        },
+        {
+          title: 'Installed',
+          icon: CheckCircle,
+          path: '/market-place/installed',
+        },
+        {
+          title: 'Updates',
+          icon: Download,
+          path: '/market-place/updates',
+        },
+      ]
+    },
+    {
+      title: 'Settings',
+      icon: Settings,
+      path: '/settings',
+    },
+  ];
 
-  const toggleExpanded = (itemName: string) => {
-    setExpandedItems(prev => 
-      prev.includes(itemName) 
-        ? prev.filter(name => name !== itemName)
-        : [...prev, itemName]
-    );
-  };
-
-  const handleNavigation = (href: string, section?: string) => {
-    if (section && section !== currentSection) {
-      setCurrentSection(section);
-    }
-    navigate(href);
-  };
-
-  React.useEffect(() => {
-    const path = location.pathname;
-    if (path.startsWith('/utility')) {
-      setCurrentSection('Utility');
-    } else if (path.startsWith('/transitioning')) {
-      setCurrentSection('Transitioning');
-    } else if (path.startsWith('/security')) {
-      setCurrentSection('Security');
-    } else if (path.startsWith('/vas')) {
-      setCurrentSection('Value Added Services');
-    } else if (path.startsWith('/finance')) {
-      setCurrentSection('Finance');
-    } else if (path.startsWith('/maintenance')) {
-      setCurrentSection('Maintenance');
-    } else if (path.startsWith('/safety')) {
-      setCurrentSection('Safety');
-    } else if (path.startsWith('/crm')) {
-      setCurrentSection('CRM');
-    } else if (path.startsWith('/market-place')) {
-      setCurrentSection('Market Place');
-    } else if (path.startsWith('/settings')) {
-      setCurrentSection('Settings');
-    }
-  }, [location.pathname, setCurrentSection]);
-
-  const currentModules = modulesByPackage[currentSection] || [];
-
-  const isActiveRoute = (href: string) => {
-    return location.pathname === href || location.pathname.startsWith(href + '/');
-  };
-
-  const renderMenuItem = (item: any, level: number = 0) => {
-    const hasSubItems = item.subItems && item.subItems.length > 0;
-    const isExpanded = expandedItems.includes(item.name);
-    const showDropdowns = item.hasDropdowns && location.pathname === item.href;
-    const isActive = isActiveRoute(item.href);
-    
-    if (hasSubItems) {
-      return (
-        <div key={item.name}>
-          <button
-            onClick={() => toggleExpanded(item.name)}
-            className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
-          >
-            <div className="flex items-center gap-3">
-              {level === 0 && (
-                <>
-                  {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
-                  <item.icon className="w-5 h-5" />
-                </>
-              )}
-              {item.name}
-            </div>
-            {isExpanded ? 
-              <ChevronDown className="w-4 h-4" /> : 
-              <ChevronRight className="w-4 h-4" />
-            }
-          </button>
-          {isExpanded && (
-            <div className="space-y-1">
-              {item.subItems.map((subItem: any) => (
-                <div key={subItem.name} className="ml-8">
-                  {subItem.subItems ? (
-                    <div>
-                      <button
-                        onClick={() => toggleExpanded(subItem.name)}
-                        className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
-                      >
-                        {isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
-                        <span>{subItem.name}</span>
-                        {expandedItems.includes(subItem.name) ? 
-                          <ChevronDown className="w-4 h-4" /> : 
-                          <ChevronRight className="w-4 h-4" />
-                        }
-                      </button>
-                      {expandedItems.includes(subItem.name) && (
-                        <div className="ml-4 mt-1 space-y-1">
-                          {subItem.subItems.map((nestedItem: any) => (
-                            <button
-                              key={nestedItem.name}
-                              onClick={() => handleNavigation(nestedItem.href, currentSection)}
-                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${
-                                nestedItem.color || 'text-[#1a1a1a]'
-                              }`}
-                            >
-                              {isActiveRoute(nestedItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
-                              {nestedItem.name}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => handleNavigation(subItem.href, currentSection)}
-                      className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
-                        subItem.color || 'text-[#1a1a1a]'
-                      } ${subItem.bgColor || ''}`}
-                      style={subItem.bgColor ? { backgroundColor: subItem.bgColor.replace('bg-[', '').replace(']', '') } : {}}
-                    >
-                      {isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
-                      {subItem.name}
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    return (
-      <div key={item.name}>
-        <button
-          onClick={() => handleNavigation(item.href, currentSection)}
-          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
-            item.color || 'text-[#1a1a1a]'
-          } ${item.bgColor || ''}`}
-          style={item.bgColor ? { backgroundColor: item.bgColor.replace('bg-[', '').replace(']', '') } : {}}
-        >
-          {level === 0 && (
-            <>
-              {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
-              <item.icon className="w-5 h-5" />
-            </>
-          )}
-          {item.name}
-        </button>
-        
-        {/* Show dropdowns for Roles (RACI) when on that page */}
-        {showDropdowns && (
-          <div className="mt-4 space-y-3 px-3">
-            <div>
-              <label className="text-xs font-medium text-[#1a1a1a] mb-1 block">Department</label>
-              <select
-                value={selectedDepartment}
-                onChange={(e) => setSelectedDepartment(e.target.value)}
-                className="!w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030]"
-
-              >
-                <option value="">Select Department</option>
-                <option value="engineering">Engineering</option>
-                <option value="facilities">Facilities</option>
-                <option value="security">Security</option>
-                <option value="finance">Finance</option>
-                <option value="hr">Human Resources</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="text-xs font-medium text-[#1a1a1a] mb-1 block">Role</label>
-              <select
-                value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value)}
-className="!w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030]"
-              >
-                <option value="">Select Role</option>
-                <option value="manager">Manager</option>
-                <option value="supervisor">Supervisor</option>
-                <option value="technician">Technician</option>
-                <option value="coordinator">Coordinator</option>
-                <option value="analyst">Analyst</option>
-              </select>
-            </div>
-          </div>
-        )}
-      </div>
-    );
+  const isActiveRoute = (path: string) => {
+    return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
   return (
-    <div
-      className="w-64 bg-[#f6f4ee] border-r border-[#1a1a1a] fixed left-0 top-0 overflow-y-auto"
-      style={{ top: '9vh', height: '91vh' }}
-    >
-      <div className="p-2">
-        <div className="flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 bg-[#C72030] rounded-lg flex items-center justify-center">
+    <div className="w-64 bg-white border-r border-gray-200 h-screen overflow-y-auto">
+      <div className="p-4">
+        <div className="flex items-center space-x-2 mb-6">
+          <div className="w-8 h-8 bg-red-600 rounded flex items-center justify-center">
             <span className="text-white font-bold text-sm">FM</span>
           </div>
-          <span className="text-[#1a1a1a] font-semibold text-lg">Facility Management</span>
+          <span className="font-semibold text-gray-900">Facility Management</span>
         </div>
         
-        {currentSection && (
-          <div className="mb-4">
-            <h3 className="text-sm font-medium text-[#1a1a1a] opacity-70 uppercase tracking-wide">
-              {currentSection}
-            </h3>
-          </div>
-        )}
-        
-        <nav className="space-y-2">
-          {currentModules.map((module) => renderMenuItem(module))}
+        <nav className="space-y-1">
+          {menuItems.map((item) => (
+            <div key={item.path}>
+              <NavLink
+                to={item.path}
+                className={({ isActive }) => `
+                  flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors
+                  ${isActive || isActiveRoute(item.path) 
+                    ? 'bg-red-50 text-red-700 border-r-2 border-red-600' 
+                    : 'text-gray-700 hover:bg-gray-100'
+                  }
+                `}
+              >
+                <item.icon className="w-5 h-5 mr-3" />
+                {item.title}
+              </NavLink>
+              
+              {item.subItems && isActiveRoute(item.path) && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {item.subItems.map((subItem) => (
+                    <NavLink
+                      key={subItem.path}
+                      to={subItem.path}
+                      className={({ isActive }) => `
+                        flex items-center px-3 py-2 text-sm rounded-lg transition-colors
+                        ${isActive 
+                          ? 'bg-red-600 text-white' 
+                          : 'text-gray-600 hover:bg-gray-100'
+                        }
+                      `}
+                    >
+                      <subItem.icon className="w-4 h-4 mr-2" />
+                      {subItem.title}
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </nav>
       </div>
     </div>
   );
 };
+
+export default Sidebar;
