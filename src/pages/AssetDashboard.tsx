@@ -419,7 +419,7 @@ export const AssetDashboard = () => {
                   <TableCell className="px-4 py-3 text-sm text-gray-600 font-mono">{asset.code}</TableCell>
                   <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.assetNo}</TableCell>
                   <TableCell className="px-4 py-3">
-                    <Badge className={`${getStatusColor(asset.status)} text-xs px-2 py-1 rounded-full`}>
+                    <Badge className={`${getStatusColor(asset.status)} text-xs px-2 py-1`}>
                       {asset.status}
                     </Badge>
                   </TableCell>
