@@ -1,6 +1,4 @@
-
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 
 const packages = [
@@ -18,54 +16,11 @@ const packages = [
 
 export const DynamicHeader = () => {
   const { currentSection, setCurrentSection } = useLayout();
-  const navigate = useNavigate();
 
   // Set "Maintenance" as the default section when the component mounts
   useEffect(() => {
     setCurrentSection('Maintenance');
-    // Navigate to the first Maintenance item (Assets) when Maintenance is set as default
-    navigate('/maintenance/asset');
-  }, [setCurrentSection, navigate]);
-
-  const handleSectionClick = (packageName: string) => {
-    setCurrentSection(packageName);
-    
-    // Navigate to the first item of each section when clicked
-    switch (packageName) {
-      case 'Maintenance':
-        navigate('/maintenance/asset');
-        break;
-      case 'Security':
-        navigate('/security/gate-pass/inwards');
-        break;
-      case 'Utility':
-        navigate('/utility/energy');
-        break;
-      case 'Finance':
-        navigate('/finance/procurement');
-        break;
-      case 'CRM':
-        navigate('/crm/lead');
-        break;
-      case 'Safety':
-        navigate('/safety/incident');
-        break;
-      case 'Transitioning':
-        navigate('/transitioning/hoto');
-        break;
-      case 'Value Added Services':
-        navigate('/vas/fnb');
-        break;
-      case 'Market Place':
-        navigate('/market-place/all');
-        break;
-      case 'Settings':
-        navigate('/settings/general');
-        break;
-      default:
-        break;
-    }
-  };
+  }, [setCurrentSection]);
 
   return (
     <div
@@ -79,7 +34,7 @@ export const DynamicHeader = () => {
             {packages.map((packageName) => (
               <button
                 key={packageName}
-                onClick={() => handleSectionClick(packageName)}
+                onClick={() => setCurrentSection(packageName)}
                 className={`pb-3 text-sm transition-colors whitespace-nowrap ${
                   currentSection === packageName
                     ? 'text-[#C72030] border-b-2 border-[#C72030] font-medium'
