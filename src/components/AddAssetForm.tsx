@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { X, ChevronDown, ChevronUp } from 'lucide-react';
+import { MaterialDatePicker } from '@/components/ui/material-date-picker';
 
 interface AddAssetFormProps {
   isOpen: boolean;
@@ -17,6 +18,19 @@ export const AddAssetForm: React.FC<AddAssetFormProps> = ({ isOpen, onClose }) =
     nonConsumption: false,
     attachments: false
   });
+
+  const [dateValues, setDateValues] = useState({
+    purchasedDate: '',
+    expiryDate: '',
+    manufacturerDate: '',
+    warrantyStartDate: '',
+    warrantyExpiresDate: '',
+    commissioningDate: ''
+  });
+
+  const updateDateValue = (field: string, value: string) => {
+    setDateValues(prev => ({ ...prev, [field]: value }));
+  };
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({
@@ -215,9 +229,11 @@ export const AddAssetForm: React.FC<AddAssetFormProps> = ({ isOpen, onClose }) =
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Purchased ON Date</label>
-                    <input 
-                      type="date" 
-                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    <MaterialDatePicker
+                      value={dateValues.purchasedDate}
+                      onChange={(value) => updateDateValue('purchasedDate', value)}
+                      placeholder="Select Purchase Date"
+                      className="w-full"
                     />
                   </div>
                 </div>
@@ -225,16 +241,20 @@ export const AddAssetForm: React.FC<AddAssetFormProps> = ({ isOpen, onClose }) =
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <div>
                     <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Expiry date</label>
-                    <input 
-                      type="date" 
-                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    <MaterialDatePicker
+                      value={dateValues.expiryDate}
+                      onChange={(value) => updateDateValue('expiryDate', value)}
+                      placeholder="Select Expiry Date"
+                      className="w-full"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Manufacturer</label>
-                    <input 
-                      type="date" 
-                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Manufacturer Date</label>
+                    <MaterialDatePicker
+                      value={dateValues.manufacturerDate}
+                      onChange={(value) => updateDateValue('manufacturerDate', value)}
+                      placeholder="Select Manufacturer Date"
+                      className="w-full"
                     />
                   </div>
                 </div>
@@ -344,23 +364,29 @@ export const AddAssetForm: React.FC<AddAssetFormProps> = ({ isOpen, onClose }) =
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Warranty Start Date</label>
-                    <input 
-                      type="date" 
-                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    <MaterialDatePicker
+                      value={dateValues.warrantyStartDate}
+                      onChange={(value) => updateDateValue('warrantyStartDate', value)}
+                      placeholder="Select Start Date"
+                      className="w-full"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Warranty expires on</label>
-                    <input 
-                      type="date" 
-                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    <MaterialDatePicker
+                      value={dateValues.warrantyExpiresDate}
+                      onChange={(value) => updateDateValue('warrantyExpiresDate', value)}
+                      placeholder="Select Expiry Date"
+                      className="w-full"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Commissioning Date</label>
-                    <input 
-                      type="date" 
-                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    <MaterialDatePicker
+                      value={dateValues.commissioningDate}
+                      onChange={(value) => updateDateValue('commissioningDate', value)}
+                      placeholder="Select Commissioning Date"
+                      className="w-full"
                     />
                   </div>
                 </div>
