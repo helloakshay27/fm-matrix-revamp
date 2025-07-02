@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -29,22 +29,20 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
         <div className="space-y-4 py-4">
           <div>
             <Label htmlFor="fromDate">From</Label>
-            <Input
-              id="fromDate"
-              type="text"
+            <MaterialDatePicker
               value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
+              onChange={setFromDate}
+              placeholder="Select from date"
               className="mt-1"
             />
           </div>
 
           <div>
             <Label htmlFor="toDate">To</Label>
-            <Input
-              id="toDate"
-              type="text"
+            <MaterialDatePicker
               value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
+              onChange={setToDate}
+              placeholder="Select to date"
               className="mt-1"
             />
           </div>

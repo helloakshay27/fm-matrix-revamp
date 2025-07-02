@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 import { X } from "lucide-react";
 
 interface SpaceManagementRosterExportDialogProps {
@@ -125,19 +124,19 @@ export const SpaceManagementRosterExportDialog: React.FC<SpaceManagementRosterEx
         
         <div className="space-y-4">
           <div>
-            <Input
-              placeholder="01/06/2025"
+            <MaterialDatePicker
               value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
+              onChange={setFromDate}
+              placeholder="Select from date"
               className="text-sm"
             />
           </div>
           
           <div>
-            <Input
-              placeholder="30/06/2025"
+            <MaterialDatePicker
               value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
+              onChange={setToDate}
+              placeholder="Select to date"
               className="text-sm"
             />
           </div>

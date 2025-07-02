@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 
 interface RosterCalendarFilterDialogProps {
   open: boolean;
@@ -84,20 +84,20 @@ export const RosterCalendarFilterDialog: React.FC<RosterCalendarFilterDialogProp
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">Start Date</label>
-              <Input
+              <MaterialDatePicker
                 value={filters.startDate}
-                onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                placeholder="dd/mm/yyyy"
+                onChange={(value) => setFilters({ ...filters, startDate: value })}
+                placeholder="Select start date"
                 className="text-sm"
               />
             </div>
             
             <div>
               <label className="text-sm font-medium mb-2 block">End Date</label>
-              <Input
+              <MaterialDatePicker
                 value={filters.endDate}
-                onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                placeholder="dd/mm/yyyy"
+                onChange={(value) => setFilters({ ...filters, endDate: value })}
+                placeholder="Select end date"
                 className="text-sm"
               />
             </div>

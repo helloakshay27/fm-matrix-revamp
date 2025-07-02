@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { Search, RotateCcw } from 'lucide-react';
 import { SurveyResponseTable } from '../components/SurveyResponseTable';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 import { useToast } from "@/hooks/use-toast";
 
 export const SurveyResponseDashboard = () => {
@@ -85,12 +85,11 @@ export const SurveyResponseDashboard = () => {
           
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Date Range</label>
-            <Input
-              type="text"
+            <MaterialDatePicker
               value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
+              onChange={setDateRange}
+              placeholder="Select date range"
               className="border-[#D5DbDB] focus:ring-[#C72030] focus:border-[#C72030]"
-              placeholder="01/05/2025 - 21/06/2025"
             />
           </div>
         </div>

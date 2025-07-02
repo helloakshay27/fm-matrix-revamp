@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MaterialDatePicker } from '@/components/ui/material-date-picker';
 import { X } from 'lucide-react';
 
 interface InvoiceFilterDialogProps {
@@ -64,11 +65,10 @@ export const InvoiceFilterDialog = ({ isOpen, onClose }: InvoiceFilterDialogProp
             <Label htmlFor="invoiceDate" className="text-sm font-medium">
               Invoice Date
             </Label>
-            <Input
-              id="invoiceDate"
-              placeholder="Search By Invoice Date"
+            <MaterialDatePicker
               value={invoiceDate}
-              onChange={(e) => setInvoiceDate(e.target.value)}
+              onChange={setInvoiceDate}
+              placeholder="Select Invoice Date"
               className="border-gray-300"
             />
           </div>

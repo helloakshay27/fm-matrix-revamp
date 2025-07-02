@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MaterialDatePicker } from '@/components/ui/material-date-picker';
 import { X } from 'lucide-react';
 
 interface AddCostCenterDialogProps {
@@ -85,11 +86,10 @@ export const AddCostCenterDialog = ({ open, onOpenChange }: AddCostCenterDialogP
             <Label htmlFor="budgetStart" className="text-sm font-medium text-gray-700">
               Budget Start
             </Label>
-            <Input
-              id="budgetStart"
-              type="date"
+            <MaterialDatePicker
               value={formData.budgetStart}
-              onChange={(e) => handleInputChange('budgetStart', e.target.value)}
+              onChange={(value) => handleInputChange('budgetStart', value)}
+              placeholder="Select budget start date"
               className="w-full border-gray-300 focus:border-gray-400 focus:ring-0"
             />
           </div>
@@ -98,11 +98,10 @@ export const AddCostCenterDialog = ({ open, onOpenChange }: AddCostCenterDialogP
             <Label htmlFor="budgetEnd" className="text-sm font-medium text-gray-700">
               Budget End
             </Label>
-            <Input
-              id="budgetEnd"
-              type="date"
+            <MaterialDatePicker
               value={formData.budgetEnd}
-              onChange={(e) => handleInputChange('budgetEnd', e.target.value)}
+              onChange={(value) => handleInputChange('budgetEnd', value)}
+              placeholder="Select budget end date"
               className="w-full border-gray-300 focus:border-gray-400 focus:ring-0"
             />
           </div>
