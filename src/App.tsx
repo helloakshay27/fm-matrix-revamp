@@ -3,7 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { LayoutProvider } from './contexts/LayoutContext';
-import { Index } from './pages/Index';
+import Index from './pages/Index';
 import { TicketDashboard } from './pages/TicketDashboard';
 import { AssetAuditDashboard } from './pages/AssetAuditDashboard';
 import { MarketPlaceAllPage } from './pages/MarketPlaceAllPage';
