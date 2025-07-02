@@ -1,10 +1,15 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft, Star, Calculator } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { InstallModal } from '@/components/InstallModal';
 
 const AccountingDetailPage = () => {
   const navigate = useNavigate();
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
+
+  const handleInstallClick = () => {
+    setIsInstallModalOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-[#C72030]">
@@ -36,7 +41,10 @@ const AccountingDetailPage = () => {
             </div>
           </div>
           <div className="ml-auto">
-            <button className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+            <button 
+              onClick={handleInstallClick}
+              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+            >
               Install
             </button>
           </div>
@@ -141,6 +149,13 @@ const AccountingDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Install Modal */}
+      <InstallModal 
+        isOpen={isInstallModalOpen}
+        onClose={() => setIsInstallModalOpen(false)}
+        appName="Accounting"
+      />
     </div>
   );
 };
