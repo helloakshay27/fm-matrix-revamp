@@ -49,7 +49,8 @@ export default function InvoiceDashboard() {
                   placeholder="Search..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64 border-gray-300"
+                  className="pl-10 w-64 border-gray-300 h-[36px]"
+                  style={{ height: '36px' }}
                 />
               </div>
               <Button

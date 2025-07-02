@@ -41,7 +41,8 @@ export const FitoutChecklistDashboard = () => {
             placeholder="Search checklists..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-[36px]"
+            style={{ height: '36px' }}
           />
         </div>
         <Button 

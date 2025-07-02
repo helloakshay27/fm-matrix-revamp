@@ -84,7 +84,8 @@ export const InActiveAssetsDashboard = () => {
               placeholder="Search assets..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64 bg-white"
+              className="pl-10 w-64 bg-white h-[36px]"
+              style={{ height: '36px' }}
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
                   handleSearch();

@@ -63,7 +63,8 @@ export const InvoicesSESDashboard = () => {
                 placeholder=""
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 w-64"
+                className="pl-10 pr-4 py-2 w-64 h-[36px]"
+                style={{ height: '36px' }}
               />
             </div>
             <Button 

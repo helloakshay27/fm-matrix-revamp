@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Search } from 'lucide-react';
@@ -106,7 +107,8 @@ export const SearchWithSuggestions = ({
           onKeyDown={handleKeyDown}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
-          className="pl-10 pr-4 py-2 border border-[#AAB9C5] rounded-lg bg-white text-[#1F2937] placeholder:text-[#AAB9C5] focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+          className="pl-10 pr-4 py-2 border border-[#AAB9C5] rounded-lg bg-white text-[#1F2937] placeholder:text-[#AAB9C5] focus:outline-none focus:ring-2 focus:ring-[#C72030] h-[36px]"
+          style={{ height: '36px' }}
         />
       </div>
 

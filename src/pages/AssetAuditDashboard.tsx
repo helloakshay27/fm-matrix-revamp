@@ -136,8 +136,6 @@ export const AssetAuditDashboard = () => {
   ))}
 </div>
 
-
-
         {/* Action Buttons */}
         <div className="flex gap-4 mb-6">
           <Button 
@@ -165,7 +163,8 @@ export const AssetAuditDashboard = () => {
               placeholder="Search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-[36px]"
+              style={{ height: '36px' }}
             />
           </div>
         </div>

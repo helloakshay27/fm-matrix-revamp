@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -160,7 +161,8 @@ const MailroomInboundDashboard = () => {
             placeholder="Search by vendor name, recipient, department, or sender..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-md"
+            className="max-w-md h-[36px]"
+            style={{ height: '36px' }}
           />
         </div>
 

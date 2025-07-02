@@ -180,7 +180,8 @@ export const InvoicesDashboard = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
               placeholder="Search..."
-              className="pl-10 w-80"
+              className="pl-10 w-80 h-[36px]"
+              style={{ height: '36px' }}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -272,16 +273,8 @@ export const InvoicesDashboard = () => {
                     <TableCell>{invoice.adjustmentAmount}</TableCell>
                     <TableCell>{invoice.retentionAmount}</TableCell>
                     <TableCell>{invoice.ksAmount}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 text-xs rounded ${invoice.physicalInvoiceSentToAccounts === 'Yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {invoice.physicalInvoiceSentToAccounts}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 text-xs rounded ${invoice.physicalInvoiceReceivedByAccounts === 'Yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {invoice.physicalInvoiceReceivedByAccounts}
-                      </span>
-                    </TableCell>
+                    <TableCell>{invoice.physicalInvoiceSentToAccounts}</TableCell>
+                    <TableCell>{invoice.physicalInvoiceReceivedByAccounts}</TableCell>
                     <TableCell>{invoice.daysPassed}</TableCell>
                     <TableCell className="font-medium">{invoice.accountPaid}</TableCell>
                     <TableCell className="font-medium">{invoice.balanceAmount}</TableCell>
@@ -302,8 +295,8 @@ export const InvoicesDashboard = () => {
       </div>
 
       <InvoicesFilterDialog 
-        open={isFilterDialogOpen}
-        onOpenChange={setIsFilterDialogOpen}
+        isOpen={isFilterDialogOpen} 
+        onClose={() => setIsFilterDialogOpen(false)}
         onApply={handleFilterApply}
       />
     </div>
