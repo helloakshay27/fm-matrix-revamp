@@ -112,9 +112,9 @@ export const IncidentListDashboard = () => {
     </Button>
   </div>
 
-  {/* Search Section */}
+  {/* Search + Go + Reset */}
   <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full lg:w-auto">
-    <div className="relative w-full sm:w-80">
+    <div className="relative flex-1">
       <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
       <Input
         type="text"
@@ -140,6 +140,7 @@ export const IncidentListDashboard = () => {
     </Button>
   </div>
 </div>
+
 
 
       {/* Table */}
