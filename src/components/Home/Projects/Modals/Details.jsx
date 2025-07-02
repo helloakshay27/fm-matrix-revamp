@@ -214,7 +214,85 @@ const Details = ({
     return `${days}d : ${hours}h : ${minutes}m`;
   };
 
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    const payload = {
+      project_management: {
+        title: formData.projectTitle,
+        description: formData.description,
+        start_date: formData.startDate,
+        end_date: formData.endDate,
+        owner_id: formData.projectOwner,
+        priority: formData.priority,
+        active: true,
+        is_template: formData.createTemplate,
+        create_channel: formData.createChannel,
+        project_team_id: formData.projectTeam,
+        project_type_id: formData.projectType,
+      },
+      task_tag_ids: formData.tags.map((tag) => tag.value),
+    };
+
+    try {
+      await dispatch(createProject({ token, payload })).unwrap();
+      window.location.reload();
+    } catch (error) {
+      console.error("Error creating project:", error);
+      toast.error("Error creating project.");
+    }
+  }
+
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   if (!validateForm()) return;
+
+  //   const payload = {
+  //     project_management: {
+  //       title: formData.projectTitle,
+  //       description: formData.description,
+  //       start_date: formData.startDate,
+  //       end_date: formData.endDate,
+  //       ...(!isEdit && { status: "active" }),
+  //       owner_id: formData.projectOwner,
+  //       priority: formData.priority,
+  //       active: true,
+  //       is_template: formData.createTemplate,
+  //       create_channel: formData.createChannel,
+  //       project_team_id: formData.projectTeam,
+  //       project_type_id: formData.projectType,
+  //     },
+  //     task_tag_ids: formData.tags.map((tag) => tag.value),
+  //   };
+
+  //   console.log(isEditAllowed);
+  //   if (isEdit || isEditAllowed) {
+  //     dispatch(editProject({ token, id: id || project.id, payload }));
+  //   } else {
+  //     dispatch(createProject({ token, payload }));
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   if (success) {
+  //     setTab("Milestone");
+  //     dispatch(resetProjectSuccess());
+  //   }
+  // }, [success]);
+
+  // useEffect(() => {
+  //   if (editsuccess) {
+  //     if (isEdit) {
+  //       window.location.reload();
+  //     } else {
+  //       setTab("Milestone");
+  //       dispatch(resetEditSuccess());
+  //     }
+  //   }
+  // }, [editsuccess]);
+
   const handleSubmit = async (e) => {
+    console.log("clicked");
     e.preventDefault();
     if (!validateForm()) return;
 
@@ -236,31 +314,31 @@ const Details = ({
       task_tag_ids: formData.tags.map((tag) => tag.value),
     };
 
-    console.log(isEditAllowed);
-    if (isEdit || isEditAllowed) {
-      dispatch(editProject({ token, id: id || project.id, payload }));
-    } else {
-      dispatch(createProject({ token, payload }));
+    try {
+      if (isEdit || isEditAllowed) {
+        await dispatch(
+          editProject({ token, id: id || project.id, payload })
+        ).unwrap();
+
+        if (isEdit) {
+          window.location.reload();
+        } else {
+          setTab("Milestone");
+        }
+      } else {
+        await dispatch(createProject({ token, payload }));
+
+        toast.success("Project created successfully");
+        setTab("Milestone");
+      }
+    } catch (error) {
+      console.error("Project submission failed:", error);
+      toast.error(error.message || "Something went wrong!");
+    } finally {
+      dispatch(resetProjectSuccess());
+      dispatch(resetEditSuccess());
     }
   };
-
-  useEffect(() => {
-    if (success) {
-      setTab("Milestone");
-      dispatch(resetProjectSuccess());
-    }
-  }, [success]);
-
-  useEffect(() => {
-    if (editsuccess) {
-      if (isEdit) {
-        window.location.reload();
-      } else {
-        setTab("Milestone");
-        dispatch(resetEditSuccess());
-      }
-    }
-  }, [editsuccess]);
 
   return (
     <form className="pt-2 pb-12 h-full" onSubmit={handleSubmit}>
@@ -324,20 +402,6 @@ const Details = ({
               placeholder="Select Owner"
             />
           </div>
-
-          {/* <div className="w-1/2">
-            <label className="block mb-2">Template</label>
-            <SelectBox
-              options={templates.map(template => ({
-                value: template.id,
-                label: template.title,
-              }))}
-              value={formData.template}
-              onChange={value => handleSelectChange("template", value)}
-              placeholder="Select Template"
-              style={{ border: "1px solid #b3b2b2" }}
-            />
-          </div> */}
         </div>
 
         <div className="flex gap-2 mt-4 text-[12px]">
@@ -452,10 +516,22 @@ const Details = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center gap-3">
+            {
+              !isEdit && (
+                <button
+                  type="button"
+                  className="border-2 border-red-500 px-4 py-2 text-black w-[100px]"
+                  disabled={success || editsuccess}
+                  onClick={handleSave}
+                >
+                  Save
+                </button>
+              )
+            }
             <button
               type="submit"
-              className="border-2 border-red-500 px-4 py-2 text-black w-[100px]"
+              className="border-2 border-red-500 px-4 py-2 text-black w-max"
               disabled={success || editsuccess}
             >
               {endText}

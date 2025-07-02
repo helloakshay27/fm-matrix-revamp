@@ -204,7 +204,7 @@ const AddProjectModal = ({ isModalOpen, setIsModalOpen, projectname = "New Proje
           }
 
 
-          {tab == "Details" && <Details setTab={setTab} setOpenTagModal={setOpenTagModal} setOpenTeamModal={setOpenTeamModal} isEdit={isEdit} endText={isEdit ? "Save" : "Next"} templateDetails={templateDetails} />}
+          {tab == "Details" && <Details setTab={setTab} setOpenTagModal={setOpenTagModal} setOpenTeamModal={setOpenTeamModal} isEdit={isEdit} endText={isEdit ? "Save" : "Save & Next"} templateDetails={templateDetails} />}
           {tab == "Milestone" && <Milestones />}
         </div>
 

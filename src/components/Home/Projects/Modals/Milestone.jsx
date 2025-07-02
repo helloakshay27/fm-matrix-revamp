@@ -150,7 +150,7 @@ const AddMilestoneModal = ({
   );
 };
 
-const Milestones = () => {
+const Milestones = ({ closeModal }) => {
   const token = localStorage.getItem('token');
   const location = useLocation();
   const dispatch = useDispatch();
@@ -322,7 +322,6 @@ const Milestones = () => {
               disabled={loading}
               onClick={() => {
                 if (savedMilestones.length === 0) {
-                  setIsDelete(true);
                   setFormData({
                     title: "",
                     ownerId: null,
@@ -330,6 +329,7 @@ const Milestones = () => {
                     endDate: "",
                     dependsOnId: null,
                   });
+                  closeModal()
                 } else {
                   window.location.reload();
                 }

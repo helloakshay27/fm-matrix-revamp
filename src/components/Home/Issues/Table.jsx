@@ -374,21 +374,30 @@ const IssuesTable = () => {
 
   // Fetch projects or set project ID
   useEffect(() => {
-    if (parentId !== null && parentId !== undefined) {
-      setNewIssuesProjectId(parentId);
-    } else if (
-      !loadingProjects &&
-      projectOptions.length === 0 &&
-      !projectsFetchInitiatedRef.current
-    ) {
-      dispatch(fetchProjects({ token }));
-      projectsFetchInitiatedRef.current = true;
-    }
+    const run = async () => {
+      try {
+        if (parentId !== null && parentId !== undefined) {
+          setNewIssuesProjectId(parentId);
+        } else if (
+          !loadingProjects &&
+          projectOptions.length === 0 &&
+          !projectsFetchInitiatedRef.current
+        ) {
+          projectsFetchInitiatedRef.current = true;
+          await dispatch(fetchProjects({ token }));
+        }
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+      }
+    };
+
+    run();
   }, [dispatch, loadingProjects, parentId, projectOptions, token]);
+
 
   // Set project options
   useEffect(() => {
-    if (!loadingProjects && projects.length > 0 && !projectsFetchError) {
+    if (!loadingProjects && projects?.length > 0 && !projectsFetchError) {
       setProjectOptions(
         projects.map((project) => ({
           value: project.id,

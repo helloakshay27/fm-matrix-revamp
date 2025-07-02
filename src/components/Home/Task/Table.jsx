@@ -154,7 +154,7 @@ const DateEditor = ({
       onKeyDown={handleKeyDown}
       onClick={handleInputClick}
       className={`${isInvalid ? "border border-red-400" : "border-none"
-        } w-full focus:outline-none rounded text-[12px] p-1 ${className || ""}`}
+        } w-full focus:outline-none bg-transparent rounded text-[12px] p-1 ${className || ""}`}
       placeholder={placeholder}
       min={formatDate(min)}
       max={formatDate(max)}
@@ -317,10 +317,17 @@ const TaskTable = () => {
   }, [filterSuccess, filterTasks]);
 
   useEffect(() => {
-    if (!isCreatingTask && !isUpdatingTask) {
-      if (mid) dispatch(fetchTasks({ token, id: mid }));
-      else dispatch(fetchTasks({ token, id: "" }));
-    }
+    const fetch = async () => {
+      try {
+        if (!isCreatingTask && !isUpdatingTask) {
+          await dispatch(fetchTasks({ token, id: mid || "" })).unwrap();
+        }
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    };
+
+    fetch();
   }, [dispatch, isCreatingTask, isUpdatingTask, location.pathname, mid, token]);
 
   useEffect(() => {
@@ -738,13 +745,8 @@ const TaskTable = () => {
                   newValue
                 )
               }
-              style={{
-                border: "none",
-                width: "100%",
-                height: "100%",
-                padding: "0.5rem",
-              }}
               table={true}
+              className="w-full"
             />
           );
         },

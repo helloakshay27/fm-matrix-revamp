@@ -145,8 +145,12 @@ const MoMAdd = () => {
         }
 
         if (isExternal) {
-            for (let i = 0; i < formData.users.length; i++) {
+            for (let i = 0; i < entries.length; i++) {
                 const user = formData.users[i];
+                if (!user) {
+                    toast.error(`Attendee ${i + 1} is incomplete`);
+                    return false;
+                }
                 if (!user.name?.trim()) {
                     toast.error(`Name is required for attendee ${i + 1}`);
                     return false;
@@ -169,9 +173,9 @@ const MoMAdd = () => {
                 }
             }
         } else {
-            for (let i = 0; i < formData.users.length; i++) {
+            for (let i = 0; i < entries.length; i++) {
                 const user = formData.users[i];
-                if (!user?.value) {
+                if (!user || !user.value) {
                     toast.error(`Internal user selection is required for attendee ${i + 1}`);
                     return false;
                 }
@@ -183,10 +187,30 @@ const MoMAdd = () => {
             return false;
         }
 
-        for (let i = 0; i < formData.points.length; i++) {
+        for (let i = 0; i < points.length; i++) {
             const point = formData.points[i];
+            if (!point) {
+                toast.error(`Point ${i + 1} is incomplete`);
+                return false;
+            }
             if (!point.description?.trim()) {
                 toast.error(`Description is required for point ${i + 1}`);
+                return false;
+            }
+            if (!point.raisedBy?.trim()) {
+                toast.error(`Raised By is required for point ${i + 1}`);
+                return false;
+            }
+            if (!point.responsiblePerson || !point.responsiblePerson.value) {
+                toast.error(`Responsible Person is required for point ${i + 1}`);
+                return false;
+            }
+            if (!point.endDate) {
+                toast.error(`End Date is required for point ${i + 1}`);
+                return false;
+            }
+            if (!point.tag || !point.tag.value) {
+                toast.error(`Tag is required for point ${i + 1}`);
                 return false;
             }
         }
@@ -313,6 +337,7 @@ const MoMAdd = () => {
                             type="date"
                             className="w-full border outline-none border-gray-300 py-2 px-3 text-[12px]"
                             value={rawDate}
+                            min={new Date().toISOString().split("T")[0]}
                             onChange={handleDateChange}
                         />
                     </div>
@@ -549,7 +574,7 @@ const MoMAdd = () => {
 
                         <div className="flex flex-col justify-between">
                             <div className="space-y-2">
-                                <label className="text-[12px]">Raised by</label>
+                                <label className="text-[12px]">Raised by <span className="text-red-500 ml-1">*</span></label>
                                 <input
                                     type="text"
                                     className="w-full border outline-none border-gray-300 py-2 px-3 text-[12px]"
@@ -566,11 +591,12 @@ const MoMAdd = () => {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[12px]">End Date</label>
+                                <label className="text-[12px]">End Date <span className="text-red-500 ml-1">*</span></label>
                                 <input
                                     type="date"
                                     className="w-full border outline-none border-gray-300 py-2 px-3 text-[12px]"
                                     value={formData.points[index]?.endDate || ""}
+                                    min={rawDate}
                                     onChange={(e) => {
                                         const updatedPoints = [...formData.points];
                                         updatedPoints[index] = {
@@ -585,7 +611,7 @@ const MoMAdd = () => {
 
                         <div className="flex flex-col justify-between w-1/5">
                             <div className="space-y-2">
-                                <label className="text-[12px]">Responsible Person</label>
+                                <label className="text-[12px]">Responsible Person <span className="text-red-500 ml-1">*</span></label>
                                 <SelectBox
                                     options={
                                         users ? users.map((user) => ({
@@ -608,7 +634,7 @@ const MoMAdd = () => {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[12px]">Tags</label>
+                                <label className="text-[12px]">Tags <span className="text-red-500 ml-1">*</span></label>
                                 <SelectBox
                                     options={
                                         tags ? tags.map((tag) => ({

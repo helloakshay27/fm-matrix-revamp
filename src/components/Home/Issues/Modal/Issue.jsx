@@ -29,63 +29,9 @@ const globalPriorityOptions = [
   { value: 5, label: "Urgent" },
 ];
 
-// const Attachments = ({ attachments, setAttachments }) => {
-//   const fileInputRef = useRef(null);
-//   const dispatch = useDispatch();
-//   const [files, setFiles] = useState(attachments);
-
-//   const handleAttachFile = () => {
-//     fileInputRef.current.click(); // Open file picker
-//   };
-
-//   const handleFileChange = async (event) => {
-//     const selectedFiles = Array.from(event.target.files);
-//     if (!selectedFiles?.length) return;
-//     setFiles(selectedFiles);
-//     setAttachments(selectedFiles);
-//     console.log(selectedFiles);
-//   };
-
-//   return (
-//     <div className="flex h-[45px] border">
-//       {files?.length > 0 ? (
-//         <>
-//           <div className="text-[14px] mt-2 p-1">
-//             <span className="p-2">{files?.length}</span>
-
-//           </div>
-//         </>
-//       ) : (
-//         <div className="flex  w-full justify-between items-center p-2 ">
-//           <span className="text-[14px] "><i className="text-gray-400">No Documents Attached</i></span>
-//           <button
-//             type="button"
-//             className="bg-[#C72030] h-[30px] w-[100px] text-white rounded"
-//             onClick={handleAttachFile}
-//           >
-//             Attach Files
-//           </button>
-//         </div>
-//       )}
-
-//       <input
-//         type="file"
-//         multiple
-//         ref={fileInputRef}
-//         style={{ display: "none" }}
-//         onChange={handleFileChange}
-//       />
-//     </div>
-//   );
-// };
-
 const Attachments = ({ attachments, setAttachments }) => {
   const fileInputRef = useRef(null);
   const [files, setFiles] = useState([]);
-
-  // useEffect(() => {
-  //   setFiles(attachments || []);
-  // }, [attachments]);
 
   const handleAttachFile = () => {
     fileInputRef.current?.click();
@@ -95,12 +41,22 @@ const Attachments = ({ attachments, setAttachments }) => {
     const selectedFiles = Array.from(event.target.files);
     if (!selectedFiles?.length) return;
 
-    setFiles([...files, ...selectedFiles]);
+    const newFiles = [...files, ...selectedFiles];
+    setFiles(newFiles);
     setAttachments([...attachments, ...selectedFiles]);
   };
 
-  const isImage = (file) => file.type.startsWith("image/");
+  const handleRemoveFile = (index) => {
+    const updatedFiles = [...files];
+    updatedFiles.splice(index, 1);
+    setFiles(updatedFiles);
 
+    const updatedAttachments = [...attachments];
+    updatedAttachments.splice(index, 1);
+    setAttachments(updatedAttachments);
+  };
+
+  const isImage = (file) => file.type.startsWith("image/");
   const getFileUrl = (file) => URL.createObjectURL(file);
 
   return (
@@ -129,32 +85,40 @@ const Attachments = ({ attachments, setAttachments }) => {
       {/* Preview area */}
       {files?.length > 0 && (
         <div className="flex flex-wrap gap-4 mt-2">
-          {files.map((file, index) =>
-            isImage(file) ? (
-              <div
-                key={index}
-                className="w-[80px] h-[80px] border rounded-md overflow-hidden"
+          {files.map((file, index) => (
+            <div
+              key={index}
+              className="relative w-[80px] h-[80px] border rounded-md"
+            >
+              {/* ❌ Remove button */}
+              <button
+                type="button"
+                onClick={() => handleRemoveFile(index)}
+                className="absolute -top-1 -right-1 bg-white text-red-500 rounded-full w-5 h-5 text-lg flex items-center justify-center shadow-lg"
+                title="Remove"
               >
+                &times;
+              </button>
+
+              {isImage(file) ? (
                 <img
                   src={getFileUrl(file)}
                   alt={file.name}
                   className="w-full h-full object-cover"
                 />
-              </div>
-            ) : (
-              <div
-                key={index}
-                className="text-sm text-gray-800 px-2 py-1 border rounded bg-gray-100"
-              >
-                📄 {file.name}
-              </div>
-            )
-          )}
+              ) : (
+                <div className="text-xs text-gray-800 px-2 py-1 h-full flex items-center justify-center bg-gray-100">
+                  📄 {file.name}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>
   );
 };
+
 
 const Issues = ({ closeModal }) => {
   const [title, setTitle] = useState("");
