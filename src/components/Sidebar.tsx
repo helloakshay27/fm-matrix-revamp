@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -222,9 +223,14 @@ const modulesByPackage = {
     { name: 'Redemption Marketplace', icon: Globe, href: '/vas/redemonection-marketplace' }
   ],
   'Market Place': [
-    { name: 'All', icon: Package, href: '/market-place/all' },
-    { name: 'Installed', icon: CheckSquare, href: '/market-place/installed' },
-    { name: 'Updates', icon: Download, href: '/market-place/updates' }
+    { name: 'Lease Management', icon: FileText, href: '/market-place/lease-management' },
+    { name: 'Loyalty Rule Engine', icon: Settings, href: '/market-place/loyalty-rule-engine' },
+    { name: 'Cloud Telephony', icon: Phone, href: '/market-place/cloud-telephony' },
+    { 
+      name: 'Accounting', 
+      icon: Calculator, 
+      href: '/market-place/accounting'
+    }
   ],
   'Settings': [
     { name: 'General', icon: Settings, href: '/settings/general' },
