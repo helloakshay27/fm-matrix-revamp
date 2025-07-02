@@ -351,20 +351,18 @@ export const TaskDashboard = () => {
           </div>
 
           {/* Status Cards */}
-          <div className="grid grid-cols-5 gap-4 mb-6">
-            {Object.entries(statusCounts).map(([status, count]) => (
-              <div
-                key={status}
-                className={`${statusColors[status as keyof typeof statusColors]} text-white p-4 rounded-lg text-center cursor-pointer transition-opacity ${
-                  selectedStatus === status ? 'opacity-100 ring-2 ring-white' : 'opacity-90 hover:opacity-100'
-                }`}
-                onClick={() => handleStatusFilter(status)}
-              >
-                <div className="text-2xl font-bold">{count}</div>
-                <div className="text-sm">{status}</div>
-              </div>
-            ))}
-          </div>
+<div className="grid grid-cols-5 gap-4 mb-6">
+  {Object.entries(statusCounts).map(([status, count]) => (
+    <div
+      key={status}
+      className="bg-[#F2F0EB] text-[#D92818] p-4 rounded-lg text-center shadow-[0px_2px_18px_rgba(45,45,45,0.1)]"
+    >
+      <div className="text-2xl font-bold">{count}</div>
+      <div className="text-sm">{status}</div>
+    </div>
+  ))}
+</div>
+
 
           {/* Filter Row */}
           <div className="flex items-center gap-3 mb-4">
