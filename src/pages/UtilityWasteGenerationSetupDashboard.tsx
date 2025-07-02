@@ -122,7 +122,7 @@ const UtilityWasteGenerationSetupDashboard = () => {
   value={commodityName}
   onChange={(e) => setCommodityName(e.target.value)}
   placeholder="Enter commodity name"
-  className="flex-1 h-9 text-sm"
+  className="flex-1 h-10 text-sm"
   onKeyPress={(e) => e.key === 'Enter' && handleAddCommodity()}
 />
 
@@ -168,7 +168,7 @@ const UtilityWasteGenerationSetupDashboard = () => {
                       Commodity*
                     </Label>
                     <Select>
-                      <SelectTrigger className="mt-2">
+                      <SelectTrigger className="mt-2 h-[56px]">
                         <SelectValue placeholder="Select Commodity" />
                       </SelectTrigger>
                       <SelectContent>
@@ -200,7 +200,7 @@ const UtilityWasteGenerationSetupDashboard = () => {
                       UOM*
                     </Label>
                     <Select value={categoryUoM} onValueChange={setCategoryUoM}>
-                      <SelectTrigger className="mt-2">
+                      <SelectTrigger className="mt-2 h-[56px]">
                         <SelectValue placeholder="Select UOM" />
                       </SelectTrigger>
                       <SelectContent>
