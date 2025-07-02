@@ -127,7 +127,7 @@ export const AMCDashboard = () => {
   onClick={handleAddClick}
   className="text-white bg-[#C72030] hover:bg-[#C72030]/90 [&_svg]:text-white"
 >
-  <Plus className="w-4 h-4 mr-2" />
+<Plus className="w-4 h-4 mr-2" style={{ color: '#BF213E' }} />
   Add
 </Button>
 
