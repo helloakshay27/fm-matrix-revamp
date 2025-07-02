@@ -250,7 +250,7 @@ export const ServiceDashboard = () => {
       {/* Header */}
       <div className="mb-6">
         <p className="text-[#1a1a1a] opacity-70 mb-2">Services &gt; Service List</p>
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">SERVICE LIST</h1>
+        <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a]">SERVICE LIST</h1>
       </div>
 
       {/* Action Buttons */}
