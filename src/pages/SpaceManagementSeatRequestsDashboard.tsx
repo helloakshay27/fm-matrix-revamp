@@ -153,47 +153,52 @@ export const SpaceManagementSeatRequestsDashboard = () => {
         <h1 className="text-2xl font-bold text-[#1a1a1a] mb-6 uppercase">SEAT APPROVAL REQUEST</h1>
         
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-gray-500 p-4 rounded-lg text-white">
-            <div className="flex items-center gap-3">
-              <Users className="w-8 h-8" />
-              <div>
-                <div className="text-2xl font-bold">{statistics.total}</div>
-                <div className="text-sm">All</div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-orange-500 p-4 rounded-lg text-white">
-            <div className="flex items-center gap-3">
-              <Clock className="w-8 h-8" />
-              <div>
-                <div className="text-2xl font-bold">{statistics.pending}</div>
-                <div className="text-sm">Pending</div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-green-500 p-4 rounded-lg text-white">
-            <div className="flex items-center gap-3">
-              <CheckCircle className="w-8 h-8" />
-              <div>
-                <div className="text-2xl font-bold">{statistics.approved}</div>
-                <div className="text-sm">Approved</div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-red-500 p-4 rounded-lg text-white">
-            <div className="flex items-center gap-3">
-              <XCircle className="w-8 h-8" />
-              <div>
-                <div className="text-2xl font-bold">{statistics.rejected}</div>
-                <div className="text-sm">Rejected</div>
-              </div>
-            </div>
-          </div>
-        </div>
+       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+  {/* All */}
+  <div className="bg-[#f6f4ee] p-4 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
+    <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
+      <Users className="w-5 h-5 text-[#D92818]" />
+    </div>
+    <div>
+      <div className="text-[#D92818] text-lg font-bold">{statistics.total}</div>
+      <div className="text-sm text-gray-500">All</div>
+    </div>
+  </div>
+
+  {/* Pending */}
+  <div className="bg-[#f6f4ee] p-4 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
+    <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
+      <Clock className="w-5 h-5 text-[#D92818]" />
+    </div>
+    <div>
+      <div className="text-[#D92818] text-lg font-bold">{statistics.pending}</div>
+      <div className="text-sm text-gray-500">Pending</div>
+    </div>
+  </div>
+
+  {/* Approved */}
+  <div className="bg-[#f6f4ee] p-4 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
+    <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
+      <CheckCircle className="w-5 h-5 text-[#D92818]" />
+    </div>
+    <div>
+      <div className="text-[#D92818] text-lg font-bold">{statistics.approved}</div>
+      <div className="text-sm text-gray-500">Approved</div>
+    </div>
+  </div>
+
+  {/* Rejected */}
+  <div className="bg-[#f6f4ee] p-4 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
+    <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
+      <XCircle className="w-5 h-5 text-[#D92818]" />
+    </div>
+    <div>
+      <div className="text-[#D92818] text-lg font-bold">{statistics.rejected}</div>
+      <div className="text-sm text-gray-500">Rejected</div>
+    </div>
+  </div>
+</div>
+
 
         {/* Table */}
         <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
