@@ -4,13 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Filter, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { RuleFilterDialog } from '@/components/RuleFilterDialog';
 
 export const RuleListPage = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
 
   const handleNewRule = () => {
     navigate('/loyalty-rule-engine');
+  };
+
+  const handleFilterClick = () => {
+    setFilterDialogOpen(true);
   };
 
   return (
@@ -34,7 +40,11 @@ export const RuleListPage = () => {
         </Button>
 
         <div className="flex items-center gap-4">
-          <Button variant="outline" className="border-gray-300">
+          <Button 
+            variant="outline" 
+            className="border-gray-300"
+            onClick={handleFilterClick}
+          >
             <Filter className="w-4 h-4 mr-2" />
             Filter
           </Button>
@@ -65,6 +75,12 @@ export const RuleListPage = () => {
           No matching rules found. Adjust your filters to see results.
         </div>
       </div>
+
+      {/* Filter Dialog */}
+      <RuleFilterDialog 
+        open={filterDialogOpen} 
+        onOpenChange={setFilterDialogOpen} 
+      />
     </div>
   );
 };
