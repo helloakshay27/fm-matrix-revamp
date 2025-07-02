@@ -1,8 +1,8 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Switch } from '@/components/ui/switch';
 import { Plus, Upload, FileText, Filter, Search, Eye, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ServiceBulkUploadModal } from '@/components/ServiceBulkUploadModal';
@@ -137,18 +137,18 @@ export const ServiceDashboard = () => {
     }
   };
 
-  const handleStatusToggle = (id: string, checked: boolean) => {
-    console.log(`Toggling status for Service ${id} to ${checked}`);
+  const handleStatusToggle = (id: string) => {
+    console.log(`Toggling status for Service ${id}`);
     
     // Update the main data array
     const updatedServices = services.map(service => 
-      service.id === id ? { ...service, status: checked } : service
+      service.id === id ? { ...service, status: !service.status } : service
     );
     setServices(updatedServices);
     
     // Update the filtered data array
     const updatedFilteredData = filteredServices.map(service => 
-      service.id === id ? { ...service, status: checked } : service
+      service.id === id ? { ...service, status: !service.status } : service
     );
     setFilteredServices(updatedFilteredData);
   };
@@ -371,10 +371,16 @@ export const ServiceDashboard = () => {
                 <TableCell>{service.floor}</TableCell>
                 <TableCell>{service.room}</TableCell>
                 <TableCell>
-                  <Switch
-                    checked={service.status}
-                    onCheckedChange={(checked) => handleStatusToggle(service.id, checked)}
-                  />
+                  <div className="flex items-center">
+                    <div
+                      className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${service.status ? 'bg-green-500' : 'bg-gray-300'}`}
+                      onClick={() => handleStatusToggle(service.id)}
+                    >
+                      <span
+                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${service.status ? 'translate-x-6' : 'translate-x-1'}`}
+                      />
+                    </div>
+                  </div>
                 </TableCell>
                 <TableCell>{service.createdOn}</TableCell>
               </TableRow>
