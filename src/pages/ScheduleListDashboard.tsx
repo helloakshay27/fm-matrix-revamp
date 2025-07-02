@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Switch } from '@/components/ui/switch';
 import { Plus, Upload, Filter, Download, Eye, Edit, Copy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
@@ -69,6 +68,8 @@ export const ScheduleListDashboard = () => {
   };
 
   const handleToggleActive = (scheduleId: string) => {
+    console.log(`Toggling active status for Schedule ${scheduleId}`);
+    
     setSchedules(prev => 
       prev.map(schedule => 
         schedule.id === scheduleId 
@@ -231,11 +232,16 @@ className="hover:opacity-90 px-4"
                   </span>
                 </TableCell>
                 <TableCell>
-                  <Switch 
-                    checked={schedule.active}
-                    onCheckedChange={() => handleToggleActive(schedule.id)}
-                    className="data-[state=checked]:bg-[#C72030]"
-                  />
+                  <div className="flex items-center">
+                    <div
+                      className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${schedule.active ? 'bg-green-500' : 'bg-gray-300'}`}
+                      onClick={() => handleToggleActive(schedule.id)}
+                    >
+                      <span
+                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${schedule.active ? 'translate-x-6' : 'translate-x-1'}`}
+                      />
+                    </div>
+                  </div>
                 </TableCell>
                 <TableCell>{schedule.createdOn}</TableCell>
               </TableRow>
