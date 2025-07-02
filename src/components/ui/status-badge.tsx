@@ -8,19 +8,23 @@ const statusBadgeVariants = cva(
   {
     variants: {
       variant: {
-        pending: "bg-[#D9CA20] text-black border border-[#D9CA20]",
-        rejected: "bg-[#D92E14] text-white border border-[#D92E14]",
-        accepted: "bg-[#16B364] text-white border border-[#16B364]",
-        yellow: "bg-[#D9CA20] text-black border border-[#D9CA20]",
-        red: "bg-[#D92E14] text-white border border-[#D92E14]",
-        green: "bg-[#16B364] text-white border border-[#16B364]",
-        open: "bg-[#16B364] text-white border border-[#16B364]",
-        closed: "bg-[#D92E14] text-white border border-[#D92E14]",
-        "in-progress": "bg-[#D9CA20] text-black border border-[#D9CA20]",
-        active: "bg-[#16B364] text-white border border-[#16B364]",
-        inactive: "bg-[#D92E14] text-white border border-[#D92E14]",
-        breakdown: "bg-[#D92E14] text-white border border-[#D92E14]",
-        "in-use": "bg-[#16B364] text-white border border-[#16B364]",
+        pending: "bg-[#F2EBC9] text-black border border-[#F2EBC9]",
+        rejected: "bg-[#F2C8C4] text-black border border-[#F2C8C4]",
+        accepted: "bg-[#C7EDDA] text-black border border-[#C7EDDA]",
+
+        // Optional: map older keys too
+        yellow: "bg-[#F2EBC9] text-black border border-[#F2EBC9]",
+        red: "bg-[#F2C8C4] text-black border border-[#F2C8C4]",
+        green: "bg-[#C7EDDA] text-black border border-[#C7EDDA]",
+        
+        // Leave other statuses unchanged or update similarly
+        open: "bg-[#C7EDDA] text-black border border-[#C7EDDA]",
+        closed: "bg-[#F2C8C4] text-black border border-[#F2C8C4]",
+        "in-progress": "bg-[#F2EBC9] text-black border border-[#F2EBC9]",
+        active: "bg-[#C7EDDA] text-black border border-[#C7EDDA]",
+        inactive: "bg-[#F2C8C4] text-black border border-[#F2C8C4]",
+        breakdown: "bg-[#F2C8C4] text-black border border-[#F2C8C4]",
+        "in-use": "bg-[#C7EDDA] text-black border border-[#C7EDDA]",
       },
       size: {
         default: "px-2.5 py-0.5 text-xs",
@@ -33,7 +37,7 @@ const statusBadgeVariants = cva(
       size: "default",
     },
   }
-)
+);
 
 type StatusVariant = "pending" | "rejected" | "accepted" | "yellow" | "red" | "green" | "open" | "closed" | "in-progress" | "active" | "inactive" | "breakdown" | "in-use"
 
