@@ -361,6 +361,9 @@ import CloudTelephonyDetailPage from './pages/CloudTelephonyDetailPage';
 // Import Accounting Detail page
 import AccountingDetailPage from './pages/AccountingDetailPage';
 
+// Import Rule List page
+import { RuleListPage } from './pages/RuleListPage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -371,6 +374,10 @@ function App() {
           <Routes>
             <Route path="/" element={<Layout><div /></Layout>}>
               <Route index element={<Index />} />
+              
+              {/* Rule Engine Routes */}
+              <Route path="/rule-engine/rule-list" element={<RuleListPage />} />
+              <Route path="/loyalty-rule-engine" element={<LoyaltyRuleEngineDashboard />} />
               
               {/* Settings Routes */}
               <Route path="/settings/users" element={<FMUsersDashboard />} />
