@@ -22,44 +22,48 @@ export const BillBookingDashboard = () => {
         <h1 className="text-2xl font-bold text-gray-900 mb-6">BILL LIST</h1>
         
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-  <div className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-6 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm opacity-80">Total Bills</p>
-        <p className="text-3xl font-bold">0</p>
-      </div>
-      <Settings className="w-8 h-8 opacity-60" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  {/* Card 1 */}
+  <div className="bg-[#F9F7F2] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4">
+    <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
+      <Settings className="w-5 h-5 text-[#D92818]" />
+    </div>
+    <div>
+      <p className="text-[#D92818] font-bold text-lg">0</p>
+      <p className="text-sm text-gray-500">Total Bills</p>
     </div>
   </div>
 
-  <div className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-6 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-lg font-semibold">Total Amount</p>
-        <p className="text-3xl font-bold">0</p>
-      </div>
-      <Banknote className="w-8 h-8 opacity-60" />
+  {/* Card 2 */}
+  <div className="bg-[#F9F7F2] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4">
+    <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
+      <Banknote className="w-5 h-5 text-[#D92818]" />
+    </div>
+    <div>
+      <p className="text-[#D92818] font-bold text-lg">₹ 0</p>
+      <p className="text-sm text-gray-500">Total Amount</p>
     </div>
   </div>
 
-  <div className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-6 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-lg font-semibold">Total Paid Amount</p>
-        <p className="text-3xl font-bold">0</p>
-      </div>
-      <CreditCard className="w-8 h-8 opacity-60" />
+  {/* Card 3 */}
+  <div className="bg-[#F9F7F2] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4">
+    <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
+      <CreditCard className="w-5 h-5 text-[#D92818]" />
+    </div>
+    <div>
+      <p className="text-[#D92818] font-bold text-lg">₹ 0</p>
+      <p className="text-sm text-gray-500">Total Paid Amount</p>
     </div>
   </div>
 
-  <div className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-6 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-lg font-semibold">Total Pending Amount</p>
-        <p className="text-3xl font-bold">0</p>
-      </div>
-      <Clock className="w-8 h-8 opacity-60" />
+  {/* Card 4 */}
+  <div className="bg-[#F9F7F2] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4">
+    <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
+      <Clock className="w-5 h-5 text-[#D92818]" />
+    </div>
+    <div>
+      <p className="text-[#D92818] font-bold text-lg">₹ 0</p>
+      <p className="text-sm text-gray-500">Total Pending Amount</p>
     </div>
   </div>
 </div>
