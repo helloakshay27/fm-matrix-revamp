@@ -199,7 +199,6 @@ export const TaskDashboard = () => {
 
   const handleAdvancedFilter = (filters: any) => {
     console.log('Advanced filters applied:', filters);
-    // Apply advanced filters logic here
     let filtered = taskData;
     
     if (filters.type) {
@@ -213,7 +212,6 @@ export const TaskDashboard = () => {
   };
 
   const handleExport = () => {
-    // Create CSV content
     const headers = ['ID', 'Checklist', 'Type', 'Schedule', 'Assign to', 'Status', 'Schedule For', 'Assets/Services', 'Site', 'Location', 'Supplier', 'Grace Time', 'Duration'];
     const csvContent = [
       headers.join(','),
@@ -234,7 +232,6 @@ export const TaskDashboard = () => {
       ].join(','))
     ].join('\n');
 
-    // Create and download CSV file
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -263,20 +260,23 @@ export const TaskDashboard = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       {/* Header */}
-      <div className="mb-6">
-        <p className="text-[#1a1a1a] opacity-70 mb-2">Scheduled Task &gt; Scheduled Task List</p>
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">SCHEDULED TASK</h1>
+      <div className="mb-4 sm:mb-6">
+        <p className="text-[#1a1a1a] opacity-70 mb-2 text-sm sm:text-base">Scheduled Task > Scheduled Task List</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">SCHEDULED TASK</h1>
       </div>
 
       {/* View Tabs */}
-      <div className="flex gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-4 sm:mb-6">
         <Button
           variant={view === 'List' ? 'default' : 'outline'}
           onClick={() => setView('List')}
           style={view === 'List' ? { backgroundColor: '#C72030' } : {}}
-          className={view === 'List' ? 'text-white' : 'border-[#C72030] text-[#C72030]'}
+          className={cn(
+            view === 'List' ? 'text-white' : 'border-[#C72030] text-[#C72030]',
+            'text-sm sm:text-base py-2 sm:py-2 px-4 sm:px-6'
+          )}
         >
           List
         </Button>
@@ -284,7 +284,10 @@ export const TaskDashboard = () => {
           variant={view === 'Calendar' ? 'default' : 'outline'}
           onClick={() => setView('Calendar')}
           style={view === 'Calendar' ? { backgroundColor: '#C72030' } : {}}
-          className={view === 'Calendar' ? 'text-white' : 'border-[#C72030] text-[#C72030]'}
+          className={cn(
+            view === 'Calendar' ? 'text-white' : 'border-[#C72030] text-[#C72030]',
+            'text-sm sm:text-base py-2 sm:py-2 px-4 sm:px-6'
+          )}
         >
           Calendar
         </Button>
@@ -293,13 +296,13 @@ export const TaskDashboard = () => {
       {view === 'List' ? (
         <>
           {/* Date Range with Calendar Dropdown */}
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4 sm:mb-6">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-[200px] justify-start text-left font-normal",
+                    "w-full sm:w-[200px] justify-start text-left font-normal text-sm sm:text-base",
                     !startDate && "text-muted-foreground"
                   )}
                 >
@@ -323,7 +326,7 @@ export const TaskDashboard = () => {
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-[200px] justify-start text-left font-normal",
+                    "w-full sm:w-[200px] justify-start text-left font-normal text-sm sm:text-base",
                     !endDate && "text-muted-foreground"
                   )}
                 >
@@ -342,39 +345,38 @@ export const TaskDashboard = () => {
               </PopoverContent>
             </Popover>
             
-            <Button style={{ backgroundColor: '#00A651' }} className="text-white">
+            <Button style={{ backgroundColor: '#00A651' }} className="text-white w-full sm:w-auto">
               Apply
             </Button>
-            <Button style={{ backgroundColor: '#FFA500' }} className="text-white" onClick={handleReset}>
+            <Button style={{ backgroundColor: '#FFA500' }} className="text-white w-full sm:w-auto" onClick={handleReset}>
               Reset
             </Button>
           </div>
 
           {/* Status Cards */}
-<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-  {Object.entries(statusCounts).map(([status, count]) => (
-    <div
-      key={status}
-      className="bg-[#F2F0EB] text-[#D92818] p-4 rounded-lg text-center shadow-[0px_2px_18px_rgba(45,45,45,0.1)] md:h-[132px] flex flex-col items-center justify-center"
-    >
-      <div className="text-2xl font-bold">{count}</div>
-      <div className="text-sm">{status}</div>
-    </div>
-  ))}
-</div>
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-4 sm:mb-6">
+            {Object.entries(statusCounts).map(([status, count]) => (
+              <div
+                key={status}
+                className="bg-[#F2F0EB] text-[#D92818] p-3 sm:p-4 rounded-lg text-center shadow-[0px_2px_18px_rgba(45,45,45,0.1)] h-[100px] sm:h-[132px] flex flex-col items-center justify-center"
+              >
+                <div className="text-lg sm:text-2xl font-bold">{count}</div>
+                <div className="text-xs sm:text-sm">{status}</div>
+              </div>
+            ))}
+          </div>
 
           {/* Filter Row */}
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+                <Button variant="outline" className="border-[#C72030] text-[#C72030] w-full sm:w-auto">
                   <Filter className="w-4 h-4 mr-2" />
                   Filter
                   <ChevronDown className="w-4 h-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-80 p-4 space-y-3">
+              <DropdownMenuContent className="w-full sm:w-80 p-4 space-y-3">
                 <div className="grid grid-cols-1 gap-3">
                   <Select value={filterType} onValueChange={setFilterType}>
                     <SelectTrigger>
@@ -418,7 +420,7 @@ export const TaskDashboard = () => {
                   </Select>
                 </div>
                 
-                <div className="flex gap-2 pt-2">
+                <div className="flex flex-col sm:flex-row gap-2 pt-2">
                   <Button 
                     onClick={handleBasicFilter}
                     style={{ backgroundColor: '#C72030' }}
@@ -445,7 +447,7 @@ export const TaskDashboard = () => {
 
             <Button 
               variant="outline" 
-              className="border-[#C72030] text-[#C72030]"
+              className="border-[#C72030] text-[#C72030] w-full sm:w-auto"
               onClick={() => setShowAdvancedFilter(true)}
             >
               <Filter className="w-4 h-4 mr-2" />
@@ -454,32 +456,29 @@ export const TaskDashboard = () => {
           </div>
 
           {/* Filter and Search */}
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4 sm:mb-6">
             <Input
               placeholder="Search with Task ID"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-48"
+              className="w-full sm:w-48 text-sm sm:text-base"
             />
             <Input
               placeholder="Search using checklist name or assigned to"
               value={searchChecklist}
               onChange={(e) => setSearchChecklist(e.target.value)}
-              className="w-64"
+              className="w-full sm:w-64 text-sm sm:text-base"
             />
             <Button 
-
-style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }}
-  className="hover:opacity-90 px-4"
-
-
+              style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }}
+              className="hover:opacity-90 px-4 w-full sm:w-auto"
               onClick={handleSearch}
             >
               GO
             </Button>
             <Button 
               variant="outline" 
-              className="border-[#C72030] text-[#C72030] ml-auto"
+              className="border-[#C72030] text-[#C72030] w-full sm:w-auto sm:ml-auto"
               onClick={handleExport}
             >
               <Download className="w-4 h-4 mr-2" />
@@ -492,21 +491,21 @@ style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }}
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Action</TableHead>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Checklist</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Schedule</TableHead>
-                  <TableHead>Assign to</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Schedule For</TableHead>
-                  <TableHead>Assets/Services</TableHead>
-                  <TableHead>Site</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead>Grace Time</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>%</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Action</TableHead>
+                  <TableHead className="text-xs sm:text-sm">ID</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Checklist</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Type</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Schedule</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Assign to</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Status</TableHead>
+                  <TableHead className="hidden sm:table-cell text-xs sm:text-sm">Schedule For</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">Assets/Services</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs sm:text-sm">Site</TableHead>
+                  <TableHead className="hidden lg:table-cell text-xs sm:text-sm">Location</TableHead>
+                  <TableHead className="hidden lg:table-cell text-xs sm:text-sm">Supplier</TableHead>
+                  <TableHead className="hidden lg:table-cell text-xs sm:text-sm">Grace Time</TableHead>
+                  <TableHead className="hidden lg:table-cell text-xs sm:text-sm">Duration</TableHead>
+                  <TableHead className="hidden lg:table-cell text-xs sm:text-sm">%</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -521,28 +520,28 @@ style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }}
                         <Eye className="w-4 h-4" />
                       </Button>
                     </TableCell>
-                    <TableCell className="font-medium">{task.id}</TableCell>
-                    <TableCell>{task.checklist}</TableCell>
+                    <TableCell className="font-medium text-xs sm:text-sm">{task.id}</TableCell>
+                    <TableCell className="text-xs sm:text-sm">{task.checklist}</TableCell>
                     <TableCell>
-                      <Badge className="bg-blue-100 text-blue-700">
+                      <Badge className="bg-blue-100 text-blue-700 text-xs sm:text-sm">
                         {task.type}
                       </Badge>
                     </TableCell>
-                    <TableCell>{task.schedule}</TableCell>
-                    <TableCell>{task.assignTo}</TableCell>
+                    <TableCell className="text-xs sm:text-sm">{task.schedule}</TableCell>
+                    <TableCell className="text-xs sm:text-sm">{task.assignTo}</TableCell>
                     <TableCell>
-                      <Badge className={getStatusBadgeColor(task.status)}>
+                      <Badge className={cn(getStatusBadgeColor(task.status), "text-xs sm:text-sm")}>
                         {task.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>{task.scheduleFor}</TableCell>
-                    <TableCell>{task.assetsServices}</TableCell>
-                    <TableCell>{task.site}</TableCell>
-                    <TableCell className="max-w-xs truncate">{task.location}</TableCell>
-                    <TableCell>{task.supplier}</TableCell>
-                    <TableCell>{task.graceTime}</TableCell>
-                    <TableCell>{task.duration}</TableCell>
-                    <TableCell></TableCell>
+                    <TableCell className="hidden sm:table-cell text-xs sm:text-sm">{task.scheduleFor}</TableCell>
+                    <TableCell className="hidden md:table-cell text-xs sm:text-sm">{task.assetsServices}</TableCell>
+                    <TableCell className="hidden md:table-cell text-xs sm:text-sm">{task.site}</TableCell>
+                    <TableCell className="hidden lg:table-cell text-xs sm:text-sm max-w-xs truncate">{task.location}</TableCell>
+                    <TableCell className="hidden lg:table-cell text-xs sm:text-sm">{task.supplier}</TableCell>
+                    <TableCell className="hidden lg:table-cell text-xs sm:text-sm">{task.graceTime}</TableCell>
+                    <TableCell className="hidden lg:table-cell text-xs sm:text-sm">{task.duration}</TableCell>
+                    <TableCell className="hidden lg:table-cell text-xs sm:text-sm"></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -551,15 +550,15 @@ style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }}
         </>
       ) : (
         /* Calendar View */
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Calendar Controls */}
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4 sm:mb-6">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-[200px] justify-start text-left font-normal",
+                    "w-full sm:w-[200px] justify-start text-left font-normal text-sm sm:text-base",
                     !startDate && "text-muted-foreground"
                   )}
                 >
@@ -583,7 +582,7 @@ style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }}
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-[200px] justify-start text-left font-normal",
+                    "w-full sm:w-[200px] justify-start text-left font-normal text-sm sm:text-base",
                     !endDate && "text-muted-foreground"
                   )}
                 >
@@ -604,41 +603,41 @@ style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }}
             
             <Input
               placeholder="Select Some Options"
-              className="w-48"
+              className="w-full sm:w-48 text-sm sm:text-base"
             />
             <Input
               placeholder="Select Schedule Type"
-              className="w-48"
+              className="w-full sm:w-48 text-sm sm:text-base"
             />
-            <Button style={{ backgroundColor: '#C72030' }} className="text-white">
+            <Button style={{ backgroundColor: '#C72030' }} className="text-white w-full sm:w-auto">
               Apply
             </Button>
-            <Button style={{ backgroundColor: '#FFA500' }} className="text-white">
+            <Button style={{ backgroundColor: '#FFA500' }} className="text-white w-full sm:w-auto">
               Reset
             </Button>
-            <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+            <Button variant="outline" className="border-[#C72030] text-[#C72030] w-full sm:w-auto">
               Export
             </Button>
           </div>
 
           {/* Calendar Navigation */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">&lt;</Button>
-              <Button variant="outline" size="sm">&gt;</Button>
-              <Button variant="outline" size="sm">Today</Button>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between mb-4 gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button variant="outline" size="sm" className="text-xs sm:text-sm">{'<'}</Button>
+              <Button variant="outline" size="sm" className="text-xs sm:text-sm">{'>'}</Button>
+              <Button variant="outline" size="sm" className="text-xs sm:text-sm">Today</Button>
             </div>
-            <h2 className="text-xl font-semibold">June 2025</h2>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">month</Button>
-              <Button variant="outline" size="sm">week</Button>
-              <Button variant="outline" size="sm">day</Button>
-              <Button variant="outline" size="sm">list</Button>
+            <h2 className="text-lg sm:text-xl font-semibold">June 2025</h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button variant="outline" size="sm" className="text-xs sm:text-sm">month</Button>
+              <Button variant="outline" size="sm" className="text-xs sm:text-sm">week</Button>
+              <Button variant="outline" size="sm" className="text-xs sm:text-sm">day</Button>
+              <Button variant="outline" size="sm" className="text-xs sm:text-sm">list</Button>
             </div>
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-4 mb-4 text-sm">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-4 text-xs sm:text-sm">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-yellow-400 rounded"></div>
               <span>Scheduled</span>
@@ -663,7 +662,7 @@ style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }}
 
           {/* Calendar Grid */}
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <Calendar
                 mode="single"
                 selected={calendarDate}
@@ -672,7 +671,7 @@ style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }}
               />
               
               {/* Sample calendar entries */}
-              <div className="mt-6 space-y-2">
+              <div className="mt-4 sm:mt-6 space-y-2">
                 <div className="text-xs text-gray-600 grid grid-cols-7 gap-1">
                   <div>Sun</div>
                   <div>Mon</div>
@@ -683,15 +682,14 @@ style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }}
                   <div>Sat</div>
                 </div>
                 
-                {/* Calendar entries for demonstration */}
                 <div className="grid grid-cols-7 gap-1 text-xs">
                   {Array.from({ length: 30 }, (_, i) => (
-                    <div key={i} className="min-h-[100px] border border-gray-200 p-1">
+                    <div key={i} className="min-h-[80px] sm:min-h-[100px] border border-gray-200 p-1">
                       <div className="font-semibold">{i + 1}</div>
                       {i % 3 === 0 && (
                         <div className="space-y-1">
-                          <div className="bg-red-500 text-white p-1 rounded text-xs">PPM - Diesel Generator</div>
-                          <div className="bg-red-500 text-white p-1 rounded text-xs">PPM - Test Ladies washroom</div>
+                          <div className="bg-red-500 text-white p-1 rounded text-[10px] sm:text-xs truncate">PPM - Diesel Generator</div>
+                          <div className="bg-red-500 text-white p-1 rounded text-[10px] sm:text-xs truncate">PPM - Test Ladies washroom</div>
                         </div>
                       )}
                     </div>
