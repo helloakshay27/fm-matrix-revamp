@@ -77,7 +77,7 @@ export const VendorDashboard = () => {
           <span>&gt;</span>
           <span>Supplier List</span>
         </div>
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">SUPPLIER LIST</h1>
+        <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a]">SUPPLIER LIST</h1>
       </div>
 
       {/* Action Buttons */}

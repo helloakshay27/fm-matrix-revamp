@@ -9,243 +9,145 @@ import { Edit, Eye, Plus } from "lucide-react";
 const utilityRequestData = [
   {
     id: 1,
-    entity: "SIFY TECHNOLOGIES LTD",
-    fromDate: "2024-05-01",
-    toDate: "2024-05-31",
-    totalConsumption: 35.93,
-    rate: 28.78,
-    amount: 1033.95,
-    plantDetail: "",
-    status: "pending",
-    readingType: "DGKVAH"
+    entity: "SIFY TECHNOLOGIES LIMITED",
+    requestType: "Water",
+    amount: 5000,
+    status: "Pending",
+    requestDate: "2024-01-15",
+    description: "Monthly water utility request"
   },
   {
     id: 2,
-    entity: "Tata Starbucks Private Limited",
-    fromDate: "2024-05-01",
-    toDate: "2024-05-31",
-    totalConsumption: 321.27,
-    rate: 28.78,
-    amount: 9246.21,
-    plantDetail: "",
-    status: "pending",
-    readingType: "DGKVAH"
-  },
-  {
-    id: 3,
-    entity: "Storybook Ventures",
-    fromDate: "2024-05-01",
-    toDate: "2024-05-31",
-    totalConsumption: 155.23,
-    rate: 28.78,
-    amount: 4467.63,
-    plantDetail: "",
-    status: "pending",
-    readingType: "DGKVAH"
-  },
-  {
-    id: 4,
-    entity: "CREST DIGITAL PRIVATE LIMITED (Space Tele)",
-    fromDate: "2024-05-01",
-    toDate: "2024-05-31",
-    totalConsumption: 786.67,
-    rate: 28.78,
-    amount: 22640.5,
-    plantDetail: "",
-    status: "pending",
-    readingType: "DGKVAH"
-  },
-  {
-    id: 5,
-    entity: "Reliance Jio Infocomm Limited",
-    fromDate: "2024-05-01",
-    toDate: "2024-05-31",
-    totalConsumption: 97.85,
-    rate: 28.78,
-    amount: 2816.01,
-    plantDetail: "",
-    status: "pending",
-    readingType: "DGKVAH"
-  },
-  {
-    id: 6,
-    entity: "Synechron Technologies Pvt. Ltd.-SE",
-    fromDate: "2024-05-01",
-    toDate: "2024-05-31",
-    totalConsumption: 3525.64,
-    rate: 28.78,
-    amount: 101468.0,
-    plantDetail: "",
-    status: "pending",
-    readingType: "DGKVAH"
-  },
-  {
-    id: 7,
-    entity: "Northern Operating Solutions Pvt. L",
-    fromDate: "2024-05-01",
-    toDate: "2024-05-31",
-    totalConsumption: 7258.89,
-    rate: 28.78,
-    amount: 208911.0,
-    plantDetail: "",
-    status: "pending",
-    readingType: "DGKVAH"
-  },
-  {
-    id: 8,
-    entity: "ALTERA DIGITAL HEALTH (INDIA) LLP",
-    fromDate: "2024-05-01",
-    toDate: "2024-05-31",
-    totalConsumption: 1671.24,
-    rate: 28.78,
-    amount: 48098.2,
-    plantDetail: "",
-    status: "pending",
-    readingType: "DGKVAH"
-  },
-  {
-    id: 9,
-    entity: "CompuCom CSI Systems India Pvt. Ltd",
-    fromDate: "2024-05-01",
-    toDate: "2024-05-31",
-    totalConsumption: 3094.7,
-    rate: 28.78,
-    amount: 89065.6,
-    plantDetail: "",
-    status: "pending",
-    readingType: "DGKVAH"
-  },
-  {
-    id: 10,
-    entity: "Allianz Services Private Limited",
-    fromDate: "2024-05-01",
-    toDate: "2024-05-31",
-    totalConsumption: 2949.43,
-    rate: 28.78,
-    amount: 84884.5,
-    plantDetail: "",
-    status: "pending",
-    readingType: "DGKVAH"
+    entity: "TECH SOLUTIONS PVT LTD",
+    requestType: "Electricity",
+    amount: 15000,
+    status: "Approved",
+    requestDate: "2024-01-14",
+    description: "Quarterly electricity bill request"
   }
 ];
 
-const UtilityRequestDashboard = () => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 6; // Based on the pagination shown in the image
+export const UtilityRequestDashboard = () => {
+  const [selectedTab, setSelectedTab] = useState('all');
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+  const handleAddRequest = () => {
+    console.log('Add new utility request');
+  };
+
+  const handleViewRequest = (id: number) => {
+    console.log('View request:', id);
+  };
+
+  const handleEditRequest = (id: number) => {
+    console.log('Edit request:', id);
   };
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Customer Consumption</h1>
+      {/* Breadcrumb */}
+      <div className="text-sm text-gray-600">
+        Utility &gt; Requests
       </div>
 
-      {/* Add Button */}
-      <div className="flex justify-start">
+      {/* Page Title */}
+      <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">UTILITY REQUESTS</h1>
+
+      {/* Action Buttons */}
+      <div className="flex gap-3">
         <Button 
-          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+          onClick={handleAddRequest}
+          className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
         >
           <Plus className="w-4 h-4" />
-          Add
+          Add Request
         </Button>
       </div>
 
-      {/* Table */}
+      {/* Tab Navigation */}
+      <div className="flex border-b border-gray-200">
+        {['all', 'pending', 'approved', 'rejected'].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setSelectedTab(tab)}
+            className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors capitalize ${
+              selectedTab === tab
+                ? 'border-[#C72030] text-[#C72030] bg-[#C72030]/5'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* Requests Table */}
       <Card>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-gray-700">Action</TableHead>
-                <TableHead className="font-semibold text-gray-700">view</TableHead>
-                <TableHead className="font-semibold text-gray-700">Entity</TableHead>
-                <TableHead className="font-semibold text-gray-700">From date</TableHead>
-                <TableHead className="font-semibold text-gray-700">To date</TableHead>
-                <TableHead className="font-semibold text-gray-700">Total consumption</TableHead>
-                <TableHead className="font-semibold text-gray-700">Rate</TableHead>
-                <TableHead className="font-semibold text-gray-700">Amount</TableHead>
-                <TableHead className="font-semibold text-gray-700">Plant detail</TableHead>
-                <TableHead className="font-semibold text-gray-700">Status</TableHead>
-                <TableHead className="font-semibold text-gray-700">Reading type</TableHead>
+                <TableHead className="font-semibold">Actions</TableHead>
+                <TableHead className="font-semibold">ID</TableHead>
+                <TableHead className="font-semibold">Entity</TableHead>
+                <TableHead className="font-semibold">Request Type</TableHead>
+                <TableHead className="font-semibold">Amount</TableHead>
+                <TableHead className="font-semibold">Status</TableHead>
+                <TableHead className="font-semibold">Request Date</TableHead>
+                <TableHead className="font-semibold">Description</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {utilityRequestData.map((item) => (
-                <TableRow key={item.id} className="hover:bg-gray-50">
-                  <TableCell>
-                    <Button 
-                      size="sm" 
-                      className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-2 py-1 h-8 text-xs font-medium"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
+              {utilityRequestData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                    No utility requests found
                   </TableCell>
-                  <TableCell>
-                    <Button 
-                      size="sm" 
-                      className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-2 py-1 h-8 text-xs font-medium"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </TableCell>
-                  <TableCell className="font-medium">{item.entity}</TableCell>
-                  <TableCell>{item.fromDate}</TableCell>
-                  <TableCell>{item.toDate}</TableCell>
-                  <TableCell>{item.totalConsumption}</TableCell>
-                  <TableCell>{item.rate}</TableCell>
-                  <TableCell>{item.amount}</TableCell>
-                  <TableCell>{item.plantDetail}</TableCell>
-                  <TableCell>
-                    <span className="text-orange-600 font-medium">{item.status}</span>
-                  </TableCell>
-                  <TableCell>{item.readingType}</TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                utilityRequestData.map((request) => (
+                  <TableRow key={request.id} className="hover:bg-gray-50">
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleViewRequest(request.id)}
+                          className="h-8 w-8 p-0 hover:bg-blue-100 hover:text-blue-600"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEditRequest(request.id)}
+                          className="h-8 w-8 p-0 hover:bg-gray-100"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">#{request.id}</TableCell>
+                    <TableCell>{request.entity}</TableCell>
+                    <TableCell>{request.requestType}</TableCell>
+                    <TableCell>₹{request.amount.toLocaleString()}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        request.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                        request.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {request.status}
+                      </span>
+                    </TableCell>
+                    <TableCell>{request.requestDate}</TableCell>
+                    <TableCell className="max-w-xs truncate">{request.description}</TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
-
-      {/* Pagination */}
-      <div className="flex items-center justify-center space-x-2">
-        <div className="flex items-center space-x-1">
-          {[1, 2, 3, 4, 5].map((page) => (
-            <Button
-              key={page}
-              variant={currentPage === page ? "default" : "outline"}
-              size="sm"
-              onClick={() => handlePageChange(page)}
-              className={`w-8 h-8 rounded-none ${
-                currentPage === page 
-                  ? "bg-[#C72030] hover:bg-[#A01B29] text-white" 
-                  : "bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200"
-              }`}
-            >
-              {page}
-            </Button>
-          ))}
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-8 h-8 rounded-none bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200"
-          >
-            6
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-none bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200"
-          >
-            Last »
-          </Button>
-        </div>
-      </div>
     </div>
   );
 };
-
-export default UtilityRequestDashboard;

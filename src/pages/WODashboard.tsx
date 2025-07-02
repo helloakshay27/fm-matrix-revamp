@@ -64,7 +64,7 @@ export const WODashboard = () => {
       </div>
 
       {/* Page Title */}
-      <h1 className="text-2xl font-bold mb-6">WORK ORDER LIST</h1>
+      <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal mb-6">WORK ORDER LIST</h1>
 
       {/* Action Buttons */}
       <div className="flex items-center justify-between mb-6">

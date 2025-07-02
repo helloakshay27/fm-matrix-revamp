@@ -77,7 +77,7 @@ export const UtilityWaterDashboard = () => {
       </div>
 
       {/* Page Title */}
-      <h1 className="text-2xl font-bold text-gray-900">ASSET LIST</h1>
+      <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">ASSET LIST</h1>
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -87,7 +87,7 @@ export const WBSElementDashboard = () => {
       </div>
 
       {/* Page Title */}
-      <h1 className="text-2xl font-bold mb-6">WBS LIST</h1>
+      <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal mb-6">WBS LIST</h1>
 
       {/* Action Buttons */}
       <div className="mb-6 flex gap-3">

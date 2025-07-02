@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,7 +54,7 @@ export const ViewPerformancePage = () => {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">meter reading</h1>
+          <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a]">meter reading</h1>
           <div className="flex gap-3">
             <Button 
               variant="secondary"

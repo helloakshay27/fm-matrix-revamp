@@ -23,7 +23,7 @@ const UtilitySolarGeneratorDashboard = () => {
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[#C72030]">SOLAR GENERATORS LIST</h1>
+        <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#C72030]">SOLAR GENERATORS LIST</h1>
       </div>
 
       {/* Filters Button */}

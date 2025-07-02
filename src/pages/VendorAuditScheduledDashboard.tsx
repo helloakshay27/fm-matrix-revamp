@@ -40,7 +40,7 @@ export const VendorAuditScheduledDashboard = () => {
           <span className="mx-2">{'>'}</span>
           <span>Schedule List</span>
         </nav>
-        <h1 className="text-2xl font-bold text-gray-900">SCHEDULE LIST</h1>
+        <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">SCHEDULE LIST</h1>
       </div>
 
       {/* Add Button */}
