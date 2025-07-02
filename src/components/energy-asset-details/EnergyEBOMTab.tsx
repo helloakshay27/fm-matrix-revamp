@@ -53,7 +53,7 @@ export const EnergyEBOMTab = () => {
                 <td className="px-4 py-3 text-sm text-gray-900">7</td>
                 <td className="px-4 py-3 text-sm text-blue-600">DIESEL GENERATOR</td>
                 <td className="px-4 py-3">
-                  <div className="w-6 h-3 bg-red-500 rounded-full"></div>
+                  <div className="w-6 h-3 bg-red-500 rounded-none"></div>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-900">09/05/2025</td>
               </tr>

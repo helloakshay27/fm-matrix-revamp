@@ -1,8 +1,8 @@
+
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
-// 👇 Changed `rounded-full` → `rounded-none`
 const statusBadgeVariants = cva(
   "inline-flex items-center rounded-none px-2.5 py-0.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
   {
@@ -35,14 +35,37 @@ const statusBadgeVariants = cva(
   }
 )
 
+type StatusVariantKey = keyof typeof statusBadgeVariants
+
 export interface StatusBadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof statusBadgeVariants> {
-  status?: keyof typeof statusBadgeVariants["variants"]["variant"]
+  status?: string
 }
 
 function StatusBadge({ className, variant, size, status, children, ...props }: StatusBadgeProps) {
-  const statusVariant = status || variant
+  // Convert status string to valid variant key
+  const getVariantFromStatus = (statusValue?: string): StatusVariantKey => {
+    if (!statusValue) return "pending"
+    
+    const normalizedStatus = statusValue.toLowerCase().replace(/\s+/g, '-')
+    const validVariants = Object.keys((statusBadgeVariants as any).config.variants.variant)
+    
+    if (validVariants.includes(normalizedStatus)) {
+      return normalizedStatus as StatusVariantKey
+    }
+    
+    // Map common status values
+    if (statusValue.toLowerCase().includes('pending')) return "pending"
+    if (statusValue.toLowerCase().includes('reject')) return "rejected"
+    if (statusValue.toLowerCase().includes('accept') || statusValue.toLowerCase().includes('confirm')) return "accepted"
+    if (statusValue.toLowerCase().includes('active') || statusValue.toLowerCase().includes('use')) return "active"
+    if (statusValue.toLowerCase().includes('inactive') || statusValue.toLowerCase().includes('breakdown')) return "inactive"
+    
+    return "pending"
+  }
+
+  const statusVariant = status ? getVariantFromStatus(status) : variant || "pending"
 
   return (
     <div className={cn(statusBadgeVariants({ variant: statusVariant, size }), className)} {...props}>

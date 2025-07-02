@@ -219,7 +219,7 @@ export const SpaceManagementBookingDetailsPage = () => {
             <div className="space-y-4">
               <div className="flex">
                 <span className="text-gray-600 w-32">Status</span>
-                <span className={`font-medium px-2 py-1 rounded text-xs ${
+                <span className={`font-medium px-2 py-1 rounded-none text-xs ${
                   booking.status === 'Cancelled' ? 'bg-red-100 text-red-800' : 
                   booking.status === 'Confirmed' ? 'bg-green-100 text-green-800' : 
                   'bg-blue-100 text-blue-800'

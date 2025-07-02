@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Eye, Download, Filter, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -161,11 +162,11 @@ export const AssetTable = ({ searchTerm = '' }: AssetTableProps) => {
 
   const getStatusBadge = (status: string) => {
     if (status === 'In Use') {
-      return <span className="bg-green-500 text-white px-2 py-1 rounded text-xs">{status}</span>;
+      return <span className="bg-green-500 text-white px-2 py-1 rounded-none text-xs">{status}</span>;
     } else if (status === 'Breakdown') {
-      return <span className="bg-red-500 text-white px-2 py-1 rounded text-xs">{status}</span>;
+      return <span className="bg-red-500 text-white px-2 py-1 rounded-none text-xs">{status}</span>;
     }
-    return <span className="bg-gray-500 text-white px-2 py-1 rounded text-xs">{status}</span>;
+    return <span className="bg-gray-500 text-white px-2 py-1 rounded-none text-xs">{status}</span>;
   };
 
   const handleEyeClick = (assetId: string) => {
