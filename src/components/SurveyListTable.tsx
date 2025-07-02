@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import {
   Table,
@@ -46,6 +45,8 @@ export const SurveyListTable = ({ onAddSurvey }: SurveyListTableProps) => {
   const [surveys, setSurveys] = useState(mockSurveyData);
 
   const handleStatusToggle = (surveyId: number) => {
+    console.log(`Toggling status for Survey ${surveyId}`);
+    
     setSurveys(prevSurveys => 
       prevSurveys.map(survey => 
         survey.id === surveyId 
@@ -61,6 +62,8 @@ export const SurveyListTable = ({ onAddSurvey }: SurveyListTableProps) => {
   };
 
   const handleTicketCreationToggle = (surveyId: number) => {
+    console.log(`Toggling ticket creation for Survey ${surveyId}`);
+    
     setSurveys(prevSurveys => 
       prevSurveys.map(survey => 
         survey.id === surveyId 
@@ -76,6 +79,8 @@ export const SurveyListTable = ({ onAddSurvey }: SurveyListTableProps) => {
   };
 
   const handleActiveToggle = (surveyId: number) => {
+    console.log(`Toggling active status for Survey ${surveyId}`);
+    
     setSurveys(prevSurveys => 
       prevSurveys.map(survey => 
         survey.id === surveyId 
@@ -132,47 +137,56 @@ export const SurveyListTable = ({ onAddSurvey }: SurveyListTableProps) => {
               <TableRow key={survey.id}>
                 <TableCell className="font-medium">{survey.title}</TableCell>
                 <TableCell>
-                  <button
-                    onClick={() => handleStatusToggle(survey.id)}
-                    className={`w-11 h-6 rounded-full relative transition-colors duration-200 ease-in-out ${
-                      survey.status === 'Active' 
-                        ? 'bg-[#C72030]' 
-                        : 'bg-gray-200'
-                    }`}
-                  >
+                  <div className="flex items-center">
                     <div
-                      className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out absolute top-0.5 ${
+                      className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
                         survey.status === 'Active' 
-                          ? 'translate-x-5' 
-                          : 'translate-x-0.5'
+                          ? 'bg-green-500' 
+                          : 'bg-gray-300'
                       }`}
-                    />
-                  </button>
+                      onClick={() => handleStatusToggle(survey.id)}
+                    >
+                      <span
+                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                          survey.status === 'Active' 
+                            ? 'translate-x-6' 
+                            : 'translate-x-1'
+                        }`}
+                      />
+                    </div>
+                  </div>
                 </TableCell>
                 <TableCell>
-                  <Switch
-                    checked={survey.active}
-                    onCheckedChange={() => handleActiveToggle(survey.id)}
-                    className="data-[state=checked]:bg-[#C72030]"
-                  />
-                </TableCell>
-                <TableCell>
-                  <button
-                    onClick={() => handleTicketCreationToggle(survey.id)}
-                    className={`w-11 h-6 rounded-full relative transition-colors duration-200 ease-in-out ${
-                      survey.ticketCreation 
-                        ? 'bg-[#C72030]' 
-                        : 'bg-gray-200'
-                    }`}
-                  >
+                  <div className="flex items-center">
                     <div
-                      className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out absolute top-0.5 ${
-                        survey.ticketCreation 
-                          ? 'translate-x-5' 
-                          : 'translate-x-0.5'
+                      className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
+                        survey.active ? 'bg-green-500' : 'bg-gray-300'
                       }`}
-                    />
-                  </button>
+                      onClick={() => handleActiveToggle(survey.id)}
+                    >
+                      <span
+                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                          survey.active ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center">
+                    <div
+                      className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
+                        survey.ticketCreation ? 'bg-green-500' : 'bg-gray-300'
+                      }`}
+                      onClick={() => handleTicketCreationToggle(survey.id)}
+                    >
+                      <span
+                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                          survey.ticketCreation ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </div>
+                  </div>
                 </TableCell>
                 <TableCell>{survey.ticketLevel}</TableCell>
                 <TableCell>{survey.ticketCategory}</TableCell>
