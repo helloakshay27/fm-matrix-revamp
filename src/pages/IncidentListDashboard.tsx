@@ -99,39 +99,48 @@ export const IncidentListDashboard = () => {
       </div>
 
       {/* Action Bar */}
-      <div className="flex justify-between items-center mb-6">
-        <Button 
-          onClick={handleAddIncident}
-          style={{ backgroundColor: '#C72030' }} 
-          className="text-white hover:opacity-90"
-        >
-          <Plus className="w-4 h-4 mr-2 text-white stroke-white" />
-          Add
-        </Button>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+  {/* Add Button */}
+  <div className="w-full lg:w-auto">
+    <Button 
+      onClick={handleAddIncident}
+      style={{ backgroundColor: '#C72030' }} 
+      className="text-white hover:opacity-90 w-full lg:w-auto"
+    >
+      <Plus className="w-4 h-4 mr-2 text-[#C72030] stroke-[#C72030]" />
+      Add
+    </Button>
+  </div>
 
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Search using Incident Id"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-80"
-            />
-          </div>
-          <Button 
-            onClick={handleSearch} 
-            style={{ backgroundColor: '#C72030' }} 
-            className="text-white hover:opacity-90"
-          >
-            Go!
-          </Button>
-          <Button onClick={handleReset} variant="outline">
-            Reset
-          </Button>
-        </div>
-      </div>
+  {/* Search Section */}
+  <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full lg:w-auto">
+    <div className="relative w-full sm:w-80">
+      <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+      <Input
+        type="text"
+        placeholder="Search using Incident Id"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="pl-10 w-full"
+      />
+    </div>
+    <Button 
+      onClick={handleSearch} 
+      style={{ backgroundColor: '#C72030' }} 
+      className="text-white hover:opacity-90 w-full sm:w-auto"
+    >
+      Go!
+    </Button>
+    <Button 
+      onClick={handleReset} 
+      variant="outline" 
+      className="w-full sm:w-auto"
+    >
+      Reset
+    </Button>
+  </div>
+</div>
+
 
       {/* Table */}
       <div className="bg-white rounded-lg border overflow-x-auto">
