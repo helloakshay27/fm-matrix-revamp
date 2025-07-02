@@ -114,7 +114,7 @@ export const AssetAuditDashboard = () => {
         <h1 className="text-2xl font-bold text-gray-900 mb-6">AUDIT LIST</h1>
         
         {/* Statistics Cards */}
-       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+<div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
   {[
     { label: 'Scheduled', value: stats.scheduled },
     { label: 'In Progress', value: stats.inProgress },
@@ -127,7 +127,7 @@ export const AssetAuditDashboard = () => {
       className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]"
     >
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 bg-[#D92818] bg-opacity-10 rounded-lg flex items-center justify-center">
+        <div className="w-12 h-12 bg-[rgba(217,40,24,0.1)] rounded-lg flex items-center justify-center">
           <span className="text-2xl font-bold">{item.value}</span>
         </div>
         <span className="font-medium">{item.label}</span>
@@ -135,6 +135,7 @@ export const AssetAuditDashboard = () => {
     </div>
   ))}
 </div>
+
 
 
         {/* Action Buttons */}
