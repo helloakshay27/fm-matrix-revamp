@@ -173,7 +173,7 @@ export const TicketDashboard = () => {
   ].map((item, i) => (
     <div
       key={i}
-      className="p-4 rounded-lg text-center shadow-[0px_2px_18px_rgba(45,45,45,0.1)] bg-[#F2F0EB] text-[#D92818]"
+      className="p-4 rounded-lg text-center shadow-[0px_2px_18px_rgba(45,45,45,0.1)] bg-[#F2F0EB] text-[#D92818] border border-[#D92818]"
     >
       <div className="text-2xl font-bold">{item.value}</div>
       <div className="text-sm">{item.label}</div>
