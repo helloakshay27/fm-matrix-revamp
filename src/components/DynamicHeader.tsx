@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLayout } from '../contexts/LayoutContext';
 
 const packages = [
@@ -16,6 +16,11 @@ const packages = [
 
 export const DynamicHeader = () => {
   const { currentSection, setCurrentSection } = useLayout();
+
+  // Set "Maintenance" as the default section when the component mounts
+  useEffect(() => {
+    setCurrentSection('Maintenance');
+  }, [setCurrentSection]);
 
   return (
     <div
