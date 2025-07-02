@@ -223,16 +223,16 @@ export const AssetDashboard = () => {
     navigate(`/maintenance/asset/details/${assetId}`);
   };
 
-  // const getStatusColor = (status: string) => {
-  //   switch (status) {
-  //     case 'In Use':
-  //       return 'bg-green-500 text-white';
-  //     case 'Breakdown':
-  //       return 'bg-red-500 text-white';
-  //     default:
-  //       return 'bg-gray-500 text-white';
-  //   }
-  // };
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'In Use':
+        return 'bg-green-500 text-white';
+      case 'Breakdown':
+        return 'bg-red-500 text-white';
+      default:
+        return 'bg-gray-500 text-white';
+    }
+  };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen max-w-full overflow-x-hidden">
@@ -419,7 +419,7 @@ export const AssetDashboard = () => {
                   <TableCell className="px-4 py-3 text-sm text-gray-600 font-mono">{asset.code}</TableCell>
                   <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.assetNo}</TableCell>
                   <TableCell className="px-4 py-3">
-                    <Badge className= "text-xs px-2 py-1">
+                    <Badge className={`${getStatusColor(asset.status)} text-xs px-2 py-1`}>
                       {asset.status}
                     </Badge>
                   </TableCell>
