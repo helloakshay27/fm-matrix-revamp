@@ -127,7 +127,7 @@ export const AssetAuditDashboard = () => {
       className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]"
     >
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 bg-[rgba(217,40,24,0.1)] rounded-lg flex items-center justify-center">
+        <div className="w-12 h-12  rounded-lg flex items-center justify-center">
           <span className="text-2xl font-bold">{item.value}</span>
         </div>
         <span className="font-medium">{item.label}</span>
@@ -175,12 +175,12 @@ export const AssetAuditDashboard = () => {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-gray-900">Audit Name</TableHead>
-                <TableHead className="font-semibold text-gray-900">Audit ID</TableHead>
+                <TableHead className="font-semibold text-gray-900">Audit Name ↕</TableHead>
+                <TableHead className="font-semibold text-gray-900">Audit ID ↕</TableHead>
                 <TableHead className="font-semibold text-gray-900">Type</TableHead>
                 <TableHead className="font-semibold text-gray-900">Start Date</TableHead>
                 <TableHead className="font-semibold text-gray-900">End Date</TableHead>
-                <TableHead className="font-semibold text-gray-900">Audit Status</TableHead>
+                <TableHead className="font-semibold text-gray-900">Audit Status ↕</TableHead>
                 <TableHead className="font-semibold text-gray-900">Conducted By</TableHead>
                 <TableHead className="font-semibold text-gray-900">Report</TableHead>
               </TableRow>
@@ -191,7 +191,7 @@ export const AssetAuditDashboard = () => {
                   <TableCell>
                     <button
                       onClick={() => handleAuditNameClick(audit.auditId)}
-                      className="text-black hover:underline font-medium"
+                      className="text-blue-600 hover:underline font-medium"
                     >
                       {audit.auditName}
                     </button>
@@ -201,26 +201,22 @@ export const AssetAuditDashboard = () => {
                   <TableCell>{audit.startDate}</TableCell>
                   <TableCell>{audit.endDate}</TableCell>
                   <TableCell>
-  <Select
-    value={audit.status}
-    onValueChange={(value) => handleStatusUpdate(audit.id, value)}
-  >
-    <SelectTrigger
-      className={`w-32 text-white px-3 py-1.5 text-sm rounded-md ${getStatusColor(audit.status)}`}
-    >
-      <SelectValue />
-    </SelectTrigger>
-
-    <SelectContent>
-      <SelectItem value="Scheduled">Scheduled</SelectItem>
-      <SelectItem value="In Progress">In Progress</SelectItem>
-      <SelectItem value="Completed">Completed</SelectItem>
-      <SelectItem value="Overdue">Overdue</SelectItem>
-      <SelectItem value="Closed">Closed</SelectItem>
-    </SelectContent>
-  </Select>
-</TableCell>
-
+                    <Select
+                      value={audit.status}
+                      onValueChange={(value) => handleStatusUpdate(audit.id, value)}
+                    >
+                      <SelectTrigger className={`w-32 text-white ${getStatusColor(audit.status)}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Scheduled">Scheduled</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
+                        <SelectItem value="Overdue">Overdue</SelectItem>
+                        <SelectItem value="Closed">Closed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
                   <TableCell>{audit.conductedBy}</TableCell>
                   <TableCell>
                     {audit.report && (
