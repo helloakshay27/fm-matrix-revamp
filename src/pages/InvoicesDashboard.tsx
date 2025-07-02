@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -295,8 +294,8 @@ export const InvoicesDashboard = () => {
       </div>
 
       <InvoicesFilterDialog 
-        isOpen={isFilterDialogOpen} 
-        onClose={() => setIsFilterDialogOpen(false)}
+        open={isFilterDialogOpen} 
+        onOpenChange={setIsFilterDialogOpen}
         onApply={handleFilterApply}
       />
     </div>
