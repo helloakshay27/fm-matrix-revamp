@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
@@ -96,6 +97,206 @@ button {
 @media (max-width: 767px) {
   button {
     width: max-content !important;
+  }
+}
+
+/* Global Table Styles */
+/* Target all table elements across the project */
+table,
+.table,
+[role="table"],
+.data-table,
+.table-container table,
+div[class*="table"] table,
+div:has(table) table {
+  width: 100% !important;
+  background-color: rgba(196, 184, 208, 0.34) !important;
+  border-radius: 0px !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  font-family: 'Work Sans', sans-serif !important;
+  color: #1A1A1A !important;
+}
+
+/* Table container styles */
+.table-container,
+div:has(table),
+.overflow-x-auto:has(table),
+.relative:has(table) {
+  width: 100% !important;
+  background-color: rgba(196, 184, 208, 0.34) !important;
+  border-radius: 0px !important;
+}
+
+/* Table header styles */
+table thead,
+table th,
+.table thead,
+.table th,
+[role="table"] [role="columnheader"] {
+  background-color: rgba(196, 184, 208, 0.34) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 1) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+  font-family: 'Work Sans', sans-serif !important;
+  font-weight: 400 !important;
+  color: #1A1A1A !important;
+  border-radius: 0 !important;
+}
+
+/* Table body and cell styles */
+table tbody,
+table td,
+.table tbody,
+.table td,
+[role="table"] [role="cell"] {
+  background-color: rgba(196, 184, 208, 0.34) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 1) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+  font-family: 'Work Sans', sans-serif !important;
+  font-weight: 400 !important;
+  color: #1A1A1A !important;
+  text-align: left !important;
+  border-radius: 0 !important;
+}
+
+/* Table row styles */
+table tr,
+.table tr,
+[role="table"] [role="row"] {
+  background-color: rgba(196, 184, 208, 0.34) !important;
+  border-radius: 0 !important;
+}
+
+table tr:hover,
+.table tr:hover,
+[role="table"] [role="row"]:hover {
+  background-color: rgba(196, 184, 208, 0.45) !important;
+}
+
+/* Desktop Styles */
+@media (min-width: 1024px) {
+  table,
+  .table,
+  [role="table"],
+  .data-table,
+  .table-container table,
+  div[class*="table"] table,
+  div:has(table) table {
+    padding: 20px 16px 12px 20px !important;
+    height: 196px !important;
+  }
+
+  .table-container,
+  div:has(table),
+  .overflow-x-auto:has(table),
+  .relative:has(table) {
+    padding: 20px 16px 12px 20px !important;
+    height: 196px !important;
+  }
+
+  table th,
+  .table th,
+  [role="table"] [role="columnheader"] {
+    font-size: 14px !important;
+    line-height: auto !important;
+    padding-left: 20px !important;
+    height: 40px !important;
+  }
+
+  table td,
+  .table td,
+  [role="table"] [role="cell"] {
+    font-size: 12px !important;
+    line-height: auto !important;
+    padding-left: 40px !important;
+    height: 40px !important;
+    text-align: left !important;
+  }
+}
+
+/* Tablet Styles */
+@media (min-width: 768px) and (max-width: 1023px) {
+  table,
+  .table,
+  [role="table"],
+  .data-table,
+  .table-container table,
+  div[class*="table"] table,
+  div:has(table) table {
+    padding: 20px 20px 10px 20px !important;
+    height: 186px !important;
+  }
+
+  .table-container,
+  div:has(table),
+  .overflow-x-auto:has(table),
+  .relative:has(table) {
+    padding: 20px 20px 10px 20px !important;
+    height: 186px !important;
+  }
+
+  table th,
+  .table th,
+  [role="table"] [role="columnheader"] {
+    font-size: 12px !important;
+    line-height: auto !important;
+    padding-left: 20px !important;
+    height: 40px !important;
+  }
+
+  table td,
+  .table td,
+  [role="table"] [role="cell"] {
+    font-size: 10px !important;
+    line-height: auto !important;
+    padding-left: 40px !important;
+    height: 40px !important;
+    text-align: left !important;
+  }
+}
+
+/* Mobile Styles */
+@media (max-width: 767px) {
+  table,
+  .table,
+  [role="table"],
+  .data-table,
+  .table-container table,
+  div[class*="table"] table,
+  div:has(table) table {
+    padding: 20px 20px 10px 20px !important;
+    height: 196px !important;
+    width: 1524px !important;
+  }
+
+  .table-container,
+  div:has(table),
+  .overflow-x-auto:has(table),
+  .relative:has(table) {
+    padding: 20px 20px 10px 20px !important;
+    height: 196px !important;
+    width: 100% !important;
+    max-width: 344px !important;
+    overflow-x: auto !important;
+  }
+
+  table th,
+  .table th,
+  [role="table"] [role="columnheader"] {
+    font-size: 12px !important;
+    line-height: auto !important;
+    padding-left: 20px !important;
+    height: 36px !important;
+  }
+
+  table td,
+  .table td,
+  [role="table"] [role="cell"] {
+    font-size: 10px !important;
+    line-height: auto !important;
+    padding-left: 30px !important;
+    height: 36px !important;
+    text-align: left !important;
   }
 }
 
@@ -581,7 +782,7 @@ button[class*="go-button"] {
   .relative:has(input[class*="search"]) button,
   .relative:has([data-search] input) button,
   .relative:has(.search-input) button,
-  .relative:has(input[placeholder*="Search AMC"]) button,
+  .relative:Has(input[placeholder*="Search AMC"]) button,
   .relative:has(input[placeholder*="Search..."]) button,
   .relative:has(input[placeholder*="Enter Activity Name"]) button,
   .relative:has(input[placeholder*="Search assets"]) button {
