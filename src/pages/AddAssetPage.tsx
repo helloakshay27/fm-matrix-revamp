@@ -204,7 +204,7 @@ export const AddAssetPage = () => {
       <div className="mb-6">
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
           <span>Asset List</span>
-          <span>></span>
+          <span>&gt;</span>
           <span className="text-gray-900 font-medium">Create New Asset</span>
         </div>
         <h1 className="text-2xl font-bold text-gray-900">NEW ASSET</h1>
