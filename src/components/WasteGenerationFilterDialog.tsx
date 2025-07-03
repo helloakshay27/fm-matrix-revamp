@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,11 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
     dateRange: ''
   });
 
-  const handleFilterChange = (field: keyof Filters) => (event: React.ChangeEvent<HTMLInputElement> | SelectChangeEvent<string>) => {
+  const handleSelectChange = (field: keyof Filters) => (event: SelectChangeEvent<string>) => {
+    setFilters(prev => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const handleInputChange = (field: keyof Filters) => (event: React.ChangeEvent<HTMLInputElement>) => {
     setFilters(prev => ({ ...prev, [field]: event.target.value }));
   };
 
@@ -91,7 +96,7 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
                   labelId="commodity-select-label"
                   label="Commodity/Source"
                   value={filters.commodity}
-                  onChange={handleFilterChange('commodity')}
+                  onChange={handleSelectChange('commodity')}
                   displayEmpty
                   sx={fieldStyles}
                 >
@@ -111,7 +116,7 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
                   labelId="category-select-label"
                   label="Category"
                   value={filters.category}
-                  onChange={handleFilterChange('category')}
+                  onChange={handleSelectChange('category')}
                   displayEmpty
                   sx={fieldStyles}
                 >
@@ -132,7 +137,7 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
                   labelId="operational-name-select-label"
                   label="Operational Name"
                   value={filters.operationalName}
-                  onChange={handleFilterChange('operationalName')}
+                  onChange={handleSelectChange('operationalName')}
                   displayEmpty
                   sx={fieldStyles}
                 >
@@ -149,7 +154,7 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
                 label="Date Range"
                 type="date"
                 value={filters.dateRange}
-                onChange={handleFilterChange('dateRange')}
+                onChange={handleInputChange('dateRange')}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
