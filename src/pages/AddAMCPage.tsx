@@ -1,13 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, ArrowLeft, X } from 'lucide-react';
+import { ArrowLeft, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 export const AddAMCPage = () => {
   const navigate = useNavigate();
@@ -74,6 +71,30 @@ export const AddAMCPage = () => {
     });
     
     navigate('/maintenance/amc');
+  };
+
+  // Responsive styles for TextField and Select
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+      '&::placeholder': {
+        fontSize: { xs: '12px', sm: '13px', md: '14px' }, // Default for text fields
+        opacity: 1,
+      },
+      '&[type="date"]::placeholder': {
+        fontSize: { xs: '11px', sm: '12px', md: '9px' }, // Smaller for date fields
+        opacity: 1,
+      },
+    },
+    '& .MuiInputBase-root': {
+      '& .MuiSelect-select': {
+        fontSize: { xs: '11px', sm: '12px', md: '9px' }, // Smaller for dropdowns
+      },
+      '& .MuiMenuItem-root': {
+        fontSize: { xs: '11px', sm: '12px', md: '9px' }, // Smaller for dropdown menu items
+      },
+    },
   };
 
   return (
@@ -158,31 +179,43 @@ export const AddAMCPage = () => {
 
             <div>
               <label className="block text-sm font-medium mb-2">Assets*</label>
-              <Select onValueChange={(value) => handleInputChange('assetName', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select an Option..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="adani-electric-meter">Adani Electric Meter</SelectItem>
-                  <SelectItem value="laptop-dell">Laptop Dell Vostro</SelectItem>
-                  <SelectItem value="samsung">Samsung</SelectItem>
-                  <SelectItem value="vinayak-testing-1">Vinayak Testing 1</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="asset-select-label" shrink>Assets</InputLabel>
+                <MuiSelect
+                  labelId="asset-select-label"
+                  label="Assets"
+                  displayEmpty
+                  value={formData.assetName}
+                  onChange={(e) => handleInputChange('assetName', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select an Option...</em></MenuItem>
+                  <MenuItem value="adani-electric-meter">Adani Electric Meter</MenuItem>
+                  <MenuItem value="laptop-dell">Laptop Dell Vostro</MenuItem>
+                  <MenuItem value="samsung">Samsung</MenuItem>
+                  <MenuItem value="vinayak-testing-1">Vinayak Testing 1</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">Supplier</label>
-              <Select onValueChange={(value) => handleInputChange('vendor', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Supplier" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tbs-electrical">TBS ELECTRICAL</SelectItem>
-                  <SelectItem value="modwin-networks">MODWIN NETWORKS PVT.LTD</SelectItem>
-                  <SelectItem value="reliance-digital">Reliance Digital</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="vendor-select-label" shrink>Supplier</InputLabel>
+                <MuiSelect
+                  labelId="vendor-select-label"
+                  label="Supplier"
+                  displayEmpty
+                  value={formData.vendor}
+                  onChange={(e) => handleInputChange('vendor', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Supplier</em></MenuItem>
+                  <MenuItem value="tbs-electrical">TBS ELECTRICAL</MenuItem>
+                  <MenuItem value="modwin-networks">MODWIN NETWORKS PVT.LTD</MenuItem>
+                  <MenuItem value="reliance-digital">Reliance Digital</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </CardContent>
         </Card>
@@ -198,78 +231,141 @@ export const AddAMCPage = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Cost</label>
-                <Input 
-                  type="number" 
+                <TextField
+                  label="Cost"
                   placeholder="Enter Cost"
+                  name="cost"
+                  type="number"
                   value={formData.cost}
                   onChange={(e) => handleInputChange('cost', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Start Date*</label>
-                <Input 
-                  type="date" 
+                <TextField
+                  required
+                  label="Start Date"
+                  placeholder="Select Date"
+                  name="startDate"
+                  type="date"
                   value={formData.startDate}
                   onChange={(e) => handleInputChange('startDate', e.target.value)}
-                  required
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">First Service Date*</label>
-                <Input 
-                  type="date" 
+                <TextField
+                  required
+                  label="First Service Date"
+                  placeholder="Select Date"
+                  name="firstService"
+                  type="date"
                   value={formData.firstService}
                   onChange={(e) => handleInputChange('firstService', e.target.value)}
-                  required
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Payment Terms</label>
-                <Select onValueChange={(value) => handleInputChange('paymentTerms', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Payment Term" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="quarterly">Quarterly</SelectItem>
-                    <SelectItem value="half-yearly">Half Yearly</SelectItem>
-                    <SelectItem value="yearly">Yearly</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="payment-terms-select-label" shrink>Payment Terms</InputLabel>
+                  <MuiSelect
+                    labelId="payment-terms-select-label"
+                    label="Payment Terms"
+                    displayEmpty
+                    value={formData.paymentTerms}
+                    onChange={(e) => handleInputChange('paymentTerms', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Payment Term</em></MenuItem>
+                    <MenuItem value="monthly">Monthly</MenuItem>
+                    <MenuItem value="quarterly">Quarterly</MenuItem>
+                    <MenuItem value="half-yearly">Half Yearly</MenuItem>
+                    <MenuItem value="yearly">Yearly</MenuItem>
+                  </MuiSelect>
+                </FormControl>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">End Date*</label>
-                <Input 
-                  type="date" 
+                <TextField
+                  required
+                  label="End Date"
+                  placeholder="Select Date"
+                  name="endDate"
+                  type="date"
                   value={formData.endDate}
                   onChange={(e) => handleInputChange('endDate', e.target.value)}
-                  required
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">No. of Visits</label>
-                <Input 
-                  type="number" 
+                <TextField
+                  label="No. of Visits"
                   placeholder="Enter No. of Visit"
+                  name="noOfVisits"
+                  type="number"
                   value={formData.noOfVisits}
                   onChange={(e) => handleInputChange('noOfVisits', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Remarks</label>
-              <Textarea 
+              <TextField
+                label="Remarks"
                 placeholder="Enter Remarks"
+                name="remarks"
                 value={formData.remarks}
                 onChange={(e) => handleInputChange('remarks', e.target.value)}
+                fullWidth
+                variant="outlined"
+                multiline
                 rows={3}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                InputProps={{
+                  sx: fieldStyles
+                }}
               />
             </div>
           </CardContent>
@@ -304,7 +400,11 @@ export const AddAMCPage = () => {
                   >
                     Choose File
                   </Button>
-                  <p className="text-xs text-gray-500 mt-2">No file chosen</p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    {attachments.contracts.length > 0 
+                      ? `${attachments.contracts.length} file(s) selected` 
+                      : 'No file chosen'}
+                  </p>
                 </div>
                 {attachments.contracts.length > 0 && (
                   <div className="mt-2 space-y-1">
@@ -344,7 +444,11 @@ export const AddAMCPage = () => {
                   >
                     Choose File
                   </Button>
-                  <p className="text-xs text-gray-500 mt-2">No file chosen</p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    {attachments.invoices.length > 0 
+                      ? `${attachments.invoices.length} file(s) selected` 
+                      : 'No file chosen'}
+                  </p>
                 </div>
                 {attachments.invoices.length > 0 && (
                   <div className="mt-2 space-y-1">
