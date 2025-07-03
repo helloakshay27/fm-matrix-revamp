@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -263,7 +264,7 @@ export const TaskDashboard = () => {
     <div className="p-4 sm:p-6">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
-        <p className="text-[#1a1a1a] opacity-70 mb-2 text-sm sm:text-base">Scheduled Task > Scheduled Task List</p>
+        <p className="text-[#1a1a1a] opacity-70 mb-2 text-sm sm:text-base">Scheduled Task &gt; Scheduled Task List</p>
         <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-[#1a1a1a] font-['Work_Sans']">SCHEDULED TASK</h1>
       </div>
 
@@ -618,8 +619,8 @@ export const TaskDashboard = () => {
           {/* Calendar Navigation */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between mb-4 gap-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <Button variant="outline" size="sm" className="text-xs sm:text-sm"><</Button>
-              <Button variant="outline" size="sm" className="text-xs sm:text-sm">></Button>
+              <Button variant="outline" size="sm" className="text-xs sm:text-sm">&lt;</Button>
+              <Button variant="outline" size="sm" className="text-xs sm:text-sm">&gt;</Button>
               <Button variant="outline" size="sm" className="text-xs sm:text-sm">Today</Button>
             </div>
             <h2 className="text-lg sm:text-xl font-semibold">July 2025</h2>
