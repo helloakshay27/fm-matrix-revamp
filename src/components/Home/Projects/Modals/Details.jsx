@@ -7,6 +7,7 @@ import {
   editProject,
   fetchActiveProjectTypes,
   fetchProjectDetails,
+  fetchProjects,
   fetchProjectTeams,
   fetchProjectTypes,
   fetchTemplates,
@@ -243,54 +244,6 @@ const Details = ({
     }
   }
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   if (!validateForm()) return;
-
-  //   const payload = {
-  //     project_management: {
-  //       title: formData.projectTitle,
-  //       description: formData.description,
-  //       start_date: formData.startDate,
-  //       end_date: formData.endDate,
-  //       ...(!isEdit && { status: "active" }),
-  //       owner_id: formData.projectOwner,
-  //       priority: formData.priority,
-  //       active: true,
-  //       is_template: formData.createTemplate,
-  //       create_channel: formData.createChannel,
-  //       project_team_id: formData.projectTeam,
-  //       project_type_id: formData.projectType,
-  //     },
-  //     task_tag_ids: formData.tags.map((tag) => tag.value),
-  //   };
-
-  //   console.log(isEditAllowed);
-  //   if (isEdit || isEditAllowed) {
-  //     dispatch(editProject({ token, id: id || project.id, payload }));
-  //   } else {
-  //     dispatch(createProject({ token, payload }));
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   if (success) {
-  //     setTab("Milestone");
-  //     dispatch(resetProjectSuccess());
-  //   }
-  // }, [success]);
-
-  // useEffect(() => {
-  //   if (editsuccess) {
-  //     if (isEdit) {
-  //       window.location.reload();
-  //     } else {
-  //       setTab("Milestone");
-  //       dispatch(resetEditSuccess());
-  //     }
-  //   }
-  // }, [editsuccess]);
-
   const handleSubmit = async (e) => {
     console.log("clicked");
     e.preventDefault();
@@ -327,9 +280,9 @@ const Details = ({
         }
       } else {
         await dispatch(createProject({ token, payload }));
-
         toast.success("Project created successfully");
         setTab("Milestone");
+        await dispatch(fetchProjects({ token })).unwrap();
       }
     } catch (error) {
       console.error("Project submission failed:", error);
