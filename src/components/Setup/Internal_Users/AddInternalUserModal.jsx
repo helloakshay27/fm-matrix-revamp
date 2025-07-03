@@ -229,7 +229,8 @@ const AddInternalUser = ({
                             onChange={(e) =>
                                 setFormData({ ...formData, email: e.target.value })
                             }
-                            autoComplete="off"
+                            autoComplete="new-email"
+                            name="internal_user_email"
                         />
                     </div>
 
@@ -246,7 +247,8 @@ const AddInternalUser = ({
                             onChange={(e) =>
                                 setFormData({ ...formData, password: e.target.value })
                             }
-                            autoComplete="off"
+                            autoComplete="new-password"
+                            name="internal_user_password"
                         />
                         {showPassword ? (
                             <EyeOff

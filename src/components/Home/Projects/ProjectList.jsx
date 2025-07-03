@@ -94,23 +94,31 @@ const NewProjectDateEditor = ({
 };
 
 const ActionIcons = ({ row }) => {
-    const navigate = useNavigate()
+    const navigate = useNavigate();
     const dispatch = useDispatch();
+    const [deleting, setDeleting] = useState(false); // Local state for delete button
+
     const handleDelete = async (id) => {
         const formatId = id.split('-')[1];
-        console.log(formatId);
-        await dispatch(deleteProject({ id: formatId, token: localStorage.getItem('token') })).unwrap();
-        await dispatch(fetchProjects({ token: localStorage.getItem('token') })).unwrap();
-        toast.dismiss();
-        toast.success("Project deleted successfully", {
-            iconTheme: {
-                primary: "red", // This might directly change the color of the success icon
-                secondary: "white", // The circle background
-            },
-        })
-    }
+        setDeleting(true); // Disable button
+        try {
+            await dispatch(deleteProject({ id: formatId, token: localStorage.getItem('token') })).unwrap();
+            await dispatch(fetchProjects({ token: localStorage.getItem('token') })).unwrap();
+            toast.dismiss();
+            toast.success("Project deleted successfully", {
+                iconTheme: {
+                    primary: "red",
+                    secondary: "white",
+                },
+            });
+        } catch (err) {
+            console.error("Delete error:", err);
+            toast.error("Failed to delete project");
+        } finally {
+            setDeleting(false); // Re-enable button after operation
+        }
+    };
 
-    console.log(row.original)
     return (
         <div className="action-icons flex justify-around items-center">
             <button
@@ -125,20 +133,16 @@ const ActionIcons = ({ row }) => {
             >
                 <LoginTwoToneIcon sx={{ fontSize: "1.2em" }} />
             </button>
-            {/* <button
-                onClick={() => alert(`Archiving: ${row.original.title}`)}
-                title="Archive"
-            >
-                <ArchiveOutlinedIcon sx={{ fontSize: "1.2em" }} />
-            </button> */}
             <button
                 onClick={() => handleDelete(row.original.id)}
                 title="Delete"
+                disabled={deleting} // Disable button when deleting
+                className={deleting ? "opacity-50 cursor-not-allowed" : ""}
             >
                 <DeleteOutlineOutlinedIcon sx={{ fontSize: "1.2em" }} />
             </button>
         </div>
-    )
+    );
 };
 
 const ProgressBar = ({ progressString }) => {

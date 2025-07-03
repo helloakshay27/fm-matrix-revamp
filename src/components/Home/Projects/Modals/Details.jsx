@@ -218,8 +218,8 @@ const Details = ({
 
   const handleSave = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
     if (!validateForm()) return;
+    setIsSubmitting(true);
     const payload = {
       project_management: {
         title: formData.projectTitle,
@@ -250,8 +250,8 @@ const Details = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
     if (!validateForm()) return;
+    setIsSubmitting(true);
 
     const payload = {
       project_management: {
