@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
 import { X, ChevronDown, ChevronUp } from 'lucide-react';
 import { MaterialDatePicker } from '@/components/ui/material-date-picker';
+import { TextField } from '@mui/material';
 
 interface AddAssetFormProps {
   isOpen: boolean;
@@ -135,11 +135,20 @@ export const AddAssetForm: React.FC<AddAssetFormProps> = ({ isOpen, onClose }) =
               <div className="bg-[#f6f4ee] p-6 rounded-lg">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <div>
-                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Asset Name*</label>
-                    <input 
-                      type="text" 
-                      placeholder="Enter Text"
-                      className="w-full p-3 border border-[#D5DbDB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    <TextField
+                      required
+                      id="outlined-required"
+                      label="Asset Name"
+                      defaultValue="Enter Text"
+                      InputProps={{
+                        sx: {
+                          height: 36,
+                          '& input': {
+                            padding: '8px 14px',
+                          },
+                        },
+                      }}
+                      sx={{ width: '100%' }}
                     />
                   </div>
                   <div>
