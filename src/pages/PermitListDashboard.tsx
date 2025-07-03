@@ -8,15 +8,16 @@ import { useNavigate } from 'react-router-dom';
 import { PermitFilterModal } from '@/components/PermitFilterModal';
 
 const statsData = [
-  { label: 'Total Permits', count: 0, icon: FileCheck, color: 'bg-purple-500' },
-  { label: 'Draft Permits', count: 0, icon: Clock, color: 'bg-orange-500' },
-  { label: 'Hold Permits', count: 0, icon: HourglassIcon, color: 'bg-red-900' },
-  { label: 'Open Permits', count: 0, icon: Clock, color: 'bg-orange-500' },
-  { label: 'Approved Permits', count: 0, icon: CheckCircle, color: 'bg-green-500' },
-  { label: 'Rejected Permits', count: 0, icon: XCircle, color: 'bg-red-500' },
-  { label: 'Extended Permits', count: 0, icon: RotateCcw, color: 'bg-teal-500' },
-  { label: 'Closed Permits', count: 0, icon: Archive, color: 'bg-green-600' },
+  { label: 'Total Permits', count: 0, icon: FileCheck },
+  { label: 'Draft Permits', count: 0, icon: Clock },
+  { label: 'Hold Permits', count: 0, icon: HourglassIcon },
+  { label: 'Open Permits', count: 0, icon: Clock },
+  { label: 'Approved Permits', count: 0, icon: CheckCircle },
+  { label: 'Rejected Permits', count: 0, icon: XCircle },
+  { label: 'Extended Permits', count: 0, icon: RotateCcw },
+  { label: 'Closed Permits', count: 0, icon: Archive },
 ];
+
 
 export const PermitListDashboard = () => {
   const navigate = useNavigate();
@@ -64,10 +65,11 @@ export const PermitListDashboard = () => {
       onClick={() => handleStatsCardClick(stat.label)}
     >
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div className={`p-2 rounded-lg ${stat.color}`}>
-            <stat.icon className="w-6 h-6 text-white" />
-          </div>
+            <div className="flex items-center justify-between">
+              <div className="p-2 rounded-lg bg-[#F2F0EB]">
+              <stat.icon className="w-6 h-6 text-[#D92818]" />
+    </div>
+
           <div className="text-right">
             <div className="text-2xl font-bold">{stat.count}</div>
           </div>
