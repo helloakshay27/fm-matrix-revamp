@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -264,7 +263,7 @@ export const TaskDashboard = () => {
     <div className="p-4 sm:p-6">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
-        <p className="text-[#1a1a1a] opacity-70 mb-2 text-sm sm:text-base">Scheduled Task &gt; Scheduled Task List</p>
+        <p className="text-[#1a1a1a] opacity-70 mb-2 text-sm sm:text-base">Scheduled Task > Scheduled Task List</p>
         <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-[#1a1a1a] font-['Work_Sans']">SCHEDULED TASK</h1>
       </div>
 
@@ -548,7 +547,6 @@ export const TaskDashboard = () => {
           </div>
         </>
       ) : (
-        /* Calendar View */
         <div className="space-y-4 sm:space-y-6">
           {/* Calendar Controls */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4 sm:mb-6">
@@ -565,17 +563,16 @@ export const TaskDashboard = () => {
                   {startDate ? format(startDate, "dd/MM/yyyy") : <span>Pick start date</span>}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0" align="start" style={{ minWidth: "280px" }}>
                 <Calendar
                   mode="single"
                   selected={startDate}
                   onSelect={(date) => date && setStartDate(date)}
                   initialFocus
-                  className="pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
-            
+
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -589,13 +586,12 @@ export const TaskDashboard = () => {
                   {endDate ? format(endDate, "dd/MM/yyyy") : <span>Pick end date</span>}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0" align="start" style={{ minWidth: "280px" }}>
                 <Calendar
                   mode="single"
                   selected={endDate}
                   onSelect={(date) => date && setEndDate(date)}
                   initialFocus
-                  className="pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
@@ -622,11 +618,11 @@ export const TaskDashboard = () => {
           {/* Calendar Navigation */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between mb-4 gap-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <Button variant="outline" size="sm" className="text-xs sm:text-sm">&lt;</Button>
-              <Button variant="outline" size="sm" className="text-xs sm:text-sm">&gt;</Button>
+              <Button variant="outline" size="sm" className="text-xs sm:text-sm"><</Button>
+              <Button variant="outline" size="sm" className="text-xs sm:text-sm">></Button>
               <Button variant="outline" size="sm" className="text-xs sm:text-sm">Today</Button>
             </div>
-            <h2 className="text-lg sm:text-xl font-semibold">June 2025</h2>
+            <h2 className="text-lg sm:text-xl font-semibold">July 2025</h2>
             <div className="flex items-center gap-2 flex-wrap">
               <Button variant="outline" size="sm" className="text-xs sm:text-sm">month</Button>
               <Button variant="outline" size="sm" className="text-xs sm:text-sm">week</Button>
@@ -659,44 +655,63 @@ export const TaskDashboard = () => {
             </div>
           </div>
 
-          {/* Calendar Grid */}
+          {/* Calendar */}
           <Card>
             <CardContent className="p-4 sm:p-6">
               <Calendar
                 mode="single"
                 selected={calendarDate}
                 onSelect={setCalendarDate}
-                className="w-full"
+                className="max-w-full"
               />
-              
-              {/* Sample calendar entries */}
-              <div className="mt-4 sm:mt-6 space-y-2">
-                <div className="text-xs text-gray-600 grid grid-cols-7 gap-1">
-                  <div>Sun</div>
-                  <div>Mon</div>
-                  <div>Tue</div>
-                  <div>Wed</div>
-                  <div>Thu</div>
-                  <div>Fri</div>
-                  <div>Sat</div>
-                </div>
-                
-                <div className="grid grid-cols-7 gap-1 text-xs">
-                  {Array.from({ length: 30 }, (_, i) => (
-                    <div key={i} className="min-h-[80px] sm:min-h-[100px] border border-gray-200 p-1">
-                      <div className="font-semibold">{i + 1}</div>
-                      {i % 3 === 0 && (
-                        <div className="space-y-1">
-                          <div className="bg-red-500 text-white p-1 rounded text-[10px] sm:text-xs truncate">PPM - Diesel Generator</div>
-                          <div className="bg-red-500 text-white p-1 rounded text-[10px] sm:text-xs truncate">PPM - Test Ladies washroom</div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
             </CardContent>
           </Card>
+
+          {/* Optional: Dynamic task grid based on selected date */}
+          {calendarDate && (
+            <div className="mt-4 sm:mt-6 space-y-2">
+              <div className="text-xs text-gray-600 grid grid-cols-7 gap-1">
+                <div>Sun</div>
+                <div>Mon</div>
+                <div>Tue</div>
+                <div>Wed</div>
+                <div>Thu</div>
+                <div>Fri</div>
+                <div>Sat</div>
+              </div>
+              <div className="grid grid-cols-7 gap-1 text-xs">
+                {Array.from({ length: 31 }, (_, i) => {
+                  const date = new Date(2025, 6, i + 1); // July 1 to 31, 2025
+                  const tasks = taskData.filter(task => {
+                    const taskDate = new Date(task.schedule.split(',')[0]);
+                    return taskDate.getDate() === date.getDate() && taskDate.getMonth() === date.getMonth();
+                  });
+                  return (
+                    <div key={i} className="min-h-[80px] sm:min-h-[100px] border border-gray-200 p-1">
+                      <div className="font-semibold">{i + 1}</div>
+                      {tasks.map(task => (
+                        <div
+                          key={task.id}
+                          className={cn(
+                            "p-1 rounded text-[10px] sm:text-xs truncate",
+                            {
+                              'bg-red-500 text-white': task.status === 'Open',
+                              'bg-orange-500 text-white': task.status === 'In Progress',
+                              'bg-green-500 text-white': task.status === 'Closed',
+                              'bg-red-600 text-white': task.status === 'Overdue',
+                              'bg-yellow-400 text-white': task.status === 'Scheduled'
+                            }
+                          )}
+                        >
+                          {task.checklist}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
       
