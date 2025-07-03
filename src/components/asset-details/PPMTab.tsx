@@ -18,7 +18,7 @@ const statusCards = [
     {statusCards.map((card, index) => (
       <div
         key={index}
-        className="rounded-2xl p-4 min-h-[96px] bg-[#f6f4ee] text-sm text-black shadow-sm"
+        className="p-4 min-h-[96px] bg-[#f6f4ee] text-sm text-black shadow-sm"
       >
         <div className="flex items-center gap-3">
           <div
