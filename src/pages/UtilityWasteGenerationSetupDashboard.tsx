@@ -394,7 +394,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                   Commodities
                   <div className="flex items-center space-x-2">
                     <TextField
-                      placeholder="Search commodities..."
+                      placeholder="Find commodities..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       size="small"
@@ -536,7 +536,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                   Unit of Measurements
                   <div className="flex items-center space-x-2">
                     <TextField
-                      placeholder="Search UOMs..."
+                      placeholder="Find UOMs..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       size="small"
