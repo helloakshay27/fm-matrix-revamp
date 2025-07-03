@@ -18,7 +18,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({ assetId }) => {
         </div>
         
         {/* Location Timeline */}
-        <div className="flex items-center justify-between mb-6 relative">
+       <div className="flex items-center justify-between mb-6 relative z-[1]">
           <div className="absolute top-4 left-0 right-0 h-0.5 bg-[#C72030]"></div>
           {['Site', 'Building', 'Wing', 'Floor', 'Area', 'Room'].map((item, index) => (
             <div key={item} className="flex flex-col items-center relative z-10">
