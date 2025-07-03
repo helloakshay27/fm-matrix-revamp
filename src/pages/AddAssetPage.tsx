@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronDown, ChevronUp, X, Plus } from 'lucide-react';
-import { TextField, Select as MuiSelect, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 export const AddAssetPage = () => {
   const navigate = useNavigate();
@@ -197,7 +196,7 @@ export const AddAssetPage = () => {
       <div className="mb-6">
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
           <span>Asset List</span>
-          <span>{'>'}</span>
+          <span>></span>
           <span className="text-gray-900 font-medium">Create New Asset</span>
         </div>
         <h1 className="text-2xl font-bold text-gray-900">NEW ASSET</h1>
@@ -222,72 +221,132 @@ export const AddAssetPage = () => {
             <CardContent className="pt-6">
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
                 <div>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Site" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="site1">Site 1</SelectItem>
-                      <SelectItem value="site2">Site 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="site-select-label" shrink>Site</InputLabel>
+                    <MuiSelect
+                      labelId="site-select-label"
+                      label="Site"
+                      displayEmpty
+                      value=""
+                      sx={{
+                        height: 56,
+                        '& .MuiSelect-select': {
+                          padding: '14px',
+                        },
+                      }}
+                    >
+                      <MenuItem value=""><em>Select Site</em></MenuItem>
+                      <MenuItem value="site1">Site 1</MenuItem>
+                      <MenuItem value="site2">Site 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
                 <div>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Building" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="building1">Building 1</SelectItem>
-                      <SelectItem value="building2">Building 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="building-select-label" shrink>Building</InputLabel>
+                    <MuiSelect
+                      labelId="building-select-label"
+                      label="Building"
+                      displayEmpty
+                      value=""
+                      sx={{
+                        height: 56,
+                        '& .MuiSelect-select': {
+                          padding: '14px',
+                        },
+                      }}
+                    >
+                      <MenuItem value=""><em>Select Building</em></MenuItem>
+                      <MenuItem value="building1">Building 1</MenuItem>
+                      <MenuItem value="building2">Building 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
                 <div>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Wing" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="wing1">Wing 1</SelectItem>
-                      <SelectItem value="wing2">Wing 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="wing-select-label" shrink>Wing</InputLabel>
+                    <MuiSelect
+                      labelId="wing-select-label"
+                      label="Wing"
+                      displayEmpty
+                      value=""
+                      sx={{
+                        height: 56,
+                        '& .MuiSelect-select': {
+                          padding: '14px',
+                        },
+                      }}
+                    >
+                      <MenuItem value=""><em>Select Wing</em></MenuItem>
+                      <MenuItem value="wing1">Wing 1</MenuItem>
+                      <MenuItem value="wing2">Wing 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
                 <div>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Area" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="area1">Area 1</SelectItem>
-                      <SelectItem value="area2">Area 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="area-select-label" shrink>Area</InputLabel>
+                    <MuiSelect
+                      labelId="area-select-label"
+                      label="Area"
+                      displayEmpty
+                      value=""
+                      sx={{
+                        height: 56,
+                        '& .MuiSelect-select': {
+                          padding: '14px',
+                        },
+                      }}
+                    >
+                      <MenuItem value=""><em>Select Area</em></MenuItem>
+                      <MenuItem value="area1">Area 1</MenuItem>
+                      <MenuItem value="area2">Area 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
                 <div>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Floor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="floor1">Floor 1</SelectItem>
-                      <SelectItem value="floor2">Floor 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="floor-select-label" shrink>Floor</InputLabel>
+                    <MuiSelect
+                      labelId="floor-select-label"
+                      label="Floor"
+                      displayEmpty
+                      value=""
+                      sx={{
+                        height: 56,
+                        '& .MuiSelect-select': {
+                          padding: '14px',
+                        },
+                      }}
+                    >
+                      <MenuItem value=""><em>Select Floor</em></MenuItem>
+                      <MenuItem value="floor1">Floor 1</MenuItem>
+                      <MenuItem value="floor2">Floor 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Room" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="room1">Room 1</SelectItem>
-                      <SelectItem value="room2">Room 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="room-select-label" shrink>Room</InputLabel>
+                    <MuiSelect
+                      labelId="room-select-label"
+                      label="Room"
+                      displayEmpty
+                      value=""
+                      sx={{
+                        height: 56,
+                        '& .MuiSelect-select': {
+                          padding: '14px',
+                        },
+                      }}
+                    >
+                      <MenuItem value=""><em>Select Room</em></MenuItem>
+                      <MenuItem value="room1">Room 1</MenuItem>
+                      <MenuItem value="room2">Room 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
               </div>
             </CardContent>
@@ -507,40 +566,45 @@ export const AddAssetPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div>
                   <FormControl fullWidth variant="outlined">
-  <InputLabel id="group-select-label" shrink>
-    Group
-  </InputLabel>
-  <MuiSelect
-    labelId="group-select-label"
-    label="Group"
-    displayEmpty
-    value="" // ✅ This ensures "Select Group" is shown initially
-    sx={{
-      height: 56,
-      '& .MuiSelect-select': {
-        padding: '14px',
-      },
-    }}
-  >
-    <MenuItem value="">
-      <em>Select Group</em>
-    </MenuItem>
-    <MenuItem value="group1">Group 1</MenuItem>
-    <MenuItem value="group2">Group 2</MenuItem>
-  </MuiSelect>
-</FormControl>
-
+                    <InputLabel id="group-select-label" shrink>Group</InputLabel>
+                    <MuiSelect
+                      labelId="group-select-label"
+                      label="Group"
+                      displayEmpty
+                      value=""
+                      sx={{
+                        height: 56,
+                        '& .MuiSelect-select': {
+                          padding: '14px',
+                        },
+                      }}
+                    >
+                      <MenuItem value=""><em>Select Group</em></MenuItem>
+                      <MenuItem value="group1">Group 1</MenuItem>
+                      <MenuItem value="group2">Group 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
                 <div>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select SubGroup" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="subgroup1">SubGroup 1</SelectItem>
-                      <SelectItem value="subgroup2">SubGroup 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="subgroup-select-label" shrink>Subgroup</InputLabel>
+                    <MuiSelect
+                      labelId="subgroup-select-label"
+                      label="Subgroup"
+                      displayEmpty
+                      value=""
+                      sx={{
+                        height: 56,
+                        '& .MuiSelect-select': {
+                          padding: '14px',
+                        },
+                      }}
+                    >
+                      <MenuItem value=""><em>Select Subgroup</em></MenuItem>
+                      <MenuItem value="subgroup1">Subgroup 1</MenuItem>
+                      <MenuItem value="subgroup2">Subgroup 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
                 <div>
                   <TextField
@@ -901,20 +965,28 @@ export const AddAssetPage = () => {
                         />
                       </div>
                       <div>
-                        <Select
-                          value={measure.unitType}
-                          onValueChange={(value) => updateConsumptionMeasure(measure.id, 'unitType', value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select Unit Type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="kwh">kWh</SelectItem>
-                            <SelectItem value="liters">Liters</SelectItem>
-                            <SelectItem value="cubic-meters">Cubic Meters</SelectItem>
-                            <SelectItem value="units">Units</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <FormControl fullWidth variant="outlined">
+                          <InputLabel id={`unitType-select-label-${measure.id}`} shrink>Unit Type</InputLabel>
+                          <MuiSelect
+                            labelId={`unitType-select-label-${measure.id}`}
+                            label="Unit Type"
+                            displayEmpty
+                            value={measure.unitType}
+                            onChange={(e) => updateConsumptionMeasure(measure.id, 'unitType', e.target.value)}
+                            sx={{
+                              height: 56,
+                              '& .MuiSelect-select': {
+                                padding: '14px',
+                              },
+                            }}
+                          >
+                            <MenuItem value=""><em>Select Unit Type</em></MenuItem>
+                            <MenuItem value="kwh">kWh</MenuItem>
+                            <MenuItem value="liters">Liters</MenuItem>
+                            <MenuItem value="cubic-meters">Cubic Meters</MenuItem>
+                            <MenuItem value="units">Units</MenuItem>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
                       <div>
                         <TextField
@@ -1116,21 +1188,29 @@ export const AddAssetPage = () => {
                         />
                       </div>
                       <div>
-                        <Select
-                          value={measure.unitType}
-                          onValueChange={(value) => updateNonConsumptionMeasure(measure.id, 'unitType', value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select Unit Type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="temperature">Temperature</SelectItem>
-                            <SelectItem value="pressure">Pressure</SelectItem>
-                            <SelectItem value="voltage">Voltage</SelectItem>
-                            <SelectItem value="current">Current</SelectItem>
-                            <SelectItem value="frequency">Frequency</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <FormControl fullWidth variant="outlined">
+                          <InputLabel id={`nc-unitType-select-label-${measure.id}`} shrink>Unit Type</InputLabel>
+                          <MuiSelect
+                            labelId={`nc-unitType-select-label-${measure.id}`}
+                            label="Unit Type"
+                            displayEmpty
+                            value={measure.unitType}
+                            onChange={(e) => updateNonConsumptionMeasure(measure.id, 'unitType', e.target.value)}
+                            sx={{
+                              height: 56,
+                              '& .MuiSelect-select': {
+                                padding: '14px',
+                              },
+                            }}
+                          >
+                            <MenuItem value=""><em>Select Unit Type</em></MenuItem>
+                            <MenuItem value="temperature">Temperature</MenuItem>
+                            <MenuItem value="pressure">Pressure</MenuItem>
+                            <MenuItem value="voltage">Voltage</MenuItem>
+                            <MenuItem value="current">Current</MenuItem>
+                            <MenuItem value="frequency">Frequency</MenuItem>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
                       <div>
                         <TextField
