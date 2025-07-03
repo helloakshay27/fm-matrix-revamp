@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Upload } from "lucide-react";
@@ -7,9 +8,7 @@ import { EditCategoryModal } from "@/components/EditCategoryModal";
 import { AddDeviationStatusModal } from "@/components/AddDeviationStatusModal";
 import { AddStatusModal } from "@/components/AddStatusModal";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useToast } from "@/hooks/use-toast";
 
 interface Category {
@@ -40,6 +39,13 @@ export const FitoutSetupDashboard = () => {
   const [isAddStatusOpen, setIsAddStatusOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const { toast } = useToast();
+
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+  };
 
   const [categories, setCategories] = useState<Category[]>([
     { id: 1, category: 'ho', amount: '', active: true },
@@ -80,8 +86,8 @@ export const FitoutSetupDashboard = () => {
     ));
 
     toast({
-      title: "Updated successfully.",
-      className: "bg-green-500 text-white border-green-500",
+      title: "Success",
+      description: "Category updated successfully!",
     });
   };
 
@@ -108,8 +114,8 @@ export const FitoutSetupDashboard = () => {
       });
 
       toast({
-        title: "File uploaded successfully.",
-        className: "bg-green-500 text-white border-green-500",
+        title: "Success",
+        description: "File uploaded successfully!",
       });
     }
   };
@@ -162,28 +168,49 @@ export const FitoutSetupDashboard = () => {
     <div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <div>
-          <Label htmlFor="status">Status</Label>
-          <Input id="status" placeholder="Enter status" />
+          <TextField
+            placeholder="Enter status"
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
+          />
         </div>
         <div>
-          <Label htmlFor="fixedState">Fixed State</Label>
-          <Select>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Fixed State" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="state1">State 1</SelectItem>
-              <SelectItem value="state2">State 2</SelectItem>
-            </SelectContent>
-          </Select>
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel id="fixed-state-label" shrink>Fixed State</InputLabel>
+            <MuiSelect
+              labelId="fixed-state-label"
+              label="Fixed State"
+              displayEmpty
+              sx={fieldStyles}
+            >
+              <MenuItem value=""><em>Select Fixed State</em></MenuItem>
+              <MenuItem value="state1">State 1</MenuItem>
+              <MenuItem value="state2">State 2</MenuItem>
+            </MuiSelect>
+          </FormControl>
         </div>
         <div>
-          <Label htmlFor="color">Color</Label>
-          <Input id="color" type="color" className="h-10" />
+          <TextField
+            type="color"
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
+          />
         </div>
         <div>
-          <Label htmlFor="statusOrder">Status Order</Label>
-          <Input id="statusOrder" placeholder="Enter status order" />
+          <TextField
+            placeholder="Enter status order"
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
+          />
         </div>
       </div>
 

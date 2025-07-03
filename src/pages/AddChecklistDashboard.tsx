@@ -1,13 +1,12 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, X } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { useToast } from '@/hooks/use-toast';
 
 interface Question {
   id: number;
@@ -18,6 +17,7 @@ interface Question {
 
 export const AddChecklistDashboard = () => {
   const navigate = useNavigate();
+  const { toast: showToast } = useToast();
   const [formData, setFormData] = useState({
     category: '',
     subCategory: '',
@@ -27,6 +27,13 @@ export const AddChecklistDashboard = () => {
   const [questions, setQuestions] = useState<Question[]>([
     { id: 1, text: '', answerType: '', mandatory: false }
   ]);
+
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+  };
 
   const handleAddQuestion = () => {
     const newQuestion: Question = {
@@ -69,13 +76,19 @@ export const AddChecklistDashboard = () => {
 
   const handleCreateChecklist = () => {
     console.log('Creating checklist:', { formData, questions });
-    toast.success('Checklist created successfully!');
+    showToast({
+      title: "Success",
+      description: "Checklist created successfully!",
+    });
     navigate('/transitioning/fitout/checklist');
   };
 
   const handleProceed = () => {
     console.log('Proceeding with checklist creation...');
-    toast.success('Proceeding to next step...');
+    showToast({
+      title: "Success",
+      description: "Proceeding to next step...",
+    });
   };
 
   return (
@@ -99,48 +112,55 @@ export const AddChecklistDashboard = () => {
       <div className="space-y-6 mb-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
-            <Label htmlFor="category" className="text-sm font-medium">
-              Category <span className="text-red-500">*</span>
-            </Label>
-            <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({...prev, category: value}))}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="electrical">Electrical</SelectItem>
-                <SelectItem value="plumbing">Plumbing</SelectItem>
-                <SelectItem value="renovation">Renovation</SelectItem>
-                <SelectItem value="safety">Safety</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel id="category-label" shrink>Category*</InputLabel>
+              <MuiSelect
+                labelId="category-label"
+                label="Category*"
+                displayEmpty
+                value={formData.category}
+                onChange={(e) => setFormData(prev => ({...prev, category: e.target.value}))}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Category</em></MenuItem>
+                <MenuItem value="electrical">Electrical</MenuItem>
+                <MenuItem value="plumbing">Plumbing</MenuItem>
+                <MenuItem value="renovation">Renovation</MenuItem>
+                <MenuItem value="safety">Safety</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="subCategory" className="text-sm font-medium">
-              Sub Category <span className="text-red-500">*</span>
-            </Label>
-            <Select value={formData.subCategory} onValueChange={(value) => setFormData(prev => ({...prev, subCategory: value}))}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Sub-Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="wiring">Wiring</SelectItem>
-                <SelectItem value="fixtures">Fixtures</SelectItem>
-                <SelectItem value="pipes">Pipes</SelectItem>
-                <SelectItem value="fittings">Fittings</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel id="sub-category-label" shrink>Sub Category*</InputLabel>
+              <MuiSelect
+                labelId="sub-category-label"
+                label="Sub Category*"
+                displayEmpty
+                value={formData.subCategory}
+                onChange={(e) => setFormData(prev => ({...prev, subCategory: e.target.value}))}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Sub-Category</em></MenuItem>
+                <MenuItem value="wiring">Wiring</MenuItem>
+                <MenuItem value="fixtures">Fixtures</MenuItem>
+                <MenuItem value="pipes">Pipes</MenuItem>
+                <MenuItem value="fittings">Fittings</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="title" className="text-sm font-medium">
-              Title <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="title"
+            <TextField
               placeholder="Enter the title"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({...prev, title: e.target.value}))}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
             />
           </div>
         </div>
@@ -153,18 +173,20 @@ export const AddChecklistDashboard = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            <Select value={numberOfQuestions.toString()} onValueChange={handleNumberOfQuestionsChange}>
-              <SelectTrigger className="w-20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
+            <FormControl variant="outlined" sx={{ width: 80 }}>
+              <MuiSelect
+                displayEmpty
+                value={numberOfQuestions.toString()}
+                onChange={(e) => handleNumberOfQuestionsChange(e.target.value)}
+                sx={fieldStyles}
+              >
                 {Array.from({ length: 20 }, (_, i) => i + 1).map(num => (
-                  <SelectItem key={num} value={num.toString()}>
+                  <MenuItem key={num} value={num.toString()}>
                     {num.toString().padStart(2, '0')}
-                  </SelectItem>
+                  </MenuItem>
                 ))}
-              </SelectContent>
-            </Select>
+              </MuiSelect>
+            </FormControl>
             <Button
               type="button"
               onClick={handleAddQuestion}
@@ -197,11 +219,17 @@ export const AddChecklistDashboard = () => {
 
               <div className="space-y-4">
                 <div>
-                  <Textarea
+                  <TextField
                     placeholder="Enter your Question"
                     value={question.text}
                     onChange={(e) => handleQuestionChange(question.id, 'text', e.target.value)}
-                    className="min-h-[100px]"
+                    fullWidth
+                    variant="outlined"
+                    multiline
+                    rows={4}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
                   />
                 </div>
 
@@ -213,22 +241,24 @@ export const AddChecklistDashboard = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">Select Answer Type</Label>
-                    <Select 
-                      value={question.answerType} 
-                      onValueChange={(value) => handleQuestionChange(question.id, 'answerType', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose Answer Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="text">Text</SelectItem>
-                        <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
-                        <SelectItem value="yes-no">Yes/No</SelectItem>
-                        <SelectItem value="rating">Rating</SelectItem>
-                        <SelectItem value="number">Number</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <InputLabel id={`answer-type-${question.id}-label`} shrink>Select Answer Type</InputLabel>
+                      <MuiSelect
+                        labelId={`answer-type-${question.id}-label`}
+                        label="Select Answer Type"
+                        displayEmpty
+                        value={question.answerType}
+                        onChange={(e) => handleQuestionChange(question.id, 'answerType', e.target.value)}
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value=""><em>Choose Answer Type</em></MenuItem>
+                        <MenuItem value="text">Text</MenuItem>
+                        <MenuItem value="multiple-choice">Multiple Choice</MenuItem>
+                        <MenuItem value="yes-no">Yes/No</MenuItem>
+                        <MenuItem value="rating">Rating</MenuItem>
+                        <MenuItem value="number">Number</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
                   </div>
 
                   <div className="flex items-center space-x-2">
@@ -237,9 +267,9 @@ export const AddChecklistDashboard = () => {
                       checked={question.mandatory}
                       onCheckedChange={(checked) => handleQuestionChange(question.id, 'mandatory', checked as boolean)}
                     />
-                    <Label htmlFor={`mandatory-${question.id}`} className="text-sm font-medium">
+                    <label htmlFor={`mandatory-${question.id}`} className="text-sm font-medium">
                       Mandatory
-                    </Label>
+                    </label>
                   </div>
                 </div>
               </div>

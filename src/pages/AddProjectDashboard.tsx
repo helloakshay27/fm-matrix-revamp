@@ -1,13 +1,13 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, X, Plus } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { AddCategoryModal } from '@/components/AddCategoryModal';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { useToast } from '@/hooks/use-toast';
 
 interface Category {
   id: number;
@@ -18,6 +18,7 @@ interface Category {
 
 export const AddProjectDashboard = () => {
   const navigate = useNavigate();
+  const { toast: showToast } = useToast();
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -31,6 +32,13 @@ export const AddProjectDashboard = () => {
     vendor: '',
     category: ''
   });
+
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +63,10 @@ export const AddProjectDashboard = () => {
     existingProjects.push(newProject);
     localStorage.setItem('fitoutProjects', JSON.stringify(existingProjects));
     
-    toast.success('Project created successfully!');
+    showToast({
+      title: "Success",
+      description: "Project created successfully!",
+    });
     navigate('/transitioning/fitout/request');
   };
 
@@ -67,12 +78,18 @@ export const AddProjectDashboard = () => {
       active: true
     };
     setCategories(prev => [...prev, newCategory]);
-    toast.success('Category added successfully!');
+    showToast({
+      title: "Success",
+      description: "Category added successfully!",
+    });
   };
 
   const handleRemoveCategory = (id: number) => {
     setCategories(prev => prev.filter(cat => cat.id !== id));
-    toast.success('Category removed successfully!');
+    showToast({
+      title: "Success",
+      description: "Category removed successfully!",
+    });
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,13 +97,19 @@ export const AddProjectDashboard = () => {
     if (files) {
       const newFiles = Array.from(files);
       setUploadedFiles(prev => [...prev, ...newFiles]);
-      toast.success(`${newFiles.length} file(s) uploaded successfully!`);
+      showToast({
+        title: "Success",
+        description: `${newFiles.length} file(s) uploaded successfully!`,
+      });
     }
   };
 
   const handleRemoveFile = (index: number) => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
-    toast.success('File removed successfully!');
+    showToast({
+      title: "Success",
+      description: "File removed successfully!",
+    });
   };
 
   return (
@@ -102,111 +125,128 @@ export const AddProjectDashboard = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <div>
-            <Label htmlFor="building" className="text-sm font-medium mb-2 block">
-              Building <span className="text-red-500">*</span>
-            </Label>
-            <Select value={formData.building} onValueChange={(value) => setFormData(prev => ({...prev, building: value}))}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Building" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="building-a">Building A</SelectItem>
-                <SelectItem value="building-b">Building B</SelectItem>
-                <SelectItem value="building-c">Building C</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel id="building-label" shrink>Building*</InputLabel>
+              <MuiSelect
+                labelId="building-label"
+                label="Building*"
+                displayEmpty
+                value={formData.building}
+                onChange={(e) => setFormData(prev => ({...prev, building: e.target.value}))}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Building</em></MenuItem>
+                <MenuItem value="building-a">Building A</MenuItem>
+                <MenuItem value="building-b">Building B</MenuItem>
+                <MenuItem value="building-c">Building C</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           <div>
-            <Label htmlFor="floor" className="text-sm font-medium mb-2 block">
-              Floor <span className="text-red-500">*</span>
-            </Label>
-            <Select value={formData.floor} onValueChange={(value) => setFormData(prev => ({...prev, floor: value}))}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Floor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ground">Ground Floor</SelectItem>
-                <SelectItem value="first">First Floor</SelectItem>
-                <SelectItem value="second">Second Floor</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel id="floor-label" shrink>Floor*</InputLabel>
+              <MuiSelect
+                labelId="floor-label"
+                label="Floor*"
+                displayEmpty
+                value={formData.floor}
+                onChange={(e) => setFormData(prev => ({...prev, floor: e.target.value}))}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Floor</em></MenuItem>
+                <MenuItem value="ground">Ground Floor</MenuItem>
+                <MenuItem value="first">First Floor</MenuItem>
+                <MenuItem value="second">Second Floor</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           <div>
-            <Label htmlFor="unit" className="text-sm font-medium mb-2 block">
-              Unit <span className="text-red-500">*</span>
-            </Label>
-            <Select value={formData.unit} onValueChange={(value) => setFormData(prev => ({...prev, unit: value}))}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Unit" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="unit-101">Unit 101</SelectItem>
-                <SelectItem value="unit-102">Unit 102</SelectItem>
-                <SelectItem value="unit-103">Unit 103</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel id="unit-label" shrink>Unit*</InputLabel>
+              <MuiSelect
+                labelId="unit-label"
+                label="Unit*"
+                displayEmpty
+                value={formData.unit}
+                onChange={(e) => setFormData(prev => ({...prev, unit: e.target.value}))}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Unit</em></MenuItem>
+                <MenuItem value="unit-101">Unit 101</MenuItem>
+                <MenuItem value="unit-102">Unit 102</MenuItem>
+                <MenuItem value="unit-103">Unit 103</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           <div>
-            <Label htmlFor="user" className="text-sm font-medium mb-2 block">
-              User <span className="text-red-500">*</span>
-            </Label>
-            <Select value={formData.user} onValueChange={(value) => setFormData(prev => ({...prev, user: value}))}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select User" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="john-doe">John Doe</SelectItem>
-                <SelectItem value="jane-smith">Jane Smith</SelectItem>
-                <SelectItem value="mike-johnson">Mike Johnson</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel id="user-label" shrink>User*</InputLabel>
+              <MuiSelect
+                labelId="user-label"
+                label="User*"
+                displayEmpty
+                value={formData.user}
+                onChange={(e) => setFormData(prev => ({...prev, user: e.target.value}))}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select User</em></MenuItem>
+                <MenuItem value="john-doe">John Doe</MenuItem>
+                <MenuItem value="jane-smith">Jane Smith</MenuItem>
+                <MenuItem value="mike-johnson">Mike Johnson</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
-            <Label htmlFor="description" className="text-sm font-medium mb-2 block">
-              Description
-            </Label>
-            <Textarea
-              id="description"
+            <TextField
               placeholder="Description"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({...prev, description: e.target.value}))}
-              className="min-h-[100px]"
+              fullWidth
+              variant="outlined"
+              multiline
+              rows={4}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
             />
           </div>
 
           <div>
-            <Label htmlFor="requestDate" className="text-sm font-medium mb-2 block">
-              Request Date <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="requestDate"
+            <TextField
               type="date"
-              placeholder="Request Date"
               value={formData.requestDate}
               onChange={(e) => setFormData(prev => ({...prev, requestDate: e.target.value}))}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
             />
           </div>
 
           <div>
-            <Label htmlFor="vendor" className="text-sm font-medium mb-2 block">
-              Vendor
-            </Label>
-            <Select value={formData.vendor} onValueChange={(value) => setFormData(prev => ({...prev, vendor: value}))}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Vendor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="vendor-a">Vendor A</SelectItem>
-                <SelectItem value="vendor-b">Vendor B</SelectItem>
-                <SelectItem value="vendor-c">Vendor C</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel id="vendor-label" shrink>Vendor</InputLabel>
+              <MuiSelect
+                labelId="vendor-label"
+                label="Vendor"
+                displayEmpty
+                value={formData.vendor}
+                onChange={(e) => setFormData(prev => ({...prev, vendor: e.target.value}))}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Vendor</em></MenuItem>
+                <MenuItem value="vendor-a">Vendor A</MenuItem>
+                <MenuItem value="vendor-b">Vendor B</MenuItem>
+                <MenuItem value="vendor-c">Vendor C</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
         </div>
       </div>
@@ -225,14 +265,22 @@ export const AddProjectDashboard = () => {
           {categories.map((category) => (
             <div key={category.id} className="flex gap-2 items-end">
               <div className="flex-1">
-                <Label className="text-sm font-medium mb-2 block">
-                  Category <span className="text-red-500">*</span>
-                </Label>
-                <Input value={category.category} readOnly className="bg-gray-50" />
+                <TextField
+                  value={category.category}
+                  fullWidth
+                  variant="outlined"
+                  InputProps={{ readOnly: true, sx: { ...fieldStyles, backgroundColor: '#f9fafb' } }}
+                  sx={{ mt: 1 }}
+                />
               </div>
               <div className="flex-1">
-                <Label className="text-sm font-medium mb-2 block">Amount</Label>
-                <Input value={category.amount} readOnly className="bg-gray-50" />
+                <TextField
+                  value={category.amount}
+                  fullWidth
+                  variant="outlined"
+                  InputProps={{ readOnly: true, sx: { ...fieldStyles, backgroundColor: '#f9fafb' } }}
+                  sx={{ mt: 1 }}
+                />
               </div>
               <Button 
                 type="button" 
@@ -249,7 +297,6 @@ export const AddProjectDashboard = () => {
 
         {/* File Upload Section */}
         <div className="mb-6">
-          <Label className="text-sm font-medium mb-2 block">Upload Files</Label>
           <div className="space-y-4">
             <div>
               <input
@@ -274,7 +321,6 @@ export const AddProjectDashboard = () => {
             {/* Display uploaded files */}
             {uploadedFiles.length > 0 && (
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Uploaded Files:</Label>
                 {uploadedFiles.map((file, index) => (
                   <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
                     <span className="text-sm">{file.name}</span>
