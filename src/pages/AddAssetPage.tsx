@@ -321,9 +321,23 @@ export const AddAssetPage = () => {
             <CardContent className="pt-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
-                  <Label htmlFor="assetName">Asset Name*</Label>
-                  <Input placeholder="Enter Text" />
-                </div>
+  <TextField
+    required
+    label="Asset Name"
+    placeholder="Enter Text"
+    name="assetName"
+    fullWidth
+    variant="outlined"
+    InputProps={{
+      sx: {
+        height: 36,
+        '& input': {
+          padding: '8px 14px',
+        },
+      },
+    }}
+  />
+</div>
                 <div>
                   <Label htmlFor="assetNo">Asset No.*</Label>
                   <Input placeholder="Enter Number" />
