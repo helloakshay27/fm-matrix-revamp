@@ -329,7 +329,6 @@ const Sprints = ({ closeModal }) => {
               disabled={isSubmitting}
               onClick={() => {
                 if (savedSprints.length === 0) {
-                  setIsDelete(true);
                   setFormData({
                     title: "",
                     ownerId: "",
@@ -337,6 +336,7 @@ const Sprints = ({ closeModal }) => {
                     endDate: "",
                     priority: "",
                   });
+                  closeModal();
                 } else {
                   window.location.reload();
                 }
