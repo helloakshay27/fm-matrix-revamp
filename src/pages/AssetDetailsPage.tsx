@@ -26,7 +26,7 @@ export const AssetDetailsPage = () => {
     id: id || '203696',
     name: 'sdcsdc',
     code: '026dd95aa50be420318ea',
-    status: 'In Use',
+    status: 'In Use'
   };
 
   const handleBack = () => {
@@ -54,9 +54,20 @@ export const AssetDetailsPage = () => {
 
   return (
     <div className="p-4 sm:p-6 min-h-screen">
-      {/* Header */}
+      <style>
+        {`
+          .no-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+          .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `}
+      </style>
+
       <div className="mb-6">
-        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 mb-4">
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4 flex-wrap">
           <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800">
             <ArrowLeft className="w-4 h-4" />
             Assets List
@@ -71,21 +82,18 @@ export const AssetDetailsPage = () => {
           </h1>
 
           <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4">
-            {/* Custom Toggle */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">Breakdown</span>
               <div className="flex items-center">
                 <div
-                  className={`relative inline-flex items-center h-6 w-11 rounded-full cursor-pointer transition-colors ${
+                  className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
                     isInUse ? 'bg-green-500' : 'bg-gray-300'
                   }`}
-                  onClick={() =>
-                    setIsInUse((prev) => {
-                      const next = !prev;
-                      handleSwitchChange(next);
-                      return next;
-                    })
-                  }
+                  onClick={() => setIsInUse(prev => {
+                    const next = !prev;
+                    handleSwitchChange(next);
+                    return next;
+                  })}
                 >
                   <span
                     className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
@@ -97,7 +105,6 @@ export const AssetDetailsPage = () => {
               <span className="text-sm text-gray-600">In Use</span>
             </div>
 
-            {/* Buttons */}
             <Button
               onClick={handleEditClick}
               variant="outline"
@@ -125,35 +132,30 @@ export const AssetDetailsPage = () => {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="asset-info" className="w-full">
-          {/* Responsive Scrollable Tabs */}
-          <TabsList className="overflow-x-auto scrollbar-hide bg-gray-50 rounded-t-lg border-b">
-            <div className="flex min-w-[900px] sm:min-w-full">
-              {[
-                { label: 'Asset Info', value: 'asset-info' },
-                { label: 'AMC Details', value: 'amc-details' },
-                { label: 'PPM', value: 'ppm' },
-                { label: 'E-BOM', value: 'e-bom' },
-                { label: 'Attachments', value: 'attachments' },
-                { label: 'Readings', value: 'readings' },
-                { label: 'Logs', value: 'logs' },
-                { label: 'History Card', value: 'history-card' },
-                { label: 'Cost Of Ownership', value: 'cost-ownership' },
-              ].map(({ label, value }) => (
-                <TabsTrigger
-                  key={value}
-                  value={value}
-                  className="flex-1 min-w-[140px] text-center px-2 py-3 text-sm border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030] text-[#C72030]"
-                >
-                  {label}
-                </TabsTrigger>
-              ))}
-            </div>
+          <TabsList className="overflow-x-auto whitespace-nowrap no-scrollbar bg-gray-50 rounded-t-lg border-b px-2">
+            {[
+              { value: 'asset-info', label: 'Asset Info' },
+              { value: 'amc-details', label: 'AMC Details' },
+              { value: 'ppm', label: 'PPM' },
+              { value: 'e-bom', label: 'E-BOM' },
+              { value: 'attachments', label: 'Attachments' },
+              { value: 'readings', label: 'Readings' },
+              { value: 'logs', label: 'Logs' },
+              { value: 'history-card', label: 'History Card' },
+              { value: 'cost-ownership', label: 'Cost Of Ownership' }
+            ].map(tab => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="inline-block min-w-[140px] px-2 py-3 text-sm text-[#C72030] data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
-          {/* Tab Content */}
           <TabsContent value="asset-info" className="p-4 sm:p-6">
             <AssetInfoTab assetId={asset.id} />
           </TabsContent>
@@ -184,7 +186,6 @@ export const AssetDetailsPage = () => {
         </Tabs>
       </div>
 
-      {/* Modals */}
       <RepairReplaceModal
         isOpen={isRepairReplaceOpen}
         onClose={() => setIsRepairReplaceOpen(false)}
