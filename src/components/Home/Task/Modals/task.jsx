@@ -10,6 +10,7 @@ import { useParams } from "react-router-dom";
 import { fetchProjectDetails, removeTagFromProject } from "../../../../redux/slices/projectSlice";
 import { fetchMilestoneById } from "../../../../redux/slices/milestoneSlice";
 import toast from "react-hot-toast";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 
 const TaskForm = ({
   formData,
@@ -29,9 +30,11 @@ const TaskForm = ({
   milestoneEndDate,
   token,
   allUsers,
-  calculateDuration // Add calculateDuration as a prop
+  calculateDuration,
+  hasSavedTasks,
+  setIsDelete
 }) => {
-  const { fetchUserAvailability: userAvailability } = useSelector(state => state.fetchUserAvailability)
+  const { fetchUserAvailability: userAvailability } = useSelector(state => state.fetchUserAvailability);
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -74,7 +77,29 @@ const TaskForm = ({
   };
 
   return (
-    <div className="p-4 bg-white">
+    <div className="p-4 bg-white relative">
+      {!isReadOnly && hasSavedTasks && (
+        <DeleteOutlinedIcon
+          onClick={() => {
+            setFormData({
+              project: formData.project,
+              milestone: formData.milestone,
+              taskTitle: "",
+              description: "",
+              responsiblePerson: "",
+              department: "",
+              priority: "",
+              duration: "",
+              expected_start_date: null,
+              target_date: null,
+              observer: [],
+              tags: [],
+            });
+            setIsDelete(true);
+          }}
+          className="absolute top-3 right-3 text-red-600 cursor-pointer"
+        />
+      )}
       {project && milestone &&
         !Array.isArray(project) &&
         !Array.isArray(milestone) &&
@@ -281,6 +306,7 @@ const Tasks = ({ isEdit, onCloseModal }) => {
 
   const [nextId, setNextId] = useState(1);
   const [savedTasks, setSavedTasks] = useState([]);
+  const [isDelete, setIsDelete] = useState(false);
   const [formData, setFormData] = useState({
     project: id,
     milestone: mid,
@@ -318,7 +344,7 @@ const Tasks = ({ isEdit, onCloseModal }) => {
     dispatch(fetchTags({ token }));
     dispatch(fetchProjectDetails({ token, id }));
     dispatch(fetchMilestoneById({ token, id: mid }));
-  }, [dispatch, id, mid]);
+  }, [dispatch, id, mid, token]);
 
   const getTagName = useCallback(
     (id) => tags.find((t) => t.id === id)?.name || "",
@@ -357,7 +383,7 @@ const Tasks = ({ isEdit, onCloseModal }) => {
       setPrevTags(mappedTags);
       setPrevObservers(mappedObservers);
     }
-  }, [isEdit, task, id, mid]);
+  }, [isEdit, task, id, mid, getTagName]);
 
   const createTaskPayload = (data) => ({
     title: data.taskTitle,
@@ -389,7 +415,7 @@ const Tasks = ({ isEdit, onCloseModal }) => {
   const handleCancel = () => {
     if (savedTasks.length === 0) {
       if (onCloseModal) {
-        onCloseModal(); // Trigger modal close from parent
+        onCloseModal();
       } else {
         console.log("Modal closed (onCloseModal not provided)");
       }
@@ -400,6 +426,11 @@ const Tasks = ({ isEdit, onCloseModal }) => {
 
   const handleAddTask = async (e) => {
     e.preventDefault();
+    if (isDelete) {
+      setIsDelete(false);
+      return;
+    }
+
     if (
       !formData.taskTitle ||
       !formData.responsiblePerson ||
@@ -442,9 +473,12 @@ const Tasks = ({ isEdit, onCloseModal }) => {
         observer: [],
         tags: [],
       });
+      setPrevTags([]);
+      setPrevObservers([]);
+      setIsDelete(false);
       setNextId(nextId + 1);
     } catch (error) {
-      console.error("Error creating task:", error);
+      console.errorovate("Error creating task:", error);
       toast.dismiss();
       toast.error("Error creating task.");
     }
@@ -452,14 +486,20 @@ const Tasks = ({ isEdit, onCloseModal }) => {
 
   const handleSubmit = async (e, editId) => {
     e.preventDefault();
+    if (isDelete && isFormEmpty()) {
+      window.location.reload();
+      return;
+    }
+
     if (
-      !formData.taskTitle ||
-      !formData.responsiblePerson ||
-      !formData.priority ||
-      !formData.expected_start_date ||
-      !formData.target_date ||
-      !formData.observer.length ||
-      !formData.tags.length
+      !isDelete &&
+      (!formData.taskTitle ||
+        !formData.responsiblePerson ||
+        !formData.priority ||
+        !formData.expected_start_date ||
+        !formData.target_date ||
+        !formData.observer.length ||
+        !formData.tags.length)
     ) {
       toast.dismiss();
       toast.error("Please fill all required fields.");
@@ -528,29 +568,35 @@ const Tasks = ({ isEdit, onCloseModal }) => {
             token={token}
             allUsers={users}
             calculateDuration={calculateDuration}
+            hasSavedTasks={savedTasks.length > 0}
+            setIsDelete={setIsDelete}
           />
         ))}
 
-        <TaskForm
-          formData={formData}
-          setFormData={setFormData}
-          isReadOnly={false}
-          project={project}
-          milestone={milestone}
-          users={project?.project_team?.project_team_members || users}
-          tags={tags}
-          prevTags={prevTags}
-          setPrevTags={setPrevTags}
-          prevObservers={prevObservers}
-          setPrevObservers={setPrevObservers}
-          isEdit={isEdit}
-          dispatch={dispatch}
-          milestoneStartDate={milestone?.start_date}
-          milestoneEndDate={milestone?.end_date}
-          token={token}
-          allUsers={users}
-          calculateDuration={calculateDuration}
-        />
+        {!isDelete && (
+          <TaskForm
+            formData={formData}
+            setFormData={setFormData}
+            isReadOnly={false}
+            project={project}
+            milestone={milestone}
+            users={project?.project_team?.project_team_members || users}
+            tags={tags}
+            prevTags={prevTags}
+            setPrevTags={setPrevTags}
+            prevObservers={prevObservers}
+            setPrevObservers={setPrevObservers}
+            isEdit={isEdit}
+            dispatch={dispatch}
+            milestoneStartDate={milestone?.start_date}
+            milestoneEndDate={milestone?.end_date}
+            token={token}
+            allUsers={users}
+            calculateDuration={calculateDuration}
+            hasSavedTasks={savedTasks.length > 0}
+            setIsDelete={setIsDelete}
+          />
+        )}
 
         <div className="flex items-center justify-center gap-4 w-full bottom-0 py-3 bg-white mt-10 text-[12px]">
           <button
