@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -79,8 +80,24 @@ export const AddSchedulePage = () => {
     endAt: ''
   });
 
+  // Cron form states
+  const [cronFormData, setCronFormData] = useState({
+    minuteStart: '00',
+    minuteEnd: '59',
+    hourStart: '00',
+    hourEnd: '23',
+    dayStart: '01',
+    dayEnd: '31',
+    monthStart: 'Jan',
+    monthEnd: 'Dec'
+  });
+
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCronFormChange = (field: string, value: string) => {
+    setCronFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleTaskSectionChange = (sectionId: string, field: keyof TaskSection, value: any) => {
@@ -855,27 +872,31 @@ export const AddSchedulePage = () => {
                   <div className="flex items-center space-x-2">
                     <input type="radio" id="every-minute" name="minutes-option" />
                     <Label htmlFor="every-minute">Every minute between minute</Label>
-                    <Select>
-                      <SelectTrigger className="w-20">
-                        <SelectValue placeholder="00" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <FormControl size="small" sx={{ minWidth: 80 }}>
+                      <MuiSelect
+                        value={cronFormData.minuteStart}
+                        onChange={(e) => handleCronFormChange('minuteStart', e.target.value)}
+                        displayEmpty
+                        sx={{ height: 40 }}
+                      >
                         {Array.from({ length: 60 }, (_, i) => (
-                          <SelectItem key={i} value={i.toString()}>{i.toString().padStart(2, '0')}</SelectItem>
+                          <MenuItem key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}</MenuItem>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </MuiSelect>
+                    </FormControl>
                     <span>and minute</span>
-                    <Select>
-                      <SelectTrigger className="w-20">
-                        <SelectValue placeholder="59" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <FormControl size="small" sx={{ minWidth: 80 }}>
+                      <MuiSelect
+                        value={cronFormData.minuteEnd}
+                        onChange={(e) => handleCronFormChange('minuteEnd', e.target.value)}
+                        displayEmpty
+                        sx={{ height: 40 }}
+                      >
                         {Array.from({ length: 60 }, (_, i) => (
-                          <SelectItem key={i} value={i.toString()}>{i.toString().padStart(2, '0')}</SelectItem>
+                          <MenuItem key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}</MenuItem>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </MuiSelect>
+                    </FormControl>
                   </div>
                 </>
               )}
@@ -899,27 +920,31 @@ export const AddSchedulePage = () => {
                   <div className="flex items-center space-x-2">
                     <input type="radio" id="every-hour" name="hours-option" />
                     <Label htmlFor="every-hour">Every hour between hour</Label>
-                    <Select>
-                      <SelectTrigger className="w-20">
-                        <SelectValue placeholder="00" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <FormControl size="small" sx={{ minWidth: 80 }}>
+                      <MuiSelect
+                        value={cronFormData.hourStart}
+                        onChange={(e) => handleCronFormChange('hourStart', e.target.value)}
+                        displayEmpty
+                        sx={{ height: 40 }}
+                      >
                         {Array.from({ length: 24 }, (_, i) => (
-                          <SelectItem key={i} value={i.toString()}>{i.toString().padStart(2, '0')}</SelectItem>
+                          <MenuItem key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}</MenuItem>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </MuiSelect>
+                    </FormControl>
                     <span>and hour</span>
-                    <Select>
-                      <SelectTrigger className="w-20">
-                        <SelectValue placeholder="23" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <FormControl size="small" sx={{ minWidth: 80 }}>
+                      <MuiSelect
+                        value={cronFormData.hourEnd}
+                        onChange={(e) => handleCronFormChange('hourEnd', e.target.value)}
+                        displayEmpty
+                        sx={{ height: 40 }}
+                      >
                         {Array.from({ length: 24 }, (_, i) => (
-                          <SelectItem key={i} value={i.toString()}>{i.toString().padStart(2, '0')}</SelectItem>
+                          <MenuItem key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}</MenuItem>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </MuiSelect>
+                    </FormControl>
                   </div>
                 </>
               )}
@@ -943,27 +968,31 @@ export const AddSchedulePage = () => {
                   <div className="flex items-center space-x-2">
                     <input type="radio" id="every-day" name="days-option" />
                     <Label htmlFor="every-day">Every day between day</Label>
-                    <Select>
-                      <SelectTrigger className="w-20">
-                        <SelectValue placeholder="01" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <FormControl size="small" sx={{ minWidth: 80 }}>
+                      <MuiSelect
+                        value={cronFormData.dayStart}
+                        onChange={(e) => handleCronFormChange('dayStart', e.target.value)}
+                        displayEmpty
+                        sx={{ height: 40 }}
+                      >
                         {Array.from({ length: 31 }, (_, i) => (
-                          <SelectItem key={i} value={(i + 1).toString()}>{(i + 1).toString().padStart(2, '0')}</SelectItem>
+                          <MenuItem key={i} value={(i + 1).toString().padStart(2, '0')}>{(i + 1).toString().padStart(2, '0')}</MenuItem>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </MuiSelect>
+                    </FormControl>
                     <span>and day</span>
-                    <Select>
-                      <SelectTrigger className="w-20">
-                        <SelectValue placeholder="31" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <FormControl size="small" sx={{ minWidth: 80 }}>
+                      <MuiSelect
+                        value={cronFormData.dayEnd}
+                        onChange={(e) => handleCronFormChange('dayEnd', e.target.value)}
+                        displayEmpty
+                        sx={{ height: 40 }}
+                      >
                         {Array.from({ length: 31 }, (_, i) => (
-                          <SelectItem key={i} value={(i + 1).toString()}>{(i + 1).toString().padStart(2, '0')}</SelectItem>
+                          <MenuItem key={i} value={(i + 1).toString().padStart(2, '0')}>{(i + 1).toString().padStart(2, '0')}</MenuItem>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </MuiSelect>
+                    </FormControl>
                   </div>
                 </>
               )}
@@ -987,27 +1016,31 @@ export const AddSchedulePage = () => {
                   <div className="flex items-center space-x-2">
                     <input type="radio" id="every-month" name="months-option" />
                     <Label htmlFor="every-month">Every month between month</Label>
-                    <Select>
-                      <SelectTrigger className="w-24">
-                        <SelectValue placeholder="Jan" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <FormControl size="small" sx={{ minWidth: 100 }}>
+                      <MuiSelect
+                        value={cronFormData.monthStart}
+                        onChange={(e) => handleCronFormChange('monthStart', e.target.value)}
+                        displayEmpty
+                        sx={{ height: 40 }}
+                      >
                         {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
-                          <SelectItem key={i} value={(i + 1).toString()}>{month}</SelectItem>
+                          <MenuItem key={i} value={month}>{month}</MenuItem>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </MuiSelect>
+                    </FormControl>
                     <span>and month</span>
-                    <Select>
-                      <SelectTrigger className="w-24">
-                        <SelectValue placeholder="Dec" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <FormControl size="small" sx={{ minWidth: 100 }}>
+                      <MuiSelect
+                        value={cronFormData.monthEnd}
+                        onChange={(e) => handleCronFormChange('monthEnd', e.target.value)}
+                        displayEmpty
+                        sx={{ height: 40 }}
+                      >
                         {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
-                          <SelectItem key={i} value={(i + 1).toString()}>{month}</SelectItem>
+                          <MenuItem key={i} value={month}>{month}</MenuItem>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </MuiSelect>
+                    </FormControl>
                   </div>
                 </>
               )}
