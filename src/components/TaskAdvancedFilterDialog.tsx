@@ -1,14 +1,24 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
+import { SelectChangeEvent } from '@mui/material/Select';
+import { useToast } from '@/hooks/use-toast';
+
+interface Filters {
+  type: string;
+  scheduleType: string;
+  scheduleFor: string;
+  group: string;
+  subGroup: string;
+  assignedTo: string;
+  supplier: string;
+}
 
 interface TaskAdvancedFilterDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onApply: (filters: any) => void;
+  onApply: (filters: Filters) => void;
 }
 
 export const TaskAdvancedFilterDialog: React.FC<TaskAdvancedFilterDialogProps> = ({
@@ -16,7 +26,8 @@ export const TaskAdvancedFilterDialog: React.FC<TaskAdvancedFilterDialogProps> =
   onOpenChange,
   onApply,
 }) => {
-  const [filters, setFilters] = useState({
+  const { toast } = useToast();
+  const [filters, setFilters] = useState<Filters>({
     type: '',
     scheduleType: '',
     scheduleFor: '',
@@ -29,6 +40,10 @@ export const TaskAdvancedFilterDialog: React.FC<TaskAdvancedFilterDialogProps> =
   const handleApply = () => {
     console.log('Applying Advanced filters:', filters);
     onApply(filters);
+    toast({
+      title: 'Success',
+      description: 'Filters applied successfully!',
+    });
     onOpenChange(false);
   };
 
@@ -44,6 +59,17 @@ export const TaskAdvancedFilterDialog: React.FC<TaskAdvancedFilterDialogProps> =
     });
   };
 
+  const handleSelectChange = (field: keyof Filters) => (event: SelectChangeEvent<string>) => {
+    setFilters({ ...filters, [field]: event.target.value });
+  };
+
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
@@ -55,107 +81,141 @@ export const TaskAdvancedFilterDialog: React.FC<TaskAdvancedFilterDialogProps> =
           {/* First Row */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Type</label>
-              <Select value={filters.type} onValueChange={(value) => setFilters({ ...filters, type: value })}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Select Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ppm">PPM</SelectItem>
-                  <SelectItem value="breakdown">Breakdown</SelectItem>
-                  <SelectItem value="preventive">Preventive</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="type-select-label" shrink>Type</InputLabel>
+                <MuiSelect
+                  labelId="type-select-label"
+                  label="Type"
+                  value={filters.type}
+                  onChange={handleSelectChange('type')}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Type</em></MenuItem>
+                  <MenuItem value="ppm">PPM</MenuItem>
+                  <MenuItem value="breakdown">Breakdown</MenuItem>
+                  <MenuItem value="preventive">Preventive</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
             
             <div>
-              <label className="text-sm font-medium mb-2 block">Schedule Type</label>
-              <Select value={filters.scheduleType} onValueChange={(value) => setFilters({ ...filters, scheduleType: value })}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Select Schedule Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="yearly">Yearly</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="schedule-type-select-label" shrink>Schedule Type</InputLabel>
+                <MuiSelect
+                  labelId="schedule-type-select-label"
+                  label="Schedule Type"
+                  value={filters.scheduleType}
+                  onChange={handleSelectChange('scheduleType')}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Schedule Type</em></MenuItem>
+                  <MenuItem value="daily">Daily</MenuItem>
+                  <MenuItem value="weekly">Weekly</MenuItem>
+                  <MenuItem value="monthly">Monthly</MenuItem>
+                  <MenuItem value="yearly">Yearly</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
           {/* Second Row */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Schedule For</label>
-              <Input
-                placeholder=""
+              <TextField
+                label="Schedule For"
+                placeholder="Enter Schedule For"
                 value={filters.scheduleFor}
-                onChange={(e) => setFilters({ ...filters, scheduleFor: e.target.value })}
-                className="text-sm"
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, scheduleFor: e.target.value })}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Group</label>
-              <Select value={filters.group} onValueChange={(value) => setFilters({ ...filters, group: value })}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Select Group" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cleaning">Cleaning</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="security">Security</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="group-select-label" shrink>Group</InputLabel>
+                <MuiSelect
+                  labelId="group-select-label"
+                  label="Group"
+                  value={filters.group}
+                  onChange={handleSelectChange('group')}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Group</em></MenuItem>
+                  <MenuItem value="cleaning">Cleaning</MenuItem>
+                  <MenuItem value="maintenance">Maintenance</MenuItem>
+                  <MenuItem value="security">Security</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
           {/* Third Row */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Sub Group</label>
-              <Select value={filters.subGroup} onValueChange={(value) => setFilters({ ...filters, subGroup: value })}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Select Sub Group" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="washroom">Washroom</SelectItem>
-                  <SelectItem value="lobby">Lobby</SelectItem>
-                  <SelectItem value="lift">Lift</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="sub-group-select-label" shrink>Sub Group</InputLabel>
+                <MuiSelect
+                  labelId="sub-group-select-label"
+                  label="Sub Group"
+                  value={filters.subGroup}
+                  onChange={handleSelectChange('subGroup')}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Sub Group</em></MenuItem>
+                  <MenuItem value="washroom">Washroom</MenuItem>
+                  <MenuItem value="lobby">Lobby</MenuItem>
+                  <MenuItem value="lift">Lift</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Assigned To</label>
-              <Select value={filters.assignedTo} onValueChange={(value) => setFilters({ ...filters, assignedTo: value })}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Select Assigned To" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="vinayak-mane">Vinayak Mane</SelectItem>
-                  <SelectItem value="john-doe">John Doe</SelectItem>
-                  <SelectItem value="jane-smith">Jane Smith</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="assigned-to-select-label" shrink>Assigned To</InputLabel>
+                <MuiSelect
+                  labelId="assigned-to-select-label"
+                  label="Assigned To"
+                  value={filters.assignedTo}
+                  onChange={handleSelectChange('assignedTo')}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Assigned To</em></MenuItem>
+                  <MenuItem value="vinayak-mane">Vinayak Mane</MenuItem>
+                  <MenuItem value="john-doe">John Doe</MenuItem>
+                  <MenuItem value="jane-smith">Jane Smith</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
           {/* Fourth Row */}
           <div className="grid grid-cols-1 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Supplier</label>
-              <Select value={filters.supplier} onValueChange={(value) => setFilters({ ...filters, supplier: value })}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Select Supplier" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="supplier-1">Supplier 1</SelectItem>
-                  <SelectItem value="supplier-2">Supplier 2</SelectItem>
-                  <SelectItem value="supplier-3">Supplier 3</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="supplier-select-label" shrink>Supplier</InputLabel>
+                <MuiSelect
+                  labelId="supplier-select-label"
+                  label="Supplier"
+                  value={filters.supplier}
+                  onChange={handleSelectChange('supplier')}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Supplier</em></MenuItem>
+                  <MenuItem value="supplier-1">Supplier 1</MenuItem>
+                  <MenuItem value="supplier-2">Supplier 2</MenuItem>
+                  <MenuItem value="supplier-3">Supplier 3</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
         </div>

@@ -1,35 +1,51 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
+import { SelectChangeEvent } from '@mui/material/Select';
 import { X } from "lucide-react";
+import { useToast } from '@/hooks/use-toast';
+
+interface Filters {
+  commodity: string;
+  category: string;
+  operationalName: string;
+  dateRange: string;
+}
 
 interface WasteGenerationFilterDialogProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const WasteGenerationFilterDialog = ({ isOpen, onClose }: WasteGenerationFilterDialogProps) => {
-  const [filters, setFilters] = useState({
+export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogProps> = ({ isOpen, onClose }) => {
+  const { toast } = useToast();
+  const [filters, setFilters] = useState<Filters>({
     commodity: '',
     category: '',
     operationalName: '',
     dateRange: ''
   });
 
-  const handleFilterChange = (field: string, value: string) => {
-    setFilters(prev => ({ ...prev, [field]: value }));
+  const handleFilterChange = (field: keyof Filters) => (event: React.ChangeEvent<HTMLInputElement> | SelectChangeEvent<string>) => {
+    setFilters(prev => ({ ...prev, [field]: event.target.value }));
   };
 
   const handleSubmit = () => {
     console.log('Applying filters:', filters);
+    toast({
+      title: 'Success',
+      description: 'Filters applied successfully!',
+    });
     onClose();
   };
 
   const handleExport = () => {
     console.log('Exporting filtered data');
+    toast({
+      title: 'Success',
+      description: 'Data exported successfully!',
+    });
     onClose();
   };
 
@@ -42,6 +58,13 @@ export const WasteGenerationFilterDialog = ({ isOpen, onClose }: WasteGeneration
     });
   };
 
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl p-6 [&>button]:hidden">
@@ -52,7 +75,7 @@ export const WasteGenerationFilterDialog = ({ isOpen, onClose }: WasteGeneration
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="h-8 w-8 p-1 bg-[#C72030] text-white hover:bg-[#C72030]/90 rounded-none shadow-none"
+              className="h-8 w-8 p-1  text-white  rounded-none shadow-none"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -62,58 +85,76 @@ export const WasteGenerationFilterDialog = ({ isOpen, onClose }: WasteGeneration
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label>Commodity/Source</Label>
-              <Select value={filters.commodity} onValueChange={(value) => handleFilterChange('commodity', value)}>
-                <SelectTrigger className="rounded-none">
-                  <SelectValue placeholder="Select Commodity" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="paper">Paper</SelectItem>
-                  <SelectItem value="plastic">Plastic</SelectItem>
-                  <SelectItem value="metal">Metal</SelectItem>
-                  <SelectItem value="organic">Organic</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="commodity-select-label" shrink>Commodity/Source</InputLabel>
+                <MuiSelect
+                  labelId="commodity-select-label"
+                  label="Commodity/Source"
+                  value={filters.commodity}
+                  onChange={handleFilterChange('commodity')}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Commodity</em></MenuItem>
+                  <MenuItem value="paper">Paper</MenuItem>
+                  <MenuItem value="plastic">Plastic</MenuItem>
+                  <MenuItem value="metal">Metal</MenuItem>
+                  <MenuItem value="organic">Organic</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div className="space-y-2">
-              <Label>Category</Label>
-              <Select value={filters.category} onValueChange={(value) => handleFilterChange('category', value)}>
-                <SelectTrigger className="rounded-none">
-                  <SelectValue placeholder="Select Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="recyclable">Recyclable</SelectItem>
-                  <SelectItem value="non-recyclable">Non-Recyclable</SelectItem>
-                  <SelectItem value="hazardous">Hazardous</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="category-select-label" shrink>Category</InputLabel>
+                <MuiSelect
+                  labelId="category-select-label"
+                  label="Category"
+                  value={filters.category}
+                  onChange={handleFilterChange('category')}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Category</em></MenuItem>
+                  <MenuItem value="recyclable">Recyclable</MenuItem>
+                  <MenuItem value="non-recyclable">Non-Recyclable</MenuItem>
+                  <MenuItem value="hazardous">Hazardous</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label>Operational Name of Landlord/ Tenant</Label>
-              <Select value={filters.operationalName} onValueChange={(value) => handleFilterChange('operationalName', value)}>
-                <SelectTrigger className="rounded-none">
-                  <SelectValue placeholder="Select Operational Name" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="abc-corp">ABC Corp</SelectItem>
-                  <SelectItem value="xyz-inc">XYZ Inc</SelectItem>
-                  <SelectItem value="def-ltd">DEF Ltd</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="operational-name-select-label" shrink>Operational Name</InputLabel>
+                <MuiSelect
+                  labelId="operational-name-select-label"
+                  label="Operational Name"
+                  value={filters.operationalName}
+                  onChange={handleFilterChange('operationalName')}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Operational Name</em></MenuItem>
+                  <MenuItem value="abc-corp">ABC Corp</MenuItem>
+                  <MenuItem value="xyz-inc">XYZ Inc</MenuItem>
+                  <MenuItem value="def-ltd">DEF Ltd</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div className="space-y-2">
-              <Label>Date Range*</Label>
-              <Input
+              <TextField
+                label="Date Range"
                 type="date"
                 value={filters.dateRange}
-                onChange={(e) => handleFilterChange('dateRange', e.target.value)}
-                placeholder="Select Date Range"
-                className="rounded-none"
+                onChange={handleFilterChange('dateRange')}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
               />
             </div>
           </div>
