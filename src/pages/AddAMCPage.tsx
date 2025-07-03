@@ -320,21 +320,20 @@ export const AddAMCPage = () => {
       </div>
 
       {/* Remarks Field - full width in grid */}
-      <div className="md:col-span-3">
-        <TextField
-          label="Remarks"
-          placeholder="Enter Remarks"
-          name="remarks"
-          value={formData.remarks}
-          onChange={(e) => handleInputChange('remarks', e.target.value)}
-          fullWidth
-          variant="outlined"
-          multiline
-          rows={3}
-          InputLabelProps={{ shrink: true }}
-          InputProps={{ sx: fieldStyles }}
-        />
-      </div>
+     <div className="md:col-span-3">
+  <label htmlFor="remarks" className="block text-sm font-medium text-gray-700 mb-1">
+    Remarks
+  </label>
+  <textarea
+    id="remarks"
+    name="remarks"
+    value={formData.remarks}
+    onChange={(e) => handleInputChange('remarks', e.target.value)}
+    placeholder="Enter Remarks"
+    rows={3}
+    className="w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] resize-none"
+  />
+</div>
     </div>
   </CardContent>
 </Card>
