@@ -192,25 +192,9 @@ export const AddAssetPage = () => {
 
   // Responsive styles for TextField and Select
   const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
+    height: { xs: 28, sm: 36, md: 36 },
     '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-      '&::placeholder': {
-        fontSize: { xs: '12px', sm: '13px', md: '14px' }, // Default for text fields
-        opacity: 1,
-      },
-      '&[type="date"]::placeholder': {
-        fontSize: { xs: '11px', sm: '12px', md: '13px' }, // Smaller for date fields
-        opacity: 1,
-      },
-    },
-    '& .MuiInputBase-root': {
-      '& .MuiSelect-select': {
-        fontSize: { xs: '11px', sm: '12px', md: '13px' }, // Smaller for dropdowns
-      },
-      '& .MuiMenuItem-root': {
-        fontSize: { xs: '11px', sm: '12px', md: '13px' }, // Smaller for dropdown menu items
-      },
+      padding: { xs: '8px', sm: '10px', md: '10px' },
     },
   };
 
@@ -220,7 +204,7 @@ export const AddAssetPage = () => {
       <div className="mb-6">
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
           <span>Asset List</span>
-          <span>></span>
+          <span>&gt;</span>
           <span className="text-gray-900 font-medium">Create New Asset</span>
         </div>
         <h1 className="text-2xl font-bold text-gray-900">NEW ASSET</h1>
@@ -523,9 +507,16 @@ export const AddAssetPage = () => {
                       value=""
                       sx={fieldStyles}
                     >
-                      <MenuItem value=""><em>Select Group</em></MenuItem>
-                      <MenuItem value="group1">Group 1</MenuItem>
-                      <MenuItem value="group2">Group 2</MenuItem>
+                      <MenuItem value="" sx={{ fontSize: 12, py: 0.5 }}>
+  <em>Select Group</em>
+</MenuItem>
+<MenuItem value="group1" sx={{ fontSize: 12, py: 0.5 }}>
+  Group 1
+</MenuItem>
+<MenuItem value="group2" sx={{ fontSize: 12, py: 0.5 }}>
+  Group 2
+</MenuItem>
+
                     </MuiSelect>
                   </FormControl>
                 </div>
