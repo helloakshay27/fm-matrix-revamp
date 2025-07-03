@@ -3,29 +3,38 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 
 export const PPMTab = () => {
-  const statusCards = [
-    { count: 0, label: 'Schedule', color: 'bg-purple-600' },
-    { count: 0, label: 'Open', color: 'bg-orange-700' },
-    { count: 0, label: 'In Progress', color: 'bg-orange-500' },
-    { count: 0, label: 'Closed', color: 'bg-green-600' },
-    { count: 0, label: 'Overdue', color: 'bg-red-700' }
-  ];
+const statusCards = [
+  { count: 0, label: 'Schedule', bgColor: '#9B8FC2' },
+  { count: 0, label: 'Open', bgColor: '#F2C8C4' },
+  { count: 0, label: 'In Progress', bgColor: '#F2EBC9' },
+  { count: 0, label: 'Closed', bgColor: '#C7EDDA' },
+  { count: 0, label: 'Overdue', bgColor: '#F28B82' },
+];
 
   return (
     <div className="space-y-6">
       {/* Status Cards */}
-      <div className="grid grid-cols-5 gap-4">
-        {statusCards.map((card, index) => (
-          <div key={index} className={`${card.color} text-white p-4 rounded-lg`}>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                <span className="text-lg font-bold">{card.count}</span>
-              </div>
-              <span className="font-medium">{card.label}</span>
-            </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+    {statusCards.map((card, index) => (
+      <div
+        key={index}
+        className="rounded-2xl p-4 min-h-[96px] bg-[#f6f4ee] text-sm text-black shadow-sm"
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm"
+            style={{
+              backgroundColor: card.bgColor,
+              color: '#C72030', // ← your requested text color
+            }}
+          >
+            {card.count}
           </div>
-        ))}
+          <div className="font-medium text-sm">{card.label}</div>
+        </div>
       </div>
+    ))}
+  </div>
 
       {/* No Scheduled Task */}
       <div className="flex flex-col items-center justify-center py-20">
