@@ -5,7 +5,7 @@ import { fetchTags } from "../../../../redux/slices/tagsSlice";
 import WeekProgressPicker from "../../../../Milestone/weekProgressPicker";
 import MultiSelectBox from "../../../MultiSelectBox";
 import SelectBox from "../../../SelectBox";
-import { createTask, editTask } from "../../../../redux/slices/taskSlice";
+import { createTask, editTask, fetchTasks } from "../../../../redux/slices/taskSlice";
 import { useParams } from "react-router-dom";
 import { fetchProjectDetails, removeTagFromProject } from "../../../../redux/slices/projectSlice";
 import { fetchMilestoneById } from "../../../../redux/slices/milestoneSlice";
@@ -477,6 +477,7 @@ const Tasks = ({ isEdit, onCloseModal }) => {
       setPrevObservers([]);
       setIsDelete(false);
       setNextId(nextId + 1);
+      await dispatch(fetchTasks({ token, id: mid })).unwrap();
     } catch (error) {
       console.errorovate("Error creating task:", error);
       toast.dismiss();
