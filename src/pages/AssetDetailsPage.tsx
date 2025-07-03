@@ -127,7 +127,7 @@ export const AssetDetailsPage = () => {
       {/* Tabs */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="asset-info" className="w-full">
-          <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
+          <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-10 bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
             <TabsTrigger value="asset-info" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
               Asset Info
             </TabsTrigger>
