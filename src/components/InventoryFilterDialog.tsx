@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { useToast } from '@/hooks/use-toast';
 
 interface InventoryFilterDialogProps {
   open: boolean;
@@ -16,6 +15,7 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
   onOpenChange,
   onApply,
 }) => {
+  const { toast } = useToast();
   const [filters, setFilters] = useState({
     name: '',
     code: '',
@@ -26,6 +26,10 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
 
   const handleApply = () => {
     console.log('Applying Inventory filters:', filters);
+    toast({
+      title: "Success",
+      description: "Filters applied successfully!",
+    });
     onApply(filters);
     onOpenChange(false);
   };
@@ -42,9 +46,19 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
 
   const handleExport = () => {
     console.log('Exporting with filters:', filters);
-    alert('Export functionality executed with current filters');
+    toast({
+      title: "Success",
+      description: "Export functionality executed with current filters",
+    });
   };
 
+  // Responsive styles for TextField and Select
+   const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+  };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
@@ -57,27 +71,41 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">Name</label>
-              <Input
+              <TextField
+                label="Name"
                 placeholder="Enter Name"
                 value={filters.name}
                 onChange={(e) => setFilters({ ...filters, name: e.target.value })}
-                className="text-sm"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                InputProps={{
+                  sx: fieldStyles
+                }}
               />
             </div>
             
             <div>
               <label className="text-sm font-medium mb-2 block">Category</label>
-              <Select value={filters.category} onValueChange={(value) => setFilters({ ...filters, category: value })}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Select Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="electronics">Electronics</SelectItem>
-                  <SelectItem value="consumable">Consumable</SelectItem>
-                  <SelectItem value="equipment">Equipment</SelectItem>
-                  <SelectItem value="furniture">Furniture</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="category-select-label" shrink>Category</InputLabel>
+                <MuiSelect
+                  labelId="category-select-label"
+                  label="Category"
+                  displayEmpty
+                  value={filters.category}
+                  onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Category</em></MenuItem>
+                  <MenuItem value="electronics">Electronics</MenuItem>
+                  <MenuItem value="consumable">Consumable</MenuItem>
+                  <MenuItem value="equipment">Equipment</MenuItem>
+                  <MenuItem value="furniture">Furniture</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
@@ -85,25 +113,39 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">Code</label>
-              <Input
+              <TextField
+                label="Code"
                 placeholder="Search by code"
                 value={filters.code}
                 onChange={(e) => setFilters({ ...filters, code: e.target.value })}
-                className="text-sm"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                InputProps={{
+                  sx: fieldStyles
+                }}
               />
             </div>
 
             <div>
               <label className="text-sm font-medium mb-2 block">Criticality</label>
-              <Select value={filters.criticality} onValueChange={(value) => setFilters({ ...filters, criticality: value })}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Select Criticality" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="critical">Critical</SelectItem>
-                  <SelectItem value="non-critical">Non-Critical</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="criticality-select-label" shrink>Criticality</InputLabel>
+                <MuiSelect
+                  labelId="criticality-select-label"
+                  label="Criticality"
+                  displayEmpty
+                  value={filters.criticality}
+                  onChange={(e) => setFilters({ ...filters, criticality: e.target.value })}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Criticality</em></MenuItem>
+                  <MenuItem value="critical">Critical</MenuItem>
+                  <MenuItem value="non-critical">Non-Critical</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
@@ -111,16 +153,22 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">Inventory Type</label>
-              <Select value={filters.inventoryType} onValueChange={(value) => setFilters({ ...filters, inventoryType: value })}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Select Inventory Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="asset">Asset</SelectItem>
-                  <SelectItem value="consumable">Consumable</SelectItem>
-                  <SelectItem value="spare-part">Spare Part</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="inventory-type-select-label" shrink>Inventory Type</InputLabel>
+                <MuiSelect
+                  labelId="inventory-type-select-label"
+                  label="Inventory Type"
+                  displayEmpty
+                  value={filters.inventoryType}
+                  onChange={(e) => setFilters({ ...filters, inventoryType: e.target.value })}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Inventory Type</em></MenuItem>
+                  <MenuItem value="asset">Asset</MenuItem>
+                  <MenuItem value="consumable">Consumable</MenuItem>
+                  <MenuItem value="spare-part">Spare Part</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
         </div>
