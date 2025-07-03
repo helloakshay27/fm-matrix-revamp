@@ -26,7 +26,7 @@ export const AssetDetailsPage = () => {
     id: id || '203696',
     name: 'sdcsdc',
     code: '026dd95aa50be420318ea',
-    status: 'In Use'
+    status: 'In Use',
   };
 
   const handleBack = () => {
@@ -128,28 +128,32 @@ export const AssetDetailsPage = () => {
       {/* Tabs */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="asset-info" className="w-full">
-          <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
-            {[
-              { label: 'Asset Info', value: 'asset-info' },
-              { label: 'AMC Details', value: 'amc-details' },
-              { label: 'PPM', value: 'ppm' },
-              { label: 'E-BOM', value: 'e-bom' },
-              { label: 'Attachments', value: 'attachments' },
-              { label: 'Readings', value: 'readings' },
-              { label: 'Logs', value: 'logs' },
-              { label: 'History Card', value: 'history-card' },
-              { label: 'Cost Of Ownership', value: 'cost-ownership' }
-            ].map(({ label, value }) => (
-              <TabsTrigger
-                key={value}
-                value={value}
-                className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030] text-[#C72030]"
-              >
-                {label}
-              </TabsTrigger>
-            ))}
+          {/* Responsive Scrollable Tabs */}
+          <TabsList className="overflow-x-auto scrollbar-hide bg-gray-50 rounded-t-lg border-b">
+            <div className="flex min-w-[900px] sm:min-w-full">
+              {[
+                { label: 'Asset Info', value: 'asset-info' },
+                { label: 'AMC Details', value: 'amc-details' },
+                { label: 'PPM', value: 'ppm' },
+                { label: 'E-BOM', value: 'e-bom' },
+                { label: 'Attachments', value: 'attachments' },
+                { label: 'Readings', value: 'readings' },
+                { label: 'Logs', value: 'logs' },
+                { label: 'History Card', value: 'history-card' },
+                { label: 'Cost Of Ownership', value: 'cost-ownership' },
+              ].map(({ label, value }) => (
+                <TabsTrigger
+                  key={value}
+                  value={value}
+                  className="flex-1 min-w-[140px] text-center px-2 py-3 text-sm border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030] text-[#C72030]"
+                >
+                  {label}
+                </TabsTrigger>
+              ))}
+            </div>
           </TabsList>
 
+          {/* Tab Content */}
           <TabsContent value="asset-info" className="p-4 sm:p-6">
             <AssetInfoTab assetId={asset.id} />
           </TabsContent>
