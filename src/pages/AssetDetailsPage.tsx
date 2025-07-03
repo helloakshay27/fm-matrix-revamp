@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Edit } from 'lucide-react';
 import { AssetInfoTab } from '@/components/asset-details/AssetInfoTab';
@@ -57,7 +56,7 @@ export const AssetDetailsPage = () => {
     <div className="p-4 sm:p-6 min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4 flex-wrap">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 mb-4">
           <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800">
             <ArrowLeft className="w-4 h-4" />
             Assets List
@@ -72,31 +71,33 @@ export const AssetDetailsPage = () => {
           </h1>
 
           <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4">
-  <div className="flex items-center gap-2">
-    <span className="text-sm text-gray-600">Breakdown</span>
+            {/* Custom Toggle */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Breakdown</span>
+              <div className="flex items-center">
+                <div
+                  className={`relative inline-flex items-center h-6 w-11 rounded-full cursor-pointer transition-colors ${
+                    isInUse ? 'bg-green-500' : 'bg-gray-300'
+                  }`}
+                  onClick={() =>
+                    setIsInUse((prev) => {
+                      const next = !prev;
+                      handleSwitchChange(next);
+                      return next;
+                    })
+                  }
+                >
+                  <span
+                    className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                      isInUse ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </div>
+              </div>
+              <span className="text-sm text-gray-600">In Use</span>
+            </div>
 
-    <div className="flex items-center">
-      <div
-        className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-          isInUse ? 'bg-green-500' : 'bg-gray-300'
-        }`}
-        onClick={() => setIsInUse(prev => {
-          const next = !prev;
-          handleSwitchChange(next);
-          return next;
-        })}
-      >
-        <span
-          className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-            isInUse ? 'translate-x-6' : 'translate-x-1'
-          }`}
-        />
-      </div>
-    </div>
-
-    <span className="text-sm text-gray-600">In Use</span>
-  </div>
-
+            {/* Buttons */}
             <Button
               onClick={handleEditClick}
               variant="outline"
@@ -128,33 +129,25 @@ export const AssetDetailsPage = () => {
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="asset-info" className="w-full">
           <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
-            <TabsTrigger value="asset-info" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              Asset Info
-            </TabsTrigger>
-            <TabsTrigger value="amc-details" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              AMC Details
-            </TabsTrigger>
-            <TabsTrigger value="ppm" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              PPM
-            </TabsTrigger>
-            <TabsTrigger value="e-bom" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              E-BOM
-            </TabsTrigger>
-            <TabsTrigger value="attachments" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              Attachments
-            </TabsTrigger>
-            <TabsTrigger value="readings" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              Readings
-            </TabsTrigger>
-            <TabsTrigger value="logs" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              Logs
-            </TabsTrigger>
-            <TabsTrigger value="history-card" className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              History Card
-            </TabsTrigger>
-            <TabsTrigger value="cost-ownership" className="rounded-none data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030]">
-              Cost Of Ownership
-            </TabsTrigger>
+            {[
+              { label: 'Asset Info', value: 'asset-info' },
+              { label: 'AMC Details', value: 'amc-details' },
+              { label: 'PPM', value: 'ppm' },
+              { label: 'E-BOM', value: 'e-bom' },
+              { label: 'Attachments', value: 'attachments' },
+              { label: 'Readings', value: 'readings' },
+              { label: 'Logs', value: 'logs' },
+              { label: 'History Card', value: 'history-card' },
+              { label: 'Cost Of Ownership', value: 'cost-ownership' }
+            ].map(({ label, value }) => (
+              <TabsTrigger
+                key={value}
+                value={value}
+                className="rounded-none border-r data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-[#C72030] text-[#C72030]"
+              >
+                {label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="asset-info" className="p-4 sm:p-6">
