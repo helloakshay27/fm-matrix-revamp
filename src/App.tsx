@@ -31,7 +31,7 @@ import { FitoutViolationDashboard } from './pages/FitoutViolationDashboard';
 // Import Maintenance pages
 import { AssetDashboard } from './pages/AssetDashboard';
 import { AssetDetailsPage } from './pages/AssetDetailsPage';
-import { AddAssetPage } from './pages/AddAssetPage';
+import AddAssetPage from './pages/AddAssetPage';
 import { InActiveAssetsDashboard } from './pages/InActiveAssetsDashboard';
 
 // Import Incident pages
