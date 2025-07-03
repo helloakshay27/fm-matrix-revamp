@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -105,7 +106,7 @@ export const AddTicketDashboard = () => {
           </Button>
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
             <span>Ticket List</span>
-            <span>></span>
+            <span>&gt;</span>
             <span>New Ticket</span>
           </div>
           <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">NEW TICKET</h1>
