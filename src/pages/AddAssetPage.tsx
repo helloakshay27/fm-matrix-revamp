@@ -507,27 +507,29 @@ export const AddAssetPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel id="group-select-label" shrink>
-                      Group
-                    </InputLabel>
-                    <MuiSelect
-                      labelId="group-select-label"
-                      label="Group"
-                      displayEmpty
-                      sx={{
-                        height: 56,
-                        '& .MuiSelect-select': {
-                          padding: '14px',
-                        },
-                      }}
-                    >
-                      <MenuItem value="">
-                        <em>Select Group</em>
-                      </MenuItem>
-                      <MenuItem value="group1">Group 1</MenuItem>
-                      <MenuItem value="group2">Group 2</MenuItem>
-                    </MuiSelect>
-                  </FormControl>
+  <InputLabel id="group-select-label" shrink>
+    Group
+  </InputLabel>
+  <MuiSelect
+    labelId="group-select-label"
+    label="Group"
+    displayEmpty
+    value="" // ✅ This ensures "Select Group" is shown initially
+    sx={{
+      height: 56,
+      '& .MuiSelect-select': {
+        padding: '14px',
+      },
+    }}
+  >
+    <MenuItem value="">
+      <em>Select Group</em>
+    </MenuItem>
+    <MenuItem value="group1">Group 1</MenuItem>
+    <MenuItem value="group2">Group 2</MenuItem>
+  </MuiSelect>
+</FormControl>
+
                 </div>
                 <div>
                   <Select>
