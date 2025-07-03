@@ -112,7 +112,7 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
             <div>
               <TextField
                 label="Code"
-                placeholder="Search by code"
+                placeholder="Find Code"
                 value={filters.code}
                 onChange={(e) => setFilters({ ...filters, code: e.target.value })}
                 fullWidth
