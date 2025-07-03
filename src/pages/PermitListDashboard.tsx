@@ -60,7 +60,6 @@ export const PermitListDashboard = () => {
         relative overflow-hidden cursor-pointer transition-all
         bg-[#F2F0EB] text-[#D92818] shadow-[0px_2px_18px_rgba(45,45,45,0.1)]
         md:h-[132px] flex flex-col justify-between
-        ${selectedFilter === stat.label ? 'ring-2 ring-purple-500' : ''}
       `}
       onClick={() => handleStatsCardClick(stat.label)}
     >
