@@ -1,6 +1,7 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { useToast } from '@/hooks/use-toast';
 
 interface AddSurveyFormProps {
   isOpen: boolean;
@@ -8,7 +9,39 @@ interface AddSurveyFormProps {
 }
 
 export const AddSurveyForm = ({ isOpen, onClose }: AddSurveyFormProps) => {
+  const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    surveyTitle: '',
+    category: '',
+  });
+
   if (!isOpen) return null;
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (e: React.ChangeEvent<{ value: unknown }>) => {
+    setFormData(prev => ({ ...prev, category: e.target.value as string }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Survey submitted:', formData);
+    toast({
+      title: 'Success',
+      description: 'Survey added successfully!',
+    });
+    onClose();
+  };
+
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -20,28 +53,39 @@ export const AddSurveyForm = ({ isOpen, onClose }: AddSurveyFormProps) => {
           </button>
         </div>
         
-        <form className="space-y-4">
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
-            <label className="block text-sm font-medium text-[#1a1a1a] mb-1">
-              Survey Title
-            </label>
-            <input
-              type="text"
-              className="w-full border border-[#D5DbDB] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
-              placeholder="Enter survey title"
+            <TextField
+              label="Survey Title"
+              name="surveyTitle"
+              value={formData.surveyTitle}
+              onChange={handleInputChange}
+              placeholder="Enter Survey Title"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-[#1a1a1a] mb-1">
-              Category
-            </label>
-            <select className="w-full border border-[#D5DbDB] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#C72030]">
-              <option>Select category</option>
-              <option>Feedback</option>
-              <option>Maintenance</option>
-              <option>Security</option>
-            </select>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel id="category-select-label" shrink>Category</InputLabel>
+              <MuiSelect
+                labelId="category-select-label"
+                label="Category"
+                value={formData.category}
+                onChange={handleSelectChange}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Category</em></MenuItem>
+                <MenuItem value="Feedback">Feedback</MenuItem>
+                <MenuItem value="Maintenance">Maintenance</MenuItem>
+                <MenuItem value="Security">Security</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
           
           <div className="flex gap-3 pt-4">
