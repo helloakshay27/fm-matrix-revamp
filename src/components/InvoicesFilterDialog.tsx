@@ -2,123 +2,142 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { X } from "lucide-react";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
 
 interface InvoicesFilterDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onApply: (filters: {
-    invoiceNumber: string;
-    invoiceDate: string;
-    supplierName: string;
-  }) => void;
 }
 
 export const InvoicesFilterDialog: React.FC<InvoicesFilterDialogProps> = ({
   open,
   onOpenChange,
-  onApply,
 }) => {
   const [filters, setFilters] = useState({
     invoiceNumber: '',
-    invoiceDate: '',
-    supplierName: ''
+    supplierName: '',
+    status: '',
+    dateRange: ''
   });
 
+  const handleInputChange = (field: string, value: string) => {
+    setFilters(prev => ({ ...prev, [field]: value }));
+  };
+
   const handleApply = () => {
-    console.log('Applying filters:', filters);
-    onApply(filters);
+    console.log('Applying invoice filters:', filters);
     onOpenChange(false);
   };
 
   const handleReset = () => {
-    console.log('Resetting filters...');
     setFilters({
       invoiceNumber: '',
-      invoiceDate: '',
-      supplierName: ''
+      supplierName: '',
+      status: '',
+      dateRange: ''
     });
-  };
-
-  const handleClose = () => {
-    onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between text-lg font-semibold">
-            FILTER BY
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClose}
-              className="h-6 w-6 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </DialogTitle>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+            className="h-6 w-6 p-0"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </DialogHeader>
         
-        <div className="space-y-6">
-          {/* Work Order Details Section */}
-          <div>
-            <h3 className="text-orange-500 font-medium mb-4">Work Order Details</h3>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <TextField
+              label="Invoice Number"
+              placeholder="Search By Invoice Number"
+              value={filters.invoiceNumber}
+              onChange={(e) => handleInputChange('invoiceNumber', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
             
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <Label className="text-sm font-medium text-gray-700">Invoice Number</Label>
-                <Input 
-                  placeholder="Search By Invoice Number"
-                  value={filters.invoiceNumber}
-                  onChange={(e) => setFilters(prev => ({ ...prev, invoiceNumber: e.target.value }))}
-                  className="mt-1"
-                />
-              </div>
-              
-              <div>
-                <Label className="text-sm font-medium text-gray-700">Invoice Date</Label>
-                <Input 
-                  placeholder="Search By Invoice Date"
-                  type="date"
-                  value={filters.invoiceDate}
-                  onChange={(e) => setFilters(prev => ({ ...prev, invoiceDate: e.target.value }))}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-            
-            <div className="mt-6">
-              <Label className="text-sm font-medium text-gray-700">Supplier Name</Label>
-              <Input 
-                placeholder="Supplier Name"
-                value={filters.supplierName}
-                onChange={(e) => setFilters(prev => ({ ...prev, supplierName: e.target.value }))}
-                className="mt-1"
-              />
-            </div>
+            <TextField
+              label="Supplier Name"
+              placeholder="Supplier Name"
+              value={filters.supplierName}
+              onChange={(e) => handleInputChange('supplierName', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
           </div>
-          
-          {/* Action Buttons */}
-          <div className="flex gap-4 pt-4">
-            <Button 
-              onClick={handleApply}
-              className="flex-1"
-              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-            >
-              Apply
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={handleReset}
-              className="flex-1"
-            >
-              Reset
-            </Button>
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Status</InputLabel>
+              <MuiSelect
+                label="Status"
+                value={filters.status}
+                onChange={(e) => handleInputChange('status', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Status</em></MenuItem>
+                <MenuItem value="paid">Paid</MenuItem>
+                <MenuItem value="pending">Pending</MenuItem>
+                <MenuItem value="overdue">Overdue</MenuItem>
+              </MuiSelect>
+            </FormControl>
+
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Date Range</InputLabel>
+              <MuiSelect
+                label="Date Range"
+                value={filters.dateRange}
+                onChange={(e) => handleInputChange('dateRange', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Date Range</em></MenuItem>
+                <MenuItem value="last-7-days">Last 7 Days</MenuItem>
+                <MenuItem value="last-30-days">Last 30 Days</MenuItem>
+                <MenuItem value="last-90-days">Last 90 Days</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
+        </div>
+
+        <div className="flex gap-3 pt-4">
+          <Button 
+            onClick={handleApply}
+            className="flex-1 text-white"
+            style={{ backgroundColor: '#C72030' }}
+          >
+            Apply
+          </Button>
+          <Button 
+            onClick={handleReset}
+            variant="outline"
+            className="flex-1"
+          >
+            Reset
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

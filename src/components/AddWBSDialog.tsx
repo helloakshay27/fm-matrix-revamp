@@ -2,218 +2,170 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X } from "lucide-react";
-import { toast } from "sonner";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
-interface WBSFormData {
-  plantCode: string;
-  category: string;
-  categoryWBSCode: string;
-  wbsName: string;
-  wbsCode: string;
-  site: string;
-}
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
 
 interface AddWBSDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: WBSFormData) => void;
 }
 
-export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({ open, onOpenChange, onSubmit }) => {
-  const [formData, setFormData] = useState<WBSFormData>({
-    plantCode: '',
-    category: '',
-    categoryWBSCode: '',
-    wbsName: '',
+export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
+  open,
+  onOpenChange,
+}) => {
+  const [formData, setFormData] = useState({
     wbsCode: '',
-    site: ''
+    wbsName: '',
+    description: '',
+    parentWBS: '',
+    department: '',
+    status: 'active'
   });
 
-  const [errors, setErrors] = useState<Partial<WBSFormData>>({});
-
-  const validateForm = (): boolean => {
-    const newErrors: Partial<WBSFormData> = {};
-
-    if (!formData.plantCode.trim()) {
-      newErrors.plantCode = 'Plant Code is required';
-    }
-    if (!formData.category.trim()) {
-      newErrors.category = 'Category is required';
-    }
-    if (!formData.categoryWBSCode.trim()) {
-      newErrors.categoryWBSCode = 'Category WBS Code is required';
-    }
-    if (!formData.wbsName.trim()) {
-      newErrors.wbsName = 'WBS Name is required';
-    }
-    if (!formData.wbsCode.trim()) {
-      newErrors.wbsCode = 'WBS Code is required';
-    }
-    if (!formData.site.trim()) {
-      newErrors.site = 'Site is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
-    console.log('WBS Form submitted:', formData);
-    onSubmit(formData);
-    
+  const handleSubmit = () => {
+    console.log('Adding WBS:', formData);
+    onOpenChange(false);
     // Reset form
     setFormData({
-      plantCode: '',
-      category: '',
-      categoryWBSCode: '',
-      wbsName: '',
       wbsCode: '',
-      site: ''
-    });
-    setErrors({});
-    onOpenChange(false);
-  };
-
-  const handleInputChange = (field: keyof WBSFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  };
-
-  const handleClose = () => {
-    setFormData({
-      plantCode: '',
-      category: '',
-      categoryWBSCode: '',
       wbsName: '',
-      wbsCode: '',
-      site: ''
+      description: '',
+      parentWBS: '',
+      department: '',
+      status: 'active'
     });
-    setErrors({});
-    onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md [&>button]:hidden">
-        <DialogHeader className="flex flex-row items-center justify-between">
-          <DialogTitle>Add New WBS</DialogTitle>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={handleClose}
-            className="h-6 w-6"
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <DialogTitle className="text-lg font-semibold">ADD WBS</DialogTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+            className="h-6 w-6 p-0"
           >
             <X className="h-4 w-4" />
           </Button>
         </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+        
+        <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Plant Code *</label>
-              <Select 
-                value={formData.plantCode} 
-                onValueChange={(value) => handleInputChange('plantCode', value)}
-              >
-                <SelectTrigger className={errors.plantCode ? 'border-red-500' : ''}>
-                  <SelectValue placeholder="-- Select Plant --" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PLT001">Plant 001</SelectItem>
-                  <SelectItem value="PLT002">Plant 002</SelectItem>
-                  <SelectItem value="PLT003">Plant 003</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.plantCode && <p className="text-sm text-red-500">{errors.plantCode}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Category *</label>
-              <Input 
-                value={formData.category}
-                onChange={(e) => handleInputChange('category', e.target.value)}
-                placeholder="Enter category"
-                className={errors.category ? 'border-red-500' : ''}
-              />
-              {errors.category && <p className="text-sm text-red-500">{errors.category}</p>}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Category WBS Code *</label>
-              <Input 
-                value={formData.categoryWBSCode}
-                onChange={(e) => handleInputChange('categoryWBSCode', e.target.value)}
-                placeholder="Enter WBS code"
-                className={errors.categoryWBSCode ? 'border-red-500' : ''}
-              />
-              {errors.categoryWBSCode && <p className="text-sm text-red-500">{errors.categoryWBSCode}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">WBS Name *</label>
-              <Input 
-                value={formData.wbsName}
-                onChange={(e) => handleInputChange('wbsName', e.target.value)}
-                placeholder="Enter WBS name"
-                className={errors.wbsName ? 'border-red-500' : ''}
-              />
-              {errors.wbsName && <p className="text-sm text-red-500">{errors.wbsName}</p>}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">WBS Code *</label>
-            <Input 
+            <TextField
+              label="WBS Code*"
+              placeholder="Enter WBS Code"
               value={formData.wbsCode}
               onChange={(e) => handleInputChange('wbsCode', e.target.value)}
-              placeholder="Enter WBS code"
-              className={errors.wbsCode ? 'border-red-500' : ''}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
             />
-            {errors.wbsCode && <p className="text-sm text-red-500">{errors.wbsCode}</p>}
+            
+            <TextField
+              label="WBS Name*"
+              placeholder="Enter WBS Name"
+              value={formData.wbsName}
+              onChange={(e) => handleInputChange('wbsName', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Site *</label>
-            <Select 
-              value={formData.site} 
-              onValueChange={(value) => handleInputChange('site', value)}
-            >
-              <SelectTrigger className={errors.site ? 'border-red-500' : ''}>
-                <SelectValue placeholder="-- Select Site --" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Site A">Site A</SelectItem>
-                <SelectItem value="Site B">Site B</SelectItem>
-                <SelectItem value="Site C">Site C</SelectItem>
-              </SelectContent>
-            </Select>
-            {errors.site && <p className="text-sm text-red-500">{errors.site}</p>}
+          <TextField
+            label="Description"
+            placeholder="Enter Description"
+            value={formData.description}
+            onChange={(e) => handleInputChange('description', e.target.value)}
+            fullWidth
+            variant="outlined"
+            multiline
+            minRows={3}
+            InputLabelProps={{ shrink: true }}
+            sx={{ mt: 1 }}
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Parent WBS</InputLabel>
+              <MuiSelect
+                label="Parent WBS"
+                value={formData.parentWBS}
+                onChange={(e) => handleInputChange('parentWBS', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Parent WBS</em></MenuItem>
+                <MenuItem value="WBS-001">WBS-001</MenuItem>
+                <MenuItem value="WBS-002">WBS-002</MenuItem>
+              </MuiSelect>
+            </FormControl>
+
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Department</InputLabel>
+              <MuiSelect
+                label="Department"
+                value={formData.department}
+                onChange={(e) => handleInputChange('department', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Department</em></MenuItem>
+                <MenuItem value="engineering">Engineering</MenuItem>
+                <MenuItem value="construction">Construction</MenuItem>
+                <MenuItem value="finance">Finance</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
-          <div className="flex justify-center pt-4">
-            <Button 
-              type="submit" 
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#C72030]/90 px-8"
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel shrink>Status</InputLabel>
+            <MuiSelect
+              label="Status"
+              value={formData.status}
+              onChange={(e) => handleInputChange('status', e.target.value)}
+              sx={fieldStyles}
             >
-              Add
-            </Button>
-          </div>
-        </form>
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="inactive">Inactive</MenuItem>
+            </MuiSelect>
+          </FormControl>
+        </div>
+
+        <div className="flex gap-3 pt-4">
+          <Button 
+            onClick={handleSubmit}
+            className="flex-1 text-white"
+            style={{ backgroundColor: '#C72030' }}
+          >
+            Add WBS
+          </Button>
+          <Button 
+            onClick={() => onOpenChange(false)}
+            variant="outline"
+            className="flex-1"
+          >
+            Cancel
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

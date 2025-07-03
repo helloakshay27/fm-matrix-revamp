@@ -2,9 +2,15 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { X } from "lucide-react";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
 
 interface GRNFilterDialogProps {
   open: boolean;
@@ -16,32 +22,38 @@ export const GRNFilterDialog: React.FC<GRNFilterDialogProps> = ({
   onOpenChange,
 }) => {
   const [filters, setFilters] = useState({
-    inventoryName: '',
+    grnNumber: '',
+    poNumber: '',
     supplierName: '',
-    invoiceNumber: ''
+    status: ''
   });
 
+  const handleInputChange = (field: string, value: string) => {
+    setFilters(prev => ({ ...prev, [field]: value }));
+  };
+
   const handleApply = () => {
-    console.log('Applying filters:', filters);
+    console.log('Applying GRN filters:', filters);
     onOpenChange(false);
   };
 
   const handleReset = () => {
     setFilters({
-      inventoryName: '',
+      grnNumber: '',
+      poNumber: '',
       supplierName: '',
-      invoiceNumber: ''
+      status: ''
     });
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl bg-white">
-        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
             onClick={() => onOpenChange(false)}
             className="h-6 w-6 p-0"
           >
@@ -49,52 +61,77 @@ export const GRNFilterDialog: React.FC<GRNFilterDialogProps> = ({
           </Button>
         </DialogHeader>
         
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <Label className="text-sm font-medium mb-2 block">Inventory Name</Label>
-              <Input
-                placeholder="Inventory Name"
-                value={filters.inventoryName}
-                onChange={(e) => setFilters({...filters, inventoryName: e.target.value})}
-              />
-            </div>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <TextField
+              label="GRN Number"
+              placeholder="Search By GRN Number"
+              value={filters.grnNumber}
+              onChange={(e) => handleInputChange('grnNumber', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
             
-            <div>
-              <Label className="text-sm font-medium mb-2 block">Supplier Name</Label>
-              <Input
-                placeholder="Supplier Name"
-                value={filters.supplierName}
-                onChange={(e) => setFilters({...filters, supplierName: e.target.value})}
-              />
-            </div>
-            
-            <div>
-              <Label className="text-sm font-medium mb-2 block">Invoice Number</Label>
-              <Input
-                placeholder="Invoice Number"
-                value={filters.invoiceNumber}
-                onChange={(e) => setFilters({...filters, invoiceNumber: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="PO Number"
+              placeholder="Search By PO Number"
+              value={filters.poNumber}
+              onChange={(e) => handleInputChange('poNumber', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
           </div>
-          
-          <div className="flex gap-3 justify-end pt-4">
-            <Button
-              onClick={handleApply}
-              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-              className="hover:bg-[#F2EEE9]/90 px-8"
+
+          <TextField
+            label="Supplier Name"
+            placeholder="Supplier Name"
+            value={filters.supplierName}
+            onChange={(e) => handleInputChange('supplierName', e.target.value)}
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
+          />
+
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel shrink>Status</InputLabel>
+            <MuiSelect
+              label="Status"
+              value={filters.status}
+              onChange={(e) => handleInputChange('status', e.target.value)}
+              displayEmpty
+              sx={fieldStyles}
             >
-              Apply
-            </Button>
-            <Button
-              onClick={handleReset}
-              variant="outline"
-              className="px-8"
-            >
-              Reset
-            </Button>
-          </div>
+              <MenuItem value=""><em>Select Status</em></MenuItem>
+              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="received">Received</MenuItem>
+              <MenuItem value="partial">Partial</MenuItem>
+            </MuiSelect>
+          </FormControl>
+        </div>
+
+        <div className="flex gap-3 pt-4">
+          <Button 
+            onClick={handleApply}
+            className="flex-1 text-white"
+            style={{ backgroundColor: '#C72030' }}
+          >
+            Apply
+          </Button>
+          <Button 
+            onClick={handleReset}
+            variant="outline"
+            className="flex-1"
+          >
+            Reset
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
