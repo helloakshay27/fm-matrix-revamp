@@ -67,7 +67,7 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
           {/* Activity Name */}
           <div className="space-y-2">
             <TextField
-              placeholder="Enter Activity Name"
+              placeholder="Enter Activity"
               value={activityName}
               onChange={(e) => setActivityName(e.target.value)}
               fullWidth
