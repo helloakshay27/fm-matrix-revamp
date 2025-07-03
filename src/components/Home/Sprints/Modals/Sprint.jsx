@@ -226,6 +226,7 @@ const Sprints = ({ closeModal }) => {
         priority: "",
       });
       setNextId(nextId + 1);
+      await dispatch(fetchSpirints({ token })).unwrap();
     } catch (error) {
       console.error("Error creating sprint:", error);
       toast.error("Error creating sprint.");
@@ -236,12 +237,18 @@ const Sprints = ({ closeModal }) => {
     e.preventDefault();
     if (isSubmittingRef.current) return;
 
+    if (isDelete && isFormEmpty) {
+      window.location.reload();
+      return;
+    }
+
     if (
-      !formData.title ||
-      !formData.ownerId ||
-      !formData.startDate ||
-      !formData.endDate ||
-      (!formData.priority && !isDelete)
+      !isDelete &&
+      (!formData.title ||
+        !formData.ownerId ||
+        !formData.startDate ||
+        !formData.endDate ||
+        !formData.priority)
     ) {
       toast.dismiss();
       toast.error("Please fill all required fields.");
@@ -265,6 +272,7 @@ const Sprints = ({ closeModal }) => {
       toast.error("Error submitting sprint.");
     } finally {
       setIsSubmitting(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -303,16 +311,6 @@ const Sprints = ({ closeModal }) => {
             setIsDelete={setIsDelete}
           />
         )}
-        {/* <div className="relative">
-          <button
-            type="button"
-            onClick={handleAddSprints}
-            className="absolute text-[12px] text-[red] right-2 -top-[30px] cursor-pointer mt-1"
-
-          >
-            Add Sprints
-          </button>
-        </div> */}
         <div className="flex items-center justify-center gap-4 w-full bottom-0 py-4 bg-white mt-10">
           <button
             type="submit"

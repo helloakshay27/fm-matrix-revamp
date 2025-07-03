@@ -240,7 +240,7 @@ const Milestones = ({ closeModal }) => {
         dependsOnId: null,
       });
       setNextId(nextId + 1);
-      await dispatch(fetchMilestone({ token, id }));
+      await dispatch(fetchMilestone({ token, id })).unwrap();
     } catch {
       toast.error("Error creating milestone.");
     } finally {
@@ -250,6 +250,13 @@ const Milestones = ({ closeModal }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmittingRef.current) return;
+
+    if (isDelete && isFormEmpty) {
+      window.location.reload();
+      return;
+    }
+
     if (!isDelete && !validateForm(formData)) return;
     if (isSubmittingRef.current) return;
 
@@ -258,7 +265,7 @@ const Milestones = ({ closeModal }) => {
 
     try {
       if (!isDelete) {
-        await dispatch(createMilestone({ token, payload }));
+        await dispatch(createMilestone({ token, payload })).unwrap();
       }
       toast.success("Milestone created successfully.");
       await dispatch(fetchMilestone({ token, id }));
