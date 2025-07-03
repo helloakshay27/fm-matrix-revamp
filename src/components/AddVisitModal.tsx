@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { X } from 'lucide-react';
+import { TextField } from '@mui/material';
 
 interface AddVisitModalProps {
   isOpen: boolean;
@@ -29,6 +28,14 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
     onClose();
   };
 
+  // Responsive styles for TextField
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg w-full max-w-md">
@@ -45,23 +52,41 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
         <form onSubmit={handleSubmit} className="p-6">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Vendor<span className="text-red-500">*</span>
-              </label>
-              <Input 
+              <TextField
+                required
+                label="Vendor"
                 placeholder="Enter Visit Number"
+                name="vendor"
                 value={formData.vendor}
                 onChange={(e) => handleInputChange('vendor', e.target.value)}
-                required
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                InputProps={{
+                  sx: fieldStyles
+                }}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Start Date</label>
-              <Input 
-                placeholder="Enter Visit Date"
+
+              <TextField
+                label="Start Date"
+                placeholder="Select Date"
+                name="startDate"
+                type="date"
                 value={formData.startDate}
                 onChange={(e) => handleInputChange('startDate', e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                InputProps={{
+                  sx: fieldStyles
+                }}
               />
             </div>
           </div>
