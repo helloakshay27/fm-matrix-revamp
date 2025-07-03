@@ -1,80 +1,25 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 export const AddVendorAuditPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [createNew, setCreateNew] = useState(false);
   const [createTask, setCreateTask] = useState(false);
   const [weightage, setWeightage] = useState(false);
   const [scheduleFor, setScheduleFor] = useState('asset');
   const [checklistType, setChecklistType] = useState('individual');
   const [taskSections, setTaskSections] = useState([]);
-
-  const [basicInfo, setBasicInfo] = useState({
-    activityName: '',
-    description: '',
-    allowObservations: false
-  });
-
-  const [taskData, setTaskData] = useState({
-    group: '',
-    subGroup: '',
-    task: '',
-    inputType: '',
-    mandatory: false,
-    reading: false,
-    helpText: false
-  });
-
-  const [scheduleData, setScheduleData] = useState({
-    asset: '',
-    assignTo: '',
-    scanType: '',
-    planDuration: '',
-    priority: '',
-    emailTriggerRule: '',
-    supervisors: '',
-    category: '',
-    lockOverdueTask: '',
-    frequency: '',
-    startFrom: '',
-    endAt: '',
-    supplier: ''
-  });
-
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-      fontSize: { xs: '12px', sm: '13px', md: '14px' },
-    },
-    '& .MuiInputLabel-root': {
-      fontSize: { xs: '12px', sm: '13px', md: '14px' },
-    },
-  };
-
-  const handleBasicInfoChange = (field: string, value: string | boolean) => {
-    setBasicInfo(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleTaskDataChange = (field: string, value: string | boolean) => {
-    setTaskData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleScheduleDataChange = (field: string, value: string) => {
-    setScheduleData(prev => ({ ...prev, [field]: value }));
-  };
 
   const handleAddSection = () => {
     setTaskSections([...taskSections, { id: Date.now() }]);
@@ -86,13 +31,6 @@ export const AddVendorAuditPage = () => {
 
   const handleSubmit = () => {
     console.log('Form submitted');
-    
-    toast({
-      title: "Success",
-      description: "Vendor audit schedule created successfully!",
-    });
-    
-    navigate('/maintenance/audit/vendor');
   };
 
   return (
@@ -175,40 +113,25 @@ export const AddVendorAuditPage = () => {
           </div>
 
           <div>
-            <TextField
-              required
-              label="Activity Name"
+            <Label htmlFor="activity-name">Activity Name*</Label>
+            <Input 
+              id="activity-name" 
               placeholder="Enter Activity Name"
-              value={basicInfo.activityName}
-              onChange={(e) => handleBasicInfoChange('activityName', e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
+              className="mt-1"
             />
           </div>
 
           <div>
-            <TextField
-              label="Description"
+            <Label htmlFor="description">Description</Label>
+            <Textarea 
+              id="description" 
               placeholder="Enter Description"
-              value={basicInfo.description}
-              onChange={(e) => handleBasicInfoChange('description', e.target.value)}
-              fullWidth
-              variant="outlined"
-              multiline
-              rows={3}
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
+              className="mt-1 min-h-[100px]"
             />
           </div>
 
           <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="allow-observations" 
-              checked={basicInfo.allowObservations}
-              onCheckedChange={(checked) => handleBasicInfoChange('allowObservations', checked === true)}
-            />
+            <Checkbox id="allow-observations" />
             <Label htmlFor="allow-observations">Allow Observations</Label>
           </div>
         </CardContent>
@@ -232,96 +155,61 @@ export const AddVendorAuditPage = () => {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="group-label" shrink>Group</InputLabel>
-                <MuiSelect
-                  labelId="group-label"
-                  label="Group"
-                  displayEmpty
-                  value={taskData.group}
-                  onChange={(e) => handleTaskDataChange('group', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Group</em></MenuItem>
-                  <MenuItem value="group1">Group 1</MenuItem>
-                  <MenuItem value="group2">Group 2</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <Label>Group</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Group" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="group1">Group 1</SelectItem>
+                  <SelectItem value="group2">Group 2</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="subgroup-label" shrink>SubGroup</InputLabel>
-                <MuiSelect
-                  labelId="subgroup-label"
-                  label="SubGroup"
-                  displayEmpty
-                  value={taskData.subGroup}
-                  onChange={(e) => handleTaskDataChange('subGroup', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Sub Group</em></MenuItem>
-                  <MenuItem value="subgroup1">SubGroup 1</MenuItem>
-                  <MenuItem value="subgroup2">SubGroup 2</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <Label>SubGroup</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Sub Group" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="subgroup1">SubGroup 1</SelectItem>
+                  <SelectItem value="subgroup2">SubGroup 2</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <TextField
-                label="Task"
-                placeholder="Enter Task"
-                value={taskData.task}
-                onChange={(e) => handleTaskDataChange('task', e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-              />
+              <Label>Task</Label>
+              <Input placeholder="Enter Task" />
             </div>
             <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="input-type-label" shrink>Input Type</InputLabel>
-                <MuiSelect
-                  labelId="input-type-label"
-                  label="Input Type"
-                  displayEmpty
-                  value={taskData.inputType}
-                  onChange={(e) => handleTaskDataChange('inputType', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Input Type</em></MenuItem>
-                  <MenuItem value="text">Text</MenuItem>
-                  <MenuItem value="radio">Radio Button</MenuItem>
-                  <MenuItem value="checkbox">Checkbox</MenuItem>
-                  <MenuItem value="dropdown">Dropdown</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <Label>Input Type</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Input Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="text">Text</SelectItem>
+                  <SelectItem value="radio">Radio Button</SelectItem>
+                  <SelectItem value="checkbox">Checkbox</SelectItem>
+                  <SelectItem value="dropdown">Dropdown</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center gap-4 pt-6">
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="mandatory" 
-                  checked={taskData.mandatory}
-                  onCheckedChange={(checked) => handleTaskDataChange('mandatory', checked === true)}
-                />
+                <Checkbox id="mandatory" />
                 <Label htmlFor="mandatory">Mandatory</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="reading" 
-                  checked={taskData.reading}
-                  onCheckedChange={(checked) => handleTaskDataChange('reading', checked === true)}
-                />
+                <Checkbox id="reading" />
                 <Label htmlFor="reading">Reading</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="help-text" 
-                  checked={taskData.helpText}
-                  onCheckedChange={(checked) => handleTaskDataChange('helpText', checked === true)}
-                />
+                <Checkbox id="help-text" />
                 <Label htmlFor="help-text">Help Text</Label>
               </div>
             </div>
@@ -368,247 +256,158 @@ export const AddVendorAuditPage = () => {
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="asset-label" shrink>Asset</InputLabel>
-                <MuiSelect
-                  labelId="asset-label"
-                  label="Asset"
-                  displayEmpty
-                  value={scheduleData.asset}
-                  onChange={(e) => handleScheduleDataChange('asset', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Asset</em></MenuItem>
-                  <MenuItem value="asset1">Asset 1</MenuItem>
-                  <MenuItem value="asset2">Asset 2</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <Label>Asset</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Asset" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="asset1">Asset 1</SelectItem>
+                  <SelectItem value="asset2">Asset 2</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="assign-to-label" shrink>Assign To</InputLabel>
-                <MuiSelect
-                  labelId="assign-to-label"
-                  label="Assign To"
-                  displayEmpty
-                  value={scheduleData.assignTo}
-                  onChange={(e) => handleScheduleDataChange('assignTo', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Assign To</em></MenuItem>
-                  <MenuItem value="user1">User 1</MenuItem>
-                  <MenuItem value="user2">User 2</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <Label>Assign To</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Assign To" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user1">User 1</SelectItem>
+                  <SelectItem value="user2">User 2</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="scan-type-label" shrink>Scan Type</InputLabel>
-                <MuiSelect
-                  labelId="scan-type-label"
-                  label="Scan Type"
-                  displayEmpty
-                  value={scheduleData.scanType}
-                  onChange={(e) => handleScheduleDataChange('scanType', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Scan Type</em></MenuItem>
-                  <MenuItem value="qr">QR Code</MenuItem>
-                  <MenuItem value="barcode">Barcode</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <Label>Scan Type</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Scan Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="qr">QR Code</SelectItem>
+                  <SelectItem value="barcode">Barcode</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="plan-duration-label" shrink>Plan Duration</InputLabel>
-                <MuiSelect
-                  labelId="plan-duration-label"
-                  label="Plan Duration"
-                  displayEmpty
-                  value={scheduleData.planDuration}
-                  onChange={(e) => handleScheduleDataChange('planDuration', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Plan Duration</em></MenuItem>
-                  <MenuItem value="daily">Daily</MenuItem>
-                  <MenuItem value="weekly">Weekly</MenuItem>
-                  <MenuItem value="monthly">Monthly</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <Label>Plan Duration</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Plan Duration" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="priority-label" shrink>Priority</InputLabel>
-                <MuiSelect
-                  labelId="priority-label"
-                  label="Priority"
-                  displayEmpty
-                  value={scheduleData.priority}
-                  onChange={(e) => handleScheduleDataChange('priority', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Priority</em></MenuItem>
-                  <MenuItem value="high">High</MenuItem>
-                  <MenuItem value="medium">Medium</MenuItem>
-                  <MenuItem value="low">Low</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <Label>Priority</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="email-trigger-label" shrink>Email Trigger Rule</InputLabel>
-                <MuiSelect
-                  labelId="email-trigger-label"
-                  label="Email Trigger Rule"
-                  displayEmpty
-                  value={scheduleData.emailTriggerRule}
-                  onChange={(e) => handleScheduleDataChange('emailTriggerRule', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Email Trigger Rule</em></MenuItem>
-                  <MenuItem value="immediate">Immediate</MenuItem>
-                  <MenuItem value="daily">Daily</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <Label>Email Trigger Rule</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Email Trigger Rule" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="immediate">Immediate</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="supervisors-label" shrink>Supervisors</InputLabel>
-                <MuiSelect
-                  labelId="supervisors-label"
-                  label="Supervisors"
-                  displayEmpty
-                  value={scheduleData.supervisors}
-                  onChange={(e) => handleScheduleDataChange('supervisors', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Supervisors</em></MenuItem>
-                  <MenuItem value="supervisor1">Supervisor 1</MenuItem>
-                  <MenuItem value="supervisor2">Supervisor 2</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <Label>Supervisors</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Supervisors" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="supervisor1">Supervisor 1</SelectItem>
+                  <SelectItem value="supervisor2">Supervisor 2</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="category-label" shrink>Category</InputLabel>
-                <MuiSelect
-                  labelId="category-label"
-                  label="Category"
-                  displayEmpty
-                  value={scheduleData.category}
-                  onChange={(e) => handleScheduleDataChange('category', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Category</em></MenuItem>
-                  <MenuItem value="category1">Category 1</MenuItem>
-                  <MenuItem value="category2">Category 2</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <Label>Category</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="category1">Category 1</SelectItem>
+                  <SelectItem value="category2">Category 2</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="lock-overdue-label" shrink>Lock Overdue Task</InputLabel>
-                <MuiSelect
-                  labelId="lock-overdue-label"
-                  label="Lock Overdue Task"
-                  displayEmpty
-                  value={scheduleData.lockOverdueTask}
-                  onChange={(e) => handleScheduleDataChange('lockOverdueTask', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Lock Status</em></MenuItem>
-                  <MenuItem value="yes">Yes</MenuItem>
-                  <MenuItem value="no">No</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <Label>Lock Overdue Task</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Lock Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="yes">Yes</SelectItem>
+                  <SelectItem value="no">No</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="frequency-label" shrink>Frequency</InputLabel>
-                <MuiSelect
-                  labelId="frequency-label"
-                  label="Frequency"
-                  displayEmpty
-                  value={scheduleData.frequency}
-                  onChange={(e) => handleScheduleDataChange('frequency', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Frequency</em></MenuItem>
-                  <MenuItem value="daily">Daily</MenuItem>
-                  <MenuItem value="weekly">Weekly</MenuItem>
-                  <MenuItem value="monthly">Monthly</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <Label>Frequency</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Frequency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <TextField
-                label="Start From"
-                placeholder="Select Start Date"
-                type="date"
-                value={scheduleData.startFrom}
-                onChange={(e) => handleScheduleDataChange('startFrom', e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: {
-                    ...fieldStyles,
-                    '& .MuiInputBase-input': {
-                      ...fieldStyles['& .MuiInputBase-input, & .MuiSelect-select'],
-                      fontSize: { xs: '11px', sm: '12px', md: '13px' },
-                    }
-                  }
-                }}
-              />
+              <Label>Start From</Label>
+              <Input type="date" placeholder="Select Start Date" />
             </div>
             <div>
-              <TextField
-                label="End At"
-                placeholder="Select End Date"
-                type="date"
-                value={scheduleData.endAt}
-                onChange={(e) => handleScheduleDataChange('endAt', e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: {
-                    ...fieldStyles,
-                    '& .MuiInputBase-input': {
-                      ...fieldStyles['& .MuiInputBase-input, & .MuiSelect-select'],
-                      fontSize: { xs: '11px', sm: '12px', md: '13px' },
-                    }
-                  }
-                }}
-              />
+              <Label>End At</Label>
+              <Input type="date" placeholder="Select End Date" />
             </div>
           </div>
 
           <div>
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="supplier-label" shrink>Select Supplier</InputLabel>
-              <MuiSelect
-                labelId="supplier-label"
-                label="Select Supplier"
-                displayEmpty
-                value={scheduleData.supplier}
-                onChange={(e) => handleScheduleDataChange('supplier', e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                <MenuItem value="supplier1">Supplier 1</MenuItem>
-                <MenuItem value="supplier2">Supplier 2</MenuItem>
-              </MuiSelect>
-            </FormControl>
+            <Label>Select Supplier</Label>
+            <Select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Supplier" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="supplier1">Supplier 1</SelectItem>
+                <SelectItem value="supplier2">Supplier 2</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>

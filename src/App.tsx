@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -63,7 +62,7 @@ import UtilitySolarGeneratorDashboard from './pages/UtilitySolarGeneratorDashboa
 
 // Import Waste Generation pages
 import UtilityWasteGenerationDashboard from './pages/UtilityWasteGenerationDashboard';
-import { UtilityWasteGenerationSetupDashboard } from './pages/UtilityWasteGenerationSetupDashboard';
+import UtilityWasteGenerationSetupDashboard from './pages/UtilityWasteGenerationSetupDashboard';
 import AddWasteGenerationPage from './pages/AddWasteGenerationPage';
 
 // Import Survey pages

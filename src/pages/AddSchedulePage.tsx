@@ -1,417 +1,942 @@
-
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Plus, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Checkbox } from '@mui/material';
+
+interface TaskSection {
+  id: string;
+  group: string;
+  subGroup: string;
+  task: string;
+  inputType: string;
+  mandatory: boolean;
+  reading: boolean;
+  helpText: string;
+  weightageValue: string;
+  failing: boolean;
+}
 
 export const AddSchedulePage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const [createNew, setCreateNew] = useState(false);
+  const [createTicket, setCreateTicket] = useState(false);
+  const [weightage, setWeightage] = useState(false);
+  const [activeTab, setActiveTab] = useState('Minutes');
   
+  // Task sections state
+  const [taskSections, setTaskSections] = useState<TaskSection[]>([
+    {
+      id: '1',
+      group: '',
+      subGroup: '',
+      task: '',
+      inputType: '',
+      mandatory: false,
+      reading: false,
+      helpText: '',
+      weightageValue: '',
+      failing: false
+    }
+  ]);
+  
+  // Form states
   const [formData, setFormData] = useState({
-    scheduleName: '',
-    scheduleType: '',
-    frequency: '',
-    startDate: '',
-    endDate: '',
+    template: '',
+    ticketLevel: 'Question Level',
     assignedTo: '',
+    ticketCategory: '',
+    activityName: '',
     description: '',
+    checklistType: 'Individual',
+    asset: '',
+    assignTo: '',
+    scanType: '',
+    planDuration: '',
     priority: '',
-    location: '',
-    category: ''
+    emailTriggerRule: '',
+    supervisors: '',
+    category: '',
+    submissionTime: '',
+    graceTime: '',
+    lockOverdueTask: '',
+    frequency: '',
+    startFrom: '',
+    endAt: ''
   });
 
-  const [dynamicFields, setDynamicFields] = useState([
-    { id: Date.now(), label: '', value: '', type: 'text' }
-  ]);
-
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-      fontSize: { xs: '12px', sm: '13px', md: '14px' },
-    },
-    '& .MuiInputLabel-root': {
-      fontSize: { xs: '12px', sm: '13px', md: '14px' },
-    },
-  };
-
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const addField = () => {
-    setDynamicFields([...dynamicFields, { 
-      id: Date.now(), 
-      label: '', 
-      value: '', 
-      type: 'text' 
-    }]);
+  const handleTaskSectionChange = (sectionId: string, field: keyof TaskSection, value: any) => {
+    setTaskSections(prev => 
+      prev.map(section => 
+        section.id === sectionId 
+          ? { ...section, [field]: value }
+          : section
+      )
+    );
   };
 
-  const updateDynamicField = (id: number, field: string, value: string) => {
-    setDynamicFields(dynamicFields.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
-    ));
+  const handleAddSection = () => {
+    const newSection: TaskSection = {
+      id: Date.now().toString(),
+      group: '',
+      subGroup: '',
+      task: '',
+      inputType: '',
+      mandatory: false,
+      reading: false,
+      helpText: '',
+      weightageValue: '',
+      failing: false
+    };
+    setTaskSections(prev => [...prev, newSection]);
   };
 
-  const removeDynamicField = (id: number) => {
-    if (dynamicFields.length > 1) {
-      setDynamicFields(dynamicFields.filter(item => item.id !== id));
+  const handleRemoveSection = (sectionId: string) => {
+    if (taskSections.length > 1) {
+      setTaskSections(prev => prev.filter(section => section.id !== sectionId));
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Schedule Data:', { ...formData, dynamicFields });
-    
-    toast({
-      title: "Success",
-      description: "Schedule created successfully!",
-    });
-    
+  const handleSubmit = () => {
+    console.log('Submitting schedule data:', { formData, taskSections });
+    // Handle form submission
     navigate('/maintenance/schedule');
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
         <Button 
           variant="ghost" 
           onClick={() => navigate('/maintenance/schedule')}
-          className="mb-4"
+          className="p-2"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Schedule List
+          <ArrowLeft className="w-5 h-5" />
         </Button>
-        <p className="text-[#1a1a1a] opacity-70 mb-2">Schedule &gt; Add Schedule</p>
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">ADD SCHEDULE</h1>
+        <div>
+          <div className="text-sm text-gray-600 mb-1">Schedule</div>
+          <h1 className="text-2xl font-bold">Add Schedule</h1>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg text-[#C72030] flex items-center">
-              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
-              SCHEDULE DETAILS
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div>
-                <TextField
-                  required
-                  label="Schedule Name"
-                  placeholder="Enter Schedule Name"
-                  name="scheduleName"
-                  value={formData.scheduleName}
-                  onChange={(e) => handleInputChange('scheduleName', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
-                />
-              </div>
+      {/* Toggles */}
+      <div className="flex gap-6">
+        <div className="flex items-center space-x-2">
+          <Switch 
+            checked={createNew} 
+            onCheckedChange={setCreateNew}
+            id="create-new"
+          />
+          <Label htmlFor="create-new">Create New</Label>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <Switch 
+            checked={createTicket} 
+            onCheckedChange={setCreateTicket}
+            id="create-ticket"
+          />
+          <Label htmlFor="create-ticket">Create Ticket</Label>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <Switch 
+            checked={weightage} 
+            onCheckedChange={setWeightage}
+            id="weightage"
+          />
+          <Label htmlFor="weightage">Weightage</Label>
+        </div>
+      </div>
 
-              <div>
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel id="schedule-type-label" shrink>Schedule Type</InputLabel>
-                  <MuiSelect
-                    labelId="schedule-type-label"
-                    label="Schedule Type"
-                    displayEmpty
-                    value={formData.scheduleType}
-                    onChange={(e) => handleInputChange('scheduleType', e.target.value)}
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value=""><em>Select Type</em></MenuItem>
-                    <MenuItem value="maintenance">Maintenance</MenuItem>
-                    <MenuItem value="inspection">Inspection</MenuItem>
-                    <MenuItem value="cleaning">Cleaning</MenuItem>
-                    <MenuItem value="audit">Audit</MenuItem>
-                  </MuiSelect>
-                </FormControl>
-              </div>
-
-              <div>
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel id="frequency-label" shrink>Frequency</InputLabel>
-                  <MuiSelect
-                    labelId="frequency-label"
-                    label="Frequency"
-                    displayEmpty
-                    value={formData.frequency}
-                    onChange={(e) => handleInputChange('frequency', e.target.value)}
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value=""><em>Select Frequency</em></MenuItem>
-                    <MenuItem value="daily">Daily</MenuItem>
-                    <MenuItem value="weekly">Weekly</MenuItem>
-                    <MenuItem value="monthly">Monthly</MenuItem>
-                    <MenuItem value="quarterly">Quarterly</MenuItem>
-                    <MenuItem value="yearly">Yearly</MenuItem>
-                  </MuiSelect>
-                </FormControl>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div>
-                <TextField
-                  required
-                  label="Start Date"
-                  placeholder="Select Date"
-                  name="startDate"
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) => handleInputChange('startDate', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{
-                    sx: {
-                      ...fieldStyles,
-                      '& .MuiInputBase-input': {
-                        ...fieldStyles['& .MuiInputBase-input, & .MuiSelect-select'],
-                        fontSize: { xs: '11px', sm: '12px', md: '13px' },
-                      }
-                    }
-                  }}
-                />
-              </div>
-
-              <div>
-                <TextField
-                  label="End Date"
-                  placeholder="Select Date"
-                  name="endDate"
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) => handleInputChange('endDate', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{
-                    sx: {
-                      ...fieldStyles,
-                      '& .MuiInputBase-input': {
-                        ...fieldStyles['& .MuiInputBase-input, & .MuiSelect-select'],
-                        fontSize: { xs: '11px', sm: '12px', md: '13px' },
-                      }
-                    }
-                  }}
-                />
-              </div>
-
-              <div>
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel id="assigned-to-label" shrink>Assigned To</InputLabel>
-                  <MuiSelect
-                    labelId="assigned-to-label"
-                    label="Assigned To"
-                    displayEmpty
-                    value={formData.assignedTo}
-                    onChange={(e) => handleInputChange('assignedTo', e.target.value)}
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value=""><em>Select Assignee</em></MenuItem>
-                    <MenuItem value="john-doe">John Doe</MenuItem>
-                    <MenuItem value="jane-smith">Jane Smith</MenuItem>
-                    <MenuItem value="mike-johnson">Mike Johnson</MenuItem>
-                  </MuiSelect>
-                </FormControl>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel id="priority-label" shrink>Priority</InputLabel>
-                  <MuiSelect
-                    labelId="priority-label"
-                    label="Priority"
-                    displayEmpty
-                    value={formData.priority}
-                    onChange={(e) => handleInputChange('priority', e.target.value)}
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value=""><em>Select Priority</em></MenuItem>
-                    <MenuItem value="high">High</MenuItem>
-                    <MenuItem value="medium">Medium</MenuItem>
-                    <MenuItem value="low">Low</MenuItem>
-                  </MuiSelect>
-                </FormControl>
-              </div>
-
-              <div>
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel id="location-label" shrink>Location</InputLabel>
-                  <MuiSelect
-                    labelId="location-label"
-                    label="Location"
-                    displayEmpty
-                    value={formData.location}
-                    onChange={(e) => handleInputChange('location', e.target.value)}
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value=""><em>Select Location</em></MenuItem>
-                    <MenuItem value="building-a">Building A</MenuItem>
-                    <MenuItem value="building-b">Building B</MenuItem>
-                    <MenuItem value="parking">Parking Area</MenuItem>
-                    <MenuItem value="lobby">Lobby</MenuItem>
-                  </MuiSelect>
-                </FormControl>
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <TextField
-                label="Description"
-                placeholder="Enter description"
-                name="description"
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                fullWidth
-                variant="outlined"
-                multiline
-                rows={3}
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-              />
+      {/* Create New Toggle Section */}
+      {createNew && (
+        <Card>
+          <CardContent className="pt-6">
+            <div>
+              <Label htmlFor="template-select">Select from the existing Template</Label>
+              <Select value={formData.template} onValueChange={(value) => handleInputChange('template', value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select from the existing Template" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="template1">Template 1</SelectItem>
+                  <SelectItem value="template2">Template 2</SelectItem>
+                  <SelectItem value="template3">Template 3</SelectItem>
+                  <SelectItem value="custom">Custom Template</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
+      )}
 
-        {/* Dynamic Fields Section */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg text-[#C72030] flex items-center justify-between">
-              <div className="flex items-center">
-                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
-                ADDITIONAL FIELDS
-              </div>
-              <Button 
-                type="button"
-                onClick={addField}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Field
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+      {/* Create Ticket Toggle Section */}
+      {createTicket && (
+        <Card>
+          <CardContent className="pt-6">
             <div className="space-y-4">
-              {dynamicFields.map((field, index) => (
-                <div key={field.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                  <div>
-                    <TextField
-                      label="Field Label"
-                      placeholder="Enter field label"
-                      value={field.label}
-                      onChange={(e) => updateDynamicField(field.id, 'label', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center space-x-2">
+                  <input 
+                    type="radio" 
+                    id="checklist-level" 
+                    name="ticketLevel" 
+                    value="Checklist Level"
+                    checked={formData.ticketLevel === 'Checklist Level'}
+                    onChange={(e) => handleInputChange('ticketLevel', e.target.value)}
+                  />
+                  <Label htmlFor="checklist-level">Checklist Level</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input 
+                    type="radio" 
+                    id="question-level" 
+                    name="ticketLevel" 
+                    value="Question Level"
+                    checked={formData.ticketLevel === 'Question Level'}
+                    onChange={(e) => handleInputChange('ticketLevel', e.target.value)}
+                  />
+                  <Label htmlFor="question-level">Question Level</Label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Select Assigned To</Label>
+                  <Select value={formData.assignedTo} onValueChange={(value) => handleInputChange('assignedTo', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Assigned To" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="supervisor">Supervisor</SelectItem>
+                      <SelectItem value="technician">Technician</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Select Category</Label>
+                  <Select value={formData.ticketCategory} onValueChange={(value) => handleInputChange('ticketCategory', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="technical">Technical</SelectItem>
+                      <SelectItem value="non-technical">Non Technical</SelectItem>
+                      <SelectItem value="maintenance">Maintenance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Basic Info Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm">1</span>
+            Basic Info
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4 mb-4">
+            <Label>Type</Label>
+            <div className="flex gap-4">
+              <div className="flex items-center space-x-2">
+                <input type="radio" id="ppm" name="type" value="PPM" />
+                <Label htmlFor="ppm">PPM</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input type="radio" id="amc" name="type" value="AMC" />
+                <Label htmlFor="amc">AMC</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input type="radio" id="preparedness" name="type" value="Preparedness" />
+                <Label htmlFor="preparedness">Preparedness</Label>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 mb-4">
+            <Label>Schedule For</Label>
+            <div className="flex gap-4">
+              <div className="flex items-center space-x-2">
+                <input type="radio" id="asset" name="scheduleFor" value="Asset" />
+                <Label htmlFor="asset">Asset</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input type="radio" id="service" name="scheduleFor" value="Service" />
+                <Label htmlFor="service">Service</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input type="radio" id="vendor" name="scheduleFor" value="Vendor" />
+                <Label htmlFor="vendor">Vendor</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input type="radio" id="training" name="scheduleFor" value="Training" />
+                <Label htmlFor="training">Training</Label>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="activity-name">Activity Name*</Label>
+            <Input
+              id="activity-name"
+              placeholder="Enter Activity Name"
+              value={formData.activityName}
+              onChange={(e) => handleInputChange('activityName', e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              placeholder="Enter Description"
+              value={formData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Task Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm">2</span>
+              Task
+            </div>
+            <Button 
+              onClick={handleAddSection}
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Section
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {taskSections.map((section, index) => (
+            <div key={section.id} className="space-y-4 p-4 border rounded-lg relative">
+              {taskSections.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleRemoveSection(section.id)}
+                  className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Group</Label>
+                  <Select 
+                    value={section.group} 
+                    onValueChange={(value) => handleTaskSectionChange(section.id, 'group', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="group1">Group 1</SelectItem>
+                      <SelectItem value="group2">Group 2</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>SubGroup</Label>
+                  <Select 
+                    value={section.subGroup} 
+                    onValueChange={(value) => handleTaskSectionChange(section.id, 'subGroup', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Sub Group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="subgroup1">Sub Group 1</SelectItem>
+                      <SelectItem value="subgroup2">Sub Group 2</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label>Task</Label>
+                  <Input
+                    placeholder="Enter Task"
+                    value={section.task}
+                    onChange={(e) => handleTaskSectionChange(section.id, 'task', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Input Type</Label>
+                  <Select 
+                    value={section.inputType} 
+                    onValueChange={(value) => handleTaskSectionChange(section.id, 'inputType', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Input Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="text">Text</SelectItem>
+                      <SelectItem value="number">Number</SelectItem>
+                      <SelectItem value="dropdown">Dropdown</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-4 pt-6">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`mandatory-${section.id}`}
+                      checked={section.mandatory}
+                      onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'mandatory', checked)}
                     />
+                    <Label htmlFor={`mandatory-${section.id}`}>Mandatory</Label>
                   </div>
-                  
-                  <div>
-                    <FormControl fullWidth variant="outlined">
-                      <InputLabel id={`field-type-${field.id}`} shrink>Field Type</InputLabel>
-                      <MuiSelect
-                        labelId={`field-type-${field.id}`}
-                        label="Field Type"
-                        value={field.type}
-                        onChange={(e) => updateDynamicField(field.id, 'type', e.target.value)}
-                        sx={fieldStyles}
-                      >
-                        <MenuItem value="text">Text</MenuItem>
-                        <MenuItem value="number">Number</MenuItem>
-                        <MenuItem value="date">Date</MenuItem>
-                        <MenuItem value="select">Dropdown</MenuItem>
-                      </MuiSelect>
-                    </FormControl>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`reading-${section.id}`}
+                      checked={section.reading}
+                      onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'reading', checked)}
+                    />
+                    <Label htmlFor={`reading-${section.id}`}>Reading</Label>
                   </div>
-
-                  <div>
-                    {field.type === 'select' ? (
-                      <FormControl fullWidth variant="outlined">
-                        <InputLabel id={`field-value-${field.id}`} shrink>Field Value</InputLabel>
-                        <MuiSelect
-                          labelId={`field-value-${field.id}`}
-                          label="Field Value"
-                          displayEmpty
-                          value={field.value}
-                          onChange={(e) => updateDynamicField(field.id, 'value', e.target.value)}
-                          sx={fieldStyles}
-                        >
-                          <MenuItem value=""><em>Select Value</em></MenuItem>
-                          <MenuItem value="option1">Option 1</MenuItem>
-                          <MenuItem value="option2">Option 2</MenuItem>
-                          <MenuItem value="option3">Option 3</MenuItem>
-                        </MuiSelect>
-                      </FormControl>
-                    ) : (
-                      <TextField
-                        label="Field Value"
-                        placeholder="Enter field value"
-                        type={field.type}
-                        value={field.value}
-                        onChange={(e) => updateDynamicField(field.id, 'value', e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                      />
-                    )}
-                  </div>
-
-                  <div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => removeDynamicField(field.id)}
-                      disabled={dynamicFields.length === 1}
-                      className="border-red-300 text-red-600 hover:bg-red-50"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`help-text-${section.id}`}
+                      checked={!!section.helpText}
+                      onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'helpText', checked ? 'Help text' : '')}
+                    />
+                    <Label htmlFor={`help-text-${section.id}`}>Help Text</Label>
                   </div>
                 </div>
+              </div>
+
+              {/* Weightage option - only show when weightage toggle is on */}
+              {weightage && (
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <Label>Weightage</Label>
+                    <Input
+                      placeholder="Enter Weightage"
+                      value={section.weightageValue}
+                      onChange={(e) => handleTaskSectionChange(section.id, 'weightageValue', e.target.value)}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 pt-6">
+                    <Checkbox 
+                      id={`failing-${section.id}`}
+                      checked={section.failing}
+                      onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'failing', checked)}
+                    />
+                    <Label htmlFor={`failing-${section.id}`}>Failing</Label>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Schedule Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm">3</span>
+            Schedule
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4 mb-4">
+            <Label>Checklist Type</Label>
+            <div className="flex gap-4">
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="radio" 
+                  id="individual" 
+                  name="checklistType" 
+                  value="Individual" 
+                  checked={formData.checklistType === 'Individual'}
+                  onChange={(e) => handleInputChange('checklistType', e.target.value)}
+                />
+                <Label htmlFor="individual">Individual</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="radio" 
+                  id="asset-group" 
+                  name="checklistType" 
+                  value="Asset Group"
+                  checked={formData.checklistType === 'Asset Group'}
+                  onChange={(e) => handleInputChange('checklistType', e.target.value)}
+                />
+                <Label htmlFor="asset-group">Asset Group</Label>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label>Asset</Label>
+              <Select value={formData.asset} onValueChange={(value) => handleInputChange('asset', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Asset" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="asset1">Asset 1</SelectItem>
+                  <SelectItem value="asset2">Asset 2</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Assign To</Label>
+              <Select value={formData.assignTo} onValueChange={(value) => handleInputChange('assignTo', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Assign To" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user1">User 1</SelectItem>
+                  <SelectItem value="user2">User 2</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Scan Type</Label>
+              <Select value={formData.scanType} onValueChange={(value) => handleInputChange('scanType', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Scan Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="qr">QR Code</SelectItem>
+                  <SelectItem value="barcode">Barcode</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label>Plan Duration</Label>
+              <Select value={formData.planDuration} onValueChange={(value) => handleInputChange('planDuration', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Plan Duration" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1hour">1 Hour</SelectItem>
+                  <SelectItem value="2hours">2 Hours</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Priority</Label>
+              <Select value={formData.priority} onValueChange={(value) => handleInputChange('priority', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Email Trigger Rule</Label>
+              <Select value={formData.emailTriggerRule} onValueChange={(value) => handleInputChange('emailTriggerRule', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Email Trigger Rule" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="immediate">Immediate</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label>Supervisors</Label>
+              <Select value={formData.supervisors} onValueChange={(value) => handleInputChange('supervisors', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Supervisors" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="supervisor1">Supervisor 1</SelectItem>
+                  <SelectItem value="supervisor2">Supervisor 2</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Category</Label>
+              <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="technical">Technical</SelectItem>
+                  <SelectItem value="non-technical">Non Technical</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Submission Time</Label>
+              <Select value={formData.submissionTime} onValueChange={(value) => handleInputChange('submissionTime', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Submission Time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="24hours">24 Hours</SelectItem>
+                  <SelectItem value="48hours">48 Hours</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label>Grace Time</Label>
+              <Select value={formData.graceTime} onValueChange={(value) => handleInputChange('graceTime', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Grace Time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1hour">1 Hour</SelectItem>
+                  <SelectItem value="2hours">2 Hours</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Lock Overdue Task</Label>
+              <Select value={formData.lockOverdueTask} onValueChange={(value) => handleInputChange('lockOverdueTask', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Lock Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="yes">Yes</SelectItem>
+                  <SelectItem value="no">No</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Frequency</Label>
+              <Select value={formData.frequency} onValueChange={(value) => handleInputChange('frequency', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Frequency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Start From</Label>
+              <Input
+                type="date"
+                value={formData.startFrom}
+                onChange={(e) => handleInputChange('startFrom', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>End At</Label>
+              <Input
+                type="date"
+                value={formData.endAt}
+                onChange={(e) => handleInputChange('endAt', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label>Select Supplier</Label>
+            <Select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Supplier" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="supplier1">Supplier 1</SelectItem>
+                <SelectItem value="supplier2">Supplier 2</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Cron Form Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm">4</span>
+            Cron form
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex border rounded-lg overflow-hidden">
+              {['Minutes', 'Hours', 'Day', 'Month'].map((tab, index) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 flex-1 transition-colors ${
+                    activeTab === tab 
+                      ? 'text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  style={activeTab === tab ? { backgroundColor: '#C72030' } : {}}
+                >
+                  {tab}
+                </button>
               ))}
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4">
-          <Button 
-            type="submit"
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
-          >
-            Save Schedule
-          </Button>
-          <Button 
-            type="button"
-            variant="outline"
-            onClick={() => navigate('/maintenance/schedule')}
-          >
-            Cancel
-          </Button>
-        </div>
-      </form>
+            <div className="space-y-4">
+              {activeTab === 'Minutes' && (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="specific-minutes" name="minutes-option" defaultChecked />
+                    <Label htmlFor="specific-minutes">Specific minute (choose one or many)</Label>
+                  </div>
 
-      {/* Footer */}
-      <div className="mt-8 text-center">
-        <div className="text-sm text-[#1a1a1a] opacity-70">
-          Powered by <span className="font-semibold">go</span><span className="text-[#C72030]">Phygital</span><span className="font-semibold">.work</span>
-        </div>
+                  <div className="grid grid-cols-12 gap-2 text-sm">
+                    {Array.from({ length: 60 }, (_, i) => (
+                      <div key={i} className="flex items-center space-x-1">
+                        <Checkbox id={`minute-${i}`} />
+                        <Label htmlFor={`minute-${i}`} className="text-xs">{i.toString().padStart(2, '0')}</Label>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="every-minute" name="minutes-option" />
+                    <Label htmlFor="every-minute">Every minute between minute</Label>
+                    <Select>
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="00" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 60 }, (_, i) => (
+                          <SelectItem key={i} value={i.toString()}>{i.toString().padStart(2, '0')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span>and minute</span>
+                    <Select>
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="59" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 60 }, (_, i) => (
+                          <SelectItem key={i} value={i.toString()}>{i.toString().padStart(2, '0')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'Hours' && (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="specific-hours" name="hours-option" defaultChecked />
+                    <Label htmlFor="specific-hours">Specific hour (choose one or many)</Label>
+                  </div>
+
+                  <div className="grid grid-cols-12 gap-2 text-sm">
+                    {Array.from({ length: 24 }, (_, i) => (
+                      <div key={i} className="flex items-center space-x-1">
+                        <Checkbox id={`hour-${i}`} />
+                        <Label htmlFor={`hour-${i}`} className="text-xs">{i.toString().padStart(2, '0')}</Label>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="every-hour" name="hours-option" />
+                    <Label htmlFor="every-hour">Every hour between hour</Label>
+                    <Select>
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="00" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <SelectItem key={i} value={i.toString()}>{i.toString().padStart(2, '0')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span>and hour</span>
+                    <Select>
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="23" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <SelectItem key={i} value={i.toString()}>{i.toString().padStart(2, '0')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'Day' && (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="specific-days" name="days-option" defaultChecked />
+                    <Label htmlFor="specific-days">Specific day (choose one or many)</Label>
+                  </div>
+
+                  <div className="grid grid-cols-8 gap-2 text-sm">
+                    {Array.from({ length: 31 }, (_, i) => (
+                      <div key={i} className="flex items-center space-x-1">
+                        <Checkbox id={`day-${i + 1}`} />
+                        <Label htmlFor={`day-${i + 1}`} className="text-xs">{(i + 1).toString()}</Label>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="every-day" name="days-option" />
+                    <Label htmlFor="every-day">Every day between day</Label>
+                    <Select>
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="01" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 31 }, (_, i) => (
+                          <SelectItem key={i} value={(i + 1).toString()}>{(i + 1).toString().padStart(2, '0')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span>and day</span>
+                    <Select>
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="31" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 31 }, (_, i) => (
+                          <SelectItem key={i} value={(i + 1).toString()}>{(i + 1).toString().padStart(2, '0')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'Month' && (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="specific-months" name="months-option" defaultChecked />
+                    <Label htmlFor="specific-months">Specific month (choose one or many)</Label>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2 text-sm">
+                    {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
+                      <div key={i} className="flex items-center space-x-1">
+                        <Checkbox id={`month-${i + 1}`} />
+                        <Label htmlFor={`month-${i + 1}`} className="text-xs">{month}</Label>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="every-month" name="months-option" />
+                    <Label htmlFor="every-month">Every month between month</Label>
+                    <Select>
+                      <SelectTrigger className="w-24">
+                        <SelectValue placeholder="Jan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
+                          <SelectItem key={i} value={(i + 1).toString()}>{month}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span>and month</span>
+                    <Select>
+                      <SelectTrigger className="w-24">
+                        <SelectValue placeholder="Dec" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
+                          <SelectItem key={i} value={(i + 1).toString()}>{month}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              <div className="bg-gray-50 p-4 rounded">
+                <Label className="text-sm font-medium">Resulting Cron Expression:</Label>
+                <div className="mt-2 font-mono text-sm">0 0 ? * *</div>
+              </div>
+
+              <div className="grid grid-cols-5 gap-4 mt-6">
+                <div className="text-center">
+                  <div className="font-medium mb-2">Minutes</div>
+                  <div className="text-sm">*</div>
+                </div>
+                <div className="text-center">
+                  <div className="font-medium mb-2">Hours</div>
+                  <div className="text-sm">*</div>
+                </div>
+                <div className="text-center">
+                  <div className="font-medium mb-2">Day Of Month</div>
+                  <div className="text-sm">*</div>
+                </div>
+                <div className="text-center">
+                  <div className="font-medium mb-2">Month</div>
+                  <div className="text-sm">*</div>
+                </div>
+                <div className="text-center">
+                  <div className="font-medium mb-2">Day Of Week</div>
+                  <div className="text-sm">*</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-4">
+        <Button variant="outline" onClick={() => navigate('/maintenance/schedule')}>
+          Cancel
+        </Button>
+        <Button 
+          onClick={handleSubmit}
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white"
+        >
+          Save Schedule
+        </Button>
       </div>
     </div>
   );

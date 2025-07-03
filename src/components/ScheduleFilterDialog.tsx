@@ -2,9 +2,9 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X } from 'lucide-react';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import { useToast } from '@/hooks/use-toast';
 
 interface ScheduleFilterDialogProps {
   open: boolean;
@@ -15,17 +15,12 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
   open,
   onOpenChange,
 }) => {
-  const { toast } = useToast();
   const [activityName, setActivityName] = useState('');
   const [type, setType] = useState('');
   const [category, setCategory] = useState('');
 
   const handleApply = () => {
     console.log('Applying filters:', { activityName, type, category });
-    toast({
-      title: "Success",
-      description: "Filters applied successfully!",
-    });
     onOpenChange(false);
   };
 
@@ -33,25 +28,6 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
     setActivityName('');
     setType('');
     setCategory('');
-  };
-
-  // Responsive styles for TextField and Select
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-root': {
-      '& .MuiSelect-select': {
-        fontSize: { xs: '11px', sm: '12px', md: '13px' },
-        padding: { xs: '8px', sm: '10px', md: '12px' },
-      },
-    },
-    '& .MuiInputBase-input': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-      fontSize: { xs: '12px', sm: '13px', md: '14px' },
-      '&::placeholder': {
-        fontSize: { xs: '12px', sm: '13px', md: '14px' },
-        opacity: 1,
-      },
-    },
   };
 
   return (
@@ -73,53 +49,43 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
         
         <div className="space-y-4">
           {/* Activity Name */}
-          <TextField
-            label="Activity Name"
-            placeholder="Enter Activity Name"
-            value={activityName}
-            onChange={(e) => setActivityName(e.target.value)}
-            fullWidth
-            variant="outlined"
-            InputLabelProps={{
-              shrink: true,
-            }}
-            sx={fieldStyles}
-          />
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Activity Name</label>
+            <Input
+              placeholder="Enter Activity Name"
+              value={activityName}
+              onChange={(e) => setActivityName(e.target.value)}
+            />
+          </div>
 
           {/* Select Type */}
-          <FormControl fullWidth variant="outlined">
-            <InputLabel id="type-select-label" shrink>Type</InputLabel>
-            <MuiSelect
-              labelId="type-select-label"
-              label="Type"
-              displayEmpty
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              sx={fieldStyles}
-            >
-              <MenuItem value=""><em>Select Type</em></MenuItem>
-              <MenuItem value="PPM">PPM</MenuItem>
-              <MenuItem value="Routine">Routine</MenuItem>
-              <MenuItem value="AMC">AMC</MenuItem>
-            </MuiSelect>
-          </FormControl>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Select Type</label>
+            <Select value={type} onValueChange={setType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="PPM">PPM</SelectItem>
+                <SelectItem value="Routine">Routine</SelectItem>
+                <SelectItem value="AMC">AMC</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Select Category */}
-          <FormControl fullWidth variant="outlined">
-            <InputLabel id="category-select-label" shrink>Category</InputLabel>
-            <MuiSelect
-              labelId="category-select-label"
-              label="Category"
-              displayEmpty
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              sx={fieldStyles}
-            >
-              <MenuItem value=""><em>Select Category</em></MenuItem>
-              <MenuItem value="Technical">Technical</MenuItem>
-              <MenuItem value="Non Technical">Non Technical</MenuItem>
-            </MuiSelect>
-          </FormControl>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Select Category</label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Technical">Technical</SelectItem>
+                <SelectItem value="Non Technical">Non Technical</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">

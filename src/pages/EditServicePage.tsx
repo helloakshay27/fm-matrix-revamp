@@ -91,7 +91,7 @@ export const EditServicePage = () => {
           Back to Service List
         </Button>
         <div>
-          <p className="text-[#1a1a1a] opacity-70 mb-2">Service List &gt; Edit Service</p>
+          <p className="text-[#1a1a1a] opacity-70 mb-2">Service List > Edit Service</p>
           <h1 className="text-2xl font-bold text-[#1a1a1a]">EDIT SERVICE</h1>
         </div>
       </div>
