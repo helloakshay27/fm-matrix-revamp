@@ -70,7 +70,6 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
           {/* First Row */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Name</label>
               <TextField
                 label="Name"
                 placeholder="Enter Name"
@@ -88,7 +87,6 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
             </div>
             
             <div>
-              <label className="text-sm font-medium mb-2 block">Category</label>
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="category-select-label" shrink>Category</InputLabel>
                 <MuiSelect
@@ -112,7 +110,6 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
           {/* Second Row */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Code</label>
               <TextField
                 label="Code"
                 placeholder="Search by code"
@@ -130,7 +127,6 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Criticality</label>
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="criticality-select-label" shrink>Criticality</InputLabel>
                 <MuiSelect
@@ -152,7 +148,6 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
           {/* Third Row */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Inventory Type</label>
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="inventory-type-select-label" shrink>Inventory Type</InputLabel>
                 <MuiSelect
