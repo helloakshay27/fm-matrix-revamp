@@ -265,7 +265,7 @@ export const TaskDashboard = () => {
       {/* Header */}
       <div className="mb-4 sm:mb-6">
         <p className="text-[#1a1a1a] opacity-70 mb-2 text-sm sm:text-base">Scheduled Task &gt; Scheduled Task List</p>
-        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">SCHEDULED TASK</h1>
+        <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-[#1a1a1a] font-['Work_Sans']">SCHEDULED TASK</h1>
       </div>
 
       {/* View Tabs */}
@@ -297,53 +297,52 @@ export const TaskDashboard = () => {
       {view === 'List' ? (
         <>
           {/* Date Range with Calendar Dropdown */}
-         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4 sm:mb-6">
-  <Popover>
-    <PopoverTrigger asChild>
-      <Button
-        variant="outline"
-        className={cn(
-          "w-full sm:w-[200px] justify-start text-left font-normal text-sm sm:text-base",
-          !startDate && "text-muted-foreground"
-        )}
-      >
-        <CalendarIcon className="mr-2 h-4 w-4" />
-        {startDate ? format(startDate, "dd/MM/yyyy") : <span>Pick start date</span>}
-      </Button>
-    </PopoverTrigger>
-    <PopoverContent className="w-auto p-0" align="start" style={{ minWidth: "280px" }}>
-      <Calendar
-        mode="single"
-        selected={startDate}
-        onSelect={(date) => date && setStartDate(date)}
-        initialFocus
-      />
-    </PopoverContent>
-  </Popover>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4 sm:mb-6">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full sm:w-[200px] justify-start text-left font-normal text-sm sm:text-base",
+                    !startDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {startDate ? format(startDate, "dd/MM/yyyy") : <span>Pick start date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start" style={{ minWidth: "280px" }}>
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={(date) => date && setStartDate(date)}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
 
-  <Popover>
-    <PopoverTrigger asChild>
-      <Button
-        variant="outline"
-        className={cn(
-          "w-full sm:w-[200px] justify-start text-left font-normal text-sm sm:text-base",
-          !endDate && "text-muted-foreground"
-        )}
-      >
-        <CalendarIcon className="mr-2 h-4 w-4" />
-        {endDate ? format(endDate, "dd/MM/yyyy") : <span>Pick end date</span>}
-      </Button>
-    </PopoverTrigger>
-    <PopoverContent className="w-auto p-0" align="start" style={{ minWidth: "280px" }}>
-      <Calendar
-        mode="single"
-        selected={endDate}
-        onSelect={(date) => date && setEndDate(date)}
-        initialFocus
-      />
-    </PopoverContent>
-  </Popover>
-</div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full sm:w-[200px] justify-start text-left font-normal text-sm sm:text-base",
+                    !endDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {endDate ? format(endDate, "dd/MM/yyyy") : <span>Pick end date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start" style={{ minWidth: "280px" }}>
+                <Calendar
+                  mode="single"
+                  selected={endDate}
+                  onSelect={(date) => date && setEndDate(date)}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
             
             <Button style={{ backgroundColor: '#00A651' }} className="text-white w-full sm:w-auto">
               Apply
