@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -191,13 +190,21 @@ export const AddAssetPage = () => {
     ));
   };
 
+  // Responsive styles for TextField and Select
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 36 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '10px' },
+    },
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
           <span>Asset List</span>
-          <span>&gt;</span>
+          <span>></span>
           <span className="text-gray-900 font-medium">Create New Asset</span>
         </div>
         <h1 className="text-2xl font-bold text-gray-900">NEW ASSET</h1>
@@ -229,12 +236,7 @@ export const AddAssetPage = () => {
                       label="Site"
                       displayEmpty
                       value=""
-                      sx={{
-                        height: 56,
-                        '& .MuiSelect-select': {
-                          padding: '14px',
-                        },
-                      }}
+                      sx={fieldStyles}
                     >
                       <MenuItem value=""><em>Select Site</em></MenuItem>
                       <MenuItem value="site1">Site 1</MenuItem>
@@ -250,12 +252,7 @@ export const AddAssetPage = () => {
                       label="Building"
                       displayEmpty
                       value=""
-                      sx={{
-                        height: 56,
-                        '& .MuiSelect-select': {
-                          padding: '14px',
-                        },
-                      }}
+                      sx={fieldStyles}
                     >
                       <MenuItem value=""><em>Select Building</em></MenuItem>
                       <MenuItem value="building1">Building 1</MenuItem>
@@ -271,12 +268,7 @@ export const AddAssetPage = () => {
                       label="Wing"
                       displayEmpty
                       value=""
-                      sx={{
-                        height: 56,
-                        '& .MuiSelect-select': {
-                          padding: '14px',
-                        },
-                      }}
+                      sx={fieldStyles}
                     >
                       <MenuItem value=""><em>Select Wing</em></MenuItem>
                       <MenuItem value="wing1">Wing 1</MenuItem>
@@ -292,12 +284,7 @@ export const AddAssetPage = () => {
                       label="Area"
                       displayEmpty
                       value=""
-                      sx={{
-                        height: 56,
-                        '& .MuiSelect-select': {
-                          padding: '14px',
-                        },
-                      }}
+                      sx={fieldStyles}
                     >
                       <MenuItem value=""><em>Select Area</em></MenuItem>
                       <MenuItem value="area1">Area 1</MenuItem>
@@ -313,12 +300,7 @@ export const AddAssetPage = () => {
                       label="Floor"
                       displayEmpty
                       value=""
-                      sx={{
-                        height: 56,
-                        '& .MuiSelect-select': {
-                          padding: '14px',
-                        },
-                      }}
+                      sx={fieldStyles}
                     >
                       <MenuItem value=""><em>Select Floor</em></MenuItem>
                       <MenuItem value="floor1">Floor 1</MenuItem>
@@ -336,12 +318,7 @@ export const AddAssetPage = () => {
                       label="Room"
                       displayEmpty
                       value=""
-                      sx={{
-                        height: 56,
-                        '& .MuiSelect-select': {
-                          padding: '14px',
-                        },
-                      }}
+                      sx={fieldStyles}
                     >
                       <MenuItem value=""><em>Select Room</em></MenuItem>
                       <MenuItem value="room1">Room 1</MenuItem>
@@ -383,12 +360,7 @@ export const AddAssetPage = () => {
                       shrink: true,
                     }}
                     InputProps={{
-                      sx: {
-                        height: 56,
-                        '& input': {
-                          padding: '14px',
-                        },
-                      },
+                      sx: fieldStyles
                     }}
                   />
                 </div>
@@ -404,12 +376,7 @@ export const AddAssetPage = () => {
                       shrink: true,
                     }}
                     InputProps={{
-                      sx: {
-                        height: 56,
-                        '& input': {
-                          padding: '14px',
-                        },
-                      },
+                      sx: fieldStyles
                     }}
                   />
                 </div>
@@ -425,12 +392,7 @@ export const AddAssetPage = () => {
                       shrink: true,
                     }}
                     InputProps={{
-                      sx: {
-                        height: 56,
-                        '& input': {
-                          padding: '14px',
-                        },
-                      },
+                      sx: fieldStyles
                     }}
                   />
                 </div>
@@ -448,12 +410,7 @@ export const AddAssetPage = () => {
                       shrink: true,
                     }}
                     InputProps={{
-                      sx: {
-                        height: 56,
-                        '& input': {
-                          padding: '14px',
-                        },
-                      },
+                      sx: fieldStyles
                     }}
                   />
                 </div>
@@ -468,12 +425,7 @@ export const AddAssetPage = () => {
                       shrink: true,
                     }}
                     InputProps={{
-                      sx: {
-                        height: 56,
-                        '& input': {
-                          padding: '14px',
-                        },
-                      },
+                      sx: fieldStyles
                     }}
                   />
                 </div>
@@ -488,12 +440,7 @@ export const AddAssetPage = () => {
                       shrink: true,
                     }}
                     InputProps={{
-                      sx: {
-                        height: 56,
-                        '& input': {
-                          padding: '14px',
-                        },
-                      },
+                      sx: fieldStyles
                     }}
                   />
                 </div>
@@ -513,12 +460,7 @@ export const AddAssetPage = () => {
                       shrink: true,
                     }}
                     InputProps={{
-                      sx: {
-                        height: 56,
-                        '& input': {
-                          padding: '14px',
-                        },
-                      },
+                      sx: fieldStyles
                     }}
                   />
                 </div>
@@ -533,12 +475,7 @@ export const AddAssetPage = () => {
                       shrink: true,
                     }}
                     InputProps={{
-                      sx: {
-                        height: 56,
-                        '& input': {
-                          padding: '14px',
-                        },
-                      },
+                      sx: fieldStyles
                     }}
                   />
                 </div>
@@ -553,12 +490,7 @@ export const AddAssetPage = () => {
                       shrink: true,
                     }}
                     InputProps={{
-                      sx: {
-                        height: 56,
-                        '& input': {
-                          padding: '14px',
-                        },
-                      },
+                      sx: fieldStyles
                     }}
                   />
                 </div>
@@ -573,12 +505,7 @@ export const AddAssetPage = () => {
                       label="Group"
                       displayEmpty
                       value=""
-                      sx={{
-                        height: 56,
-                        '& .MuiSelect-select': {
-                          padding: '14px',
-                        },
-                      }}
+                      sx={fieldStyles}
                     >
                       <MenuItem value=""><em>Select Group</em></MenuItem>
                       <MenuItem value="group1">Group 1</MenuItem>
@@ -594,12 +521,7 @@ export const AddAssetPage = () => {
                       label="Subgroup"
                       displayEmpty
                       value=""
-                      sx={{
-                        height: 56,
-                        '& .MuiSelect-select': {
-                          padding: '14px',
-                        },
-                      }}
+                      sx={fieldStyles}
                     >
                       <MenuItem value=""><em>Select Subgroup</em></MenuItem>
                       <MenuItem value="subgroup1">Subgroup 1</MenuItem>
@@ -619,12 +541,7 @@ export const AddAssetPage = () => {
                       shrink: true,
                     }}
                     InputProps={{
-                      sx: {
-                        height: 56,
-                        '& input': {
-                          padding: '14px',
-                        },
-                      },
+                      sx: fieldStyles
                     }}
                   />
                 </div>
@@ -643,12 +560,7 @@ export const AddAssetPage = () => {
                       shrink: true,
                     }}
                     InputProps={{
-                      sx: {
-                        height: 56,
-                        '& input': {
-                          padding: '14px',
-                        },
-                      },
+                      sx: fieldStyles
                     }}
                   />
                 </div>
@@ -663,12 +575,7 @@ export const AddAssetPage = () => {
                       shrink: true,
                     }}
                     InputProps={{
-                      sx: {
-                        height: 56,
-                        '& input': {
-                          padding: '14px',
-                        },
-                      },
+                      sx: fieldStyles
                     }}
                   />
                 </div>
@@ -788,12 +695,7 @@ export const AddAssetPage = () => {
                       shrink: true,
                     }}
                     InputProps={{
-                      sx: {
-                        height: 56,
-                        '& input': {
-                          padding: '14px',
-                        },
-                      },
+                      sx: fieldStyles
                     }}
                   />
                 </div>
@@ -809,12 +711,7 @@ export const AddAssetPage = () => {
                       shrink: true,
                     }}
                     InputProps={{
-                      sx: {
-                        height: 56,
-                        '& input': {
-                          padding: '14px',
-                        },
-                      },
+                      sx: fieldStyles
                     }}
                   />
                 </div>
@@ -830,12 +727,7 @@ export const AddAssetPage = () => {
                       shrink: true,
                     }}
                     InputProps={{
-                      sx: {
-                        height: 56,
-                        '& input': {
-                          padding: '14px',
-                        },
-                      },
+                      sx: fieldStyles
                     }}
                   />
                 </div>
@@ -956,12 +848,7 @@ export const AddAssetPage = () => {
                             shrink: true,
                           }}
                           InputProps={{
-                            sx: {
-                              height: 56,
-                              '& input': {
-                                padding: '14px',
-                              },
-                            },
+                            sx: fieldStyles
                           }}
                         />
                       </div>
@@ -974,12 +861,7 @@ export const AddAssetPage = () => {
                             displayEmpty
                             value={measure.unitType}
                             onChange={(e) => updateConsumptionMeasure(measure.id, 'unitType', e.target.value)}
-                            sx={{
-                              height: 56,
-                              '& .MuiSelect-select': {
-                                padding: '14px',
-                              },
-                            }}
+                            sx={fieldStyles}
                           >
                             <MenuItem value=""><em>Select Unit Type</em></MenuItem>
                             <MenuItem value="kwh">kWh</MenuItem>
@@ -1003,12 +885,7 @@ export const AddAssetPage = () => {
                             shrink: true,
                           }}
                           InputProps={{
-                            sx: {
-                              height: 56,
-                              '& input': {
-                                padding: '14px',
-                              },
-                            },
+                            sx: fieldStyles
                           }}
                         />
                       </div>
@@ -1026,12 +903,7 @@ export const AddAssetPage = () => {
                             shrink: true,
                           }}
                           InputProps={{
-                            sx: {
-                              height: 56,
-                              '& input': {
-                                padding: '14px',
-                              },
-                            },
+                            sx: fieldStyles
                           }}
                         />
                       </div>
@@ -1049,12 +921,7 @@ export const AddAssetPage = () => {
                             shrink: true,
                           }}
                           InputProps={{
-                            sx: {
-                              height: 56,
-                              '& input': {
-                                padding: '14px',
-                              },
-                            },
+                            sx: fieldStyles
                           }}
                         />
                       </div>
@@ -1075,12 +942,7 @@ export const AddAssetPage = () => {
                             shrink: true,
                           }}
                           InputProps={{
-                            sx: {
-                              height: 56,
-                              '& input': {
-                                padding: '14px',
-                              },
-                            },
+                            sx: fieldStyles
                           }}
                         />
                       </div>
@@ -1097,12 +959,7 @@ export const AddAssetPage = () => {
                             shrink: true,
                           }}
                           InputProps={{
-                            sx: {
-                              height: 56,
-                              '& input': {
-                                padding: '14px',
-                              },
-                            },
+                            sx: fieldStyles
                           }}
                         />
                       </div>
@@ -1179,12 +1036,7 @@ export const AddAssetPage = () => {
                             shrink: true,
                           }}
                           InputProps={{
-                            sx: {
-                              height: 56,
-                              '& input': {
-                                padding: '14px',
-                              },
-                            },
+                            sx: fieldStyles
                           }}
                         />
                       </div>
@@ -1197,12 +1049,7 @@ export const AddAssetPage = () => {
                             displayEmpty
                             value={measure.unitType}
                             onChange={(e) => updateNonConsumptionMeasure(measure.id, 'unitType', e.target.value)}
-                            sx={{
-                              height: 56,
-                              '& .MuiSelect-select': {
-                                padding: '14px',
-                              },
-                            }}
+                            sx={fieldStyles}
                           >
                             <MenuItem value=""><em>Select Unit Type</em></MenuItem>
                             <MenuItem value="temperature">Temperature</MenuItem>
@@ -1227,12 +1074,7 @@ export const AddAssetPage = () => {
                             shrink: true,
                           }}
                           InputProps={{
-                            sx: {
-                              height: 56,
-                              '& input': {
-                                padding: '14px',
-                              },
-                            },
+                            sx: fieldStyles
                           }}
                         />
                       </div>
@@ -1250,12 +1092,7 @@ export const AddAssetPage = () => {
                             shrink: true,
                           }}
                           InputProps={{
-                            sx: {
-                              height: 56,
-                              '& input': {
-                                padding: '14px',
-                              },
-                            },
+                            sx: fieldStyles
                           }}
                         />
                       </div>
@@ -1273,12 +1110,7 @@ export const AddAssetPage = () => {
                             shrink: true,
                           }}
                           InputProps={{
-                            sx: {
-                              height: 56,
-                              '& input': {
-                                padding: '14px',
-                              },
-                            },
+                            sx: fieldStyles
                           }}
                         />
                       </div>
@@ -1299,12 +1131,7 @@ export const AddAssetPage = () => {
                             shrink: true,
                           }}
                           InputProps={{
-                            sx: {
-                              height: 56,
-                              '& input': {
-                                padding: '14px',
-                              },
-                            },
+                            sx: fieldStyles
                           }}
                         />
                       </div>
@@ -1321,12 +1148,7 @@ export const AddAssetPage = () => {
                             shrink: true,
                           }}
                           InputProps={{
-                            sx: {
-                              height: 56,
-                              '& input': {
-                                padding: '14px',
-                              },
-                            },
+                            sx: fieldStyles
                           }}
                         />
                       </div>
