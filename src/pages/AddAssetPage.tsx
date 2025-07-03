@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -24,7 +22,7 @@ export const AddAssetPage = () => {
 
   const [meterCategoryType, setMeterCategoryType] = useState('');
   const [subCategoryType, setSubCategoryType] = useState('');
-  
+
   // State for consumption asset measures
   const [consumptionMeasures, setConsumptionMeasures] = useState([
     {
@@ -199,7 +197,7 @@ export const AddAssetPage = () => {
       <div className="mb-6">
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
           <span>Asset List</span>
-          <span>&gt;</span>
+          <span>></span>
           <span className="text-gray-900 font-medium">Create New Asset</span>
         </div>
         <h1 className="text-2xl font-bold text-gray-900">NEW ASSET</h1>
@@ -224,7 +222,6 @@ export const AddAssetPage = () => {
             <CardContent className="pt-6">
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
                 <div>
-                  <Label htmlFor="site">Site*</Label>
                   <Select>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Site" />
@@ -236,7 +233,6 @@ export const AddAssetPage = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="building">Building</Label>
                   <Select>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Building" />
@@ -248,7 +244,6 @@ export const AddAssetPage = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="wing">Wing</Label>
                   <Select>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Wing" />
@@ -260,7 +255,6 @@ export const AddAssetPage = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="area">Area</Label>
                   <Select>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Area" />
@@ -272,7 +266,6 @@ export const AddAssetPage = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="floor">Floor</Label>
                   <Select>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Floor" />
@@ -286,7 +279,6 @@ export const AddAssetPage = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div>
-                  <Label htmlFor="room">Room</Label>
                   <Select>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Room" />
@@ -320,69 +312,200 @@ export const AddAssetPage = () => {
             <CardContent className="pt-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
-  <TextField
-    required
-    label="Asset Name"
-    placeholder="Enter Name"
-    name="assetName"
-    fullWidth
-    variant="outlined"
-    InputLabelProps={{
-      shrink: true, // Prevent label from floating
-    }}
-    InputProps={{
-      sx: {
-        height: 56, // default height when shrink is true
-        '& input': {
-          padding: '14px', // vertical alignment
-        },
-      },
-    }}
-  />
-</div>
-                <div>
-                  <Label htmlFor="assetNo">Asset No.*</Label>
-                  <Input placeholder="Enter Number" />
+                  <TextField
+                    required
+                    label="Asset Name"
+                    placeholder="Enter Name"
+                    name="assetName"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      sx: {
+                        height: 56,
+                        '& input': {
+                          padding: '14px',
+                        },
+                      },
+                    }}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="equipmentId">Equipment ID*</Label>
-                  <Input placeholder="Enter Number" />
+                  <TextField
+                    required
+                    label="Asset No."
+                    placeholder="Enter Number"
+                    name="assetNo"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      sx: {
+                        height: 56,
+                        '& input': {
+                          padding: '14px',
+                        },
+                      },
+                    }}
+                  />
+                </div>
+                <div>
+                  <TextField
+                    required
+                    label="Equipment ID"
+                    placeholder="Enter Number"
+                    name="equipmentId"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      sx: {
+                        height: 56,
+                        '& input': {
+                          padding: '14px',
+                        },
+                      },
+                    }}
+                  />
                 </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
-                  <Label htmlFor="modelNo">Model No.</Label>
-                  <Input placeholder="Enter Number" />
+                  <TextField
+                    label="Model No."
+                    placeholder="Enter Number"
+                    name="modelNo"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      sx: {
+                        height: 56,
+                        '& input': {
+                          padding: '14px',
+                        },
+                      },
+                    }}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="serialNo">Serial No.</Label>
-                  <Input placeholder="Enter Number" />
+                  <TextField
+                    label="Serial No."
+                    placeholder="Enter Number"
+                    name="serialNo"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      sx: {
+                        height: 56,
+                        '& input': {
+                          padding: '14px',
+                        },
+                      },
+                    }}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="consumerNo">Consumer No.</Label>
-                  <Input placeholder="Enter Number" />
+                  <TextField
+                    label="Consumer No."
+                    placeholder="Enter Number"
+                    name="consumerNo"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      sx: {
+                        height: 56,
+                        '& input': {
+                          padding: '14px',
+                        },
+                      },
+                    }}
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
-                  <Label htmlFor="purchaseCost">Purchase Cost*</Label>
-                  <Input placeholder="Enter Numeric value" />
+                  <TextField
+                    required
+                    label="Purchase Cost"
+                    placeholder="Enter Numeric value"
+                    name="purchaseCost"
+                    type="number"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      sx: {
+                        height: 56,
+                        '& input': {
+                          padding: '14px',
+                        },
+                      },
+                    }}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="capacity">Capacity</Label>
-                  <Input placeholder="Enter Text" />
+                  <TextField
+                    label="Capacity"
+                    placeholder="Enter Text"
+                    name="capacity"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      sx: {
+                        height: 56,
+                        '& input': {
+                          padding: '14px',
+                        },
+                      },
+                    }}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="unit">Unit</Label>
-                  <Input placeholder="Enter Text" />
+                  <TextField
+                    label="Unit"
+                    placeholder="Enter Text"
+                    name="unit"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      sx: {
+                        height: 56,
+                        '& input': {
+                          padding: '14px',
+                        },
+                      },
+                    }}
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div>
-                  <Label htmlFor="group">Group*</Label>
                   <Select>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Group" />
@@ -394,7 +517,6 @@ export const AddAssetPage = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="subgroup">Subgroup*</Label>
                   <Select>
                     <SelectTrigger>
                       <SelectValue placeholder="Select SubGroup" />
@@ -406,50 +528,100 @@ export const AddAssetPage = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="purchaseDate">Purchased ON Date</Label>
-                  <Input type="date" placeholder="Select Date" />
+                  <TextField
+                    label="Purchased ON Date"
+                    placeholder="Select Date"
+                    name="purchaseDate"
+                    type="date"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      sx: {
+                        height: 56,
+                        '& input': {
+                          padding: '14px',
+                        },
+                      },
+                    }}
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div>
-                  <Label htmlFor="expiryDate">Expiry date</Label>
-                  <Input type="date" placeholder="Select Date" />
+                  <TextField
+                    label="Expiry date"
+                    placeholder="Select Date"
+                    name="expiryDate"
+                    type="date"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      sx: {
+                        height: 56,
+                        '& input': {
+                          padding: '14px',
+                        },
+                      },
+                    }}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="manufacturer">Manufacturer</Label>
-                  <Input placeholder="Enter Text" />
+                  <TextField
+                    label="Manufacturer"
+                    placeholder="Enter Text"
+                    name="manufacturer"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      sx: {
+                        height: 56,
+                        '& input': {
+                          padding: '14px',
+                        },
+                      },
+                    }}
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <Label className="text-sm font-medium">Location Type</Label>
+                  <label className="text-sm font-medium">Location Type</label>
                   <RadioGroup defaultValue="common" className="flex gap-6 mt-2">
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="common" id="common" />
-                      <Label htmlFor="common">Common Area</Label>
+                      <label htmlFor="common">Common Area</label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="customer" id="customer" />
-                      <Label htmlFor="customer">Customer</Label>
+                      <label htmlFor="customer">Customer</label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="na" id="na" />
-                      <Label htmlFor="na">NA</Label>
+                      <label htmlFor="na">NA</label>
                     </div>
                   </RadioGroup>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Asset Type</Label>
+                  <label className="text-sm font-medium">Asset Type</label>
                   <RadioGroup defaultValue="parent" className="flex gap-6 mt-2">
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="parent" id="parent" />
-                      <Label htmlFor="parent">Parent</Label>
+                      <label htmlFor="parent">Parent</label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="sub" id="sub" />
-                      <Label htmlFor="sub">Sub</Label>
+                      <label htmlFor="sub">Sub</label>
                     </div>
                   </RadioGroup>
                 </div>
@@ -457,28 +629,28 @@ export const AddAssetPage = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <Label className="text-sm font-medium">Status</Label>
+                  <label className="text-sm font-medium">Status</label>
                   <RadioGroup defaultValue="inuse" className="flex gap-6 mt-2">
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="inuse" id="inuse" />
-                      <Label htmlFor="inuse">In Use</Label>
+                      <label htmlFor="inuse">In Use</label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="breakdown" id="breakdown" />
-                      <Label htmlFor="breakdown">Breakdown</Label>
+                      <label htmlFor="breakdown">Breakdown</label>
                     </div>
                   </RadioGroup>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Critical</Label>
+                  <label className="text-sm font-medium">Critical</label>
                   <RadioGroup defaultValue="no" className="flex gap-6 mt-2">
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="yes" id="yes" />
-                      <Label htmlFor="yes">Yes</Label>
+                      <label htmlFor="yes">Yes</label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="no" id="no" />
-                      <Label htmlFor="no">No</Label>
+                      <label htmlFor="no">No</label>
                     </div>
                   </RadioGroup>
                 </div>
@@ -486,7 +658,7 @@ export const AddAssetPage = () => {
 
               <div className="flex items-center space-x-2">
                 <Checkbox id="meterApplicable" />
-                <Label htmlFor="meterApplicable">Meter Applicable</Label>
+                <label htmlFor="meterApplicable">Meter Applicable</label>
               </div>
             </CardContent>
           )}
@@ -510,31 +682,82 @@ export const AddAssetPage = () => {
             <CardContent className="pt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                 <div>
-                  <Label className="text-sm font-medium">Under Warranty</Label>
+                  <label className="text-sm font-medium">Under Warranty</label>
                   <RadioGroup defaultValue="no" className="flex gap-6 mt-2">
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="yes" id="warranty-yes" />
-                      <Label htmlFor="warranty-yes">Yes</Label>
+                      <label htmlFor="warranty-yes">Yes</label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="no" id="warranty-no" />
-                      <Label htmlFor="warranty-no">No</Label>
+                      <label htmlFor="warranty-no">No</label>
                     </div>
                   </RadioGroup>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="warrantyStart">Warranty Start Date</Label>
-                  <Input type="date" placeholder="Select Date" />
+                  <TextField
+                    label="Warranty Start Date"
+                    placeholder="Select Date"
+                    name="warrantyStart"
+                    type="date"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      sx: {
+                        height: 56,
+                        '& input': {
+                          padding: '14px',
+                        },
+                      },
+                    }}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="warrantyExpires">Warranty expires on</Label>
-                  <Input type="date" placeholder="Select Date" />
+                  <TextField
+                    label="Warranty expires on"
+                    placeholder="Select Date"
+                    name="warrantyExpires"
+                    type="date"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      sx: {
+                        height: 56,
+                        '& input': {
+                          padding: '14px',
+                        },
+                      },
+                    }}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="commissioningDate">Commissioning Date</Label>
-                  <Input type="date" placeholder="Select Date" />
+                  <TextField
+                    label="Commissioning Date"
+                    placeholder="Select Date"
+                    name="commissioningDate"
+                    type="date"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      sx: {
+                        height: 56,
+                        '& input': {
+                          padding: '14px',
+                        },
+                      },
+                    }}
+                  />
                 </div>
               </div>
             </CardContent>
@@ -570,15 +793,14 @@ export const AddAssetPage = () => {
                         onChange={(e) => handleMeterCategoryChange(e.target.value)}
                         className="w-4 h-4 text-[#C72030] bg-gray-100 border-gray-300 focus:ring-[#C72030] focus:ring-2"
                       />
-                      <Label htmlFor={option.value} className="text-sm cursor-pointer">
+                      <label htmlFor={option.value} className="text-sm cursor-pointer">
                         {option.label}
-                      </Label>
+                      </label>
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* Sub-category options based on selected main category */}
               {getSubCategoryOptions().length > 0 && (
                 <div className="mt-6">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -594,9 +816,9 @@ export const AddAssetPage = () => {
                             onChange={(e) => setSubCategoryType(e.target.value)}
                             className="w-4 h-4 text-[#C72030] bg-gray-100 border-gray-300 focus:ring-[#C72030] focus:ring-2"
                           />
-                          <Label htmlFor={`sub-${option.value}`} className="text-sm cursor-pointer">
+                          <label htmlFor={`sub-${option.value}`} className="text-sm cursor-pointer">
                             {option.label}
-                          </Label>
+                          </label>
                         </div>
                       </div>
                     ))}
@@ -642,16 +864,28 @@ export const AddAssetPage = () => {
                     
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
                       <div>
-                        <Label htmlFor={`name-${measure.id}`}>Name</Label>
-                        <Input
-                          id={`name-${measure.id}`}
+                        <TextField
+                          label="Name"
                           placeholder="Enter Text"
+                          name={`name-${measure.id}`}
                           value={measure.name}
                           onChange={(e) => updateConsumptionMeasure(measure.id, 'name', e.target.value)}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          InputProps={{
+                            sx: {
+                              height: 56,
+                              '& input': {
+                                padding: '14px',
+                              },
+                            },
+                          }}
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`unitType-${measure.id}`}>Unit Type</Label>
                         <Select
                           value={measure.unitType}
                           onValueChange={(value) => updateConsumptionMeasure(measure.id, 'unitType', value)}
@@ -668,55 +902,120 @@ export const AddAssetPage = () => {
                         </Select>
                       </div>
                       <div>
-                        <Label htmlFor={`min-${measure.id}`}>Min</Label>
-                        <Input
-                          id={`min-${measure.id}`}
+                        <TextField
+                          label="Min"
                           placeholder="Enter Number"
+                          name={`min-${measure.id}`}
                           type="number"
                           value={measure.min}
                           onChange={(e) => updateConsumptionMeasure(measure.id, 'min', e.target.value)}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          InputProps={{
+                            sx: {
+                              height: 56,
+                              '& input': {
+                                padding: '14px',
+                              },
+                            },
+                          }}
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`max-${measure.id}`}>Max</Label>
-                        <Input
-                          id={`max-${measure.id}`}
+                        <TextField
+                          label="Max"
                           placeholder="Enter Number"
+                          name={`max-${measure.id}`}
                           type="number"
                           value={measure.max}
                           onChange={(e) => updateConsumptionMeasure(measure.id, 'max', e.target.value)}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          InputProps={{
+                            sx: {
+                              height: 56,
+                              '& input': {
+                                padding: '14px',
+                              },
+                            },
+                          }}
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`alertBelow-${measure.id}`}>Alert Below Val.</Label>
-                        <Input
-                          id={`alertBelow-${measure.id}`}
+                        <TextField
+                          label="Alert Below Val."
                           placeholder="Enter Value"
+                          name={`alertBelow-${measure.id}`}
                           type="number"
                           value={measure.alertBelowVal}
                           onChange={(e) => updateConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          InputProps={{
+                            sx: {
+                              height: 56,
+                              '& input': {
+                                padding: '14px',
+                              },
+                            },
+                          }}
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                       <div>
-                        <Label htmlFor={`alertAbove-${measure.id}`}>Alert Above Val.</Label>
-                        <Input
-                          id={`alertAbove-${measure.id}`}
+                        <TextField
+                          label="Alert Above Val."
                           placeholder="Enter Value"
+                          name={`alertAbove-${measure.id}`}
                           type="number"
                           value={measure.alertAboveVal}
                           onChange={(e) => updateConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          InputProps={{
+                            sx: {
+                              height: 56,
+                              '& input': {
+                                padding: '14px',
+                              },
+                            },
+                          }}
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`multiplier-${measure.id}`}>Multiplier Factor</Label>
-                        <Input
-                          id={`multiplier-${measure.id}`}
+                        <TextField
+                          label="Multiplier Factor"
                           placeholder="Enter Text"
+                          name={`multiplier-${measure.id}`}
                           value={measure.multiplierFactor}
                           onChange={(e) => updateConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          InputProps={{
+                            sx: {
+                              height: 56,
+                              '& input': {
+                                padding: '14px',
+                              },
+                            },
+                          }}
                         />
                       </div>
                     </div>
@@ -727,7 +1026,7 @@ export const AddAssetPage = () => {
                         checked={measure.checkPreviousReading}
                         onCheckedChange={(checked) => updateConsumptionMeasure(measure.id, 'checkPreviousReading', checked)}
                       />
-                      <Label htmlFor={`checkPrevious-${measure.id}`}>Check Previous Reading</Label>
+                      <label htmlFor={`checkPrevious-${measure.id}`}>Check Previous Reading</label>
                     </div>
                   </div>
                 ))}
@@ -780,16 +1079,28 @@ export const AddAssetPage = () => {
                     
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
                       <div>
-                        <Label htmlFor={`nc-name-${measure.id}`}>Name</Label>
-                        <Input
-                          id={`nc-name-${measure.id}`}
+                        <TextField
+                          label="Name"
                           placeholder="Name"
+                          name={`nc-name-${measure.id}`}
                           value={measure.name}
                           onChange={(e) => updateNonConsumptionMeasure(measure.id, 'name', e.target.value)}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          InputProps={{
+                            sx: {
+                              height: 56,
+                              '& input': {
+                                padding: '14px',
+                              },
+                            },
+                          }}
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`nc-unitType-${measure.id}`}>Unit Type</Label>
                         <Select
                           value={measure.unitType}
                           onValueChange={(value) => updateNonConsumptionMeasure(measure.id, 'unitType', value)}
@@ -807,55 +1118,120 @@ export const AddAssetPage = () => {
                         </Select>
                       </div>
                       <div>
-                        <Label htmlFor={`nc-min-${measure.id}`}>Min</Label>
-                        <Input
-                          id={`nc-min-${measure.id}`}
+                        <TextField
+                          label="Min"
                           placeholder="Min"
+                          name={`nc-min-${measure.id}`}
                           type="number"
                           value={measure.min}
                           onChange={(e) => updateNonConsumptionMeasure(measure.id, 'min', e.target.value)}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          InputProps={{
+                            sx: {
+                              height: 56,
+                              '& input': {
+                                padding: '14px',
+                              },
+                            },
+                          }}
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`nc-max-${measure.id}`}>Max</Label>
-                        <Input
-                          id={`nc-max-${measure.id}`}
+                        <TextField
+                          label="Max"
                           placeholder="Max"
+                          name={`nc-max-${measure.id}`}
                           type="number"
                           value={measure.max}
                           onChange={(e) => updateNonConsumptionMeasure(measure.id, 'max', e.target.value)}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          InputProps={{
+                            sx: {
+                              height: 56,
+                              '& input': {
+                                padding: '14px',
+                              },
+                            },
+                          }}
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`nc-alertBelow-${measure.id}`}>Alert Below Val.</Label>
-                        <Input
-                          id={`nc-alertBelow-${measure.id}`}
+                        <TextField
+                          label="Alert Below Val."
                           placeholder="Alert Below Value"
+                          name={`nc-alertBelow-${measure.id}`}
                           type="number"
                           value={measure.alertBelowVal}
                           onChange={(e) => updateNonConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          InputProps={{
+                            sx: {
+                              height: 56,
+                              '& input': {
+                                padding: '14px',
+                              },
+                            },
+                          }}
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                       <div>
-                        <Label htmlFor={`nc-alertAbove-${measure.id}`}>Alert Above Val.</Label>
-                        <Input
-                          id={`nc-alertAbove-${measure.id}`}
+                        <TextField
+                          label="Alert Above Val."
                           placeholder="Alert Above Value"
+                          name={`nc-alertAbove-${measure.id}`}
                           type="number"
                           value={measure.alertAboveVal}
                           onChange={(e) => updateNonConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          InputProps={{
+                            sx: {
+                              height: 56,
+                              '& input': {
+                                padding: '14px',
+                              },
+                            },
+                          }}
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`nc-multiplier-${measure.id}`}>Multiplier Factor</Label>
-                        <Input
-                          id={`nc-multiplier-${measure.id}`}
+                        <TextField
+                          label="Multiplier Factor"
                           placeholder="Multiplier Factor"
+                          name={`nc-multiplier-${measure.id}`}
                           value={measure.multiplierFactor}
                           onChange={(e) => updateNonConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          InputProps={{
+                            sx: {
+                              height: 56,
+                              '& input': {
+                                padding: '14px',
+                              },
+                            },
+                          }}
                         />
                       </div>
                     </div>
@@ -866,7 +1242,7 @@ export const AddAssetPage = () => {
                         checked={measure.checkPreviousReading}
                         onCheckedChange={(checked) => updateNonConsumptionMeasure(measure.id, 'checkPreviousReading', checked)}
                       />
-                      <Label htmlFor={`nc-checkPrevious-${measure.id}`}>Check Previous Reading</Label>
+                      <label htmlFor={`nc-checkPrevious-${measure.id}`}>Check Previous Reading</label>
                     </div>
                   </div>
                 ))}
@@ -903,7 +1279,7 @@ export const AddAssetPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Manuals Upload */}
                 <div>
-                  <Label className="text-sm font-medium mb-2 block">Manuals Upload</Label>
+                  <label className="text-sm font-medium mb-2 block">Manuals Upload</label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                     <input
                       type="file"
@@ -962,7 +1338,7 @@ export const AddAssetPage = () => {
 
                 {/* Insurance Details */}
                 <div>
-                  <Label className="text-sm font-medium mb-2 block">Insurance Details</Label>
+                  <label className="text-sm font-medium mb-2 block">Insurance Details</label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                     <input
                       type="file"
@@ -1021,7 +1397,7 @@ export const AddAssetPage = () => {
 
                 {/* Purchase Invoice */}
                 <div>
-                  <Label className="text-sm font-medium mb-2 block">Purchase Invoice</Label>
+                  <label className="text-sm font-medium mb-2 block">Purchase Invoice</label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                     <input
                       type="file"
@@ -1080,7 +1456,7 @@ export const AddAssetPage = () => {
 
                 {/* AMC */}
                 <div>
-                  <Label className="text-sm font-medium mb-2 block">AMC</Label>
+                  <label className="text-sm font-medium mb-2 block">AMC</label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                     <input
                       type="file"
