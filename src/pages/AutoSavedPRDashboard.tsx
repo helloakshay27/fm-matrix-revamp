@@ -39,7 +39,7 @@ export const AutoSavedPRDashboard = () => {
               <TableRow key={index} className="hover:bg-gray-50">
                 <TableCell>
                   <div className="w-6 h-6 bg-gray-300 rounded flex items-center justify-center">
-                    <span className="text-white text-xs">👁</span>
+                     <Eye className="w-4 h-4" />
                   </div>
                 </TableCell>
                 <TableCell className="font-medium">{item.type}</TableCell>
