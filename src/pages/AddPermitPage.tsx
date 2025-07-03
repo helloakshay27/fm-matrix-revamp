@@ -2,12 +2,16 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
 
 export const AddPermitPage = () => {
   const navigate = useNavigate();
@@ -89,7 +93,7 @@ export const AddPermitPage = () => {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto bg-white min-h-screen">
+    <div className="p-4 sm:p-6 md:p-8 max-w-6xl mx-auto bg-white min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <nav className="flex items-center text-sm text-gray-600 mb-4">
@@ -97,7 +101,7 @@ export const AddPermitPage = () => {
           <span className="mx-2">{'>'}</span>
           <span>New Permit</span>
         </nav>
-        <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">NEW PERMIT</h1>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">NEW PERMIT</h1>
       </div>
 
       {/* Permit Requestor Details */}
@@ -109,47 +113,57 @@ export const AddPermitPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-6">
-            <div>
-              <Label>Name</Label>
-              <Input
-                value={permitData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                placeholder="Enter Name"
-              />
-            </div>
-            <div>
-              <Label>Contact Number</Label>
-              <Input
-                value={permitData.contactNumber}
-                onChange={(e) => handleInputChange('contactNumber', e.target.value)}
-                placeholder="Enter Contact Number"
-              />
-            </div>
-            <div>
-              <Label>Site</Label>
-              <Input
-                value={permitData.site}
-                onChange={(e) => handleInputChange('site', e.target.value)}
-                placeholder="Enter Site"
-              />
-            </div>
-            <div>
-              <Label>Department</Label>
-              <Input
-                value={permitData.department}
-                onChange={(e) => handleInputChange('department', e.target.value)}
-                placeholder="Enter Department"
-              />
-            </div>
-            <div>
-              <Label>Unit</Label>
-              <Input
-                value={permitData.unit}
-                onChange={(e) => handleInputChange('unit', e.target.value)}
-                placeholder="Enter Unit"
-              />
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <TextField
+              label="Name"
+              value={permitData.name}
+              onChange={(e) => handleInputChange('name', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+            <TextField
+              label="Contact Number"
+              value={permitData.contactNumber}
+              onChange={(e) => handleInputChange('contactNumber', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+            <TextField
+              label="Site"
+              value={permitData.site}
+              onChange={(e) => handleInputChange('site', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+            <TextField
+              label="Department"
+              value={permitData.department}
+              onChange={(e) => handleInputChange('department', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+            <TextField
+              label="Unit"
+              value={permitData.unit}
+              onChange={(e) => handleInputChange('unit', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
           </div>
         </CardContent>
       </Card>
@@ -164,97 +178,115 @@ export const AddPermitPage = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div>
-              <Label>Permit For*</Label>
-              <Input
-                value={permitData.permitFor}
-                onChange={(e) => handleInputChange('permitFor', e.target.value)}
-                placeholder="Enter Permit For"
-              />
-            </div>
+            <TextField
+              label="Permit For*"
+              value={permitData.permitFor}
+              onChange={(e) => handleInputChange('permitFor', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
             
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label>Building*</Label>
-                <Select onValueChange={(value) => handleInputChange('building', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Building" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="building-a">Building A</SelectItem>
-                    <SelectItem value="building-b">Building B</SelectItem>
-                    <SelectItem value="building-c">Building C</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Wing</Label>
-                <Select onValueChange={(value) => handleInputChange('wing', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Building First" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="wing-1">Wing 1</SelectItem>
-                    <SelectItem value="wing-2">Wing 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Area</Label>
-                <Select onValueChange={(value) => handleInputChange('area', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Floor First" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="area-1">Area 1</SelectItem>
-                    <SelectItem value="area-2">Area 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Building*</InputLabel>
+                <MuiSelect
+                  label="Building*"
+                  value={permitData.building}
+                  onChange={(e) => handleInputChange('building', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Building</em></MenuItem>
+                  <MenuItem value="building-a">Building A</MenuItem>
+                  <MenuItem value="building-b">Building B</MenuItem>
+                  <MenuItem value="building-c">Building C</MenuItem>
+                </MuiSelect>
+              </FormControl>
+              
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Wing</InputLabel>
+                <MuiSelect
+                  label="Wing"
+                  value={permitData.wing}
+                  onChange={(e) => handleInputChange('wing', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Building First</em></MenuItem>
+                  <MenuItem value="wing-1">Wing 1</MenuItem>
+                  <MenuItem value="wing-2">Wing 2</MenuItem>
+                </MuiSelect>
+              </FormControl>
+              
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Area</InputLabel>
+                <MuiSelect
+                  label="Area"
+                  value={permitData.area}
+                  onChange={(e) => handleInputChange('area', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Floor First</em></MenuItem>
+                  <MenuItem value="area-1">Area 1</MenuItem>
+                  <MenuItem value="area-2">Area 2</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label>Floor</Label>
-                <Select onValueChange={(value) => handleInputChange('floor', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Wing First" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="floor-1">Floor 1</SelectItem>
-                    <SelectItem value="floor-2">Floor 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Room</Label>
-                <Select onValueChange={(value) => handleInputChange('room', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Wing First" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="room-1">Room 1</SelectItem>
-                    <SelectItem value="room-2">Room 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Copy To</Label>
-                <Select onValueChange={(value) => handleInputChange('copyTo', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="supervisor">Supervisor</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Floor</InputLabel>
+                <MuiSelect
+                  label="Floor"
+                  value={permitData.floor}
+                  onChange={(e) => handleInputChange('floor', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Wing First</em></MenuItem>
+                  <MenuItem value="floor-1">Floor 1</MenuItem>
+                  <MenuItem value="floor-2">Floor 2</MenuItem>
+                </MuiSelect>
+              </FormControl>
+              
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Room</InputLabel>
+                <MuiSelect
+                  label="Room"
+                  value={permitData.room}
+                  onChange={(e) => handleInputChange('room', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Wing First</em></MenuItem>
+                  <MenuItem value="room-1">Room 1</MenuItem>
+                  <MenuItem value="room-2">Room 2</MenuItem>
+                </MuiSelect>
+              </FormControl>
+              
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Copy To</InputLabel>
+                <MuiSelect
+                  label="Copy To"
+                  value={permitData.copyTo}
+                  onChange={(e) => handleInputChange('copyTo', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select</em></MenuItem>
+                  <MenuItem value="manager">Manager</MenuItem>
+                  <MenuItem value="supervisor">Supervisor</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div>
-              <Label>Client Specific</Label>
-              <div className="flex gap-4 mt-2">
+              <label className="block text-sm font-medium mb-2">Client Specific</label>
+              <div className="flex gap-4">
                 <label className="flex items-center">
                   <input
                     type="radio"
@@ -294,8 +326,8 @@ export const AddPermitPage = () => {
         <CardContent>
           <div className="space-y-4">
             <div>
-              <Label>Select Permit Type*</Label>
-              <div className="mt-2 p-4 border rounded-lg">
+              <label className="block text-sm font-medium mb-2">Select Permit Type*</label>
+              <div className="p-4 border rounded-lg">
                 <label className="flex items-center">
                   <input
                     type="radio"
@@ -310,15 +342,28 @@ export const AddPermitPage = () => {
               </div>
             </div>
 
-            <div>
-              <Label>Enter Permit Description*</Label>
-              <Textarea
-                value={permitData.permitDescription}
-                onChange={(e) => handleInputChange('permitDescription', e.target.value)}
-                placeholder="Enter description"
-                className="min-h-[100px]"
-              />
-            </div>
+            <TextField
+              label="Enter Permit Description*"
+              value={permitData.permitDescription}
+              onChange={(e) => handleInputChange('permitDescription', e.target.value)}
+              fullWidth
+              variant="outlined"
+              multiline
+              minRows={4}
+              maxRows={10}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{
+                sx: {
+                  '& textarea': {
+                    height: 'auto',
+                    overflow: 'hidden',
+                    resize: 'none',
+                    padding: '8px 14px',
+                  },
+                },
+              }}
+              sx={{ mt: 1 }}
+            />
 
             {/* Dynamic Activities */}
             {activities.map((activity, index) => (
@@ -332,56 +377,78 @@ export const AddPermitPage = () => {
                   </button>
                 )}
                 
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label>Activity*</Label>
-                    <Select onValueChange={(value) => handleActivityChange(index, 'activity', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Activity" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="maintenance">Maintenance</SelectItem>
-                        <SelectItem value="installation">Installation</SelectItem>
-                        <SelectItem value="repair">Repair</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Sub Activity*</Label>
-                    <Select onValueChange={(value) => handleActivityChange(index, 'subActivity', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Sub Activity" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="electrical">Electrical</SelectItem>
-                        <SelectItem value="plumbing">Plumbing</SelectItem>
-                        <SelectItem value="hvac">HVAC</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Category of Hazards*</Label>
-                    <Select onValueChange={(value) => handleActivityChange(index, 'categoryOfHazards', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Category of Hazards" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Low Risk</SelectItem>
-                        <SelectItem value="medium">Medium Risk</SelectItem>
-                        <SelectItem value="high">High Risk</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>Activity*</InputLabel>
+                    <MuiSelect
+                      label="Activity*"
+                      value={activity.activity}
+                      onChange={(e) => handleActivityChange(index, 'activity', e.target.value)}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value=""><em>Select Activity</em></MenuItem>
+                      <MenuItem value="maintenance">Maintenance</MenuItem>
+                      <MenuItem value="installation">Installation</MenuItem>
+                      <MenuItem value="repair">Repair</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                  
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>Sub Activity*</InputLabel>
+                    <MuiSelect
+                      label="Sub Activity*"
+                      value={activity.subActivity}
+                      onChange={(e) => handleActivityChange(index, 'subActivity', e.target.value)}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value=""><em>Select Sub Activity</em></MenuItem>
+                      <MenuItem value="electrical">Electrical</MenuItem>
+                      <MenuItem value="plumbing">Plumbing</MenuItem>
+                      <MenuItem value="hvac">HVAC</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                  
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>Category of Hazards*</InputLabel>
+                    <MuiSelect
+                      label="Category of Hazards*"
+                      value={activity.categoryOfHazards}
+                      onChange={(e) => handleActivityChange(index, 'categoryOfHazards', e.target.value)}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value=""><em>Select Category of Hazards</em></MenuItem>
+                      <MenuItem value="low">Low Risk</MenuItem>
+                      <MenuItem value="medium">Medium Risk</MenuItem>
+                      <MenuItem value="high">High Risk</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
 
-                <div>
-                  <Label>Risks*</Label>
-                  <Textarea
-                    value={permitData.risks}
-                    onChange={(e) => handleInputChange('risks', e.target.value)}
-                    placeholder="Enter risks"
-                  />
-                </div>
+                <TextField
+                  label="Risks*"
+                  value={permitData.risks}
+                  onChange={(e) => handleInputChange('risks', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  multiline
+                  minRows={3}
+                  maxRows={6}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: {
+                      '& textarea': {
+                        height: 'auto',
+                        overflow: 'hidden',
+                        resize: 'none',
+                        padding: '8px 14px',
+                      },
+                    },
+                  }}
+                  sx={{ mt: 1 }}
+                />
               </div>
             ))}
 
@@ -393,27 +460,43 @@ export const AddPermitPage = () => {
               + Add Activity
             </Button>
 
-            <div>
-              <Label>Vendor</Label>
-              <Select onValueChange={(value) => handleInputChange('vendor', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Vendor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="vendor-1">Vendor 1</SelectItem>
-                  <SelectItem value="vendor-2">Vendor 2</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Vendor</InputLabel>
+              <MuiSelect
+                label="Vendor"
+                value={permitData.vendor}
+                onChange={(e) => handleInputChange('vendor', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Vendor</em></MenuItem>
+                <MenuItem value="vendor-1">Vendor 1</MenuItem>
+                <MenuItem value="vendor-2">Vendor 2</MenuItem>
+              </MuiSelect>
+            </FormControl>
 
-            <div>
-              <Label>Comment(Optional)</Label>
-              <Textarea
-                value={permitData.comment}
-                onChange={(e) => handleInputChange('comment', e.target.value)}
-                placeholder="Enter Comment"
-              />
-            </div>
+            <TextField
+              label="Comment (Optional)"
+              value={permitData.comment}
+              onChange={(e) => handleInputChange('comment', e.target.value)}
+              fullWidth
+              variant="outlined"
+              multiline
+              minRows={3}
+              maxRows={6}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{
+                sx: {
+                  '& textarea': {
+                    height: 'auto',
+                    overflow: 'hidden',
+                    resize: 'none',
+                    padding: '8px 14px',
+                  },
+                },
+              }}
+              sx={{ mt: 1 }}
+            />
           </div>
         </CardContent>
       </Card>

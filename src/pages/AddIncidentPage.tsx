@@ -1,320 +1,241 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Upload } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
 
 export const AddIncidentPage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [formData, setFormData] = useState({
-    incidentDate: '',
-    incidentTime: '',
-    location: '',
+  const [incidentData, setIncidentData] = useState({
+    title: '',
     description: '',
-    incidentType: '',
-    severity: '',
+    priority: '',
+    category: '',
+    location: '',
     reportedBy: '',
-    witnessName: '',
-    injuryOccurred: '',
-    propertyDamage: '',
-    immediateAction: '',
-    rootCause: '',
-    preventiveMeasures: ''
+    assignedTo: '',
+    status: 'Open',
+    incidentDate: '',
+    attachments: null as File | null
   });
 
-  // Determine if we're in Safety or Maintenance context
-  const isSafetyContext = location.pathname.startsWith('/safety');
-  const basePath = isSafetyContext ? '/safety' : '/maintenance';
-
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
+    setIncidentData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const handleSubmit = () => {
-    console.log('Incident submitted:', formData);
-    navigate(`${basePath}/incident`);
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setIncidentData(prev => ({
+        ...prev,
+        attachments: file
+      }));
+      toast.success('File uploaded successfully');
+    }
   };
 
-  const handleFileUpload = () => {
-    console.log('File upload clicked');
-    // Create file input element
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.multiple = true;
-    fileInput.accept = '.jpg,.jpeg,.png,.pdf,.doc,.docx';
-    fileInput.onchange = (e) => {
-      const files = (e.target as HTMLInputElement).files;
-      if (files) {
-        console.log('Files selected:', Array.from(files).map(f => f.name));
-        // Handle file upload logic here
-      }
-    };
-    fileInput.click();
+  const handleSubmit = () => {
+    if (!incidentData.title || !incidentData.description) {
+      toast.error('Please fill all required fields');
+      return;
+    }
+    
+    console.log('Incident Data:', incidentData);
+    toast.success('Incident reported successfully!');
+    navigate('/incidents');
   };
 
   return (
-    <div className="flex-1 p-4 bg-white min-h-screen">
+    <div className="p-4 sm:p-6 md:p-8 max-w-6xl mx-auto bg-white min-h-screen">
       {/* Header */}
-      <div className="mb-4">
-        <nav className="flex items-center text-sm text-gray-600 mb-3">
-          <span>Safety</span>
+      <div className="mb-6">
+        <nav className="flex items-center text-sm text-gray-600 mb-4">
+          <span>Incidents</span>
           <span className="mx-2">{'>'}</span>
-          <span>Incident</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Add Incident</span>
+          <span>New Incident</span>
         </nav>
-        <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">ADD INCIDENT</h1>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">NEW INCIDENT</h1>
       </div>
 
-      <div className="space-y-4 max-w-full">
-        {/* Basic Information */}
-        <Card className="w-full">
-          <CardHeader className="pb-4">
-            <CardTitle>Basic Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Incident Date*</Label>
-                <Input
-                  type="date"
-                  value={formData.incidentDate}
-                  onChange={(e) => handleInputChange('incidentDate', e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Incident Time*</Label>
-                <Input
-                  type="time"
-                  value={formData.incidentTime}
-                  onChange={(e) => handleInputChange('incidentTime', e.target.value)}
-                  className="w-full"
-                />
-              </div>
-            </div>
+      {/* Basic Details */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-orange-600 flex items-center">
+            <span className="mr-2">🔸</span>
+            INCIDENT DETAILS
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <TextField
+              label="Incident Title*"
+              value={incidentData.title}
+              onChange={(e) => handleInputChange('title', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
             
-            <div className="space-y-2">
-              <Label>Location*</Label>
-              <Input
-                value={formData.location}
-                onChange={(e) => handleInputChange('location', e.target.value)}
-                placeholder="Enter incident location"
-                className="w-full"
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Priority*</InputLabel>
+              <MuiSelect
+                label="Priority*"
+                value={incidentData.priority}
+                onChange={(e) => handleInputChange('priority', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Priority</em></MenuItem>
+                <MenuItem value="low">Low</MenuItem>
+                <MenuItem value="medium">Medium</MenuItem>
+                <MenuItem value="high">High</MenuItem>
+                <MenuItem value="critical">Critical</MenuItem>
+              </MuiSelect>
+            </FormControl>
+
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Category</InputLabel>
+              <MuiSelect
+                label="Category"
+                value={incidentData.category}
+                onChange={(e) => handleInputChange('category', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Category</em></MenuItem>
+                <MenuItem value="safety">Safety</MenuItem>
+                <MenuItem value="security">Security</MenuItem>
+                <MenuItem value="maintenance">Maintenance</MenuItem>
+                <MenuItem value="it">IT</MenuItem>
+              </MuiSelect>
+            </FormControl>
+
+            <TextField
+              label="Location"
+              value={incidentData.location}
+              onChange={(e) => handleInputChange('location', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+
+            <TextField
+              label="Reported By"
+              value={incidentData.reportedBy}
+              onChange={(e) => handleInputChange('reportedBy', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+
+            <TextField
+              label="Incident Date"
+              type="date"
+              value={incidentData.incidentDate}
+              onChange={(e) => handleInputChange('incidentDate', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+          </div>
+
+          <div className="mt-4">
+            <TextField
+              label="Description*"
+              value={incidentData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+              fullWidth
+              variant="outlined"
+              multiline
+              minRows={4}
+              maxRows={10}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{
+                sx: {
+                  '& textarea': {
+                    height: 'auto',
+                    overflow: 'hidden',
+                    resize: 'none',
+                    padding: '8px 14px',
+                  },
+                },
+              }}
+              sx={{ mt: 1 }}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Attachments */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-orange-600 flex items-center">
+            <span className="mr-2">📎</span>
+            ATTACHMENTS
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <input
+                type="file"
+                onChange={handleFileUpload}
+                className="hidden"
+                id="file-upload"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
               />
+              <label
+                htmlFor="file-upload"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50"
+              >
+                Choose Files
+              </label>
+              <span className="ml-4 text-sm text-gray-500">
+                {incidentData.attachments ? incidentData.attachments.name : 'No file chosen'}
+              </span>
             </div>
-            
-            <div className="space-y-2">
-              <Label>Description*</Label>
-              <Textarea
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                placeholder="Describe the incident in detail"
-                className="min-h-[120px] w-full"
-              />
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Incident Classification */}
-        <Card className="w-full">
-          <CardHeader className="pb-4">
-            <CardTitle>Incident Classification</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Incident Type*</Label>
-                <Select value={formData.incidentType} onValueChange={(value) => handleInputChange('incidentType', value)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select incident type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="accident">Accident</SelectItem>
-                    <SelectItem value="near-miss">Near Miss</SelectItem>
-                    <SelectItem value="property-damage">Property Damage</SelectItem>
-                    <SelectItem value="security">Security Incident</SelectItem>
-                    <SelectItem value="fire">Fire Incident</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Severity Level*</Label>
-                <Select value={formData.severity} onValueChange={(value) => handleInputChange('severity', value)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select severity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* People Involved */}
-        <Card className="w-full">
-          <CardHeader className="pb-4">
-            <CardTitle>People Involved</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Reported By*</Label>
-                <Input
-                  value={formData.reportedBy}
-                  onChange={(e) => handleInputChange('reportedBy', e.target.value)}
-                  placeholder="Name of person reporting"
-                  className="w-full"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Witness Name</Label>
-                <Input
-                  value={formData.witnessName}
-                  onChange={(e) => handleInputChange('witnessName', e.target.value)}
-                  placeholder="Name of witness (if any)"
-                  className="w-full"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Incident Details */}
-        <Card className="w-full">
-          <CardHeader className="pb-4">
-            <CardTitle>Incident Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <Label>Was there any injury?*</Label>
-              <RadioGroup value={formData.injuryOccurred} onValueChange={(value) => handleInputChange('injuryOccurred', value)}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id="injury-yes" />
-                  <Label htmlFor="injury-yes">Yes</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="injury-no" />
-                  <Label htmlFor="injury-no">No</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            
-            <div className="space-y-3">
-              <Label>Property Damage*</Label>
-              <RadioGroup value={formData.propertyDamage} onValueChange={(value) => handleInputChange('propertyDamage', value)}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id="damage-yes" />
-                  <Label htmlFor="damage-yes">Yes</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="damage-no" />
-                  <Label htmlFor="damage-no">No</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Immediate Action Taken</Label>
-              <Textarea
-                value={formData.immediateAction}
-                onChange={(e) => handleInputChange('immediateAction', e.target.value)}
-                placeholder="Describe immediate actions taken"
-                className="min-h-[100px] w-full"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Investigation */}
-        <Card className="w-full">
-          <CardHeader className="pb-4">
-            <CardTitle>Investigation</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Root Cause Analysis</Label>
-              <Textarea
-                value={formData.rootCause}
-                onChange={(e) => handleInputChange('rootCause', e.target.value)}
-                placeholder="Identify the root cause of the incident"
-                className="min-h-[100px] w-full"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Preventive Measures</Label>
-              <Textarea
-                value={formData.preventiveMeasures}
-                onChange={(e) => handleInputChange('preventiveMeasures', e.target.value)}
-                placeholder="Recommend preventive measures"
-                className="min-h-[100px] w-full"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* File Upload */}
-        <Card className="w-full">
-          <CardHeader className="pb-4">
-            <CardTitle>Attachments</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-              <Upload className="mx-auto h-12 w-12 text-gray-400" />
-              <div className="mt-3">
-                <Button
-                  variant="outline"
-                  onClick={handleFileUpload}
-                  className="mt-2"
-                >
-                  Choose Files
-                </Button>
-              </div>
-              <p className="text-sm text-gray-500 mt-3">
-                Upload photos, documents, or other relevant files (JPG, PNG, PDF, DOC, DOCX)
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Submit Buttons */}
-        <div className="flex gap-3 pt-4 pb-6">
-          <Button
-            variant="outline"
-            onClick={() => navigate(`${basePath}/incident`)}
-            className="px-8"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:opacity-90 px-8"
-          >
-            Submit Incident
-          </Button>
-        </div>
+      {/* Submit Buttons */}
+      <div className="flex justify-center gap-4 pt-6">
+        <Button
+          variant="outline"
+          onClick={() => navigate('/incidents')}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:opacity-90 px-8 py-3 text-lg"
+        >
+          Report Incident
+        </Button>
       </div>
     </div>
   );
 };
+
+export default AddIncidentPage;

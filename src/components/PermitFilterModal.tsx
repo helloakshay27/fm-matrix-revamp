@@ -2,9 +2,15 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
 
 interface PermitFilterModalProps {
   isOpen: boolean;
@@ -65,33 +71,48 @@ export const PermitFilterModal: React.FC<PermitFilterModalProps> = ({
         </DialogHeader>
         
         <div className="space-y-4 pt-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Permit Id</Label>
-              <Input
-                value={filterData.permitId}
-                onChange={(e) => handleInputChange('permitId', e.target.value)}
-                placeholder="Search By Permit Id"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Permit Type</Label>
-              <Input
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <TextField
+              label="Permit Id"
+              value={filterData.permitId}
+              onChange={(e) => handleInputChange('permitId', e.target.value)}
+              placeholder="Search By Permit Id"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+            
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Permit Type</InputLabel>
+              <MuiSelect
+                label="Permit Type"
                 value={filterData.permitType}
                 onChange={(e) => handleInputChange('permitType', e.target.value)}
-                placeholder="Search By Permit Type"
-              />
-            </div>
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Search By Permit Type</em></MenuItem>
+                <MenuItem value="maintenance">Maintenance</MenuItem>
+                <MenuItem value="construction">Construction</MenuItem>
+                <MenuItem value="electrical">Electrical</MenuItem>
+                <MenuItem value="hot-work">Hot Work</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
-          <div className="space-y-2">
-            <Label>Vendor Name</Label>
-            <Input
-              value={filterData.vendorName}
-              onChange={(e) => handleInputChange('vendorName', e.target.value)}
-              placeholder="Search By Vendor Name"
-            />
-          </div>
+          <TextField
+            label="Vendor Name"
+            value={filterData.vendorName}
+            onChange={(e) => handleInputChange('vendorName', e.target.value)}
+            placeholder="Search By Vendor Name"
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
+          />
 
           <div className="flex justify-center gap-4 pt-6">
             <Button
