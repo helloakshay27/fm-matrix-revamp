@@ -503,7 +503,7 @@ const TeamModal = ({
                             value={formData.teamMembers}
                             onChange={(values) => handleMultiSelectChange("teamMembers", values)}
                             options={users.map((user) => ({
-                                label: `${user.firstname} ${user.lastname}`,
+                                label: `${user.firstname} ${user.lastname} (${user.email})`,
                                 value: user.id,
                             }))}
                         />

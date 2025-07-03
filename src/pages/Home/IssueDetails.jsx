@@ -1,35 +1,10 @@
 import gsap from "gsap";
-import IssuesTable from "../../components/Home/Issues/Table";
-import { ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronDownCircle } from "lucide-react";
 import { useGSAP } from "@gsap/react";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { attachFile, fetchIssue, updateIssue } from "../../redux/slices/IssueSlice";
-import { map } from "zod";
-
-
-
-const STATUS_COLORS = {
-    "active": "bg-[#88D760] text-white",
-    "in progress": "bg-[#88D760] text-white",
-    "on hold": "bg-[#FFC107] text-black",
-    "overdue": "bg-[#FF5B5B] text-white",
-    "completed": "bg-[#D6D6D6] text-black",
-};
-
-const formatDuration = (ms) => {
-    const totalSeconds = Math.floor(ms / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    const parts = [];
-    if (hours) parts.push(`${hours} hr`);
-    if (minutes) parts.push(`${minutes} mins`);
-    if (seconds || parts.length === 0) parts.push(`${seconds} sec`);
-    return parts.join(" ");
-};
 
 const Attachments = ({ attachments, id }) => {
     const fileInputRef = useRef(null);
@@ -146,29 +121,29 @@ const Attachments = ({ attachments, id }) => {
 };
 
 function formatToDDMMYYYY_AMPM(dateString) {
-        const date = new Date(dateString);
+    const date = new Date(dateString);
 
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
 
-        let hours = date.getHours();
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
 
-        hours = hours % 12;
-        hours = hours ? hours : 12; // Convert hour 0 to 12
-        hours = String(hours).padStart(2, '0');
+    hours = hours % 12;
+    hours = hours ? hours : 12; // Convert hour 0 to 12
+    hours = String(hours).padStart(2, '0');
 
-        return `${day} /${month}/${year} ${hours}:${minutes} ${ampm}`;
-    }
-    
+    return `${day} /${month}/${year} ${hours}:${minutes} ${ampm}`;
+}
 
-const Comments=({comment})=>{
+
+const Comments = ({ comment }) => {
     return (
-            <div className="p-2 text-[14px]">
-            {comment?.map((comment)=>(
-                 <div key={comment.id} className="relative flex justify-start m-2 gap-5">
+        <div className="p-2 text-[14px]">
+            {comment?.map((comment) => (
+                <div key={comment.id} className="relative flex justify-start m-2 gap-5">
                     <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white text-center p-1.5">
                         <span className="">{comment.commentor_full_name.charAt(0)}</span>
                     </div>
@@ -182,9 +157,9 @@ const Comments=({comment})=>{
                         </div>
                     </div>
                 </div>
-                        ))}
-                        </div>
-          
+            ))}
+        </div>
+
     )
 }
 
@@ -223,23 +198,23 @@ const IssueDetails = () => {
     const dispatch = useDispatch();
 
     const issues = useSelector((state) => state.fetchIssues.fetchIssue);
-    const {success:statusSuccess} = useSelector((state) => state.updateIssues);
+    const { success: statusSuccess } = useSelector((state) => state.updateIssues);
 
     const [openDropdown, setOpenDropdown] = useState(false);
     const [selectedOption, setSelectedOption] = useState("Active");
     const [issueDetails, setIssueDetails] = useState();
 
-    useEffect(()=>{
-        if(issues && Array.isArray(issues) && issues.length > 0){
+    useEffect(() => {
+        if (issues && Array.isArray(issues) && issues.length > 0) {
             setIssueDetails(issues.find(issue => issue.id == id));
         }
-    },[id,issues])
+    }, [id, issues])
 
     useEffect(() => {
         if (issueDetails?.status) {
             setSelectedOption(mapStatusToDisplay(issueDetails.status));
         }
-    }, [issueDetails?.status, issueDetails?.id,issueDetails]);
+    }, [issueDetails?.status, issueDetails?.id, issueDetails]);
 
     const dropdownRef = useRef(null);
 
@@ -260,8 +235,8 @@ const IssueDetails = () => {
     const handleOptionSelect = (option) => {
         setSelectedOption(option);
         setOpenDropdown(false);
-        const payload={
-            status:mapDisplayToApiStatus(option)
+        const payload = {
+            status: mapDisplayToApiStatus(option)
         }
         dispatch(updateIssue({ token, id, payload }));
     };
@@ -471,7 +446,7 @@ const IssueDetails = () => {
 
                     <div>
                         {tab == "Documents" && <Attachments attachments={issueDetails?.attachments} id={issueDetails?.id} />}
-                        {tab== "Comments" && <Comments comment={issueDetails?.comments} /> }
+                        {tab == "Comments" && <Comments comment={issueDetails?.comments} />}
                     </div>
                 </div>
             </div>

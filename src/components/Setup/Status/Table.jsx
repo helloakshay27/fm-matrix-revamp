@@ -195,7 +195,7 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
   );
 
   const table = useReactTable({
-    data: statusList, // Use the statusList from Redux directly here
+    data: [...statusList].reverse(), // Use the statusList from Redux directly here
     columns,
     state: { pagination },
     onPaginationChange: setPagination,

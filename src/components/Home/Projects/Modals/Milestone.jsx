@@ -221,6 +221,7 @@ const Milestones = ({ closeModal }) => {
       setIsDelete(false);
       return;
     }
+    toast.dismiss();
 
     if (!validateForm(formData)) return;
     if (isSubmittingRef.current) return;
@@ -256,6 +257,8 @@ const Milestones = ({ closeModal }) => {
       window.location.reload();
       return;
     }
+
+    toast.dismiss();
 
     if (!isDelete && !validateForm(formData)) return;
     if (isSubmittingRef.current) return;

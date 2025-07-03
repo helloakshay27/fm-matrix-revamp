@@ -58,6 +58,7 @@ const Details = ({
   );
 
   const [isEditAllowed, setIsEditAllowed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     projectTitle: "",
     description: "",
@@ -217,6 +218,7 @@ const Details = ({
 
   const handleSave = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     if (!validateForm()) return;
     const payload = {
       project_management: {
@@ -241,12 +243,14 @@ const Details = ({
     } catch (error) {
       console.error("Error creating project:", error);
       toast.error("Error creating project.");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   const handleSubmit = async (e) => {
-    console.log("clicked");
     e.preventDefault();
+    setIsSubmitting(true);
     if (!validateForm()) return;
 
     const payload = {
@@ -288,6 +292,7 @@ const Details = ({
       console.error("Project submission failed:", error);
       toast.error(error.message || "Something went wrong!");
     } finally {
+      setIsSubmitting(false);
       dispatch(resetProjectSuccess());
       dispatch(resetEditSuccess());
     }
@@ -475,7 +480,7 @@ const Details = ({
                 <button
                   type="button"
                   className="border-2 border-red-500 px-4 py-2 text-black w-[100px]"
-                  disabled={success || editsuccess}
+                  disabled={isSubmitting}
                   onClick={handleSave}
                 >
                   Save
@@ -485,7 +490,7 @@ const Details = ({
             <button
               type="submit"
               className="border-2 border-red-500 px-4 py-2 text-black w-max"
-              disabled={success || editsuccess}
+              disabled={isSubmitting}
             >
               {endText}
             </button>

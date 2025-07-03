@@ -45,6 +45,7 @@ const ProjectTemplates = () => {
 
     useEffect(() => {
         if (success) {
+            toast.dismiss()
             toast.success('Template deleted successfully')
             dispatch(fetchTemplates({ token }))
         }
@@ -66,13 +67,20 @@ const ProjectTemplates = () => {
                 accessorKey: 'priority',
                 header: 'Priority',
                 size: 200,
-                cell: ({ row, getValue }) => row.original ? <span className='pl-2'>{getValue()}</span> : 0,
+                cell: ({ row, getValue }) => {
+                    const value = getValue();
+                    const capitalized = value ? value.charAt(0).toUpperCase() + value.slice(1) : '';
+                    return <span className="pl-2">{capitalized}</span>;
+                },
             },
             {
-                accessorKey: 'project_members',
+                accessorKey: 'project_team.project_team_members',
                 header: 'Project Members',
                 size: 200,
-                cell: ({ row, getValue }) => row.original ? <span>{getValue().length}</span> : 0,
+                cell: ({ row }) => {
+                    const members = row.original?.project_team?.project_team_members;
+                    return <span>{Array.isArray(members) ? members.length : 0}</span>;
+                },
             },
             {
                 id: 'actions',

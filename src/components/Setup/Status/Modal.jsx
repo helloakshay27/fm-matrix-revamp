@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
-import { updateStatus, createStatus } from '../../../redux/slices/statusSlice';
+import { updateStatus, createStatus, fetchStatus } from '../../../redux/slices/statusSlice';
 import { useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 
@@ -61,7 +61,7 @@ const Modal = ({ setOpenModal, openModal, isEdit, existingData = {} }) => {
     setOpenModal(false);
 
   }
-  const handleSuccess = () => {
+  const handleSuccess = async () => {
     setFormData({
       title: '',
       color: '#c72030',
@@ -69,6 +69,7 @@ const Modal = ({ setOpenModal, openModal, isEdit, existingData = {} }) => {
     })
     setError("");
     setOpenModal(false);
+    await dispatch(fetchStatus({ token })).unwrap();
   }
 
   return (

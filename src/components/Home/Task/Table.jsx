@@ -639,190 +639,185 @@ const TaskTable = () => {
     [dispatch, isUpdatingTask, token]
   );
 
-  const mainTableColumns = useMemo(
-    () => [
-      {
-        id: "expander",
-        header: () => null,
-        size: 40,
-        cell: ({ row }) => {
-          const canExpand = row.original.hasSubtasks;
-          return canExpand ? (
-            <button
-              onClick={row.getToggleExpandedHandler()}
-              style={{ cursor: "pointer", paddingLeft: `${row.depth * 1}rem` }}
-              className="flex items-center justify-center w-full h-full"
-              aria-label={row.getIsExpanded() ? "Collapse" : "Expand"}
-            >
-              {row.getIsExpanded() ? (
-                <ChevronDownIcon className="h-4 w-4" />
-              ) : (
-                <ChevronRightIcon className="h-4 w-4" />
-              )}
-            </button>
-          ) : (
-            <span
-              style={{ paddingLeft: `${row.depth * 1 + 0.5}rem` }}
-              className="flex items-center justify-center w-full h-full"
-            >
-
-            </span>
-          );
-        },
+  const mainTableColumns = [
+    {
+      id: "expander",
+      header: () => null,
+      size: 40,
+      cell: ({ row }) => {
+        const canExpand = row.original.hasSubtasks;
+        return canExpand ? (
+          <button
+            onClick={row.getToggleExpandedHandler()}
+            style={{ cursor: "pointer", paddingLeft: `${row.depth * 1}rem` }}
+            className="flex items-center justify-center w-full h-full"
+            aria-label={row.getIsExpanded() ? "Collapse" : "Expand"}
+          >
+            {row.getIsExpanded() ? (
+              <ChevronDownIcon className="h-4 w-4" />
+            ) : (
+              <ChevronRightIcon className="h-4 w-4" />
+            )}
+          </button>
+        ) : (
+          <span
+            style={{ paddingLeft: `${row.depth * 1 + 0.5}rem` }}
+            className="flex items-center justify-center w-full h-full"
+          ></span>
+        );
       },
-      {
-        accessorKey: "id",
-        header: "Task Id",
-        size: 100,
-        cell: ({ getValue, row }) => {
-          let originalId = String(getValue() || "");
-          let displayId = "";
-          let linkIdPart = originalId;
-          if (originalId.startsWith("T-")) {
-            displayId = originalId;
-            linkIdPart = originalId.substring(2);
-          } else {
-            displayId = `T-${originalId}`;
+    },
+    {
+      accessorKey: "id",
+      header: "Task Id",
+      size: 100,
+      cell: ({ getValue, row }) => {
+        let originalId = String(getValue() || "");
+        let displayId = "";
+        let linkIdPart = originalId;
+        if (originalId.startsWith("T-")) {
+          displayId = originalId;
+          linkIdPart = originalId.substring(2);
+        } else {
+          displayId = `T-${originalId}`;
+        }
+        return (
+          <Link
+            to={`${linkIdPart}`}
+            className="text-xs text-blue-600 hover:text-blue-800 hover:underline p-1 block"
+            style={{ paddingLeft: `${row.depth * 1.5}rem` }}
+          >
+            <span>{displayId}</span>
+          </Link>
+        );
+      },
+    },
+    {
+      accessorKey: "taskTitle",
+      header: "Task Title",
+      size: 200,
+      cell: ({ getValue, row }) => {
+        const [editTitle, setEditTitle] = useState(getValue());
+        return (
+          <EditableTextField
+            value={editTitle}
+            onUpdate={(title) => setEditTitle(title)}
+            onEnterPress={() =>
+              handleUpdateTaskFieldCell(row.original.id, "title", editTitle)
+            }
+          />
+        );
+      },
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      size: 150,
+      cell: ({ getValue, row }) => (
+        <StatusBadge
+          status={getValue()}
+          statusOptions={globalStatusOptions}
+          onStatusChange={(newStatus) =>
+            handleUpdateTaskFieldCell(row.original.id, "status", newStatus)
           }
-          return (
-            <Link
-              to={`${linkIdPart}`}
-              className="text-xs text-blue-600 hover:text-blue-800 hover:underline p-1 block"
-              style={{ paddingLeft: `${row.depth * 1.5}rem` }}
-            >
-              <span>{displayId}</span>
-            </Link>
-          );
-        },
-      },
-      {
-        accessorKey: "taskTitle",
-        header: "Task Title",
-        size: 200,
-        cell: ({ getValue, row }) => {
-          const [editTitle, setEditTitle] = useState(getValue());
-          return (
-            <EditableTextField
-              value={editTitle}
-              onUpdate={(title) => setEditTitle(title)}
-              onEnterPress={() =>
-                handleUpdateTaskFieldCell(row.original.id, "title", editTitle)
-              }
-            />
-          );
-        },
-      },
-      {
-        accessorKey: "status",
-        header: "Status",
-        size: 150,
-        cell: ({ getValue, row }) => (
-          <StatusBadge
-            status={getValue()}
-            statusOptions={globalStatusOptions}
-            onStatusChange={(newStatus) =>
-              handleUpdateTaskFieldCell(row.original.id, "status", newStatus)
-            }
-          />
-        ),
-      },
-      {
-        accessorKey: "responsiblePersonId",
-        header: "Responsible Person",
-        size: 150,
-        cell: ({ getValue, row }) => {
-          return (
-            <SelectBox
-              options={users.map((user) => ({
-                value: user.id,
-                label: `${user.firstname} ${user.lastname}`,
-              }))}
-              value={getValue()}
-              onChange={(newValue) =>
-                handleUpdateTaskFieldCell(
-                  row.original.id,
-                  "responsible_person_id",
-                  newValue
-                )
-              }
-              table={true}
-              className="w-full"
-            />
-          );
-        },
-      },
-      {
-        accessorKey: "startDate",
-        header: "Start Date",
-        size: 130,
-        cell: ({ getValue, row }) => (
-          <DateEditor
+        />
+      ),
+    },
+    {
+      accessorKey: "responsiblePersonId",
+      header: "Responsible Person",
+      size: 150,
+      cell: ({ getValue, row }) => {
+        return (
+          <SelectBox
+            options={users.map((user) => ({
+              value: user.id,
+              label: `${user.firstname} ${user.lastname}`,
+            }))}
             value={getValue()}
-            onUpdate={(date) =>
+            onChange={(newValue) =>
               handleUpdateTaskFieldCell(
                 row.original.id,
-                "expected_start_date",
-                date
+                "responsible_person_id",
+                newValue
               )
             }
-            className="text-[12px]"
+            table={true}
+            className="w-full"
           />
-        ),
+        );
       },
-      {
-        accessorKey: "endDate",
-        header: "End Date",
-        size: 130,
-        cell: ({ getValue, row }) => (
-          <DateEditor
-            value={getValue()}
-            onUpdate={(date) =>
-              handleUpdateTaskFieldCell(row.original.id, "target_date", date)
-            }
-            className="text-[12px]"
-            min={row.original.startDate}
-          />
-        ),
-      },
-      {
-        accessorKey: "duration",
-        header: "Duration",
-        size: 120,
-        cell: ({ getValue }) => <span className="text-xs">{getValue()}</span>,
-      },
-      {
-        accessorKey: "priority",
-        header: "Priority",
-        size: 110,
-        cell: ({ getValue, row }) => (
-          <StatusBadge
-            status={getValue()}
-            statusOptions={globalPriorityOptions}
-            onStatusChange={(newPriority) =>
-              handleUpdateTaskFieldCell(
-                row.original.id,
-                "priority",
-                newPriority
-              )
-            }
-          />
-        ),
-      },
-      {
-        accessorKey: "predecessor",
-        header: "Predecessor",
-        size: 100,
-        cell: ({ getValue }) => <span className="text-xs">{getValue()}</span>,
-      },
-      {
-        accessorKey: "successor",
-        header: "Successor",
-        size: 100,
-        cell: ({ getValue }) => <span className="text-xs">{getValue()}</span>,
-      },
-    ],
-    [handleUpdateTaskFieldCell, users]
-  );
+    },
+    {
+      accessorKey: "startDate",
+      header: "Start Date",
+      size: 130,
+      cell: ({ getValue, row }) => (
+        <DateEditor
+          value={getValue()}
+          onUpdate={(date) =>
+            handleUpdateTaskFieldCell(
+              row.original.id,
+              "expected_start_date",
+              date
+            )
+          }
+          className="text-[12px]"
+        />
+      ),
+    },
+    {
+      accessorKey: "endDate",
+      header: "End Date",
+      size: 130,
+      cell: ({ getValue, row }) => (
+        <DateEditor
+          value={getValue()}
+          onUpdate={(date) =>
+            handleUpdateTaskFieldCell(row.original.id, "target_date", date)
+          }
+          className="text-[12px]"
+          min={row.original.startDate}
+        />
+      ),
+    },
+    {
+      accessorKey: "duration",
+      header: "Duration",
+      size: 120,
+      cell: ({ getValue }) => <span className="text-xs">{getValue()}</span>,
+    },
+    {
+      accessorKey: "priority",
+      header: "Priority",
+      size: 110,
+      cell: ({ getValue, row }) => (
+        <StatusBadge
+          status={getValue()}
+          statusOptions={globalPriorityOptions}
+          onStatusChange={(newPriority) =>
+            handleUpdateTaskFieldCell(
+              row.original.id,
+              "priority",
+              newPriority
+            )
+          }
+        />
+      ),
+    },
+    {
+      accessorKey: "predecessor",
+      header: "Predecessor",
+      size: 100,
+      cell: ({ getValue }) => <span className="text-xs">{getValue()}</span>,
+    },
+    {
+      accessorKey: "successor",
+      header: "Successor",
+      size: 100,
+      cell: ({ getValue }) => <span className="text-xs">{getValue()}</span>,
+    },
+  ];
 
   const table = useReactTable({
     data,

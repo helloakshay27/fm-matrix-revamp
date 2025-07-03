@@ -1,12 +1,12 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import SelectBox from "../../components/SelectBox";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchInternalUser, fetchUsers } from "../../redux/slices/userSlice";
 import { createMoM, resetMomCreateSuccess } from "../../redux/slices/momSlice";
-import { useNavigate } from "react-router-dom";
 import { fetchActiveTags } from "../../redux/slices/tagsSlice";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import SelectBox from "../../components/SelectBox";
 
 const MoMAdd = () => {
     const token = localStorage.getItem("token");
@@ -18,12 +18,14 @@ const MoMAdd = () => {
     );
     const { fetchUsers: users } = useSelector((state) => state.fetchUsers);
     const { fetchActiveTags: tags } = useSelector((state) => state.fetchActiveTags);
-    const { loading, success } = useSelector((state) => state.createMoM);
+    const { loading, success, error } = useSelector((state) => state.createMoM);
 
-    const attachmentRef = useRef();
-
+    const attachmentRef = useRef(null);
     const [isExternal, setIsExternal] = useState(false);
-    const [entries, setEntries] = useState([{ id: Date.now() }]);
+    const [internalEntries, setInternalEntries] = useState([{ id: Date.now() }]);
+    const [externalEntries, setExternalEntries] = useState([{ id: Date.now() + 1 }]);
+    const [internalAttendees, setInternalAttendees] = useState([null]);
+    const [externalAttendees, setExternalAttendees] = useState([{}]);
     const [points, setPoints] = useState([{ id: Date.now() }]);
     const [rawDate, setRawDate] = useState("");
     const [rawTime, setRawTime] = useState("");
@@ -33,41 +35,57 @@ const MoMAdd = () => {
         time: "",
         meetingType: "",
         meetingMode: "",
-        isInternal: true,
         users: [],
-        points: [],
+        points: [
+            {
+                description: "",
+                raisedBy: "",
+                responsiblePerson: null,
+                endDate: "",
+                isTask: false,
+                tag: null,
+            },
+        ],
         attachments: [],
     });
 
+    // Fetch data on component mount
     useEffect(() => {
         dispatch(fetchInternalUser({ token }));
         dispatch(fetchUsers({ token }));
         dispatch(fetchActiveTags({ token }));
     }, [dispatch]);
 
-    const handleAddMore = () => {
-        setEntries((prev) => [...prev, { id: Date.now() }]);
-    };
-
-    const handleDeleteEntry = (id, index) => {
-        if (entries.length === 1) {
-            toast.error("At least one attendee is required");
-            return;
+    // Handle success navigation and error handling
+    useEffect(() => {
+        if (success) {
+            toast.success("MoM created successfully!");
+            navigate(-1);
+            dispatch(resetMomCreateSuccess());
         }
-        setEntries((prev) => prev.filter((entry) => entry.id !== id));
-        setFormData((prev) => ({
-            ...prev,
-            users: prev.users.filter((_, i) => i !== index),
-        }));
-    };
+        if (error) {
+            toast.error("Failed to create MoM. Please try again.");
+        }
+    }, [success, error, navigate, dispatch]);
+
+    // Sync formData.users with both internal and external attendees
+    useEffect(() => {
+        const updatedUsers = [
+            ...internalAttendees.filter(Boolean),
+            ...externalAttendees.filter((u) => u?.name && u?.email),
+        ];
+        setFormData((prev) => ({ ...prev, users: updatedUsers }));
+    }, [internalAttendees, externalAttendees]);
 
     const updateCombinedDateTime = (newDate, newTime) => {
         if (newDate && newTime) {
-            const combined = new Date(`${newDate}T${newTime}`);
-            setFormData((prev) => ({
-                ...prev,
-                date: combined.toISOString(),
-            }));
+            try {
+                const combined = new Date(`${newDate}T${newTime}`);
+                if (isNaN(combined.getTime())) throw new Error("Invalid date or time");
+                setFormData((prev) => ({ ...prev, date: combined.toISOString() }));
+            } catch {
+                toast.error("Invalid date or time format");
+            }
         }
     };
 
@@ -83,13 +101,42 @@ const MoMAdd = () => {
         updateCombinedDateTime(rawDate, newTime);
     };
 
+    const handleAddMore = () => {
+        if (isExternal) {
+            setExternalEntries((prev) => [...prev, { id: Date.now() }]);
+            setExternalAttendees((prev) => [...prev, {}]);
+        } else {
+            setInternalEntries((prev) => [...prev, { id: Date.now() }]);
+            setInternalAttendees((prev) => [...prev, null]);
+        }
+    };
+
+    const handleDeleteEntry = (index) => {
+        if (isExternal) {
+            if (externalEntries.length === 1 && internalEntries.length === 0) {
+                toast.error("At least one attendee is required");
+                return;
+            }
+            setExternalEntries((prev) => prev.filter((_, i) => i !== index));
+            setExternalAttendees((prev) => prev.filter((_, i) => i !== index));
+        } else {
+            if (internalEntries.length === 1 && externalEntries.length === 0) {
+                toast.error("At least one attendee is required");
+                return;
+            }
+            setInternalEntries((prev) => prev.filter((_, i) => i !== index));
+            setInternalAttendees((prev) => prev.filter((_, i) => i !== index));
+        }
+    };
+
     const handleAddPoint = () => {
         const newPoint = {
             description: "",
             raisedBy: "",
-            responsiblePerson: "",
+            responsiblePerson: null,
             endDate: "",
             isTask: false,
+            tag: null,
         };
         setPoints((prev) => [...prev, { id: Date.now() }]);
         setFormData((prev) => ({
@@ -98,12 +145,12 @@ const MoMAdd = () => {
         }));
     };
 
-    const handleDeletePoint = (id, index) => {
+    const handleDeletePoint = (index) => {
         if (points.length === 1) {
             toast.error("At least one discussion point is required");
             return;
         }
-        setPoints((prev) => prev.filter((point) => point.id !== id));
+        setPoints((prev) => prev.filter((_, i) => i !== index));
         setFormData((prev) => ({
             ...prev,
             points: prev.points.filter((_, i) => i !== index),
@@ -123,62 +170,53 @@ const MoMAdd = () => {
             toast.error("Meeting Title is required");
             return false;
         }
-
         if (!formData.meetingMode) {
             toast.error("Meeting Mode is required");
             return false;
         }
-
         if (!rawDate) {
             toast.error("Meeting Date is required");
             return false;
         }
-
         if (!rawTime) {
             toast.error("Meeting Time is required");
             return false;
         }
-
         if (formData.users.length === 0) {
             toast.error("At least one attendee is required");
             return false;
         }
 
-        if (isExternal) {
-            for (let i = 0; i < entries.length; i++) {
-                const user = formData.users[i];
-                if (!user) {
-                    toast.error(`Attendee ${i + 1} is incomplete`);
+        for (let i = 0; i < externalAttendees.length; i++) {
+            const user = externalAttendees[i];
+            if (user?.name || user?.email || user?.role || user?.organization) {
+                if (!user?.name?.trim()) {
+                    toast.error(`Name is required for external attendee ${i + 1}`);
                     return false;
                 }
-                if (!user.name?.trim()) {
-                    toast.error(`Name is required for attendee ${i + 1}`);
+                if (!user?.email?.trim()) {
+                    toast.error(`Email is required for external attendee ${i + 1}`);
                     return false;
                 }
-                if (!user.email?.trim()) {
-                    toast.error(`Email is required for attendee ${i + 1}`);
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)) {
+                    toast.error(`Invalid email for external attendee ${i + 1}`);
                     return false;
                 }
-                if (!/\S+@\S+\.\S+/.test(user.email)) {
-                    toast.error(`Invalid email for attendee ${i + 1}`);
+                if (!user?.role?.trim()) {
+                    toast.error(`Role is required for external attendee ${i + 1}`);
                     return false;
                 }
-                if (!user.role?.trim()) {
-                    toast.error(`Role is required for attendee ${i + 1}`);
-                    return false;
-                }
-                if (!user.organization?.trim()) {
-                    toast.error(`Organization is required for attendee ${i + 1}`);
+                if (!user?.organization?.trim()) {
+                    toast.error(`Organization is required for external attendee ${i + 1}`);
                     return false;
                 }
             }
-        } else {
-            for (let i = 0; i < entries.length; i++) {
-                const user = formData.users[i];
-                if (!user || !user.value) {
-                    toast.error(`Internal user selection is required for attendee ${i + 1}`);
-                    return false;
-                }
+        }
+
+        for (let i = 0; i < internalAttendees.length; i++) {
+            if (internalAttendees[i]?.value && !internalAttendees[i]?.value) {
+                toast.error(`Internal user selection is required for attendee ${i + 1}`);
+                return false;
             }
         }
 
@@ -186,94 +224,89 @@ const MoMAdd = () => {
             toast.error("At least one discussion point is required");
             return false;
         }
-
-        for (let i = 0; i < points.length; i++) {
+        for (let i = 0; i < formData.points.length; i++) {
             const point = formData.points[i];
-            if (!point) {
-                toast.error(`Point ${i + 1} is incomplete`);
-                return false;
-            }
-            if (!point.description?.trim()) {
+            if (!point?.description?.trim()) {
                 toast.error(`Description is required for point ${i + 1}`);
                 return false;
             }
-            if (!point.raisedBy?.trim()) {
+            if (!point?.raisedBy?.trim()) {
                 toast.error(`Raised By is required for point ${i + 1}`);
                 return false;
             }
-            if (!point.responsiblePerson || !point.responsiblePerson.value) {
+            if (!point?.responsiblePerson?.value) {
                 toast.error(`Responsible Person is required for point ${i + 1}`);
                 return false;
             }
-            if (!point.endDate) {
+            if (!point?.endDate) {
                 toast.error(`End Date is required for point ${i + 1}`);
                 return false;
             }
-            if (!point.tag || !point.tag.value) {
+            if (!point?.tag?.value) {
                 toast.error(`Tag is required for point ${i + 1}`);
                 return false;
             }
         }
-
         return true;
     };
 
     const handleSubmit = () => {
         if (!validateForm()) return;
+
+        const combinedUsers = [
+            ...internalAttendees
+                .filter(Boolean)
+                .map((u) => ({
+                    name: u.label,
+                    email: u.user?.email,
+                    organization: u.user?.organization_name,
+                    imp_mail: true,
+                    role: u.user?.lock_role?.name,
+                    attendees_type: "internal",
+                    attendees_id: JSON.parse(localStorage.getItem("user")).id,
+                })),
+            ...externalAttendees
+                .filter((u) => u?.name && u?.email)
+                .map((u) => ({
+                    name: u.name,
+                    email: u.email,
+                    organization: u.organization,
+                    imp_mail: true,
+                    role: u.role,
+                    attendees_type: "external",
+                    attendees_id: JSON.parse(localStorage.getItem("user")).id,
+                })),
+        ];
+
         const payload = {
             title: formData.title,
             meeting_date: formData.date,
             meeting_type: formData.meetingType,
             meeting_mode: formData.meetingMode,
             created_by_id: JSON.parse(localStorage.getItem("user")).id,
-            mom_attendees_attributes: [
-                ...formData.users.map((user) => ({
-                    name: isExternal ? user.name : user.label,
-                    email: isExternal ? user.email : user.user?.email,
-                    organization: isExternal
-                        ? user.organization
-                        : user.user?.organization_name,
-                    imp_mail: true,
-                    role: isExternal ? user.role : user.user?.lock_role?.name,
-                    attendees_type: isExternal ? "external" : "internal",
-                    attendees_id: JSON.parse(localStorage.getItem("user")).id,
-                })),
-            ],
-            mom_tasks_attributes: [
-                ...formData.points.map((point) => ({
-                    description: point.description,
-                    raised_by: point.raisedBy,
-                    responsible_person_id: point.responsiblePerson?.value,
-                    responsible_person_name: point.responsiblePerson?.label,
-                    responsible_person_type: point.responsiblePerson?.user.user_type,
-                    responsible_person_email: point.responsiblePerson?.user.email,
-                    target_date: point.endDate,
-                    status: "open",
-                    save_task: point?.isTask,
-                    company_tag_id: point.tag?.value,
-                })),
-            ],
-            attachments: formData.attachments.map((file) => file),
+            mom_attendees_attributes: combinedUsers,
+            mom_tasks_attributes: formData.points.map((point) => ({
+                description: point.description,
+                raised_by: point.raisedBy,
+                responsible_person_id: point.responsiblePerson?.value,
+                responsible_person_name: point.responsiblePerson?.label,
+                responsible_person_type: point.responsiblePerson?.user.user_type,
+                responsible_person_email: point.responsiblePerson?.user.email,
+                target_date: point.endDate,
+                status: "open",
+                save_task: point.isTask,
+                company_tag_id: point.tag?.value,
+            })),
+            attachments: formData.attachments,
         };
-
         dispatch(createMoM({ token, payload }));
     };
 
-    useEffect(() => {
-        if (success) {
-            navigate(-1);
-            dispatch(resetMomCreateSuccess());
-        }
-    }, [success]);
-
-    const isImage = (file) => {
-        return file.type.startsWith("image/");
-    };
+    const isImage = (file) => file?.type?.startsWith("image/") || false;
 
     return (
         <div className="h-full overflow-y-auto no-scrollbar">
             <h3 className="font-medium m-4">New Minutes Of Meeting</h3>
-
             <hr className="border border-gray-200" />
 
             <div className="py-4 px-6 w-full">
@@ -366,14 +399,7 @@ const MoMAdd = () => {
                                 className="sr-only peer"
                                 checked={isExternal}
                                 onChange={(e) => {
-                                    const external = e.target.checked;
-                                    setIsExternal(external);
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        isInternal: !external,
-                                        users: [],
-                                    }));
-                                    setEntries([{ id: Date.now() }]);
+                                    setIsExternal(e.target.checked);
                                 }}
                             />
                             <div
@@ -385,11 +411,8 @@ const MoMAdd = () => {
                         <span className="text-[12px]">Client</span>
                     </div>
 
-                    <div
-                        className={`flex ${isExternal ? "flex-col" : "flex-row gap-4 flex-wrap"
-                            } w-full`}
-                    >
-                        {entries.map((entry, i) => (
+                    <div className="flex flex-col w-full">
+                        {(isExternal ? externalEntries : internalEntries).map((entry, i) => (
                             <div
                                 key={entry.id}
                                 className="flex items-end gap-5 mt-6 justify-between"
@@ -398,20 +421,18 @@ const MoMAdd = () => {
                                     <>
                                         <div className="space-y-2">
                                             <label className="text-[12px]">
-                                                External User <span className="text-red-500 ml-1">*</span>
+                                                External User{" "}
+                                                <span className="text-red-500 ml-1">*</span>
                                             </label>
                                             <input
                                                 type="text"
                                                 className="w-full border outline-none border-gray-300 py-2 px-3 text-[12px]"
                                                 placeholder="Enter External User Name"
-                                                value={formData.users[i]?.name || ""}
+                                                value={externalAttendees[i]?.name || ""}
                                                 onChange={(e) => {
-                                                    const updatedUsers = [...formData.users];
-                                                    updatedUsers[i] = {
-                                                        ...updatedUsers[i],
-                                                        name: e.target.value,
-                                                    };
-                                                    setFormData({ ...formData, users: updatedUsers });
+                                                    const updated = [...externalAttendees];
+                                                    updated[i] = { ...updated[i], name: e.target.value };
+                                                    setExternalAttendees(updated);
                                                 }}
                                             />
                                         </div>
@@ -420,17 +441,14 @@ const MoMAdd = () => {
                                                 Email ID <span className="text-red-500 ml-1">*</span>
                                             </label>
                                             <input
-                                                type="text"
+                                                type="email"
                                                 className="w-full border outline-none border-gray-300 py-2 px-3 text-[12px]"
                                                 placeholder="Enter Email ID"
-                                                value={formData.users[i]?.email || ""}
+                                                value={externalAttendees[i]?.email || ""}
                                                 onChange={(e) => {
-                                                    const updatedUsers = [...formData.users];
-                                                    updatedUsers[i] = {
-                                                        ...updatedUsers[i],
-                                                        email: e.target.value,
-                                                    };
-                                                    setFormData({ ...formData, users: updatedUsers });
+                                                    const updated = [...externalAttendees];
+                                                    updated[i] = { ...updated[i], email: e.target.value };
+                                                    setExternalAttendees(updated);
                                                 }}
                                             />
                                         </div>
@@ -442,40 +460,38 @@ const MoMAdd = () => {
                                                 type="text"
                                                 className="w-full border outline-none border-gray-300 py-2 px-3 text-[12px]"
                                                 placeholder="Enter Role"
-                                                value={formData.users[i]?.role || ""}
+                                                value={externalAttendees[i]?.role || ""}
                                                 onChange={(e) => {
-                                                    const updatedUsers = [...formData.users];
-                                                    updatedUsers[i] = {
-                                                        ...updatedUsers[i],
-                                                        role: e.target.value,
-                                                    };
-                                                    setFormData({ ...formData, users: updatedUsers });
+                                                    const updated = [...externalAttendees];
+                                                    updated[i] = { ...updated[i], role: e.target.value };
+                                                    setExternalAttendees(updated);
                                                 }}
                                             />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[12px]">
-                                                Organization <span className="text-red-500 ml-1">*</span>
+                                                Organization{" "}
+                                                <span className="text-red-500 ml-1">*</span>
                                             </label>
                                             <input
                                                 type="text"
                                                 className="w-full border outline-none border-gray-300 py-2 px-3 text-[12px]"
                                                 placeholder="Enter Organization"
-                                                value={formData.users[i]?.organization || ""}
+                                                value={externalAttendees[i]?.organization || ""}
                                                 onChange={(e) => {
-                                                    const updatedUsers = [...formData.users];
-                                                    updatedUsers[i] = {
-                                                        ...updatedUsers[i],
+                                                    const updated = [...externalAttendees];
+                                                    updated[i] = {
+                                                        ...updated[i],
                                                         organization: e.target.value,
                                                     };
-                                                    setFormData({ ...formData, users: updatedUsers });
+                                                    setExternalAttendees(updated);
                                                 }}
                                             />
                                         </div>
-                                        {entries.length > 1 && (
+                                        {(externalEntries.length > 1 || internalEntries.length > 0) && (
                                             <button
                                                 className="text-[#C72030] p-2"
-                                                onClick={() => handleDeleteEntry(entry.id, i)}
+                                                onClick={() => handleDeleteEntry(i)}
                                             >
                                                 <Trash2 size={18} />
                                             </button>
@@ -492,24 +508,26 @@ const MoMAdd = () => {
                                                 className="w-full"
                                                 placeholder="Select Internal User"
                                                 options={
-                                                    internalUsers ? internalUsers.map((user) => ({
-                                                        value: user.id,
-                                                        label: user.firstname + " " + user.lastname,
-                                                        user: user,
-                                                    })) : []
+                                                    internalUsers
+                                                        ? internalUsers.map((user) => ({
+                                                            value: user.id,
+                                                            label: `${user.firstname} ${user.lastname}`,
+                                                            user,
+                                                        }))
+                                                        : []
                                                 }
-                                                value={formData.users[i]?.value || null}
+                                                value={internalAttendees[i]?.value || null}
                                                 onChange={(value) => {
-                                                    const newUsers = [...formData.users];
-                                                    newUsers[i] = value;
-                                                    setFormData({ ...formData, users: newUsers });
+                                                    const updated = [...internalAttendees];
+                                                    updated[i] = value;
+                                                    setInternalAttendees(updated);
                                                 }}
                                                 mom={true}
                                             />
-                                            {entries.length > 1 && (
+                                            {(internalEntries.length > 1 || externalEntries.length > 0) && (
                                                 <button
                                                     className="text-[#C72030] p-2"
-                                                    onClick={() => handleDeleteEntry(entry.id, i)}
+                                                    onClick={() => handleDeleteEntry(i)}
                                                 >
                                                     <Trash2 size={18} />
                                                 </button>
@@ -574,7 +592,9 @@ const MoMAdd = () => {
 
                         <div className="flex flex-col justify-between">
                             <div className="space-y-2">
-                                <label className="text-[12px]">Raised by <span className="text-red-500 ml-1">*</span></label>
+                                <label className="text-[12px]">
+                                    Raised by <span className="text-red-500 ml-1">*</span>
+                                </label>
                                 <input
                                     type="text"
                                     className="w-full border outline-none border-gray-300 py-2 px-3 text-[12px]"
@@ -591,7 +611,9 @@ const MoMAdd = () => {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[12px]">End Date <span className="text-red-500 ml-1">*</span></label>
+                                <label className="text-[12px]">
+                                    End Date <span className="text-red-500 ml-1">*</span>
+                                </label>
                                 <input
                                     type="date"
                                     className="w-full border outline-none border-gray-300 py-2 px-3 text-[12px]"
@@ -611,15 +633,16 @@ const MoMAdd = () => {
 
                         <div className="flex flex-col justify-between w-1/5">
                             <div className="space-y-2">
-                                <label className="text-[12px]">Responsible Person <span className="text-red-500 ml-1">*</span></label>
+                                <label className="text-[12px]">
+                                    Responsible Person{" "}
+                                    <span className="text-red-500 ml-1">*</span>
+                                </label>
                                 <SelectBox
-                                    options={
-                                        users ? users.map((user) => ({
-                                            value: user.id,
-                                            label: user.firstname + " " + user.lastname,
-                                            user: user,
-                                        })) : []
-                                    }
+                                    options={users.map((user) => ({
+                                        value: user.id,
+                                        label: `${user.firstname} ${user.lastname}`,
+                                        user,
+                                    }))}
                                     className="w-full"
                                     value={formData.points[index]?.responsiblePerson?.value || ""}
                                     onChange={(e) => {
@@ -634,15 +657,15 @@ const MoMAdd = () => {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[12px]">Tags <span className="text-red-500 ml-1">*</span></label>
+                                <label className="text-[12px]">
+                                    Tags <span className="text-red-500 ml-1">*</span>
+                                </label>
                                 <SelectBox
-                                    options={
-                                        tags ? tags.map((tag) => ({
-                                            value: tag.id,
-                                            label: tag.name,
-                                            user: tag,
-                                        })) : []
-                                    }
+                                    options={tags.map((tag) => ({
+                                        value: tag.id,
+                                        label: tag.name,
+                                        user: tag,
+                                    }))}
                                     className="w-full"
                                     value={formData.points[index]?.tag?.value || ""}
                                     onChange={(e) => {
@@ -661,7 +684,7 @@ const MoMAdd = () => {
                         {points.length > 1 && (
                             <button
                                 className="text-[#C72030] p-2 self-start"
-                                onClick={() => handleDeletePoint(point.id, index)}
+                                onClick={() => handleDeletePoint(index)}
                             >
                                 <Trash2 size={18} />
                             </button>
@@ -736,8 +759,11 @@ const MoMAdd = () => {
                         type="file"
                         onChange={(e) => {
                             const files = Array.from(e.target.files);
-                            const updatedAttachments = [...formData.attachments, ...files];
-                            setFormData({ ...formData, attachments: updatedAttachments });
+                            setFormData((prev) => ({
+                                ...prev,
+                                attachments: [...prev.attachments, ...files],
+                            }));
+                            attachmentRef.current.value = null; // Reset file input
                         }}
                         multiple
                         hidden
@@ -748,11 +774,12 @@ const MoMAdd = () => {
 
                 <div className="mt-6 flex justify-center">
                     <button
-                        className="text-[12px] flex items-center justify-center gap-2 text-white px-3 py-2 w-40 bg-red border"
+                        className={`text-[12px] flex items-center justify-center gap-2 text-white px-3 py-2 w-40 bg-red border ${loading ? "opacity-50 cursor-not-allowed" : ""
+                            }`}
                         onClick={handleSubmit}
                         disabled={loading}
                     >
-                        Create
+                        {loading ? "Creating..." : "Create"}
                     </button>
                 </div>
             </div>

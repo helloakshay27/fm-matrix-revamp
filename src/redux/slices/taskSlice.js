@@ -244,12 +244,14 @@ export const changeTaskStatus = createAsyncThunk('changeTaskStatus', async ({ to
 export const attachFiles = createAsyncThunk('attachFiles', async ({ token, id, payload }) => {
     try {
         const response = await axios.put(`${baseURL}/task_managements/${id}.json`,
-            payload, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'Multipart/form-data'
+            payload,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'Multipart/form-data'
+                }
             }
-        });
+        );
 
         return response.data;
     } catch (error) {
