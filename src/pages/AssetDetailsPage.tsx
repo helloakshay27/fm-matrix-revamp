@@ -54,7 +54,7 @@ export const AssetDetailsPage = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 bg-[#f6f4ee] min-h-screen">
+    <div className="p-4 sm:p-6 min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4 flex-wrap">
@@ -72,15 +72,30 @@ export const AssetDetailsPage = () => {
           </h1>
 
           <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Breakdown</span>
-              <Switch
-                checked={isInUse}
-                onCheckedChange={handleSwitchChange}
-                className="data-[state=checked]:bg-green-500"
-              />
-              <span className="text-sm text-gray-600">In Use</span>
-            </div>
+  <div className="flex items-center gap-2">
+    <span className="text-sm text-gray-600">Breakdown</span>
+
+    <div className="flex items-center">
+      <div
+        className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
+          isInUse ? 'bg-green-500' : 'bg-gray-300'
+        }`}
+        onClick={() => setIsInUse(prev => {
+          const next = !prev;
+          handleSwitchChange(next);
+          return next;
+        })}
+      >
+        <span
+          className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+            isInUse ? 'translate-x-6' : 'translate-x-1'
+          }`}
+        />
+      </div>
+    </div>
+
+    <span className="text-sm text-gray-600">In Use</span>
+  </div>
 
             <Button
               onClick={handleEditClick}
