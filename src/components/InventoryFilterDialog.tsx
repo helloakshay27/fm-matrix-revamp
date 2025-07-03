@@ -1,7 +1,18 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
 
 interface InventoryFilterDialogProps {
@@ -21,14 +32,13 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
     code: '',
     category: '',
     criticality: '',
-    inventoryType: ''
+    inventoryType: '',
   });
 
   const handleApply = () => {
-    console.log('Applying Inventory filters:', filters);
     toast({
-      title: "Success",
-      description: "Filters applied successfully!",
+      title: 'Success',
+      description: 'Filters applied successfully!',
     });
     onApply(filters);
     onOpenChange(false);
@@ -40,154 +50,151 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
       code: '',
       category: '',
       criticality: '',
-      inventoryType: ''
+      inventoryType: '',
     });
   };
 
   const handleExport = () => {
-    console.log('Exporting with filters:', filters);
     toast({
-      title: "Success",
-      description: "Export functionality executed with current filters",
+      title: 'Success',
+      description: 'Export functionality executed with current filters',
     });
   };
 
-  // Responsive styles for TextField and Select
-   const fieldStyles = {
+  // Consistent field styling
+  const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
     '& .MuiInputBase-input, & .MuiSelect-select': {
       padding: { xs: '8px', sm: '10px', md: '12px' },
     },
   };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl overflow-visible">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4">
-          {/* First Row */}
+          {/* Row 1 */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <TextField
-                label="Name"
-                placeholder="Enter Name"
-                value={filters.name}
-                onChange={(e) => setFilters({ ...filters, name: e.target.value })}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                InputProps={{
-                  sx: fieldStyles
-                }}
-              />
-            </div>
-            
-            <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="category-select-label" shrink>Category</InputLabel>
-                <MuiSelect
-                  labelId="category-select-label"
-                  label="Category"
-                  displayEmpty
-                  value={filters.category}
-                  onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Category</em></MenuItem>
-                  <MenuItem value="electronics">Electronics</MenuItem>
-                  <MenuItem value="consumable">Consumable</MenuItem>
-                  <MenuItem value="equipment">Equipment</MenuItem>
-                  <MenuItem value="furniture">Furniture</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
+            <TextField
+              label="Name"
+              placeholder="Enter Name"
+              value={filters.name}
+              onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
+
+            <FormControl fullWidth>
+              <InputLabel id="category-label" shrink>
+                Category
+              </InputLabel>
+              <Select
+                labelId="category-label"
+                label="Category"
+                value={filters.category}
+                displayEmpty
+                onChange={(e) =>
+                  setFilters({ ...filters, category: e.target.value })
+                }
+                sx={fieldStyles}
+              >
+                <MenuItem value="">
+                  <em>Select Category</em>
+                </MenuItem>
+                <MenuItem value="electronics">Electronics</MenuItem>
+                <MenuItem value="consumable">Consumable</MenuItem>
+                <MenuItem value="equipment">Equipment</MenuItem>
+                <MenuItem value="furniture">Furniture</MenuItem>
+              </Select>
+            </FormControl>
           </div>
 
-          {/* Second Row */}
+          {/* Row 2 */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <TextField
-                label="Code"
-                placeholder="Find Code"
-                value={filters.code}
-                onChange={(e) => setFilters({ ...filters, code: e.target.value })}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                InputProps={{
-                  sx: fieldStyles
-                }}
-              />
-            </div>
+            <TextField
+              label="Code"
+              placeholder="Find Code"
+              value={filters.code}
+              onChange={(e) => setFilters({ ...filters, code: e.target.value })}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
 
-            <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="criticality-select-label" shrink>Criticality</InputLabel>
-                <MuiSelect
-                  labelId="criticality-select-label"
-                  label="Criticality"
-                  displayEmpty
-                  value={filters.criticality}
-                  onChange={(e) => setFilters({ ...filters, criticality: e.target.value })}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Criticality</em></MenuItem>
-                  <MenuItem value="critical">Critical</MenuItem>
-                  <MenuItem value="non-critical">Non-Critical</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
+            <FormControl fullWidth>
+              <InputLabel id="criticality-label" shrink>
+                Criticality
+              </InputLabel>
+              <Select
+                labelId="criticality-label"
+                label="Criticality"
+                value={filters.criticality}
+                displayEmpty
+                onChange={(e) =>
+                  setFilters({ ...filters, criticality: e.target.value })
+                }
+                sx={fieldStyles}
+              >
+                <MenuItem value="">
+                  <em>Select Criticality</em>
+                </MenuItem>
+                <MenuItem value="critical">Critical</MenuItem>
+                <MenuItem value="non-critical">Non-Critical</MenuItem>
+              </Select>
+            </FormControl>
           </div>
 
-          {/* Third Row */}
+          {/* Row 3 */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="inventory-type-select-label" shrink>Inventory Type</InputLabel>
-                <MuiSelect
-                  labelId="inventory-type-select-label"
-                  label="Inventory Type"
-                  displayEmpty
-                  value={filters.inventoryType}
-                  onChange={(e) => setFilters({ ...filters, inventoryType: e.target.value })}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Inventory Type</em></MenuItem>
-                  <MenuItem value="asset">Asset</MenuItem>
-                  <MenuItem value="consumable">Consumable</MenuItem>
-                  <MenuItem value="spare-part">Spare Part</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
+            <FormControl fullWidth>
+              <InputLabel id="inventory-type-label" shrink>
+                Inventory Type
+              </InputLabel>
+              <Select
+                labelId="inventory-type-label"
+                label="Inventory Type"
+                value={filters.inventoryType}
+                displayEmpty
+                onChange={(e) =>
+                  setFilters({ ...filters, inventoryType: e.target.value })
+                }
+                sx={fieldStyles}
+              >
+                <MenuItem value="">
+                  <em>Select Inventory Type</em>
+                </MenuItem>
+                <MenuItem value="asset">Asset</MenuItem>
+                <MenuItem value="consumable">Consumable</MenuItem>
+                <MenuItem value="spare-part">Spare Part</MenuItem>
+              </Select>
+            </FormControl>
           </div>
         </div>
 
+        {/* Actions */}
         <div className="flex gap-3 pt-4">
-          <Button 
+          <Button
             onClick={handleExport}
             style={{ backgroundColor: '#C72030' }}
             className="text-white hover:bg-[#C72030]/90 px-6"
           >
             Export
           </Button>
-          <Button 
+          <Button
             onClick={handleApply}
             style={{ backgroundColor: '#C72030' }}
             className="text-white hover:bg-[#C72030]/90 px-6"
           >
             Apply
           </Button>
-          <Button 
-            onClick={handleReset}
-            variant="outline"
-            className="px-6"
-          >
+          <Button onClick={handleReset} variant="outline" className="px-6">
             Reset
           </Button>
         </div>
