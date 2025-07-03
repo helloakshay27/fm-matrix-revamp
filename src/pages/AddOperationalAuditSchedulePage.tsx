@@ -1,501 +1,496 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, X } from "lucide-react";
+import { ArrowLeft, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Checkbox } from '@mui/material';
 
 export const AddOperationalAuditSchedulePage = () => {
   const navigate = useNavigate();
-  const [scheduleFor, setScheduleFor] = useState("Asset");
-  const [activityName, setActivityName] = useState("");
-  const [description, setDescription] = useState("");
-  const [checklistType, setChecklistType] = useState("Individual");
-  const [selectedAsset, setSelectedAsset] = useState("");
-  const [assignTo, setAssignTo] = useState("");
-  const [scanType, setScanType] = useState("");
-  const [planDuration, setPlanDuration] = useState("");
-  const [priority, setPriority] = useState("");
-  const [emailTriggerRule, setEmailTriggerRule] = useState("");
-  const [supervisors, setSupervisors] = useState("");
-  const [category, setCategory] = useState("");
-  const [lockOverdueTask, setLockOverdueTask] = useState("");
-  const [frequency, setFrequency] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [supplier, setSupplier] = useState("");
+  const { toast } = useToast();
+  
+  const [formData, setFormData] = useState({
+    auditName: '',
+    auditType: '',
+    frequency: '',
+    startDate: '',
+    endDate: '',
+    auditor: '',
+    department: '',
+    location: '',
+    description: '',
+    priority: '',
+    checklist: ''
+  });
 
   const [taskSections, setTaskSections] = useState([
     {
       id: 1,
-      group: "",
-      subGroup: "",
-      task: "",
-      inputType: "",
-      mandatory: false,
-      reading: false,
-      helpText: false
+      group: '',
+      subGroup: '',
+      tasks: [
+        {
+          id: 1,
+          taskName: '',
+          inputType: '',
+          mandatory: false,
+          reading: false,
+          helpText: false
+        }
+      ]
     }
   ]);
 
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+      fontSize: { xs: '12px', sm: '13px', md: '14px' },
+    },
+    '& .MuiInputLabel-root': {
+      fontSize: { xs: '12px', sm: '13px', md: '14px' },
+    },
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
   const addTaskSection = () => {
     const newSection = {
-      id: taskSections.length + 1,
-      group: "",
-      subGroup: "",
-      task: "",
-      inputType: "",
-      mandatory: false,
-      reading: false,
-      helpText: false
+      id: Date.now(),
+      group: '',
+      subGroup: '',
+      tasks: [
+        {
+          id: 1,
+          taskName: '',
+          inputType: '',
+          mandatory: false,
+          reading: false,
+          helpText: false
+        }
+      ]
     };
     setTaskSections([...taskSections, newSection]);
   };
 
-  const removeTaskSection = (id: number) => {
-    if (taskSections.length > 1) {
-      setTaskSections(taskSections.filter(section => section.id !== id));
-    }
-  };
-
-  const updateTaskSection = (id: number, field: string, value: any) => {
+  const updateTaskSection = (sectionId: number, field: string, value: string) => {
     setTaskSections(taskSections.map(section => 
-      section.id === id ? { ...section, [field]: value } : section
+      section.id === sectionId ? { ...section, [field]: value } : section
     ));
   };
 
-  const handleSubmit = () => {
-    console.log('Submitting schedule with data:', {
-      scheduleFor,
-      activityName,
-      description,
-      checklistType,
-      selectedAsset,
-      assignTo,
-      scanType,
-      planDuration,
-      priority,
-      emailTriggerRule,
-      supervisors,
-      category,
-      lockOverdueTask,
-      frequency,
-      startDate,
-      endDate,
-      supplier,
-      taskSections
+  const addQuestion = (sectionId: number) => {
+    setTaskSections(taskSections.map(section => {
+      if (section.id === sectionId) {
+        const newTask = {
+          id: Date.now(),
+          taskName: '',
+          inputType: '',
+          mandatory: false,
+          reading: false,
+          helpText: false
+        };
+        return { ...section, tasks: [...section.tasks, newTask] };
+      }
+      return section;
+    }));
+  };
+
+  const updateTask = (sectionId: number, taskId: number, field: string, value: any) => {
+    setTaskSections(taskSections.map(section => {
+      if (section.id === sectionId) {
+        return {
+          ...section,
+          tasks: section.tasks.map(task => 
+            task.id === taskId ? { ...task, [field]: value } : task
+          )
+        };
+      }
+      return section;
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Audit Schedule Data:', { ...formData, taskSections });
+    
+    toast({
+      title: "Success",
+      description: "Operational audit schedule created successfully!",
     });
     
-    // Navigate back to the schedule list
-    navigate('/maintenance/audit/operational/scheduled');
+    navigate('/maintenance/audit/operational');
   };
 
   return (
     <div className="p-6">
       <div className="mb-6">
-        <p className="text-[#1a1a1a] opacity-70 mb-2">Schedule &gt; Add Schedule</p>
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">ADD SCHEDULE</h1>
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/maintenance/audit/operational')}
+          className="mb-4"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Operational Audit
+        </Button>
+        <p className="text-[#1a1a1a] opacity-70 mb-2">Operational Audit &gt; Add Schedule</p>
+        <h1 className="text-2xl font-bold text-[#1a1a1a]">ADD OPERATIONAL AUDIT SCHEDULE</h1>
       </div>
 
-      <div className="space-y-6">
-        {/* Basic Info Section */}
-        <Card>
+      <form onSubmit={handleSubmit}>
+        <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[#C72030]">
-              <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white font-bold">
-                ⚙
-              </div>
-              Basic Info
+            <CardTitle className="text-lg text-[#C72030] flex items-center">
+              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
+              AUDIT DETAILS
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-sm font-medium">Schedule For</Label>
-              <RadioGroup value={scheduleFor} onValueChange={setScheduleFor} className="flex gap-6 mt-2">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Asset" id="asset" />
-                  <Label htmlFor="asset">Asset</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Service" id="service" />
-                  <Label htmlFor="service">Service</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Vendor" id="vendor" />
-                  <Label htmlFor="vendor">Vendor</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Training" id="training" />
-                  <Label htmlFor="training">Training</Label>
-                </div>
-              </RadioGroup>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <TextField
+                  required
+                  label="Audit Name"
+                  placeholder="Enter Audit Name"
+                  name="auditName"
+                  value={formData.auditName}
+                  onChange={(e) => handleInputChange('auditName', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                />
+              </div>
+
+              <div>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="audit-type-label" shrink>Audit Type</InputLabel>
+                  <MuiSelect
+                    labelId="audit-type-label"
+                    label="Audit Type"
+                    displayEmpty
+                    value={formData.auditType}
+                    onChange={(e) => handleInputChange('auditType', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Type</em></MenuItem>
+                    <MenuItem value="operational">Operational</MenuItem>
+                    <MenuItem value="compliance">Compliance</MenuItem>
+                    <MenuItem value="safety">Safety</MenuItem>
+                    <MenuItem value="quality">Quality</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </div>
+
+              <div>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="frequency-label" shrink>Frequency</InputLabel>
+                  <MuiSelect
+                    labelId="frequency-label"
+                    label="Frequency"
+                    displayEmpty
+                    value={formData.frequency}
+                    onChange={(e) => handleInputChange('frequency', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Frequency</em></MenuItem>
+                    <MenuItem value="daily">Daily</MenuItem>
+                    <MenuItem value="weekly">Weekly</MenuItem>
+                    <MenuItem value="monthly">Monthly</MenuItem>
+                    <MenuItem value="quarterly">Quarterly</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="activityName" className="text-sm font-medium">Activity Name*</Label>
-              <Input
-                id="activityName"
-                placeholder="Enter Activity Name"
-                value={activityName}
-                onChange={(e) => setActivityName(e.target.value)}
-                className="mt-1"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <TextField
+                  required
+                  label="Start Date"
+                  placeholder="Select Date"
+                  name="startDate"
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e) => handleInputChange('startDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: {
+                      ...fieldStyles,
+                      '& .MuiInputBase-input': {
+                        ...fieldStyles['& .MuiInputBase-input, & .MuiSelect-select'],
+                        fontSize: { xs: '11px', sm: '12px', md: '13px' },
+                      }
+                    }
+                  }}
+                />
+              </div>
+
+              <div>
+                <TextField
+                  label="End Date"
+                  placeholder="Select Date"
+                  name="endDate"
+                  type="date"
+                  value={formData.endDate}
+                  onChange={(e) => handleInputChange('endDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: {
+                      ...fieldStyles,
+                      '& .MuiInputBase-input': {
+                        ...fieldStyles['& .MuiInputBase-input, & .MuiSelect-select'],
+                        fontSize: { xs: '11px', sm: '12px', md: '13px' },
+                      }
+                    }
+                  }}
+                />
+              </div>
+
+              <div>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="auditor-label" shrink>Auditor</InputLabel>
+                  <MuiSelect
+                    labelId="auditor-label"
+                    label="Auditor"
+                    displayEmpty
+                    value={formData.auditor}
+                    onChange={(e) => handleInputChange('auditor', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Auditor</em></MenuItem>
+                    <MenuItem value="john-doe">John Doe</MenuItem>
+                    <MenuItem value="jane-smith">Jane Smith</MenuItem>
+                    <MenuItem value="mike-johnson">Mike Johnson</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="description" className="text-sm font-medium">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Enter Description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="mt-1"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="department-label" shrink>Department</InputLabel>
+                  <MuiSelect
+                    labelId="department-label"
+                    label="Department"
+                    displayEmpty
+                    value={formData.department}
+                    onChange={(e) => handleInputChange('department', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Department</em></MenuItem>
+                    <MenuItem value="maintenance">Maintenance</MenuItem>
+                    <MenuItem value="operations">Operations</MenuItem>
+                    <MenuItem value="safety">Safety</MenuItem>
+                    <MenuItem value="quality">Quality</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </div>
+
+              <div>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="location-label" shrink>Location</InputLabel>
+                  <MuiSelect
+                    labelId="location-label"
+                    label="Location"
+                    displayEmpty
+                    value={formData.location}
+                    onChange={(e) => handleInputChange('location', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Location</em></MenuItem>
+                    <MenuItem value="building-a">Building A</MenuItem>
+                    <MenuItem value="building-b">Building B</MenuItem>
+                    <MenuItem value="parking">Parking Area</MenuItem>
+                    <MenuItem value="lobby">Lobby</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <TextField
+                label="Description"
+                placeholder="Enter description"
+                name="description"
+                value={formData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                fullWidth
+                variant="outlined"
+                multiline
                 rows={3}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
               />
             </div>
           </CardContent>
         </Card>
 
-        {/* Task Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[#C72030]">
-              <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white font-bold">
-                ⚙
+        {/* Task Sections */}
+        {taskSections.map((section, sectionIndex) => (
+          <Card key={section.id} className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg text-[#C72030] flex items-center">
+                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+                AUDIT CHECKLIST
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id={`group-${section.id}`} shrink>Select Group</InputLabel>
+                    <MuiSelect
+                      labelId={`group-${section.id}`}
+                      label="Select Group"
+                      value={section.group}
+                      onChange={(e) => updateTaskSection(section.id, 'group', e.target.value)}
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="electrical">Electrical</MenuItem>
+                      <MenuItem value="mechanical">Mechanical</MenuItem>
+                      <MenuItem value="safety">Safety</MenuItem>
+                      <MenuItem value="maintenance">Maintenance</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id={`subgroup-${section.id}`} shrink>Select Sub Group</InputLabel>
+                    <MuiSelect
+                      labelId={`subgroup-${section.id}`}
+                      label="Select Sub Group"
+                      value={section.subGroup}
+                      onChange={(e) => updateTaskSection(section.id, 'subGroup', e.target.value)}
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="lighting">Lighting</MenuItem>
+                      <MenuItem value="power">Power</MenuItem>
+                      <MenuItem value="ventilation">Ventilation</MenuItem>
+                      <MenuItem value="cleaning">Cleaning</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                </div>
               </div>
-              Task
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <Label className="text-sm font-medium">Group</Label>
-                <Select>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="maintenance">Maintenance</SelectItem>
-                    <SelectItem value="safety">Safety</SelectItem>
-                    <SelectItem value="quality">Quality</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1">
-                <Label className="text-sm font-medium">SubGroup</Label>
-                <Select>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Sub Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="electrical">Electrical</SelectItem>
-                    <SelectItem value="mechanical">Mechanical</SelectItem>
-                    <SelectItem value="civil">Civil</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-end">
-                <Button 
-                  onClick={addTaskSection}
+
+              {/* Tasks */}
+              {section.tasks.map((task, taskIndex) => (
+                <div key={task.id} className="grid grid-cols-2 gap-4 mb-4 p-4 border rounded">
+                  <div>
+                    <TextField
+                      required
+                      label="Task"
+                      placeholder="Enter Task"
+                      value={task.taskName}
+                      onChange={(e) => updateTask(section.id, task.id, 'taskName', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                    />
+                  </div>
+                  <div>
+                    <FormControl fullWidth variant="outlined">
+                      <InputLabel id={`input-type-${task.id}`} shrink>Input Type</InputLabel>
+                      <MuiSelect
+                        labelId={`input-type-${task.id}`}
+                        label="Input Type"
+                        value={task.inputType}
+                        onChange={(e) => updateTask(section.id, task.id, 'inputType', e.target.value)}
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value="text">Text</MenuItem>
+                        <MenuItem value="number">Number</MenuItem>
+                        <MenuItem value="checkbox">Checkbox</MenuItem>
+                        <MenuItem value="dropdown">Dropdown</MenuItem>
+                        <MenuItem value="date">Date</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                  <div className="col-span-2 flex gap-6">
+                    <label className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={task.mandatory}
+                        onChange={(e) => updateTask(section.id, task.id, 'mandatory', e.target.checked)}
+                      />
+                      <span>Mandatory</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={task.reading}
+                        onChange={(e) => updateTask(section.id, task.id, 'reading', e.target.checked)}
+                      />
+                      <span>Reading</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={task.helpText}
+                        onChange={(e) => updateTask(section.id, task.id, 'helpText', e.target.checked)}
+                      />
+                      <span>Help Text</span>
+                    </label>
+                  </div>
+                </div>
+              ))}
+
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  onClick={() => addQuestion(section.id)}
                   style={{ backgroundColor: '#C72030' }}
-                  className="text-white"
+                  className="text-white hover:opacity-90 flex items-center gap-2"
                 >
-                  + Add Section
+                  <Plus className="w-4 h-4" />
+                  Add Question
                 </Button>
               </div>
-            </div>
+            </CardContent>
+          </Card>
+        ))}
 
-            {taskSections.map((section, index) => (
-              <div key={section.id} className="border rounded-lg p-4 bg-gray-50">
-                <div className="flex justify-between items-start mb-4">
-                  <h4 className="font-medium">Task Section {index + 1}</h4>
-                  {taskSections.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeTaskSection(section.id)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <Label className="text-sm">Task</Label>
-                    <Input
-                      placeholder="Enter Task"
-                      value={section.task}
-                      onChange={(e) => updateTaskSection(section.id, 'task', e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm">Select Input Type</Label>
-                    <Select onValueChange={(value) => updateTaskSection(section.id, 'inputType', value)}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Select Input Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="text">Text</SelectItem>
-                        <SelectItem value="number">Number</SelectItem>
-                        <SelectItem value="dropdown">Dropdown</SelectItem>
-                        <SelectItem value="checkbox">Checkbox</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="flex gap-6">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`mandatory-${section.id}`}
-                      checked={section.mandatory}
-                      onCheckedChange={(checked) => updateTaskSection(section.id, 'mandatory', checked)}
-                    />
-                    <Label htmlFor={`mandatory-${section.id}`} className="text-sm">Mandatory</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`reading-${section.id}`}
-                      checked={section.reading}
-                      onCheckedChange={(checked) => updateTaskSection(section.id, 'reading', checked)}
-                    />
-                    <Label htmlFor={`reading-${section.id}`} className="text-sm">Reading</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`helpText-${section.id}`}
-                      checked={section.helpText}
-                      onCheckedChange={(checked) => updateTaskSection(section.id, 'helpText', checked)}
-                    />
-                    <Label htmlFor={`helpText-${section.id}`} className="text-sm">Help Text</Label>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Schedule Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[#C72030]">
-              <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white font-bold">
-                ⚙
-              </div>
-              Schedule
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-sm font-medium">Checklist Type</Label>
-              <RadioGroup value={checklistType} onValueChange={setChecklistType} className="flex gap-6 mt-2">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Individual" id="individual" />
-                  <Label htmlFor="individual">Individual</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Asset Group" id="assetGroup" />
-                  <Label htmlFor="assetGroup">Asset Group</Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label className="text-sm font-medium">Asset</Label>
-                <Select onValueChange={setSelectedAsset}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Asset" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="asset1">Asset 1</SelectItem>
-                    <SelectItem value="asset2">Asset 2</SelectItem>
-                    <SelectItem value="asset3">Asset 3</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">Assign To</Label>
-                <Select onValueChange={setAssignTo}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Assign To" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user1">User 1</SelectItem>
-                    <SelectItem value="user2">User 2</SelectItem>
-                    <SelectItem value="user3">User 3</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">Scan Type</Label>
-                <Select onValueChange={setScanType}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Scan Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="qr">QR Code</SelectItem>
-                    <SelectItem value="barcode">Barcode</SelectItem>
-                    <SelectItem value="manual">Manual</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label className="text-sm font-medium">Plan Duration</Label>
-                <Select onValueChange={setPlanDuration}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Plan Duration" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="30min">30 Minutes</SelectItem>
-                    <SelectItem value="1hr">1 Hour</SelectItem>
-                    <SelectItem value="2hr">2 Hours</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">Priority</Label>
-                <Select onValueChange={setPriority}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">Email Trigger Rule</Label>
-                <Select onValueChange={setEmailTriggerRule}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Email Trigger Rule" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="immediate">Immediate</SelectItem>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label className="text-sm font-medium">Supervisors</Label>
-                <Select onValueChange={setSupervisors}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Supervisors" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="supervisor1">Supervisor 1</SelectItem>
-                    <SelectItem value="supervisor2">Supervisor 2</SelectItem>
-                    <SelectItem value="supervisor3">Supervisor 3</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">Category</Label>
-                <Select onValueChange={setCategory}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="technical">Technical</SelectItem>
-                    <SelectItem value="non-technical">Non Technical</SelectItem>
-                    <SelectItem value="safety">Safety</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">Lock Overdue Task</Label>
-                <Select onValueChange={setLockOverdueTask}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Lock Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="yes">Yes</SelectItem>
-                    <SelectItem value="no">No</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label className="text-sm font-medium">Frequency</Label>
-                <Select onValueChange={setFrequency}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Frequency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="quarterly">Quarterly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="startDate" className="text-sm font-medium">Start From</Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="endDate" className="text-sm font-medium">End At</Label>
-                <Input
-                  id="endDate"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium">Select Supplier</Label>
-              <Select onValueChange={setSupplier}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select Supplier" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="supplier1">Supplier 1</SelectItem>
-                  <SelectItem value="supplier2">Supplier 2</SelectItem>
-                  <SelectItem value="supplier3">Supplier 3</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Submit Button */}
-        <div className="flex justify-end">
-          <Button 
-            onClick={handleSubmit}
+        <div className="flex justify-between">
+          <Button
+            type="button"
+            onClick={addTaskSection}
             style={{ backgroundColor: '#C72030' }}
-            className="text-white px-8 py-2"
+            className="text-white hover:opacity-90 flex items-center gap-2"
           >
-            Submit
+            <Plus className="w-4 h-4" />
+            Add Section
           </Button>
+
+          <div className="flex gap-4">
+            <Button
+              type="submit"
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:opacity-90 px-8"
+            >
+              Submit
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate('/maintenance/audit/operational')}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </form>
+
+      {/* Footer */}
+      <div className="mt-8 text-center">
+        <div className="text-sm text-[#1a1a1a] opacity-70">
+          Powered by <span className="font-semibold">go</span><span className="text-[#C72030]">Phygital</span><span className="font-semibold">.work</span>
         </div>
       </div>
     </div>

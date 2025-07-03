@@ -1,16 +1,16 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, X } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 export const AddMasterChecklistPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   // Basic Info state
   const [scheduleFor, setScheduleFor] = useState('asset');
@@ -40,6 +40,17 @@ export const AddMasterChecklistPage = () => {
   // Toggle buttons state
   const [createTask, setCreateTask] = useState(false);
   const [weightage, setWeightage] = useState(false);
+
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+      fontSize: { xs: '12px', sm: '13px', md: '14px' },
+    },
+    '& .MuiInputLabel-root': {
+      fontSize: { xs: '12px', sm: '13px', md: '14px' },
+    },
+  };
 
   // Handler functions for checkboxes
   const handleCreateTaskChange = (checked: boolean | "indeterminate") => {
@@ -121,8 +132,12 @@ export const AddMasterChecklistPage = () => {
       createTask,
       weightage
     });
-    // Add submission logic here
-    alert('Master checklist created successfully!');
+    
+    toast({
+      title: "Success",
+      description: "Master checklist created successfully!",
+    });
+    
     navigate('/maintenance/audit/operational/master-checklists');
   };
 
@@ -204,43 +219,53 @@ export const AddMasterChecklistPage = () => {
             </div>
 
             <div>
-              <Label htmlFor="activityName" className="text-sm font-medium mb-2 block">
-                Activity Name <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="activityName"
+              <TextField
+                required
+                label="Activity Name"
                 placeholder="Enter Activity Name"
                 value={activityName}
                 onChange={(e) => setActivityName(e.target.value)}
-                required
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
               />
             </div>
 
             <div>
-              <Label htmlFor="description" className="text-sm font-medium mb-2 block">Description</Label>
-              <Textarea
-                id="description"
+              <TextField
+                label="Description"
                 placeholder="Enter Description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="min-h-[100px]"
+                fullWidth
+                variant="outlined"
+                multiline
+                rows={3}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
               />
             </div>
 
             <div>
-              <Label htmlFor="assetType" className="text-sm font-medium mb-2 block">Asset Type</Label>
-              <Select value={assetType} onValueChange={setAssetType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Asset Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="electrical">Electrical</SelectItem>
-                  <SelectItem value="mechanical">Mechanical</SelectItem>
-                  <SelectItem value="hvac">HVAC</SelectItem>
-                  <SelectItem value="plumbing">Plumbing</SelectItem>
-                  <SelectItem value="fire-safety">Fire Safety</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="asset-type-label" shrink>Asset Type</InputLabel>
+                <MuiSelect
+                  labelId="asset-type-label"
+                  label="Asset Type"
+                  displayEmpty
+                  value={assetType}
+                  onChange={(e) => setAssetType(e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Asset Type</em></MenuItem>
+                  <MenuItem value="electrical">Electrical</MenuItem>
+                  <MenuItem value="mechanical">Mechanical</MenuItem>
+                  <MenuItem value="hvac">HVAC</MenuItem>
+                  <MenuItem value="plumbing">Plumbing</MenuItem>
+                  <MenuItem value="fire-safety">Fire Safety</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
         </div>
@@ -268,32 +293,38 @@ export const AddMasterChecklistPage = () => {
 
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div>
-                <Label className="text-sm font-medium mb-2 block">Select Group</Label>
-                <Select value={section.group} onValueChange={(value) => updateTaskSection(section.id, 'group', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="electrical">Electrical</SelectItem>
-                    <SelectItem value="mechanical">Mechanical</SelectItem>
-                    <SelectItem value="safety">Safety</SelectItem>
-                    <SelectItem value="maintenance">Maintenance</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id={`group-${section.id}`} shrink>Select Group</InputLabel>
+                  <MuiSelect
+                    labelId={`group-${section.id}`}
+                    label="Select Group"
+                    value={section.group}
+                    onChange={(e) => updateTaskSection(section.id, 'group', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value="electrical">Electrical</MenuItem>
+                    <MenuItem value="mechanical">Mechanical</MenuItem>
+                    <MenuItem value="safety">Safety</MenuItem>
+                    <MenuItem value="maintenance">Maintenance</MenuItem>
+                  </MuiSelect>
+                </FormControl>
               </div>
               <div>
-                <Label className="text-sm font-medium mb-2 block">Select Sub Group</Label>
-                <Select value={section.subGroup} onValueChange={(value) => updateTaskSection(section.id, 'subGroup', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Sub Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="lighting">Lighting</SelectItem>
-                    <SelectItem value="power">Power</SelectItem>
-                    <SelectItem value="ventilation">Ventilation</SelectItem>
-                    <SelectItem value="cleaning">Cleaning</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id={`subgroup-${section.id}`} shrink>Select Sub Group</InputLabel>
+                  <MuiSelect
+                    labelId={`subgroup-${section.id}`}
+                    label="Select Sub Group"
+                    value={section.subGroup}
+                    onChange={(e) => updateTaskSection(section.id, 'subGroup', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value="lighting">Lighting</MenuItem>
+                    <MenuItem value="power">Power</MenuItem>
+                    <MenuItem value="ventilation">Ventilation</MenuItem>
+                    <MenuItem value="cleaning">Cleaning</MenuItem>
+                  </MuiSelect>
+                </FormControl>
               </div>
             </div>
 
@@ -301,32 +332,35 @@ export const AddMasterChecklistPage = () => {
             {section.tasks.map((task, taskIndex) => (
               <div key={task.id} className="grid grid-cols-2 gap-4 mb-4 p-4 border rounded">
                 <div>
-                  <Label className="text-sm font-medium mb-2 block">
-                    Task <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
+                  <TextField
+                    required
+                    label="Task"
                     placeholder="Enter Task"
                     value={task.taskName}
                     onChange={(e) => updateTask(section.id, task.id, 'taskName', e.target.value)}
-                    required
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium mb-2 block">
-                    Input Type <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={task.inputType} onValueChange={(value) => updateTask(section.id, task.id, 'inputType', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Input Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="text">Text</SelectItem>
-                      <SelectItem value="number">Number</SelectItem>
-                      <SelectItem value="checkbox">Checkbox</SelectItem>
-                      <SelectItem value="dropdown">Dropdown</SelectItem>
-                      <SelectItem value="date">Date</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id={`input-type-${task.id}`} shrink>Input Type</InputLabel>
+                    <MuiSelect
+                      labelId={`input-type-${task.id}`}
+                      label="Input Type"
+                      value={task.inputType}
+                      onChange={(e) => updateTask(section.id, task.id, 'inputType', e.target.value)}
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="text">Text</MenuItem>
+                      <MenuItem value="number">Number</MenuItem>
+                      <MenuItem value="checkbox">Checkbox</MenuItem>
+                      <MenuItem value="dropdown">Dropdown</MenuItem>
+                      <MenuItem value="date">Date</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
                 <div className="col-span-2 flex gap-6">
                   <label className="flex items-center space-x-2">

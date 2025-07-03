@@ -2,322 +2,434 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Checkbox } from '@mui/material';
 
-const UtilityWasteGenerationSetupDashboard = () => {
-  const [commodityName, setCommodityName] = useState('');
-  const [categoryName, setCategoryName] = useState('');
-  const [categoryUoM, setCategoryUoM] = useState('');
-  const [operationalName, setOperationalName] = useState('');
+export const UtilityWasteGenerationSetupDashboard = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const [formData, setFormData] = useState({
+    setupName: '',
+    location: '',
+    category: '',
+    frequency: '',
+    startDate: '',
+    endDate: '',
+    assignedTo: '',
+    priority: '',
+    description: '',
+    autoCalculate: false
+  });
 
-  // Sample data states
-  const [commodities, setCommodities] = useState([
-    { id: 1, name: 'abc' },
-    { id: 2, name: 'DRY' }
+  const [utilityFields, setUtilityFields] = useState([
+    { 
+      id: Date.now(), 
+      utilityType: '', 
+      unit: '', 
+      threshold: '',
+      alertEnabled: false 
+    }
   ]);
-  const [categories, setCategories] = useState<Array<{id: number, name: string, uom: string}>>([]);
-  const [operationalNames, setOperationalNames] = useState<Array<{id: number, name: string}>>([]);
 
-  const handleAddCommodity = () => {
-    if (commodityName.trim()) {
-      const newCommodity = {
-        id: commodities.length + 1,
-        name: commodityName.trim()
-      };
-      setCommodities([...commodities, newCommodity]);
-      setCommodityName('');
-      console.log('Added commodity:', newCommodity);
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+      fontSize: { xs: '12px', sm: '13px', md: '14px' },
+    },
+    '& .MuiInputLabel-root': {
+      fontSize: { xs: '12px', sm: '13px', md: '14px' },
+    },
+  };
+
+  const handleInputChange = (field: string, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const addUtilityField = () => {
+    setUtilityFields([...utilityFields, { 
+      id: Date.now(), 
+      utilityType: '', 
+      unit: '', 
+      threshold: '',
+      alertEnabled: false 
+    }]);
+  };
+
+  const updateUtilityField = (id: number, field: string, value: string | boolean) => {
+    setUtilityFields(utilityFields.map(item => 
+      item.id === id ? { ...item, [field]: value } : item
+    ));
+  };
+
+  const removeUtilityField = (id: number) => {
+    if (utilityFields.length > 1) {
+      setUtilityFields(utilityFields.filter(item => item.id !== id));
     }
   };
 
-  const handleAddCategory = () => {
-    if (categoryName.trim()) {
-      const newCategory = {
-        id: categories.length + 1,
-        name: categoryName.trim(),
-        uom: categoryUoM
-      };
-      setCategories([...categories, newCategory]);
-      setCategoryName('');
-      setCategoryUoM('');
-      console.log('Added category:', newCategory);
-    }
-  };
-
-  const handleAddOperational = () => {
-    if (operationalName.trim()) {
-      const newOperational = {
-        id: operationalNames.length + 1,
-        name: operationalName.trim()
-      };
-      setOperationalNames([...operationalNames, newOperational]);
-      setOperationalName('');
-      console.log('Added operational name:', newOperational);
-    }
-  };
-
-  const handleDeleteCommodity = (id: number) => {
-    setCommodities(commodities.filter(commodity => commodity.id !== id));
-    console.log('Deleted commodity with id:', id);
-  };
-
-  const handleDeleteCategory = (id: number) => {
-    setCategories(categories.filter(category => category.id !== id));
-    console.log('Deleted category with id:', id);
-  };
-
-  const handleDeleteOperational = (id: number) => {
-    setOperationalNames(operationalNames.filter(operational => operational.id !== id));
-    console.log('Deleted operational name with id:', id);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Utility Waste Generation Setup:', { ...formData, utilityFields });
+    
+    toast({
+      title: "Success",
+      description: "Utility waste generation setup created successfully!",
+    });
+    
+    navigate('/maintenance/audit/waste/utility');
   };
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <div>
-          <nav className="text-sm text-gray-600 mb-2">
-            Waste Generation Tag &gt; Waste Generation Tag
-          </nav>
-          <h2 className="text-3xl font-bold tracking-tight">WASTE GENERATION TAGS</h2>
-        </div>
+    <div className="p-6">
+      <div className="mb-6">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/maintenance/audit/waste/utility')}
+          className="mb-4"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Utility Waste
+        </Button>
+        <p className="text-[#1a1a1a] opacity-70 mb-2">Utility Waste &gt; Setup Dashboard</p>
+        <h1 className="text-2xl font-bold text-[#1a1a1a]">UTILITY WASTE GENERATION SETUP</h1>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <Tabs defaultValue="commodity" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 rounded-none">
-              <TabsTrigger 
-                value="commodity" 
-                className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-white rounded-none"
-              >
-                Commodity
-              </TabsTrigger>
-              <TabsTrigger 
-                value="category"
-                className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-white rounded-none"
-              >
-                Category
-              </TabsTrigger>
-              <TabsTrigger 
-                value="operational"
-                className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-white rounded-none"
-              >
-                Operational Name of Landlord/Tenant
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="commodity" className="space-y-4 mt-0 p-6">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="commodity" className="text-sm font-medium">
-                    Commodity*
-                  </Label>
-                  <div className="flex gap-2 mt-2">
-                   <Input
-  id="commodity"
-  value={commodityName}
-  onChange={(e) => setCommodityName(e.target.value)}
-  placeholder="Enter commodity name"
-  className="flex-1 h-10 text-sm"
-  onKeyPress={(e) => e.key === 'Enter' && handleAddCommodity()}
-/>
-
-                    <Button 
-                      onClick={handleAddCommodity}
-                      style={{ backgroundColor: '#C72030' }}
-                      className="hover:bg-[#A01B26] text-white"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="mt-8">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-medium text-center mb-4">Commodity</h3>
-                    <div className="space-y-2">
-                      {commodities.map((commodity) => (
-                        <div key={commodity.id} className="bg-white p-3 rounded border flex justify-between items-center">
-                          <span>{commodity.name}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteCommodity(commodity.id)}
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+      <form onSubmit={handleSubmit}>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg text-[#C72030] flex items-center">
+              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
+              SETUP DETAILS
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <TextField
+                  required
+                  label="Setup Name"
+                  placeholder="Enter Setup Name"
+                  name="setupName"
+                  value={formData.setupName}
+                  onChange={(e) => handleInputChange('setupName', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                />
               </div>
-            </TabsContent>
-            
-            <TabsContent value="category" className="space-y-4 mt-0 p-6">
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="commodity-select" className="text-sm font-medium">
-                      Commodity*
-                    </Label>
-                    <Select>
-                      <SelectTrigger className="mt-2 h-[56px]">
-                        <SelectValue placeholder="Select Commodity" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {commodities.map((commodity) => (
-                          <SelectItem key={commodity.id} value={commodity.name}>
-                            {commodity.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
 
-                  <div>
-                    <Label htmlFor="category" className="text-sm font-medium">
-                      Category*
-                    </Label>
-                    <Input
-                      id="category"
-                      value={categoryName}
-                      onChange={(e) => setCategoryName(e.target.value)}
-                      placeholder="Enter category name"
-                      className="mt-2"
-                      onKeyPress={(e) => e.key === 'Enter' && handleAddCategory()}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="uom" className="text-sm font-medium">
-                      UOM*
-                    </Label>
-                    <Select value={categoryUoM} onValueChange={setCategoryUoM}>
-                      <SelectTrigger className="mt-2 h-[56px]">
-                        <SelectValue placeholder="Select UOM" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="kg">KG</SelectItem>
-                        <SelectItem value="tons">Tons</SelectItem>
-                        <SelectItem value="liters">Liters</SelectItem>
-                        <SelectItem value="pieces">Pieces</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="flex justify-start">
-                  <Button 
-                    onClick={handleAddCategory}
-                    style={{ backgroundColor: '#C72030' }}
-                    className="hover:bg-[#A01B26] text-white"
+              <div>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="location-label" shrink>Location</InputLabel>
+                  <MuiSelect
+                    labelId="location-label"
+                    label="Location"
+                    displayEmpty
+                    value={formData.location}
+                    onChange={(e) => handleInputChange('location', e.target.value)}
+                    sx={fieldStyles}
                   >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add
-                  </Button>
-                </div>
-
-                <div className="mt-8">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="grid grid-cols-3 gap-4 mb-4">
-                      <h3 className="font-medium text-center">Commodity</h3>
-                      <h3 className="font-medium text-center">Category</h3>
-                      <h3 className="font-medium text-center">UOM</h3>
-                    </div>
-                    <div className="space-y-2">
-                      {categories.length > 0 ? (
-                        categories.map((category) => (
-                          <div key={category.id} className="bg-white p-3 rounded border grid grid-cols-3 gap-4 items-center">
-                            <span className="text-center">-</span>
-                            <span className="text-center">{category.name}</span>
-                            <span className="text-center">{category.uom}</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteCategory(category.id)}
-                              className="h-8 w-8 p-0 text-red-600 hover:text-red-800 justify-self-end col-start-3"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center text-muted-foreground py-4">
-                          No categories added yet
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                    <MenuItem value=""><em>Select Location</em></MenuItem>
+                    <MenuItem value="building-a">Building A</MenuItem>
+                    <MenuItem value="building-b">Building B</MenuItem>
+                    <MenuItem value="parking">Parking Area</MenuItem>
+                    <MenuItem value="common-area">Common Area</MenuItem>
+                  </MuiSelect>
+                </FormControl>
               </div>
-            </TabsContent>
-            
-            <TabsContent value="operational" className="space-y-4 mt-0 p-6">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="operational" className="text-sm font-medium">
-                    Operational Name of Landlord/ Tenant*
-                  </Label>
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                      id="operational"
-                      value={operationalName}
-                      onChange={(e) => setOperationalName(e.target.value)}
-                      placeholder="Enter operational name"
-                      className="flex-1"
-                      onKeyPress={(e) => e.key === 'Enter' && handleAddOperational()}
+
+              <div>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="category-label" shrink>Category</InputLabel>
+                  <MuiSelect
+                    labelId="category-label"
+                    label="Category"
+                    displayEmpty
+                    value={formData.category}
+                    onChange={(e) => handleInputChange('category', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Category</em></MenuItem>
+                    <MenuItem value="water">Water</MenuItem>
+                    <MenuItem value="electricity">Electricity</MenuItem>
+                    <MenuItem value="gas">Gas</MenuItem>
+                    <MenuItem value="waste">Waste</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="frequency-label" shrink>Frequency</InputLabel>
+                  <MuiSelect
+                    labelId="frequency-label"
+                    label="Frequency"
+                    displayEmpty
+                    value={formData.frequency}
+                    onChange={(e) => handleInputChange('frequency', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Frequency</em></MenuItem>
+                    <MenuItem value="daily">Daily</MenuItem>
+                    <MenuItem value="weekly">Weekly</MenuItem>
+                    <MenuItem value="monthly">Monthly</MenuItem>
+                    <MenuItem value="quarterly">Quarterly</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </div>
+
+              <div>
+                <TextField
+                  required
+                  label="Start Date"
+                  placeholder="Select Date"
+                  name="startDate"
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e) => handleInputChange('startDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: {
+                      ...fieldStyles,
+                      '& .MuiInputBase-input': {
+                        ...fieldStyles['& .MuiInputBase-input, & .MuiSelect-select'],
+                        fontSize: { xs: '11px', sm: '12px', md: '13px' },
+                      }
+                    }
+                  }}
+                />
+              </div>
+
+              <div>
+                <TextField
+                  label="End Date"
+                  placeholder="Select Date"
+                  name="endDate"
+                  type="date"
+                  value={formData.endDate}
+                  onChange={(e) => handleInputChange('endDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: {
+                      ...fieldStyles,
+                      '& .MuiInputBase-input': {
+                        ...fieldStyles['& .MuiInputBase-input, & .MuiSelect-select'],
+                        fontSize: { xs: '11px', sm: '12px', md: '13px' },
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="assigned-to-label" shrink>Assigned To</InputLabel>
+                  <MuiSelect
+                    labelId="assigned-to-label"
+                    label="Assigned To"
+                    displayEmpty
+                    value={formData.assignedTo}
+                    onChange={(e) => handleInputChange('assignedTo', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Assignee</em></MenuItem>
+                    <MenuItem value="john-doe">John Doe</MenuItem>
+                    <MenuItem value="jane-smith">Jane Smith</MenuItem>
+                    <MenuItem value="mike-johnson">Mike Johnson</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </div>
+
+              <div>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="priority-label" shrink>Priority</InputLabel>
+                  <MuiSelect
+                    labelId="priority-label"
+                    label="Priority"
+                    displayEmpty
+                    value={formData.priority}
+                    onChange={(e) => handleInputChange('priority', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Priority</em></MenuItem>
+                    <MenuItem value="high">High</MenuItem>
+                    <MenuItem value="medium">Medium</MenuItem>
+                    <MenuItem value="low">Low</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <TextField
+                label="Description"
+                placeholder="Enter description"
+                name="description"
+                value={formData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                fullWidth
+                variant="outlined"
+                multiline
+                rows={3}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="flex items-center space-x-2">
+                <Checkbox
+                  checked={formData.autoCalculate}
+                  onChange={(e) => handleInputChange('autoCalculate', e.target.checked)}
+                />
+                <span>Enable Auto Calculation</span>
+              </label>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Utility Fields Section */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg text-[#C72030] flex items-center justify-between">
+              <div className="flex items-center">
+                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+                UTILITY CONFIGURATION
+              </div>
+              <Button 
+                type="button"
+                onClick={addUtilityField}
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Utility
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {utilityFields.map((field, index) => (
+                <div key={field.id} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end p-4 border rounded">
+                  <div>
+                    <FormControl fullWidth variant="outlined">
+                      <InputLabel id={`utility-type-${field.id}`} shrink>Utility Type</InputLabel>
+                      <MuiSelect
+                        labelId={`utility-type-${field.id}`}
+                        label="Utility Type"
+                        displayEmpty
+                        value={field.utilityType}
+                        onChange={(e) => updateUtilityField(field.id, 'utilityType', e.target.value)}
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value=""><em>Select Type</em></MenuItem>
+                        <MenuItem value="water">Water</MenuItem>
+                        <MenuItem value="electricity">Electricity</MenuItem>
+                        <MenuItem value="gas">Gas</MenuItem>
+                        <MenuItem value="heating">Heating</MenuItem>
+                        <MenuItem value="cooling">Cooling</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                  
+                  <div>
+                    <FormControl fullWidth variant="outlined">
+                      <InputLabel id={`unit-${field.id}`} shrink>Unit</InputLabel>
+                      <MuiSelect
+                        labelId={`unit-${field.id}`}
+                        label="Unit"
+                        displayEmpty
+                        value={field.unit}
+                        onChange={(e) => updateUtilityField(field.id, 'unit', e.target.value)}
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value=""><em>Select Unit</em></MenuItem>
+                        <MenuItem value="kWh">kWh</MenuItem>
+                        <MenuItem value="liters">Liters</MenuItem>
+                        <MenuItem value="cubic-meters">Cubic Meters</MenuItem>
+                        <MenuItem value="tons">Tons</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  <div>
+                    <TextField
+                      label="Threshold"
+                      placeholder="Enter threshold"
+                      type="number"
+                      value={field.threshold}
+                      onChange={(e) => updateUtilityField(field.id, 'threshold', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
                     />
-                    <Button 
-                      onClick={handleAddOperational}
-                      style={{ backgroundColor: '#C72030' }}
-                      className="hover:bg-[#A01B26] text-white"
+                  </div>
+
+                  <div>
+                    <label className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={field.alertEnabled}
+                        onChange={(e) => updateUtilityField(field.id, 'alertEnabled', e.target.checked)}
+                      />
+                      <span>Alert</span>
+                    </label>
+                  </div>
+
+                  <div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => removeUtilityField(field.id)}
+                      disabled={utilityFields.length === 1}
+                      className="border-red-300 text-red-600 hover:bg-red-50"
                     >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add
+                      <X className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
-                <div className="mt-8">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-medium text-center mb-4">Operational Name of Landlord/ Tenant</h3>
-                    <div className="space-y-2">
-                      {operationalNames.length > 0 ? (
-                        operationalNames.map((operational) => (
-                          <div key={operational.id} className="bg-white p-3 rounded border flex justify-between items-center">
-                            <span>{operational.name}</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteOperational(operational.id)}
-                              className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center text-muted-foreground py-4">
-                          No operational names added yet
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+        {/* Action Buttons */}
+        <div className="flex gap-4">
+          <Button 
+            type="submit"
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
+          >
+            Save Setup
+          </Button>
+          <Button 
+            type="button"
+            variant="outline"
+            onClick={() => navigate('/maintenance/audit/waste/utility')}
+          >
+            Cancel
+          </Button>
+        </div>
+      </form>
+
+      {/* Footer */}
+      <div className="mt-8 text-center">
+        <div className="text-sm text-[#1a1a1a] opacity-70">
+          Powered by <span className="font-semibold">go</span><span className="text-[#C72030]">Phygital</span><span className="font-semibold">.work</span>
+        </div>
+      </div>
     </div>
   );
 };
-
-export default UtilityWasteGenerationSetupDashboard;
