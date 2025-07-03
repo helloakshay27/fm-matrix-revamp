@@ -37,8 +37,22 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
   // Responsive styles for TextField and Select
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
+    '& .MuiInputBase-root': {
+      borderWidth: 0, // Explicitly remove border
+      '& .MuiSelect-select': {
+        fontSize: { xs: '11px', sm: '12px', md: '13px' }, // Smaller for dropdowns
+        padding: { xs: '8px', sm: '10px', md: '12px' },
+      },
+      '& .MuiMenuItem-root': {
+        fontSize: { xs: '11px', sm: '12px', md: '13px' }, // Smaller for dropdown menu items
+      },
+    },
+    '& .MuiInputBase-input': {
       padding: { xs: '8px', sm: '10px', md: '12px' },
+      '&::placeholder': {
+        fontSize: { xs: '12px', sm: '13px', md: '14px' }, // Default for text fields
+        opacity: 1,
+      },
     },
   };
 
@@ -62,6 +76,7 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
         <div className="space-y-4">
           {/* Activity Name */}
           <div className="space-y-2">
+            <label className="text-sm font-medium">Activity Name</label>
             <TextField
               label="Activity Name"
               placeholder="Enter Activity Name"
@@ -80,6 +95,7 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
 
           {/* Select Type */}
           <div className="space-y-2">
+            <label className="text-sm font-medium">Select Type</label>
             <FormControl fullWidth variant="outlined">
               <InputLabel id="type-select-label" shrink>Type</InputLabel>
               <MuiSelect
@@ -100,6 +116,7 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
 
           {/* Select Category */}
           <div className="space-y-2">
+            <label className="text-sm font-medium">Select Category</label>
             <FormControl fullWidth variant="outlined">
               <InputLabel id="category-select-label" shrink>Category</InputLabel>
               <MuiSelect
