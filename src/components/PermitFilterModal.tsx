@@ -76,7 +76,7 @@ export const PermitFilterModal: React.FC<PermitFilterModalProps> = ({
               label="Permit Id"
               value={filterData.permitId}
               onChange={(e) => handleInputChange('permitId', e.target.value)}
-              placeholder="Search By Permit Id"
+              placeholder="Find By Permit Id"
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -106,7 +106,7 @@ export const PermitFilterModal: React.FC<PermitFilterModalProps> = ({
             label="Vendor Name"
             value={filterData.vendorName}
             onChange={(e) => handleInputChange('vendorName', e.target.value)}
-            placeholder="Search By Vendor Name"
+            placeholder="Find By Vendor Name"
             fullWidth
             variant="outlined"
             InputLabelProps={{ shrink: true }}
