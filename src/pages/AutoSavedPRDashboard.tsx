@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Eye } from 'lucide-react';
 
 export const AutoSavedPRDashboard = () => {
   // Sample data - empty as shown in the first image
