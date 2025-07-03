@@ -339,7 +339,7 @@ export const AddSchedulePage = () => {
 
           <div>
             <TextField
-              placeholder="Enter Activity Name"
+              placeholder="Enter Activity"
               value={formData.activityName}
               onChange={(e) => handleInputChange('activityName', e.target.value)}
               fullWidth
@@ -352,18 +352,28 @@ export const AddSchedulePage = () => {
 
           <div>
             <TextField
-              placeholder="Enter Description"
-              value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              fullWidth
-              variant="outlined"
-              multiline
-              rows={4}
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-          </div>
+  placeholder="Enter Description"
+  value={formData.description}
+  onChange={(e) => handleInputChange('description', e.target.value)}
+  fullWidth
+  variant="outlined"
+  multiline
+  minRows={1}
+  maxRows={10} // Optional: limits how much it can grow
+  InputLabelProps={{ shrink: true }}
+  InputProps={{
+    sx: {
+      '& textarea': {
+        height: 'auto',
+        overflow: 'hidden',
+        resize: 'none',
+        padding: '8px 14px',
+      },
+    },
+  }}
+  sx={{ mt: 1 }}
+/>
+
         </CardContent>
       </Card>
 
