@@ -78,10 +78,10 @@ export const AssetDashboard = () => {
     navigate('/maintenance/asset/add');
   };
 
-  const statData = [
-  { label: "Total Asset", value: "10,000", icon: <Settings className="w-6 h-6 text-[#C72030]" /> },
-  { label: "In Use", value: "7,800", icon: <Settings className="w-6 h-6 text-[#C72030]" /> },
-  { label: "Breakdown", value: "2,200", icon: <Settings className="w-6 h-6 text-[#C72030]" /> },
+const statData = [
+  { label: "Total Asset", value: stats.total, icon: <Settings className="w-6 h-6 text-[#C72030]" /> },
+  { label: "In Use", value: stats.inUse, icon: <Settings className="w-6 h-6 text-[#C72030]" /> },
+  { label: "Breakdown", value: stats.breakdown, icon: <Settings className="w-6 h-6 text-[#C72030]" /> },
 ];
 
   const handleImport = () => {
