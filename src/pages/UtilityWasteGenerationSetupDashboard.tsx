@@ -124,63 +124,81 @@ export const UtilityWasteGenerationSetupDashboard = () => {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleWasteCategorySubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category Name*</Label>
-                    <TextField
-                      id="category"
-                      placeholder="Enter category name"
-                      value={wasteCategoryForm.category}
-                      onChange={(e) => setWasteCategoryForm(prev => ({ ...prev, category: e.target.value }))}
-                      required
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
-                      sx={{ mt: 1 }}
-                    />
-                  </div>
+                  <div className="space-y-1">
+ 
+  <TextField
+    id="category"
+    name="category"
+    placeholder="Enter category name"
+    value={wasteCategoryForm.category}
+    onChange={(e) =>
+      setWasteCategoryForm((prev) => ({ ...prev, category: e.target.value }))
+    }
+    required
+    fullWidth
+    variant="outlined"
+    InputLabelProps={{ shrink: false }} // disable floating label
+    InputProps={{ sx: fieldStyles }}
+    sx={{ mt: 0.5 }}
+  />
+</div>
+
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="categoryCode">Category Code*</Label>
-                    <TextField
-                      id="categoryCode"
-                      placeholder="Enter category code"
-                      value={wasteCategoryForm.categoryCode}
-                      onChange={(e) => setWasteCategoryForm(prev => ({ ...prev, categoryCode: e.target.value }))}
-                      required
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
-                      sx={{ mt: 1 }}
-                    />
-                  </div>
+                  <div className="space-y-1">
+  
+  <TextField
+    id="categoryCode"
+    name="categoryCode"
+    placeholder="Enter category code"
+    value={wasteCategoryForm.categoryCode}
+    onChange={(e) =>
+      setWasteCategoryForm((prev) => ({
+        ...prev,
+        categoryCode: e.target.value,
+      }))
+    }
+    required
+    fullWidth
+    variant="outlined"
+    InputLabelProps={{ shrink: false }} // Disable floating label
+    InputProps={{ sx: fieldStyles }}
+    sx={{ mt: 0.5 }}
+  />
+</div>
+
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <TextField
-                      id="description"
-                      placeholder="Enter description"
-                      value={wasteCategoryForm.description}
-                      onChange={(e) => setWasteCategoryForm(prev => ({ ...prev, description: e.target.value }))}
-                      fullWidth
-                      variant="outlined"
-                      multiline
-                      minRows={3}
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{
-                        sx: {
-                          '& textarea': {
-                            height: 'auto',
-                            overflow: 'hidden',
-                            resize: 'none',
-                            padding: '8px 14px',
-                          },
-                        },
-                      }}
-                      sx={{ mt: 1 }}
-                    />
-                  </div>
+                  <div className="space-y-1">
+  
+  <TextField
+    id="description"
+    name="description"
+    placeholder="Enter description"
+    value={wasteCategoryForm.description}
+    onChange={(e) =>
+      setWasteCategoryForm((prev) => ({
+        ...prev,
+        description: e.target.value,
+      }))
+    }
+    fullWidth
+    variant="outlined"
+    multiline
+    minRows={3}
+    InputLabelProps={{ shrink: false }} // disables floating label
+    InputProps={{
+      sx: {
+        '& textarea': {
+          height: 'auto',
+          overflow: 'hidden',
+          resize: 'none',
+          padding: '8px 14px',
+        },
+      },
+    }}
+    sx={{ mt: 0.5 }}
+  />
+</div>
+
                   
                   <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
@@ -214,7 +232,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                   Waste Categories
                   <div className="flex items-center space-x-2">
                     <TextField
-                      placeholder="Search categories..."
+                      placeholder="Find categories..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       size="small"

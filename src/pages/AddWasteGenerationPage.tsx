@@ -82,7 +82,6 @@ const AddWasteGenerationPage = () => {
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="building">Building</Label>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="building-label" shrink>Select Building</InputLabel>
                 <MuiSelect
@@ -102,7 +101,6 @@ const AddWasteGenerationPage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="wing">Wing</Label>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="wing-label" shrink>Select Building First</InputLabel>
                 <MuiSelect
@@ -122,7 +120,6 @@ const AddWasteGenerationPage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="area">Area</Label>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="area-label" shrink>Select Floor First</InputLabel>
                 <MuiSelect
@@ -142,7 +139,6 @@ const AddWasteGenerationPage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="date">Date*</Label>
               <TextField
                 type="date"
                 value={formData.date}
@@ -159,7 +155,6 @@ const AddWasteGenerationPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="vendor">Vendor</Label>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="vendor-label" shrink>Select Vendor</InputLabel>
                 <MuiSelect
@@ -179,7 +174,6 @@ const AddWasteGenerationPage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="commodity">Commodity*</Label>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="commodity-label" shrink>Select Commodity</InputLabel>
                 <MuiSelect
@@ -200,7 +194,6 @@ const AddWasteGenerationPage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Category*</Label>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="category-label" shrink>Select Category</InputLabel>
                 <MuiSelect
@@ -220,7 +213,6 @@ const AddWasteGenerationPage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="uom">UoM</Label>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="uom-label" shrink>Select UoM</InputLabel>
                 <MuiSelect
@@ -242,7 +234,6 @@ const AddWasteGenerationPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="operationalName">Operational Name of Landlord/ Tenant*</Label>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="operational-name-label" shrink>Select Operational Name</InputLabel>
                 <MuiSelect
@@ -261,49 +252,57 @@ const AddWasteGenerationPage = () => {
               </FormControl>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="agencyName">Agency Name</Label>
-              <TextField
-                value={formData.agencyName}
-                onChange={(e) => handleInputChange('agencyName', e.target.value)}
-                placeholder="Enter Agency Name"
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-            </div>
+            <div className="space-y-1">
+  <TextField
+    id="agencyName"
+    name="agencyName"
+    value={formData.agencyName}
+    onChange={(e) => handleInputChange('agencyName', e.target.value)}
+    placeholder="Enter Agency Name"
+    fullWidth
+    variant="outlined"
+    InputLabelProps={{ shrink: false }} // prevent floating label
+    InputProps={{ sx: fieldStyles }}
+    sx={{ mt: 0.5 }}
+  />
+</div>
 
-            <div className="space-y-2">
-              <Label htmlFor="generatedUnit">Generated Unit*</Label>
-              <TextField
-                type="number"
-                value={formData.generatedUnit}
-                onChange={(e) => handleInputChange('generatedUnit', e.target.value)}
-                placeholder="Enter Unit"
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="recycledUnit">Recycled Unit</Label>
-              <TextField
-                type="number"
-                value={formData.recycledUnit}
-                onChange={(e) => handleInputChange('recycledUnit', e.target.value)}
-                placeholder="0"
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-            </div>
+           <div className="space-y-1">
+ 
+  <TextField
+    id="generatedUnit"
+    name="generatedUnit"
+    type="number"
+    value={formData.generatedUnit}
+    onChange={(e) => handleInputChange('generatedUnit', e.target.value)}
+    placeholder="Enter Unit"
+    fullWidth
+    variant="outlined"
+    InputLabelProps={{ shrink: false }} // disable floating label
+    InputProps={{ sx: fieldStyles }}
+    sx={{ mt: 0.5 }}
+  />
+</div>
+
+
+           <div className="space-y-1">
+  
+  <TextField
+    id="recycledUnit"
+    name="recycledUnit"
+    type="number"
+    value={formData.recycledUnit}
+    onChange={(e) => handleInputChange('recycledUnit', e.target.value)}
+    placeholder="0"
+    fullWidth
+    variant="outlined"
+    InputLabelProps={{ shrink: false }} // disable floating label
+    InputProps={{ sx: fieldStyles }}
+    sx={{ mt: 0.5 }}
+  />
+</div>
+
           </div>
 
           <div className="flex justify-center gap-4 pt-6">

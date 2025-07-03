@@ -121,7 +121,7 @@ export const AddVendorAuditPage = () => {
             <Label htmlFor="activity-name">Activity Name*</Label>
             <TextField
               id="activity-name" 
-              placeholder="Enter Activity Name"
+              placeholder="Enter Activity "
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -180,7 +180,6 @@ export const AddVendorAuditPage = () => {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Group</Label>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="group-label" shrink>Select Group</InputLabel>
                 <MuiSelect
@@ -196,7 +195,6 @@ export const AddVendorAuditPage = () => {
               </FormControl>
             </div>
             <div>
-              <Label>SubGroup</Label>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="subgroup-label" shrink>Select Sub Group</InputLabel>
                 <MuiSelect
@@ -215,7 +213,6 @@ export const AddVendorAuditPage = () => {
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label>Task</Label>
               <TextField
                 placeholder="Enter Task"
                 fullWidth
@@ -226,7 +223,6 @@ export const AddVendorAuditPage = () => {
               />
             </div>
             <div>
-              <Label>Input Type</Label>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="input-type-label" shrink>Select Input Type</InputLabel>
                 <MuiSelect
@@ -300,7 +296,6 @@ export const AddVendorAuditPage = () => {
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label>Asset</Label>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="asset-label" shrink>Select Asset</InputLabel>
                 <MuiSelect
@@ -316,7 +311,6 @@ export const AddVendorAuditPage = () => {
               </FormControl>
             </div>
             <div>
-              <Label>Assign To</Label>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="assign-to-label" shrink>Select Assign To</InputLabel>
                 <MuiSelect
@@ -332,7 +326,6 @@ export const AddVendorAuditPage = () => {
               </FormControl>
             </div>
             <div>
-              <Label>Scan Type</Label>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="scan-type-label" shrink>Select Scan Type</InputLabel>
                 <MuiSelect
@@ -351,7 +344,6 @@ export const AddVendorAuditPage = () => {
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label>Plan Duration</Label>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="plan-duration-label" shrink>Select Plan Duration</InputLabel>
                 <MuiSelect
@@ -368,7 +360,6 @@ export const AddVendorAuditPage = () => {
               </FormControl>
             </div>
             <div>
-              <Label>Priority</Label>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="priority-label" shrink>Select Priority</InputLabel>
                 <MuiSelect

@@ -148,9 +148,7 @@ export const AddAssetAuditPage = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="conductedBy" className="text-sm font-medium">
-                      Conducted By<span className="text-red-500">*</span>
-                    </Label>
+                    
                     <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                       <InputLabel id="conducted-by-label" shrink>Select</InputLabel>
                       <MuiSelect
@@ -191,9 +189,7 @@ export const AddAssetAuditPage = () => {
             {auditTypeExpanded && (
               <div className="p-6">
                 <div className="mb-6">
-                  <Label className="text-sm font-medium mb-3 block">
-                    Based On<span className="text-red-500">*</span>
-                  </Label>
+                
                   <RadioGroup
                     value={formData.basedOn}
                     onValueChange={(value) => updateFormData('basedOn', value)}
@@ -212,9 +208,7 @@ export const AddAssetAuditPage = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                   <div>
-                    <Label htmlFor="site" className="text-sm font-medium">
-                      Site<span className="text-red-500">*</span>
-                    </Label>
+                   
                     <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                       <InputLabel id="site-label" shrink>Select...</InputLabel>
                       <MuiSelect
@@ -233,9 +227,7 @@ export const AddAssetAuditPage = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="building" className="text-sm font-medium">
-                      Building<span className="text-red-500">*</span>
-                    </Label>
+                    
                     <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                       <InputLabel id="building-label" shrink>Select...</InputLabel>
                       <MuiSelect
@@ -254,9 +246,7 @@ export const AddAssetAuditPage = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="department" className="text-sm font-medium">
-                      Department<span className="text-red-500">*</span>
-                    </Label>
+                    
                     <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                       <InputLabel id="department-label" shrink>Select...</InputLabel>
                       <MuiSelect
@@ -276,9 +266,7 @@ export const AddAssetAuditPage = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="assetGroup" className="text-sm font-medium">
-                      Asset Group<span className="text-red-500">*</span>
-                    </Label>
+                   
                     <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                       <InputLabel id="asset-group-label" shrink>Select...</InputLabel>
                       <MuiSelect
@@ -297,9 +285,7 @@ export const AddAssetAuditPage = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="assetSubGroup" className="text-sm font-medium">
-                      Asset SubGroup<span className="text-red-500">*</span>
-                    </Label>
+                    
                     <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                       <InputLabel id="asset-subgroup-label" shrink>Select...</InputLabel>
                       <MuiSelect
