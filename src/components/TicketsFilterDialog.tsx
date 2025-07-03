@@ -1,11 +1,9 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface FilterData {
   createdDate: string;
@@ -27,6 +25,7 @@ interface TicketsFilterDialogProps {
 }
 
 export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: TicketsFilterDialogProps) => {
+  const { toast } = useToast();
   const [filters, setFilters] = useState<FilterData>({
     createdDate: '',
     category: '',
@@ -64,6 +63,19 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
 
   const handleApply = () => {
     onApplyFilters(filters);
+    toast({
+      title: "Success",
+      description: "Filters applied successfully!",
+    });
+    onClose();
+  };
+
+  // Responsive styles for TextField and Select
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
   };
 
   return (
@@ -79,136 +91,195 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
         <div className="grid grid-cols-3 gap-4 py-4">
           {/* Row 1 */}
           <div className="space-y-2">
-            <Label>Select Created Date</Label>
-            <Input
+            <TextField
+              label="Created Date"
               type="date"
               value={filters.createdDate}
               onChange={(e) => handleFilterChange('createdDate', e.target.value)}
               placeholder="Select Created Date"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              InputProps={{
+                sx: fieldStyles
+              }}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Select Category</Label>
-            <Select value={filters.category} onValueChange={(value) => handleFilterChange('category', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Category Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="air-conditioner">Air Conditioner</SelectItem>
-                <SelectItem value="fire-system">FIRE SYSTEM</SelectItem>
-                <SelectItem value="cleaning">Cleaning</SelectItem>
-                <SelectItem value="electrical">Electrical</SelectItem>
-                <SelectItem value="printer">Printer</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="category-select-label" shrink>Category</InputLabel>
+              <MuiSelect
+                labelId="category-select-label"
+                label="Category"
+                displayEmpty
+                value={filters.category}
+                onChange={(e) => handleFilterChange('category', e.target.value)}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Category Type</em></MenuItem>
+                <MenuItem value="air-conditioner">Air Conditioner</MenuItem>
+                <MenuItem value="fire-system">FIRE SYSTEM</MenuItem>
+                <MenuItem value="cleaning">Cleaning</MenuItem>
+                <MenuItem value="electrical">Electrical</MenuItem>
+                <MenuItem value="printer">Printer</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           <div className="space-y-2">
-            <Label>Select Subcategory</Label>
-            <Select value={filters.subcategory} onValueChange={(value) => handleFilterChange('subcategory', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select SubCategory" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="test">test</SelectItem>
-                <SelectItem value="na">NA</SelectItem>
-                <SelectItem value="fire">fire</SelectItem>
-                <SelectItem value="dentry">dentry</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="subcategory-select-label" shrink>Subcategory</InputLabel>
+              <MuiSelect
+                labelId="subcategory-select-label"
+                label="Subcategory"
+                displayEmpty
+                value={filters.subcategory}
+                onChange={(e) => handleFilterChange('subcategory', e.target.value)}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select SubCategory</em></MenuItem>
+                <MenuItem value="test">test</MenuItem>
+                <MenuItem value="na">NA</MenuItem>
+                <MenuItem value="fire">fire</MenuItem>
+                <MenuItem value="dentry">dentry</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           {/* Row 2 */}
           <div className="space-y-2">
-            <Label>Select Department</Label>
-            <Select value={filters.department} onValueChange={(value) => handleFilterChange('department', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Department" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="technician">Technician</SelectItem>
-                <SelectItem value="maintenance">Maintenance</SelectItem>
-                <SelectItem value="facility">Facility</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="department-select-label" shrink>Department</InputLabel>
+              <MuiSelect
+                labelId="department-select-label"
+                label="Department"
+                displayEmpty
+                value={filters.department}
+                onChange={(e) => handleFilterChange('department', e.target.value)}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Department</em></MenuItem>
+                <MenuItem value="technician">Technician</MenuItem>
+                <MenuItem value="maintenance">Maintenance</MenuItem>
+                <MenuItem value="facility">Facility</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           <div className="space-y-2">
-            <Label>Select Site</Label>
-            <Select value={filters.site} onValueChange={(value) => handleFilterChange('site', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Site" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="lockated">Lockated</SelectItem>
-                <SelectItem value="mumbai">Mumbai</SelectItem>
-                <SelectItem value="pune">Pune</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="site-select-label" shrink>Site</InputLabel>
+              <MuiSelect
+                labelId="site-select-label"
+                label="Site"
+                displayEmpty
+                value={filters.site}
+                onChange={(e) => handleFilterChange('site', e.target.value)}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Site</em></MenuItem>
+                <MenuItem value="lockated">Lockated</MenuItem>
+                <MenuItem value="mumbai">Mumbai</MenuItem>
+                <MenuItem value="pune">Pune</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           <div className="space-y-2">
-            <Label>Select Unit</Label>
-            <Select value={filters.unit} onValueChange={(value) => handleFilterChange('unit', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Unit" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="unit1">Unit 1</SelectItem>
-                <SelectItem value="unit2">Unit 2</SelectItem>
-                <SelectItem value="unit3">Unit 3</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="unit-select-label" shrink>Unit</InputLabel>
+              <MuiSelect
+                labelId="unit-select-label"
+                label="Unit"
+                displayEmpty
+                value={filters.unit}
+                onChange={(e) => handleFilterChange('unit', e.target.value)}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Unit</em></MenuItem>
+                <MenuItem value="unit1">Unit 1</MenuItem>
+                <MenuItem value="unit2">Unit 2</MenuItem>
+                <MenuItem value="unit3">Unit 3</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           {/* Row 3 */}
           <div className="space-y-2">
-            <Label>Select Status</Label>
-            <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="open">Open</SelectItem>
-                <SelectItem value="in-progress">In Progress</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="status-select-label" shrink>Status</InputLabel>
+              <MuiSelect
+                labelId="status-select-label"
+                label="Status"
+                displayEmpty
+                value={filters.status}
+                onChange={(e) => handleFilterChange('status', e.target.value)}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Status</em></MenuItem>
+                <MenuItem value="pending">Pending</MenuItem>
+                <MenuItem value="open">Open</MenuItem>
+                <MenuItem value="in-progress">In Progress</MenuItem>
+                <MenuItem value="closed">Closed</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           <div className="space-y-2">
-            <Label>Select Admin Priority</Label>
-            <Select value={filters.adminPriority} onValueChange={(value) => handleFilterChange('adminPriority', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Admin Priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="p1">P1</SelectItem>
-                <SelectItem value="p2">P2</SelectItem>
-                <SelectItem value="p3">P3</SelectItem>
-                <SelectItem value="p4">P4</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="admin-priority-select-label" shrink>Admin Priority</InputLabel>
+              <MuiSelect
+                labelId="admin-priority-select-label"
+                label="Admin Priority"
+                displayEmpty
+                value={filters.adminPriority}
+                onChange={(e) => handleFilterChange('adminPriority', e.target.value)}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Admin Priority</em></MenuItem>
+                <MenuItem value="p1">P1</MenuItem>
+                <MenuItem value="p2">P2</MenuItem>
+                <MenuItem value="p3">P3</MenuItem>
+                <MenuItem value="p4">P4</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           <div className="space-y-2">
-            <Label>Created By</Label>
-            <Input
+            <TextField
+              label="Created By"
+              placeholder="Enter Created By"
               value={filters.createdBy}
               onChange={(e) => handleFilterChange('createdBy', e.target.value)}
-              placeholder="Created by"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              InputProps={{
+                sx: fieldStyles
+              }}
             />
           </div>
 
           {/* Row 4 */}
           <div className="space-y-2">
-            <Label>Assigned To</Label>
-            <Input
+            <TextField
+              label="Assigned To"
+              placeholder="Enter Assigned To"
               value={filters.assignedTo}
               onChange={(e) => handleFilterChange('assignedTo', e.target.value)}
-              placeholder="Assigned To"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              InputProps={{
+                sx: fieldStyles
+              }}
             />
           </div>
         </div>

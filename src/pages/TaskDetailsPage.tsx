@@ -4,15 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 export const TaskDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('Help Text');
   const [showSubmitForm, setShowSubmitForm] = useState(false);
   const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
@@ -74,13 +74,19 @@ export const TaskDetailsPage = () => {
   const handleSubmitForm = () => {
     console.log('Form submitted:', formData);
     setShowSubmitForm(false);
-    // Add success toast or navigation logic here
+    toast({
+      title: "Success",
+      description: "Task submitted successfully!",
+    });
   };
 
   const handleRescheduleSubmit = () => {
     console.log('Reschedule submitted:', rescheduleData);
     setShowRescheduleDialog(false);
-    // Add success toast or navigation logic here
+    toast({
+      title: "Success",
+      description: "Task rescheduled successfully!",
+    });
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,6 +98,14 @@ export const TaskDetailsPage = () => {
   };
 
   const tabs = ['Help Text', 'Activities', 'Input', 'Comments', 'Weightage', 'Rating', 'Score', 'Status', 'Attachments'];
+
+  // Responsive styles for TextField and Select
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+  };
 
   return (
     <>
@@ -241,12 +255,28 @@ export const TaskDetailsPage = () => {
               {activeTab === 'Input' && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Input Value</label>
-                    <Input placeholder="Enter input value" />
+                    <TextField
+                      label="Input Value"
+                      placeholder="Enter Input Value"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                    <Textarea placeholder="Enter notes or comments" rows={4} />
+                    <TextField
+                      label="Notes"
+                      placeholder="Enter Notes"
+                      fullWidth
+                      variant="outlined"
+                      multiline
+                      rows={4}
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                    />
                   </div>
                 </div>
               )}
@@ -254,8 +284,17 @@ export const TaskDetailsPage = () => {
               {activeTab === 'Comments' && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Add Comment</label>
-                    <Textarea placeholder="Add your comment here" rows={4} />
+                    <TextField
+                      label="Comment"
+                      placeholder="Enter Comment"
+                      fullWidth
+                      variant="outlined"
+                      multiline
+                      rows={4}
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                    />
                   </div>
                   <Button style={{ backgroundColor: '#C72030' }} className="text-white">
                     Add Comment
@@ -290,8 +329,16 @@ export const TaskDetailsPage = () => {
               {activeTab === 'Attachments' && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Upload Attachment</label>
-                    <Input type="file" accept="image/*,application/pdf" />
+                    <TextField
+                      label="Attachment"
+                      type="file"
+                      inputProps={{ accept: 'image/*,application/pdf' }}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                    />
                   </div>
                   <Button style={{ backgroundColor: '#C72030' }} className="text-white">
                     Upload File
@@ -323,15 +370,21 @@ export const TaskDetailsPage = () => {
                   checked={formData.isFloorClean}
                   onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isFloorClean: !!checked }))}
                 />
-                <Label htmlFor="floor-clean">Yes</Label>
+                <label htmlFor="floor-clean">Yes</label>
               </div>
               <div className="space-y-2">
-                <Label>Enter Comment</Label>
-                <Textarea 
-                  placeholder="Enter Comment"
+                <TextField
+                  label="Floor Comment"
+                  placeholder="Enter Floor Comment"
                   value={formData.floorComment}
                   onChange={(e) => setFormData(prev => ({ ...prev, floorComment: e.target.value }))}
+                  fullWidth
+                  variant="outlined"
+                  multiline
                   rows={3}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
                 />
               </div>
               <div className="flex gap-4">
@@ -340,7 +393,6 @@ export const TaskDetailsPage = () => {
                 ))}
               </div>
               <div className="space-y-2">
-                <Label>Attachments</Label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                   <input
                     type="file"
@@ -361,12 +413,18 @@ export const TaskDetailsPage = () => {
             <div className="space-y-3">
               <p className="font-medium">2. LBLR lobby*</p>
               <div className="space-y-2">
-                <Label>Enter Comment</Label>
-                <Textarea 
-                  placeholder="Enter Comment"
+                <TextField
+                  label="Dust Comment"
+                  placeholder="Enter Dust Comment"
                   value={formData.dustComment}
                   onChange={(e) => setFormData(prev => ({ ...prev, dustComment: e.target.value }))}
+                  fullWidth
+                  variant="outlined"
+                  multiline
                   rows={3}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
                 />
               </div>
               <div className="flex gap-4">
@@ -375,7 +433,6 @@ export const TaskDetailsPage = () => {
                 ))}
               </div>
               <div className="space-y-2">
-                <Label>Attachments</Label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                   <input
                     type="file"
@@ -404,7 +461,7 @@ export const TaskDetailsPage = () => {
                       liftOptions: { ...prev.liftOptions, dust: !!checked }
                     }))}
                   />
-                  <Label htmlFor="dust">Dust</Label>
+                  <label htmlFor="dust">Dust</label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox 
@@ -415,7 +472,7 @@ export const TaskDetailsPage = () => {
                       liftOptions: { ...prev.liftOptions, dryMop: !!checked }
                     }))}
                   />
-                  <Label htmlFor="dry-mop">Dry mop</Label>
+                  <label htmlFor="dry-mop">Dry mop</label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox 
@@ -426,7 +483,7 @@ export const TaskDetailsPage = () => {
                       liftOptions: { ...prev.liftOptions, wetMop: !!checked }
                     }))}
                   />
-                  <Label htmlFor="wet-mop">Wet mop</Label>
+                  <label htmlFor="wet-mop">Wet mop</label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox 
@@ -437,20 +494,25 @@ export const TaskDetailsPage = () => {
                       liftOptions: { ...prev.liftOptions, vacuum: !!checked }
                     }))}
                   />
-                  <Label htmlFor="vacuum">Vacuum</Label>
+                  <label htmlFor="vacuum">Vacuum</label>
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Enter Comment</Label>
-                <Textarea 
-                  placeholder="Enter Comment"
+                <TextField
+                  label="Lift Comment"
+                  placeholder="Enter Lift Comment"
                   value={formData.liftComment}
                   onChange={(e) => setFormData(prev => ({ ...prev, liftComment: e.target.value }))}
+                  fullWidth
+                  variant="outlined"
+                  multiline
                   rows={3}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Attachments</Label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                   <input
                     type="file"
@@ -465,7 +527,6 @@ export const TaskDetailsPage = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Upload File</Label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                   <input
                     type="file"
@@ -506,19 +567,29 @@ export const TaskDetailsPage = () => {
               <h3 className="font-medium mb-4">New Schedule</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Schedule Date</Label>
-                  <Input 
+                  <TextField
+                    label="Schedule Date"
                     type="date"
                     value={rescheduleData.scheduleDate}
                     onChange={(e) => setRescheduleData(prev => ({ ...prev, scheduleDate: e.target.value }))}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
                   />
                 </div>
                 <div>
-                  <Label>Time</Label>
-                  <Input 
+                  <TextField
+                    label="Time"
                     type="time"
                     value={rescheduleData.time}
                     onChange={(e) => setRescheduleData(prev => ({ ...prev, time: e.target.value }))}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
                   />
                 </div>
               </div>
@@ -527,19 +598,23 @@ export const TaskDetailsPage = () => {
             <div>
               <h3 className="font-medium mb-2">Notify Users</h3>
               <div className="space-y-2">
-                <Label>Select Users</Label>
-                <select 
-                  className="w-full p-2 border rounded"
-                  value={rescheduleData.selectUsers}
-                  onChange={(e) => setRescheduleData(prev => ({ ...prev, selectUsers: e.target.value }))}
-                >
-                  <option value="">Select Users</option>
-                  <option value="user1">User 1</option>
-                  <option value="user2">User 2</option>
-                </select>
+                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                  <InputLabel id="select-users-label" shrink>Select Users</InputLabel>
+                  <MuiSelect
+                    labelId="select-users-label"
+                    label="Select Users"
+                    displayEmpty
+                    value={rescheduleData.selectUsers}
+                    onChange={(e) => setRescheduleData(prev => ({ ...prev, selectUsers: e.target.value }))}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Users</em></MenuItem>
+                    <MenuItem value="user1">User 1</MenuItem>
+                    <MenuItem value="user2">User 2</MenuItem>
+                  </MuiSelect>
+                </FormControl>
               </div>
               <div className="space-y-2 mt-4">
-                <Label>Select</Label>
                 <div className="flex gap-4">
                   <div className="flex items-center space-x-2">
                     <Checkbox 
@@ -547,7 +622,7 @@ export const TaskDetailsPage = () => {
                       checked={rescheduleData.email}
                       onCheckedChange={(checked) => setRescheduleData(prev => ({ ...prev, email: !!checked }))}
                     />
-                    <Label htmlFor="email">Email</Label>
+                    <label htmlFor="email">Email</label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox 
@@ -555,7 +630,7 @@ export const TaskDetailsPage = () => {
                       checked={rescheduleData.sms}
                       onCheckedChange={(checked) => setRescheduleData(prev => ({ ...prev, sms: !!checked }))}
                     />
-                    <Label htmlFor="sms">SMS</Label>
+                    <label htmlFor="sms">SMS</label>
                   </div>
                 </div>
               </div>
