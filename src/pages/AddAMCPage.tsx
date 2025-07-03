@@ -209,160 +209,136 @@ export const AddAMCPage = () => {
         </Card>
 
         {/* AMC Details */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg text-[#C72030] flex items-center">
-              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
-              AMC DETAILS
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <TextField
-                  label="Cost"
-                  placeholder="Enter Cost"
-                  name="cost"
-                  type="number"
-                  value={formData.cost}
-                  onChange={(e) => handleInputChange('cost', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
-                />
-              </div>
+<Card className="mb-6">
+  <CardHeader>
+    <CardTitle className="text-lg text-[#C72030] flex items-center">
+      <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+      AMC DETAILS
+    </CardTitle>
+  </CardHeader>
 
-              <div>
-                <TextField
-                  required
-                  label="Start Date"
-                  placeholder="Select Date"
-                  name="startDate"
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) => handleInputChange('startDate', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
-                />
-              </div>
+  <CardContent className="space-y-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <TextField
+          label="Cost"
+          placeholder="Enter Cost"
+          name="cost"
+          type="number"
+          value={formData.cost}
+          onChange={(e) => handleInputChange('cost', e.target.value)}
+          fullWidth
+          variant="outlined"
+          InputLabelProps={{ shrink: true }}
+          InputProps={{ sx: fieldStyles }}
+        />
+      </div>
 
-              <div>
-                <TextField
-                  required
-                  label="First Service Date"
-                  placeholder="Select Date"
-                  name="firstService"
-                  type="date"
-                  value={formData.firstService}
-                  onChange={(e) => handleInputChange('firstService', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
-                />
-              </div>
+      <div>
+        <TextField
+          required
+          label="Start Date"
+          placeholder="Select Date"
+          name="startDate"
+          type="date"
+          value={formData.startDate}
+          onChange={(e) => handleInputChange('startDate', e.target.value)}
+          fullWidth
+          variant="outlined"
+          InputLabelProps={{ shrink: true }}
+          InputProps={{ sx: fieldStyles }}
+        />
+      </div>
 
-              <div>
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel id="payment-terms-select-label" shrink>Payment Terms</InputLabel>
-                  <MuiSelect
-                    labelId="payment-terms-select-label"
-                    label="Payment Terms"
-                    displayEmpty
-                    value={formData.paymentTerms}
-                    onChange={(e) => handleInputChange('paymentTerms', e.target.value)}
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value=""><em>Select Payment Term</em></MenuItem>
-                    <MenuItem value="monthly">Monthly</MenuItem>
-                    <MenuItem value="quarterly">Quarterly</MenuItem>
-                    <MenuItem value="half-yearly">Half Yearly</MenuItem>
-                    <MenuItem value="yearly">Yearly</MenuItem>
-                  </MuiSelect>
-                </FormControl>
-              </div>
+      <div>
+        <TextField
+          required
+          label="First Service Date"
+          placeholder="Select Date"
+          name="firstService"
+          type="date"
+          value={formData.firstService}
+          onChange={(e) => handleInputChange('firstService', e.target.value)}
+          fullWidth
+          variant="outlined"
+          InputLabelProps={{ shrink: true }}
+          InputProps={{ sx: fieldStyles }}
+        />
+      </div>
 
-              <div>
-                <TextField
-                  required
-                  label="End Date"
-                  placeholder="Select Date"
-                  name="endDate"
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) => handleInputChange('endDate', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
-                />
-              </div>
+      <div>
+        <FormControl fullWidth variant="outlined">
+          <InputLabel id="payment-terms-select-label" shrink>
+            Payment Terms
+          </InputLabel>
+          <MuiSelect
+            labelId="payment-terms-select-label"
+            label="Payment Terms"
+            displayEmpty
+            value={formData.paymentTerms}
+            onChange={(e) => handleInputChange('paymentTerms', e.target.value)}
+            sx={fieldStyles}
+          >
+            <MenuItem value=""><em>Select Payment Term</em></MenuItem>
+            <MenuItem value="monthly">Monthly</MenuItem>
+            <MenuItem value="quarterly">Quarterly</MenuItem>
+            <MenuItem value="half-yearly">Half Yearly</MenuItem>
+            <MenuItem value="yearly">Yearly</MenuItem>
+          </MuiSelect>
+        </FormControl>
+      </div>
 
-              <div>
-                <TextField
-                  label="No. of Visits"
-                  placeholder="Enter No. of Visit"
-                  name="noOfVisits"
-                  type="number"
-                  value={formData.noOfVisits}
-                  onChange={(e) => handleInputChange('noOfVisits', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
-                />
-              </div>
-            </div>
+      <div>
+        <TextField
+          required
+          label="End Date"
+          placeholder="Select Date"
+          name="endDate"
+          type="date"
+          value={formData.endDate}
+          onChange={(e) => handleInputChange('endDate', e.target.value)}
+          fullWidth
+          variant="outlined"
+          InputLabelProps={{ shrink: true }}
+          InputProps={{ sx: fieldStyles }}
+        />
+      </div>
 
-            <div>
-  <TextField
-    label="Remarks"
-    placeholder="Enter Remarks"
-    name="remarks"
-    value={formData.remarks}
-    onChange={(e) => handleInputChange('remarks', e.target.value)}
-    fullWidth
-    variant="outlined"
-    multiline
-    rows={3}
-    InputLabelProps={{
-      shrink: true,
-    }}
-    InputProps={{
-      sx: {
-        ...fieldStyles,
-        alignItems: 'flex-start', // optional: aligns text to top
-        paddingTop: '12px',       // optional: improve vertical padding
-      }
-    }}
-  />
-</div>
+      <div>
+        <TextField
+          label="No. of Visits"
+          placeholder="Enter No. of Visit"
+          name="noOfVisits"
+          type="number"
+          value={formData.noOfVisits}
+          onChange={(e) => handleInputChange('noOfVisits', e.target.value)}
+          fullWidth
+          variant="outlined"
+          InputLabelProps={{ shrink: true }}
+          InputProps={{ sx: fieldStyles }}
+        />
+      </div>
 
-          </CardContent>
-        </Card>
+      {/* Remarks Field - full width in grid */}
+      <div className="md:col-span-3">
+        <TextField
+          label="Remarks"
+          placeholder="Enter Remarks"
+          name="remarks"
+          value={formData.remarks}
+          onChange={(e) => handleInputChange('remarks', e.target.value)}
+          fullWidth
+          variant="outlined"
+          multiline
+          rows={3}
+          InputLabelProps={{ shrink: true }}
+          InputProps={{ sx: fieldStyles }}
+        />
+      </div>
+    </div>
+  </CardContent>
+</Card>
+
 
         {/* Attachments */}
         <Card className="mb-6">
