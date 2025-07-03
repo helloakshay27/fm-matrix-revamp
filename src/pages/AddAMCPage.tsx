@@ -338,24 +338,29 @@ export const AddAMCPage = () => {
             </div>
 
             <div>
-              <TextField
-                label="Remarks"
-                placeholder="Enter Remarks"
-                name="remarks"
-                value={formData.remarks}
-                onChange={(e) => handleInputChange('remarks', e.target.value)}
-                fullWidth
-                variant="outlined"
-                multiline
-                rows={3}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                InputProps={{
-                  sx: fieldStyles
-                }}
-              />
-            </div>
+  <TextField
+    label="Remarks"
+    placeholder="Enter Remarks"
+    name="remarks"
+    value={formData.remarks}
+    onChange={(e) => handleInputChange('remarks', e.target.value)}
+    fullWidth
+    variant="outlined"
+    multiline
+    rows={3}
+    InputLabelProps={{
+      shrink: true,
+    }}
+    InputProps={{
+      sx: {
+        ...fieldStyles,
+        alignItems: 'flex-start', // optional: aligns text to top
+        paddingTop: '12px',       // optional: improve vertical padding
+      }
+    }}
+  />
+</div>
+
           </CardContent>
         </Card>
 
