@@ -161,7 +161,6 @@ export const AddAMCPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Assets*</label>
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="asset-select-label" shrink>Assets</InputLabel>
                 <MuiSelect
@@ -182,7 +181,6 @@ export const AddAMCPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Supplier</label>
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="vendor-select-label" shrink>Supplier</InputLabel>
                 <MuiSelect
