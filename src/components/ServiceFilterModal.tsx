@@ -1,10 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { X } from 'lucide-react';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 interface ServiceFilterModalProps {
   isOpen: boolean;
@@ -38,6 +36,13 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
     onApply({});
   };
 
+  // Responsive styles for TextField and Select
+    const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+  };
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
@@ -61,11 +66,20 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
             <h3 className="text-orange-500 font-medium mb-4">Service Details</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Service Name</label>
-                <Input
+                <TextField
+                  label="Service Name"
                   placeholder="Enter Service Name"
+                  name="serviceName"
                   value={filters.serviceName}
                   onChange={(e) => handleInputChange('serviceName', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
                 />
               </div>
             </div>
@@ -76,30 +90,40 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
             <h3 className="text-orange-500 font-medium mb-4">Location Details</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Building</label>
-                <Select onValueChange={(value) => handleInputChange('building', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Building" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="wing2">Wing2</SelectItem>
-                    <SelectItem value="main-building">Main Building</SelectItem>
-                    <SelectItem value="annexe">Annexe</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="building-select-label" shrink>Building</InputLabel>
+                  <MuiSelect
+                    labelId="building-select-label"
+                    label="Building"
+                    displayEmpty
+                    value={filters.building}
+                    onChange={(e) => handleInputChange('building', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Building</em></MenuItem>
+                    <MenuItem value="wing2">Wing2</MenuItem>
+                    <MenuItem value="main-building">Main Building</MenuItem>
+                    <MenuItem value="annexe">Annexe</MenuItem>
+                  </MuiSelect>
+                </FormControl>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Area</label>
-                <Select onValueChange={(value) => handleInputChange('area', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Area" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="lobby">Lobby</SelectItem>
-                    <SelectItem value="office">Office</SelectItem>
-                    <SelectItem value="cafeteria">Cafeteria</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="area-select-label" shrink>Area</InputLabel>
+                  <MuiSelect
+                    labelId="area-select-label"
+                    label="Area"
+                    displayEmpty
+                    value={filters.area}
+                    onChange={(e) => handleInputChange('area', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Area</em></MenuItem>
+                    <MenuItem value="lobby">Lobby</MenuItem>
+                    <MenuItem value="office">Office</MenuItem>
+                    <MenuItem value="cafeteria">Cafeteria</MenuItem>
+                  </MuiSelect>
+                </FormControl>
               </div>
             </div>
           </div>

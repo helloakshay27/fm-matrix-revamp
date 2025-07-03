@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { X } from 'lucide-react';
+import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { useToast } from '@/hooks/use-toast';
 
 interface AssociateServiceModalProps {
   isOpen: boolean;
@@ -11,16 +11,40 @@ interface AssociateServiceModalProps {
 }
 
 export const AssociateServiceModal = ({ isOpen, onClose }: AssociateServiceModalProps) => {
+  const { toast } = useToast();
   const [selectedAsset, setSelectedAsset] = useState('');
 
   const handleAssociate = () => {
     if (!selectedAsset) {
-      alert('Please select an asset first');
+      toast({
+        title: "Error",
+        description: "Please select an asset first",
+        variant: "destructive",
+      });
       return;
     }
     console.log('Associating service with asset:', selectedAsset);
-    alert('Service associated successfully!');
+    toast({
+      title: "Success",
+      description: "Service associated successfully!",
+    });
     onClose();
+  };
+
+  // Responsive styles for Select
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+    '& .MuiInputBase-root': {
+      '& .MuiSelect-select': {
+        fontSize: { xs: '11px', sm: '12px', md: '13px' }, // Smaller for dropdowns
+      },
+      '& .MuiMenuItem-root': {
+        fontSize: { xs: '11px', sm: '12px', md: '13px' }, // Smaller for dropdown menu items
+      },
+    },
   };
 
   return (
@@ -28,7 +52,7 @@ export const AssociateServiceModal = ({ isOpen, onClose }: AssociateServiceModal
       <DialogContent className="max-w-md">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-semibold text-orange-500">
+            <DialogTitle className="text-xl font-semibold text-[#C72030]">
               Associate Services To Asset
             </DialogTitle>
             <Button
@@ -44,19 +68,24 @@ export const AssociateServiceModal = ({ isOpen, onClose }: AssociateServiceModal
         
         <div className="space-y-6 pt-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Asset</label>
-            <Select onValueChange={setSelectedAsset}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Asset" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="asset1">Asset 1 - Electrical Panel</SelectItem>
-                <SelectItem value="asset2">Asset 2 - HVAC System</SelectItem>
-                <SelectItem value="asset3">Asset 3 - Fire Safety System</SelectItem>
-                <SelectItem value="asset4">Asset 4 - Water Pump</SelectItem>
-                <SelectItem value="asset5">Asset 5 - Generator</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="asset-select-label" shrink>Asset</InputLabel>
+              <MuiSelect
+                labelId="asset-select-label"
+                label="Asset"
+                displayEmpty
+                value={selectedAsset}
+                onChange={(e) => setSelectedAsset(e.target.value)}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Asset</em></MenuItem>
+                <MenuItem value="asset1">Asset 1 - Electrical Panel</MenuItem>
+                <MenuItem value="asset2">Asset 2 - HVAC System</MenuItem>
+                <MenuItem value="asset3">Asset 3 - Fire Safety System</MenuItem>
+                <MenuItem value="asset4">Asset 4 - Water Pump</MenuItem>
+                <MenuItem value="asset5">Asset 5 - Generator</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           <div className="flex justify-end">

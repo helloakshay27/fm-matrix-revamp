@@ -1,12 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 export const AddServicePage = () => {
   const navigate = useNavigate();
@@ -49,6 +47,14 @@ export const AddServicePage = () => {
     navigate('/maintenance/service');
   };
 
+  // Responsive styles for TextField and Select
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -60,7 +66,7 @@ export const AddServicePage = () => {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Service List
         </Button>
-        <p className="text-[#1a1a1a] opacity-70 mb-2">Service List &gt; Create Service</p>
+        <p className="text-[#1a1a1a] opacity-70 mb-2">Service List > Create Service</p>
         <h1 className="text-2xl font-bold text-[#1a1a1a]">CREATE SERVICE</h1>
       </div>
 
@@ -75,134 +81,179 @@ export const AddServicePage = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Service Name<span className="text-red-500">*</span>
-              </label>
-              <Input 
+              <TextField
+                required
+                label="Service Name"
                 placeholder="Enter Service Name"
+                name="serviceName"
                 value={formData.serviceName}
                 onChange={(e) => handleInputChange('serviceName', e.target.value)}
-                required
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                InputProps={{
+                  sx: fieldStyles
+                }}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Site<span className="text-red-500">*</span>
-              </label>
-              <Select onValueChange={(value) => handleInputChange('site', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tower-4">Tower 4</SelectItem>
-                  <SelectItem value="sebc">SEBC</SelectItem>
-                  <SelectItem value="hay">Hay</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="site-select-label" shrink>Site</InputLabel>
+                <MuiSelect
+                  labelId="site-select-label"
+                  label="Site"
+                  displayEmpty
+                  value={formData.site}
+                  onChange={(e) => handleInputChange('site', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select</em></MenuItem>
+                  <MenuItem value="tower-4">Tower 4</MenuItem>
+                  <MenuItem value="sebc">SEBC</MenuItem>
+                  <MenuItem value="hay">Hay</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Building</label>
-              <Select onValueChange={(value) => handleInputChange('building', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Building" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="wing2">Wing2</SelectItem>
-                  <SelectItem value="main-building">Main Building</SelectItem>
-                  <SelectItem value="annexe">Annexe</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="building-select-label" shrink>Building</InputLabel>
+                <MuiSelect
+                  labelId="building-select-label"
+                  label="Building"
+                  displayEmpty
+                  value={formData.building}
+                  onChange={(e) => handleInputChange('building', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Building</em></MenuItem>
+                  <MenuItem value="wing2">Wing2</MenuItem>
+                  <MenuItem value="main-building">Main Building</MenuItem>
+                  <MenuItem value="annexe">Annexe</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Wing</label>
-              <Select onValueChange={(value) => handleInputChange('wing', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Wing" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="south">South</SelectItem>
-                  <SelectItem value="north">North</SelectItem>
-                  <SelectItem value="east">East</SelectItem>
-                  <SelectItem value="west">West</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="wing-select-label" shrink>Wing</InputLabel>
+                <MuiSelect
+                  labelId="wing-select-label"
+                  label="Wing"
+                  displayEmpty
+                  value={formData.wing}
+                  onChange={(e) => handleInputChange('wing', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Wing</em></MenuItem>
+                  <MenuItem value="south">South</MenuItem>
+                  <MenuItem value="north">North</MenuItem>
+                  <MenuItem value="east">East</MenuItem>
+                  <MenuItem value="west">West</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Area</label>
-              <Select onValueChange={(value) => handleInputChange('area', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Area" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="lobby">Lobby</SelectItem>
-                  <SelectItem value="office">Office</SelectItem>
-                  <SelectItem value="cafeteria">Cafeteria</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="area-select-label" shrink>Area</InputLabel>
+                <MuiSelect
+                  labelId="area-select-label"
+                  label="Area"
+                  displayEmpty
+                  value={formData.area}
+                  onChange={(e) => handleInputChange('area', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Area</em></MenuItem>
+                  <MenuItem value="lobby">Lobby</MenuItem>
+                  <MenuItem value="office">Office</MenuItem>
+                  <MenuItem value="cafeteria">Cafeteria</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Floor</label>
-              <Select onValueChange={(value) => handleInputChange('floor', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Floor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ground">Ground Floor</SelectItem>
-                  <SelectItem value="first">First Floor</SelectItem>
-                  <SelectItem value="second">Second Floor</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="floor-select-label" shrink>Floor</InputLabel>
+                <MuiSelect
+                  labelId="floor-select-label"
+                  label="Floor"
+                  displayEmpty
+                  value={formData.floor}
+                  onChange={(e) => handleInputChange('floor', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Floor</em></MenuItem>
+                  <MenuItem value="ground">Ground Floor</MenuItem>
+                  <MenuItem value="first">First Floor</MenuItem>
+                  <MenuItem value="second">Second Floor</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Room</label>
-              <Select onValueChange={(value) => handleInputChange('room', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Room" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="101">Room 101</SelectItem>
-                  <SelectItem value="102">Room 102</SelectItem>
-                  <SelectItem value="conference">Conference Room</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="room-select-label" shrink>Room</InputLabel>
+                <MuiSelect
+                  labelId="room-select-label"
+                  label="Room"
+                  displayEmpty
+                  value={formData.room}
+                  onChange={(e) => handleInputChange('room', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Room</em></MenuItem>
+                  <MenuItem value="101">Room 101</MenuItem>
+                  <MenuItem value="102">Room 102</MenuItem>
+                  <MenuItem value="conference">Conference Room</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Group</label>
-              <Select onValueChange={(value) => handleInputChange('group', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Group" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="cleaning">Cleaning</SelectItem>
-                  <SelectItem value="security">Security</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="group-select-label" shrink>Group</InputLabel>
+                <MuiSelect
+                  labelId="group-select-label"
+                  label="Group"
+                  displayEmpty
+                  value={formData.group}
+                  onChange={(e) => handleInputChange('group', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Group</em></MenuItem>
+                  <MenuItem value="maintenance">Maintenance</MenuItem>
+                  <MenuItem value="cleaning">Cleaning</MenuItem>
+                  <MenuItem value="security">Security</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Sub-Group</label>
-              <Select onValueChange={(value) => handleInputChange('subGroup', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select SubGroup" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="electrical">Electrical</SelectItem>
-                  <SelectItem value="plumbing">Plumbing</SelectItem>
-                  <SelectItem value="hvac">HVAC</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="subgroup-select-label" shrink>Sub-Group</InputLabel>
+                <MuiSelect
+                  labelId="subgroup-select-label"
+                  label="Sub-Group"
+                  displayEmpty
+                  value={formData.subGroup}
+                  onChange={(e) => handleInputChange('subGroup', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Sub-Group</em></MenuItem>
+                  <MenuItem value="electrical">Electrical</MenuItem>
+                  <MenuItem value="plumbing">Plumbing</MenuItem>
+                  <MenuItem value="hvac">HVAC</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
         </CardContent>
