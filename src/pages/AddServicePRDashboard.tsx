@@ -36,10 +36,13 @@ export const AddServicePRDashboard = () => {
         {/* Work Order Details Section */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-orange-600 flex items-center">
-              <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">1</span>
-              WORK ORDER DETAILS
-            </CardTitle>
+           <CardTitle className="text-[#C72030] flex items-center">
+  <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+    1
+  </h2>
+  WORK ORDER DETAILS
+</CardTitle>
+
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

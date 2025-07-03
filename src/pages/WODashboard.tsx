@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit, Search } from "lucide-react";
@@ -57,26 +56,27 @@ export const WODashboard = () => {
   );
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       {/* Breadcrumb */}
-      <div className="mb-4 text-sm text-gray-600">
-        WO
-      </div>
+      <div className="mb-2 text-sm text-gray-600">WO</div>
 
-      {/* Page Title */}
-      <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal mb-6">WORK ORDER LIST</h1>
+      {/* Title */}
+      <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal mb-4">
+        WORK ORDER LIST
+      </h1>
 
-      {/* Action Buttons */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex gap-3">
-          <Button 
+      {/* Buttons + Search */}
+      <div className="flex flex-col md:flex-row justify-between gap-4 flex-wrap mb-6">
+        {/* Left Side Buttons */}
+        <div className="flex flex-wrap gap-3">
+          <Button
             className="bg-[#C72030] hover:bg-[#A01020] text-white"
             onClick={() => navigate('/finance/wo/add')}
           >
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
-          <Button 
+          <Button
             variant="outline"
             onClick={() => setIsFilterDialogOpen(true)}
           >
@@ -84,35 +84,32 @@ export const WODashboard = () => {
           </Button>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="relative">
+        {/* Right Side Search */}
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:items-center md:w-auto">
+          <div className="relative w-full sm:w-64">
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent w-64"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
             />
           </div>
-          <Button 
-            className="bg-[#C72030] hover:bg-[#A01020] text-white px-4"
-          >
-            Go!
-          </Button>
-          <Button 
-            variant="outline" 
-            className="px-4"
-            onClick={() => setSearchQuery('')}
-          >
-            Reset
-          </Button>
+          <div className="flex gap-2">
+            <Button className="bg-[#C72030] hover:bg-[#A01020] text-white px-4">
+              Go!
+            </Button>
+            <Button variant="outline" className="px-4" onClick={() => setSearchQuery('')}>
+              Reset
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Table */}
+      {/* Responsive Table */}
       <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <Table>
+        <Table className="min-w-[1200px]">
           <TableHeader>
             <TableRow className="bg-gray-50">
               <TableHead className="font-semibold">Action</TableHead>
@@ -150,9 +147,7 @@ export const WODashboard = () => {
                 </TableCell>
                 <TableCell className="font-medium">{item.id}</TableCell>
                 <TableCell>{item.woNo}</TableCell>
-                <TableCell className="text-blue-600 hover:underline cursor-pointer">
-                  {item.referenceNo}
-                </TableCell>
+                <TableCell className="text-blue-600 hover:underline cursor-pointer">{item.referenceNo}</TableCell>
                 <TableCell>{item.createdBy}</TableCell>
                 <TableCell>{item.supplier}</TableCell>
                 <TableCell>
@@ -161,7 +156,7 @@ export const WODashboard = () => {
                   </span>
                 </TableCell>
                 <TableCell>{item.paymentTenureInDays}</TableCell>
-                <TableCell className="font-medium">{item.woAmount}</TableCell>
+                <TableCell>{item.woAmount}</TableCell>
                 <TableCell>{item.totalAmtCritNAmount}</TableCell>
                 <TableCell>{item.woAmount}</TableCell>
                 <TableCell>{item.totalAmtCritNAmount}</TableCell>
@@ -182,7 +177,7 @@ export const WODashboard = () => {
         </Table>
       </div>
 
-      <WOFilterDialog 
+      <WOFilterDialog
         open={isFilterDialogOpen}
         onOpenChange={setIsFilterDialogOpen}
       />

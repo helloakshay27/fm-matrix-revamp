@@ -37,10 +37,13 @@ export const AddMaterialPRDashboard = () => {
           {/* Supplier Details */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-orange-600 flex items-center">
-                <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">1</span>
-                SUPPLIER DETAILS
-              </CardTitle>
+             <CardTitle className="text-[#C72030] flex items-center">
+  <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+    1
+  </h2>
+  SUPPLIER DETAILS
+</CardTitle>
+
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -116,10 +119,13 @@ export const AddMaterialPRDashboard = () => {
           <Card>
             <CardHeader>
               <CardTitle className="text-orange-600 flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">2</span>
-                  ITEM DETAILS
-                </div>
+                <div className="flex items-center text-[#C72030]">
+  <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+    2
+  </h2>
+  ITEM DETAILS
+</div>
+
                 <Button onClick={addItem} size="sm" className="bg-purple-600 hover:bg-purple-700">
                   Add Item
                 </Button>
@@ -188,10 +194,13 @@ export const AddMaterialPRDashboard = () => {
           {/* Attachments */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-orange-600 flex items-center">
-                <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">3</span>
-                ATTACHMENTS
-              </CardTitle>
+              <CardTitle className="text-[#C72030] flex items-center">
+  <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+    3
+  </h2>
+  ATTACHMENTS
+</CardTitle>
+
             </CardHeader>
             <CardContent>
               <div className="border-2 border-dashed border-yellow-400 rounded-lg p-8 text-center">

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit, Search } from "lucide-react";
@@ -70,62 +69,50 @@ export const ServicePRDashboard = () => {
   );
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       {/* Breadcrumb */}
-      <div className="mb-4 text-sm text-gray-600">
-        Service PR
-      </div>
+      <div className="mb-2 text-sm text-gray-600">Service PR</div>
 
       {/* Page Title */}
-      <h1 className="text-2xl font-bold mb-6">SERVICE PR</h1>
+      <h1 className="text-xl sm:text-2xl font-bold mb-4">SERVICE PR</h1>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex gap-3">
-          <Button 
-            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-            onClick={() => navigate('/finance/service-pr/add')}
-          >
+      <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+        <div className="flex flex-wrap gap-3">
+          <Button className="bg-[#C72030] hover:bg-[#A01020] text-white" onClick={() => navigate('/finance/service-pr/add')}>
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
-          <Button 
-            variant="outline"
-            onClick={() => setIsFilterDialogOpen(true)}
-          >
+          <Button variant="outline" onClick={() => setIsFilterDialogOpen(true)}>
             Filters
           </Button>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+          <div className="relative w-full sm:w-64">
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search By PR Number"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent w-64"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
             />
           </div>
-          <Button 
-            className="bg-[#C72030] hover:bg-[#A01020] text-white px-4"
-          >
-            Go!
-          </Button>
-          <Button 
-            variant="outline" 
-            className="px-4"
-            onClick={() => setSearchQuery('')}
-          >
-            Reset
-          </Button>
+          <div className="flex gap-2">
+            <Button className="bg-[#C72030] hover:bg-[#A01020] text-white px-4">
+              Go!
+            </Button>
+            <Button variant="outline" className="px-4" onClick={() => setSearchQuery('')}>
+              Reset
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Table */}
       <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <Table>
+        <Table className="min-w-[1000px]">
           <TableHeader>
             <TableRow className="bg-gray-50">
               <TableHead className="font-semibold">Action</TableHead>
@@ -146,9 +133,9 @@ export const ServicePRDashboard = () => {
             {filteredData.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
+                  <Button
+                    size="sm"
+                    variant="ghost"
                     className="p-1"
                     onClick={() => navigate(`/finance/service-pr/edit/${item.id}`)}
                   >
@@ -156,22 +143,18 @@ export const ServicePRDashboard = () => {
                   </Button>
                 </TableCell>
                 <TableCell>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="p-1 bg-gradient-to-b from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300"
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="p-1"
                     onClick={() => navigate(`/finance/service-pr/details/${item.id}`)}
                   >
                     <Eye className="w-4 h-4" />
                   </Button>
                 </TableCell>
                 <TableCell className="font-medium">{item.id}</TableCell>
-                <TableCell className="text-blue-600 hover:underline cursor-pointer">
-                  {item.prNumber}
-                </TableCell>
-                <TableCell className="text-blue-600 hover:underline cursor-pointer">
-                  {item.referenceNo}
-                </TableCell>
+                <TableCell className="text-blue-600 hover:underline cursor-pointer">{item.prNumber}</TableCell>
+                <TableCell className="text-blue-600 hover:underline cursor-pointer">{item.referenceNo}</TableCell>
                 <TableCell>{item.supplierName}</TableCell>
                 <TableCell>{item.createdBy}</TableCell>
                 <TableCell>{item.createdOn}</TableCell>
@@ -183,12 +166,7 @@ export const ServicePRDashboard = () => {
                 </TableCell>
                 <TableCell className="font-medium">{item.prAmount}</TableCell>
                 <TableCell>
-                  <input 
-                    type="checkbox" 
-                    checked={item.activeInactive} 
-                    readOnly
-                    className="w-4 h-4"
-                  />
+                  <input type="checkbox" checked={item.activeInactive} readOnly className="w-4 h-4" />
                 </TableCell>
               </TableRow>
             ))}
@@ -196,10 +174,8 @@ export const ServicePRDashboard = () => {
         </Table>
       </div>
 
-      <ServicePRFilterDialog 
-        open={isFilterDialogOpen}
-        onOpenChange={setIsFilterDialogOpen}
-      />
+      {/* Filter Dialog */}
+      <ServicePRFilterDialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen} />
     </div>
   );
 };

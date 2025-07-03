@@ -93,7 +93,6 @@ export const InvoicesDashboard = () => {
 
   const handleFilterApply = (filters: typeof appliedFilters) => {
     setAppliedFilters(filters);
-    console.log('Applied filters:', filters);
     toast.success('Filters applied successfully');
   };
 
@@ -117,13 +116,11 @@ export const InvoicesDashboard = () => {
   const filteredInvoices = applyFilters(invoicesData);
 
   const handleSearch = () => {
-    console.log('Searching for:', searchTerm);
     const filtered = applyFilters(invoicesData);
     toast.success(`Found ${filtered.length} matching records`);
   };
 
   const handleReset = () => {
-    console.log('Resetting search...');
     setSearchTerm('');
     setAppliedFilters({
       invoiceNumber: '',
@@ -134,104 +131,82 @@ export const InvoicesDashboard = () => {
   };
 
   const handleViewInvoice = (invoiceId: number) => {
-    console.log('Viewing invoice:', invoiceId);
     toast.info(`Opening invoice details for ID: ${invoiceId}`);
   };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'approved':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'rejected':
-        return 'bg-red-100 text-red-800';
-      case 'partial':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      case 'partial': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   return (
     <div className="p-6 space-y-6">
-      {/* Breadcrumb */}
-      <div className="text-sm text-gray-600">
-        Home &gt; Finance &gt; Invoices
-      </div>
-
-      {/* Header Section */}
+      <div className="text-sm text-gray-600">Home &gt; Finance &gt; Invoices</div>
       <h1 className="text-2xl font-bold">WORK ORDER INVOICES/SES</h1>
 
-      {/* Filter and Search Section */}
-      <div className="flex items-center gap-4">
-        <Button 
-          variant="outline" 
-          onClick={() => setIsFilterDialogOpen(true)}
-          className="flex items-center gap-2"
-        >
-          <Filter className="w-4 h-4" />
-          Filters
-        </Button>
-        
-        <div className="flex items-center gap-2 ml-auto">
-          <div className="relative">
+      {/* Responsive Filters and Search */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 flex-wrap">
+        <div className="flex-shrink-0">
+          <Button variant="outline" onClick={() => setIsFilterDialogOpen(true)} className="flex items-center gap-2">
+            <Filter className="w-4 h-4" /> Filters
+          </Button>
+        </div>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+          <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
               placeholder="Search..."
-              className="pl-10 w-80 h-[36px]"
-              style={{ height: '36px' }}
+              className="pl-10 w-full h-[36px]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
             />
           </div>
-          <Button 
-            onClick={handleSearch}
-            style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-            className="hover:bg-[#F2EEE9]/90"
-          >
-            Go!
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={handleReset}
-            className="hover:bg-gray-50"
-          >
-            Reset
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button onClick={handleSearch} style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }} className="hover:bg-[#F2EEE9]/90 w-full sm:w-auto">
+              Go!
+            </Button>
+            <Button variant="outline" onClick={handleReset} className="hover:bg-gray-50 w-full sm:w-auto">
+              Reset
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Invoices Table */}
+      {/* Responsive Table */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="min-w-[1400px]">
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold">View</TableHead>
-                <TableHead className="font-semibold">ID</TableHead>
-                <TableHead className="font-semibold">Invoice Number</TableHead>
-                <TableHead className="font-semibold">Invoice Date</TableHead>
-                <TableHead className="font-semibold">Supplier</TableHead>
-                <TableHead className="font-semibold">W.O. Number</TableHead>
-                <TableHead className="font-semibold">WO Amount</TableHead>
-                <TableHead className="font-semibold">Total Invoice Amount</TableHead>
-                <TableHead className="font-semibold">Last Approved By</TableHead>
-                <TableHead className="font-semibold">Approved Status</TableHead>
-                <TableHead className="font-semibold">Payable Amount</TableHead>
-                <TableHead className="font-semibold">Adjustment Amount</TableHead>
-                <TableHead className="font-semibold">Retention Amount</TableHead>
-                <TableHead className="font-semibold">KS Amount</TableHead>
-                <TableHead className="font-semibold">Physical Invoice Sent to Accounts</TableHead>
-                <TableHead className="font-semibold">Physical Invoice Received by Accounts</TableHead>
-                <TableHead className="font-semibold">Days Passed</TableHead>
-                <TableHead className="font-semibold">Account Paid</TableHead>
-                <TableHead className="font-semibold">Balance Amount</TableHead>
-                <TableHead className="font-semibold">Payment Status</TableHead>
-                <TableHead className="font-semibold">Aging</TableHead>
-                <TableHead className="font-semibold">Created On</TableHead>
-                <TableHead className="font-semibold">Created By</TableHead>
+                <TableHead>View</TableHead>
+                <TableHead>ID</TableHead>
+                <TableHead>Invoice Number</TableHead>
+                <TableHead>Invoice Date</TableHead>
+                <TableHead>Supplier</TableHead>
+                <TableHead>W.O. Number</TableHead>
+                <TableHead>WO Amount</TableHead>
+                <TableHead>Total Invoice Amount</TableHead>
+                <TableHead>Last Approved By</TableHead>
+                <TableHead>Approved Status</TableHead>
+                <TableHead>Payable Amount</TableHead>
+                <TableHead>Adjustment Amount</TableHead>
+                <TableHead>Retention Amount</TableHead>
+                <TableHead>KS Amount</TableHead>
+                <TableHead>Physical Invoice Sent to Accounts</TableHead>
+                <TableHead>Physical Invoice Received by Accounts</TableHead>
+                <TableHead>Days Passed</TableHead>
+                <TableHead>Account Paid</TableHead>
+                <TableHead>Balance Amount</TableHead>
+                <TableHead>Payment Status</TableHead>
+                <TableHead>Aging</TableHead>
+                <TableHead>Created On</TableHead>
+                <TableHead>Created By</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -245,18 +220,12 @@ export const InvoicesDashboard = () => {
                 filteredInvoices.map((invoice) => (
                   <TableRow key={invoice.id} className="hover:bg-gray-50">
                     <TableCell>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleViewInvoice(invoice.id)}
-                      >
+                      <Button variant="outline" size="sm" onClick={() => handleViewInvoice(invoice.id)}>
                         View
                       </Button>
                     </TableCell>
                     <TableCell className="font-medium">{invoice.id}</TableCell>
-                    <TableCell className="text-blue-600 cursor-pointer hover:underline">
-                      {invoice.invoiceNumber}
-                    </TableCell>
+                    <TableCell className="text-blue-600 cursor-pointer hover:underline">{invoice.invoiceNumber}</TableCell>
                     <TableCell>{invoice.invoiceDate}</TableCell>
                     <TableCell>{invoice.supplier}</TableCell>
                     <TableCell>{invoice.woNumber}</TableCell>
@@ -293,11 +262,7 @@ export const InvoicesDashboard = () => {
         </div>
       </div>
 
-      <InvoicesFilterDialog 
-        open={isFilterDialogOpen} 
-        onOpenChange={setIsFilterDialogOpen}
-        onApply={handleFilterApply}
-      />
+      <InvoicesFilterDialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen} onApply={handleFilterApply} />
     </div>
   );
 };

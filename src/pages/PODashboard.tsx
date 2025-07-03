@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Search } from "lucide-react";
@@ -32,7 +31,7 @@ export const PODashboard = () => {
     },
     {
       id: 10501,
-      poNumber: "NA", 
+      poNumber: "NA",
       referenceNo: "121248",
       createdBy: "Sony B Bhosle",
       createdOn: "01/04/2025",
@@ -51,7 +50,7 @@ export const PODashboard = () => {
     {
       id: 10405,
       poNumber: "NA",
-      referenceNo: "121243", 
+      referenceNo: "121243",
       createdBy: "Sony B Bhosle",
       createdOn: "26/03/2025",
       supplier: "ACHLA CORPORATION",
@@ -92,19 +91,18 @@ export const PODashboard = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       {/* Breadcrumb */}
-      <div className="mb-4 text-sm text-gray-600">
-        PO
-      </div>
+      <div className="mb-2 text-sm text-gray-600">PO</div>
 
       {/* Page Title */}
-      <h1 className="text-2xl font-bold mb-6">PURCHASE ORDER LIST</h1>
+      <h1 className="text-xl sm:text-2xl font-bold mb-4">PURCHASE ORDER LIST</h1>
 
-      {/* Action Buttons */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex gap-3">
-          <Button 
+      {/* Action + Search Section */}
+      <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+        {/* Buttons */}
+        <div className="flex flex-wrap gap-3">
+          <Button
             style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
             className="hover:bg-[#F2EEE9]/90"
             onClick={() => navigate('/finance/po/add')}
@@ -112,7 +110,7 @@ export const PODashboard = () => {
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
-          <Button 
+          <Button
             variant="outline"
             onClick={() => setIsFilterDialogOpen(true)}
           >
@@ -120,36 +118,39 @@ export const PODashboard = () => {
           </Button>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="relative">
+        {/* Search */}
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full md:w-auto">
+          <div className="relative w-full sm:w-64">
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BF213E] focus:border-transparent w-64"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BF213E] focus:border-transparent"
             />
           </div>
-          <Button 
-            style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-            className="hover:bg-[#F2EEE9]/90 px-4"
-          >
-            Go!
-          </Button>
-          <Button 
-            variant="outline" 
-            className="px-4"
-            onClick={() => setSearchQuery('')}
-          >
-            Reset
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+              className="hover:bg-[#F2EEE9]/90 px-4"
+            >
+              Go!
+            </Button>
+            <Button
+              variant="outline"
+              className="px-4"
+              onClick={() => setSearchQuery('')}
+            >
+              Reset
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table Section */}
       <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <Table>
+        <Table className="min-w-[1100px]">
           <TableHeader>
             <TableRow className="bg-gray-50">
               <TableHead className="font-semibold">View</TableHead>
@@ -175,9 +176,9 @@ export const PODashboard = () => {
             {filteredData.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
+                  <Button
+                    size="sm"
+                    variant="ghost"
                     className="p-1"
                     onClick={() => handleViewPO(item.id)}
                   >
@@ -194,9 +195,9 @@ export const PODashboard = () => {
                 <TableCell>{item.supplier}</TableCell>
                 <TableCell>{item.paymentTenure}</TableCell>
                 <TableCell>
-                  <input 
-                    type="checkbox" 
-                    checked={item.activeInactive} 
+                  <input
+                    type="checkbox"
+                    checked={item.activeInactive}
                     readOnly
                     className="w-4 h-4"
                   />
@@ -219,7 +220,8 @@ export const PODashboard = () => {
         </Table>
       </div>
 
-      <POFilterDialog 
+      {/* Filter Dialog */}
+      <POFilterDialog
         open={isFilterDialogOpen}
         onOpenChange={setIsFilterDialogOpen}
       />
