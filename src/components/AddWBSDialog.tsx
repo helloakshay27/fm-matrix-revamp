@@ -12,14 +12,25 @@ const fieldStyles = {
   },
 };
 
+interface WBSElement {
+  plantCode: string;
+  category: string;
+  categoryWBSCode: string;
+  wbsName: string;
+  wbsCode: string;
+  site: string;
+}
+
 interface AddWBSDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSubmit: (data: Omit<WBSElement, 'id'>) => void;
 }
 
 export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
   open,
   onOpenChange,
+  onSubmit,
 }) => {
   const [formData, setFormData] = useState({
     wbsCode: '',
@@ -27,15 +38,31 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
     description: '',
     parentWBS: '',
     department: '',
-    status: 'active'
+    status: 'active',
+    plantCode: '',
+    category: '',
+    categoryWBSCode: '',
+    site: ''
   });
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleSelectChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
   const handleSubmit = () => {
     console.log('Adding WBS:', formData);
+    onSubmit({
+      plantCode: formData.plantCode,
+      category: formData.category,
+      categoryWBSCode: formData.categoryWBSCode,
+      wbsName: formData.wbsName,
+      wbsCode: formData.wbsCode,
+      site: formData.site
+    });
     onOpenChange(false);
     // Reset form
     setFormData({
@@ -44,7 +71,11 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
       description: '',
       parentWBS: '',
       department: '',
-      status: 'active'
+      status: 'active',
+      plantCode: '',
+      category: '',
+      categoryWBSCode: '',
+      site: ''
     });
   };
 
@@ -90,6 +121,58 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
             />
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <TextField
+              label="Plant Code"
+              placeholder="Enter Plant Code"
+              value={formData.plantCode}
+              onChange={(e) => handleInputChange('plantCode', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+            
+            <TextField
+              label="Category"
+              placeholder="Enter Category"
+              value={formData.category}
+              onChange={(e) => handleInputChange('category', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <TextField
+              label="Category WBS Code"
+              placeholder="Enter Category WBS Code"
+              value={formData.categoryWBSCode}
+              onChange={(e) => handleInputChange('categoryWBSCode', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+            
+            <TextField
+              label="Site"
+              placeholder="Enter Site"
+              value={formData.site}
+              onChange={(e) => handleInputChange('site', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+          </div>
+
           <TextField
             label="Description"
             placeholder="Enter Description"
@@ -109,7 +192,7 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
               <MuiSelect
                 label="Parent WBS"
                 value={formData.parentWBS}
-                onChange={(e) => handleInputChange('parentWBS', e.target.value)}
+                onChange={(e) => handleSelectChange('parentWBS', e.target.value)}
                 displayEmpty
                 sx={fieldStyles}
               >
@@ -124,7 +207,7 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
               <MuiSelect
                 label="Department"
                 value={formData.department}
-                onChange={(e) => handleInputChange('department', e.target.value)}
+                onChange={(e) => handleSelectChange('department', e.target.value)}
                 displayEmpty
                 sx={fieldStyles}
               >
@@ -141,7 +224,7 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
             <MuiSelect
               label="Status"
               value={formData.status}
-              onChange={(e) => handleInputChange('status', e.target.value)}
+              onChange={(e) => handleSelectChange('status', e.target.value)}
               sx={fieldStyles}
             >
               <MenuItem value="active">Active</MenuItem>

@@ -15,11 +15,13 @@ const fieldStyles = {
 interface InvoicesFilterDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onApply: (filters: { invoiceNumber: string; invoiceDate: string; supplierName: string; }) => void;
 }
 
 export const InvoicesFilterDialog: React.FC<InvoicesFilterDialogProps> = ({
   open,
   onOpenChange,
+  onApply,
 }) => {
   const [filters, setFilters] = useState({
     invoiceNumber: '',
@@ -32,8 +34,17 @@ export const InvoicesFilterDialog: React.FC<InvoicesFilterDialogProps> = ({
     setFilters(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleSelectChange = (field: string, value: string) => {
+    setFilters(prev => ({ ...prev, [field]: value }));
+  };
+
   const handleApply = () => {
     console.log('Applying invoice filters:', filters);
+    onApply({
+      invoiceNumber: filters.invoiceNumber,
+      invoiceDate: '',
+      supplierName: filters.supplierName
+    });
     onOpenChange(false);
   };
 
@@ -94,7 +105,7 @@ export const InvoicesFilterDialog: React.FC<InvoicesFilterDialogProps> = ({
               <MuiSelect
                 label="Status"
                 value={filters.status}
-                onChange={(e) => handleInputChange('status', e.target.value)}
+                onChange={(e) => handleSelectChange('status', e.target.value)}
                 displayEmpty
                 sx={fieldStyles}
               >
@@ -110,7 +121,7 @@ export const InvoicesFilterDialog: React.FC<InvoicesFilterDialogProps> = ({
               <MuiSelect
                 label="Date Range"
                 value={filters.dateRange}
-                onChange={(e) => handleInputChange('dateRange', e.target.value)}
+                onChange={(e) => handleSelectChange('dateRange', e.target.value)}
                 displayEmpty
                 sx={fieldStyles}
               >
