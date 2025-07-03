@@ -1,13 +1,19 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
 
 export const AddAssetAuditPage = () => {
   const navigate = useNavigate();
@@ -93,11 +99,15 @@ export const AddAssetAuditPage = () => {
                     <Label htmlFor="auditName" className="text-sm font-medium">
                       Audit Name<span className="text-red-500">*</span>
                     </Label>
-                    <Input
+                    <TextField
                       id="auditName"
                       value={formData.auditName}
                       onChange={(e) => updateFormData('auditName', e.target.value)}
-                      className="mt-1"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
                     />
                   </div>
 
@@ -105,13 +115,17 @@ export const AddAssetAuditPage = () => {
                     <Label htmlFor="startDate" className="text-sm font-medium">
                       Start Date<span className="text-red-500">*</span>
                     </Label>
-                    <Input
+                    <TextField
                       id="startDate"
                       type="date"
                       value={formData.startDate}
                       onChange={(e) => updateFormData('startDate', e.target.value)}
-                      className="mt-1"
                       placeholder="dd-mm-yyyy"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
                     />
                   </div>
 
@@ -119,13 +133,17 @@ export const AddAssetAuditPage = () => {
                     <Label htmlFor="endDate" className="text-sm font-medium">
                       End Date<span className="text-red-500">*</span>
                     </Label>
-                    <Input
+                    <TextField
                       id="endDate"
                       type="date"
                       value={formData.endDate}
                       onChange={(e) => updateFormData('endDate', e.target.value)}
-                      className="mt-1"
                       placeholder="dd-mm-yyyy"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
                     />
                   </div>
 
@@ -133,16 +151,22 @@ export const AddAssetAuditPage = () => {
                     <Label htmlFor="conductedBy" className="text-sm font-medium">
                       Conducted By<span className="text-red-500">*</span>
                     </Label>
-                    <Select value={formData.conductedBy} onValueChange={(value) => updateFormData('conductedBy', value)}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="abhishek">Abhishek Sharma</SelectItem>
-                        <SelectItem value="abdul">Abdul Ghaffar</SelectItem>
-                        <SelectItem value="vinayak">Vinayak Mane</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <InputLabel id="conducted-by-label" shrink>Select</InputLabel>
+                      <MuiSelect
+                        labelId="conducted-by-label"
+                        label="Select"
+                        displayEmpty
+                        value={formData.conductedBy}
+                        onChange={(e) => updateFormData('conductedBy', e.target.value)}
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value=""><em>Select</em></MenuItem>
+                        <MenuItem value="abhishek">Abhishek Sharma</MenuItem>
+                        <MenuItem value="abdul">Abdul Ghaffar</MenuItem>
+                        <MenuItem value="vinayak">Vinayak Mane</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
                   </div>
                 </div>
               </div>
@@ -191,76 +215,106 @@ export const AddAssetAuditPage = () => {
                     <Label htmlFor="site" className="text-sm font-medium">
                       Site<span className="text-red-500">*</span>
                     </Label>
-                    <Select value={formData.site} onValueChange={(value) => updateFormData('site', value)}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Select..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="site1">Site 1</SelectItem>
-                        <SelectItem value="site2">Site 2</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <InputLabel id="site-label" shrink>Select...</InputLabel>
+                      <MuiSelect
+                        labelId="site-label"
+                        label="Select..."
+                        displayEmpty
+                        value={formData.site}
+                        onChange={(e) => updateFormData('site', e.target.value)}
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value=""><em>Select...</em></MenuItem>
+                        <MenuItem value="site1">Site 1</MenuItem>
+                        <MenuItem value="site2">Site 2</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
                   </div>
 
                   <div>
                     <Label htmlFor="building" className="text-sm font-medium">
                       Building<span className="text-red-500">*</span>
                     </Label>
-                    <Select value={formData.building} onValueChange={(value) => updateFormData('building', value)}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Select..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="building1">Building 1</SelectItem>
-                        <SelectItem value="building2">Building 2</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <InputLabel id="building-label" shrink>Select...</InputLabel>
+                      <MuiSelect
+                        labelId="building-label"
+                        label="Select..."
+                        displayEmpty
+                        value={formData.building}
+                        onChange={(e) => updateFormData('building', e.target.value)}
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value=""><em>Select...</em></MenuItem>
+                        <MenuItem value="building1">Building 1</MenuItem>
+                        <MenuItem value="building2">Building 2</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
                   </div>
 
                   <div>
                     <Label htmlFor="department" className="text-sm font-medium">
                       Department<span className="text-red-500">*</span>
                     </Label>
-                    <Select value={formData.department} onValueChange={(value) => updateFormData('department', value)}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Select..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="it">IT</SelectItem>
-                        <SelectItem value="facilities">Facilities</SelectItem>
-                        <SelectItem value="security">Security</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <InputLabel id="department-label" shrink>Select...</InputLabel>
+                      <MuiSelect
+                        labelId="department-label"
+                        label="Select..."
+                        displayEmpty
+                        value={formData.department}
+                        onChange={(e) => updateFormData('department', e.target.value)}
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value=""><em>Select...</em></MenuItem>
+                        <MenuItem value="it">IT</MenuItem>
+                        <MenuItem value="facilities">Facilities</MenuItem>
+                        <MenuItem value="security">Security</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
                   </div>
 
                   <div>
                     <Label htmlFor="assetGroup" className="text-sm font-medium">
                       Asset Group<span className="text-red-500">*</span>
                     </Label>
-                    <Select value={formData.assetGroup} onValueChange={(value) => updateFormData('assetGroup', value)}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Select..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="group1">Group 1</SelectItem>
-                        <SelectItem value="group2">Group 2</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <InputLabel id="asset-group-label" shrink>Select...</InputLabel>
+                      <MuiSelect
+                        labelId="asset-group-label"
+                        label="Select..."
+                        displayEmpty
+                        value={formData.assetGroup}
+                        onChange={(e) => updateFormData('assetGroup', e.target.value)}
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value=""><em>Select...</em></MenuItem>
+                        <MenuItem value="group1">Group 1</MenuItem>
+                        <MenuItem value="group2">Group 2</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
                   </div>
 
                   <div>
                     <Label htmlFor="assetSubGroup" className="text-sm font-medium">
                       Asset SubGroup<span className="text-red-500">*</span>
                     </Label>
-                    <Select value={formData.assetSubGroup} onValueChange={(value) => updateFormData('assetSubGroup', value)}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Select..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="subgroup1">SubGroup 1</SelectItem>
-                        <SelectItem value="subgroup2">SubGroup 2</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <InputLabel id="asset-subgroup-label" shrink>Select...</InputLabel>
+                      <MuiSelect
+                        labelId="asset-subgroup-label"
+                        label="Select..."
+                        displayEmpty
+                        value={formData.assetSubGroup}
+                        onChange={(e) => updateFormData('assetSubGroup', e.target.value)}
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value=""><em>Select...</em></MenuItem>
+                        <MenuItem value="subgroup1">SubGroup 1</MenuItem>
+                        <MenuItem value="subgroup2">SubGroup 2</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
                   </div>
                 </div>
               </div>

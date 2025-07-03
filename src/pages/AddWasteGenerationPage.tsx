@@ -2,11 +2,17 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
 
 const AddWasteGenerationPage = () => {
   const navigate = useNavigate();
@@ -77,53 +83,76 @@ const AddWasteGenerationPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="space-y-2">
               <Label htmlFor="building">Building</Label>
-              <Select value={formData.building} onValueChange={(value) => handleInputChange('building', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Building" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="building-a">Building A</SelectItem>
-                  <SelectItem value="building-b">Building B</SelectItem>
-                  <SelectItem value="building-c">Building C</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="building-label" shrink>Select Building</InputLabel>
+                <MuiSelect
+                  labelId="building-label"
+                  label="Select Building"
+                  displayEmpty
+                  value={formData.building}
+                  onChange={(e) => handleInputChange('building', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Building</em></MenuItem>
+                  <MenuItem value="building-a">Building A</MenuItem>
+                  <MenuItem value="building-b">Building B</MenuItem>
+                  <MenuItem value="building-c">Building C</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="wing">Wing</Label>
-              <Select value={formData.wing} onValueChange={(value) => handleInputChange('wing', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Building First" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="east-wing">East Wing</SelectItem>
-                  <SelectItem value="west-wing">West Wing</SelectItem>
-                  <SelectItem value="north-wing">North Wing</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="wing-label" shrink>Select Building First</InputLabel>
+                <MuiSelect
+                  labelId="wing-label"
+                  label="Select Building First"
+                  displayEmpty
+                  value={formData.wing}
+                  onChange={(e) => handleInputChange('wing', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Building First</em></MenuItem>
+                  <MenuItem value="east-wing">East Wing</MenuItem>
+                  <MenuItem value="west-wing">West Wing</MenuItem>
+                  <MenuItem value="north-wing">North Wing</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="area">Area</Label>
-              <Select value={formData.area} onValueChange={(value) => handleInputChange('area', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Floor First" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="floor-1">Floor 1</SelectItem>
-                  <SelectItem value="floor-2">Floor 2</SelectItem>
-                  <SelectItem value="floor-3">Floor 3</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="area-label" shrink>Select Floor First</InputLabel>
+                <MuiSelect
+                  labelId="area-label"
+                  label="Select Floor First"
+                  displayEmpty
+                  value={formData.area}
+                  onChange={(e) => handleInputChange('area', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Floor First</em></MenuItem>
+                  <MenuItem value="floor-1">Floor 1</MenuItem>
+                  <MenuItem value="floor-2">Floor 2</MenuItem>
+                  <MenuItem value="floor-3">Floor 3</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="date">Date*</Label>
-              <Input
+              <TextField
                 type="date"
                 value={formData.date}
                 onChange={(e) => handleInputChange('date', e.target.value)}
                 placeholder="Enter Date"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
               />
             </div>
           </div>
@@ -131,103 +160,148 @@ const AddWasteGenerationPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="space-y-2">
               <Label htmlFor="vendor">Vendor</Label>
-              <Select value={formData.vendor} onValueChange={(value) => handleInputChange('vendor', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Vendor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ecogreen">EcoGreen Solutions</SelectItem>
-                  <SelectItem value="wasteco">WasteCo Ltd</SelectItem>
-                  <SelectItem value="greentech">GreenTech Services</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="vendor-label" shrink>Select Vendor</InputLabel>
+                <MuiSelect
+                  labelId="vendor-label"
+                  label="Select Vendor"
+                  displayEmpty
+                  value={formData.vendor}
+                  onChange={(e) => handleInputChange('vendor', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Vendor</em></MenuItem>
+                  <MenuItem value="ecogreen">EcoGreen Solutions</MenuItem>
+                  <MenuItem value="wasteco">WasteCo Ltd</MenuItem>
+                  <MenuItem value="greentech">GreenTech Services</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="commodity">Commodity*</Label>
-              <Select value={formData.commodity} onValueChange={(value) => handleInputChange('commodity', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Commodity" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="paper">Paper</SelectItem>
-                  <SelectItem value="plastic">Plastic</SelectItem>
-                  <SelectItem value="metal">Metal</SelectItem>
-                  <SelectItem value="organic">Organic</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="commodity-label" shrink>Select Commodity</InputLabel>
+                <MuiSelect
+                  labelId="commodity-label"
+                  label="Select Commodity"
+                  displayEmpty
+                  value={formData.commodity}
+                  onChange={(e) => handleInputChange('commodity', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Commodity</em></MenuItem>
+                  <MenuItem value="paper">Paper</MenuItem>
+                  <MenuItem value="plastic">Plastic</MenuItem>
+                  <MenuItem value="metal">Metal</MenuItem>
+                  <MenuItem value="organic">Organic</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="category">Category*</Label>
-              <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="recyclable">Recyclable</SelectItem>
-                  <SelectItem value="non-recyclable">Non-Recyclable</SelectItem>
-                  <SelectItem value="hazardous">Hazardous</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="category-label" shrink>Select Category</InputLabel>
+                <MuiSelect
+                  labelId="category-label"
+                  label="Select Category"
+                  displayEmpty
+                  value={formData.category}
+                  onChange={(e) => handleInputChange('category', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Category</em></MenuItem>
+                  <MenuItem value="recyclable">Recyclable</MenuItem>
+                  <MenuItem value="non-recyclable">Non-Recyclable</MenuItem>
+                  <MenuItem value="hazardous">Hazardous</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="uom">UoM</Label>
-              <Select value={formData.uom} onValueChange={(value) => handleInputChange('uom', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select UoM" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="kg">KG</SelectItem>
-                  <SelectItem value="tons">Tons</SelectItem>
-                  <SelectItem value="liters">Liters</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="uom-label" shrink>Select UoM</InputLabel>
+                <MuiSelect
+                  labelId="uom-label"
+                  label="Select UoM"
+                  displayEmpty
+                  value={formData.uom}
+                  onChange={(e) => handleInputChange('uom', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select UoM</em></MenuItem>
+                  <MenuItem value="kg">KG</MenuItem>
+                  <MenuItem value="tons">Tons</MenuItem>
+                  <MenuItem value="liters">Liters</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="space-y-2">
               <Label htmlFor="operationalName">Operational Name of Landlord/ Tenant*</Label>
-              <Select value={formData.operationalName} onValueChange={(value) => handleInputChange('operationalName', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Operational Name" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="abc-corp">ABC Corp</SelectItem>
-                  <SelectItem value="xyz-inc">XYZ Inc</SelectItem>
-                  <SelectItem value="def-ltd">DEF Ltd</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="operational-name-label" shrink>Select Operational Name</InputLabel>
+                <MuiSelect
+                  labelId="operational-name-label"
+                  label="Select Operational Name"
+                  displayEmpty
+                  value={formData.operationalName}
+                  onChange={(e) => handleInputChange('operationalName', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Operational Name</em></MenuItem>
+                  <MenuItem value="abc-corp">ABC Corp</MenuItem>
+                  <MenuItem value="xyz-inc">XYZ Inc</MenuItem>
+                  <MenuItem value="def-ltd">DEF Ltd</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="agencyName">Agency Name</Label>
-              <Input
+              <TextField
                 value={formData.agencyName}
                 onChange={(e) => handleInputChange('agencyName', e.target.value)}
                 placeholder="Enter Agency Name"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="generatedUnit">Generated Unit*</Label>
-              <Input
+              <TextField
                 type="number"
                 value={formData.generatedUnit}
                 onChange={(e) => handleInputChange('generatedUnit', e.target.value)}
                 placeholder="Enter Unit"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="recycledUnit">Recycled Unit</Label>
-              <Input
+              <TextField
                 type="number"
                 value={formData.recycledUnit}
                 onChange={(e) => handleInputChange('recycledUnit', e.target.value)}
                 placeholder="0"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
               />
             </div>
           </div>
