@@ -257,7 +257,7 @@ export const AssetDashboard = () => {
       {statData.map((item, i) => (
         <div
           key={i}
-          className="bg-[#F9F7F3] p-6 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4"
+          className="bg-[#f6f4ee] p-6 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4"
         >
           {/* Icon with circle background */}
           <div className="w-14 h-14 bg-[#FBEDEC] rounded-full flex items-center justify-center">
