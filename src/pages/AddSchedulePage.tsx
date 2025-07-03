@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Plus, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { useToast } from '@/hooks/use-toast';
 
 interface TaskSection {
   id: string;
@@ -23,8 +23,16 @@ interface TaskSection {
   failing: boolean;
 }
 
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
+
 export const AddSchedulePage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [createNew, setCreateNew] = useState(false);
   const [createTicket, setCreateTicket] = useState(false);
   const [weightage, setWeightage] = useState(false);
@@ -109,7 +117,10 @@ export const AddSchedulePage = () => {
 
   const handleSubmit = () => {
     console.log('Submitting schedule data:', { formData, taskSections });
-    // Handle form submission
+    toast({
+      title: "Success",
+      description: "Schedule saved successfully!",
+    });
     navigate('/maintenance/schedule');
   };
 
@@ -165,18 +176,23 @@ export const AddSchedulePage = () => {
         <Card>
           <CardContent className="pt-6">
             <div>
-              <Label htmlFor="template-select">Select from the existing Template</Label>
-              <Select value={formData.template} onValueChange={(value) => handleInputChange('template', value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select from the existing Template" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="template1">Template 1</SelectItem>
-                  <SelectItem value="template2">Template 2</SelectItem>
-                  <SelectItem value="template3">Template 3</SelectItem>
-                  <SelectItem value="custom">Custom Template</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="template-label" shrink>Select from the existing Template</InputLabel>
+                <MuiSelect
+                  labelId="template-label"
+                  label="Select from the existing Template"
+                  displayEmpty
+                  value={formData.template}
+                  onChange={(e) => handleInputChange('template', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select from the existing Template</em></MenuItem>
+                  <MenuItem value="template1">Template 1</MenuItem>
+                  <MenuItem value="template2">Template 2</MenuItem>
+                  <MenuItem value="template3">Template 3</MenuItem>
+                  <MenuItem value="custom">Custom Template</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </CardContent>
         </Card>
@@ -214,30 +230,40 @@ export const AddSchedulePage = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Select Assigned To</Label>
-                  <Select value={formData.assignedTo} onValueChange={(value) => handleInputChange('assignedTo', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Assigned To" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="supervisor">Supervisor</SelectItem>
-                      <SelectItem value="technician">Technician</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel id="assigned-to-label" shrink>Select Assigned To</InputLabel>
+                    <MuiSelect
+                      labelId="assigned-to-label"
+                      label="Select Assigned To"
+                      displayEmpty
+                      value={formData.assignedTo}
+                      onChange={(e) => handleInputChange('assignedTo', e.target.value)}
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value=""><em>Select Assigned To</em></MenuItem>
+                      <MenuItem value="admin">Admin</MenuItem>
+                      <MenuItem value="supervisor">Supervisor</MenuItem>
+                      <MenuItem value="technician">Technician</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
                 <div>
-                  <Label>Select Category</Label>
-                  <Select value={formData.ticketCategory} onValueChange={(value) => handleInputChange('ticketCategory', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="technical">Technical</SelectItem>
-                      <SelectItem value="non-technical">Non Technical</SelectItem>
-                      <SelectItem value="maintenance">Maintenance</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel id="ticket-category-label" shrink>Select Category</InputLabel>
+                    <MuiSelect
+                      labelId="ticket-category-label"
+                      label="Select Category"
+                      displayEmpty
+                      value={formData.ticketCategory}
+                      onChange={(e) => handleInputChange('ticketCategory', e.target.value)}
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value=""><em>Select Category</em></MenuItem>
+                      <MenuItem value="technical">Technical</MenuItem>
+                      <MenuItem value="non-technical">Non Technical</MenuItem>
+                      <MenuItem value="maintenance">Maintenance</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
               </div>
             </div>
@@ -295,22 +321,30 @@ export const AddSchedulePage = () => {
           </div>
 
           <div>
-            <Label htmlFor="activity-name">Activity Name*</Label>
-            <Input
-              id="activity-name"
+            <TextField
               placeholder="Enter Activity Name"
               value={formData.activityName}
               onChange={(e) => handleInputChange('activityName', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
             />
           </div>
 
           <div>
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
+            <TextField
               placeholder="Enter Description"
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
+              fullWidth
+              variant="outlined"
+              multiline
+              rows={4}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
             />
           </div>
         </CardContent>
@@ -350,61 +384,71 @@ export const AddSchedulePage = () => {
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Group</Label>
-                  <Select 
-                    value={section.group} 
-                    onValueChange={(value) => handleTaskSectionChange(section.id, 'group', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Group" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="group1">Group 1</SelectItem>
-                      <SelectItem value="group2">Group 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel id={`group-${section.id}-label`} shrink>Group</InputLabel>
+                    <MuiSelect
+                      labelId={`group-${section.id}-label`}
+                      label="Group"
+                      displayEmpty
+                      value={section.group}
+                      onChange={(e) => handleTaskSectionChange(section.id, 'group', e.target.value)}
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value=""><em>Select Group</em></MenuItem>
+                      <MenuItem value="group1">Group 1</MenuItem>
+                      <MenuItem value="group2">Group 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
                 <div>
-                  <Label>SubGroup</Label>
-                  <Select 
-                    value={section.subGroup} 
-                    onValueChange={(value) => handleTaskSectionChange(section.id, 'subGroup', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Sub Group" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="subgroup1">Sub Group 1</SelectItem>
-                      <SelectItem value="subgroup2">Sub Group 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel id={`subgroup-${section.id}-label`} shrink>SubGroup</InputLabel>
+                    <MuiSelect
+                      labelId={`subgroup-${section.id}-label`}
+                      label="SubGroup"
+                      displayEmpty
+                      value={section.subGroup}
+                      onChange={(e) => handleTaskSectionChange(section.id, 'subGroup', e.target.value)}
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value=""><em>Select Sub Group</em></MenuItem>
+                      <MenuItem value="subgroup1">Sub Group 1</MenuItem>
+                      <MenuItem value="subgroup2">Sub Group 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label>Task</Label>
-                  <Input
+                  <TextField
                     placeholder="Enter Task"
                     value={section.task}
                     onChange={(e) => handleTaskSectionChange(section.id, 'task', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
                   />
                 </div>
                 <div>
-                  <Label>Input Type</Label>
-                  <Select 
-                    value={section.inputType} 
-                    onValueChange={(value) => handleTaskSectionChange(section.id, 'inputType', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Input Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="text">Text</SelectItem>
-                      <SelectItem value="number">Number</SelectItem>
-                      <SelectItem value="dropdown">Dropdown</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel id={`input-type-${section.id}-label`} shrink>Input Type</InputLabel>
+                    <MuiSelect
+                      labelId={`input-type-${section.id}-label`}
+                      label="Input Type"
+                      displayEmpty
+                      value={section.inputType}
+                      onChange={(e) => handleTaskSectionChange(section.id, 'inputType', e.target.value)}
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value=""><em>Select Input Type</em></MenuItem>
+                      <MenuItem value="text">Text</MenuItem>
+                      <MenuItem value="number">Number</MenuItem>
+                      <MenuItem value="dropdown">Dropdown</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
                 <div className="flex items-center gap-4 pt-6">
                   <div className="flex items-center space-x-2">
@@ -438,11 +482,15 @@ export const AddSchedulePage = () => {
               {weightage && (
                 <div className="grid grid-cols-2 gap-4 mt-4">
                   <div>
-                    <Label>Weightage</Label>
-                    <Input
+                    <TextField
                       placeholder="Enter Weightage"
                       value={section.weightageValue}
                       onChange={(e) => handleTaskSectionChange(section.id, 'weightageValue', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
                     />
                   </div>
                   <div className="flex items-center space-x-2 pt-6">
@@ -499,192 +547,263 @@ export const AddSchedulePage = () => {
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label>Asset</Label>
-              <Select value={formData.asset} onValueChange={(value) => handleInputChange('asset', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Asset" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="asset1">Asset 1</SelectItem>
-                  <SelectItem value="asset2">Asset 2</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="asset-label" shrink>Asset</InputLabel>
+                <MuiSelect
+                  labelId="asset-label"
+                  label="Asset"
+                  displayEmpty
+                  value={formData.asset}
+                  onChange={(e) => handleInputChange('asset', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Asset</em></MenuItem>
+                  <MenuItem value="asset1">Asset 1</MenuItem>
+                  <MenuItem value="asset2">Asset 2</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
             <div>
-              <Label>Assign To</Label>
-              <Select value={formData.assignTo} onValueChange={(value) => handleInputChange('assignTo', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Assign To" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="user1">User 1</SelectItem>
-                  <SelectItem value="user2">User 2</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="assign-to-label" shrink>Assign To</InputLabel>
+                <MuiSelect
+                  labelId="assign-to-label"
+                  label="Assign To"
+                  displayEmpty
+                  value={formData.assignTo}
+                  onChange={(e) => handleInputChange('assignTo', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Assign To</em></MenuItem>
+                  <MenuItem value="user1">User 1</MenuItem>
+                  <MenuItem value="user2">User 2</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
             <div>
-              <Label>Scan Type</Label>
-              <Select value={formData.scanType} onValueChange={(value) => handleInputChange('scanType', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Scan Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="qr">QR Code</SelectItem>
-                  <SelectItem value="barcode">Barcode</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label>Plan Duration</Label>
-              <Select value={formData.planDuration} onValueChange={(value) => handleInputChange('planDuration', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Plan Duration" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1hour">1 Hour</SelectItem>
-                  <SelectItem value="2hours">2 Hours</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Priority</Label>
-              <Select value={formData.priority} onValueChange={(value) => handleInputChange('priority', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Email Trigger Rule</Label>
-              <Select value={formData.emailTriggerRule} onValueChange={(value) => handleInputChange('emailTriggerRule', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Email Trigger Rule" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="immediate">Immediate</SelectItem>
-                  <SelectItem value="daily">Daily</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="scan-type-label" shrink>Scan Type</InputLabel>
+                <MuiSelect
+                  labelId="scan-type-label"
+                  label="Scan Type"
+                  displayEmpty
+                  value={formData.scanType}
+                  onChange={(e) => handleInputChange('scanType', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Scan Type</em></MenuItem>
+                  <MenuItem value="qr">QR Code</MenuItem>
+                  <MenuItem value="barcode">Barcode</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label>Supervisors</Label>
-              <Select value={formData.supervisors} onValueChange={(value) => handleInputChange('supervisors', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Supervisors" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="supervisor1">Supervisor 1</SelectItem>
-                  <SelectItem value="supervisor2">Supervisor 2</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="plan-duration-label" shrink>Plan Duration</InputLabel>
+                <MuiSelect
+                  labelId="plan-duration-label"
+                  label="Plan Duration"
+                  displayEmpty
+                  value={formData.planDuration}
+                  onChange={(e) => handleInputChange('planDuration', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Plan Duration</em></MenuItem>
+                  <MenuItem value="1hour">1 Hour</MenuItem>
+                  <MenuItem value="2hours">2 Hours</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
             <div>
-              <Label>Category</Label>
-              <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="technical">Technical</SelectItem>
-                  <SelectItem value="non-technical">Non Technical</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="priority-label" shrink>Priority</InputLabel>
+                <MuiSelect
+                  labelId="priority-label"
+                  label="Priority"
+                  displayEmpty
+                  value={formData.priority}
+                  onChange={(e) => handleInputChange('priority', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Priority</em></MenuItem>
+                  <MenuItem value="high">High</MenuItem>
+                  <MenuItem value="medium">Medium</MenuItem>
+                  <MenuItem value="low">Low</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
             <div>
-              <Label>Submission Time</Label>
-              <Select value={formData.submissionTime} onValueChange={(value) => handleInputChange('submissionTime', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Submission Time" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="24hours">24 Hours</SelectItem>
-                  <SelectItem value="48hours">48 Hours</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="email-trigger-label" shrink>Email Trigger Rule</InputLabel>
+                <MuiSelect
+                  labelId="email-trigger-label"
+                  label="Email Trigger Rule"
+                  displayEmpty
+                  value={formData.emailTriggerRule}
+                  onChange={(e) => handleInputChange('emailTriggerRule', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Email Trigger Rule</em></MenuItem>
+                  <MenuItem value="immediate">Immediate</MenuItem>
+                  <MenuItem value="daily">Daily</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label>Grace Time</Label>
-              <Select value={formData.graceTime} onValueChange={(value) => handleInputChange('graceTime', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Grace Time" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1hour">1 Hour</SelectItem>
-                  <SelectItem value="2hours">2 Hours</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="supervisors-label" shrink>Supervisors</InputLabel>
+                <MuiSelect
+                  labelId="supervisors-label"
+                  label="Supervisors"
+                  displayEmpty
+                  value={formData.supervisors}
+                  onChange={(e) => handleInputChange('supervisors', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Supervisors</em></MenuItem>
+                  <MenuItem value="supervisor1">Supervisor 1</MenuItem>
+                  <MenuItem value="supervisor2">Supervisor 2</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
             <div>
-              <Label>Lock Overdue Task</Label>
-              <Select value={formData.lockOverdueTask} onValueChange={(value) => handleInputChange('lockOverdueTask', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Lock Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="yes">Yes</SelectItem>
-                  <SelectItem value="no">No</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="category-label" shrink>Category</InputLabel>
+                <MuiSelect
+                  labelId="category-label"
+                  label="Category"
+                  displayEmpty
+                  value={formData.category}
+                  onChange={(e) => handleInputChange('category', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Category</em></MenuItem>
+                  <MenuItem value="technical">Technical</MenuItem>
+                  <MenuItem value="non-technical">Non Technical</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
             <div>
-              <Label>Frequency</Label>
-              <Select value={formData.frequency} onValueChange={(value) => handleInputChange('frequency', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Frequency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="submission-time-label" shrink>Submission Time</InputLabel>
+                <MuiSelect
+                  labelId="submission-time-label"
+                  label="Submission Time"
+                  displayEmpty
+                  value={formData.submissionTime}
+                  onChange={(e) => handleInputChange('submissionTime', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Submission Time</em></MenuItem>
+                  <MenuItem value="24hours">24 Hours</MenuItem>
+                  <MenuItem value="48hours">48 Hours</MenuItem>
+                </MuiSelect>
+              </FormControl>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="grace-time-label" shrink>Grace Time</InputLabel>
+                <MuiSelect
+                  labelId="grace-time-label"
+                  label="Grace Time"
+                  displayEmpty
+                  value={formData.graceTime}
+                  onChange={(e) => handleInputChange('graceTime', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Grace Time</em></MenuItem>
+                  <MenuItem value="1hour">1 Hour</MenuItem>
+                  <MenuItem value="2hours">2 Hours</MenuItem>
+                </MuiSelect>
+              </FormControl>
+            </div>
+            <div>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="lock-overdue-label" shrink>Lock Overdue Task</InputLabel>
+                <MuiSelect
+                  labelId="lock-overdue-label"
+                  label="Lock Overdue Task"
+                  displayEmpty
+                  value={formData.lockOverdueTask}
+                  onChange={(e) => handleInputChange('lockOverdueTask', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Lock Status</em></MenuItem>
+                  <MenuItem value="yes">Yes</MenuItem>
+                  <MenuItem value="no">No</MenuItem>
+                </MuiSelect>
+              </FormControl>
+            </div>
+            <div>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="frequency-label" shrink>Frequency</InputLabel>
+                <MuiSelect
+                  labelId="frequency-label"
+                  label="Frequency"
+                  displayEmpty
+                  value={formData.frequency}
+                  onChange={(e) => handleInputChange('frequency', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Frequency</em></MenuItem>
+                  <MenuItem value="daily">Daily</MenuItem>
+                  <MenuItem value="weekly">Weekly</MenuItem>
+                  <MenuItem value="monthly">Monthly</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Start From</Label>
-              <Input
+              <TextField
                 type="date"
                 value={formData.startFrom}
                 onChange={(e) => handleInputChange('startFrom', e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
               />
             </div>
             <div>
-              <Label>End At</Label>
-              <Input
+              <TextField
                 type="date"
                 value={formData.endAt}
                 onChange={(e) => handleInputChange('endAt', e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
               />
             </div>
           </div>
 
           <div>
-            <Label>Select Supplier</Label>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Supplier" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="supplier1">Supplier 1</SelectItem>
-                <SelectItem value="supplier2">Supplier 2</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel id="supplier-label" shrink>Select Supplier</InputLabel>
+              <MuiSelect
+                labelId="supplier-label"
+                label="Select Supplier"
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Supplier</em></MenuItem>
+                <MenuItem value="supplier1">Supplier 1</MenuItem>
+                <MenuItem value="supplier2">Supplier 2</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
         </CardContent>
       </Card>

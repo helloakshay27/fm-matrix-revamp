@@ -2,25 +2,37 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X } from 'lucide-react';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { useToast } from '@/hooks/use-toast';
 
 interface ScheduleFilterDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
+
 export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
   open,
   onOpenChange,
 }) => {
+  const { toast } = useToast();
   const [activityName, setActivityName] = useState('');
   const [type, setType] = useState('');
   const [category, setCategory] = useState('');
 
   const handleApply = () => {
     console.log('Applying filters:', { activityName, type, category });
+    toast({
+      title: "Success",
+      description: "Filters applied successfully!",
+    });
     onOpenChange(false);
   };
 
@@ -28,6 +40,10 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
     setActivityName('');
     setType('');
     setCategory('');
+    toast({
+      title: "Success",
+      description: "Filters reset successfully!",
+    });
   };
 
   return (
@@ -50,41 +66,55 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
         <div className="space-y-4">
           {/* Activity Name */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Activity Name</label>
-            <Input
+            <TextField
               placeholder="Enter Activity Name"
               value={activityName}
               onChange={(e) => setActivityName(e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
             />
           </div>
 
           {/* Select Type */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Select Type</label>
-            <Select value={type} onValueChange={setType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="PPM">PPM</SelectItem>
-                <SelectItem value="Routine">Routine</SelectItem>
-                <SelectItem value="AMC">AMC</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel id="type-label" shrink>Select Type</InputLabel>
+              <MuiSelect
+                labelId="type-label"
+                label="Select Type"
+                displayEmpty
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Type</em></MenuItem>
+                <MenuItem value="PPM">PPM</MenuItem>
+                <MenuItem value="Routine">Routine</MenuItem>
+                <MenuItem value="AMC">AMC</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           {/* Select Category */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Select Category</label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Technical">Technical</SelectItem>
-                <SelectItem value="Non Technical">Non Technical</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel id="category-label" shrink>Select Category</InputLabel>
+              <MuiSelect
+                labelId="category-label"
+                label="Select Category"
+                displayEmpty
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Category</em></MenuItem>
+                <MenuItem value="Technical">Technical</MenuItem>
+                <MenuItem value="Non Technical">Non Technical</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           {/* Action Buttons */}
