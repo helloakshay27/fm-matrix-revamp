@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -6,7 +5,13 @@ import { Label } from '@/components/ui/label';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem
+} from '@mui/material';
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -19,7 +24,7 @@ export const AddAssetAuditPage = () => {
   const navigate = useNavigate();
   const [basicDetailsExpanded, setBasicDetailsExpanded] = useState(true);
   const [auditTypeExpanded, setAuditTypeExpanded] = useState(true);
-  
+
   const [formData, setFormData] = useState({
     auditName: '',
     startDate: '',
@@ -40,13 +45,12 @@ export const AddAssetAuditPage = () => {
     }
 
     console.log('Audit form submitted:', formData);
-    
+
     if (type === 'create') {
       toast.success('Audit created successfully!');
       navigate('/maintenance/audit/assets');
     } else {
       toast.success('Audit saved and ready for new audit!');
-      // Reset form for new audit
       setFormData({
         auditName: '',
         startDate: '',
@@ -68,18 +72,20 @@ export const AddAssetAuditPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="p-6 max-w-6xl mx-auto">
+      <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto">
         {/* Breadcrumb */}
         <div className="mb-4 text-sm text-gray-600">
           Audit &gt; Create New Audit
         </div>
 
-        <h1 className="text-2xl font-bold mb-6">NEW AUDIT</h1>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-6">
+          NEW AUDIT
+        </h1>
 
         <div className="space-y-6">
-          {/* Basic Details Section */}
+          {/* Basic Details */}
           <div className="bg-white rounded-lg shadow-sm border">
-            <div 
+            <div
               className="flex items-center justify-between p-4 cursor-pointer border-b"
               onClick={() => setBasicDetailsExpanded(!basicDetailsExpanded)}
             >
@@ -87,14 +93,14 @@ export const AddAssetAuditPage = () => {
                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
                   <span className="text-white text-sm">1</span>
                 </div>
-                <h2 className="text-lg font-semibold text-blue-600">BASIC DETAILS</h2>
+                <h2 className="text-base md:text-lg font-semibold text-blue-600">BASIC DETAILS</h2>
               </div>
               {basicDetailsExpanded ? <ChevronUp /> : <ChevronDown />}
             </div>
 
             {basicDetailsExpanded && (
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="p-4 sm:p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <Label htmlFor="auditName" className="text-sm font-medium">
                       Audit Name<span className="text-red-500">*</span>
@@ -120,7 +126,6 @@ export const AddAssetAuditPage = () => {
                       type="date"
                       value={formData.startDate}
                       onChange={(e) => updateFormData('startDate', e.target.value)}
-                      placeholder="dd-mm-yyyy"
                       fullWidth
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
@@ -138,7 +143,6 @@ export const AddAssetAuditPage = () => {
                       type="date"
                       value={formData.endDate}
                       onChange={(e) => updateFormData('endDate', e.target.value)}
-                      placeholder="dd-mm-yyyy"
                       fullWidth
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
@@ -148,7 +152,6 @@ export const AddAssetAuditPage = () => {
                   </div>
 
                   <div>
-                    
                     <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                       <InputLabel id="conducted-by-label" shrink>Select</InputLabel>
                       <MuiSelect
@@ -171,9 +174,9 @@ export const AddAssetAuditPage = () => {
             )}
           </div>
 
-          {/* Audit Type Section */}
+          {/* Audit Type */}
           <div className="bg-white rounded-lg shadow-sm border">
-            <div 
+            <div
               className="flex items-center justify-between p-4 cursor-pointer border-b"
               onClick={() => setAuditTypeExpanded(!auditTypeExpanded)}
             >
@@ -181,144 +184,72 @@ export const AddAssetAuditPage = () => {
                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
                   <span className="text-white text-sm">2</span>
                 </div>
-                <h2 className="text-lg font-semibold text-blue-600">Audit Type</h2>
+                <h2 className="text-base md:text-lg font-semibold text-blue-600">Audit Type</h2>
               </div>
               {auditTypeExpanded ? <ChevronUp /> : <ChevronDown />}
             </div>
 
             {auditTypeExpanded && (
-              <div className="p-6">
-                <div className="mb-6">
-                
-                  <RadioGroup
-                    value={formData.basedOn}
-                    onValueChange={(value) => updateFormData('basedOn', value)}
-                    className="flex gap-6"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="Location" id="location" />
-                      <Label htmlFor="location">Location</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="Asset" id="asset" />
-                      <Label htmlFor="asset">Asset</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
+              <div className="p-4 sm:p-6">
+                <RadioGroup
+                  value={formData.basedOn}
+                  onValueChange={(value) => updateFormData('basedOn', value)}
+                  className="flex flex-wrap gap-6 mb-6"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="Location" id="location" />
+                    <Label htmlFor="location">Location</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="Asset" id="asset" />
+                    <Label htmlFor="asset">Asset</Label>
+                  </div>
+                </RadioGroup>
 
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                  <div>
-                   
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                      <InputLabel id="site-label" shrink>Select...</InputLabel>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                  {[
+                    { label: 'site', values: ['Site 1', 'Site 2'] },
+                    { label: 'building', values: ['Building 1', 'Building 2'] },
+                    { label: 'department', values: ['IT', 'Facilities', 'Security'] },
+                    { label: 'assetGroup', values: ['Group 1', 'Group 2'] },
+                    { label: 'assetSubGroup', values: ['SubGroup 1', 'SubGroup 2'] }
+                  ].map((field, index) => (
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} key={index}>
+                      <InputLabel id={`${field.label}-label`} shrink>Select...</InputLabel>
                       <MuiSelect
-                        labelId="site-label"
+                        labelId={`${field.label}-label`}
                         label="Select..."
                         displayEmpty
-                        value={formData.site}
-                        onChange={(e) => updateFormData('site', e.target.value)}
+                        value={formData[field.label as keyof typeof formData]}
+                        onChange={(e) => updateFormData(field.label, e.target.value)}
                         sx={fieldStyles}
                       >
                         <MenuItem value=""><em>Select...</em></MenuItem>
-                        <MenuItem value="site1">Site 1</MenuItem>
-                        <MenuItem value="site2">Site 2</MenuItem>
+                        {field.values.map((val, idx) => (
+                          <MenuItem key={idx} value={val.toLowerCase().replace(/\s+/g, '')}>
+                            {val}
+                          </MenuItem>
+                        ))}
                       </MuiSelect>
                     </FormControl>
-                  </div>
-
-                  <div>
-                    
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                      <InputLabel id="building-label" shrink>Select...</InputLabel>
-                      <MuiSelect
-                        labelId="building-label"
-                        label="Select..."
-                        displayEmpty
-                        value={formData.building}
-                        onChange={(e) => updateFormData('building', e.target.value)}
-                        sx={fieldStyles}
-                      >
-                        <MenuItem value=""><em>Select...</em></MenuItem>
-                        <MenuItem value="building1">Building 1</MenuItem>
-                        <MenuItem value="building2">Building 2</MenuItem>
-                      </MuiSelect>
-                    </FormControl>
-                  </div>
-
-                  <div>
-                    
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                      <InputLabel id="department-label" shrink>Select...</InputLabel>
-                      <MuiSelect
-                        labelId="department-label"
-                        label="Select..."
-                        displayEmpty
-                        value={formData.department}
-                        onChange={(e) => updateFormData('department', e.target.value)}
-                        sx={fieldStyles}
-                      >
-                        <MenuItem value=""><em>Select...</em></MenuItem>
-                        <MenuItem value="it">IT</MenuItem>
-                        <MenuItem value="facilities">Facilities</MenuItem>
-                        <MenuItem value="security">Security</MenuItem>
-                      </MuiSelect>
-                    </FormControl>
-                  </div>
-
-                  <div>
-                   
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                      <InputLabel id="asset-group-label" shrink>Select...</InputLabel>
-                      <MuiSelect
-                        labelId="asset-group-label"
-                        label="Select..."
-                        displayEmpty
-                        value={formData.assetGroup}
-                        onChange={(e) => updateFormData('assetGroup', e.target.value)}
-                        sx={fieldStyles}
-                      >
-                        <MenuItem value=""><em>Select...</em></MenuItem>
-                        <MenuItem value="group1">Group 1</MenuItem>
-                        <MenuItem value="group2">Group 2</MenuItem>
-                      </MuiSelect>
-                    </FormControl>
-                  </div>
-
-                  <div>
-                    
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                      <InputLabel id="asset-subgroup-label" shrink>Select...</InputLabel>
-                      <MuiSelect
-                        labelId="asset-subgroup-label"
-                        label="Select..."
-                        displayEmpty
-                        value={formData.assetSubGroup}
-                        onChange={(e) => updateFormData('assetSubGroup', e.target.value)}
-                        sx={fieldStyles}
-                      >
-                        <MenuItem value=""><em>Select...</em></MenuItem>
-                        <MenuItem value="subgroup1">SubGroup 1</MenuItem>
-                        <MenuItem value="subgroup2">SubGroup 2</MenuItem>
-                      </MuiSelect>
-                    </FormControl>
-                  </div>
+                  ))}
                 </div>
               </div>
             )}
           </div>
 
           {/* Submit Buttons */}
-          <div className="flex justify-center gap-4">
-            <Button 
+          <div className="flex flex-wrap justify-center gap-4">
+            <Button
               onClick={() => handleSubmit('create')}
-              className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
+              className="bg-[#C72030] hover:bg-[#A01020] text-white px-6"
             >
               Create Audit
             </Button>
-            <Button 
+            <Button
               onClick={() => handleSubmit('saveAndCreate')}
               variant="outline"
-              className="border-gray-300 px-8"
+              className="border-gray-300 px-6"
             >
               Save And Create New Audit
             </Button>
