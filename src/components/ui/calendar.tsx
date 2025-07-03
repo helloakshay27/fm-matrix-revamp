@@ -34,10 +34,10 @@ export function Calendar({
         row: "flex w-full mt-2",
         cell: "relative w-10 h-10 text-center text-sm p-0", // Ensure square dimensions
         day: cn(
-          "w-full h-full flex items-center justify-center font-normal border-0 shadow-none rounded-full hover:bg-gray-100"
+          "w-10 h-10 flex items-center justify-center font-normal border-0 shadow-none rounded-full hover:bg-gray-100"
         ),
         day_selected: cn(
-          "bg-[#C72030] text-white hover:bg-[#C72030] hover:text-white focus:bg-[#C72030] focus:text-white rounded-full w-full h-full flex items-center justify-center"
+          "bg-[#C72030] text-white hover:bg-[#C72030] hover:text-white focus:bg-[#C72030] focus:text-white rounded-full w-10 h-10 flex items-center justify-center"
         ),
         day_today: "border border-[#C72030] text-[#C72030] font-semibold rounded-full",
         day_outside: "text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
