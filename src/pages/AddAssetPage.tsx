@@ -196,16 +196,20 @@ export const AddAssetPage = () => {
     '& .MuiInputBase-input, & .MuiSelect-select': {
       padding: { xs: '8px', sm: '10px', md: '12px' },
       '&::placeholder': {
-        fontSize: { xs: '12px', sm: '13px', md: '14px' },
-        opacity: 1, // Ensure placeholder is fully visible
+        fontSize: { xs: '12px', sm: '13px', md: '14px' }, // Default for text fields
+        opacity: 1,
+      },
+      '&[type="date"]::placeholder': {
+        fontSize: { xs: '11px', sm: '12px', md: '13px' }, // Smaller for date fields
+        opacity: 1,
       },
     },
     '& .MuiInputBase-root': {
       '& .MuiSelect-select': {
-        fontSize: { xs: '12px', sm: '13px', md: '14px' },
+        fontSize: { xs: '11px', sm: '12px', md: '13px' }, // Smaller for dropdowns
       },
       '& .MuiMenuItem-root': {
-        fontSize: { xs: '12px', sm: '13px', md: '14px' },
+        fontSize: { xs: '11px', sm: '12px', md: '13px' }, // Smaller for dropdown menu items
       },
     },
   };
@@ -216,7 +220,7 @@ export const AddAssetPage = () => {
       <div className="mb-6">
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
           <span>Asset List</span>
-          <span>&gt;</span>
+          <span>></span>
           <span className="text-gray-900 font-medium">Create New Asset</span>
         </div>
         <h1 className="text-2xl font-bold text-gray-900">NEW ASSET</h1>
