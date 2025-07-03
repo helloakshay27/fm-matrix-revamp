@@ -178,18 +178,12 @@ const AddAssetPage = () => {
       m.id === id ? { ...m, [field]: value } : m
     ));
   };
-
   const fieldStyles = {
-    height: { xs: '2rem', sm: '2.25rem', md: '2.25rem' },
+    height: { xs: 28, sm: 36, md: 45 },
     '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '0.5rem', sm: '0.625rem', md: '0.625rem' },
-      fontSize: { xs: '0.875rem', sm: '1rem' }
+      padding: { xs: '8px', sm: '10px', md: '12px' },
     },
-    '& .MuiInputLabel-root': {
-      fontSize: { xs: '0.875rem', sm: '1rem' }
-    }
   };
-
   return (
     <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50">
       {/* Header */}
