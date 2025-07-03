@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { TextField } from "@/components/ui/textfield";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export const MarketPlaceAccountingPage = () => {
@@ -29,11 +30,12 @@ export const MarketPlaceAccountingPage = () => {
             <Label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
               Name
             </Label>
-            <TextField
+            <Input
               id="name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              className="w-full border-gray-300 rounded-none focus:border-gray-400 focus:ring-0"
             />
           </div>
 

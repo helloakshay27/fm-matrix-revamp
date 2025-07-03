@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { TextField } from '@/components/ui/textfield';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
 
@@ -42,11 +42,12 @@ export const AddGroupDialog = ({ open, onOpenChange }: AddGroupDialogProps) => {
             <Label htmlFor="groupName" className="text-sm font-medium text-gray-700">
               Group Name
             </Label>
-            <TextField
+            <Input
               id="groupName"
               placeholder="Enter Group Name"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
+              className="w-full"
             />
           </div>
         </div>

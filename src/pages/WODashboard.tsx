@@ -1,10 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { WOFilterDialog } from "@/components/WOFilterDialog";
-import { TextField } from "@/components/ui/textfield";
 import { useNavigate } from 'react-router-dom';
 
 export const WODashboard = () => {
@@ -89,14 +87,13 @@ export const WODashboard = () => {
         {/* Right Side Search */}
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:items-center md:w-auto">
           <div className="relative w-full sm:w-64">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10" />
-            <TextField
+            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
               placeholder="Search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                style: { paddingLeft: '40px' }
-              }}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
             />
           </div>
           <div className="flex gap-2">

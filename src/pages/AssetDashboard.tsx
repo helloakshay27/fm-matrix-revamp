@@ -1,8 +1,7 @@
-
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { TextField } from '@/components/ui/textfield';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Upload, Download, FileText, Search, Filter, Eye, Settings } from 'lucide-react';
@@ -321,15 +320,12 @@ const statData = [
 
         {/* Search Box aligned to right */}
         <div className="relative ml-auto">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
-          <TextField
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
             placeholder="Search assets..."
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
-            className="w-64"
-            InputProps={{
-              style: { paddingLeft: '40px' }
-            }}
+            className="pl-10 w-64 bg-white border-gray-300"
           />
         </div>
         <Button 
