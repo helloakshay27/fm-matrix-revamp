@@ -1,13 +1,17 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, X, Plus } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
 
 export const AddMaterialPRDashboard = () => {
   const navigate = useNavigate();
@@ -46,71 +50,107 @@ export const AddMaterialPRDashboard = () => {
 
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Supplier*</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Supplier" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="abc">ABC</SelectItem>
-                    <SelectItem value="godrej">Godrej</SelectItem>
-                    <SelectItem value="lt">L&T</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Plant Detail</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Plant Detail" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="plant1">Plant 1</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Billing Address*</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Billing Address" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="address1">Address 1</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Delivery Address*</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Delivery Address" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="address1">Address 1</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Reference#</Label>
-                <Input placeholder="Enter Number" />
-              </div>
-              <div>
-                <Label>TDS%</Label>
-                <Input placeholder="Enter Number" />
-              </div>
-              <div>
-                <Label>Payment Terms(In Days)</Label>
-                <Input placeholder="Enter Number" />
-              </div>
-              <div>
-                <Label>Advance Amount</Label>
-                <Input placeholder="Enter Number" />
-              </div>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Supplier*</InputLabel>
+                <MuiSelect
+                  label="Supplier*"
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Supplier</em></MenuItem>
+                  <MenuItem value="abc">ABC</MenuItem>
+                  <MenuItem value="godrej">Godrej</MenuItem>
+                  <MenuItem value="lt">L&T</MenuItem>
+                </MuiSelect>
+              </FormControl>
+              
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Plant Detail</InputLabel>
+                <MuiSelect
+                  label="Plant Detail"
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Plant Detail</em></MenuItem>
+                  <MenuItem value="plant1">Plant 1</MenuItem>
+                </MuiSelect>
+              </FormControl>
+              
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Billing Address*</InputLabel>
+                <MuiSelect
+                  label="Billing Address*"
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Billing Address</em></MenuItem>
+                  <MenuItem value="address1">Address 1</MenuItem>
+                </MuiSelect>
+              </FormControl>
+              
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Delivery Address*</InputLabel>
+                <MuiSelect
+                  label="Delivery Address*"
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Delivery Address</em></MenuItem>
+                  <MenuItem value="address1">Address 1</MenuItem>
+                </MuiSelect>
+              </FormControl>
+              
+              <TextField
+                label="Reference#"
+                placeholder="Enter Number"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+              
+              <TextField
+                label="TDS%"
+                placeholder="Enter Number"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+              
+              <TextField
+                label="Payment Terms(In Days)"
+                placeholder="Enter Number"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+              
+              <TextField
+                label="Advance Amount"
+                placeholder="Enter Number"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+              
               <div className="md:col-span-2">
-                <Label>Terms & Conditions*</Label>
-                <Textarea placeholder="" className="min-h-[100px]" />
+                <TextField
+                  label="Terms & Conditions*"
+                  placeholder=""
+                  fullWidth
+                  variant="outlined"
+                  multiline
+                  minRows={4}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ mt: 1 }}
+                />
               </div>
             </CardContent>
           </Card>
@@ -145,47 +185,78 @@ export const AddMaterialPRDashboard = () => {
                     </Button>
                   )}
                   
-                  <div>
-                    <Label>Item Details*</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Inventory" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="item1">Item 1</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>Item Details*</InputLabel>
+                    <MuiSelect
+                      label="Item Details*"
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value=""><em>Select Inventory</em></MenuItem>
+                      <MenuItem value="item1">Item 1</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                   
-                  <div>
-                    <Label>SAC/HSN Code</Label>
-                    <Input placeholder="Enter Code" />
-                  </div>
+                  <TextField
+                    label="SAC/HSN Code"
+                    placeholder="Enter Code"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
                   
-                  <div>
-                    <Label>Product Description*</Label>
-                    <Input placeholder="Product Description" />
-                  </div>
+                  <TextField
+                    label="Product Description*"
+                    placeholder="Product Description"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
                   
-                  <div>
-                    <Label>Each</Label>
-                    <Input placeholder="Enter Number" />
-                  </div>
+                  <TextField
+                    label="Each"
+                    placeholder="Enter Number"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
                   
-                  <div>
-                    <Label>Quantity*</Label>
-                    <Input placeholder="Enter Number" />
-                  </div>
+                  <TextField
+                    label="Quantity*"
+                    placeholder="Enter Number"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
                   
-                  <div>
-                    <Label>Expected Date*</Label>
-                    <Input type="date" defaultValue="2025-06-14" />
-                  </div>
+                  <TextField
+                    label="Expected Date*"
+                    type="date"
+                    defaultValue="2025-06-14"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
                   
-                  <div>
-                    <Label>Amount*</Label>
-                    <Input placeholder="Enter Number" />
-                  </div>
+                  <TextField
+                    label="Amount*"
+                    placeholder="Enter Number"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
                 </div>
               ))}
             </CardContent>
