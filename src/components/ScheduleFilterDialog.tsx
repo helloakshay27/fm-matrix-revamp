@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -38,19 +39,16 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
     '& .MuiInputBase-root': {
-      borderWidth: 0, // Explicitly remove border
       '& .MuiSelect-select': {
-        fontSize: { xs: '11px', sm: '12px', md: '13px' }, // Smaller for dropdowns
+        fontSize: { xs: '11px', sm: '12px', md: '13px' },
         padding: { xs: '8px', sm: '10px', md: '12px' },
-      },
-      '& .MuiMenuItem-root': {
-        fontSize: { xs: '11px', sm: '12px', md: '13px' }, // Smaller for dropdown menu items
       },
     },
     '& .MuiInputBase-input': {
       padding: { xs: '8px', sm: '10px', md: '12px' },
+      fontSize: { xs: '12px', sm: '13px', md: '14px' },
       '&::placeholder': {
-        fontSize: { xs: '12px', sm: '13px', md: '14px' }, // Default for text fields
+        fontSize: { xs: '12px', sm: '13px', md: '14px' },
         opacity: 1,
       },
     },
@@ -87,9 +85,7 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
               InputLabelProps={{
                 shrink: true,
               }}
-              InputProps={{
-                sx: fieldStyles
-              }}
+              sx={fieldStyles}
             />
           </div>
 
