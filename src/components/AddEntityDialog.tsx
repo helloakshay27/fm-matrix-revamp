@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { TextField } from '@/components/ui/textfield';
 import { toast } from 'sonner';
 
 interface AddEntityDialogProps {
@@ -36,11 +36,10 @@ export const AddEntityDialog = ({ open, onOpenChange }: AddEntityDialogProps) =>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Entity Name
             </label>
-            <Input
+            <TextField
               placeholder="Enter Entity Name"
               value={entityName}
               onChange={(e) => setEntityName(e.target.value)}
-              className="focus:ring-[#C72030] focus:border-[#C72030]"
             />
           </div>
 
