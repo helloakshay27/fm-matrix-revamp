@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
 
 interface AddSurveyFormProps {
@@ -22,8 +23,8 @@ export const AddSurveyForm = ({ isOpen, onClose }: AddSurveyFormProps) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (e: React.ChangeEvent<{ value: unknown }>) => {
-    setFormData(prev => ({ ...prev, category: e.target.value as string }));
+  const handleSelectChange = (e: SelectChangeEvent<string>) => {
+    setFormData(prev => ({ ...prev, category: e.target.value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
