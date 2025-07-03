@@ -520,14 +520,8 @@ const SubtaskTable = () => {
       ? new Date(parentTaskForSubtasks.target_date)
       : null;
 
-    if (start < parentStart) {
-      setLocalError(
-        "Subtask start date cannot be before parent task start date"
-      );
-      setValidator(true);
-      return;
-    }
-    if (parentEnd && start > parentEnd) {
+
+    if (parentEnd && start >= parentEnd) {
       setLocalError("Subtask start date cannot be after parent task end date");
       setValidator(true);
       return;
