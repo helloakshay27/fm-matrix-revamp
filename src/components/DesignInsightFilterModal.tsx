@@ -2,9 +2,8 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { useToast } from '@/hooks/use-toast';
 
 interface DesignInsightFilterModalProps {
   isOpen: boolean;
@@ -12,6 +11,7 @@ interface DesignInsightFilterModalProps {
 }
 
 export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> = ({ isOpen, onClose }) => {
+  const { toast } = useToast();
   const [dateRange, setDateRange] = useState('');
   const [zone, setZone] = useState('');
   const [category, setCategory] = useState('');
@@ -21,7 +21,18 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
 
   const handleApply = () => {
     console.log('Filter applied:', { dateRange, zone, category, subCategory, mustHave, createdBy });
+    toast({
+      title: "Success",
+      description: "Filter applied successfully!",
+    });
     onClose();
+  };
+
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
   };
 
   return (
@@ -32,101 +43,103 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
         </DialogHeader>
         
         <div className="grid grid-cols-2 gap-6 py-4">
-          <div>
-            <Label htmlFor="dateRange" className="text-sm font-medium">
-              Date Range<span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="dateRange"
-              type="text"
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
-              placeholder="Select Date Range"
-              className="mt-1"
-            />
-          </div>
+          <TextField
+            placeholder="Select Date Range"
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value)}
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
+          />
 
-          <div>
-            <Label htmlFor="zone" className="text-sm font-medium">
-              Zone<span className="text-red-500">*</span>
-            </Label>
-            <Select value={zone} onValueChange={setZone}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Select Zone" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="mumbai">Mumbai</SelectItem>
-                <SelectItem value="ncr">NCR</SelectItem>
-                <SelectItem value="bangalore">Bangalore</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel id="zone-label" shrink>Zone</InputLabel>
+            <MuiSelect
+              labelId="zone-label"
+              label="Zone"
+              displayEmpty
+              value={zone}
+              onChange={(e) => setZone(e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value=""><em>Select Zone</em></MenuItem>
+              <MenuItem value="mumbai">Mumbai</MenuItem>
+              <MenuItem value="ncr">NCR</MenuItem>
+              <MenuItem value="bangalore">Bangalore</MenuItem>
+            </MuiSelect>
+          </FormControl>
 
-          <div>
-            <Label htmlFor="category" className="text-sm font-medium">
-              Category<span className="text-red-500">*</span>
-            </Label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Select Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="landscape">Landscape</SelectItem>
-                <SelectItem value="facade">Façade</SelectItem>
-                <SelectItem value="security">Security & surveillance</SelectItem>
-                <SelectItem value="inside-units">Inside Units</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel id="category-label" shrink>Category</InputLabel>
+            <MuiSelect
+              labelId="category-label"
+              label="Category"
+              displayEmpty
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value=""><em>Select Category</em></MenuItem>
+              <MenuItem value="landscape">Landscape</MenuItem>
+              <MenuItem value="facade">Façade</MenuItem>
+              <MenuItem value="security">Security & surveillance</MenuItem>
+              <MenuItem value="inside-units">Inside Units</MenuItem>
+            </MuiSelect>
+          </FormControl>
 
-          <div>
-            <Label htmlFor="subCategory" className="text-sm font-medium">
-              Sub-category<span className="text-red-500">*</span>
-            </Label>
-            <Select value={subCategory} onValueChange={setSubCategory}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Select Sub Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="access-control">Access Control</SelectItem>
-                <SelectItem value="cctv">CCTV</SelectItem>
-                <SelectItem value="bedroom">Bedroom</SelectItem>
-                <SelectItem value="entry-exit">Entry-Exit</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel id="sub-category-label" shrink>Sub-category</InputLabel>
+            <MuiSelect
+              labelId="sub-category-label"
+              label="Sub-category"
+              displayEmpty
+              value={subCategory}
+              onChange={(e) => setSubCategory(e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value=""><em>Select Sub Category</em></MenuItem>
+              <MenuItem value="access-control">Access Control</MenuItem>
+              <MenuItem value="cctv">CCTV</MenuItem>
+              <MenuItem value="bedroom">Bedroom</MenuItem>
+              <MenuItem value="entry-exit">Entry-Exit</MenuItem>
+            </MuiSelect>
+          </FormControl>
 
-          <div>
-            <Label htmlFor="mustHave" className="text-sm font-medium">
-              Must have<span className="text-red-500">*</span>
-            </Label>
-            <Select value={mustHave} onValueChange={setMustHave}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Select" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="yes">Yes</SelectItem>
-                <SelectItem value="no">No</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel id="must-have-label" shrink>Must have</InputLabel>
+            <MuiSelect
+              labelId="must-have-label"
+              label="Must have"
+              displayEmpty
+              value={mustHave}
+              onChange={(e) => setMustHave(e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value=""><em>Select</em></MenuItem>
+              <MenuItem value="yes">Yes</MenuItem>
+              <MenuItem value="no">No</MenuItem>
+            </MuiSelect>
+          </FormControl>
 
-          <div>
-            <Label htmlFor="createdBy" className="text-sm font-medium">
-              Created by<span className="text-red-500">*</span>
-            </Label>
-            <Select value={createdBy} onValueChange={setCreatedBy}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Select" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sony-bhosle">Sony Bhosle</SelectItem>
-                <SelectItem value="robert-day">Robert Day2</SelectItem>
-                <SelectItem value="sanket-patil">Sanket Patil</SelectItem>
-                <SelectItem value="devesh-jain">Devesh Jain</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel id="created-by-label" shrink>Created by</InputLabel>
+            <MuiSelect
+              labelId="created-by-label"
+              label="Created by"
+              displayEmpty
+              value={createdBy}
+              onChange={(e) => setCreatedBy(e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value=""><em>Select</em></MenuItem>
+              <MenuItem value="sony-bhosle">Sony Bhosle</MenuItem>
+              <MenuItem value="robert-day">Robert Day2</MenuItem>
+              <MenuItem value="sanket-patil">Sanket Patil</MenuItem>
+              <MenuItem value="devesh-jain">Devesh Jain</MenuItem>
+            </MuiSelect>
+          </FormControl>
         </div>
 
         <div className="flex justify-end pt-4">

@@ -2,9 +2,8 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { useToast } from '@/hooks/use-toast';
 
 interface AddStatusModalProps {
   isOpen: boolean;
@@ -13,6 +12,7 @@ interface AddStatusModalProps {
 }
 
 export const AddStatusModal = ({ isOpen, onClose, onSubmit }: AddStatusModalProps) => {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     status: "",
     fixedState: "",
@@ -23,9 +23,20 @@ export const AddStatusModal = ({ isOpen, onClose, onSubmit }: AddStatusModalProp
   const handleSubmit = () => {
     if (formData.status.trim() && formData.fixedState && formData.order) {
       onSubmit(formData);
+      toast({
+        title: "Success",
+        description: "Status added successfully!",
+      });
       setFormData({ status: "", fixedState: "", color: "#000000", order: "" });
       onClose();
     }
+  };
+
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
   };
 
   return (
@@ -37,62 +48,58 @@ export const AddStatusModal = ({ isOpen, onClose, onSubmit }: AddStatusModalProp
 
         <div className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>
-                Status <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                placeholder="Enter status"
-                value={formData.status}
-                onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value }))}
-              />
-            </div>
+            <TextField
+              placeholder="Enter status"
+              value={formData.status}
+              onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value }))}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div className="space-y-2">
-              <Label>
-                Fixed State <span className="text-red-500">*</span>
-              </Label>
-              <Select 
-                value={formData.fixedState} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, fixedState: value }))}
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel id="fixed-state-label" shrink>Fixed State</InputLabel>
+              <MuiSelect
+                labelId="fixed-state-label"
+                label="Fixed State"
+                displayEmpty
+                value={formData.fixedState}
+                onChange={(e) => setFormData(prev => ({ ...prev, fixedState: e.target.value }))}
+                sx={fieldStyles}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Fixed State" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="state1">State 1</SelectItem>
-                  <SelectItem value="state2">State 2</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                <MenuItem value=""><em>Select Fixed State</em></MenuItem>
+                <MenuItem value="state1">State 1</MenuItem>
+                <MenuItem value="state2">State 2</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>
-                Order <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                placeholder="Enter status order"
-                value={formData.order}
-                onChange={(e) => setFormData(prev => ({ ...prev, order: e.target.value }))}
-              />
-            </div>
+            <TextField
+              placeholder="Enter status order"
+              value={formData.order}
+              onChange={(e) => setFormData(prev => ({ ...prev, order: e.target.value }))}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div className="space-y-2">
-              <Label>Color</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="color"
-                  value={formData.color}
-                  onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
-                  className="w-16 h-10 p-1"
-                />
-                <div 
-                  className="w-10 h-10 border rounded"
-                  style={{ backgroundColor: formData.color }}
-                />
-              </div>
+            <div className="flex items-center gap-2">
+              <TextField
+                type="color"
+                value={formData.color}
+                onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
+                InputProps={{ sx: { ...fieldStyles, width: '60px' } }}
+                sx={{ mt: 1 }}
+              />
+              <div 
+                className="w-10 h-10 border rounded"
+                style={{ backgroundColor: formData.color }}
+              />
             </div>
           </div>
         </div>

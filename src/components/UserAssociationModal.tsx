@@ -2,11 +2,9 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { X, Upload } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface UserAssociationModalProps {
   isOpen: boolean;
@@ -15,6 +13,7 @@ interface UserAssociationModalProps {
 }
 
 export const UserAssociationModal = ({ isOpen, onClose, checklistName }: UserAssociationModalProps) => {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     userType: '',
     userName: '',
@@ -37,7 +36,10 @@ export const UserAssociationModal = ({ isOpen, onClose, checklistName }: UserAss
 
   const handleSubmit = () => {
     console.log('User Association Data:', formData);
-    // Here you would typically send the data to your backend
+    toast({
+      title: "Success",
+      description: "User association completed successfully!",
+    });
     onClose();
     // Reset form
     setFormData({
@@ -65,163 +67,165 @@ export const UserAssociationModal = ({ isOpen, onClose, checklistName }: UserAss
     });
   };
 
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
         <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
-          <DialogTitle className="text-lg font-semibold">User Associated</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-6 w-6 p-0"
-          >
-            <X className="h-4 w-4" />
+          <DialogTitle className="text-lg font-semibold">
+            User Association - {checklistName}
+          </DialogTitle>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <X className="w-4 h-4" />
           </Button>
         </DialogHeader>
-        
-        <div className="p-6 space-y-6">
-          <div className="text-sm text-gray-600 mb-4">
-            Associate users with checklist: <strong>{checklistName}</strong>
-          </div>
 
-          {/* User Type Selection */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">User Type</Label>
-            <Select value={formData.userType} onValueChange={(value) => handleInputChange('userType', value)}>
-              <SelectTrigger className="border-gray-300">
-                <SelectValue placeholder="Select user type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="internal">Internal User</SelectItem>
-                <SelectItem value="external">External User</SelectItem>
-                <SelectItem value="contractor">Contractor</SelectItem>
-                <SelectItem value="vendor">Vendor</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="space-y-4 py-6">
+          <div className="grid grid-cols-2 gap-4">
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel id="user-type-label" shrink>User Type</InputLabel>
+              <MuiSelect
+                labelId="user-type-label"
+                label="User Type"
+                displayEmpty
+                value={formData.userType}
+                onChange={(e) => handleInputChange('userType', e.target.value)}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select User Type</em></MenuItem>
+                <MenuItem value="occupant">Occupant</MenuItem>
+                <MenuItem value="fm">FM User</MenuItem>
+                <MenuItem value="admin">Admin</MenuItem>
+              </MuiSelect>
+            </FormControl>
 
-          {/* User Name */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">User Name</Label>
-            <Input
-              placeholder="Enter user name"
+            <TextField
+              placeholder="Enter User Name"
               value={formData.userName}
               onChange={(e) => handleInputChange('userName', e.target.value)}
-              className="border-gray-300"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
             />
           </div>
 
-          {/* Email */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Email</Label>
-            <Input
+          <div className="grid grid-cols-2 gap-4">
+            <TextField
+              placeholder="Enter Email"
               type="email"
-              placeholder="Enter email address"
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
-              className="border-gray-300"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
             />
-          </div>
 
-          {/* Phone */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Phone Number</Label>
-            <Input
-              type="tel"
-              placeholder="Enter phone number"
+            <TextField
+              placeholder="Enter Phone"
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
-              className="border-gray-300"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
             />
           </div>
 
-          {/* Role */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Role</Label>
-            <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value)}>
-              <SelectTrigger className="border-gray-300">
-                <SelectValue placeholder="Select role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="inspector">Inspector</SelectItem>
-                <SelectItem value="supervisor">Supervisor</SelectItem>
-                <SelectItem value="manager">Manager</SelectItem>
-                <SelectItem value="technician">Technician</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel id="role-label" shrink>Role</InputLabel>
+              <MuiSelect
+                labelId="role-label"
+                label="Role"
+                displayEmpty
+                value={formData.role}
+                onChange={(e) => handleInputChange('role', e.target.value)}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Role</em></MenuItem>
+                <MenuItem value="manager">Manager</MenuItem>
+                <MenuItem value="technician">Technician</MenuItem>
+                <MenuItem value="supervisor">Supervisor</MenuItem>
+              </MuiSelect>
+            </FormControl>
+
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel id="department-label" shrink>Department</InputLabel>
+              <MuiSelect
+                labelId="department-label"
+                label="Department"
+                displayEmpty
+                value={formData.department}
+                onChange={(e) => handleInputChange('department', e.target.value)}
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Department</em></MenuItem>
+                <MenuItem value="maintenance">Maintenance</MenuItem>
+                <MenuItem value="facility">Facility</MenuItem>
+                <MenuItem value="security">Security</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
-          {/* Department */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Department</Label>
-            <Select value={formData.department} onValueChange={(value) => handleInputChange('department', value)}>
-              <SelectTrigger className="border-gray-300">
-                <SelectValue placeholder="Select department" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="maintenance">Maintenance</SelectItem>
-                <SelectItem value="construction">Construction</SelectItem>
-                <SelectItem value="quality">Quality Assurance</SelectItem>
-                <SelectItem value="operations">Operations</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Notes</Label>
-            <Textarea
-              placeholder="Enter additional notes"
+          <div className="space-y-4">
+            <TextField
+              placeholder="Enter Notes"
               value={formData.notes}
               onChange={(e) => handleInputChange('notes', e.target.value)}
-              className="border-gray-300 min-h-[80px]"
+              fullWidth
+              variant="outlined"
+              multiline
+              rows={3}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
             />
-          </div>
 
-          {/* File Upload */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Attachments</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-              <input
-                type="file"
-                id="file-upload"
-                className="hidden"
-                onChange={handleFileUpload}
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-              />
-              <label
-                htmlFor="file-upload"
-                className="flex flex-col items-center justify-center cursor-pointer"
-              >
-                <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                <span className="text-sm text-gray-600">
-                  {formData.attachments ? formData.attachments.name : 'Click to upload files'}
-                </span>
-                <span className="text-xs text-gray-400 mt-1">
-                  PDF, DOC, DOCX, JPG, JPEG, PNG (Max 10MB)
-                </span>
-              </label>
+            <div className="space-y-2">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <input
+                  type="file"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="attachment-upload"
+                  accept="image/*,.pdf,.doc,.docx"
+                />
+                <label htmlFor="attachment-upload" className="cursor-pointer">
+                  <Upload className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                  <div className="text-sm text-gray-500">
+                    {formData.attachments ? formData.attachments.name : 'Click to upload attachment'}
+                  </div>
+                </label>
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button
-              onClick={handleReset}
-              variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2"
-            >
-              Reset
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:bg-[#C72030]/90 text-white px-6 py-2"
-            >
-              Submit
-            </Button>
-          </div>
+        <div className="flex justify-center gap-4 pt-4 border-t">
+          <Button 
+            onClick={handleSubmit}
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
+          >
+            Submit
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={handleReset}
+            className="px-8"
+          >
+            Reset
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

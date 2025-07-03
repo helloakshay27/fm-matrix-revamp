@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { TextField } from '@mui/material';
+import { useToast } from '@/hooks/use-toast';
 
 interface AddCategoryModalProps {
   isOpen: boolean;
@@ -20,6 +20,7 @@ export const AddCategoryModal = ({
   showTimings = true, 
   showAmount = false 
 }: AddCategoryModalProps) => {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     category: "",
     timings: "",
@@ -41,9 +42,20 @@ export const AddCategoryModal = ({
       }
       
       onSubmit(submitData);
+      toast({
+        title: "Success",
+        description: "Category added successfully!",
+      });
       setFormData({ category: "", timings: "", amount: "" });
       onClose();
     }
+  };
+
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
   };
 
   return (
@@ -54,47 +66,41 @@ export const AddCategoryModal = ({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="category" className="text-sm">
-              Category
-            </Label>
-            <Input
-              id="category"
-              placeholder="Enter Category Name"
-              value={formData.category}
-              onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-              className="w-full"
-            />
-          </div>
+          <TextField
+            placeholder="Enter Category Name"
+            value={formData.category}
+            onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
+          />
 
           {showTimings && (
-            <div className="space-y-2">
-              <Label htmlFor="timings" className="text-sm">
-                Timings
-              </Label>
-              <Input
-                id="timings"
-                placeholder="Enter Timings"
-                value={formData.timings}
-                onChange={(e) => setFormData(prev => ({ ...prev, timings: e.target.value }))}
-                className="w-full"
-              />
-            </div>
+            <TextField
+              placeholder="Enter Timings"
+              value={formData.timings}
+              onChange={(e) => setFormData(prev => ({ ...prev, timings: e.target.value }))}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
           )}
 
           {showAmount && (
-            <div className="space-y-2">
-              <Label htmlFor="amount" className="text-sm">
-                Amount
-              </Label>
-              <Input
-                id="amount"
-                placeholder="Enter Amount"
-                value={formData.amount}
-                onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-                className="w-full"
-              />
-            </div>
+            <TextField
+              placeholder="Enter Amount"
+              value={formData.amount}
+              onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
           )}
         </div>
 

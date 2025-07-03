@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { useToast } from '@/hooks/use-toast';
 
 interface SnaggingFilterDialogProps {
   open: boolean;
@@ -18,6 +19,7 @@ interface FilterValues {
 }
 
 export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: SnaggingFilterDialogProps) => {
+  const { toast } = useToast();
   const [filters, setFilters] = useState<FilterValues>({
     tower: '',
     floor: '',
@@ -31,6 +33,10 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
 
   const handleApply = () => {
     onApplyFilters(filters);
+    toast({
+      title: "Success",
+      description: "Filters applied successfully!",
+    });
     onOpenChange(false);
   };
 
@@ -38,6 +44,13 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
     const resetFilters = { tower: '', floor: '', flat: '', stage: '' };
     setFilters(resetFilters);
     onApplyFilters(resetFilters);
+  };
+
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
   };
 
   return (
@@ -48,69 +61,81 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
         </DialogHeader>
         
         <div className="grid grid-cols-2 gap-4 py-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Tower</label>
-            <Select value={filters.tower} onValueChange={(value) => handleFilterChange('tower', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Snag Entity" />
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                <SelectItem value="A">Tower A</SelectItem>
-                <SelectItem value="B">Tower B</SelectItem>
-                <SelectItem value="C">Tower C</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel id="tower-label" shrink>Tower</InputLabel>
+            <MuiSelect
+              labelId="tower-label"
+              label="Tower"
+              displayEmpty
+              value={filters.tower}
+              onChange={(e) => handleFilterChange('tower', e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value=""><em>Select Snag Entity</em></MenuItem>
+              <MenuItem value="A">Tower A</MenuItem>
+              <MenuItem value="B">Tower B</MenuItem>
+              <MenuItem value="C">Tower C</MenuItem>
+            </MuiSelect>
+          </FormControl>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Floor</label>
-            <Select value={filters.floor} onValueChange={(value) => handleFilterChange('floor', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Floor" />
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                <SelectItem value="1st">1st Floor</SelectItem>
-                <SelectItem value="2nd">2nd Floor</SelectItem>
-                <SelectItem value="3rd">3rd Floor</SelectItem>
-                <SelectItem value="4th">4th Floor</SelectItem>
-                <SelectItem value="5th">5th Floor</SelectItem>
-                <SelectItem value="6th">6th Floor</SelectItem>
-                <SelectItem value="7th">7th Floor</SelectItem>
-                <SelectItem value="8th">8th Floor</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel id="floor-label" shrink>Floor</InputLabel>
+            <MuiSelect
+              labelId="floor-label"
+              label="Floor"
+              displayEmpty
+              value={filters.floor}
+              onChange={(e) => handleFilterChange('floor', e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value=""><em>Select Floor</em></MenuItem>
+              <MenuItem value="1st">1st Floor</MenuItem>
+              <MenuItem value="2nd">2nd Floor</MenuItem>
+              <MenuItem value="3rd">3rd Floor</MenuItem>
+              <MenuItem value="4th">4th Floor</MenuItem>
+              <MenuItem value="5th">5th Floor</MenuItem>
+              <MenuItem value="6th">6th Floor</MenuItem>
+              <MenuItem value="7th">7th Floor</MenuItem>
+              <MenuItem value="8th">8th Floor</MenuItem>
+            </MuiSelect>
+          </FormControl>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Flat</label>
-            <Select value={filters.flat} onValueChange={(value) => handleFilterChange('flat', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Flat" />
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                <SelectItem value="101">101</SelectItem>
-                <SelectItem value="103">103</SelectItem>
-                <SelectItem value="301">301</SelectItem>
-                <SelectItem value="501">501</SelectItem>
-                <SelectItem value="601">601</SelectItem>
-                <SelectItem value="801">801</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel id="flat-label" shrink>Flat</InputLabel>
+            <MuiSelect
+              labelId="flat-label"
+              label="Flat"
+              displayEmpty
+              value={filters.flat}
+              onChange={(e) => handleFilterChange('flat', e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value=""><em>Select Flat</em></MenuItem>
+              <MenuItem value="101">101</MenuItem>
+              <MenuItem value="103">103</MenuItem>
+              <MenuItem value="301">301</MenuItem>
+              <MenuItem value="501">501</MenuItem>
+              <MenuItem value="601">601</MenuItem>
+              <MenuItem value="801">801</MenuItem>
+            </MuiSelect>
+          </FormControl>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Stage</label>
-            <Select value={filters.stage} onValueChange={(value) => handleFilterChange('stage', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a stage" />
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                <SelectItem value="Units Snagging">Units Snagging</SelectItem>
-                <SelectItem value="Common Area Snagging">Common Area Snagging</SelectItem>
-                <SelectItem value="Pre-handover Snagging">Pre-handover Snagging</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel id="stage-label" shrink>Stage</InputLabel>
+            <MuiSelect
+              labelId="stage-label"
+              label="Stage"
+              displayEmpty
+              value={filters.stage}
+              onChange={(e) => handleFilterChange('stage', e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value=""><em>Select a stage</em></MenuItem>
+              <MenuItem value="Units Snagging">Units Snagging</MenuItem>
+              <MenuItem value="Common Area Snagging">Common Area Snagging</MenuItem>
+              <MenuItem value="Pre-handover Snagging">Pre-handover Snagging</MenuItem>
+            </MuiSelect>
+          </FormControl>
         </div>
 
         <div className="flex justify-center gap-4 pt-4">
