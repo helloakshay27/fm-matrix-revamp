@@ -1,13 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronDown, ChevronUp, X, Plus } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
-export const AddAssetPage = () => {
+const AddAssetPage = () => {
   const navigate = useNavigate();
   const [expandedSections, setExpandedSections] = useState({
     location: true,
@@ -22,7 +18,6 @@ export const AddAssetPage = () => {
   const [meterCategoryType, setMeterCategoryType] = useState('');
   const [subCategoryType, setSubCategoryType] = useState('');
 
-  // State for consumption asset measures
   const [consumptionMeasures, setConsumptionMeasures] = useState([
     {
       id: 1,
@@ -37,7 +32,6 @@ export const AddAssetPage = () => {
     }
   ]);
 
-  // State for non-consumption asset measures
   const [nonConsumptionMeasures, setNonConsumptionMeasures] = useState([
     {
       id: 1,
@@ -53,20 +47,20 @@ export const AddAssetPage = () => {
   ]);
 
   const [attachments, setAttachments] = useState({
-    manualsUpload: [] as File[],
-    insuranceDetails: [] as File[],
-    purchaseInvoice: [] as File[],
-    amc: [] as File[]
+    manualsUpload: [],
+    insuranceDetails: [],
+    purchaseInvoice: [],
+    amc: []
   });
 
-  const toggleSection = (section: keyof typeof expandedSections) => {
+  const toggleSection = (section) => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }));
   };
 
-  const handleFileUpload = (category: keyof typeof attachments, files: FileList | null) => {
+  const handleFileUpload = (category, files) => {
     if (files) {
       const fileArray = Array.from(files);
       setAttachments(prev => ({
@@ -76,7 +70,7 @@ export const AddAssetPage = () => {
     }
   };
 
-  const removeFile = (category: keyof typeof attachments, index: number) => {
+  const removeFile = (category, index) => {
     setAttachments(prev => ({
       ...prev,
       [category]: prev[category].filter((_, i) => i !== index)
@@ -90,19 +84,16 @@ export const AddAssetPage = () => {
 
   const handleSaveAndCreate = () => {
     console.log('Save and create new asset');
-    // Reset form or navigate as needed
   };
 
-  const getMeterCategoryOptions = () => {
-    return [
-      { value: 'board', label: 'Board' },
-      { value: 'dg', label: 'DG' },
-      { value: 'renewable', label: 'Renewable' },
-      { value: 'fresh-water', label: 'Fresh Water' },
-      { value: 'recycled', label: 'Recycled' },
-      { value: 'iex-gdam', label: 'IEX-GDAM' }
-    ];
-  };
+  const getMeterCategoryOptions = () => [
+    { value: 'board', label: 'Board' },
+    { value: 'dg', label: 'DG' },
+    { value: 'renewable', label: 'Renewable' },
+    { value: 'fresh-water', label: 'Fresh Water' },
+    { value: 'recycled', label: 'Recycled' },
+    { value: 'iex-gdam', label: 'IEX-GDAM' }
+  ];
 
   const getSubCategoryOptions = () => {
     switch (meterCategoryType) {
@@ -129,12 +120,11 @@ export const AddAssetPage = () => {
     }
   };
 
-  const handleMeterCategoryChange = (value: string) => {
+  const handleMeterCategoryChange = (value) => {
     setMeterCategoryType(value);
-    setSubCategoryType(''); // Reset sub-category when main category changes
+    setSubCategoryType('');
   };
 
-  // Functions for consumption measures
   const addConsumptionMeasure = () => {
     const newId = consumptionMeasures.length > 0 ? Math.max(...consumptionMeasures.map(m => m.id)) + 1 : 1;
     setConsumptionMeasures([...consumptionMeasures, {
@@ -150,19 +140,18 @@ export const AddAssetPage = () => {
     }]);
   };
 
-  const removeConsumptionMeasure = (id: number) => {
+  const removeConsumptionMeasure = (id) => {
     if (consumptionMeasures.length > 1) {
       setConsumptionMeasures(consumptionMeasures.filter(m => m.id !== id));
     }
   };
 
-  const updateConsumptionMeasure = (id: number, field: string, value: any) => {
+  const updateConsumptionMeasure = (id, field, value) => {
     setConsumptionMeasures(consumptionMeasures.map(m => 
       m.id === id ? { ...m, [field]: value } : m
     ));
   };
 
-  // Functions for non-consumption measures
   const addNonConsumptionMeasure = () => {
     const newId = nonConsumptionMeasures.length > 0 ? Math.max(...nonConsumptionMeasures.map(m => m.id)) + 1 : 1;
     setNonConsumptionMeasures([...nonConsumptionMeasures, {
@@ -178,583 +167,366 @@ export const AddAssetPage = () => {
     }]);
   };
 
-  const removeNonConsumptionMeasure = (id: number) => {
+  const removeNonConsumptionMeasure = (id) => {
     if (nonConsumptionMeasures.length > 1) {
       setNonConsumptionMeasures(nonConsumptionMeasures.filter(m => m.id !== id));
     }
   };
 
-  const updateNonConsumptionMeasure = (id: number, field: string, value: any) => {
+  const updateNonConsumptionMeasure = (id, field, value) => {
     setNonConsumptionMeasures(nonConsumptionMeasures.map(m => 
       m.id === id ? { ...m, [field]: value } : m
     ));
   };
 
-  // Responsive styles for TextField and Select
   const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
+    height: { xs: '2rem', sm: '2.25rem', md: '2.25rem' },
     '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
+      padding: { xs: '0.5rem', sm: '0.625rem', md: '0.625rem' },
+      fontSize: { xs: '0.875rem', sm: '1rem' }
     },
+    '& .MuiInputLabel-root': {
+      fontSize: { xs: '0.875rem', sm: '1rem' }
+    }
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
           <span>Asset List</span>
-          <span>&gt;</span>
+          <span>></span>
           <span className="text-gray-900 font-medium">Create New Asset</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">NEW ASSET</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">NEW ASSET</h1>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Location Details */}
-        <Card>
-          <CardHeader 
-            className="cursor-pointer bg-orange-50 border-l-4 border-l-[#C72030]"
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div 
+            className="cursor-pointer bg-orange-50 border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center"
             onClick={() => toggleSection('location')}
           >
-            <CardTitle className="flex items-center justify-between text-[#C72030]">
-              <span className="flex items-center gap-2">
-                <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
-                LOCATION DETAILS
-              </span>
-              {expandedSections.location ? <ChevronUp /> : <ChevronDown />}
-            </CardTitle>
-          </CardHeader>
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">1</span>
+              LOCATION DETAILS
+            </div>
+            {expandedSections.location ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
           {expandedSections.location && (
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel id="site-select-label" shrink>Site</InputLabel>
+            <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+                {['Site', 'Building', 'Wing', 'Area', 'Floor'].map((label) => (
+                  <FormControl key={label} fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                    <InputLabel id={`${label.toLowerCase()}-select-label`} shrink>{label}</InputLabel>
                     <MuiSelect
-                      labelId="site-select-label"
-                      label="Site"
+                      labelId={`${label.toLowerCase()}-select-label`}
+                      label={label}
                       displayEmpty
                       value=""
                       sx={fieldStyles}
                     >
-                      <MenuItem value=""><em>Select Site</em></MenuItem>
-                      <MenuItem value="site1">Site 1</MenuItem>
-                      <MenuItem value="site2">Site 2</MenuItem>
+                      <MenuItem value=""><em>Select {label}</em></MenuItem>
+                      <MenuItem value={`${label.toLowerCase()}1`}>{label} 1</MenuItem>
+                      <MenuItem value={`${label.toLowerCase()}2`}>{label} 2</MenuItem>
                     </MuiSelect>
                   </FormControl>
-                </div>
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel id="building-select-label" shrink>Building</InputLabel>
-                    <MuiSelect
-                      labelId="building-select-label"
-                      label="Building"
-                      displayEmpty
-                      value=""
-                      sx={fieldStyles}
-                    >
-                      <MenuItem value=""><em>Select Building</em></MenuItem>
-                      <MenuItem value="building1">Building 1</MenuItem>
-                      <MenuItem value="building2">Building 2</MenuItem>
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel id="wing-select-label" shrink>Wing</InputLabel>
-                    <MuiSelect
-                      labelId="wing-select-label"
-                      label="Wing"
-                      displayEmpty
-                      value=""
-                      sx={fieldStyles}
-                    >
-                      <MenuItem value=""><em>Select Wing</em></MenuItem>
-                      <MenuItem value="wing1">Wing 1</MenuItem>
-                      <MenuItem value="wing2">Wing 2</MenuItem>
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel id="area-select-label" shrink>Area</InputLabel>
-                    <MuiSelect
-                      labelId="area-select-label"
-                      label="Area"
-                      displayEmpty
-                      value=""
-                      sx={fieldStyles}
-                    >
-                      <MenuItem value=""><em>Select Area</em></MenuItem>
-                      <MenuItem value="area1">Area 1</MenuItem>
-                      <MenuItem value="area2">Area 2</MenuItem>
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel id="floor-select-label" shrink>Floor</InputLabel>
-                    <MuiSelect
-                      labelId="floor-select-label"
-                      label="Floor"
-                      displayEmpty
-                      value=""
-                      sx={fieldStyles}
-                    >
-                      <MenuItem value=""><em>Select Floor</em></MenuItem>
-                      <MenuItem value="floor1">Floor 1</MenuItem>
-                      <MenuItem value="floor2">Floor 2</MenuItem>
-                    </MuiSelect>
-                  </FormControl>
-                </div>
+                ))}
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel id="room-select-label" shrink>Room</InputLabel>
-                    <MuiSelect
-                      labelId="room-select-label"
-                      label="Room"
-                      displayEmpty
-                      value=""
-                      sx={fieldStyles}
-                    >
-                      <MenuItem value=""><em>Select Room</em></MenuItem>
-                      <MenuItem value="room1">Room 1</MenuItem>
-                      <MenuItem value="room2">Room 2</MenuItem>
-                    </MuiSelect>
-                  </FormControl>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="room-select-label" shrink>Room</InputLabel>
+                  <MuiSelect
+                    labelId="room-select-label"
+                    label="Room"
+                    displayEmpty
+                    value=""
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Room</em></MenuItem>
+                    <MenuItem value="room1">Room 1</MenuItem>
+                    <MenuItem value="room2">Room 2</MenuItem>
+                  </MuiSelect>
+                </FormControl>
               </div>
-            </CardContent>
+            </div>
           )}
-        </Card>
+        </div>
 
         {/* Asset Details */}
-        <Card>
-          <CardHeader 
-            className="cursor-pointer bg-orange-50 border-l-4 border-l-[#C72030]"
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div 
+            className="cursor-pointer bg-orange-50 border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center"
             onClick={() => toggleSection('asset')}
           >
-            <CardTitle className="flex items-center justify-between text-[#C72030]">
-              <span className="flex items-center gap-2">
-                <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
-                ASSET DETAILS
-              </span>
-              {expandedSections.asset ? <ChevronUp /> : <ChevronDown />}
-            </CardTitle>
-          </CardHeader>
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">2</span>
+              ASSET DETAILS
+            </div>
+            {expandedSections.asset ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
           {expandedSections.asset && (
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
+            <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                {[
+                  { label: 'Asset Name', name: 'assetName', placeholder: 'Enter Name', required: true },
+                  { label: 'Asset No.', name: 'assetNo', placeholder: 'Enter Number', required: true },
+                  { label: 'Equipment ID', name: 'equipmentId', placeholder: 'Enter Number', required: true }
+                ].map(field => (
                   <TextField
-                    required
-                    label="Asset Name"
-                    placeholder="Enter Name"
-                    name="assetName"
+                    key={field.name}
+                    required={field.required}
+                    label={field.label}
+                    placeholder={field.placeholder}
+                    name={field.name}
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
                   />
-                </div>
-                <div>
-                  <TextField
-                    required
-                    label="Asset No."
-                    placeholder="Enter Number"
-                    name="assetNo"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
-                </div>
-                <div>
-                  <TextField
-                    required
-                    label="Equipment ID"
-                    placeholder="Enter Number"
-                    name="equipmentId"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
-                </div>
+                ))}
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                {[
+                  { label: 'Model No.', name: 'modelNo', placeholder: 'Enter Number' },
+                  { label: 'Serial No.', name: 'serialNo', placeholder: 'Enter Number' },
+                  { label: 'Consumer No.', name: 'consumerNo', placeholder: 'Enter Number' }
+                ].map(field => (
                   <TextField
-                    label="Model No."
-                    placeholder="Enter Number"
-                    name="modelNo"
+                    key={field.name}
+                    label={field.label}
+                    placeholder={field.placeholder}
+                    name={field.name}
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
                   />
-                </div>
-                <div>
-                  <TextField
-                    label="Serial No."
-                    placeholder="Enter Number"
-                    name="serialNo"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
-                </div>
-                <div>
-                  <TextField
-                    label="Consumer No."
-                    placeholder="Enter Number"
-                    name="consumerNo"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
-                </div>
+                ))}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                {[
+                  { label: 'Purchase Cost', name: 'purchaseCost', placeholder: 'Enter Numeric value', type: 'number', required: true },
+                  { label: 'Capacity', name: 'capacity', placeholder: 'Enter Text' },
+                  { label: 'Unit', name: 'unit', placeholder: 'Enter Text' }
+                ].map(field => (
                   <TextField
-                    required
-                    label="Purchase Cost"
-                    placeholder="Enter Numeric value"
-                    name="purchaseCost"
-                    type="number"
+                    key={field.name}
+                    required={field.required}
+                    label={field.label}
+                    placeholder={field.placeholder}
+                    name={field.name}
+                    type={field.type || 'text'}
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
                   />
-                </div>
-                <div>
-                  <TextField
-                    label="Capacity"
-                    placeholder="Enter Text"
-                    name="capacity"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
-                </div>
-                <div>
-                  <TextField
-                    label="Unit"
-                    placeholder="Enter Text"
-                    name="unit"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
-                </div>
+                ))}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel id="group-select-label" shrink>Group</InputLabel>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                {['Group', 'Subgroup'].map(label => (
+                  <FormControl key={label} fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                    <InputLabel id={`${label.toLowerCase()}-select-label`} shrink>{label}</InputLabel>
                     <MuiSelect
-                      labelId="group-select-label"
-                      label="Group"
+                      labelId={`${label.toLowerCase()}-select-label`}
+                      label={label}
                       displayEmpty
                       value=""
                       sx={fieldStyles}
                     >
-                      <MenuItem value=""><em>Select Group</em></MenuItem>
-                      <MenuItem value="group1">Group 1</MenuItem>
-                      <MenuItem value="group2">Group 2</MenuItem>
+                      <MenuItem value=""><em>Select {label}</em></MenuItem>
+                      <MenuItem value={`${label.toLowerCase()}1`}>{label} 1</MenuItem>
+                      <MenuItem value={`${label.toLowerCase()}2`}>{label} 2</MenuItem>
                     </MuiSelect>
                   </FormControl>
-                </div>
-                <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel id="subgroup-select-label" shrink>Subgroup</InputLabel>
-                    <MuiSelect
-                      labelId="subgroup-select-label"
-                      label="Subgroup"
-                      displayEmpty
-                      value=""
-                      sx={fieldStyles}
-                    >
-                      <MenuItem value=""><em>Select Subgroup</em></MenuItem>
-                      <MenuItem value="subgroup1">Subgroup 1</MenuItem>
-                      <MenuItem value="subgroup2">Subgroup 2</MenuItem>
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-                <div>
-                  <TextField
-                    label="Purchased ON Date"
-                    placeholder="Select Date"
-                    name="purchaseDate"
-                    type="date"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
-                </div>
+                ))}
+                <TextField
+                  label="Purchased ON Date"
+                  placeholder="Select Date"
+                  name="purchaseDate"
+                  type="date"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                {[
+                  { label: 'Expiry date', name: 'expiryDate', type: 'date' },
+                  { label: 'Manufacturer', name: 'manufacturer', placeholder: 'Enter Text' }
+                ].map(field => (
                   <TextField
-                    label="Expiry date"
-                    placeholder="Select Date"
-                    name="expiryDate"
-                    type="date"
+                    key={field.name}
+                    label={field.label}
+                    placeholder={field.placeholder || 'Select Date'}
+                    name={field.name}
+                    type={field.type || 'text'}
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
                   />
-                </div>
-                <div>
-                  <TextField
-                    label="Manufacturer"
-                    placeholder="Enter Text"
-                    name="manufacturer"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
-                </div>
+                ))}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="text-sm font-medium">Location Type</label>
-                  <RadioGroup defaultValue="common" className="flex gap-6 mt-2">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="common" id="common" />
-                      <label htmlFor="common">Common Area</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4">
+                {[
+                  {
+                    label: 'Location Type',
+                    name: 'locationType',
+                    options: [
+                      { value: 'common', label: 'Common Area' },
+                      { value: 'customer', label: 'Customer' },
+                      { value: 'na', label: 'NA' }
+                    ],
+                    defaultValue: 'common'
+                  },
+                  {
+                    label: 'Asset Type',
+                    name: 'assetType',
+                    options: [
+                      { value: 'parent', label: 'Parent' },
+                      { value: 'sub', label: 'Sub' }
+                    ],
+                    defaultValue: 'parent'
+                  },
+                  {
+                    label: 'Status',
+                    name: 'status',
+                    options: [
+                      { value: 'inuse', label: 'In Use' },
+                      { value: 'breakdown', label: 'Breakdown' }
+                    ],
+                    defaultValue: 'inuse'
+                  },
+                  {
+                    label: 'Critical',
+                    name: 'critical',
+                    options: [
+                      { value: 'yes', label: 'Yes' },
+                      { value: 'no', label: 'No' }
+                    ],
+                    defaultValue: 'no'
+                  }
+                ].map(field => (
+                  <div key={field.name}>
+                    <label className="text-xs sm:text-sm font-medium text-gray-700">{field.label}</label>
+                    <div className="flex flex-wrap gap-4 sm:gap-6 mt-2">
+                      {field.options.map(option => (
+                        <div key={option.value} className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            id={`${field.name}-${option.value}`}
+                            name={field.name}
+                            value={option.value}
+                            defaultChecked={option.value === field.defaultValue}
+                            className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                          />
+                          <label htmlFor={`${field.name}-${option.value}`} className="text-xs sm:text-sm">{option.label}</label>
+                        </div>
+                      ))}
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="customer" id="customer" />
-                      <label htmlFor="customer">Customer</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="na" id="na" />
-                      <label htmlFor="na">NA</label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Asset Type</label>
-                  <RadioGroup defaultValue="parent" className="flex gap-6 mt-2">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="parent" id="parent" />
-                      <label htmlFor="parent">Parent</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="sub" id="sub" />
-                      <label htmlFor="sub">Sub</label>
-                    </div>
-                  </RadioGroup>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="text-sm font-medium">Status</label>
-                  <RadioGroup defaultValue="inuse" className="flex gap-6 mt-2">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="inuse" id="inuse" />
-                      <label htmlFor="inuse">In Use</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="breakdown" id="breakdown" />
-                      <label htmlFor="breakdown">Breakdown</label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Critical</label>
-                  <RadioGroup defaultValue="no" className="flex gap-6 mt-2">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="yes" id="yes" />
-                      <label htmlFor="yes">Yes</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="no" id="no" />
-                      <label htmlFor="no">No</label>
-                    </div>
-                  </RadioGroup>
-                </div>
+                  </div>
+                ))}
               </div>
 
               <div className="flex items-center space-x-2">
-                <Checkbox id="meterApplicable" />
-                <label htmlFor="meterApplicable">Meter Applicable</label>
+                <input
+                  type="checkbox"
+                  id="meterApplicable"
+                  className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]"
+                />
+                <label htmlFor="meterApplicable" className="text-xs sm:text-sm">Meter Applicable</label>
               </div>
-            </CardContent>
+            </div>
           )}
-        </Card>
+        </div>
 
         {/* Warranty Details */}
-        <Card>
-          <CardHeader 
-            className="cursor-pointer bg-orange-50 border-l-4 border-l-[#C72030]"
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div 
+            className="cursor-pointer bg-orange-50 border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center"
             onClick={() => toggleSection('warranty')}
           >
-            <CardTitle className="flex items-center justify-between text-[#C72030]">
-              <span className="flex items-center gap-2">
-                <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
-                Warranty Details
-              </span>
-              {expandedSections.warranty ? <ChevronUp /> : <ChevronDown />}
-            </CardTitle>
-          </CardHeader>
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">3</span>
+              WARRANTY DETAILS
+            </div>
+            {expandedSections.warranty ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
           {expandedSections.warranty && (
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+            <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4">
                 <div>
-                  <label className="text-sm font-medium">Under Warranty</label>
-                  <RadioGroup defaultValue="no" className="flex gap-6 mt-2">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="yes" id="warranty-yes" />
-                      <label htmlFor="warranty-yes">Yes</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="no" id="warranty-no" />
-                      <label htmlFor="warranty-no">No</label>
-                    </div>
-                  </RadioGroup>
+                  <label className="text-xs sm:text-sm font-medium text-gray-700">Under Warranty</label>
+                  <div className="flex gap-4 sm:gap-6 mt-2">
+                    {[
+                      { value: 'yes', label: 'Yes' },
+                      { value: 'no', label: 'No' }
+                    ].map(option => (
+                      <div key={option.value} className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id={`warranty-${option.value}`}
+                          name="underWarranty"
+                          value={option.value}
+                          defaultChecked={option.value === 'no'}
+                          className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                        />
+                        <label htmlFor={`warranty-${option.value}`} className="text-xs sm:text-sm">{option.label}</label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { label: 'Warranty Start Date', name: 'warrantyStart', type: 'date' },
+                  { label: 'Warranty expires on', name: 'warrantyExpires', type: 'date' },
+                  { label: 'Commissioning Date', name: 'commissioningDate', type: 'date' }
+                ].map(field => (
                   <TextField
-                    label="Warranty Start Date"
+                    key={field.name}
+                    label={field.label}
                     placeholder="Select Date"
-                    name="warrantyStart"
-                    type="date"
+                    name={field.name}
+                    type={field.type}
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
                   />
-                </div>
-                <div>
-                  <TextField
-                    label="Warranty expires on"
-                    placeholder="Select Date"
-                    name="warrantyExpires"
-                    type="date"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
-                </div>
-                <div>
-                  <TextField
-                    label="Commissioning Date"
-                    placeholder="Select Date"
-                    name="commissioningDate"
-                    type="date"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
-                </div>
+                ))}
               </div>
-            </CardContent>
+            </div>
           )}
-        </Card>
+        </div>
 
         {/* Meter Category Type */}
-        <Card>
-          <CardHeader 
-            className="cursor-pointer bg-orange-50 border-l-4 border-l-[#C72030]"
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div 
+            className="cursor-pointer bg-orange-50 border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center"
             onClick={() => toggleSection('meterCategory')}
           >
-            <CardTitle className="flex items-center justify-between text-[#C72030]">
-              <span className="flex items-center gap-2">
-                <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">4</span>
-                Meter Category Type
-              </span>
-              {expandedSections.meterCategory ? <ChevronUp /> : <ChevronDown />}
-            </CardTitle>
-          </CardHeader>
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">4</span>
+              METER CATEGORY TYPE
+            </div>
+            {expandedSections.meterCategory ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
           {expandedSections.meterCategory && (
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-4">
+            <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
                 {getMeterCategoryOptions().map((option) => (
-                  <div key={option.value} className="bg-purple-100 p-4 rounded-lg text-center">
+                  <div key={option.value} className="bg-purple-100 p-3 sm:p-4 rounded-lg text-center">
                     <div className="flex items-center justify-center space-x-2">
                       <input
                         type="radio"
@@ -763,21 +535,19 @@ export const AddAssetPage = () => {
                         value={option.value}
                         checked={meterCategoryType === option.value}
                         onChange={(e) => handleMeterCategoryChange(e.target.value)}
-                        className="w-4 h-4 text-[#C72030] bg-gray-100 border-gray-300 focus:ring-[#C72030] focus:ring-2"
+                        className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                       />
-                      <label htmlFor={option.value} className="text-sm cursor-pointer">
-                        {option.label}
-                      </label>
+                      <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
                     </div>
                   </div>
                 ))}
               </div>
 
               {getSubCategoryOptions().length > 0 && (
-                <div className="mt-6">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="mt-4 sm:mt-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                     {getSubCategoryOptions().map((option) => (
-                      <div key={option.value} className="bg-purple-100 p-4 rounded-lg text-center">
+                      <div key={option.value} className="bg-purple-100 p-3 sm:p-4 rounded-lg text-center">
                         <div className="flex items-center justify-center space-x-2">
                           <input
                             type="radio"
@@ -786,673 +556,344 @@ export const AddAssetPage = () => {
                             value={option.value}
                             checked={subCategoryType === option.value}
                             onChange={(e) => setSubCategoryType(e.target.value)}
-                            className="w-4 h-4 text-[#C72030] bg-gray-100 border-gray-300 focus:ring-[#C72030] focus:ring-2"
+                            className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                           />
-                          <label htmlFor={`sub-${option.value}`} className="text-sm cursor-pointer">
-                            {option.label}
-                          </label>
+                          <label htmlFor={`sub-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
-            </CardContent>
+            </div>
           )}
-        </Card>
+        </div>
 
         {/* Consumption Asset Measure */}
-        <Card>
-          <CardHeader 
-            className="cursor-pointer bg-orange-50 border-l-4 border-l-[#C72030]"
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div 
+            className="cursor-pointer bg-orange-50 border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center"
             onClick={() => toggleSection('consumption')}
           >
-            <CardTitle className="flex items-center justify-between text-[#C72030]">
-              <span className="flex items-center gap-2">
-                <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">5</span>
-                CONSUMPTION ASSET MEASURE
-              </span>
-              {expandedSections.consumption ? <ChevronUp /> : <ChevronDown />}
-            </CardTitle>
-          </CardHeader>
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">5</span>
+              CONSUMPTION ASSET MEASURE
+            </div>
+            {expandedSections.consumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
           {expandedSections.consumption && (
-            <CardContent className="pt-6">
-              <div className="space-y-6">
+            <div className="p-4 sm:p-6">
+              <div className="space-y-4 sm:space-y-6">
                 {consumptionMeasures.map((measure) => (
                   <div key={measure.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="font-medium text-gray-700">Consumption Asset Measure</h4>
+                      <h4 className="font-medium text-gray-700 text-sm sm:text-base">Consumption Asset Measure</h4>
                       {consumptionMeasures.length > 1 && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
+                        <button
                           onClick={() => removeConsumptionMeasure(measure.id)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
                         >
                           <X className="w-4 h-4" />
-                        </Button>
+                        </button>
                       )}
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
-                      <div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+                      {[
+                        { label: 'Name', name: `name-${measure.id}`, placeholder: 'Enter Text', value: measure.name, onChange: (e) => updateConsumptionMeasure(measure.id, 'name', e.target.value) },
+                        { label: 'Min', name: `min-${measure.id}`, placeholder: 'Enter Number', type: 'number', value: measure.min, onChange: (e) => updateConsumptionMeasure(measure.id, 'min', e.target.value) },
+                        { label: 'Max', name: `max-${measure.id}`, placeholder: 'Enter Number', type: 'number', value: measure.max, onChange: (e) => updateConsumptionMeasure(measure.id, 'max', e.target.value) },
+                        { label: 'Alert Below Val.', name: `alertBelow-${measure.id}`, placeholder: 'Enter Value', type: 'number', value: measure.alertBelowVal, onChange: (e) => updateConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value) }
+                      ].map(field => (
                         <TextField
-                          label="Name"
-                          placeholder="Enter Text"
-                          name={`name-${measure.id}`}
-                          value={measure.name}
-                          onChange={(e) => updateConsumptionMeasure(measure.id, 'name', e.target.value)}
+                          key={field.name}
+                          label={field.label}
+                          placeholder={field.placeholder}
+                          name={field.name}
+                          type={field.type || 'text'}
+                          value={field.value}
+                          onChange={field.onChange}
                           fullWidth
                           variant="outlined"
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          InputProps={{
-                            sx: fieldStyles
-                          }}
+                          InputLabelProps={{ shrink: true }}
+                          InputProps={{ sx: fieldStyles }}
                         />
-                      </div>
-                      <div>
-                        <FormControl fullWidth variant="outlined">
-                          <InputLabel id={`unitType-select-label-${measure.id}`} shrink>Unit Type</InputLabel>
-                          <MuiSelect
-                            labelId={`unitType-select-label-${measure.id}`}
-                            label="Unit Type"
-                            displayEmpty
-                            value={measure.unitType}
-                            onChange={(e) => updateConsumptionMeasure(measure.id, 'unitType', e.target.value)}
-                            sx={fieldStyles}
-                          >
-                            <MenuItem value=""><em>Select Unit Type</em></MenuItem>
-                            <MenuItem value="kwh">kWh</MenuItem>
-                            <MenuItem value="liters">Liters</MenuItem>
-                            <MenuItem value="cubic-meters">Cubic Meters</MenuItem>
-                            <MenuItem value="units">Units</MenuItem>
-                          </MuiSelect>
-                        </FormControl>
-                      </div>
-                      <div>
-                        <TextField
-                          label="Min"
-                          placeholder="Enter Number"
-                          name={`min-${measure.id}`}
-                          type="number"
-                          value={measure.min}
-                          onChange={(e) => updateConsumptionMeasure(measure.id, 'min', e.target.value)}
-                          fullWidth
-                          variant="outlined"
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          InputProps={{
-                            sx: fieldStyles
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <TextField
-                          label="Max"
-                          placeholder="Enter Number"
-                          name={`max-${measure.id}`}
-                          type="number"
-                          value={measure.max}
-                          onChange={(e) => updateConsumptionMeasure(measure.id, 'max', e.target.value)}
-                          fullWidth
-                          variant="outlined"
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          InputProps={{
-                            sx: fieldStyles
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <TextField
-                          label="Alert Below Val."
-                          placeholder="Enter Value"
-                          name={`alertBelow-${measure.id}`}
-                          type="number"
-                          value={measure.alertBelowVal}
-                          onChange={(e) => updateConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
-                          fullWidth
-                          variant="outlined"
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          InputProps={{
-                            sx: fieldStyles
-                          }}
-                        />
-                      </div>
+                      ))}
+                      <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                        <InputLabel id={`unitType-select-label-${measure.id}`} shrink>Unit Type</InputLabel>
+                        <MuiSelect
+                          labelId={`unitType-select-label-${measure.id}`}
+                          label="Unit Type"
+                          displayEmpty
+                          value={measure.unitType}
+                          onChange={(e) => updateConsumptionMeasure(measure.id, 'unitType', e.target.value)}
+                          sx={fieldStyles}
+                        >
+                          <MenuItem value=""><em>Select Unit Type</em></MenuItem>
+                          <MenuItem value="kwh">kWh</MenuItem>
+                          <MenuItem value="liters">Liters</MenuItem>
+                          <MenuItem value="cubic-meters">Cubic Meters</MenuItem>
+                          <MenuItem value="units">Units</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                      <div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                      {[
+                        { label: 'Alert Above Val.', name: `alertAbove-${measure.id}`, placeholder: 'Enter Value', type: 'number', value: measure.alertAboveVal, onChange: (e) => updateConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value) },
+                        { label: 'Multiplier Factor', name: `multiplier-${measure.id}`, placeholder: 'Enter Text', value: measure.multiplierFactor, onChange: (e) => updateConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value) }
+                      ].map(field => (
                         <TextField
-                          label="Alert Above Val."
-                          placeholder="Enter Value"
-                          name={`alertAbove-${measure.id}`}
-                          type="number"
-                          value={measure.alertAboveVal}
-                          onChange={(e) => updateConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
+                          key={field.name}
+                          label={field.label}
+                          placeholder={field.placeholder}
+                          name={field.name}
+                          type={field.type || 'text'}
+                          value={field.value}
+                          onChange={field.onChange}
                           fullWidth
                           variant="outlined"
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          InputProps={{
-                            sx: fieldStyles
-                          }}
+                          InputLabelProps={{ shrink: true }}
+                          InputProps={{ sx: fieldStyles }}
                         />
-                      </div>
-                      <div>
-                        <TextField
-                          label="Multiplier Factor"
-                          placeholder="Enter Text"
-                          name={`multiplier-${measure.id}`}
-                          value={measure.multiplierFactor}
-                          onChange={(e) => updateConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
-                          fullWidth
-                          variant="outlined"
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          InputProps={{
-                            sx: fieldStyles
-                          }}
-                        />
-                      </div>
+                      ))}
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <Checkbox 
+                      <input
+                        type="checkbox"
                         id={`checkPrevious-${measure.id}`}
                         checked={measure.checkPreviousReading}
-                        onCheckedChange={(checked) => updateConsumptionMeasure(measure.id, 'checkPreviousReading', checked)}
+                        onChange={(e) => updateConsumptionMeasure(measure.id, 'checkPreviousReading', e.target.checked)}
+                        className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]"
                       />
-                      <label htmlFor={`checkPrevious-${measure.id}`}>Check Previous Reading</label>
+                      <label htmlFor={`checkPrevious-${measure.id}`} className="text-xs sm:text-sm">Check Previous Reading</label>
                     </div>
                   </div>
                 ))}
                 
-                <Button 
+                <button
                   onClick={addConsumptionMeasure}
-                  style={{ backgroundColor: '#C72030' }}
-                  className="text-white"
+                  className="bg-[#C72030] text-white px-4 py-2 rounded-md hover:bg-[#a61b26] flex items-center text-sm sm:text-base"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Measure
-                </Button>
+                </button>
               </div>
-            </CardContent>
+            </div>
           )}
-        </Card>
+        </div>
 
         {/* Non Consumption Asset Measure */}
-        <Card>
-          <CardHeader 
-            className="cursor-pointer bg-orange-50 border-l-4 border-l-[#C72030]"
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div 
+            className="cursor-pointer bg-orange-50 border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center"
             onClick={() => toggleSection('nonConsumption')}
           >
-            <CardTitle className="flex items-center justify-between text-[#C72030]">
-              <span className="flex items-center gap-2">
-                <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
-                NON CONSUMPTION ASSET MEASURE
-              </span>
-              {expandedSections.nonConsumption ? <ChevronUp /> : <ChevronDown />}
-            </CardTitle>
-          </CardHeader>
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">6</span>
+              NON CONSUMPTION ASSET MEASURE
+            </div>
+            {expandedSections.nonConsumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
           {expandedSections.nonConsumption && (
-            <CardContent className="pt-6">
-              <div className="space-y-6">
+            <div className="p-4 sm:p-6">
+              <div className="space-y-4 sm:space-y-6">
                 {nonConsumptionMeasures.map((measure) => (
                   <div key={measure.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="font-medium text-gray-700">Non Consumption Asset Measure</h4>
+                      <h4 className="font-medium text-gray-700 text-sm sm:text-base">Non Consumption Asset Measure</h4>
                       {nonConsumptionMeasures.length > 1 && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
+                        <button
                           onClick={() => removeNonConsumptionMeasure(measure.id)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
                         >
                           <X className="w-4 h-4" />
-                        </Button>
+                        </button>
                       )}
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
-                      <div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+                      {[
+                        { label: 'Name', name: `nc-name-${measure.id}`, placeholder: 'Name', value: measure.name, onChange: (e) => updateNonConsumptionMeasure(measure.id, 'name', e.target.value) },
+                        { label: 'Min', name: `nc-min-${measure.id}`, placeholder: 'Min', type: 'number', value: measure.min, onChange: (e) => updateNonConsumptionMeasure(measure.id, 'min', e.target.value) },
+                        { label: 'Max', name: `nc-max-${measure.id}`, placeholder: 'Max', type: 'number', value: measure.max, onChange: (e) => updateNonConsumptionMeasure(measure.id, 'max', e.target.value) },
+                        { label: 'Alert Below Val.', name: `nc-alertBelow-${measure.id}`, placeholder: 'Alert Below Value', type: 'number', value: measure.alertBelowVal, onChange: (e) => updateNonConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value) }
+                      ].map(field => (
                         <TextField
-                          label="Name"
-                          placeholder="Name"
-                          name={`nc-name-${measure.id}`}
-                          value={measure.name}
-                          onChange={(e) => updateNonConsumptionMeasure(measure.id, 'name', e.target.value)}
+                          key={field.name}
+                          label={field.label}
+                          placeholder={field.placeholder}
+                          name={field.name}
+                          type={field.type || 'text'}
+                          value={field.value}
+                          onChange={field.onChange}
                           fullWidth
                           variant="outlined"
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          InputProps={{
-                            sx: fieldStyles
-                          }}
+                          InputLabelProps={{ shrink: true }}
+                          InputProps={{ sx: fieldStyles }}
                         />
-                      </div>
-                      <div>
-                        <FormControl fullWidth variant="outlined">
-                          <InputLabel id={`nc-unitType-select-label-${measure.id}`} shrink>Unit Type</InputLabel>
-                          <MuiSelect
-                            labelId={`nc-unitType-select-label-${measure.id}`}
-                            label="Unit Type"
-                            displayEmpty
-                            value={measure.unitType}
-                            onChange={(e) => updateNonConsumptionMeasure(measure.id, 'unitType', e.target.value)}
-                            sx={fieldStyles}
-                          >
-                            <MenuItem value=""><em>Select Unit Type</em></MenuItem>
-                            <MenuItem value="temperature">Temperature</MenuItem>
-                            <MenuItem value="pressure">Pressure</MenuItem>
-                            <MenuItem value="voltage">Voltage</MenuItem>
-                            <MenuItem value="current">Current</MenuItem>
-                            <MenuItem value="frequency">Frequency</MenuItem>
-                          </MuiSelect>
-                        </FormControl>
-                      </div>
-                      <div>
-                        <TextField
-                          label="Min"
-                          placeholder="Min"
-                          name={`nc-min-${measure.id}`}
-                          type="number"
-                          value={measure.min}
-                          onChange={(e) => updateNonConsumptionMeasure(measure.id, 'min', e.target.value)}
-                          fullWidth
-                          variant="outlined"
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          InputProps={{
-                            sx: fieldStyles
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <TextField
-                          label="Max"
-                          placeholder="Max"
-                          name={`nc-max-${measure.id}`}
-                          type="number"
-                          value={measure.max}
-                          onChange={(e) => updateNonConsumptionMeasure(measure.id, 'max', e.target.value)}
-                          fullWidth
-                          variant="outlined"
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          InputProps={{
-                            sx: fieldStyles
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <TextField
-                          label="Alert Below Val."
-                          placeholder="Alert Below Value"
-                          name={`nc-alertBelow-${measure.id}`}
-                          type="number"
-                          value={measure.alertBelowVal}
-                          onChange={(e) => updateNonConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
-                          fullWidth
-                          variant="outlined"
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          InputProps={{
-                            sx: fieldStyles
-                          }}
-                        />
-                      </div>
+                      ))}
+                      <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                        <InputLabel id={`nc-unitType-select-label-${measure.id}`} shrink>Unit Type</InputLabel>
+                        <MuiSelect
+                          labelId={`nc-unitType-select-label-${measure.id}`}
+                          label="Unit Type"
+                          displayEmpty
+                          value={measure.unitType}
+                          onChange={(e) => updateNonConsumptionMeasure(measure.id, 'unitType', e.target.value)}
+                          sx={fieldStyles}
+                        >
+                          <MenuItem value=""><em>Select Unit Type</em></MenuItem>
+                          <MenuItem value="temperature">Temperature</MenuItem>
+                          <MenuItem value="pressure">Pressure</MenuItem>
+                          <MenuItem value="voltage">Voltage</MenuItem>
+                          <MenuItem value="current">Current</MenuItem>
+                          <MenuItem value="frequency">Frequency</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                      <div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                      {[
+                        { label: 'Alert Above Val.', name: `nc-alertAbove-${measure.id}`, placeholder: 'Alert Above Value', type: 'number', value: measure.alertAboveVal, onChange: (e) => updateNonConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value) },
+                        { label: 'Multiplier Factor', name: `nc-multiplier-${measure.id}`, placeholder: 'Multiplier Factor', value: measure.multiplierFactor, onChange: (e) => updateNonConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value) }
+                      ].map(field => (
                         <TextField
-                          label="Alert Above Val."
-                          placeholder="Alert Above Value"
-                          name={`nc-alertAbove-${measure.id}`}
-                          type="number"
-                          value={measure.alertAboveVal}
-                          onChange={(e) => updateNonConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
+                          key={field.name}
+                          label={field.label}
+                          placeholder={field.placeholder}
+                          name={field.name}
+                          type={field.type || 'text'}
+                          value={field.value}
+                          onChange={field.onChange}
                           fullWidth
                           variant="outlined"
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          InputProps={{
-                            sx: fieldStyles
-                          }}
+                          InputLabelProps={{ shrink: true }}
+                          InputProps={{ sx: fieldStyles }}
                         />
-                      </div>
-                      <div>
-                        <TextField
-                          label="Multiplier Factor"
-                          placeholder="Multiplier Factor"
-                          name={`nc-multiplier-${measure.id}`}
-                          value={measure.multiplierFactor}
-                          onChange={(e) => updateNonConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
-                          fullWidth
-                          variant="outlined"
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          InputProps={{
-                            sx: fieldStyles
-                          }}
-                        />
-                      </div>
+                      ))}
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <Checkbox 
+                      <input
+                        type="checkbox"
                         id={`nc-checkPrevious-${measure.id}`}
                         checked={measure.checkPreviousReading}
-                        onCheckedChange={(checked) => updateNonConsumptionMeasure(measure.id, 'checkPreviousReading', checked)}
+                        onChange={(e) => updateNonConsumptionMeasure(measure.id, 'checkPreviousReading', e.target.checked)}
+                        className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]"
                       />
-                      <label htmlFor={`nc-checkPrevious-${measure.id}`}>Check Previous Reading</label>
+                      <label htmlFor={`nc-checkPrevious-${measure.id}`} className="text-xs sm:text-sm">Check Previous Reading</label>
                     </div>
                   </div>
                 ))}
                 
-                <Button 
+                <button
                   onClick={addNonConsumptionMeasure}
-                  style={{ backgroundColor: '#C72030' }}
-                  className="text-white"
+                  className="bg-[#C72030] text-white px-4 py-2 rounded-md hover:bg-[#a61b26] flex items-center text-sm sm:text-base"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Measure
-                </Button>
+                </button>
               </div>
-            </CardContent>
+            </div>
           )}
-        </Card>
+        </div>
 
         {/* Attachments */}
-        <Card>
-          <CardHeader 
-            className="cursor-pointer bg-orange-50 border-l-4 border-l-[#C72030]"
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div 
+            className="cursor-pointer bg-orange-50 border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center"
             onClick={() => toggleSection('attachments')}
           >
-            <CardTitle className="flex items-center justify-between text-[#C72030]">
-              <span className="flex items-center gap-2">
-                <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">7</span>
-                ATTACHMENTS
-              </span>
-              {expandedSections.attachments ? <ChevronUp /> : <ChevronDown />}
-            </CardTitle>
-          </CardHeader>
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">7</span>
+              ATTACHMENTS
+            </div>
+            {expandedSections.attachments ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
           {expandedSections.attachments && (
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Manuals Upload */}
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Manuals Upload</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                    <input
-                      type="file"
-                      multiple
-                      accept=".pdf,.doc,.docx,.txt"
-                      onChange={(e) => handleFileUpload('manualsUpload', e.target.files)}
-                      className="hidden"
-                      id="manuals-upload"
-                    />
-                    <label htmlFor="manuals-upload" className="cursor-pointer block">
-                      <div className="flex items-center justify-center space-x-2 mb-2">
-                        <span className="text-[#C72030] font-medium">Choose File</span>
-                        <span className="text-gray-500">
-                          {attachments.manualsUpload.length > 0 
-                            ? `${attachments.manualsUpload.length} file(s) selected` 
-                            : 'No file chosen'
-                          }
-                        </span>
-                      </div>
-                    </label>
-                    {attachments.manualsUpload.length > 0 && (
-                      <div className="mt-2 space-y-1">
-                        {attachments.manualsUpload.map((file, index) => (
-                          <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
-                            <span className="text-sm truncate">{file.name}</span>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => removeFile('manualsUpload', index)}
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div className="mt-2">
-                      <label htmlFor="manuals-upload">
-                        <Button
-                          size="sm"
-                          type="button"
-                          style={{ backgroundColor: '#C72030' }}
-                          className="text-white hover:opacity-90"
-                          asChild
-                        >
-                          <span className="cursor-pointer">
-                            <Plus className="w-4 h-4 mr-1" />
-                            Upload Files
+            <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                {[
+                  { label: 'Manuals Upload', id: 'manuals-upload', category: 'manualsUpload', accept: '.pdf,.doc,.docx,.txt' },
+                  { label: 'Insurance Details', id: 'insurance-upload', category: 'insuranceDetails', accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png' },
+                  { label: 'Purchaselah Invoice', id: 'invoice-upload', category: 'purchaseInvoice', accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png' },
+                  { label: 'AMC', id: 'amc-upload', category: 'amc', accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png' }
+                ].map(field => (
+                  <div key={field.id}>
+                    <label className="text-xs sm:text-sm font-medium text-gray-700 mb-2 block">{field.label}</label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                      <input
+                        type="file"
+                        multiple
+                        accept={field.accept}
+                        onChange={(e) => handleFileUpload(field.category, e.target.files)}
+                        className="hidden"
+                        id={field.id}
+                      />
+                      <label htmlFor={field.id} className="cursor-pointer block">
+                        <div className="flex items-center justify-center space-x-2 mb-2">
+                          <span className="text-[#C72030] font-medium text-xs sm:text-sm">Choose File</span>
+                          <span className="text-gray-500 text-xs sm:text-sm">
+                            {attachments[field.category].length > 0 
+                              ? `${attachments[field.category].length} file(s) selected` 
+                              : 'No file chosen'
+                            }
                           </span>
-                        </Button>
+                        </div>
                       </label>
+                      {attachments[field.category].length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {attachments[field.category].map((file, index) => (
+                            <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                              <span className="text-xs sm:text-sm truncate">{file.name}</span>
+                              <button
+                                onClick={() => removeFile(field.category, index)}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="mt-2">
+                        <label htmlFor={field.id}>
+                          <button
+                            className="bg-[#C72030] text-white px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#a61b26] flex items-center mx-auto text-xs sm:text-sm"
+                          >
+                            <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+                            Upload Files
+                          </button>
+                        </label>
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Insurance Details */}
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Insurance Details</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                    <input
-                      type="file"
-                      multiple
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                      onChange={(e) => handleFileUpload('insuranceDetails', e.target.files)}
-                      className="hidden"
-                      id="insurance-upload"
-                    />
-                    <label htmlFor="insurance-upload" className="cursor-pointer block">
-                      <div className="flex items-center justify-center space-x-2 mb-2">
-                        <span className="text-[#C72030] font-medium">Choose File</span>
-                        <span className="text-gray-500">
-                          {attachments.insuranceDetails.length > 0 
-                            ? `${attachments.insuranceDetails.length} file(s) selected` 
-                            : 'No file chosen'
-                          }
-                        </span>
-                      </div>
-                    </label>
-                    {attachments.insuranceDetails.length > 0 && (
-                      <div className="mt-2 space-y-1">
-                        {attachments.insuranceDetails.map((file, index) => (
-                          <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
-                            <span className="text-sm truncate">{file.name}</span>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => removeFile('insuranceDetails', index)}
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div className="mt-2">
-                      <label htmlFor="insurance-upload">
-                        <Button
-                          size="sm"
-                          type="button"
-                          style={{ backgroundColor: '#C72030' }}
-                          className="text-white hover:opacity-90"
-                          asChild
-                        >
-                          <span className="cursor-pointer">
-                            <Plus className="w-4 h-4 mr-1" />
-                            Upload Files
-                          </span>
-                        </Button>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Purchase Invoice */}
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Purchase Invoice</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                    <input
-                      type="file"
-                      multiple
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                      onChange={(e) => handleFileUpload('purchaseInvoice', e.target.files)}
-                      className="hidden"
-                      id="invoice-upload"
-                    />
-                    <label htmlFor="invoice-upload" className="cursor-pointer block">
-                      <div className="flex items-center justify-center space-x-2 mb-2">
-                        <span className="text-[#C72030] font-medium">Choose File</span>
-                        <span className="text-gray-500">
-                          {attachments.purchaseInvoice.length > 0 
-                            ? `${attachments.purchaseInvoice.length} file(s) selected` 
-                            : 'No file chosen'
-                          }
-                        </span>
-                      </div>
-                    </label>
-                    {attachments.purchaseInvoice.length > 0 && (
-                      <div className="mt-2 space-y-1">
-                        {attachments.purchaseInvoice.map((file, index) => (
-                          <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
-                            <span className="text-sm truncate">{file.name}</span>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => removeFile('purchaseInvoice', index)}
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div className="mt-2">
-                      <label htmlFor="invoice-upload">
-                        <Button
-                          size="sm"
-                          type="button"
-                          style={{ backgroundColor: '#C72030' }}
-                          className="text-white hover:opacity-90"
-                          asChild
-                        >
-                          <span className="cursor-pointer">
-                            <Plus className="w-4 h-4 mr-1" />
-                            Upload Files
-                          </span>
-                        </Button>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                {/* AMC */}
-                <div>
-                  <label className="text-sm font-medium mb-2 block">AMC</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                    <input
-                      type="file"
-                      multiple
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                      onChange={(e) => handleFileUpload('amc', e.target.files)}
-                      className="hidden"
-                      id="amc-upload"
-                    />
-                    <label htmlFor="amc-upload" className="cursor-pointer block">
-                      <div className="flex items-center justify-center space-x-2 mb-2">
-                        <span className="text-[#C72030] font-medium">Choose File</span>
-                        <span className="text-gray-500">
-                          {attachments.amc.length > 0 
-                            ? `${attachments.amc.length} file(s) selected` 
-                            : 'No file chosen'
-                          }
-                        </span>
-                      </div>
-                    </label>
-                    {attachments.amc.length > 0 && (
-                      <div className="mt-2 space-y-1">
-                        {attachments.amc.map((file, index) => (
-                          <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
-                            <span className="text-sm truncate">{file.name}</span>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => removeFile('amc', index)}
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div className="mt-2">
-                      <label htmlFor="amc-upload">
-                        <Button
-                          size="sm"
-                          type="button"
-                          style={{ backgroundColor: '#C72030' }}
-                          className="text-white hover:opacity-90"
-                          asChild
-                        >
-                          <span className="cursor-pointer">
-                            <Plus className="w-4 h-4 mr-1" />
-                            Upload Files
-                          </span>
-                        </Button>
-                      </label>
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
-            </CardContent>
+            </div>
           )}
-        </Card>
+        </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-center gap-4 pt-6">
-          <Button 
-            variant="outline" 
+        <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">
+          <button 
             onClick={handleSaveAndShow}
-            className="px-8 border-[#C72030] text-[#C72030]"
+            className="border border-[#C72030] text-[#C72030] px-6 sm:px-8 py-2 rounded-md hover:bg-[#C72030] hover:text-white text-sm sm:text-base"
           >
             Save & Show Details
-          </Button>
-          <Button 
+          </button>
+          <button 
             onClick={handleSaveAndCreate}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white px-8"
+            className="bg-[#C72030] text-white px-6 sm:px-8 py-2 rounded-md hover:bg-[#a61b26] text-sm sm:text-base"
           >
             Save & Create New Asset
-          </Button>
+          </button>
         </div>
       </div>
     </div>
   );
 };
+
+export default AddAssetPage;
