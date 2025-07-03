@@ -1,12 +1,17 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Upload } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
 
 export const AddServicePRDashboard = () => {
   const navigate = useNavigate();
@@ -47,76 +52,120 @@ export const AddServicePRDashboard = () => {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium">Select Contractor*</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Contractor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="contractor1">Contractor 1</SelectItem>
-                      <SelectItem value="contractor2">Contractor 2</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Select Billing Address*</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Billing Address" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="address1">Address 1</SelectItem>
-                      <SelectItem value="address2">Address 2</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">QC(%)</Label>
-                  <Input placeholder="QC" />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Related To*</Label>
-                  <Textarea placeholder="Related To" className="min-h-[80px]" />
-                </div>
+                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                  <InputLabel shrink>Select Contractor*</InputLabel>
+                  <MuiSelect
+                    label="Select Contractor*"
+                    displayEmpty
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Contractor</em></MenuItem>
+                    <MenuItem value="contractor1">Contractor 1</MenuItem>
+                    <MenuItem value="contractor2">Contractor 2</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+                
+                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                  <InputLabel shrink>Select Billing Address*</InputLabel>
+                  <MuiSelect
+                    label="Select Billing Address*"
+                    displayEmpty
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Billing Address</em></MenuItem>
+                    <MenuItem value="address1">Address 1</MenuItem>
+                    <MenuItem value="address2">Address 2</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+                
+                <TextField
+                  label="QC(%)"
+                  placeholder="QC"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+                
+                <TextField
+                  label="Related To*"
+                  placeholder="Related To"
+                  fullWidth
+                  variant="outlined"
+                  multiline
+                  minRows={3}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ mt: 1 }}
+                />
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium">Plant Detail*</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Plant Id" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="plant1">Plant 1</SelectItem>
-                      <SelectItem value="plant2">Plant 2</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Retention(%)</Label>
-                  <Input placeholder="Retention" />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Payment Tenure(In Days)</Label>
-                  <Input placeholder="Payment Tenure" />
-                </div>
+                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                  <InputLabel shrink>Plant Detail*</InputLabel>
+                  <MuiSelect
+                    label="Plant Detail*"
+                    displayEmpty
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Plant Id</em></MenuItem>
+                    <MenuItem value="plant1">Plant 1</MenuItem>
+                    <MenuItem value="plant2">Plant 2</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+                
+                <TextField
+                  label="Retention(%)"
+                  placeholder="Retention"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+                
+                <TextField
+                  label="Payment Tenure(In Days)"
+                  placeholder="Payment Tenure"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium">Select LOI Date*</Label>
-                  <Input type="date" defaultValue="2025-06-14" />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">TDS(%)</Label>
-                  <Input placeholder="TDS" />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Advance Amount</Label>
-                  <Input placeholder="Advance Amount" />
-                </div>
+                <TextField
+                  label="Select LOI Date*"
+                  type="date"
+                  defaultValue="2025-06-14"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+                
+                <TextField
+                  label="TDS(%)"
+                  placeholder="TDS"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+                
+                <TextField
+                  label="Advance Amount"
+                  placeholder="Advance Amount"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
               </div>
             </div>
           </CardContent>
@@ -125,60 +174,103 @@ export const AddServicePRDashboard = () => {
         {/* Details Section */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-orange-600 flex items-center">
-              <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">2</span>
+            <CardTitle className="text-[#C72030] flex items-center">
+              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">2</span>
               DETAILS
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium">Select Service*</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Service" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="service1">Service 1</SelectItem>
-                      <SelectItem value="service2">Service 2</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">UOM</Label>
-                  <Input placeholder="UOM" />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Amount</Label>
-                  <Input placeholder="Amount" />
-                </div>
+                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                  <InputLabel shrink>Select Service*</InputLabel>
+                  <MuiSelect
+                    label="Select Service*"
+                    displayEmpty
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Service</em></MenuItem>
+                    <MenuItem value="service1">Service 1</MenuItem>
+                    <MenuItem value="service2">Service 2</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+                
+                <TextField
+                  label="UOM"
+                  placeholder="UOM"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+                
+                <TextField
+                  label="Amount"
+                  placeholder="Amount"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium">Product Description*</Label>
-                  <Textarea placeholder="Product Description" className="min-h-[80px]" />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Expected Date*</Label>
-                  <Input type="date" placeholder="Expected Date" />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Total Amount</Label>
-                  <Input placeholder="Total Amount" />
-                </div>
+                <TextField
+                  label="Product Description*"
+                  placeholder="Product Description"
+                  fullWidth
+                  variant="outlined"
+                  multiline
+                  minRows={3}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ mt: 1 }}
+                />
+                
+                <TextField
+                  label="Expected Date*"
+                  type="date"
+                  placeholder="Expected Date"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+                
+                <TextField
+                  label="Total Amount"
+                  placeholder="Total Amount"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium">Quantity/Area*</Label>
-                  <Input placeholder="Quantity" />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Rate*</Label>
-                  <Input placeholder="Rate" />
-                </div>
+                <TextField
+                  label="Quantity/Area*"
+                  placeholder="Quantity"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+                
+                <TextField
+                  label="Rate*"
+                  placeholder="Rate"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+                
                 <div className="flex justify-end">
                   <Button variant="ghost" className="text-gray-500">
                     ✕
@@ -220,71 +312,58 @@ export const AddServicePRDashboard = () => {
       {/* Details Section */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center">
-            <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">●</span>
+          <CardTitle className="text-[#C72030] flex items-center">
+            <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">●</span>
             DETAILS
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <Label className="text-sm font-medium">Kind Attention</Label>
-              <Input placeholder="Kind Attention" />
-            </div>
-            <div>
-              <Label className="text-sm font-medium">Subject</Label>
-              <Input placeholder="Subject" />
-            </div>
+            <TextField
+              label="Kind Attention"
+              placeholder="Kind Attention"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+            
+            <TextField
+              label="Subject"
+              placeholder="Subject"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             <div>
-              <Label className="text-sm font-medium">Description</Label>
-              <div className="border rounded-md p-3 min-h-[120px] bg-gray-50">
-                <div className="flex items-center gap-2 mb-2 text-sm">
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">A</Button>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 font-bold">B</Button>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 italic">I</Button>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 underline">U</Button>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">=</Button>
-                  <Select>
-                    <SelectTrigger className="h-6 w-20">
-                      <SelectValue placeholder="system-ui" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="system-ui">system-ui</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Textarea 
-                  placeholder="Enter description here..."
-                  className="border-0 bg-transparent resize-none min-h-[80px]"
-                />
-              </div>
+              <TextField
+                label="Description"
+                placeholder="Enter description here..."
+                fullWidth
+                variant="outlined"
+                multiline
+                minRows={6}
+                InputLabelProps={{ shrink: true }}
+                sx={{ mt: 1 }}
+              />
             </div>
             <div>
-              <Label className="text-sm font-medium">Terms & Conditions</Label>
-              <div className="border rounded-md p-3 min-h-[120px] bg-gray-50">
-                <div className="flex items-center gap-2 mb-2 text-sm">
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">A</Button>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 font-bold">B</Button>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 italic">I</Button>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 underline">U</Button>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">=</Button>
-                  <Select>
-                    <SelectTrigger className="h-6 w-20">
-                      <SelectValue placeholder="system-ui" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="system-ui">system-ui</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Textarea 
-                  placeholder="Enter terms and conditions here..."
-                  className="border-0 bg-transparent resize-none min-h-[80px]"
-                />
-              </div>
+              <TextField
+                label="Terms & Conditions"
+                placeholder="Enter terms and conditions here..."
+                fullWidth
+                variant="outlined"
+                multiline
+                minRows={6}
+                InputLabelProps={{ shrink: true }}
+                sx={{ mt: 1 }}
+              />
             </div>
           </div>
         </CardContent>
@@ -293,13 +372,14 @@ export const AddServicePRDashboard = () => {
       {/* Attachments Section */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center">
-            <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">●</span>
+          <CardTitle className="text-[#C72030] flex items-center">
+            <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">●</span>
             ATTACHMENTS
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+            <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
             <p className="text-gray-500 mb-2">Drag & Drop or</p>
             <Button variant="outline" className="text-blue-600">
               Choose Files

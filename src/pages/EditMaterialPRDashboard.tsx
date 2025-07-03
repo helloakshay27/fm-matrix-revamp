@@ -1,12 +1,16 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { X } from "lucide-react";
 import { useNavigate, useParams } from 'react-router-dom';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
 
 interface ItemDetail {
   id: string;
@@ -117,139 +121,161 @@ export const EditMaterialPRDashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <Label className="text-sm font-medium">Supplier*</Label>
-            <Select value={supplierDetails.supplier} onValueChange={(value) => updateSupplierDetail('supplier', value)}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ABC-979GHGH--">ABC-979GHGH--</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel shrink>Supplier*</InputLabel>
+            <MuiSelect
+              label="Supplier*"
+              value={supplierDetails.supplier}
+              onChange={(e) => updateSupplierDetail('supplier', e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value="ABC-979GHGH--">ABC-979GHGH--</MenuItem>
+            </MuiSelect>
+          </FormControl>
 
-          <div>
-            <Label className="text-sm font-medium">Plant Detail*</Label>
-            <Select value={supplierDetails.plantDetail} onValueChange={(value) => updateSupplierDetail('plantDetail', value)}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Select Plant Detail">Select Plant Detail</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel shrink>Plant Detail*</InputLabel>
+            <MuiSelect
+              label="Plant Detail*"
+              value={supplierDetails.plantDetail}
+              onChange={(e) => updateSupplierDetail('plantDetail', e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value="Select Plant Detail">Select Plant Detail</MenuItem>
+            </MuiSelect>
+          </FormControl>
 
-          <div>
-            <Label className="text-sm font-medium">PR Date*</Label>
-            <Input
-              type="date"
-              value={supplierDetails.prDate}
-              onChange={(e) => updateSupplierDetail('prDate', e.target.value)}
-              className="mt-1"
-            />
-          </div>
+          <TextField
+            label="PR Date*"
+            type="date"
+            value={supplierDetails.prDate}
+            onChange={(e) => updateSupplierDetail('prDate', e.target.value)}
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
+          />
 
-          <div>
-            <Label className="text-sm font-medium">Billing Address*</Label>
-            <Select value={supplierDetails.billingAddress} onValueChange={(value) => updateSupplierDetail('billingAddress', value)}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="gwer">gwer</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel shrink>Billing Address*</InputLabel>
+            <MuiSelect
+              label="Billing Address*"
+              value={supplierDetails.billingAddress}
+              onChange={(e) => updateSupplierDetail('billingAddress', e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value="gwer">gwer</MenuItem>
+            </MuiSelect>
+          </FormControl>
 
-          <div>
-            <Label className="text-sm font-medium">Delivery Address*</Label>
-            <Select value={supplierDetails.deliveryAddress} onValueChange={(value) => updateSupplierDetail('deliveryAddress', value)}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Haven Infoline LLP">Haven Infoline LLP</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel shrink>Delivery Address*</InputLabel>
+            <MuiSelect
+              label="Delivery Address*"
+              value={supplierDetails.deliveryAddress}
+              onChange={(e) => updateSupplierDetail('deliveryAddress', e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value="Haven Infoline LLP">Haven Infoline LLP</MenuItem>
+            </MuiSelect>
+          </FormControl>
 
-          <div>
-            <Label className="text-sm font-medium">Transportation</Label>
-            <Input
-              placeholder="Enter Number"
-              value={supplierDetails.transportation}
-              onChange={(e) => updateSupplierDetail('transportation', e.target.value)}
-              className="mt-1"
-            />
-          </div>
+          <TextField
+            label="Transportation"
+            placeholder="Enter Number"
+            value={supplierDetails.transportation}
+            onChange={(e) => updateSupplierDetail('transportation', e.target.value)}
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
+          />
 
-          <div>
-            <Label className="text-sm font-medium">Retention(%)</Label>
-            <Input
-              placeholder="Enter Number"
-              value={supplierDetails.retention}
-              onChange={(e) => updateSupplierDetail('retention', e.target.value)}
-              className="mt-1"
-            />
-          </div>
+          <TextField
+            label="Retention(%)"
+            placeholder="Enter Number"
+            value={supplierDetails.retention}
+            onChange={(e) => updateSupplierDetail('retention', e.target.value)}
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
+          />
 
-          <div>
-            <Label className="text-sm font-medium">TDS(%)</Label>
-            <Input
-              placeholder="Enter Number"
-              value={supplierDetails.tds}
-              onChange={(e) => updateSupplierDetail('tds', e.target.value)}
-              className="mt-1"
-            />
-          </div>
+          <TextField
+            label="TDS(%)"
+            placeholder="Enter Number"
+            value={supplierDetails.tds}
+            onChange={(e) => updateSupplierDetail('tds', e.target.value)}
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
+          />
 
-          <div>
-            <Label className="text-sm font-medium">QC(%)</Label>
-            <Input
-              placeholder="Enter number"
-              value={supplierDetails.qc}
-              onChange={(e) => updateSupplierDetail('qc', e.target.value)}
-              className="mt-1"
-            />
-          </div>
+          <TextField
+            label="QC(%)"
+            placeholder="Enter number"
+            value={supplierDetails.qc}
+            onChange={(e) => updateSupplierDetail('qc', e.target.value)}
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
+          />
 
-          <div>
-            <Label className="text-sm font-medium">Payment Tenure(In Days)</Label>
-            <Input
-              placeholder="Enter Number"
-              value={supplierDetails.paymentTenure}
-              onChange={(e) => updateSupplierDetail('paymentTenure', e.target.value)}
-              className="mt-1"
-            />
-          </div>
+          <TextField
+            label="Payment Tenure(In Days)"
+            placeholder="Enter Number"
+            value={supplierDetails.paymentTenure}
+            onChange={(e) => updateSupplierDetail('paymentTenure', e.target.value)}
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
+          />
 
-          <div>
-            <Label className="text-sm font-medium">Advance Amount</Label>
-            <Input
-              placeholder="Enter Number"
-              value={supplierDetails.advanceAmount}
-              onChange={(e) => updateSupplierDetail('advanceAmount', e.target.value)}
-              className="mt-1"
-            />
-          </div>
+          <TextField
+            label="Advance Amount"
+            placeholder="Enter Number"
+            value={supplierDetails.advanceAmount}
+            onChange={(e) => updateSupplierDetail('advanceAmount', e.target.value)}
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
+          />
 
-          <div>
-            <Label className="text-sm font-medium">Related To*</Label>
-            <Textarea
-              value={supplierDetails.relatedTo}
-              onChange={(e) => updateSupplierDetail('relatedTo', e.target.value)}
-              className="mt-1 min-h-[80px]"
-            />
-          </div>
+          <TextField
+            label="Related To*"
+            value={supplierDetails.relatedTo}
+            onChange={(e) => updateSupplierDetail('relatedTo', e.target.value)}
+            fullWidth
+            variant="outlined"
+            multiline
+            minRows={3}
+            InputLabelProps={{ shrink: true }}
+            sx={{ mt: 1 }}
+          />
 
           <div className="md:col-span-2">
-            <Label className="text-sm font-medium">Terms & Conditions*</Label>
-            <Textarea
+            <TextField
+              label="Terms & Conditions*"
               value={supplierDetails.termsConditions}
               onChange={(e) => updateSupplierDetail('termsConditions', e.target.value)}
-              className="mt-1 min-h-[80px]"
+              fullWidth
+              variant="outlined"
+              multiline
+              minRows={3}
+              InputLabelProps={{ shrink: true }}
+              sx={{ mt: 1 }}
             />
           </div>
         </div>
@@ -279,76 +305,87 @@ export const EditMaterialPRDashboard = () => {
               )}
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-sm font-medium">Item Details*</Label>
-                  <Select 
-                    value={item.itemDetails} 
-                    onValueChange={(value) => updateItemDetail(item.id, 'itemDetails', value)}
+                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                  <InputLabel shrink>Item Details*</InputLabel>
+                  <MuiSelect
+                    label="Item Details*"
+                    value={item.itemDetails}
+                    onChange={(e) => updateItemDetail(item.id, 'itemDetails', e.target.value)}
+                    sx={fieldStyles}
                   >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="test asset abc-1223232321">test asset abc-1223232321</SelectItem>
-                      <SelectItem value="AAA-1223232321">AAA-1223232321</SelectItem>
-                      <SelectItem value="Select Inventory">Select Inventory</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <MenuItem value="test asset abc-1223232321">test asset abc-1223232321</MenuItem>
+                    <MenuItem value="AAA-1223232321">AAA-1223232321</MenuItem>
+                    <MenuItem value="Select Inventory">Select Inventory</MenuItem>
+                  </MuiSelect>
+                </FormControl>
 
-                <div>
-                  <Label className="text-sm font-medium">SAC/HSN Code</Label>
-                  <Input
-                    placeholder="Enter Code"
-                    value={item.sacHsnCode}
-                    onChange={(e) => updateItemDetail(item.id, 'sacHsnCode', e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
+                <TextField
+                  label="SAC/HSN Code"
+                  placeholder="Enter Code"
+                  value={item.sacHsnCode}
+                  onChange={(e) => updateItemDetail(item.id, 'sacHsnCode', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <Label className="text-sm font-medium">Product Description*</Label>
-                  <Input
-                    value={item.productDescription}
-                    onChange={(e) => updateItemDetail(item.id, 'productDescription', e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
+                <TextField
+                  label="Product Description*"
+                  value={item.productDescription}
+                  onChange={(e) => updateItemDetail(item.id, 'productDescription', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <Label className="text-sm font-medium">Quantity*</Label>
-                  <Input
-                    value={item.quantity}
-                    onChange={(e) => updateItemDetail(item.id, 'quantity', e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
+                <TextField
+                  label="Quantity*"
+                  value={item.quantity}
+                  onChange={(e) => updateItemDetail(item.id, 'quantity', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <Label className="text-sm font-medium">Expected Date*</Label>
-                  <Input
-                    type="date"
-                    value={item.expectedDate}
-                    onChange={(e) => updateItemDetail(item.id, 'expectedDate', e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
+                <TextField
+                  label="Expected Date*"
+                  type="date"
+                  value={item.expectedDate}
+                  onChange={(e) => updateItemDetail(item.id, 'expectedDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <Label className="text-sm font-medium">Rate*</Label>
-                  <Input
-                    value={item.rate}
-                    onChange={(e) => updateItemDetail(item.id, 'rate', e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
+                <TextField
+                  label="Rate*"
+                  value={item.rate}
+                  onChange={(e) => updateItemDetail(item.id, 'rate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
                 <div className="md:col-span-3">
-                  <Label className="text-sm font-medium">Amount</Label>
-                  <Input
+                  <TextField
+                    label="Amount"
                     value={item.amount}
                     onChange={(e) => updateItemDetail(item.id, 'amount', e.target.value)}
-                    className="mt-1"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
                   />
                 </div>
               </div>
