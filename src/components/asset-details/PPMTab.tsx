@@ -4,11 +4,11 @@ import { Button } from '@/components/ui/button';
 
 export const PPMTab = () => {
 const statusCards = [
-  { count: 0, label: 'Schedule', bgColor: '#9B8FC2' },
+  { count: 0, label: 'Schedule', bgColor: '#F2C8C4' },
   { count: 0, label: 'Open', bgColor: '#F2C8C4' },
-  { count: 0, label: 'In Progress', bgColor: '#F2EBC9' },
-  { count: 0, label: 'Closed', bgColor: '#C7EDDA' },
-  { count: 0, label: 'Overdue', bgColor: '#F28B82' },
+  { count: 0, label: 'In Progress', bgColor: '#F2C8C4' },
+  { count: 0, label: 'Closed', bgColor: '#F2C8C4' },
+  { count: 0, label: 'Overdue', bgColor: '#F2C8C4' },
 ];
 
   return (
