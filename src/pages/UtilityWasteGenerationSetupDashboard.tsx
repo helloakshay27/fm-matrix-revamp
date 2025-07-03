@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -85,7 +84,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
     });
   };
 
-  const handleUomSubmit = (e: React.FormForm) => {
+  const handleUomSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('UOM Form:', uomForm);
     // Reset form
