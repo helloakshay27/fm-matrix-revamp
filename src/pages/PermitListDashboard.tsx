@@ -51,31 +51,35 @@ export const PermitListDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        {statsData.map((stat, index) => (
-          <Card 
-            key={index} 
-            className={`relative overflow-hidden cursor-pointer transition-all hover:shadow-lg ${
-              selectedFilter === stat.label ? 'ring-2 ring-purple-500' : ''
-            }`}
-            onClick={() => handleStatsCardClick(stat.label)}
-          >
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div className={`p-2 rounded-lg ${stat.color}`}>
-                  <stat.icon className="w-6 h-6 text-white" />
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-gray-900">{stat.count}</div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-sm font-medium text-gray-600">{stat.label}</div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+  {statsData.map((stat, index) => (
+    <Card 
+      key={index} 
+      className={`
+        relative overflow-hidden cursor-pointer transition-all
+        bg-[#F2F0EB] text-[#D92818] shadow-[0px_2px_18px_rgba(45,45,45,0.1)]
+        md:h-[132px] flex flex-col justify-between
+        ${selectedFilter === stat.label ? 'ring-2 ring-purple-500' : ''}
+      `}
+      onClick={() => handleStatsCardClick(stat.label)}
+    >
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div className={`p-2 rounded-lg ${stat.color}`}>
+            <stat.icon className="w-6 h-6 text-white" />
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold">{stat.count}</div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="text-sm font-medium text-[#1a1a1a]/70">{stat.label}</div>
+      </CardContent>
+    </Card>
+  ))}
+</div>
+
 
       {/* Action Buttons */}
       <div className="flex gap-4 mb-6">
