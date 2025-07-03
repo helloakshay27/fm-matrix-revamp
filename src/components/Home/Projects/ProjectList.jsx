@@ -100,22 +100,40 @@ const ActionIcons = ({ row }) => {
 
     const handleDelete = async (id) => {
         const formatId = id.split('-')[1];
-        setDeleting(true); // Disable button
+        setDeleting(true);
+
         try {
-            await dispatch(deleteProject({ id: formatId, token: localStorage.getItem('token') })).unwrap();
-            await dispatch(fetchProjects({ token: localStorage.getItem('token') })).unwrap();
-            toast.dismiss();
-            toast.success("Project deleted successfully", {
-                iconTheme: {
-                    primary: "red",
-                    secondary: "white",
-                },
-            });
+            const response = await dispatch(
+                deleteProject({ id: formatId, token: localStorage.getItem('token') })
+            ).unwrap();
+
+            if (response?.error === "You are not authorized to delete this project") {
+                toast.error("You cannot delete this project — unauthorized access.", {
+                    icon: "🚫",
+                });
+            } else {
+                // Proceed only if no authorization issue
+                await dispatch(fetchProjects({ token: localStorage.getItem('token') })).unwrap();
+                toast.dismiss();
+                toast.success("Project deleted successfully", {
+                    iconTheme: {
+                        primary: "red",
+                        secondary: "white",
+                    },
+                });
+            }
         } catch (err) {
             console.error("Delete error:", err);
-            toast.error("Failed to delete project");
+
+            const message =
+                err?.error === "You are not authorized to delete this project"
+                    ? "You cannot delete this project."
+                    : "Failed to delete project. Please try again.";
+
+            toast.dismiss();
+            toast.error(message);
         } finally {
-            setDeleting(false); // Re-enable button after operation
+            setDeleting(false);
         }
     };
 
@@ -755,8 +773,6 @@ const ProjectList = () => {
         fetchProjectsError ||
         usersFetchError ||
         anyFilterError ||
-        statusChangeError ||
-        deleteProjectError ||
         fetchProjectTypesError
     ) {
         toast.error("Internal Server Error, Refresh Once");
