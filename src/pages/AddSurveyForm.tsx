@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 const fieldStyles = {
-  height: { xs: 28, sm: 36, md: 45 },
+  height: { xs: 36, sm: 40, md: 44 },
   '& .MuiInputBase-input, & .MuiSelect-select': {
     padding: { xs: '8px', sm: '10px', md: '12px' },
   },
@@ -307,26 +307,30 @@ export const AddSurveyForm = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <span className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm">1</span>
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">1</span>
             Basic Info
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-2">
+              <Label htmlFor="surveyName">Survey Name*</Label>
               <TextField
+                id="surveyName"
                 placeholder="Enter Survey Name"
                 value={formData.surveyName}
                 onChange={(e) => handleInputChange('surveyName', e.target.value)}
+                required
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{ shrink: false }}
                 InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
+                sx={{ mt: 0.5 }}
               />
             </div>
-            <div>
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <div className="space-y-2">
+              <Label htmlFor="category">Category*</Label>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 0.5 }}>
                 <InputLabel id="category-label" shrink>Select Category</InputLabel>
                 <MuiSelect
                   labelId="category-label"
@@ -346,8 +350,10 @@ export const AddSurveyForm = () => {
             </div>
           </div>
 
-          <div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
             <TextField
+              id="description"
               placeholder="Enter Description"
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
@@ -355,8 +361,7 @@ export const AddSurveyForm = () => {
               variant="outlined"
               multiline
               minRows={3}
-              maxRows={10}
-              InputLabelProps={{ shrink: true }}
+              InputLabelProps={{ shrink: false }}
               InputProps={{
                 sx: {
                   '& textarea': {
@@ -367,39 +372,42 @@ export const AddSurveyForm = () => {
                   },
                 },
               }}
-              sx={{ mt: 1 }}
+              sx={{ mt: 0.5 }}
             />
           </div>
 
           <div className="grid grid-cols-3 gap-4">
-            <div>
+            <div className="space-y-2">
+              <Label htmlFor="startDate">Start Date</Label>
               <TextField
+                id="startDate"
                 type="date"
-                placeholder="Start Date"
                 value={formData.startDate}
                 onChange={(e) => handleInputChange('startDate', e.target.value)}
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{ shrink: false }}
                 InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
+                sx={{ mt: 0.5 }}
               />
             </div>
-            <div>
+            <div className="space-y-2">
+              <Label htmlFor="endDate">End Date</Label>
               <TextField
+                id="endDate"
                 type="date"
-                placeholder="End Date"
                 value={formData.endDate}
                 onChange={(e) => handleInputChange('endDate', e.target.value)}
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{ shrink: false }}
                 InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
+                sx={{ mt: 0.5 }}
               />
             </div>
-            <div>
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <div className="space-y-2">
+              <Label htmlFor="targetAudience">Target Audience</Label>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 0.5 }}>
                 <InputLabel id="target-audience-label" shrink>Target Audience</InputLabel>
                 <MuiSelect
                   labelId="target-audience-label"
@@ -427,7 +435,7 @@ export const AddSurveyForm = () => {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm">{sectionIndex + 2}</span>
+                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">{sectionIndex + 2}</span>
                 Section {sectionIndex + 1}
               </div>
               <div className="flex items-center gap-2">
@@ -453,16 +461,18 @@ export const AddSurveyForm = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
+            <div className="space-y-2">
+              <Label htmlFor={`section-${section.id}`}>Section Name</Label>
               <TextField
+                id={`section-${section.id}`}
                 placeholder="Enter Section Name"
                 value={section.sectionName}
                 onChange={(e) => handleSectionChange(section.id, 'sectionName', e.target.value)}
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{ shrink: false }}
                 InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
+                sx={{ mt: 0.5 }}
               />
             </div>
 
@@ -481,20 +491,24 @@ export const AddSurveyForm = () => {
                 )}
                 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`question-${question.id}`}>Question*</Label>
                     <TextField
+                      id={`question-${question.id}`}
                       placeholder="Enter Question"
                       value={question.questionText}
                       onChange={(e) => handleQuestionChange(section.id, question.id, 'questionText', e.target.value)}
+                      required
                       fullWidth
                       variant="outlined"
-                      InputLabelProps={{ shrink: true }}
+                      InputLabelProps={{ shrink: false }}
                       InputProps={{ sx: fieldStyles }}
-                      sx={{ mt: 1 }}
+                      sx={{ mt: 0.5 }}
                     />
                   </div>
-                  <div>
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                  <div className="space-y-2">
+                    <Label htmlFor={`input-type-${question.id}`}>Input Type</Label>
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 0.5 }}>
                       <InputLabel id={`input-type-${question.id}-label`} shrink>Input Type</InputLabel>
                       <MuiSelect
                         labelId={`input-type-${question.id}-label`}
