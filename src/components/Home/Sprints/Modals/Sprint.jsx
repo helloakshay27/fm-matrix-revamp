@@ -243,6 +243,7 @@ const Sprints = ({ closeModal }) => {
       !formData.endDate ||
       (!formData.priority && !isDelete)
     ) {
+      toast.dismiss();
       toast.error("Please fill all required fields.");
       return;
     }
