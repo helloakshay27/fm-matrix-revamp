@@ -204,6 +204,8 @@ const AddExternalUserModal = ({
               onChange={(e) =>
                 setFormData({ ...formData, username: e.target.value })
               }
+              autoComplete="new-username"
+              name="internal_user_name"
             />
           </div>
 
@@ -219,6 +221,8 @@ const AddExternalUserModal = ({
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
               }
+              autoComplete="new-email"
+              name="external_user_email"
             />
           </div>
 
@@ -252,6 +256,8 @@ const AddExternalUserModal = ({
               onChange={(e) =>
                 setFormData({ ...formData, password: e.target.value })
               }
+              autoComplete="new-password"
+              name="external_user_password"
             />
             {showPassword ? (
               <EyeOff
