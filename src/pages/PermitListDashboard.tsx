@@ -103,7 +103,7 @@ export const PermitListDashboard = () => {
 
       {/* Permit To Complete Badge */}
       <div className="flex justify-end mb-4">
-        <div className="bg-purple-500 text-white px-3 py-1 rounded text-sm font-medium">
+        <div className="text-[#C72030] px-3 py-1 border border-[#C72030] text-sm font-medium">
           Permit To Complete
         </div>
       </div>
