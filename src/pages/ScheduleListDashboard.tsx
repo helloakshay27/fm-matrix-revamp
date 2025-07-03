@@ -46,66 +46,44 @@ export const ScheduleListDashboard = () => {
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    if (value) {
-      const filtered = scheduleData.filter(schedule =>
-        schedule.activityName.toLowerCase().includes(value.toLowerCase()) ||
-        schedule.id.toLowerCase().includes(value.toLowerCase()) ||
-        schedule.type.toLowerCase().includes(value.toLowerCase())
-      );
-      setFilteredSchedules(filtered);
-    } else {
-      setFilteredSchedules(scheduleData);
-    }
+    const filtered = value
+      ? scheduleData.filter(schedule =>
+          schedule.activityName.toLowerCase().includes(value.toLowerCase()) ||
+          schedule.id.toLowerCase().includes(value.toLowerCase()) ||
+          schedule.type.toLowerCase().includes(value.toLowerCase())
+        )
+      : scheduleData;
+    setFilteredSchedules(filtered);
   };
 
-  const handleAddSchedule = () => {
-    navigate('/maintenance/schedule/add');
-  };
-
-  const handleExport = () => {
-    navigate('/maintenance/schedule/export');
-  };
-
+  const handleAddSchedule = () => navigate('/maintenance/schedule/add');
+  const handleExport = () => navigate('/maintenance/schedule/export');
   const handleToggleActive = (scheduleId: string) => {
-    setSchedules(prev => 
-      prev.map(schedule => 
-        schedule.id === scheduleId 
-          ? { ...schedule, active: !schedule.active }
-          : schedule
+    setSchedules(prev =>
+      prev.map(schedule =>
+        schedule.id === scheduleId ? { ...schedule, active: !schedule.active } : schedule
       )
     );
-
-    setFilteredSchedules(prev => 
-      prev.map(schedule => 
-        schedule.id === scheduleId 
-          ? { ...schedule, active: !schedule.active }
-          : schedule
+    setFilteredSchedules(prev =>
+      prev.map(schedule =>
+        schedule.id === scheduleId ? { ...schedule, active: !schedule.active } : schedule
       )
     );
   };
-
-  const handleEditSchedule = (scheduleId: string) => {
-    navigate(`/maintenance/schedule/edit/${scheduleId}`);
-  };
-
-  const handleCopySchedule = (scheduleId: string) => {
-    navigate(`/maintenance/schedule/copy/${scheduleId}`);
-  };
-
-  const handleViewSchedule = (scheduleId: string) => {
-    navigate(`/maintenance/schedule/view/${scheduleId}`);
-  };
+  const handleEditSchedule = (id: string) => navigate(`/maintenance/schedule/edit/${id}`);
+  const handleCopySchedule = (id: string) => navigate(`/maintenance/schedule/copy/${id}`);
+  const handleViewSchedule = (id: string) => navigate(`/maintenance/schedule/view/${id}`);
 
   return (
     <div className="p-4 sm:p-6">
       {/* Header */}
       <div className="mb-6">
-        <p className="text-[#1a1a1a] opacity-70 mb-2">Schedule</p>
+        <p className="text-[#1a1a1a] opacity-70 mb-1">Schedule</p>
         <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Schedule List</h1>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap gap-3 items-center mb-6">
+      {/* Actions */}
+      <div className="flex flex-wrap items-center gap-3 mb-6">
         <Button onClick={handleAddSchedule} className="bg-[#C72030] text-white hover:bg-[#A61B2A]">
           <Plus className="w-4 h-4 mr-2" /> Add
         </Button>
@@ -122,23 +100,25 @@ export const ScheduleListDashboard = () => {
           <input type="checkbox" id="allowMapping" />
           <label htmlFor="allowMapping" className="text-sm">Allow Automatic Mapping</label>
         </div>
-        <div className="ml-auto w-full sm:w-64 flex gap-2 items-center">
+        <div className="w-full sm:w-auto sm:ml-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-3 sm:mt-0">
           <Input
             placeholder="Enter Activity Name"
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
-            className="w-full"
+            className="w-full sm:w-64"
           />
           <Button style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }} className="hover:opacity-90 px-4">
             Go!
           </Button>
-          <Button variant="outline" className="border-[#C72030] text-[#C72030]">Reset</Button>
+          <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+            Reset
+          </Button>
         </div>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto bg-white rounded-lg border">
-        <Table>
+      <div className="overflow-auto bg-white rounded-lg border">
+        <Table className="min-w-[1000px]">
           <TableHeader>
             <TableRow>
               <TableHead>Actions</TableHead>
@@ -172,12 +152,23 @@ export const ScheduleListDashboard = () => {
                 <TableCell>{schedule.validFrom}</TableCell>
                 <TableCell>{schedule.validTill}</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-1 rounded text-xs ${schedule.category === 'Technical' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>{schedule.category}</span>
+                  <span className={`px-2 py-1 rounded text-xs ${schedule.category === 'Technical' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>
+                    {schedule.category}
+                  </span>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center">
-                    <div className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${schedule.active ? 'bg-green-500' : 'bg-gray-300'}`} onClick={() => handleToggleActive(schedule.id)}>
-                      <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${schedule.active ? 'translate-x-6' : 'translate-x-1'}`} />
+                    <div
+                      className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
+                        schedule.active ? 'bg-green-500' : 'bg-gray-300'
+                      }`}
+                      onClick={() => handleToggleActive(schedule.id)}
+                    >
+                      <span
+                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                          schedule.active ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
                     </div>
                   </div>
                 </TableCell>
