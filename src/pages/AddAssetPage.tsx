@@ -323,7 +323,7 @@ export const AddAssetPage = () => {
   <TextField
     required
     label="Asset Name"
-    placeholder="Hello World"
+    placeholder="Enter Name"
     name="assetName"
     fullWidth
     variant="outlined"
