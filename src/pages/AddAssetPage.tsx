@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronDown, ChevronUp, X, Plus } from 'lucide-react';
-import { TextField } from '@mui/material';
+import { TextField, Select as MuiSelect, MenuItem, FormControl, InputLabel } from '@mui/material';
 
 export const AddAssetPage = () => {
   const navigate = useNavigate();
@@ -507,15 +506,28 @@ export const AddAssetPage = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Group" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="group1">Group 1</SelectItem>
-                      <SelectItem value="group2">Group 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="group-select-label" shrink>
+                      Group
+                    </InputLabel>
+                    <MuiSelect
+                      labelId="group-select-label"
+                      label="Group"
+                      displayEmpty
+                      sx={{
+                        height: 56,
+                        '& .MuiSelect-select': {
+                          padding: '14px',
+                        },
+                      }}
+                    >
+                      <MenuItem value="">
+                        <em>Select Group</em>
+                      </MenuItem>
+                      <MenuItem value="group1">Group 1</MenuItem>
+                      <MenuItem value="group2">Group 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
                 <div>
                   <Select>
