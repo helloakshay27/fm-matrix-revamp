@@ -73,62 +73,53 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
         
         <div className="space-y-4">
           {/* Activity Name */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Activity Name</label>
-            <TextField
-              label="Activity Name"
-              placeholder="Enter Activity Name"
-              value={activityName}
-              onChange={(e) => setActivityName(e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{
-                shrink: true,
-              }}
-              sx={fieldStyles}
-            />
-          </div>
+          <TextField
+            label="Activity Name"
+            placeholder="Enter Activity Name"
+            value={activityName}
+            onChange={(e) => setActivityName(e.target.value)}
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{
+              shrink: true,
+            }}
+            sx={fieldStyles}
+          />
 
           {/* Select Type */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Select Type</label>
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="type-select-label" shrink>Type</InputLabel>
-              <MuiSelect
-                labelId="type-select-label"
-                label="Type"
-                displayEmpty
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Type</em></MenuItem>
-                <MenuItem value="PPM">PPM</MenuItem>
-                <MenuItem value="Routine">Routine</MenuItem>
-                <MenuItem value="AMC">AMC</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="type-select-label" shrink>Type</InputLabel>
+            <MuiSelect
+              labelId="type-select-label"
+              label="Type"
+              displayEmpty
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value=""><em>Select Type</em></MenuItem>
+              <MenuItem value="PPM">PPM</MenuItem>
+              <MenuItem value="Routine">Routine</MenuItem>
+              <MenuItem value="AMC">AMC</MenuItem>
+            </MuiSelect>
+          </FormControl>
 
           {/* Select Category */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Select Category</label>
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="category-select-label" shrink>Category</InputLabel>
-              <MuiSelect
-                labelId="category-select-label"
-                label="Category"
-                displayEmpty
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Category</em></MenuItem>
-                <MenuItem value="Technical">Technical</MenuItem>
-                <MenuItem value="Non Technical">Non Technical</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="category-select-label" shrink>Category</InputLabel>
+            <MuiSelect
+              labelId="category-select-label"
+              label="Category"
+              displayEmpty
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value=""><em>Select Category</em></MenuItem>
+              <MenuItem value="Technical">Technical</MenuItem>
+              <MenuItem value="Non Technical">Non Technical</MenuItem>
+            </MuiSelect>
+          </FormControl>
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
