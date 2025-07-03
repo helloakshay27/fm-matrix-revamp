@@ -75,26 +75,14 @@ export const AddAMCPage = () => {
 
   // Responsive styles for TextField and Select
   const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
+    height: { xs: '2rem', sm: '2.25rem', md: '2.25rem' },
     '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-      '&::placeholder': {
-        fontSize: { xs: '12px', sm: '13px', md: '14px' }, // Default for text fields
-        opacity: 1,
-      },
-      '&[type="date"]::placeholder': {
-        fontSize: { xs: '11px', sm: '12px', md: '9px' }, // Smaller for date fields
-        opacity: 1,
-      },
+      padding: { xs: '0.5rem', sm: '0.625rem', md: '0.625rem' },
+      fontSize: { xs: '0.875rem', sm: '1rem' }
     },
-    '& .MuiInputBase-root': {
-      '& .MuiSelect-select': {
-        fontSize: { xs: '11px', sm: '12px', md: '9px' }, // Smaller for dropdowns
-      },
-      '& .MuiMenuItem-root': {
-        fontSize: { xs: '11px', sm: '12px', md: '9px' }, // Smaller for dropdown menu items
-      },
-    },
+    '& .MuiInputLabel-root': {
+      fontSize: { xs: '0.875rem', sm: '1rem' }
+    }
   };
 
   return (
