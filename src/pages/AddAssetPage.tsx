@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronDown, ChevronUp, X, Plus } from 'lucide-react';
+import { TextField } from '@mui/material';
 
 export const AddAssetPage = () => {
   const navigate = useNavigate();
@@ -140,7 +139,7 @@ export const AddAssetPage = () => {
 
   // Functions for consumption measures
   const addConsumptionMeasure = () => {
-    const newId = Math.max(...consumptionMeasures.map(m => m.id)) + 1;
+    const newId = consumptionMeasures.length > 0 ? Math.max(...consumptionMeasures.map(m => m.id)) + 1 : 1;
     setConsumptionMeasures([...consumptionMeasures, {
       id: newId,
       name: '',
@@ -168,7 +167,7 @@ export const AddAssetPage = () => {
 
   // Functions for non-consumption measures
   const addNonConsumptionMeasure = () => {
-    const newId = Math.max(...nonConsumptionMeasures.map(m => m.id)) + 1;
+    const newId = nonConsumptionMeasures.length > 0 ? Math.max(...nonConsumptionMeasures.map(m => m.id)) + 1 : 1;
     setNonConsumptionMeasures([...nonConsumptionMeasures, {
       id: newId,
       name: '',
@@ -321,23 +320,23 @@ export const AddAssetPage = () => {
             <CardContent className="pt-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
-  <TextField
-    required
-    label="Asset Name"
-    placeholder="Enter Text"
-    name="assetName"
-    fullWidth
-    variant="outlined"
-    InputProps={{
-      sx: {
-        height: 36,
-        '& input': {
-          padding: '8px 14px',
-        },
-      },
-    }}
-  />
-</div>
+                  <TextField
+                    required
+                    label="Asset Name"
+                    placeholder="Enter Text"
+                    name="assetName"
+                    fullWidth
+                    variant="outlined"
+                    InputProps={{
+                      sx: {
+                        height: 36,
+                        '& input': {
+                          padding: '8px 14px',
+                        },
+                      },
+                    }}
+                  />
+                </div>
                 <div>
                   <Label htmlFor="assetNo">Asset No.*</Label>
                   <Input placeholder="Enter Number" />
