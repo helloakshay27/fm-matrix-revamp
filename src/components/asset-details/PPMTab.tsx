@@ -22,7 +22,7 @@ const statusCards = [
       >
         <div className="flex items-center gap-3">
           <div
-            className="w-10 h-10 flex items-center justify-center font-semibold text-sm"
+            className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm"
             style={{
               backgroundColor: card.bgColor,
               color: '#C72030', // ← your requested text color
