@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,7 +67,7 @@ export const AddServicePage = () => {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Service List
         </Button>
-        <p className="text-[#1a1a1a] opacity-70 mb-2">Service List > Create Service</p>
+        <p className="text-[#1a1a1a] opacity-70 mb-2">Service List &gt; Create Service</p>
         <h1 className="text-2xl font-bold text-[#1a1a1a]">CREATE SERVICE</h1>
       </div>
 
