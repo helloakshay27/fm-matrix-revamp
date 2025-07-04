@@ -1,13 +1,17 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FileText, ListChecks, Paperclip } from "lucide-react";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
 
 export const AddPODashboard = () => {
   const navigate = useNavigate();
@@ -113,178 +117,172 @@ export const AddPODashboard = () => {
           </div>
 
           <div className="grid grid-cols-3 gap-6">
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                Select Material PR: <span className="text-red-500">*</span>
-              </Label>
-              <Select 
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Select Material PR*</InputLabel>
+              <MuiSelect
+                label="Select Material PR*"
                 value={formData.materialPR}
-                onValueChange={(value) => setFormData({ ...formData, materialPR: value })}
+                onChange={(e) => setFormData({ ...formData, materialPR: e.target.value })}
+                displayEmpty
+                sx={fieldStyles}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pr1">PR-001</SelectItem>
-                  <SelectItem value="pr2">PR-002</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                <MenuItem value=""><em>Select...</em></MenuItem>
+                <MenuItem value="pr1">PR-001</MenuItem>
+                <MenuItem value="pr2">PR-002</MenuItem>
+              </MuiSelect>
+            </FormControl>
 
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                Supplier: <span className="text-red-500">*</span>
-              </Label>
-              <Select 
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Supplier*</InputLabel>
+              <MuiSelect
+                label="Supplier*"
                 value={formData.supplier}
-                onValueChange={(value) => setFormData({ ...formData, supplier: value })}
+                onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                displayEmpty
+                sx={fieldStyles}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="supplier1">ABC Corp</SelectItem>
-                  <SelectItem value="supplier2">XYZ Ltd</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                <MenuItem value=""><em>Select...</em></MenuItem>
+                <MenuItem value="supplier1">ABC Corp</MenuItem>
+                <MenuItem value="supplier2">XYZ Ltd</MenuItem>
+              </MuiSelect>
+            </FormControl>
 
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                Plant Detail: <span className="text-red-500">*</span>
-              </Label>
-              <Select 
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Plant Detail*</InputLabel>
+              <MuiSelect
+                label="Plant Detail*"
                 value={formData.plantDetail}
-                onValueChange={(value) => setFormData({ ...formData, plantDetail: value })}
+                onChange={(e) => setFormData({ ...formData, plantDetail: e.target.value })}
+                displayEmpty
+                sx={fieldStyles}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="plant1">Plant 1</SelectItem>
-                  <SelectItem value="plant2">Plant 2</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                <MenuItem value=""><em>Select...</em></MenuItem>
+                <MenuItem value="plant1">Plant 1</MenuItem>
+                <MenuItem value="plant2">Plant 2</MenuItem>
+              </MuiSelect>
+            </FormControl>
 
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                PO Date: <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                type="date"
-                value={formData.poDate}
-                onChange={(e) => setFormData({ ...formData, poDate: e.target.value })}
-                placeholder="dd-mm-yyyy"
-              />
-            </div>
+            <TextField
+              label="PO Date*"
+              type="date"
+              value={formData.poDate}
+              onChange={(e) => setFormData({ ...formData, poDate: e.target.value })}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                Billing Address: <span className="text-red-500">*</span>
-              </Label>
-              <Select 
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Billing Address*</InputLabel>
+              <MuiSelect
+                label="Billing Address*"
                 value={formData.billingAddress}
-                onValueChange={(value) => setFormData({ ...formData, billingAddress: value })}
+                onChange={(e) => setFormData({ ...formData, billingAddress: e.target.value })}
+                displayEmpty
+                sx={fieldStyles}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="address1">Address 1</SelectItem>
-                  <SelectItem value="address2">Address 2</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                <MenuItem value=""><em>Select...</em></MenuItem>
+                <MenuItem value="address1">Address 1</MenuItem>
+                <MenuItem value="address2">Address 2</MenuItem>
+              </MuiSelect>
+            </FormControl>
 
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                Delivery Address: <span className="text-red-500">*</span>
-              </Label>
-              <Select 
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Delivery Address*</InputLabel>
+              <MuiSelect
+                label="Delivery Address*"
                 value={formData.deliveryAddress}
-                onValueChange={(value) => setFormData({ ...formData, deliveryAddress: value })}
+                onChange={(e) => setFormData({ ...formData, deliveryAddress: e.target.value })}
+                displayEmpty
+                sx={fieldStyles}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="delivery1">Delivery 1</SelectItem>
-                  <SelectItem value="delivery2">Delivery 2</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                <MenuItem value=""><em>Select...</em></MenuItem>
+                <MenuItem value="delivery1">Delivery 1</MenuItem>
+                <MenuItem value="delivery2">Delivery 2</MenuItem>
+              </MuiSelect>
+            </FormControl>
 
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                Related To
-              </Label>
-              <Input
-                value={formData.relatedTo}
-                onChange={(e) => setFormData({ ...formData, relatedTo: e.target.value })}
-              />
-            </div>
+            <TextField
+              label="Related To"
+              value={formData.relatedTo}
+              onChange={(e) => setFormData({ ...formData, relatedTo: e.target.value })}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                Retention(%)
-              </Label>
-              <Input
-                value={formData.retention}
-                onChange={(e) => setFormData({ ...formData, retention: e.target.value })}
-              />
-            </div>
+            <TextField
+              label="Retention(%)"
+              value={formData.retention}
+              onChange={(e) => setFormData({ ...formData, retention: e.target.value })}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                TDS(%)
-              </Label>
-              <Input
-                value={formData.tds}
-                onChange={(e) => setFormData({ ...formData, tds: e.target.value })}
-              />
-            </div>
+            <TextField
+              label="TDS(%)"
+              value={formData.tds}
+              onChange={(e) => setFormData({ ...formData, tds: e.target.value })}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                QC(%)
-              </Label>
-              <Input
-                value={formData.qc}
-                onChange={(e) => setFormData({ ...formData, qc: e.target.value })}
-              />
-            </div>
+            <TextField
+              label="QC(%)"
+              value={formData.qc}
+              onChange={(e) => setFormData({ ...formData, qc: e.target.value })}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                Payment Tenure(In Days)
-              </Label>
-              <Input
-                value={formData.paymentTenure}
-                onChange={(e) => setFormData({ ...formData, paymentTenure: e.target.value })}
-              />
-            </div>
+            <TextField
+              label="Payment Tenure(In Days)"
+              value={formData.paymentTenure}
+              onChange={(e) => setFormData({ ...formData, paymentTenure: e.target.value })}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                Advance Amount
-              </Label>
-              <Input
-                value={formData.advanceAmount}
-                onChange={(e) => setFormData({ ...formData, advanceAmount: e.target.value })}
-              />
-            </div>
+            <TextField
+              label="Advance Amount"
+              value={formData.advanceAmount}
+              onChange={(e) => setFormData({ ...formData, advanceAmount: e.target.value })}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
           </div>
 
           <div className="mt-6">
-            <Label className="text-sm font-medium text-gray-700 mb-2 block">
-              Terms & Conditions
-            </Label>
-            <Textarea
+            <TextField
+              label="Terms & Conditions"
               value={formData.termsConditions}
               onChange={(e) => setFormData({ ...formData, termsConditions: e.target.value })}
+              fullWidth
+              variant="outlined"
+              multiline
+              minRows={4}
               placeholder="Enter..."
-              className="min-h-[100px]"
+              InputLabelProps={{ shrink: true }}
+              sx={{ mt: 1 }}
             />
           </div>
         </div>
@@ -386,9 +384,9 @@ export const AddPODashboard = () => {
           </div>
 
           <div>
-            <Label className="text-sm font-medium text-gray-700 mb-2 block">
+            <label className="text-sm font-medium text-gray-700 mb-2 block">
               Attachment:
-            </Label>
+            </label>
             <div className="flex items-center gap-4">
               <input
                 type="file"
