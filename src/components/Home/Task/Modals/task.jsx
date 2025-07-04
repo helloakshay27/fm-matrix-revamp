@@ -327,15 +327,19 @@ const Tasks = ({ isEdit, onCloseModal }) => {
 
   const calculateDuration = (startDateStr, endDateStr) => {
     if (!startDateStr || !endDateStr) return "";
-    const start = new Date(startDateStr);
-    const end = new Date(endDateStr);
-    if (end < start) return "Invalid: End date before start date";
 
-    const ms = end - start;
+    const now = new Date();
+    const endDate = new Date(endDateStr);
+    endDate.setHours(23, 59, 59, 999); // End of that day
+
+    if (endDate < now) return "Expired";
+
+    const ms = endDate - now;
     const totalMinutes = Math.floor(ms / (1000 * 60));
-    const days = Math.floor(ms / (1000 * 60 * 60 * 24)) + 1;
-    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-    const minutes = totalMinutes % 60;
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+
     return `${days}d : ${hours}h : ${minutes}m`;
   };
 
