@@ -540,7 +540,7 @@ const MoMAdd = () => {
                                                 }}
                                                 mom={true}
                                             />
-                                            {(internalEntries.length > 1 || externalEntries.length > 0) && (
+                                            {(internalEntries.length > 1 || externalEntries.length > 1) && (
                                                 <button
                                                     className="text-[#C72030] p-2"
                                                     onClick={() => handleDeleteEntry(i)}
