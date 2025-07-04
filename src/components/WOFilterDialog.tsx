@@ -65,7 +65,7 @@ export const WOFilterDialog: React.FC<WOFilterDialogProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <TextField
               label="WO Number"
-              placeholder="Search By WO Number"
+              placeholder="Find By WO Number"
               value={filters.woNumber}
               onChange={(e) => handleInputChange('woNumber', e.target.value)}
               fullWidth

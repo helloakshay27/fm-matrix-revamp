@@ -65,7 +65,7 @@ export const ServicePRFilterDialog: React.FC<ServicePRFilterDialogProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <TextField
               label="Reference Number"
-              placeholder="Search By PR Number"
+              placeholder="Find By PR Number"
               value={filters.referenceNumber}
               onChange={(e) => handleInputChange('referenceNumber', e.target.value)}
               fullWidth
