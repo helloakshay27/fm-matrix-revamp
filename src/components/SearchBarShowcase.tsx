@@ -3,16 +3,11 @@ import { SearchWithSuggestions } from './SearchWithSuggestions';
 import { useSearchSuggestions } from '@/hooks/useSearchSuggestions';
 
 const sampleData = [
-  { name: 'Tower A - Floor 1', type: 'location', category: 'building' },
-  { name: 'Tower B - Floor 2', type: 'location', category: 'building' },
-  { name: 'Units Snagging', type: 'stage', category: 'process' },
-  { name: 'Common Area Snagging', type: 'stage', category: 'process' },
-  { name: 'Pre-handover Snagging', type: 'stage', category: 'process' },
-  { name: 'Electrical Issues', type: 'issue', category: 'technical' },
-  { name: 'Plumbing Problems', type: 'issue', category: 'technical' },
-  { name: 'Paint Defects', type: 'issue', category: 'cosmetic' },
-  { name: 'Flooring Issues', type: 'issue', category: 'structural' },
-  { name: 'Door Alignment', type: 'issue', category: 'structural' }
+  { name: '8Items looking for', type: 'location', category: 'building' },
+  { name: '8Items looking for', type: 'location', category: 'building' },
+  { name: '8Items looking for', type: 'stage', category: 'process' },
+  { name: '8Items looking for', type: 'stage', category: 'process' },
+  { name: '8Items looking for', type: 'stage', category: 'process' },
 ];
 
 export const SearchBarShowcase = () => {
@@ -26,7 +21,7 @@ export const SearchBarShowcase = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-7xl mx-auto">
         {/* Title */}
         <h1 className="text-2xl font-bold text-center mb-8 text-gray-900">
@@ -34,317 +29,434 @@ export const SearchBarShowcase = () => {
         </h1>
 
         {/* Reference Section */}
-        <div className="mb-12">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800">Reference</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">Desktop</h3>
-              <SearchWithSuggestions
-                placeholder="Search..."
-                onSearch={handleSearch}
-                suggestions={suggestions}
-                className="w-full max-w-[300px] mx-auto"
-              />
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">Tablet</h3>
-              <SearchWithSuggestions
-                placeholder="Search..."
-                onSearch={handleSearch}
-                suggestions={suggestions}
-                className="w-full max-w-[250px] mx-auto"
-              />
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">Mobile</h3>
-              <SearchWithSuggestions
-                placeholder="Search..."
-                onSearch={handleSearch}
-                suggestions={suggestions}
-                className="w-full max-w-[200px] mx-auto"
-              />
+        <div className="mb-6">
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex">
+              <div className="w-32 flex-shrink-0">
+                <h2 className="text-lg font-bold text-gray-900">Reference</h2>
+              </div>
+              <div className="flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="text-center">
+                    <h3 className="text-sm font-medium mb-4 text-gray-700">Desktop</h3>
+                    <div className="flex justify-center">
+                      <SearchWithSuggestions
+                        placeholder="Search..."
+                        onSearch={handleSearch}
+                        suggestions={suggestions}
+                        className="w-[290px]"
+                      />
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-sm font-medium mb-4 text-gray-700">Tablet</h3>
+                    <div className="flex justify-center">
+                      <SearchWithSuggestions
+                        placeholder="Search..."
+                        onSearch={handleSearch}
+                        suggestions={suggestions}
+                        className="w-[250px]"
+                      />
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-sm font-medium mb-4 text-gray-700">Mobile</h3>
+                    <div className="flex justify-center">
+                      <SearchWithSuggestions
+                        placeholder="Search..."
+                        onSearch={handleSearch}
+                        suggestions={suggestions}
+                        className="w-[170px]"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Radius Section */}
-        <div className="mb-12">
-          <h2 className="text-lg font-semibold mb-6 text-gray-800">Radius</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">0px</h3>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full px-4 py-2 border border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ borderRadius: '0px' }}
-                />
+        <div className="mb-6">
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex">
+              <div className="w-32 flex-shrink-0">
+                <h2 className="text-lg font-bold text-gray-900">Radius</h2>
               </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">4px</h3>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full px-4 py-2 border border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ borderRadius: '4px' }}
-                />
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">8px</h3>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full px-4 py-2 border border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ borderRadius: '8px' }}
-                />
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">12px</h3>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full px-4 py-2 border border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ borderRadius: '12px' }}
-                />
+              <div className="flex-1">
+                <div className="text-center">
+                  <div className="mb-4">
+                    <span className="text-lg font-medium text-gray-900">0px</span>
+                  </div>
+                  <div className="flex justify-center">
+                    <div className="relative w-[290px]">
+                      <input
+                        type="text"
+                        placeholder="Search..."
+                        className="w-full h-9 px-3 pr-10 border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        style={{ borderRadius: '0px' }}
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Spacing Section */}
-        <div className="mb-12">
-          <h2 className="text-lg font-semibold mb-6 text-gray-800">Spacing</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">Compact</h3>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full px-2 py-1 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+        <div className="mb-6">
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex">
+              <div className="w-32 flex-shrink-0">
+                <h2 className="text-lg font-bold text-gray-900">Spacing</h2>
               </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">Regular</h3>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">Large</h3>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full px-6 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+              <div className="flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="text-center">
+                    <h3 className="text-sm font-medium mb-4 text-gray-700">Desktop</h3>
+                    <div className="relative flex justify-center">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Search..."
+                          className="w-[290px] h-9 px-3 pr-10 border border-gray-300 rounded-md bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </div>
+                        {/* Dimension annotations */}
+                        <div className="absolute -bottom-8 left-0 right-0 flex justify-between text-xs text-gray-500">
+                          <span>290px</span>
+                          <span>36px</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-sm font-medium mb-4 text-gray-700">Tablet</h3>
+                    <div className="relative flex justify-center">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Search..."
+                          className="w-[250px] h-9 px-3 pr-10 border border-gray-300 rounded-md bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </div>
+                        <div className="absolute -bottom-8 left-0 right-0 flex justify-between text-xs text-gray-500">
+                          <span>250px</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-sm font-medium mb-4 text-gray-700">Mobile</h3>
+                    <div className="relative flex justify-center">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Search..."
+                          className="w-[170px] h-9 px-3 pr-10 border border-gray-300 rounded-md bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </div>
+                        <div className="absolute -bottom-8 left-0 right-0 flex justify-between text-xs text-gray-500">
+                          <span>170px</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Width/Height Section */}
-        <div className="mb-12">
-          <h2 className="text-lg font-semibold mb-6 text-gray-800">Width/height</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">Desktop</h3>
-              <div className="space-y-2">
-                <div className="text-xs text-gray-500">Search Bar: Width 290px, Height 36px</div>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    style={{ width: '290px', height: '36px' }}
-                  />
-                </div>
-                <div className="text-xs text-gray-500">Suggestion Box: Width 290px, Height 160px</div>
+        <div className="mb-6">
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex">
+              <div className="w-32 flex-shrink-0">
+                <h2 className="text-lg font-bold text-gray-900">Width/height</h2>
               </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">Tablet</h3>
-              <div className="space-y-2">
-                <div className="text-xs text-gray-500">Search Bar: Width 250px, Height 36px</div>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    style={{ width: '250px', height: '36px' }}
-                  />
+              <div className="flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="text-center">
+                    <h3 className="text-sm font-medium mb-4 text-gray-700">Desktop</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-center gap-2 text-xs text-gray-600">
+                        <span className="bg-gray-100 px-2 py-1 rounded">Width: 290px</span>
+                        <span className="bg-gray-100 px-2 py-1 rounded">Height: 36px</span>
+                      </div>
+                      <div className="flex justify-center">
+                        <SearchWithSuggestions
+                          placeholder="Search..."
+                          onSearch={handleSearch}
+                          suggestions={suggestions}
+                          className="w-[290px]"
+                        />
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        <span className="bg-gray-100 px-2 py-1 rounded">Suggestion Box: Width 290px, Height 160px</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-sm font-medium mb-4 text-gray-700">Tablet</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-center gap-2 text-xs text-gray-600">
+                        <span className="bg-gray-100 px-2 py-1 rounded">Width: 250px</span>
+                        <span className="bg-gray-100 px-2 py-1 rounded">Height: 36px</span>
+                      </div>
+                      <div className="flex justify-center">
+                        <SearchWithSuggestions
+                          placeholder="Search..."
+                          onSearch={handleSearch}
+                          suggestions={suggestions}
+                          className="w-[250px]"
+                        />
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        <span className="bg-gray-100 px-2 py-1 rounded">Suggestion Box: Width 250px, Height 160px</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-sm font-medium mb-4 text-gray-700">Mobile</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-center gap-2 text-xs text-gray-600">
+                        <span className="bg-gray-100 px-2 py-1 rounded">Width: 170px</span>
+                        <span className="bg-gray-100 px-2 py-1 rounded">Height: 36px</span>
+                      </div>
+                      <div className="flex justify-center">
+                        <SearchWithSuggestions
+                          placeholder="Search..."
+                          onSearch={handleSearch}
+                          suggestions={suggestions}
+                          className="w-[170px]"
+                        />
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        <span className="bg-gray-100 px-2 py-1 rounded">Suggestion Box: Width 170px, Height 160px</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-xs text-gray-500">Suggestion Box: Width 250px, Height 160px</div>
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">Mobile</h3>
-              <div className="space-y-2">
-                <div className="text-xs text-gray-500">Search Bar: Width 200px, Height 36px</div>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    style={{ width: '200px', height: '36px' }}
-                  />
-                </div>
-                <div className="text-xs text-gray-500">Suggestion Box: Width 200px, Height 160px</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Shadows Section */}
-        <div className="mb-12">
-          <h2 className="text-lg font-semibold mb-6 text-gray-800">Shadows</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">None</h3>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+        <div className="mb-6">
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex">
+              <div className="w-32 flex-shrink-0">
+                <h2 className="text-lg font-bold text-gray-900">Shadows</h2>
               </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">Light</h3>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                />
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">Medium</h3>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
-                />
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">Strong</h3>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg"
-                />
+              <div className="flex-1">
+                <div className="text-center">
+                  <div className="mb-4">
+                    <span className="text-lg font-medium text-gray-900">None</span>
+                  </div>
+                  <div className="flex justify-center">
+                    <div className="relative w-[290px]">
+                      <input
+                        type="text"
+                        placeholder="Search..."
+                        className="w-full h-9 px-3 pr-10 border border-gray-300 rounded-md bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Padding Section */}
-        <div className="mb-12">
-          <h2 className="text-lg font-semibold mb-6 text-gray-800">Padding</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-2 text-gray-600 text-center">Left Padding: 12px</h3>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full py-2 pr-4 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ paddingLeft: '12px' }}
-                />
+        <div className="mb-6">
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex">
+              <div className="w-32 flex-shrink-0">
+                <h2 className="text-lg font-bold text-gray-900">Padding</h2>
               </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-2 text-gray-600 text-center">Top Padding: 12px</h3>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full px-4 pb-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ paddingTop: '12px' }}
-                />
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-2 text-gray-600 text-center">Bottom Padding: 12px</h3>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full px-4 pt-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ paddingBottom: '12px' }}
-                />
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-2 text-gray-600 text-center">Right Padding: 12px</h3>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full py-2 pl-4 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ paddingRight: '12px' }}
-                />
+              <div className="flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="text-center">
+                    <div className="mb-2">
+                      <span className="bg-gray-100 px-2 py-1 rounded text-xs">Left Padding: 12px</span>
+                    </div>
+                    <div className="flex justify-center">
+                      <div className="relative w-[200px]">
+                        <input
+                          type="text"
+                          placeholder="Search..."
+                          className="w-full h-9 pr-3 border border-gray-300 rounded-md bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                          style={{ paddingLeft: '12px' }}
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="mb-2">
+                      <span className="bg-gray-100 px-2 py-1 rounded text-xs">Top Padding: 12px</span>
+                    </div>
+                    <div className="flex justify-center">
+                      <div className="relative w-[200px]">
+                        <input
+                          type="text"
+                          placeholder="Search..."
+                          className="w-full px-3 pr-10 pb-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                          style={{ paddingTop: '12px' }}
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="mb-2">
+                      <span className="bg-gray-100 px-2 py-1 rounded text-xs">Bottom Padding: 12px</span>
+                    </div>
+                    <div className="flex justify-center">
+                      <div className="relative w-[200px]">
+                        <input
+                          type="text"
+                          placeholder="Search..."
+                          className="w-full px-3 pr-10 pt-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                          style={{ paddingBottom: '12px' }}
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="mb-2">
+                      <span className="bg-gray-100 px-2 py-1 rounded text-xs">Right Padding: 12px</span>
+                    </div>
+                    <div className="flex justify-center">
+                      <div className="relative w-[200px]">
+                        <input
+                          type="text"
+                          placeholder="Search..."
+                          className="w-full py-2 pl-3 border border-gray-300 rounded-md bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                          style={{ paddingRight: '12px' }}
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Colors Section */}
-        <div className="mb-12">
-          <h2 className="text-lg font-semibold mb-6 text-gray-800">Colors</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600">Search Bar</h3>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="text-xs text-gray-500">Color Fill: #FFFFFF | Color Fill Opacity: 100% | Stroke: #A8A8A8 | Stroke Opacity: 100%</div>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      className="w-full px-4 py-2 rounded-lg text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      style={{ 
-                        backgroundColor: '#FFFFFF',
-                        border: '1px solid #A8A8A8'
-                      }}
-                    />
-                  </div>
-                </div>
+        <div className="mb-6">
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex">
+              <div className="w-32 flex-shrink-0">
+                <h2 className="text-lg font-bold text-gray-900">Colors</h2>
               </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600">Suggestion Box</h3>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="text-xs text-gray-500">Color Fill: #FFFFFF | Color Fill Opacity: 100%</div>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <div 
-                      className="absolute top-full left-0 right-0 mt-1 border border-gray-300 rounded-lg shadow-lg z-10"
-                      style={{ backgroundColor: '#FFFFFF', height: '120px' }}
-                    >
-                      <div className="p-2">
-                        <div className="text-sm text-gray-600">Sample suggestion box</div>
+              <div className="flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div>
+                    <h3 className="text-sm font-medium mb-4 text-gray-700">Search Bar</h3>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <span className="bg-gray-100 px-2 py-1 rounded">Color Fill: #FFFFFF</span>
+                        <span className="bg-gray-100 px-2 py-1 rounded">Color Fill Opacity: 100%</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <span className="bg-gray-100 px-2 py-1 rounded">Stroke: #A8A8A8</span>
+                        <span className="bg-gray-100 px-2 py-1 rounded">Stroke Opacity: 100%</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-center">
+                      <div className="relative w-[290px]">
+                        <input
+                          type="text"
+                          placeholder="Search..."
+                          className="w-full h-9 px-3 pr-10 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                          style={{ 
+                            backgroundColor: '#FFFFFF',
+                            border: '1px solid #A8A8A8',
+                            borderRadius: '6px'
+                          }}
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium mb-4 text-gray-700">Suggestion Box</h3>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <span className="bg-gray-100 px-2 py-1 rounded">Color Fill: #FFFFFF</span>
+                        <span className="bg-gray-100 px-2 py-1 rounded">Color Fill Opacity: 100%</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-center">
+                      <div className="relative w-[290px]">
+                        <input
+                          type="text"
+                          placeholder="Search..."
+                          className="w-full h-9 px-3 pr-10 border border-gray-300 rounded-md bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </div>
+                        <div 
+                          className="absolute top-full left-0 right-0 mt-1 border border-gray-300 rounded-md shadow-lg z-10"
+                          style={{ backgroundColor: '#FFFFFF', height: '120px' }}
+                        >
+                          <div className="p-2">
+                            <div className="text-sm text-gray-600">Sample suggestion box</div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -355,104 +467,188 @@ export const SearchBarShowcase = () => {
         </div>
 
         {/* Others Section */}
-        <div className="mb-12">
-          <h2 className="text-lg font-semibold mb-6 text-gray-800">Others</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">Custom Border Radius</h3>
-              <SearchWithSuggestions
-                placeholder="Custom radius..."
-                onSearch={handleSearch}
-                suggestions={suggestions}
-                className="w-full [&>div>input]:rounded-xl"
-              />
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">Enhanced Shadow</h3>
-              <SearchWithSuggestions
-                placeholder="With shadow..."
-                onSearch={handleSearch}
-                suggestions={suggestions}
-                className="w-full [&>div>input]:shadow-lg"
-              />
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium mb-4 text-gray-600 text-center">Colored Border</h3>
-              <SearchWithSuggestions
-                placeholder="Colored border..."
-                onSearch={handleSearch}
-                suggestions={suggestions}
-                className="w-full [&>div>input]:border-blue-300 [&>div>input]:focus:border-blue-500"
-              />
+        <div className="mb-6">
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex">
+              <div className="w-32 flex-shrink-0">
+                <h2 className="text-lg font-bold text-gray-900">Others</h2>
+              </div>
+              <div className="flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="text-center">
+                    <h3 className="text-sm font-medium mb-4 text-gray-700">Custom Border Radius</h3>
+                    <SearchWithSuggestions
+                      placeholder="Custom radius..."
+                      onSearch={handleSearch}
+                      suggestions={suggestions}
+                      className="w-full [&>div>input]:rounded-xl"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-sm font-medium mb-4 text-gray-700">Enhanced Shadow</h3>
+                    <SearchWithSuggestions
+                      placeholder="With shadow..."
+                      onSearch={handleSearch}
+                      suggestions={suggestions}
+                      className="w-full [&>div>input]:shadow-lg"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-sm font-medium mb-4 text-gray-700">Colored Border</h3>
+                    <SearchWithSuggestions
+                      placeholder="Colored border..."
+                      onSearch={handleSearch}
+                      suggestions={suggestions}
+                      className="w-full [&>div>input]:border-blue-300 [&>div>input]:focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Do's Section */}
-        <div className="mb-12">
-          <h2 className="text-lg font-semibold mb-6 text-gray-800">Do's</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-green-50 p-6 rounded-lg border border-green-200">
-              <h3 className="text-sm font-medium mb-4 text-green-800 text-center">Responsive Design</h3>
-              <SearchWithSuggestions
-                placeholder="Responsive search..."
-                onSearch={handleSearch}
-                suggestions={suggestions}
-                className="w-full"
-              />
-              <p className="text-xs text-green-700 mt-2">Use responsive breakpoints for different screen sizes</p>
-            </div>
-            <div className="bg-green-50 p-6 rounded-lg border border-green-200">
-              <h3 className="text-sm font-medium mb-4 text-green-800 text-center">Clear Placeholder</h3>
-              <SearchWithSuggestions
-                placeholder="Search for items, locations, or issues..."
-                onSearch={handleSearch}
-                suggestions={suggestions}
-                className="w-full"
-              />
-              <p className="text-xs text-green-700 mt-2">Provide descriptive placeholder text</p>
-            </div>
-            <div className="bg-green-50 p-6 rounded-lg border border-green-200">
-              <h3 className="text-sm font-medium mb-4 text-green-800 text-center">Keyboard Navigation</h3>
-              <SearchWithSuggestions
-                placeholder="Try arrow keys..."
-                onSearch={handleSearch}
-                suggestions={suggestions}
-                className="w-full"
-              />
-              <p className="text-xs text-green-700 mt-2">Support keyboard navigation for accessibility</p>
+        <div className="mb-6">
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex">
+              <div className="w-32 flex-shrink-0">
+                <h2 className="text-lg font-bold text-gray-900">Do's</h2>
+              </div>
+              <div className="flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <h3 className="text-sm font-medium mb-4 text-green-800 text-center">8Items looking for</h3>
+                    <div className="flex justify-center mb-2">
+                      <SearchWithSuggestions
+                        placeholder="8Items looking for"
+                        onSearch={handleSearch}
+                        suggestions={suggestions}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="flex justify-center mb-2">
+                      <SearchWithSuggestions
+                        placeholder="8Items looking for"
+                        onSearch={handleSearch}
+                        suggestions={suggestions}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="flex justify-center mb-2">
+                      <SearchWithSuggestions
+                        placeholder="8Items looking for"
+                        onSearch={handleSearch}
+                        suggestions={suggestions}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <h3 className="text-sm font-medium mb-4 text-green-800 text-center">8Items looking for</h3>
+                    <div className="flex justify-center mb-2">
+                      <SearchWithSuggestions
+                        placeholder="8Items looking for"
+                        onSearch={handleSearch}
+                        suggestions={suggestions}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="flex justify-center mb-2">
+                      <SearchWithSuggestions
+                        placeholder="8Items looking for"
+                        onSearch={handleSearch}
+                        suggestions={suggestions}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="flex justify-center mb-2">
+                      <SearchWithSuggestions
+                        placeholder="8Items looking for"
+                        onSearch={handleSearch}
+                        suggestions={suggestions}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <h3 className="text-sm font-medium mb-4 text-green-800 text-center">8Items looking for</h3>
+                    <div className="flex justify-center mb-2">
+                      <SearchWithSuggestions
+                        placeholder="8Items looking for"
+                        onSearch={handleSearch}
+                        suggestions={suggestions}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="flex justify-center mb-2">
+                      <SearchWithSuggestions
+                        placeholder="8Items looking for"
+                        onSearch={handleSearch}
+                        suggestions={suggestions}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="flex justify-center mb-2">
+                      <SearchWithSuggestions
+                        placeholder="8Items looking for"
+                        onSearch={handleSearch}
+                        suggestions={suggestions}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Don'ts Section */}
-        <div className="mb-12">
-          <h2 className="text-lg font-semibold mb-6 text-gray-800">Don't's</h2>
-          <div className="bg-red-50 p-6 rounded-lg border border-red-200">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder=""
-                className="w-full px-2 py-4 border-4 border-red-500 bg-yellow-200 text-purple-800 placeholder:text-red-600 focus:outline-none text-lg"
-                style={{ borderRadius: '50px' }}
-              />
+        <div className="mb-6">
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex">
+              <div className="w-32 flex-shrink-0">
+                <h2 className="text-lg font-bold text-gray-900">Don't's</h2>
+              </div>
+              <div className="flex-1">
+                <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                  <div className="flex justify-center">
+                    <div className="relative w-[290px]">
+                      <input
+                        type="text"
+                        placeholder=""
+                        className="w-full h-12 px-2 border-4 border-red-500 bg-yellow-200 text-purple-800 placeholder:text-red-600 focus:outline-none text-lg"
+                        style={{ borderRadius: '50px' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-red-700 mt-2">Avoid: Poor contrast, excessive padding, unclear styling, missing placeholder</p>
           </div>
         </div>
 
         {/* Use Cases Section */}
-        <div className="mb-12">
-          <h2 className="text-lg font-semibold mb-6 text-gray-800">Use cases</h2>
-          <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-            <div className="space-y-4">
-              <div>
-                <strong className="text-blue-800">Purpose:</strong>
-                <span className="text-blue-700 ml-2">A search bar with suggestion box helps users to quickly find what they are looking for.</span>
+        <div className="mb-6">
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="flex">
+              <div className="w-32 flex-shrink-0">
+                <h2 className="text-lg font-bold text-gray-900">Use cases</h2>
               </div>
-              <div>
-                <strong className="text-blue-800">Places:</strong>
-                <span className="text-blue-700 ml-2">List page and filters, forms</span>
+              <div className="flex-1">
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="space-y-2">
+                    <div>
+                      <strong className="text-blue-800">Purpose:</strong>
+                      <span className="text-blue-700 ml-2">A search bar with suggestion box helps users to quickly find what they are looking for.</span>
+                    </div>
+                    <div>
+                      <strong className="text-blue-800">Places:</strong>
+                      <span className="text-blue-700 ml-2">List page and filters, forms</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
