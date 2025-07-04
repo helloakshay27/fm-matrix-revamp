@@ -94,26 +94,24 @@ export const SearchWithSuggestions = ({
   };
 
   return (
-    <div className={className} ref={containerRef}>
-      <div className="relative">
-        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] z-10" />
-        <input
-          ref={inputRef}
-          type="text"
-          placeholder={placeholder}
-          value={searchValue}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          onFocus={handleInputFocus}
-          onBlur={handleInputBlur}
-          className="w-full h-[36px] pl-10 pr-3 border border-[#D1D5DB] bg-white text-[#374151] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#6B7280] focus:border-[#6B7280] text-sm"
-          style={{
-            borderRadius: '0px',
-            fontSize: '14px',
-            height: '36px'
-          }}
-        />
-      </div>
+    <div className={`relative ${className}`} ref={containerRef}>
+      <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] z-10" />
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder={placeholder}
+        value={searchValue}
+        onChange={handleInputChange}
+        onKeyDown={handleKeyDown}
+        onFocus={handleInputFocus}
+        onBlur={handleInputBlur}
+        className="w-full h-[36px] pl-10 pr-3 border border-[#D1D5DB] bg-white text-[#374151] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#6B7280] focus:border-[#6B7280] text-sm"
+        style={{
+          borderRadius: '0px',
+          fontSize: '14px',
+          height: '36px'
+        }}
+      />
 
       {showSuggestions &&
         filteredSuggestions.length > 0 &&
