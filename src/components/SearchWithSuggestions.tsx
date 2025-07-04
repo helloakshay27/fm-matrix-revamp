@@ -109,9 +109,6 @@ export const SearchWithSuggestions = ({
   return (
     <div className={`relative ${className}`} ref={containerRef}>
       <div className="relative">
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
-          <Search className="w-4 h-4 text-[#9CA3AF]" />
-        </div>
         <input
           ref={inputRef}
           type="text"
@@ -121,28 +118,31 @@ export const SearchWithSuggestions = ({
           onKeyDown={handleKeyDown}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
-          className="w-full h-9 pl-10 pr-3 border border-[#D1D5DB] bg-white text-[#374151] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#6B7280] focus:border-[#6B7280] text-sm"
+          className="w-full h-9 px-3 pr-10 border border-[#D1D5DB] rounded-md bg-white text-[#374151] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#6B7280] focus:border-[#6B7280] text-sm"
           style={{
-            borderRadius: '0px',
+            borderRadius: '6px',
             fontSize: '14px',
             height: '35px',
-            paddingLeft: '32px',
-            paddingRight: '12px'
+            paddingLeft: '12px',
+            paddingRight: '40px'
           }}
         />
+        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+          <Search className="w-4 h-4 text-[#9CA3AF]" />
+        </div>
       </div>
 
       {showSuggestions &&
         filteredSuggestions.length > 0 &&
         createPortal(
           <div
-            className="absolute bg-white border border-[#D1D5DB] z-[9999] overflow-hidden"
+            className="absolute bg-white border border-[#D1D5DB] rounded-md z-[9999] overflow-hidden"
             style={{
               position: 'absolute',
-              top: `${getSuggestionBoxPosition().top}px`,
+              top: `${getSuggestionBoxPosition().top + 4}px`,
               left: `${getSuggestionBoxPosition().left}px`,
               width: `${getSuggestionBoxPosition().width}px`,
-              borderRadius: '0px',
+              borderRadius: '6px',
               boxShadow: '0px 4px 8px rgba(0,0,0,0.1)',
               maxHeight: '150px'
             }}
