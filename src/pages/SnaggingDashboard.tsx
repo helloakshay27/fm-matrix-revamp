@@ -49,11 +49,8 @@ export const SnaggingDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Generate suggestions from the mock data
-  const suggestions = useSearchSuggestions({
-    data: mockData,
-    searchFields: ['checklistName', 'tower', 'floor', 'flat', 'roomType', 'stage']
-  });
+  // Generate suggestions from checklist names specifically
+  const checklistSuggestions = Array.from(new Set(mockData.map(item => item.checklistName))).sort();
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -101,11 +98,11 @@ export const SnaggingDashboard = () => {
         <h1 className="text-2xl font-bold mb-4">SNAG LIST</h1>
         
         {/* Search Section with Filters Button */}
-        <div className="flex mb-6">
+        <div className="flex mb-6" style={{ gap: '0px' }}>
           <SearchWithSuggestions
             placeholder="Search"
             onSearch={handleSearch}
-            suggestions={suggestions}
+            suggestions={checklistSuggestions}
             className="w-[290px]"
           />
           <Button 
