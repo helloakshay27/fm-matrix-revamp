@@ -74,13 +74,13 @@ const Modal = ({ setOpenModal, openModal, isEdit, existingData = {} }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 z-50">
-      <div className="w-[560px] h-[300px] bg-white absolute top-[40%] left-[45%] translate-x-[-50%] translate-y-[-50%] border-[0.5px] border-[#C0C0C0] flex flex-col shadow-md z-50">
+      <div className="w-[560px] h-[300px] bg-white absolute top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%] border-[0.5px] border-[#C0C0C0] flex flex-col shadow-md z-50">
         <div className="h-full flex flex-col gap-3 p-4 pb-1">
           <div className="flex justify-end">
             <CloseIcon className="cursor-pointer" onClick={() => handleClose()} />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm">Status Name</label>
+            <label className="text-sm">Status Name <span className="text-red-600">*</span></label>
             <input
               value={formData.title}
               onChange={(e) => {
@@ -95,8 +95,6 @@ const Modal = ({ setOpenModal, openModal, isEdit, existingData = {} }) => {
           <div className='flex flex-col gap-2'>
             <label className="text-sm">Pick Color</label>
             <div className="border-[1px] border-[#C0C0C0] p-2">
-
-
               <input
                 type="color"
                 value={formData.color}

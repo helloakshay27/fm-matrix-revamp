@@ -51,6 +51,9 @@ const AddZoneModel = ({
     if (formData.name === "") {
       setError("Please enter name");
       return;
+    } else if (formData.region === "") {
+      setError("Please select region");
+      return;
     }
 
     const payload = {

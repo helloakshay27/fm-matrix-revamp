@@ -282,7 +282,10 @@ import {
     createProjectTeam,
     fetchProjects,
     fetchProjectTeam,
+    fetchProjectTeams,
     removeMembersFromTeam,
+    resetTeamCreateSuccess,
+    resetTeamUpdateSuccess,
     updateProjectTeam,
 } from "../../../redux/slices/projectSlice";
 import toast from "react-hot-toast";
@@ -451,7 +454,17 @@ const TeamModal = ({
     // Refresh page on success
     useEffect(() => {
         if (success || editSuccess) {
-            window.location.reload();
+            setIsModalOpen(false);
+            toast.dismiss();
+            if (success) {
+                toast.success("Team created successfully");
+                dispatch(resetTeamCreateSuccess())
+            } else {
+                toast.success("Team updated successfully");
+                dispatch(resetTeamUpdateSuccess())
+            }
+            dispatch(fetchProjectTeams({ token }));
+
         }
     }, [success, editSuccess]);
 

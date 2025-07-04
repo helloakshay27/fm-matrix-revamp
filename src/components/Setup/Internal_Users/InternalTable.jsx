@@ -180,7 +180,7 @@ const InternalTable = () => {
       },
     },
     {
-      accessorKey: 'associatedProjects',
+      accessorKey: 'associated_projects_count',
       header: 'Associated Projects',
       size: 100,
     },

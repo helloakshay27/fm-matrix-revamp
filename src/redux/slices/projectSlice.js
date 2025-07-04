@@ -27,7 +27,17 @@ const createApiSlice = (name, fetchThunk) => createSlice({
             state.loading = false;
             state.success = false;
             state.error = null;
-        }
+        },
+        resetTeamCreateSuccess: (state) => {
+            state.loading = false;
+            state.success = false;
+            state.error = null;
+        },
+        resetTeamUpdateSuccess: (state) => {
+            state.loading = false;
+            state.success = false;
+            state.error = null;
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -551,3 +561,5 @@ export const { resetSuccess } = createProjectTeamSlice.actions;
 export const { resetProjectSuccess } = createProjectSlice.actions;
 export const { resetProjectCreateResponse } = createProjectSlice.actions;
 export const { resetEditSuccess } = editProjectSlice.actions;
+export const { resetTeamCreateSuccess } = createProjectTeamSlice.actions
+export const { resetTeamUpdateSuccess } = updateProjectTeamSlice.actions
