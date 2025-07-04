@@ -1,9 +1,24 @@
 import { useGSAP } from "@gsap/react";
-import { ChevronDown, ChevronDownCircle, PencilIcon, Trash2, X } from "lucide-react";
+import {
+    ChevronDown,
+    ChevronDownCircle,
+    PencilIcon,
+    Trash2,
+} from "lucide-react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { changeTaskStatus, createTaskComment, editTaskComment, taskDetails, attachFiles, editTask, deleteTaskComment, resetCommentEdit, removeTaskAttachment } from "../../redux/slices/taskSlice";
+import {
+    changeTaskStatus,
+    createTaskComment,
+    editTaskComment,
+    taskDetails,
+    attachFiles,
+    editTask,
+    deleteTaskComment,
+    resetCommentEdit,
+    removeTaskAttachment,
+} from "../../redux/slices/taskSlice";
 import gsap from "gsap";
 import SubtaskTable from "../../components/Home/Task/Modals/subtaskTable";
 import DependancyKanban from "../../components/Home/DependancyKanban";
@@ -57,9 +72,9 @@ const calculateDuration = (end) => {
     const remainingMinutes = minutes % 60;
     const remainingSeconds = seconds % 60;
 
-    return `${days > 0 ? days + "d " : ""}${remainingHours > 0 ? remainingHours + "h " : ""}${remainingMinutes > 0 ? remainingMinutes + "m " : ""}${remainingSeconds}s`;
+    return `${days > 0 ? days + "d " : ""}${remainingHours > 0 ? remainingHours + "h " : ""
+        }${remainingMinutes > 0 ? remainingMinutes + "m " : ""}${remainingSeconds}s`;
 };
-
 
 const CountdownTimer = ({ targetDate }) => {
     const [countdown, setCountdown] = useState(calculateDuration(targetDate));
@@ -73,12 +88,9 @@ const CountdownTimer = ({ targetDate }) => {
     }, [targetDate]);
 
     return (
-        <div className="text-left text-[#029464] text-[12px]">
-            {countdown}
-        </div>
+        <div className="text-left text-[#029464] text-[12px]">{countdown}</div>
     );
 };
-
 
 function formatToDDMMYYYY_AMPM(dateString) {
     const date = new Date(dateString);
@@ -273,10 +285,16 @@ const Comments = ({ comments }) => {
 
     const dispatch = useDispatch();
     const { loading, success } = useSelector((state) => state.createTaskComment);
-    const { loading: editLoading, success: editSuccess } = useSelector((state) => state.editTaskComment);
-    const { success: deleteSuccess } = useSelector((state) => state.deleteTaskComment);
+    const { loading: editLoading, success: editSuccess } = useSelector(
+        (state) => state.editTaskComment
+    );
+    const { success: deleteSuccess } = useSelector(
+        (state) => state.deleteTaskComment
+    );
     const { fetchUsers: name } = useSelector((state) => state.fetchUsers);
-    const { fetchActiveTags: tags } = useSelector((state) => state.fetchActiveTags);
+    const { fetchActiveTags: tags } = useSelector(
+        (state) => state.fetchActiveTags
+    );
 
     useEffect(() => {
         dispatch(fetchUsers({ token }));
@@ -331,7 +349,9 @@ const Comments = ({ comments }) => {
 
         const formData = new FormData();
         formData.append("comment[body]", editedCommentText);
-        dispatch(editTaskComment({ token, id: editingCommentId, payload: formData }));
+        dispatch(
+            editTaskComment({ token, id: editingCommentId, payload: formData })
+        );
     };
 
     const handleDelete = (id) => {
@@ -350,7 +370,7 @@ const Comments = ({ comments }) => {
             setEditingCommentId(null);
             setEditedCommentText("");
             dispatch(taskDetails({ token, id: tid }));
-            dispatch(resetCommentEdit())
+            dispatch(resetCommentEdit());
         }
     }, [success, editSuccess, deleteSuccess, dispatch, tid, token]);
 
@@ -540,10 +560,16 @@ const Comments = ({ comments }) => {
 
                             <div className="flex gap-2 text-[10px]">
                                 <span>{formatToDDMMYYYY_AMPM(cmt.created_at)}</span>
-                                <span className="cursor-pointer" onClick={() => handleEdit(cmt)}>
+                                <span
+                                    className="cursor-pointer"
+                                    onClick={() => handleEdit(cmt)}
+                                >
                                     Edit
                                 </span>
-                                <span className="cursor-pointer" onClick={() => handleDelete(cmt.id)}>
+                                <span
+                                    className="cursor-pointer"
+                                    onClick={() => handleDelete(cmt.id)}
+                                >
                                     Delete
                                 </span>
                             </div>
@@ -575,9 +601,10 @@ const Attachments = ({ attachments, id }) => {
             formData.append("task_management[attachments][]", file);
         });
 
-
         try {
-            const result = await dispatch(attachFiles({ token, id, payload: formData })).unwrap();
+            const result = await dispatch(
+                attachFiles({ token, id, payload: formData })
+            ).unwrap();
             console.log(result);
             const updatedAttachments = result?.attachments || [];
             setFiles(updatedAttachments);
@@ -589,7 +616,9 @@ const Attachments = ({ attachments, id }) => {
 
     const handleDeleteFile = async (fileId) => {
         try {
-            await dispatch(removeTaskAttachment({ token, id, image_id: fileId })).unwrap();
+            await dispatch(
+                removeTaskAttachment({ token, id, image_id: fileId })
+            ).unwrap();
             toast.dismiss();
             toast.success("File removed successfully.");
             setFiles((prevFiles) => prevFiles.filter((file) => file.id !== fileId));
@@ -597,7 +626,7 @@ const Attachments = ({ attachments, id }) => {
             console.error("File deletion failed:", error);
             toast.error("Failed to delete file. Please try again.");
         }
-    }
+    };
 
     return (
         <div className="flex flex-col gap-3 p-5 ">
@@ -607,22 +636,38 @@ const Attachments = ({ attachments, id }) => {
                         {files.map((file, index) => {
                             const fileName = file.document_file_name;
                             const fileUrl = file.document_url;
-                            const fileExt = fileName.split('.').pop().toLowerCase();
-                            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExt);
-                            const isPdf = fileExt === 'pdf';
-                            const isWord = ['doc', 'docx'].includes(fileExt);
-                            const isExcel = ['xls', 'xlsx'].includes(fileExt);
+                            const fileExt = fileName.split(".").pop().toLowerCase();
+                            const isImage = [
+                                "jpg",
+                                "jpeg",
+                                "png",
+                                "gif",
+                                "bmp",
+                                "webp",
+                            ].includes(fileExt);
+                            const isPdf = fileExt === "pdf";
+                            const isWord = ["doc", "docx"].includes(fileExt);
+                            const isExcel = ["xls", "xlsx"].includes(fileExt);
 
                             return (
                                 <div
                                     key={index}
                                     className="border rounded p-2 flex flex-col items-center justify-center text-center shadow-sm bg-white relative"
                                 >
-                                    <X className="absolute top-2 right-2 cursor-pointer" onClick={() => handleDeleteFile(file.id)} />
+                                    <Trash2
+                                        size={20}
+                                        color="#C72030"
+                                        className="absolute top-2 right-2 cursor-pointer"
+                                        onClick={() => handleDeleteFile(file.id)}
+                                    />
                                     {/* Preview or icon */}
                                     <div className="w-full h-[100px] flex items-center justify-center bg-gray-100 rounded mb-2 overflow-hidden">
                                         {isImage ? (
-                                            <img src={fileUrl} alt={fileName} className="object-contain h-full" />
+                                            <img
+                                                src={fileUrl}
+                                                alt={fileName}
+                                                className="object-contain h-full"
+                                            />
                                         ) : isPdf ? (
                                             <span className="text-red-600 font-bold">PDF</span>
                                         ) : isWord ? (
@@ -660,7 +705,9 @@ const Attachments = ({ attachments, id }) => {
             ) : (
                 <div className="text-[14px] mt-2">
                     <span>No Documents Attached</span>
-                    <div className="text-[#C2C2C2]">Drop or attach relevant documents here</div>
+                    <div className="text-[#C2C2C2]">
+                        Drop or attach relevant documents here
+                    </div>
                     <button
                         className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
                         onClick={handleAttachFile}
@@ -699,8 +746,8 @@ const TaskDetails = () => {
     const [openWorkflowDropdown, setOpenWorkflowDropdown] = useState(false);
     const [selectedOption, setSelectedOption] = useState("Active");
     const [selectedWorkflowOption, setSelectedWorkflowOption] = useState("Open");
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-    const [bgBTN, setBgBTN] = useState()
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [bgBTN, setBgBTN] = useState();
 
     const firstContentRef = useRef(null);
     const secondContentRef = useRef(null);
@@ -710,14 +757,14 @@ const TaskDetails = () => {
     useEffect(() => {
         if (task?.status) setSelectedOption(mapStatusToDisplay(task.status));
         if (task?.project_status?.status) {
-            setSelectedWorkflowOption(task.project_status.status)
-            setBgBTN(task.project_status.color_code)
+            setSelectedWorkflowOption(task.project_status.status);
+            setBgBTN(task.project_status.color_code);
         }
     }, [task]);
 
     useEffect(() => {
         dispatch(taskDetails({ token, id: tid }));
-        dispatch(fetchStatus({ token }))
+        dispatch(fetchStatus({ token }));
     }, [dispatch]);
 
     useEffect(() => {
@@ -737,11 +784,17 @@ const TaskDetails = () => {
             dispatch(deleteTask({ token, id }));
             navigate(-1);
         } catch (err) {
-            console.log(err)
+            console.log(err);
         }
-    }
+    };
 
-    const dropdownOptions = ["Active", "In Progress", "On Hold", "Overdue", "Completed"];
+    const dropdownOptions = [
+        "Active",
+        "In Progress",
+        "On Hold",
+        "Overdue",
+        "Completed",
+    ];
 
     const handleOptionSelect = (option) => {
         setSelectedOption(option);
@@ -753,7 +806,6 @@ const TaskDetails = () => {
                 payload: { status: mapDisplayToApiStatus(option) },
             })
         );
-
     };
 
     const handleWorkflowOptionSelect = (option) => {
@@ -771,9 +823,9 @@ const TaskDetails = () => {
 
     useEffect(() => {
         if (success || editSuccess) {
-            dispatch(taskDetails({ token, id: tid }))
+            dispatch(taskDetails({ token, id: tid }));
         }
-    }, [success, editSuccess])
+    }, [success, editSuccess]);
 
     useGSAP(() => {
         gsap.set(firstContentRef.current, { height: "auto" });
@@ -845,16 +897,20 @@ const TaskDetails = () => {
                                         aria-haspopup="true"
                                         aria-expanded={openDropdown}
                                         tabIndex={0}
-                                        onKeyDown={(e) => e.key === "Enter" && setOpenDropdown(!openDropdown)}
+                                        onKeyDown={(e) =>
+                                            e.key === "Enter" && setOpenDropdown(!openDropdown)
+                                        }
                                     >
                                         <span className="text-[13px]">{selectedOption}</span>
                                         <ChevronDown
                                             size={15}
-                                            className={`${openDropdown ? "rotate-180" : ""} transition-transform`}
+                                            className={`${openDropdown ? "rotate-180" : ""
+                                                } transition-transform`}
                                         />
                                     </div>
                                     <ul
-                                        className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${openDropdown ? "block" : "hidden"}`}
+                                        className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${openDropdown ? "block" : "hidden"
+                                            }`}
                                         role="menu"
                                         style={{
                                             minWidth: "150px",
@@ -866,7 +922,10 @@ const TaskDetails = () => {
                                         {dropdownOptions.map((option, idx) => (
                                             <li key={idx} role="menuitem">
                                                 <button
-                                                    className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option ? "bg-gray-100 font-semibold" : ""}`}
+                                                    className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option
+                                                            ? "bg-gray-100 font-semibold"
+                                                            : ""
+                                                        }`}
                                                     onClick={() => handleOptionSelect(option)}
                                                 >
                                                     {option}
@@ -877,22 +936,34 @@ const TaskDetails = () => {
                                 </div>
                             </span>
                             <span className="h-6 w-[1px] border border-gray-300"></span>
-                            <span className="cursor-pointer flex items-center gap-1" onClick={() => setIsEditModalOpen(true)}>
+                            <span
+                                className="cursor-pointer flex items-center gap-1"
+                                onClick={() => setIsEditModalOpen(true)}
+                            >
                                 <PencilIcon className="mx-1" size={15} /> Edit Task
                             </span>
                             <span className="h-6 w-[1px] border border-gray-300"></span>
-                            <span className="cursor-pointer flex items-center gap-1" onClick={() => { handleDeleteTask(task.id) }}>
+                            <span
+                                className="cursor-pointer flex items-center gap-1"
+                                onClick={() => {
+                                    handleDeleteTask(task.id);
+                                }}
+                            >
                                 <Trash2 className="mx-1" size={15} /> Delete Task
                             </span>
                         </div>
                     </div>
                     <div className="border-b-[3px] border-grey my-3"></div>
                     <div className="border rounded-md shadow-custom p-5 mb-4 text-[14px]">
-                        <div className="font-[600] text-[16px] flex items-center gap-4" onClick={toggleFirstCollapse}>
+                        <div
+                            className="font-[600] text-[16px] flex items-center gap-4"
+                            onClick={toggleFirstCollapse}
+                        >
                             <ChevronDownCircle
                                 color="#E95420"
                                 size={30}
-                                className={`${isFirstCollapsed ? "rotate-180" : "rotate-0"} transition-transform`}
+                                className={`${isFirstCollapsed ? "rotate-180" : "rotate-0"
+                                    } transition-transform`}
                             />{" "}
                             Description
                         </div>
@@ -901,11 +972,15 @@ const TaskDetails = () => {
                         </div>
                     </div>
                     <div className="border rounded-md shadow-custom p-5 mb-4">
-                        <div className="font-[600] text-[16px] flex items-center gap-4" onClick={toggleSecondCollapse}>
+                        <div
+                            className="font-[600] text-[16px] flex items-center gap-4"
+                            onClick={toggleSecondCollapse}
+                        >
                             <ChevronDownCircle
                                 color="#E95420"
                                 size={30}
-                                className={`${isSecondCollapsed ? "rotate-180" : "rotate-0"} transition-transform`}
+                                className={`${isSecondCollapsed ? "rotate-180" : "rotate-0"
+                                    } transition-transform`}
                             />{" "}
                             Details
                         </div>
@@ -913,38 +988,60 @@ const TaskDetails = () => {
                             <div className="flex flex-col">
                                 <div className="flex items-center ml-36">
                                     <div className="w-1/2 flex items-center justify-start gap-3">
-                                        <div className="text-right text-[12px] font-[500]">Responsible Person:</div>
-                                        <div className="text-left text-[12px]">{task.responsible_person?.name}</div>
+                                        <div className="text-right text-[12px] font-[500]">
+                                            Responsible Person:
+                                        </div>
+                                        <div className="text-left text-[12px]">
+                                            {task.responsible_person?.name}
+                                        </div>
                                     </div>
                                     <div className="w-1/2 flex items-center justify-start gap-3">
-                                        <div className="text-right text-[12px] font-[500]">Priority:</div>
+                                        <div className="text-right text-[12px] font-[500]">
+                                            Priority:
+                                        </div>
                                         <div className="text-left text-[12px]">
-                                            {task.priority?.charAt(0).toUpperCase() + task.priority?.slice(1).toLowerCase() || ""}
+                                            {task.priority?.charAt(0).toUpperCase() +
+                                                task.priority?.slice(1).toLowerCase() || ""}
                                         </div>
                                     </div>
                                 </div>
                                 <span className="border h-[1px] inline-block w-full my-4"></span>
                                 <div className="flex items-center ml-36">
                                     <div className="w-1/2 flex items-center justify-start gap-3">
-                                        <div className="text-right text-[12px] font-[500]">Start Date:</div>
-                                        <div className="text-left text-[12px]">{task?.expected_start_date?.split("T")[0]}</div>
+                                        <div className="text-right text-[12px] font-[500]">
+                                            Start Date:
+                                        </div>
+                                        <div className="text-left text-[12px]">
+                                            {task?.expected_start_date?.split("T")[0]}
+                                        </div>
                                     </div>
                                     <div className="w-1/2 flex items-center justify-start gap-3">
-                                        <div className="text-right text-[12px] font-[500]">MileStones:</div>
+                                        <div className="text-right text-[12px] font-[500]">
+                                            MileStones:
+                                        </div>
                                         <div className="text-left text-[12px]">0/1</div>
                                     </div>
                                 </div>
                                 <span className="border h-[1px] inline-block w-full my-4"></span>
                                 <div className="flex items-center ml-36">
                                     <div className="w-1/2 flex items-center justify-start gap-3">
-                                        <div className="text-right text-[12px] font-[500]">End Date:</div>
-                                        <div className="text-left text-[12px]">{task.target_date}</div>
+                                        <div className="text-right text-[12px] font-[500]">
+                                            End Date:
+                                        </div>
+                                        <div className="text-left text-[12px]">
+                                            {task.target_date}
+                                        </div>
                                     </div>
                                     <div className="w-1/2 flex items-center justify-start gap-3">
-                                        <div className="text-right text-[12px] font-semibold">Tags:</div>
+                                        <div className="text-right text-[12px] font-semibold">
+                                            Tags:
+                                        </div>
                                         <div className="text-left text-[12px] flex items-start">
                                             {task.task_tags?.map((tag) => (
-                                                <div key={tag.company_tag?.id} className="border-2 border-[#c72030] rounded-full py-1 px-2 text-[12px] mx-[2px]">
+                                                <div
+                                                    key={tag.company_tag?.id}
+                                                    className="border-2 border-[#c72030] rounded-full py-1 px-2 text-[12px] mx-[2px]"
+                                                >
                                                     {tag.company_tag?.name}
                                                 </div>
                                             ))}
@@ -954,14 +1051,21 @@ const TaskDetails = () => {
                                 <span className="border h-[1px] inline-block w-full my-4"></span>
                                 <div className="flex items-center ml-36">
                                     <div className="w-1/2 flex items-center justify-start gap-3">
-                                        <div className="text-right text-[12px] font-[500]">Duration:</div>
+                                        <div className="text-right text-[12px] font-[500]">
+                                            Duration:
+                                        </div>
                                         <CountdownTimer targetDate={task.target_date} />
                                     </div>
                                     <div className="w-1/2 flex items-center justify-start gap-3">
-                                        <div className="text-right text-[12px] font-semibold">Observer:</div>
+                                        <div className="text-right text-[12px] font-semibold">
+                                            Observer:
+                                        </div>
                                         <div className="text-left text-[12px] flex items-start">
                                             {task.observers?.map((observer) => (
-                                                <div key={observer.id} className="border-2 border-[#c72030] rounded-full px-2 py-1 text-[12px] mx-[2px]">
+                                                <div
+                                                    key={observer.id}
+                                                    className="border-2 border-[#c72030] rounded-full px-2 py-1 text-[12px] mx-[2px]"
+                                                >
                                                     {observer.user_name}
                                                 </div>
                                             ))}
@@ -971,26 +1075,43 @@ const TaskDetails = () => {
                                 <span className="border h-[1px] inline-block w-full my-4"></span>
                                 <div className="flex items-center ml-36">
                                     <div className="w-1/2 flex items-center justify-start gap-3">
-                                        <div className="text-right text-[12px] font-[500]">Workflow Status:</div>
-                                        <span className={`flex relative items-center gap-2 cursor-pointer px-2 py-1 w-[150px] rounded-md text-sm text-white`} style={{ backgroundColor: bgBTN || "#c72030" }}>
-                                            <div className="relative w-full" ref={workflowDropdownRef}>
+                                        <div className="text-right text-[12px] font-[500]">
+                                            Workflow Status:
+                                        </div>
+                                        <span
+                                            className={`flex relative items-center gap-2 cursor-pointer px-2 py-1 w-[150px] rounded-md text-sm text-white`}
+                                            style={{ backgroundColor: bgBTN || "#c72030" }}
+                                        >
+                                            <div
+                                                className="relative w-full"
+                                                ref={workflowDropdownRef}
+                                            >
                                                 <div
                                                     className="flex items-center justify-between gap-1 cursor-pointer px-2 py-1"
-                                                    onClick={() => setOpenWorkflowDropdown(!openWorkflowDropdown)}
+                                                    onClick={() =>
+                                                        setOpenWorkflowDropdown(!openWorkflowDropdown)
+                                                    }
                                                     role="button"
                                                     aria-haspopup="true"
                                                     aria-expanded={openWorkflowDropdown}
                                                     tabIndex={0}
-                                                    onKeyDown={(e) => e.key === "Enter" && setOpenWorkflowDropdown(!openWorkflowDropdown)}
+                                                    onKeyDown={(e) =>
+                                                        e.key === "Enter" &&
+                                                        setOpenWorkflowDropdown(!openWorkflowDropdown)
+                                                    }
                                                 >
-                                                    <span className="text-[13px]">{selectedWorkflowOption}</span>
+                                                    <span className="text-[13px]">
+                                                        {selectedWorkflowOption}
+                                                    </span>
                                                     <ChevronDown
                                                         size={15}
-                                                        className={`${openWorkflowDropdown ? "rotate-180" : ""} transition-transform`}
+                                                        className={`${openWorkflowDropdown ? "rotate-180" : ""
+                                                            } transition-transform`}
                                                     />
                                                 </div>
                                                 <ul
-                                                    className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden no-scrollbar ${openWorkflowDropdown ? "block" : "hidden"}`}
+                                                    className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden no-scrollbar ${openWorkflowDropdown ? "block" : "hidden"
+                                                        }`}
                                                     role="menu"
                                                     style={{
                                                         minWidth: "150px",
@@ -1002,8 +1123,13 @@ const TaskDetails = () => {
                                                     {statuses.map((option, idx) => (
                                                         <li key={option.id} role="menuitem">
                                                             <button
-                                                                className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option ? "bg-gray-100 font-semibold" : ""}`}
-                                                                onClick={() => handleWorkflowOptionSelect(option)}
+                                                                className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option
+                                                                        ? "bg-gray-100 font-semibold"
+                                                                        : ""
+                                                                    }`}
+                                                                onClick={() =>
+                                                                    handleWorkflowOptionSelect(option)
+                                                                }
                                                             >
                                                                 {option.status}
                                                             </button>
@@ -1020,11 +1146,19 @@ const TaskDetails = () => {
                     <div>
                         <div className="flex items-center justify-between my-3">
                             <div className="flex items-center gap-10">
-                                {["Subtasks", "Dependency", "Comments", "Attachments", "Activity Log", "Workflow Status Log"].map((tabName, index) => (
+                                {[
+                                    "Subtasks",
+                                    "Dependency",
+                                    "Comments",
+                                    "Attachments",
+                                    "Activity Log",
+                                    "Workflow Status Log",
+                                ].map((tabName, index) => (
                                     <div
                                         key={index}
                                         id={index + 1}
-                                        className={`text-[14px] font-[400] ${tab === tabName ? "selected" : "cursor-pointer"}`}
+                                        className={`text-[14px] font-[400] ${tab === tabName ? "selected" : "cursor-pointer"
+                                            }`}
                                         onClick={() => setTab(tabName)}
                                     >
                                         {tabName}
@@ -1037,23 +1171,27 @@ const TaskDetails = () => {
                             {tab === "Subtasks" && <SubtaskTable />}
                             {tab === "Dependency" && <DependancyKanban id={tid} />}
                             {tab === "Comments" && <Comments comments={task?.comments} />}
-                            {tab === "Attachments" && <Attachments attachments={task?.attachments} id={task.id} />}
-                            {tab === "Activity Log" && <Status taskStatusLogs={task.task_status_logs} />}
-                            {tab === "Workflow Status Log" && <WorkflowStatus taskStatusLogs={task.workflow_status_logs} />}
+                            {tab === "Attachments" && (
+                                <Attachments attachments={task?.attachments} id={task.id} />
+                            )}
+                            {tab === "Activity Log" && (
+                                <Status taskStatusLogs={task.task_status_logs} />
+                            )}
+                            {tab === "Workflow Status Log" && (
+                                <WorkflowStatus taskStatusLogs={task.workflow_status_logs} />
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
-            {
-                isEditModalOpen && (
-                    <AddTaskModal
-                        isModalOpen={isEditModalOpen}
-                        setIsModalOpen={setIsEditModalOpen}
-                        title={"Edit Task"}
-                        isEdit={true}
-                    />
-                )
-            }
+            {isEditModalOpen && (
+                <AddTaskModal
+                    isModalOpen={isEditModalOpen}
+                    setIsModalOpen={setIsEditModalOpen}
+                    title={"Edit Task"}
+                    isEdit={true}
+                />
+            )}
         </>
     );
 };

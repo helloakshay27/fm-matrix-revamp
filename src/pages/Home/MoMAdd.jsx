@@ -278,28 +278,44 @@ const MoMAdd = () => {
                 })),
         ];
 
-        const payload = {
-            title: formData.title,
-            meeting_date: formData.date,
-            meeting_type: formData.meetingType,
-            meeting_mode: formData.meetingMode,
-            created_by_id: JSON.parse(localStorage.getItem("user")).id,
-            mom_attendees_attributes: combinedUsers,
-            mom_tasks_attributes: formData.points.map((point) => ({
-                description: point.description,
-                raised_by: point.raisedBy,
-                responsible_person_id: point.responsiblePerson?.value,
-                responsible_person_name: point.responsiblePerson?.label,
-                responsible_person_type: point.responsiblePerson?.user.user_type,
-                responsible_person_email: point.responsiblePerson?.user.email,
-                target_date: point.endDate,
-                status: "open",
-                save_task: point.isTask,
-                company_tag_id: point.tag?.value,
-            })),
-            attachments: formData.attachments,
-        };
-        dispatch(createMoM({ token, payload }));
+        const formDataPayload = new FormData();
+
+        formDataPayload.append("mom_detail[title]", formData.title);
+        formDataPayload.append("mom_detail[meeting_date]", formData.date);
+        formDataPayload.append("mom_detail[meeting_type]", formData.meetingType);
+        formDataPayload.append("mom_detail[meeting_mode]", formData.meetingMode);
+        formDataPayload.append("mom_detail[created_by_id]", JSON.parse(localStorage.getItem("user")).id);
+
+        combinedUsers.forEach((user, index) => {
+            formDataPayload.append(`mom_detail[mom_attendees_attributes][${index}][name]`, user.name);
+            formDataPayload.append(`mom_detail[mom_attendees_attributes][${index}][email]`, user.email);
+            formDataPayload.append(`mom_detail[mom_attendees_attributes][${index}][organization]`, user.organization || '');
+            formDataPayload.append(`mom_detail[mom_attendees_attributes][${index}][imp_mail]`, user.imp_mail);
+            formDataPayload.append(`mom_detail[mom_attendees_attributes][${index}][role]`, user.role || '');
+            formDataPayload.append(`mom_detail[mom_attendees_attributes][${index}][attendees_type]`, user.attendees_type);
+            formDataPayload.append(`mom_detail[mom_attendees_attributes][${index}][attendees_id]`, user.attendees_id);
+        });
+
+        formData.points.forEach((point, index) => {
+            formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][description]`, point.description || '');
+            formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][raised_by]`, point.raisedBy || '');
+            formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][responsible_person_id]`, point.responsiblePerson?.value || '');
+            formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][responsible_person_name]`, point.responsiblePerson?.label || '');
+            formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][responsible_person_type]`, point.responsiblePerson?.user.user_type || '');
+            formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][responsible_person_email]`, point.responsiblePerson?.user.email || '');
+            formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][target_date]`, point.endDate || '');
+            formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][status]`, "open");
+            formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][save_task]`, point.isTask);
+            formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][company_tag_id]`, point.tag?.value || '');
+        });
+
+        if (formData.attachments?.length > 0) {
+            for (let i = 0; i < formData.attachments.length; i++) {
+                formDataPayload.append("attachments[]", formData.attachments[i]);
+            }
+        }
+
+        dispatch(createMoM({ token, payload: formDataPayload }));
     };
 
     const isImage = (file) => file?.type?.startsWith("image/") || false;
@@ -712,7 +728,7 @@ const MoMAdd = () => {
                     </span>
 
                     {formData.attachments.length > 0 && (
-                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4">
                             {formData.attachments.map((file, index) => (
                                 <div
                                     key={index}

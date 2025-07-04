@@ -1,14 +1,23 @@
 import gsap from "gsap";
 import IssuesTable from "../../components/Home/Issues/Table";
-import { ChevronDown, ChevronDownCircle, PencilIcon, Trash2, X } from "lucide-react";
+import {
+    ChevronDown,
+    ChevronDownCircle,
+    PencilIcon,
+    Trash2,
+} from "lucide-react";
 import { useGSAP } from "@gsap/react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { changeProjectStatus, createProject, deleteProject, editProject, fetchProjectDetails, removeAttachment } from "../../redux/slices/projectSlice";
+import {
+    changeProjectStatus,
+    deleteProject,
+    fetchProjectDetails,
+    removeAttachment,
+} from "../../redux/slices/projectSlice";
 import AddProjectModal from "../../components/Home/Projects/AddProjectModal";
 import { attachFiles } from "../../redux/slices/projectSlice";
-import FolderIcon from '@mui/icons-material/Folder';
 import toast from "react-hot-toast";
 
 const Issues = () => {
@@ -44,11 +53,11 @@ const Members = ({ allNames, projectOwner }) => {
 };
 
 const STATUS_COLORS = {
-    "active": "bg-[#88D760] text-white",
+    active: "bg-[#88D760] text-white",
     "in progress": "bg-[#88D760] text-white",
     "on hold": "bg-[#FFC107] text-black",
-    "overdue": "bg-[#FF5B5B] text-white",
-    "completed": "bg-[#D6D6D6] text-black",
+    overdue: "bg-[#FF5B5B] text-white",
+    completed: "bg-[#D6D6D6] text-black",
 };
 
 const formatDuration = (ms) => {
@@ -81,7 +90,8 @@ const Status = ({ project }) => {
                         : null;
 
                     const normalizedStatus = log.status?.toLowerCase();
-                    const badgeStyle = STATUS_COLORS[normalizedStatus] || "bg-gray-400 text-white";
+                    const badgeStyle =
+                        STATUS_COLORS[normalizedStatus] || "bg-gray-400 text-white";
 
                     return (
                         <Fragment key={log.id}>
@@ -94,9 +104,7 @@ const Status = ({ project }) => {
                             {duration && (
                                 <>
                                     <div className="flex flex-col items-center justify-start min-w-[100px]">
-                                        <h1 className="text-[9px] text-center">
-                                            {duration}
-                                        </h1>
+                                        <h1 className="text-[9px] text-center">{duration}</h1>
                                         <img src="/arrow.png" alt="arrow" className="mt-1" />
                                     </div>
                                 </>
@@ -130,7 +138,9 @@ const Attachments = ({ attachments, id }) => {
         });
 
         try {
-            const result = await dispatch(attachFiles({ token, id, payload: formData })).unwrap();
+            const result = await dispatch(
+                attachFiles({ token, id, payload: formData })
+            ).unwrap();
             console.log(result);
             const updatedAttachments = result?.attachments || [];
             setFiles(updatedAttachments);
@@ -142,7 +152,9 @@ const Attachments = ({ attachments, id }) => {
 
     const removeFile = async (fileId) => {
         try {
-            await dispatch(removeAttachment({ token, id, image_id: fileId })).unwrap();
+            await dispatch(
+                removeAttachment({ token, id, image_id: fileId })
+            ).unwrap();
             toast.dismiss();
             toast.success("File removed successfully.");
             setFiles((prevFiles) => prevFiles.filter((file) => file.id !== fileId));
@@ -150,7 +162,7 @@ const Attachments = ({ attachments, id }) => {
             toast.dismiss();
             toast.error("Failed to remove file. Please try again.");
         }
-    }
+    };
 
     return (
         <div className="flex flex-col gap-3 p-5">
@@ -160,22 +172,38 @@ const Attachments = ({ attachments, id }) => {
                         {files.map((file, index) => {
                             const fileName = file.document_file_name;
                             const fileUrl = file.document_url;
-                            const fileExt = fileName.split('.').pop().toLowerCase();
-                            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExt);
-                            const isPdf = fileExt === 'pdf';
-                            const isWord = ['doc', 'docx'].includes(fileExt);
-                            const isExcel = ['xls', 'xlsx'].includes(fileExt);
+                            const fileExt = fileName.split(".").pop().toLowerCase();
+                            const isImage = [
+                                "jpg",
+                                "jpeg",
+                                "png",
+                                "gif",
+                                "bmp",
+                                "webp",
+                            ].includes(fileExt);
+                            const isPdf = fileExt === "pdf";
+                            const isWord = ["doc", "docx"].includes(fileExt);
+                            const isExcel = ["xls", "xlsx"].includes(fileExt);
 
                             return (
                                 <div
                                     key={index}
                                     className="border rounded p-2 flex flex-col items-center justify-center text-center shadow-sm bg-white relative"
                                 >
-                                    <X className="absolute top-2 right-2 cursor-pointer" onClick={() => removeFile(file.id)} />
+                                    <Trash2
+                                        size={20}
+                                        color="#C72030"
+                                        className="absolute top-2 right-2 cursor-pointer"
+                                        onClick={() => removeFile(file.id)}
+                                    />
                                     {/* Preview or icon */}
                                     <div className="w-[100px] h-[100px] flex items-center justify-center bg-gray-100 rounded mb-2 overflow-hidden">
                                         {isImage ? (
-                                            <img src={fileUrl} alt={fileName} className="object-contain h-full" />
+                                            <img
+                                                src={fileUrl}
+                                                alt={fileName}
+                                                className="object-contain h-full"
+                                            />
                                         ) : isPdf ? (
                                             <span className="text-red-600 font-bold">PDF</span>
                                         ) : isWord ? (
@@ -212,7 +240,9 @@ const Attachments = ({ attachments, id }) => {
             ) : (
                 <div className="text-[14px] mt-2">
                     <span>No Documents Attached</span>
-                    <div className="text-[#C2C2C2]">Drop or attach relevant documents here</div>
+                    <div className="text-[#C2C2C2]">
+                        Drop or attach relevant documents here
+                    </div>
                     <button
                         className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
                         onClick={handleAttachFile}
@@ -258,19 +288,23 @@ const mapDisplayToApiStatus = (displayStatus) => {
 const ProjectDetails = () => {
     const token = localStorage.getItem("token");
     const { id } = useParams();
-    const navigate = useNavigate()
+    const navigate = useNavigate();
 
     const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
     const [tab, setTab] = useState("Member");
-    const [projectMembers, setProjectMembers] = useState([])
+    const [projectMembers, setProjectMembers] = useState([]);
 
     const firstContentRef = useRef(null);
     const secondContentRef = useRef(null);
 
     const dispatch = useDispatch();
 
-    const { fetchProjectDetails: project } = useSelector((state) => state.fetchProjectDetails);
-    const { changeProjectStatus: statusSuccess } = useSelector((state) => state.changeProjectStatus);
+    const { fetchProjectDetails: project } = useSelector(
+        (state) => state.fetchProjectDetails
+    );
+    const { changeProjectStatus: statusSuccess } = useSelector(
+        (state) => state.changeProjectStatus
+    );
     const { success } = useSelector((state) => state.deleteProject);
 
     const [openDropdown, setOpenDropdown] = useState(false);
@@ -297,20 +331,34 @@ const ProjectDetails = () => {
         };
     }, []);
 
-    const dropdownOptions = ["Active", "In Progress", "On Hold", "Overdue", "Completed"];
+    const dropdownOptions = [
+        "Active",
+        "In Progress",
+        "On Hold",
+        "Overdue",
+        "Completed",
+    ];
 
     const handleOptionSelect = (option) => {
         setSelectedOption(option);
         setOpenDropdown(false);
 
-        dispatch(changeProjectStatus({ token, id, payload: { project_management: { status: mapDisplayToApiStatus(option) } } }));
+        dispatch(
+            changeProjectStatus({
+                token,
+                id,
+                payload: {
+                    project_management: { status: mapDisplayToApiStatus(option) },
+                },
+            })
+        );
     };
 
     useEffect(() => {
         if (statusSuccess) {
-            dispatch(fetchProjectDetails({ token, id }))
+            dispatch(fetchProjectDetails({ token, id }));
         }
-    }, [statusSuccess])
+    }, [statusSuccess]);
 
     useGSAP(() => {
         gsap.set(firstContentRef.current, { height: "auto" });
@@ -337,36 +385,38 @@ const ProjectDetails = () => {
     };
 
     useEffect(() => {
-        dispatch(fetchProjectDetails({ token, id }))
-    }, [])
+        dispatch(fetchProjectDetails({ token, id }));
+    }, []);
 
     useEffect(() => {
         if (project && project.project_team) {
-            const members = project.project_team?.project_team_members.map((member) => member?.user?.name);
+            const members = project.project_team?.project_team_members.map(
+                (member) => member?.user?.name
+            );
             setProjectMembers(members);
         }
     }, [project]);
 
     useEffect(() => {
         if (success) {
-            navigate('/projects')
+            navigate("/projects");
         }
-    }, [success])
+    }, [success]);
 
     function formatToDDMMYYYY_AMPM(dateString) {
         const date = new Date(dateString);
 
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
         const year = date.getFullYear();
 
         let hours = date.getHours();
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+        const ampm = hours >= 12 ? "PM" : "AM";
 
         hours = hours % 12;
         hours = hours ? hours : 12; // Convert hour 0 to 12
-        hours = String(hours).padStart(2, '0');
+        hours = String(hours).padStart(2, "0");
 
         return `${day} /${month}/${year} ${hours}:${minutes} ${ampm}`;
     }
@@ -412,16 +462,21 @@ const ProjectDetails = () => {
                                     aria-haspopup="true"
                                     aria-expanded={openDropdown}
                                     tabIndex={0}
-                                    onKeyDown={(e) => e.key === "Enter" && setOpenDropdown(!openDropdown)}
+                                    onKeyDown={(e) =>
+                                        e.key === "Enter" && setOpenDropdown(!openDropdown)
+                                    }
                                 >
-                                    <span className="text-[13px]">{selectedOption}</span> {/* Display selected option */}
+                                    <span className="text-[13px]">{selectedOption}</span>{" "}
+                                    {/* Display selected option */}
                                     <ChevronDown
                                         size={15}
-                                        className={`${openDropdown ? "rotate-180" : ""} transition-transform`}
+                                        className={`${openDropdown ? "rotate-180" : ""
+                                            } transition-transform`}
                                     />
                                 </div>
                                 <ul
-                                    className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${openDropdown ? "block" : "hidden"}`}
+                                    className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${openDropdown ? "block" : "hidden"
+                                        }`}
                                     role="menu"
                                     style={{
                                         minWidth: "150px",
@@ -433,7 +488,9 @@ const ProjectDetails = () => {
                                     {dropdownOptions.map((option, idx) => (
                                         <li key={idx} role="menuitem">
                                             <button
-                                                className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option ? "bg-gray-100 font-semibold" : ""
+                                                className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option
+                                                        ? "bg-gray-100 font-semibold"
+                                                        : ""
                                                     }`}
                                                 onClick={() => handleOptionSelect(option)}
                                             >
@@ -449,7 +506,8 @@ const ProjectDetails = () => {
 
                         <span
                             className="flex items-center gap-1 cursor-pointer"
-                            onClick={() => setIsEditModalOpen(true)}                        >
+                            onClick={() => setIsEditModalOpen(true)}
+                        >
                             <PencilIcon size={15} />
                             <span>Edit Project</span>
                         </span>
@@ -464,7 +522,6 @@ const ProjectDetails = () => {
                             <span>Delete Project</span>
                         </span>
                     </div>
-
                 </div>
                 <div className="border-b-[3px] border-grey my-3 "></div>
 
@@ -489,14 +546,18 @@ const ProjectDetails = () => {
                                     <div className="text-right text-[12px] font-[500]">
                                         Project Manager :
                                     </div>
-                                    <div className="text-left text-[12px]">{project.project_owner_name}</div>
+                                    <div className="text-left text-[12px]">
+                                        {project.project_owner_name}
+                                    </div>
                                 </div>
                                 <div className="w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]]">
                                         Priority :
                                     </div>
-                                    <div className="text-left text-[12px]">{project.priority?.charAt(0).toUpperCase() +
-                                        project.priority?.slice(1).toLowerCase() || ""}</div>
+                                    <div className="text-left text-[12px]">
+                                        {project.priority?.charAt(0).toUpperCase() +
+                                            project.priority?.slice(1).toLowerCase() || ""}
+                                    </div>
                                 </div>
                             </div>
 
@@ -507,7 +568,9 @@ const ProjectDetails = () => {
                                     <div className="text-right text-[12px] font-[500]">
                                         Project Type:
                                     </div>
-                                    <div className="text-left text-[12px]">{project.project_type_name}</div>
+                                    <div className="text-left text-[12px]">
+                                        {project.project_type_name}
+                                    </div>
                                 </div>
                                 <div className="w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">
@@ -524,7 +587,9 @@ const ProjectDetails = () => {
                                     <div className="text-right text-[12px] font-[500]">
                                         Start Date :
                                     </div>
-                                    <div className="text-left text-[12px]">{project.start_date}</div>
+                                    <div className="text-left text-[12px]">
+                                        {project.start_date}
+                                    </div>
                                 </div>
                                 <div className="w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-semibold">
@@ -541,7 +606,9 @@ const ProjectDetails = () => {
                                     <div className="text-right text-[12px] font-[500]">
                                         End Date :
                                     </div>
-                                    <div className="text-left text-[12px]">{project.end_date}</div>
+                                    <div className="text-left text-[12px]">
+                                        {project.end_date}
+                                    </div>
                                 </div>
                                 <div className="w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">
@@ -572,8 +639,15 @@ const ProjectDetails = () => {
                     <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
 
                     <div>
-                        {tab == "Member" && <Members allNames={projectMembers} projectOwner={project.project_owner_name} />}
-                        {tab == "Documents" && <Attachments attachments={project.attachments} id={project.id} />}
+                        {tab == "Member" && (
+                            <Members
+                                allNames={projectMembers}
+                                projectOwner={project.project_owner_name}
+                            />
+                        )}
+                        {tab == "Documents" && (
+                            <Attachments attachments={project.attachments} id={project.id} />
+                        )}
                         {tab == "Status" && <Status project={project} />}
                         {tab == "Issues" && <Issues />}
                     </div>

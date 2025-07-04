@@ -14,8 +14,8 @@ const MomTasks = ({ tasks = [] }) => {
             </tr>
           </thead>
           <tbody>
-            {tasks.length > 0 ? (
-              tasks.map(task => (
+            {tasks.filter(task => task.save_task === true).length > 0 ? (
+              tasks.filter(task => task.save_task === true).map(task => (
                 <tr>
                   <td className="p-4">{task.id}</td>
                   <td className="p-4">{task.description}</td>

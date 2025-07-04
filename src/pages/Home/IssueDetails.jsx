@@ -1,10 +1,11 @@
 import gsap from "gsap";
-import { ChevronDown, ChevronDownCircle } from "lucide-react";
+import { ChevronDown, ChevronDownCircle, Trash2 } from "lucide-react";
 import { useGSAP } from "@gsap/react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { attachFile, fetchIssue, updateIssue } from "../../redux/slices/IssueSlice";
+import { attachFile, fetchIssue, removeIssueAttachment, updateIssue } from "../../redux/slices/IssueSlice";
+import toast from "react-hot-toast";
 
 const Attachments = ({ attachments, id }) => {
     const fileInputRef = useRef(null);
@@ -38,7 +39,17 @@ const Attachments = ({ attachments, id }) => {
         }
     };
 
-
+    const handleRemoveFile = async (fileId) => {
+        try {
+            await dispatch(removeIssueAttachment({ token, id, image_id: fileId })).unwrap();
+            toast.dismiss();
+            toast.success("File removed successfully.");
+            setFiles((prevFiles) => prevFiles.filter((file) => file.id !== fileId));
+        } catch (error) {
+            console.error("File deletion failed:", error);
+            toast.error("Failed to delete file. Please try again.");
+        }
+    };
 
     return (
         <div className="flex flex-col gap-3 p-5">
@@ -57,8 +68,9 @@ const Attachments = ({ attachments, id }) => {
                             return (
                                 <div
                                     key={index}
-                                    className="border rounded p-2 flex flex-col items-center justify-center text-center shadow-sm bg-white"
+                                    className="border rounded p-2 flex flex-col items-center justify-center text-center shadow-sm bg-white relative"
                                 >
+                                    <Trash2 size={20} color="#C72030" className="absolute top-2 right-2 cursor-pointer" onClick={() => { handleRemoveFile(file.id) }} />
                                     {/* Preview or icon */}
                                     <div className="w-[100px] h-[100px] flex items-center justify-center bg-gray-100 rounded mb-2 overflow-hidden">
                                         {isImage ? (
