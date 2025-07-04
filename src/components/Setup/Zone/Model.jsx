@@ -15,12 +15,9 @@ const AddZoneModel = ({
   const token = localStorage.getItem("token");
   const dispatch = useDispatch();
 
-
   const { fetchRegion: region } = useSelector((state) => state.fetchRegion);
   const { loading } = useSelector((state) => state.createZone);
-  const { loading: editLoading } = useSelector(
-    (state) => state.updateZone
-  )
+  const { loading: editLoading } = useSelector((state) => state.updateZone);
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
@@ -35,7 +32,6 @@ const AddZoneModel = ({
         name: initialData.name,
         region: initialData.region_id,
         // country: initialData.country_id,
-
       });
     } else {
       setFormData({
@@ -61,7 +57,7 @@ const AddZoneModel = ({
         name: formData.name,
         region_id: formData.region || "",
         // country_id: formData.country || "",
-        active: true
+        active: true,
       },
     };
     try {
@@ -78,15 +74,12 @@ const AddZoneModel = ({
         response = await dispatch(createZone({ token, payload })).unwrap();
       }
       console.log(response);
-      toast.success(
-        `Zone ${isEditMode ? "updated" : "created"} successfully`,
-        {
-          iconTheme: {
-            primary: "green", // This might directly change the color of the success icon
-            secondary: "white", // The circle background
-          },
-        }
-      );
+      toast.success(`Zone ${isEditMode ? "updated" : "created"} successfully`, {
+        iconTheme: {
+          primary: "green", // This might directly change the color of the success icon
+          secondary: "white", // The circle background
+        },
+      });
       handleSuccess();
     } catch (error) {
       console.log(error);
@@ -115,8 +108,8 @@ const AddZoneModel = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
-      <div className="w-[560px] h-max bg-white transform border border-[#C0C0C0]">
+    <div className="fixed inset-0 bg-black bg-opacity-30 z-50">
+      <div className="w-[560px] h-max pb-[7rem] bg-white absolute top-1/2 left-1/2 flex flex-col translate-x-[-50%] translate-y-[-50%] border border-[#C0C0C0] shadow-md">
         {/* Close Icon */}
         <div className="flex justify-end p-4">
           <CloseIcon className="cursor-pointer" onClick={handleClose} />
@@ -145,10 +138,12 @@ const AddZoneModel = ({
             </label>
             <SelectBox
               options={
-                region ? region.map((region) => ({
-                  value: region.id,
-                  label: region.name,
-                })) : []
+                region
+                  ? region.map((region) => ({
+                    value: region.id,
+                    label: region.name,
+                  }))
+                  : []
               }
               className="w-full"
               value={formData.region}
@@ -156,21 +151,20 @@ const AddZoneModel = ({
             />
           </div>
         </div>
-        {/* 
-          <div className="px-6">
-            <label className="block text-[11px] text-[#1B1B1B] mb-1">
-              Country<span className="text-red-500 ml-1">*</span>
-            </label>
-            <SelectBox
-              options={country.map((region) => ({
-                value: region.id,
-                label: region.name,
-              }))}
-              className="w-full"
-              value={formData.country}
-              onChange={(value) => setFormData({ ...formData, country: value })}
-            />
-          </div>
+
+        {/* <div className="px-6">
+          <label className="block text-[11px] text-[#1B1B1B] mb-1">
+            Country<span className="text-red-500 ml-1">*</span>
+          </label>
+          <SelectBox
+            options={country.map((region) => ({
+              value: region.id,
+              label: region.name,
+            }))}
+            className="w-full"
+            value={formData.country}
+            onChange={(value) => setFormData({ ...formData, country: value })}
+          />
         </div> */}
 
         <div>
@@ -182,7 +176,7 @@ const AddZoneModel = ({
         </div>
 
         {/* Footer Buttons */}
-        <div className="bottom-0 left-0 right-0 bg-[#D5DBDB] h-[70px] flex justify-center items-center gap-4">
+        <div className="absolute bottom-0 left-0 right-0 bg-[#D5DBDB] h-[90px] flex justify-center items-center gap-4">
           <button
             type="button"
             className="border border-[#C72030] text-[#1B1B1B] text-[13px] px-8 py-2"

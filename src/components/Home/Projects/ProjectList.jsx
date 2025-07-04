@@ -713,8 +713,24 @@ const ProjectList = () => {
                     </div>
                 ),
             },
-            { accessorKey: "startDate", header: "Start Date", size: 120 },
-            { accessorKey: "endDate", header: "End Date", size: 120 },
+            {
+                accessorKey: "startDate",
+                header: "Start Date",
+                size: 120,
+                cell: ({ getValue }) => {
+                    const date = new Date(getValue());
+                    return date.toLocaleDateString("en-GB");
+                },
+            },
+            {
+                accessorKey: "endDate",
+                header: "End Date",
+                size: 120,
+                cell: ({ getValue }) => {
+                    const date = new Date(getValue());
+                    return date.toLocaleDateString("en-GB");
+                },
+            },
             {
                 accessorKey: "priority",
                 header: "Priority",

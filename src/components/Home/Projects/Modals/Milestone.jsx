@@ -193,6 +193,7 @@ const Milestones = ({ closeModal }) => {
   }, [dispatch, id]);
 
   const validateForm = (data) => {
+    toast.dismiss();
     if (!data.title) return toast.error("Milestone title is required.") && false;
     if (!data.ownerId) return toast.error("Select project owner.") && false;
     if (!data.startDate) return toast.error("Milestone start date is required.") && false;
@@ -270,6 +271,7 @@ const Milestones = ({ closeModal }) => {
       if (!isDelete) {
         await dispatch(createMilestone({ token, payload })).unwrap();
       }
+      toast.dismiss()
       toast.success("Milestone created successfully.");
       await dispatch(fetchMilestone({ token, id }));
       window.location.reload();

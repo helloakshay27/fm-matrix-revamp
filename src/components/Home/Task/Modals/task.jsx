@@ -477,7 +477,7 @@ const Tasks = ({ isEdit, onCloseModal }) => {
       setPrevObservers([]);
       setIsDelete(false);
       setNextId(nextId + 1);
-      await dispatch(fetchTasks({ token, id: mid })).unwrap();
+      dispatch(fetchTasks({ token, id: mid ? mid : "" }));
     } catch (error) {
       console.errorovate("Error creating task:", error);
       toast.dismiss();

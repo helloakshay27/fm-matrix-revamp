@@ -31,7 +31,7 @@ const ZoneTable = ({ openModal, setOpenModal, editMode, setEditMode }) => {
       try {
         await Promise.all([
           dispatch(fetchRegion({ token })).unwrap(),
-          dispatch(fetchZone({ token })).unwrap(),
+          dispatch(fetchZone({ token })).unwrap()
         ]);
       } catch (error) {
         console.error("Failed to fetch initial zone/region data:", error);
@@ -146,12 +146,13 @@ const ZoneTable = ({ openModal, setOpenModal, editMode, setEditMode }) => {
         },
       },
       {
-        accessorKey: "country_id",
+        accessorKey: "region_id",
         header: "Country",
         size: 150,
-        cell: ({ getValue }) => {
-          const value = getValue();
-          return value ? value.charAt(0).toUpperCase() + value.slice(1) : null;
+        cell: ({ row }) => {
+          const regionId = row.original.region_id;
+          const regionMatch = Region.find((r) => r.id === regionId);
+          return regionMatch ? regionMatch.country_name : "-";
         },
       },
       {

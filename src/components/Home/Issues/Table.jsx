@@ -25,7 +25,7 @@ import {
 } from "../../../redux/slices/IssueSlice";
 import { fetchProjects } from "../../../redux/slices/projectSlice";
 import { fetchMilestone } from "../../../redux/slices/milestoneSlice";
-import { fetchTasks } from "../../../redux/slices/taskSlice";
+import { editTaskComment, fetchTasks } from "../../../redux/slices/taskSlice";
 
 const NewIssuesTextField = ({
   value,
@@ -394,19 +394,7 @@ const IssuesTable = () => {
     run();
   }, [dispatch, loadingProjects, parentId, projectOptions, token]);
 
-
   // Set project options
-  // useEffect(() => {
-  //   if (!loadingProjects && projects?.length > 0 && !projectsFetchError) {
-  //     setProjectOptions(
-  //       projects.map((project) => ({
-  //         value: project.id,
-  //         label: project.title,
-  //       }))
-  //     );
-  //   }
-  // }, [projects, loadingProjects, projectsFetchError]);
-
   useEffect(() => {
     if (loadingProjects) return; // wait for loading to finish
 
@@ -437,7 +425,6 @@ const IssuesTable = () => {
       setProjectOptions([]); // no projects case
     }
   }, [projects, loadingProjects, projectsFetchError]);
-
 
   // Process issues data
   useEffect(() => {
@@ -479,6 +466,9 @@ const IssuesTable = () => {
         comments: issue.comments?.length
           ? issue.comments[issue.comments.length - 1].body
           : "",
+        commentId: issue.comments?.length
+          ? issue.comments[issue.comments.length - 1].id
+          : null, // Store comment ID
         attachments: issue.attachments || [],
       }));
       setData(processedIssues);
@@ -669,6 +659,77 @@ const IssuesTable = () => {
           error?.response?.data?.message ||
           error?.message ||
           "Failed to update issue.";
+        setLocalError(errorMessage);
+        dispatch(fetchIssue({ token }));
+      } finally {
+        setIsUpdatingIssue(false);
+      }
+    },
+    [dispatch, token]
+  );
+
+  const handleUpdateComment = useCallback(
+    async (issueId, commentId, newComment) => {
+      if (isUpdatingIssue) return;
+      setIsUpdatingIssue(true);
+      setLocalError(null);
+
+      try {
+        if (commentId) {
+          // Update existing comment
+          const sendComment = new FormData();
+          sendComment.append("comment[body]", newComment);
+          await dispatch(
+            editTaskComment({
+              token,
+              id: commentId,
+              payload: sendComment,
+            })
+          ).unwrap();
+        } else {
+          await dispatch(
+            createIssue({
+              token,
+              payload: { issue: { id: issueId, comment: newComment } },
+            })
+          ).unwrap();
+        }
+        // Refresh issues after comment update
+        if (localStorage.getItem("IssueFilters")) {
+          const item = JSON.parse(localStorage.getItem("IssueFilters"));
+          const newFilter = {
+            "q[status_in][]":
+              item.selectedStatuses.length > 0 ? item.selectedStatuses : [],
+            "q[created_by_id_eq]":
+              item.selectedCreators.length > 0 ? item.selectedCreators : [],
+            "q[start_date_eq]": item.dates["Start Date"],
+            "q[end_date_eq]": item.dates["End Date"],
+            "q[responsible_person_id_in][]":
+              item.selectedResponsible.length > 0
+                ? item.selectedResponsible
+                : [],
+            "q[issue_type_in][]":
+              item.selectedTypes.length > 0 ? item.selectedTypes : [],
+            "q[project_management_id_in][]":
+              item.selectedProjects.length > 0 ? item.selectedProjects : [],
+            "q[task_management_id_in][]":
+              item.selectedTasks.length > 0 ? item.selectedTasks : [],
+          };
+          const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
+          await dispatch(filterIssue({ token, filter: queryString })).unwrap();
+        } else if (localStorage.getItem("issueStatus")) {
+          const status = localStorage.getItem("issueStatus");
+          const filter = { "q[status_eq]": status };
+          await dispatch(filterIssue({ token, filter })).unwrap();
+        } else {
+          await dispatch(fetchIssue({ token })).unwrap();
+        }
+      } catch (error) {
+        console.error("Failed to update comment:", error);
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to update comment.";
         setLocalError(errorMessage);
         dispatch(fetchIssue({ token }));
       } finally {
@@ -911,7 +972,11 @@ const IssuesTable = () => {
               value={editField}
               onChange={(e) => setEditField(e.target.value)}
               onEnterPress={() =>
-                handleUpdateIssues(row.original.id, "comment", editField)
+                handleUpdateComment(
+                  row.original.id,
+                  row.original.commentId,
+                  editField
+                )
               }
               placeholder="Comments"
               validator={false}
@@ -919,9 +984,8 @@ const IssuesTable = () => {
           );
         },
       },
-
     ],
-    [handleUpdateIssues, userOptionsForSelectBox, issueTypeOptions]
+    [handleUpdateIssues, handleUpdateComment, userOptionsForSelectBox, issueTypeOptions]
   );
 
   const table = useReactTable({

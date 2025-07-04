@@ -16,8 +16,6 @@ import {
   deleteRegion,
 } from '../../../redux/slices/regionSlice';
 import { fetchCountry } from '../../../redux/slices/countrySlice';
-import { fetchOrganizations } from '../../../redux/slices/organizationSlice';
-import { fetchCompany } from '../../../redux/slices/companySlice';
 import AddRegionModel from './Model';
 import toast from 'react-hot-toast';
 
@@ -36,8 +34,6 @@ const RegionTable = ({ openModal, setOpenModal, editMode, setEditMode }) => {
       try {
         await dispatch(fetchRegion({ token })).unwrap();
         await dispatch(fetchCountry({ token })).unwrap();
-        await dispatch(fetchOrganizations({ token })).unwrap();
-        await dispatch(fetchCompany({ token })).unwrap();
       } catch (error) {
         toast.error('Failed to fetch data.');
         console.error(error);
@@ -125,13 +121,10 @@ const RegionTable = ({ openModal, setOpenModal, editMode, setEditMode }) => {
         }
       },
       {
-        accessorKey: 'country_id',
+        accessorKey: 'country_name',
         header: 'Country',
         size: 150,
-        cell: ({ getValue }) => {
-          const value = countries.find(c => c.id == getValue())?.name;
-          return value ? <span className="pl-1">{value.charAt(0).toUpperCase() + value.slice(1)}</span> : null;
-        },
+        cell: ({ getValue }) => getValue(),
       },
       {
         accessorKey: 'status',

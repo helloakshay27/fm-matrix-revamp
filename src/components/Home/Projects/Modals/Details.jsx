@@ -196,6 +196,7 @@ const Details = ({
       errors.projectTeam = "Project team is required.";
 
     if (Object.keys(errors).length) {
+      toast.dismiss();
       toast.error(Object.values(errors)[0]);
       return false;
     }
@@ -284,12 +285,14 @@ const Details = ({
         }
       } else {
         await dispatch(createProject({ token, payload }));
+        toast.dismiss()
         toast.success("Project created successfully");
         setTab("Milestone");
         await dispatch(fetchProjects({ token })).unwrap();
       }
     } catch (error) {
       console.error("Project submission failed:", error);
+      toast.dismiss()
       toast.error(error.message || "Something went wrong!");
     } finally {
       setIsSubmitting(false);
