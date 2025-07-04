@@ -189,16 +189,25 @@ const Sprints = ({ closeModal }) => {
     const end = new Date(endDate);
     if (end < start) return "";
     const ms = end - start;
-    const days = Math.floor(ms / (1000 * 60 * 60 * 24)) + 1; // Inclusive counting
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24)) + 1;
     return `${days}d`;
   };
 
   const handleAddSprints = async (e) => {
     e.preventDefault();
+
     if (isDelete) {
       setIsDelete(false);
+      setFormData({
+        title: "",
+        ownerId: "",
+        startDate: "",
+        endDate: "",
+        priority: "",
+      });
       return;
     }
+
     if (
       !formData.title ||
       !formData.ownerId ||
@@ -281,7 +290,7 @@ const Sprints = ({ closeModal }) => {
     !formData.ownerId &&
     !formData.startDate &&
     !formData.endDate &&
-    !formData.priority
+    !formData.priority;
 
   return (
     <form className="pt-2 pb-12 h-full overflow-y-auto" onSubmit={handleSubmit}>
@@ -300,6 +309,7 @@ const Sprints = ({ closeModal }) => {
             hasSavedSprints={savedSprints.length > 0}
           />
         ))}
+
         {!isDelete && (
           <AddSprintsModal
             id={nextId}
@@ -311,6 +321,7 @@ const Sprints = ({ closeModal }) => {
             setIsDelete={setIsDelete}
           />
         )}
+
         <div className="flex items-center justify-center gap-4 w-full bottom-0 py-4 bg-white mt-10">
           <button
             type="submit"
@@ -320,7 +331,7 @@ const Sprints = ({ closeModal }) => {
             Submit
           </button>
 
-          {isFormEmpty ? (
+          {(isFormEmpty && !isDelete) ? (
             <button
               type="button"
               className="flex items-center justify-center border-2 text-[black] border-[red] px-4 py-2 w-max"
