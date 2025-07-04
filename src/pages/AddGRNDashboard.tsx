@@ -1,12 +1,16 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
+
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
 
 export const AddGRNDashboard = () => {
   const navigate = useNavigate();
@@ -158,137 +162,171 @@ export const AddGRNDashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <Label className="text-sm font-medium">Purchase Order*</Label>
-              <Select value={grnDetails.purchaseOrder} onValueChange={(value) => setGrnDetails({...grnDetails, purchaseOrder: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Purchase Order" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PO001">PO001 - ABC Supplier</SelectItem>
-                  <SelectItem value="PO002">PO002 - XYZ Corporation</SelectItem>
-                  <SelectItem value="PO003">PO003 - ACHLA Corporation</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Purchase Order*</InputLabel>
+              <MuiSelect
+                label="Purchase Order*"
+                value={grnDetails.purchaseOrder}
+                onChange={(e) => setGrnDetails({...grnDetails, purchaseOrder: e.target.value})}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Purchase Order</em></MenuItem>
+                <MenuItem value="PO001">PO001 - ABC Supplier</MenuItem>
+                <MenuItem value="PO002">PO002 - XYZ Corporation</MenuItem>
+                <MenuItem value="PO003">PO003 - ACHLA Corporation</MenuItem>
+              </MuiSelect>
+            </FormControl>
 
-            <div>
-              <Label className="text-sm font-medium">Supplier*</Label>
-              <Select value={grnDetails.supplier} onValueChange={(value) => setGrnDetails({...grnDetails, supplier: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Supplier" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ABC">ABC Supplier</SelectItem>
-                  <SelectItem value="XYZ Corporation">XYZ Corporation</SelectItem>
-                  <SelectItem value="ACHLA Corporation">ACHLA Corporation</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Supplier*</InputLabel>
+              <MuiSelect
+                label="Supplier*"
+                value={grnDetails.supplier}
+                onChange={(e) => setGrnDetails({...grnDetails, supplier: e.target.value})}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Supplier</em></MenuItem>
+                <MenuItem value="ABC">ABC Supplier</MenuItem>
+                <MenuItem value="XYZ Corporation">XYZ Corporation</MenuItem>
+                <MenuItem value="ACHLA Corporation">ACHLA Corporation</MenuItem>
+              </MuiSelect>
+            </FormControl>
 
-            <div>
-              <Label className="text-sm font-medium">Invoice Number*</Label>
-              <Input
-                placeholder="Enter Number"
-                value={grnDetails.invoiceNumber}
-                onChange={(e) => setGrnDetails({...grnDetails, invoiceNumber: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="Invoice Number*"
+              placeholder="Enter Number"
+              value={grnDetails.invoiceNumber}
+              onChange={(e) => setGrnDetails({...grnDetails, invoiceNumber: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">Related To</Label>
-              <Input
-                placeholder="Enter Text"
-                value={grnDetails.relatedTo}
-                onChange={(e) => setGrnDetails({...grnDetails, relatedTo: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="Related To"
+              placeholder="Enter Text"
+              value={grnDetails.relatedTo}
+              onChange={(e) => setGrnDetails({...grnDetails, relatedTo: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">Invoice Amount</Label>
-              <Input
-                type="number"
-                placeholder="Enter Number"
-                value={grnDetails.invoiceAmount}
-                onChange={(e) => setGrnDetails({...grnDetails, invoiceAmount: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="Invoice Amount"
+              type="number"
+              placeholder="Enter Number"
+              value={grnDetails.invoiceAmount}
+              onChange={(e) => setGrnDetails({...grnDetails, invoiceAmount: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">Payment Mode</Label>
-              <Select value={grnDetails.paymentMode} onValueChange={(value) => setGrnDetails({...grnDetails, paymentMode: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Payment Mode" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="cheque">Cheque</SelectItem>
-                  <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
-                  <SelectItem value="card">Card</SelectItem>
-                  <SelectItem value="upi">UPI</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Payment Mode</InputLabel>
+              <MuiSelect
+                label="Payment Mode"
+                value={grnDetails.paymentMode}
+                onChange={(e) => setGrnDetails({...grnDetails, paymentMode: e.target.value})}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Payment Mode</em></MenuItem>
+                <MenuItem value="cash">Cash</MenuItem>
+                <MenuItem value="cheque">Cheque</MenuItem>
+                <MenuItem value="bank-transfer">Bank Transfer</MenuItem>
+                <MenuItem value="card">Card</MenuItem>
+                <MenuItem value="upi">UPI</MenuItem>
+              </MuiSelect>
+            </FormControl>
 
-            <div>
-              <Label className="text-sm font-medium">Invoice Date*</Label>
-              <Input
-                type="date"
-                placeholder="Enter Date"
-                value={grnDetails.invoiceDate}
-                onChange={(e) => setGrnDetails({...grnDetails, invoiceDate: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="Invoice Date*"
+              type="date"
+              placeholder="Enter Date"
+              value={grnDetails.invoiceDate}
+              onChange={(e) => setGrnDetails({...grnDetails, invoiceDate: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">Posting Date*</Label>
-              <Input
-                type="date"
-                placeholder="20/06/2025"
-                value={grnDetails.postingDate}
-                onChange={(e) => setGrnDetails({...grnDetails, postingDate: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="Posting Date*"
+              type="date"
+              placeholder="20/06/2025"
+              value={grnDetails.postingDate}
+              onChange={(e) => setGrnDetails({...grnDetails, postingDate: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">Other Expense</Label>
-              <Input
-                type="number"
-                placeholder="Other Expense"
-                value={grnDetails.otherExpense}
-                onChange={(e) => setGrnDetails({...grnDetails, otherExpense: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="Other Expense"
+              type="number"
+              placeholder="Other Expense"
+              value={grnDetails.otherExpense}
+              onChange={(e) => setGrnDetails({...grnDetails, otherExpense: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">Loading Expense</Label>
-              <Input
-                type="number"
-                placeholder="Enter Number"
-                value={grnDetails.loadingExpense}
-                onChange={(e) => setGrnDetails({...grnDetails, loadingExpense: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="Loading Expense"
+              type="number"
+              placeholder="Enter Number"
+              value={grnDetails.loadingExpense}
+              onChange={(e) => setGrnDetails({...grnDetails, loadingExpense: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">Adjustment Amount</Label>
-              <Input
-                type="number"
-                placeholder="Enter Number"
-                value={grnDetails.adjustmentAmount}
-                onChange={(e) => setGrnDetails({...grnDetails, adjustmentAmount: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="Adjustment Amount"
+              type="number"
+              placeholder="Enter Number"
+              value={grnDetails.adjustmentAmount}
+              onChange={(e) => setGrnDetails({...grnDetails, adjustmentAmount: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
           </div>
 
           <div className="mt-6">
-            <Label className="text-sm font-medium">Notes</Label>
-            <Textarea
-              className="mt-2"
-              rows={4}
-              placeholder="Enter any additional notes..."
+            <TextField
+              label="Notes"
               value={grnDetails.notes}
               onChange={(e) => setGrnDetails({...grnDetails, notes: e.target.value})}
+              fullWidth
+              variant="outlined"
+              multiline
+              minRows={4}
+              placeholder="Enter any additional notes..."
+              InputLabelProps={{ shrink: true }}
+              sx={{ mt: 1 }}
             />
           </div>
         </div>
@@ -303,196 +341,237 @@ export const AddGRNDashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div>
-              <Label className="text-sm font-medium">Inventory Type</Label>
-              <Select value={inventoryDetails.inventoryType} onValueChange={(value) => setInventoryDetails({...inventoryDetails, inventoryType: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="power-supply">12V / 5 Amp Power Supply SM...</SelectItem>
-                  <SelectItem value="carpet-brush">Carpet Brush</SelectItem>
-                  <SelectItem value="cruet-set">Cruet Set</SelectItem>
-                  <SelectItem value="laptop">Laptop</SelectItem>
-                  <SelectItem value="office-supplies">Office Supplies</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Inventory Type</InputLabel>
+              <MuiSelect
+                label="Inventory Type"
+                value={inventoryDetails.inventoryType}
+                onChange={(e) => setInventoryDetails({...inventoryDetails, inventoryType: e.target.value})}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select</em></MenuItem>
+                <MenuItem value="power-supply">12V / 5 Amp Power Supply SM...</MenuItem>
+                <MenuItem value="carpet-brush">Carpet Brush</MenuItem>
+                <MenuItem value="cruet-set">Cruet Set</MenuItem>
+                <MenuItem value="laptop">Laptop</MenuItem>
+                <MenuItem value="office-supplies">Office Supplies</MenuItem>
+              </MuiSelect>
+            </FormControl>
 
-            <div>
-              <Label className="text-sm font-medium">Expected Quantity*</Label>
-              <Input
-                type="number"
-                placeholder="Expected Quantity"
-                value={inventoryDetails.expectedQuantity}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, expectedQuantity: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="Expected Quantity*"
+              type="number"
+              placeholder="Expected Quantity"
+              value={inventoryDetails.expectedQuantity}
+              onChange={(e) => setInventoryDetails({...inventoryDetails, expectedQuantity: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">Received Quantity*</Label>
-              <Input
-                type="number"
-                placeholder="Received Quantity"
-                value={inventoryDetails.receivedQuantity}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, receivedQuantity: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="Received Quantity*"
+              type="number"
+              placeholder="Received Quantity"
+              value={inventoryDetails.receivedQuantity}
+              onChange={(e) => setInventoryDetails({...inventoryDetails, receivedQuantity: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">Approved Quantity*</Label>
-              <Input
-                type="number"
-                placeholder="Approved Quantity"
-                value={inventoryDetails.approvedQuantity}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, approvedQuantity: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="Approved Quantity*"
+              type="number"
+              placeholder="Approved Quantity"
+              value={inventoryDetails.approvedQuantity}
+              onChange={(e) => setInventoryDetails({...inventoryDetails, approvedQuantity: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">Rejected Quantity</Label>
-              <Input
-                type="number"
-                placeholder="Rejected Quantity"
-                value={inventoryDetails.rejectedQuantity}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, rejectedQuantity: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="Rejected Quantity"
+              type="number"
+              placeholder="Rejected Quantity"
+              value={inventoryDetails.rejectedQuantity}
+              onChange={(e) => setInventoryDetails({...inventoryDetails, rejectedQuantity: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">Rate</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="Enter Number"
-                value={inventoryDetails.rate}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, rate: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="Rate"
+              type="number"
+              placeholder="Enter Number"
+              value={inventoryDetails.rate}
+              onChange={(e) => setInventoryDetails({...inventoryDetails, rate: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">CGST Rate</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="Enter Number"
-                value={inventoryDetails.cgstRate}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, cgstRate: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="CGST Rate"
+              type="number"
+              placeholder="Enter Number"
+              value={inventoryDetails.cgstRate}
+              onChange={(e) => setInventoryDetails({...inventoryDetails, cgstRate: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">CGST Amount</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="Enter Number"
-                value={inventoryDetails.cgstAmount}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, cgstAmount: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="CGST Amount"
+              type="number"
+              placeholder="Enter Number"
+              value={inventoryDetails.cgstAmount}
+              onChange={(e) => setInventoryDetails({...inventoryDetails, cgstAmount: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">SGST Rate</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="Enter Number"
-                value={inventoryDetails.sgstRate}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, sgstRate: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="SGST Rate"
+              type="number"
+              placeholder="Enter Number"
+              value={inventoryDetails.sgstRate}
+              onChange={(e) => setInventoryDetails({...inventoryDetails, sgstRate: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">SGST Amount</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="Enter Number"
-                value={inventoryDetails.sgstAmount}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, sgstAmount: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="SGST Amount"
+              type="number"
+              placeholder="Enter Number"
+              value={inventoryDetails.sgstAmount}
+              onChange={(e) => setInventoryDetails({...inventoryDetails, sgstAmount: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">IGST Rate</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="Enter Number"
-                value={inventoryDetails.igstRate}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, igstRate: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="IGST Rate"
+              type="number"
+              placeholder="Enter Number"
+              value={inventoryDetails.igstRate}
+              onChange={(e) => setInventoryDetails({...inventoryDetails, igstRate: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">IGST Amount</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="Enter Number"
-                value={inventoryDetails.igstAmount}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, igstAmount: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="IGST Amount"
+              type="number"
+              placeholder="Enter Number"
+              value={inventoryDetails.igstAmount}
+              onChange={(e) => setInventoryDetails({...inventoryDetails, igstAmount: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">TCS Rate</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="Enter Number"
-                value={inventoryDetails.tcsRate}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, tcsRate: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="TCS Rate"
+              type="number"
+              placeholder="Enter Number"
+              value={inventoryDetails.tcsRate}
+              onChange={(e) => setInventoryDetails({...inventoryDetails, tcsRate: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">TCS Amount</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="Enter Number"
-                value={inventoryDetails.tcsAmount}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, tcsAmount: e.target.value})}
-              />
-            </div>
+            <TextField
+              label="TCS Amount"
+              type="number"
+              placeholder="Enter Number"
+              value={inventoryDetails.tcsAmount}
+              onChange={(e) => setInventoryDetails({...inventoryDetails, tcsAmount: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">Total Taxes</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="Total Amount"
-                value={inventoryDetails.totalTaxes}
-                readOnly
-                className="bg-gray-50"
-              />
-            </div>
+            <TextField
+              label="Total Taxes"
+              type="number"
+              placeholder="Total Amount"
+              value={inventoryDetails.totalTaxes}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ 
+                sx: { ...fieldStyles, backgroundColor: '#f5f5f5' },
+                readOnly: true 
+              }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">Amount</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="Enter Number"
-                value={inventoryDetails.amount}
-                readOnly
-                className="bg-gray-50"
-              />
-            </div>
+            <TextField
+              label="Amount"
+              type="number"
+              placeholder="Enter Number"
+              value={inventoryDetails.amount}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ 
+                sx: { ...fieldStyles, backgroundColor: '#f5f5f5' },
+                readOnly: true 
+              }}
+              sx={{ mt: 1 }}
+            />
 
-            <div>
-              <Label className="text-sm font-medium">Total Amount</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="Total Amount"
-                value={inventoryDetails.totalAmount}
-                readOnly
-                className="bg-gray-50"
-              />
-            </div>
+            <TextField
+              label="Total Amount"
+              type="number"
+              placeholder="Total Amount"
+              value={inventoryDetails.totalAmount}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ 
+                sx: { ...fieldStyles, backgroundColor: '#f5f5f5' },
+                readOnly: true 
+              }}
+              sx={{ mt: 1 }}
+            />
           </div>
 
           <div className="flex gap-3 mt-6">
