@@ -105,18 +105,18 @@ const TaskForm = ({
         !Array.isArray(milestone) &&
         project.title && milestone.title && (
           <div className="flex items-center justify-between gap-3">
-            <div className="mt-4 space-y-2">
+            <div className="mt-4 space-y-2 w-full">
               <label className="block ms-2">
                 Project <span className="text-red-600">*</span>
               </label>
               <input
                 type="text"
                 value={project.title}
-                className="w-full border h-[40px] outline-none border-gray-300 p-2 text-[13px] bg-gray-200"
+                className="w-full border h-[40px] outline-none border-gray-300 p-2 text-[13px] bg-gray-200 overflow-hidden text-ellipsis"
                 readOnly
               />
             </div>
-            <div className="mt-4 space-y-2 w-auto">
+            <div className="mt-4 space-y-2 w-full">
               <label className="block ms-2">
                 Milestone <span className="text-red-600">*</span>
               </label>

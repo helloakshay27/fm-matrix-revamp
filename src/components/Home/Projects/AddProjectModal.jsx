@@ -11,6 +11,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers } from "../../../redux/slices/userSlice.js";
 import MultiSelectBox from "../../MultiSelectBox.jsx";
 import { createProjectTeam, fetchProjectTeams, resetProjectCreateResponse, resetSuccess } from "../../../redux/slices/projectSlice.js";
+import toast from "react-hot-toast";
 
 const CreateNewTeam = ({ setOpenModal }) => {
   const token = localStorage.getItem("token");
@@ -39,6 +40,20 @@ const CreateNewTeam = ({ setOpenModal }) => {
   };
 
   const handleSubmit = () => {
+    if (!formData.teamName) {
+      toast.dismiss();
+      toast.error("Team name is required");
+      return;
+    } else if (!formData.teamLead) {
+      toast.dismiss();
+      toast.error("Team lead is required");
+      return;
+    } else if (!formData.teamMembers.length) {
+      toast.dismiss();
+      toast.error("Team members are required");
+      return;
+    }
+
     const payload = {
       project_team: {
         name: formData.teamName,
