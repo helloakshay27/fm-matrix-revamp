@@ -28,8 +28,23 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
     stage: ''
   });
 
+  const [dropdownStates, setDropdownStates] = useState({
+    tower: false,
+    floor: false,
+    flat: false,
+    stage: false
+  });
+
   const handleFilterChange = (key: keyof FilterValues, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleDropdownOpen = (field: keyof FilterValues) => {
+    setDropdownStates(prev => ({ ...prev, [field]: true }));
+  };
+
+  const handleDropdownClose = (field: keyof FilterValues) => {
+    setDropdownStates(prev => ({ ...prev, [field]: false }));
   };
 
   const handleApply = () => {
@@ -83,6 +98,9 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               label="Tower"
               displayEmpty
               value={filters.tower}
+              open={dropdownStates.tower}
+              onOpen={() => handleDropdownOpen('tower')}
+              onClose={() => handleDropdownClose('tower')}
               onChange={(e) => handleFilterChange('tower', e.target.value)}
               sx={{
                 ...fieldStyles,
@@ -123,6 +141,9 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               label="Floor"
               displayEmpty
               value={filters.floor}
+              open={dropdownStates.floor}
+              onOpen={() => handleDropdownOpen('floor')}
+              onClose={() => handleDropdownClose('floor')}
               onChange={(e) => handleFilterChange('floor', e.target.value)}
               sx={{
                 ...fieldStyles,
@@ -168,6 +189,9 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               label="Flat"
               displayEmpty
               value={filters.flat}
+              open={dropdownStates.flat}
+              onOpen={() => handleDropdownOpen('flat')}
+              onClose={() => handleDropdownClose('flat')}
               onChange={(e) => handleFilterChange('flat', e.target.value)}
               sx={{
                 ...fieldStyles,
@@ -211,6 +235,9 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               label="Stage"
               displayEmpty
               value={filters.stage}
+              open={dropdownStates.stage}
+              onOpen={() => handleDropdownOpen('stage')}
+              onClose={() => handleDropdownClose('stage')}
               onChange={(e) => handleFilterChange('stage', e.target.value)}
               sx={{
                 ...fieldStyles,
