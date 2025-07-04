@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
 
@@ -51,13 +52,27 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
     '& .MuiInputBase-input, & .MuiSelect-select': {
       padding: { xs: '8px', sm: '10px', md: '12px' },
     },
+    '& .MuiSelect-icon': {
+      transition: 'transform 0.2s ease-in-out',
+    },
+    '& .MuiSelect-iconOpen': {
+      transform: 'rotate(180deg)',
+    },
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] bg-white">
-        <DialogHeader>
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold">Filters</DialogTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onOpenChange(false)}
+            className="h-8 w-8 p-0"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </DialogHeader>
         
         <div className="grid grid-cols-2 gap-4 py-4">
@@ -69,7 +84,30 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               displayEmpty
               value={filters.tower}
               onChange={(e) => handleFilterChange('tower', e.target.value)}
-              sx={fieldStyles}
+              sx={{
+                ...fieldStyles,
+                '& .MuiPaper-root': {
+                  backgroundColor: 'white',
+                  zIndex: 9999,
+                },
+              }}
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    backgroundColor: 'white',
+                    zIndex: 9999,
+                    maxHeight: 200,
+                  },
+                },
+                anchorOrigin: {
+                  vertical: 'bottom',
+                  horizontal: 'left',
+                },
+                transformOrigin: {
+                  vertical: 'top',
+                  horizontal: 'left',
+                },
+              }}
             >
               <MenuItem value=""><em>Select Snag Entity</em></MenuItem>
               <MenuItem value="A">Tower A</MenuItem>
@@ -86,7 +124,30 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               displayEmpty
               value={filters.floor}
               onChange={(e) => handleFilterChange('floor', e.target.value)}
-              sx={fieldStyles}
+              sx={{
+                ...fieldStyles,
+                '& .MuiPaper-root': {
+                  backgroundColor: 'white',
+                  zIndex: 9999,
+                },
+              }}
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    backgroundColor: 'white',
+                    zIndex: 9999,
+                    maxHeight: 200,
+                  },
+                },
+                anchorOrigin: {
+                  vertical: 'bottom',
+                  horizontal: 'left',
+                },
+                transformOrigin: {
+                  vertical: 'top',
+                  horizontal: 'left',
+                },
+              }}
             >
               <MenuItem value=""><em>Select Floor</em></MenuItem>
               <MenuItem value="1st">1st Floor</MenuItem>
@@ -108,7 +169,30 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               displayEmpty
               value={filters.flat}
               onChange={(e) => handleFilterChange('flat', e.target.value)}
-              sx={fieldStyles}
+              sx={{
+                ...fieldStyles,
+                '& .MuiPaper-root': {
+                  backgroundColor: 'white',
+                  zIndex: 9999,
+                },
+              }}
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    backgroundColor: 'white',
+                    zIndex: 9999,
+                    maxHeight: 200,
+                  },
+                },
+                anchorOrigin: {
+                  vertical: 'bottom',
+                  horizontal: 'left',
+                },
+                transformOrigin: {
+                  vertical: 'top',
+                  horizontal: 'left',
+                },
+              }}
             >
               <MenuItem value=""><em>Select Flat</em></MenuItem>
               <MenuItem value="101">101</MenuItem>
@@ -128,7 +212,30 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               displayEmpty
               value={filters.stage}
               onChange={(e) => handleFilterChange('stage', e.target.value)}
-              sx={fieldStyles}
+              sx={{
+                ...fieldStyles,
+                '& .MuiPaper-root': {
+                  backgroundColor: 'white',
+                  zIndex: 9999,
+                },
+              }}
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    backgroundColor: 'white',
+                    zIndex: 9999,
+                    maxHeight: 200,
+                  },
+                },
+                anchorOrigin: {
+                  vertical: 'bottom',
+                  horizontal: 'left',
+                },
+                transformOrigin: {
+                  vertical: 'top',
+                  horizontal: 'left',
+                },
+              }}
             >
               <MenuItem value=""><em>Select a stage</em></MenuItem>
               <MenuItem value="Units Snagging">Units Snagging</MenuItem>
