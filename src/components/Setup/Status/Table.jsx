@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import Switch from "@mui/joy/Switch";
@@ -7,23 +7,19 @@ import {
   updateStatus,
   deleteStatus,
 } from "../../../redux/slices/statusSlice.js";
-import { useDispatch } from "react-redux";
-
+import { useDispatch, useSelector } from "react-redux";
 import {
   useReactTable,
   getCoreRowModel,
-  flexRender,
   getPaginationRowModel,
+  flexRender,
 } from "@tanstack/react-table";
-import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
 const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
   const token = localStorage.getItem("token");
   const dispatch = useDispatch();
-  const statusList = useSelector(
-    (state) => state.fetchStatus.fetchStatus || []
-  );
+  const statusList = useSelector((state) => state.fetchStatus.fetchStatus || []);
   const fixedRowsPerPage = 13;
 
   const [pagination, setPagination] = useState({
@@ -40,11 +36,10 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
         toast.error('Failed to load status list');
       }
     };
-
     fetchData();
   }, [dispatch, token]);
 
-  const ActionIcons = ({ row, setOpenModal, setIsEdit, setExistingData }) => {
+  const ActionIcons = ({ row }) => {
     const handleEditClick = () => {
       setIsEdit(true);
       setExistingData(row.original);
@@ -53,80 +48,58 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
 
     const handleDeleteClick = async (id) => {
       try {
-        await dispatch(deleteStatus({ token, id })).unwrap(); // unwrap to handle async correctly
-        dispatch(fetchStatus({ token })); // refetch data after successful delete
-        toast.dismiss();
+        await dispatch(deleteStatus({ token, id })).unwrap();
+        await dispatch(fetchStatus({ token }));
         toast.success("Status deleted successfully", {
-          iconTheme: {
-            primary: "red", // This might directly change the color of the success icon
-            secondary: "white", // The circle background
-          },
+          iconTheme: { primary: "red", secondary: "white" },
         });
       } catch (error) {
         console.error("Failed to delete:", error);
         toast.error("Failed to delete Status.", {
-          iconTheme: {
-            primary: "red", // This might directly change the color of the success icon
-            secondary: "white", // The circle background
-          },
+          iconTheme: { primary: "red", secondary: "white" },
         });
       }
     };
 
     return (
       <div className="action-icons flex justify-between gap-5">
-        <div>
-          <EditOutlinedIcon
-            onClick={handleEditClick}
-            sx={{ fontSize: "20px", cursor: "pointer" }}
-          />
-          <button
-            onClick={() => handleDeleteClick(row.original.id)}
-            title="Delete"
-            className="ml-2"
-          >
-            <DeleteOutlineOutlinedIcon sx={{ fontSize: "20px" }} />
-          </button>
-        </div>
+        <EditOutlinedIcon
+          onClick={handleEditClick}
+          sx={{ fontSize: "20px", cursor: "pointer" }}
+        />
+        <button onClick={() => handleDeleteClick(row.original.id)} title="Delete">
+          <DeleteOutlineOutlinedIcon sx={{ fontSize: "20px" }} />
+        </button>
       </div>
     );
   };
 
-  // Handler to toggle status
-  const toggleStatus = async (row) => {
-    try {
-      const payload = {
-        active: !row.original.active,
-      };
-      await dispatch(
-        updateStatus({ token, id: row.original.id, payload })
-      ).unwrap(); // Use 'data' as key for payload if your thunk expects it
-      toast.dismiss();
-      toast.success(
-        `Status ${payload.active ? "activated" : "deactivated"} successfully`,
-        {
-          iconTheme: {
-            primary: payload.active ? "green" : "red",
-            secondary: "white",
-          },
-        }
-      );
-      dispatch(fetchStatus({ token }));
-    } catch (error) {
-      console.error("Failed to toggle status:", error);
-      toast.error("Failed to update status.", {
-        iconTheme: {
-          primary: "red",
-          secondary: "white",
-        },
-      });
-    }
-  };
+  const toggleStatus = useCallback(
+    async (row) => {
+      try {
+        const payload = { active: !row.original.active };
+        await dispatch(updateStatus({ token, id: row.original.id, payload })).unwrap();
+        toast.success(
+          `Status ${payload.active ? "activated" : "deactivated"} successfully`,
+          {
+            iconTheme: { primary: payload.active ? "green" : "red", secondary: "white" },
+          }
+        );
+        await dispatch(fetchStatus({ token }));
+      } catch (error) {
+        console.error("Failed to toggle status:", error);
+        toast.error("Failed to update status.", {
+          iconTheme: { primary: "red", secondary: "white" },
+        });
+      }
+    },
+    [dispatch, token]
+  );
 
   const columns = useMemo(
     () => [
       {
-        accessorKey: "status", // Assuming 'status' is the property in your status object
+        accessorKey: "status",
         header: "Status Name",
         size: 250,
         cell: ({ getValue }) => getValue(),
@@ -169,7 +142,7 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
         size: 150,
         cell: ({ getValue }) => {
           const date = new Date(getValue());
-          return date.toLocaleDateString("en-GB"); // DD/MM/YYYY
+          return date.toLocaleDateString("en-GB");
         },
       },
       {
@@ -177,7 +150,6 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
         header: "Actions",
         size: 60,
         cell: ({ row }) =>
-          // Pass the necessary props to ActionIcons
           row.original ? (
             <ActionIcons
               row={row}
@@ -186,16 +158,14 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
               setExistingData={setExistingData}
             />
           ) : null,
-        meta: {
-          cellClassName: "actions-cell-content",
-        },
+        meta: { cellClassName: "actions-cell-content" },
       },
     ],
-    [setOpenModal, setIsEdit, setExistingData, toggleStatus] // Add toggleStatus to dependencies
+    [setOpenModal, setIsEdit, setExistingData, toggleStatus]
   );
 
   const table = useReactTable({
-    data: [...statusList].reverse(), // Use the statusList from Redux directly here
+    data: useMemo(() => [...statusList].reverse(), [statusList]),
     columns,
     state: { pagination },
     onPaginationChange: setPagination,
@@ -205,9 +175,8 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
   });
 
   const pageRows = table.getRowModel().rows;
-  const numDataRowsOnPage = pageRows.length;
+  const numDataRowsOnPage = useMemo(() => pageRows.length, [pageRows]);
   const numEmptyRowsToAdd = Math.max(0, fixedRowsPerPage - numDataRowsOnPage);
-
   const rowHeight = 40;
   const headerHeight = 48;
   const desiredTableHeight = fixedRowsPerPage * rowHeight + headerHeight;
@@ -230,26 +199,17 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
                     className="bg-[#D5DBDB] px-3 py-3.5 text-center font-[500] border-r-2 border-[#FFFFFF]"
                   >
                     {!header.isPlaceholder &&
-                      flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                      flexRender(header.column.columnDef.header, header.getContext())}
                   </th>
                 ))}
               </tr>
             ))}
           </thead>
-          <tbody
-            className="divide-y"
-            style={{ height: `${fixedRowsPerPage * rowHeight}px` }}
-          >
+          <tbody className="divide-y" style={{ height: `${fixedRowsPerPage * rowHeight}px` }}>
             {pageRows.map((row) => {
               const isEmpty =
                 !row.original ||
-                Object.values(row.original).every(
-                  (v) => v === null || v === ""
-                );
-
+                Object.values(row.original).every((v) => v === null || v === "");
               return (
                 <tr
                   key={row.id}
@@ -265,10 +225,7 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
                         }`}
                     >
                       {!isEmpty
-                        ? flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )
+                        ? flexRender(cell.column.columnDef.cell, cell.getContext())
                         : null}
                     </td>
                   ))}
@@ -287,7 +244,7 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
                     style={{ width: column.getSize() }}
                     className="whitespace-nowrap px-3 py-2 text-transparent border-r-2"
                   >
-                    &nbsp;
+
                   </td>
                 ))}
               </tr>
@@ -295,11 +252,8 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
           </tbody>
         </table>
       </div>
-
-      {/* Changed condition to statusList.length > 0 */}
       {statusList.length > 0 && (
         <div className="flex items-center justify-start gap-4 mt-4 text-[12px]">
-          {/* Previous Button */}
           <button
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
@@ -307,39 +261,30 @@ const StatusTable = ({ setOpenModal, setIsEdit, setExistingData }) => {
           >
             {"<"}
           </button>
-
-          {/* Page Numbers (Sliding Window of 3) */}
           {(() => {
             const totalPages = table.getPageCount();
             const currentPage = table.getState().pagination.pageIndex;
             const visiblePages = 3;
-
             let start = Math.max(0, currentPage - Math.floor(visiblePages / 2));
             let end = start + visiblePages;
-
             if (end > totalPages) {
               end = totalPages;
               start = Math.max(0, end - visiblePages);
             }
-
             return [...Array(end - start)].map((_, i) => {
               const page = start + i;
               const isActive = page === currentPage;
-
               return (
                 <button
                   key={page}
                   onClick={() => table.setPageIndex(page)}
-                  className={`px-3 py-1 ${isActive ? "bg-gray-200 font-bold" : ""
-                    }`}
+                  className={`px-3 py-1 ${isActive ? "bg-gray-200 font-bold" : ""}`}
                 >
                   {page + 1}
                 </button>
               );
             });
           })()}
-
-          {/* Next Button */}
           <button
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
