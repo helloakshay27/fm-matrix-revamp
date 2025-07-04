@@ -98,7 +98,7 @@ export const SnaggingDashboard = () => {
         <h1 className="text-2xl font-bold mb-4">SNAG LIST</h1>
         
         {/* Search Section with Filters Button */}
-        <div className="flex mb-6" style={{ gap: '0px' }}>
+        <div className="flex mb-6">
           <SearchWithSuggestions
             placeholder="Search"
             onSearch={handleSearch}
