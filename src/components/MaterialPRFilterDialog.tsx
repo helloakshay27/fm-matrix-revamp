@@ -2,10 +2,15 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X } from "lucide-react";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
 
 interface MaterialPRFilterDialogProps {
   open: boolean;
@@ -22,6 +27,10 @@ export const MaterialPRFilterDialog: React.FC<MaterialPRFilterDialogProps> = ({
     supplierName: '',
     approvalStatus: ''
   });
+
+  const handleInputChange = (field: string, value: string) => {
+    setFilters(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleApply = () => {
     console.log('Applying filters:', filters);
@@ -53,56 +62,59 @@ export const MaterialPRFilterDialog: React.FC<MaterialPRFilterDialogProps> = ({
         </DialogHeader>
         
         <div className="space-y-4">
-          <div>
-            <Label className="text-sm font-medium text-gray-700 mb-3 block">
-              PR Details
-            </Label>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-xs text-gray-600">Reference Number</Label>
-                <Input
-                  placeholder="Search By PR Number"
-                  value={filters.referenceNumber}
-                  onChange={(e) => setFilters({ ...filters, referenceNumber: e.target.value })}
-                  className="text-sm mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-gray-600">PR Number</Label>
-                <Input
-                  placeholder="Enter Reference Number"
-                  value={filters.prNumber}
-                  onChange={(e) => setFilters({ ...filters, prNumber: e.target.value })}
-                  className="text-sm mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-gray-600">Supplier Name</Label>
-                <Input
-                  placeholder="Supplier Name"
-                  value={filters.supplierName}
-                  onChange={(e) => setFilters({ ...filters, supplierName: e.target.value })}
-                  className="text-sm mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-gray-600">Approval Status</Label>
-                <Select
-                  value={filters.approvalStatus}
-                  onValueChange={(value) => setFilters({ ...filters, approvalStatus: value })}
-                >
-                  <SelectTrigger className="text-sm mt-1">
-                    <SelectValue placeholder="Select Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+          <div className="grid grid-cols-2 gap-4">
+            <TextField
+              label="Reference Number"
+              placeholder="Search By PR Number"
+              value={filters.referenceNumber}
+              onChange={(e) => handleInputChange('referenceNumber', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+            
+            <TextField
+              label="PR Number"
+              placeholder="Enter Reference Number"
+              value={filters.prNumber}
+              onChange={(e) => handleInputChange('prNumber', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
           </div>
+
+          <TextField
+            label="Supplier Name"
+            placeholder="Supplier Name"
+            value={filters.supplierName}
+            onChange={(e) => handleInputChange('supplierName', e.target.value)}
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
+          />
+
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel shrink>Approval Status</InputLabel>
+            <MuiSelect
+              label="Approval Status"
+              value={filters.approvalStatus}
+              onChange={(e) => handleInputChange('approvalStatus', e.target.value)}
+              displayEmpty
+              sx={fieldStyles}
+            >
+              <MenuItem value=""><em>Select Status</em></MenuItem>
+              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="approved">Approved</MenuItem>
+              <MenuItem value="rejected">Rejected</MenuItem>
+            </MuiSelect>
+          </FormControl>
         </div>
 
         <div className="flex gap-3 pt-4">
