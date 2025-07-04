@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Eye } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SnaggingFilterDialog } from '@/components/SnaggingFilterDialog';
-import { SearchWithSuggestions } from '@/components/SearchWithSuggestions';
+import { AsyncSearchableDropdown } from '@/components/AsyncSearchableDropdown';
 import { useSearchSuggestions } from '@/hooks/useSearchSuggestions';
 
 interface SnaggingItem {
@@ -55,6 +55,12 @@ export const SnaggingDashboard = () => {
     searchFields: ['checklistName', 'tower', 'floor', 'flat', 'roomType', 'stage']
   });
 
+  // Convert suggestions to options format for react-select
+  const searchOptions = suggestions.map(suggestion => ({
+    value: suggestion,
+    label: suggestion
+  }));
+
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const view = searchParams.get('view');
@@ -86,9 +92,18 @@ export const SnaggingDashboard = () => {
     navigate(`/transitioning/snagging/details/${item.id}`, { state: { item } });
   };
 
-  const handleSearch = (value: string) => {
+  const handleSearch = async (searchTerm: string) => {
+    // Filter options based on search term
+    const filteredOptions = searchOptions.filter(option =>
+      option.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    return filteredOptions.slice(0, 8); // Limit to 8 results
+  };
+
+  const handleSearchSelect = (selectedOption: { value: string; label: string } | null) => {
+    const value = selectedOption?.value || '';
     setSearchTerm(value);
-    console.log('Search triggered for:', value);
+    console.log('Search selected:', value);
   };
 
   const handleApplyFilters = (filters: FilterValues) => {
@@ -102,11 +117,12 @@ export const SnaggingDashboard = () => {
         
         {/* Search Section with Filters Button */}
         <div className="flex gap-3 mb-6">
-          <SearchWithSuggestions
+          <AsyncSearchableDropdown
             placeholder="Search"
             onSearch={handleSearch}
-            suggestions={suggestions}
+            onChange={handleSearchSelect}
             className="max-w-md"
+            defaultOptions={searchOptions.slice(0, 5)}
           />
           <Button 
             onClick={() => handleSearch(searchTerm)}
