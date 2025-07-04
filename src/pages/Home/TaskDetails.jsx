@@ -584,52 +584,51 @@ const Comments = ({ comments }) => {
 const Attachments = ({ attachments, id }) => {
     const fileInputRef = useRef(null);
     const dispatch = useDispatch();
-    const [files, setFiles] = useState(attachments);
     const token = localStorage.getItem("token");
 
+    const [files, setFiles] = useState(attachments);
+
+    // ✅ Sync props to local state
+    useEffect(() => {
+        setFiles(attachments);
+    }, [attachments]);
+
     const handleAttachFile = () => {
-        fileInputRef.current.click(); // Open file picker
+        fileInputRef.current?.click();
     };
 
     const handleFileChange = async (event) => {
         const selectedFiles = Array.from(event.target.files);
         if (!selectedFiles.length) return;
-        console.log(selectedFiles);
-        const formData = new FormData();
 
+        const formData = new FormData();
         selectedFiles.forEach((file) => {
             formData.append("task_management[attachments][]", file);
         });
 
         try {
-            const result = await dispatch(
-                attachFiles({ token, id, payload: formData })
-            ).unwrap();
-            console.log(result);
-            const updatedAttachments = result?.attachments || [];
-            setFiles(updatedAttachments);
-            await dispatch(taskDetails({ token, id })).unwrap();
+            await dispatch(attachFiles({ token, id, payload: formData })).unwrap();
+            await dispatch(taskDetails({ token, id })).unwrap(); // ✅ ensure attachments update in parent too
         } catch (error) {
-            console.error("File upload or task fetch failed:", error);
+            console.error("File upload failed:", error);
+            toast.error("Failed to upload file.");
         }
     };
 
     const handleDeleteFile = async (fileId) => {
         try {
-            await dispatch(
-                removeTaskAttachment({ token, id, image_id: fileId })
-            ).unwrap();
+            await dispatch(removeTaskAttachment({ token, id, image_id: fileId })).unwrap();
             toast.dismiss();
             toast.success("File removed successfully.");
-            setFiles((prevFiles) => prevFiles.filter((file) => file.id !== fileId));
+            await dispatch(taskDetails({ token, id })).unwrap(); // ✅ keep redux + UI in sync
         } catch (error) {
             console.error("File deletion failed:", error);
-            toast.error("Failed to delete file. Please try again.");
+            toast.error("Failed to delete file.");
         }
     };
 
     return (
-        <div className="flex flex-col gap-3 p-5 ">
+        <div className="flex flex-col gap-3 p-5">
             {files.length > 0 ? (
                 <>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 mt-4">
@@ -637,14 +636,7 @@ const Attachments = ({ attachments, id }) => {
                             const fileName = file.document_file_name;
                             const fileUrl = file.document_url;
                             const fileExt = fileName.split(".").pop().toLowerCase();
-                            const isImage = [
-                                "jpg",
-                                "jpeg",
-                                "png",
-                                "gif",
-                                "bmp",
-                                "webp",
-                            ].includes(fileExt);
+                            const isImage = ["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(fileExt);
                             const isPdf = fileExt === "pdf";
                             const isWord = ["doc", "docx"].includes(fileExt);
                             const isExcel = ["xls", "xlsx"].includes(fileExt);
@@ -660,7 +652,6 @@ const Attachments = ({ attachments, id }) => {
                                         className="absolute top-2 right-2 cursor-pointer"
                                         onClick={() => handleDeleteFile(file.id)}
                                     />
-                                    {/* Preview or icon */}
                                     <div className="w-full h-[100px] flex items-center justify-center bg-gray-100 rounded mb-2 overflow-hidden">
                                         {isImage ? (
                                             <img
@@ -679,7 +670,6 @@ const Attachments = ({ attachments, id }) => {
                                         )}
                                     </div>
 
-                                    {/* File name and link */}
                                     <a
                                         href={fileUrl}
                                         target="_blank"
@@ -705,9 +695,7 @@ const Attachments = ({ attachments, id }) => {
             ) : (
                 <div className="text-[14px] mt-2">
                     <span>No Documents Attached</span>
-                    <div className="text-[#C2C2C2]">
-                        Drop or attach relevant documents here
-                    </div>
+                    <div className="text-[#C2C2C2]">Drop or attach relevant documents here</div>
                     <button
                         className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
                         onClick={handleAttachFile}
@@ -923,8 +911,8 @@ const TaskDetails = () => {
                                             <li key={idx} role="menuitem">
                                                 <button
                                                     className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option
-                                                            ? "bg-gray-100 font-semibold"
-                                                            : ""
+                                                        ? "bg-gray-100 font-semibold"
+                                                        : ""
                                                         }`}
                                                     onClick={() => handleOptionSelect(option)}
                                                 >
@@ -1124,8 +1112,8 @@ const TaskDetails = () => {
                                                         <li key={option.id} role="menuitem">
                                                             <button
                                                                 className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option
-                                                                        ? "bg-gray-100 font-semibold"
-                                                                        : ""
+                                                                    ? "bg-gray-100 font-semibold"
+                                                                    : ""
                                                                     }`}
                                                                 onClick={() =>
                                                                     handleWorkflowOptionSelect(option)

@@ -120,11 +120,17 @@ const Status = ({ project }) => {
 const Attachments = ({ attachments, id }) => {
     const fileInputRef = useRef(null);
     const dispatch = useDispatch();
-    const [files, setFiles] = useState(attachments);
     const token = localStorage.getItem("token");
 
+    const [files, setFiles] = useState(attachments);
+
+    // ✅ Sync files with props
+    useEffect(() => {
+        setFiles(attachments);
+    }, [attachments]);
+
     const handleAttachFile = () => {
-        fileInputRef.current.click(); // Open file picker
+        fileInputRef.current.click();
     };
 
     const handleFileChange = async (event) => {
@@ -132,32 +138,25 @@ const Attachments = ({ attachments, id }) => {
         if (!selectedFiles.length) return;
 
         const formData = new FormData();
-
         selectedFiles.forEach((file) => {
             formData.append("project_management[attachments][]", file);
         });
 
         try {
-            const result = await dispatch(
-                attachFiles({ token, id, payload: formData })
-            ).unwrap();
-            console.log(result);
-            const updatedAttachments = result?.attachments || [];
-            setFiles(updatedAttachments);
-            dispatch(fetchProjectDetails({ token, id }));
+            await dispatch(attachFiles({ token, id, payload: formData })).unwrap();
+            await dispatch(fetchProjectDetails({ token, id })); // ✅ Refetch updated attachments
         } catch (error) {
-            console.error("File upload or task fetch failed:", error);
+            console.error("File upload or fetch failed:", error);
+            toast.error("File upload failed. Please try again.");
         }
     };
 
     const removeFile = async (fileId) => {
         try {
-            await dispatch(
-                removeAttachment({ token, id, image_id: fileId })
-            ).unwrap();
+            await dispatch(removeAttachment({ token, id, image_id: fileId })).unwrap();
             toast.dismiss();
             toast.success("File removed successfully.");
-            setFiles((prevFiles) => prevFiles.filter((file) => file.id !== fileId));
+            await dispatch(fetchProjectDetails({ token, id })); // ✅ Ensure fresh data is loaded
         } catch (error) {
             toast.dismiss();
             toast.error("Failed to remove file. Please try again.");
@@ -173,14 +172,7 @@ const Attachments = ({ attachments, id }) => {
                             const fileName = file.document_file_name;
                             const fileUrl = file.document_url;
                             const fileExt = fileName.split(".").pop().toLowerCase();
-                            const isImage = [
-                                "jpg",
-                                "jpeg",
-                                "png",
-                                "gif",
-                                "bmp",
-                                "webp",
-                            ].includes(fileExt);
+                            const isImage = ["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(fileExt);
                             const isPdf = fileExt === "pdf";
                             const isWord = ["doc", "docx"].includes(fileExt);
                             const isExcel = ["xls", "xlsx"].includes(fileExt);
@@ -196,14 +188,10 @@ const Attachments = ({ attachments, id }) => {
                                         className="absolute top-2 right-2 cursor-pointer"
                                         onClick={() => removeFile(file.id)}
                                     />
-                                    {/* Preview or icon */}
+
                                     <div className="w-[100px] h-[100px] flex items-center justify-center bg-gray-100 rounded mb-2 overflow-hidden">
                                         {isImage ? (
-                                            <img
-                                                src={fileUrl}
-                                                alt={fileName}
-                                                className="object-contain h-full"
-                                            />
+                                            <img src={fileUrl} alt={fileName} className="object-contain h-full" />
                                         ) : isPdf ? (
                                             <span className="text-red-600 font-bold">PDF</span>
                                         ) : isWord ? (
@@ -215,7 +203,6 @@ const Attachments = ({ attachments, id }) => {
                                         )}
                                     </div>
 
-                                    {/* File name and link */}
                                     <a
                                         href={fileUrl}
                                         target="_blank"
@@ -230,6 +217,7 @@ const Attachments = ({ attachments, id }) => {
                             );
                         })}
                     </div>
+
                     <button
                         className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
                         onClick={handleAttachFile}
@@ -240,9 +228,7 @@ const Attachments = ({ attachments, id }) => {
             ) : (
                 <div className="text-[14px] mt-2">
                     <span>No Documents Attached</span>
-                    <div className="text-[#C2C2C2]">
-                        Drop or attach relevant documents here
-                    </div>
+                    <div className="text-[#C2C2C2]">Drop or attach relevant documents here</div>
                     <button
                         className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
                         onClick={handleAttachFile}
@@ -489,8 +475,8 @@ const ProjectDetails = () => {
                                         <li key={idx} role="menuitem">
                                             <button
                                                 className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option
-                                                        ? "bg-gray-100 font-semibold"
-                                                        : ""
+                                                    ? "bg-gray-100 font-semibold"
+                                                    : ""
                                                     }`}
                                                 onClick={() => handleOptionSelect(option)}
                                             >

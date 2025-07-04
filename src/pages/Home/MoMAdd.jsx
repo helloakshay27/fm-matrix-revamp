@@ -182,6 +182,7 @@ const MoMAdd = () => {
             toast.error("Meeting Time is required");
             return false;
         }
+
         if (formData.users.length === 0) {
             toast.error("At least one attendee is required");
             return false;
@@ -199,7 +200,7 @@ const MoMAdd = () => {
                     return false;
                 }
                 if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)) {
-                    toast.error(`Invalid email for external attendee ${i + 1}`);
+                    toast.error(`Invalid email format for external attendee ${i + 1}`);
                     return false;
                 }
                 if (!user?.role?.trim()) {
@@ -214,8 +215,9 @@ const MoMAdd = () => {
         }
 
         for (let i = 0; i < internalAttendees.length; i++) {
-            if (internalAttendees[i]?.value && !internalAttendees[i]?.value) {
-                toast.error(`Internal user selection is required for attendee ${i + 1}`);
+            const attendee = internalAttendees[i];
+            if (!attendee?.value) {
+                toast.error(`Internal attendee ${i + 1} is not selected.`);
                 return false;
             }
         }
@@ -224,6 +226,7 @@ const MoMAdd = () => {
             toast.error("At least one discussion point is required");
             return false;
         }
+
         for (let i = 0; i < formData.points.length; i++) {
             const point = formData.points[i];
             if (!point?.description?.trim()) {

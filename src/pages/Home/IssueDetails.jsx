@@ -10,32 +10,35 @@ import toast from "react-hot-toast";
 const Attachments = ({ attachments, id }) => {
     const fileInputRef = useRef(null);
     const dispatch = useDispatch();
-    const [files, setFiles] = useState(attachments);
     const token = localStorage.getItem("token");
 
+    const [files, setFiles] = useState(attachments);
+
+    // ✅ Keep local state in sync with parent prop
+    useEffect(() => {
+        setFiles(attachments);
+    }, [attachments]);
+
     const handleAttachFile = () => {
-        fileInputRef.current.click(); // Open file picker
+        fileInputRef.current?.click();
     };
 
     const handleFileChange = async (event) => {
         const selectedFiles = Array.from(event.target.files);
         if (!selectedFiles.length) return;
-        console.log(selectedFiles);
-        const formData = new FormData();
 
+        const formData = new FormData();
         selectedFiles.forEach((file) => {
             formData.append("issue[attachments][]", file);
         });
 
-
         try {
-            const result = await dispatch(attachFile({ token, id, payload: formData })).unwrap();
-            console.log(result);
-            const updatedAttachments = result?.attachments || [];
-            setFiles(updatedAttachments);
-            dispatch(fetchIssue({ token, id }));
+            await dispatch(attachFile({ token, id, payload: formData })).unwrap();
+            toast.success("Files uploaded successfully.");
+            await dispatch(fetchIssue({ token, id })).unwrap(); // ✅ refresh full issue
         } catch (error) {
-            console.error("File upload or task fetch failed:", error);
+            console.error("File upload failed:", error);
+            toast.error("Failed to upload file.");
         }
     };
 
@@ -44,10 +47,10 @@ const Attachments = ({ attachments, id }) => {
             await dispatch(removeIssueAttachment({ token, id, image_id: fileId })).unwrap();
             toast.dismiss();
             toast.success("File removed successfully.");
-            setFiles((prevFiles) => prevFiles.filter((file) => file.id !== fileId));
+            await dispatch(fetchIssue({ token, id })).unwrap(); // ✅ refresh full issue again
         } catch (error) {
             console.error("File deletion failed:", error);
-            toast.error("Failed to delete file. Please try again.");
+            toast.error("Failed to delete file.");
         }
     };
 
@@ -59,19 +62,26 @@ const Attachments = ({ attachments, id }) => {
                         {files.map((file, index) => {
                             const fileName = file.document_file_name;
                             const fileUrl = file.document_url;
-                            const fileExt = fileName.split('.').pop().toLowerCase();
-                            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExt);
-                            const isPdf = fileExt === 'pdf';
-                            const isWord = ['doc', 'docx'].includes(fileExt);
-                            const isExcel = ['xls', 'xlsx'].includes(fileExt);
+                            const fileExt = fileName.split(".").pop().toLowerCase();
+
+                            const isImage = ["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(fileExt);
+                            const isPdf = fileExt === "pdf";
+                            const isWord = ["doc", "docx"].includes(fileExt);
+                            const isExcel = ["xls", "xlsx"].includes(fileExt);
 
                             return (
                                 <div
                                     key={index}
                                     className="border rounded p-2 flex flex-col items-center justify-center text-center shadow-sm bg-white relative"
                                 >
-                                    <Trash2 size={20} color="#C72030" className="absolute top-2 right-2 cursor-pointer" onClick={() => { handleRemoveFile(file.id) }} />
-                                    {/* Preview or icon */}
+                                    <Trash2
+                                        size={20}
+                                        color="#C72030"
+                                        className="absolute top-2 right-2 cursor-pointer"
+                                        onClick={() => handleRemoveFile(file.id)}
+                                    />
+
+                                    {/* Preview */}
                                     <div className="w-[100px] h-[100px] flex items-center justify-center bg-gray-100 rounded mb-2 overflow-hidden">
                                         {isImage ? (
                                             <img src={fileUrl} alt={fileName} className="object-contain h-full" />
@@ -86,7 +96,7 @@ const Attachments = ({ attachments, id }) => {
                                         )}
                                     </div>
 
-                                    {/* File name and link */}
+                                    {/* Filename */}
                                     <a
                                         href={fileUrl}
                                         target="_blank"
@@ -101,6 +111,7 @@ const Attachments = ({ attachments, id }) => {
                             );
                         })}
                     </div>
+
                     <button
                         className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
                         onClick={handleAttachFile}
