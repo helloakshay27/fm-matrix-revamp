@@ -241,7 +241,7 @@ const SprintTable = (setIsSidebarOpen) => {
                 },
             },
             {
-                accessorKey: "No Of Projects",
+                accessorKey: "associated_projects_count",
                 header: "Number Of Projects",
                 size: 120,
             },
