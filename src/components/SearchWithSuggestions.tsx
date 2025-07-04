@@ -100,7 +100,7 @@ export const SearchWithSuggestions = ({
         <input
           ref={inputRef}
           type="text"
-          placeholder={placeholder}
+          placeholder={`🔍 ${placeholder}`}
           value={searchValue}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
