@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
 import { X } from 'lucide-react';
 
@@ -30,6 +30,10 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
 
   const handleFilterChange = (key: keyof FilterValues, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleSelectChange = (key: keyof FilterValues) => (event: SelectChangeEvent<string>) => {
+    handleFilterChange(key, event.target.value);
   };
 
   const handleApply = () => {
@@ -83,10 +87,27 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
             <InputLabel id="tower-label">Tower</InputLabel>
             <MuiSelect
               labelId="tower-label"
+              id="tower-select"
               label="Tower"
               value={filters.tower}
-              onChange={(e) => handleFilterChange('tower', e.target.value)}
+              onChange={handleSelectChange('tower')}
               sx={fieldStyles}
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 200,
+                    backgroundColor: 'white',
+                  },
+                },
+                anchorOrigin: {
+                  vertical: 'bottom',
+                  horizontal: 'left',
+                },
+                transformOrigin: {
+                  vertical: 'top',
+                  horizontal: 'left',
+                },
+              }}
             >
               <MenuItem value="">
                 <em>Select Tower</em>
@@ -101,10 +122,27 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
             <InputLabel id="floor-label">Floor</InputLabel>
             <MuiSelect
               labelId="floor-label"
+              id="floor-select"
               label="Floor"
               value={filters.floor}
-              onChange={(e) => handleFilterChange('floor', e.target.value)}
+              onChange={handleSelectChange('floor')}
               sx={fieldStyles}
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 200,
+                    backgroundColor: 'white',
+                  },
+                },
+                anchorOrigin: {
+                  vertical: 'bottom',
+                  horizontal: 'left',
+                },
+                transformOrigin: {
+                  vertical: 'top',
+                  horizontal: 'left',
+                },
+              }}
             >
               <MenuItem value="">
                 <em>Select Floor</em>
@@ -124,10 +162,27 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
             <InputLabel id="flat-label">Flat</InputLabel>
             <MuiSelect
               labelId="flat-label"
+              id="flat-select"
               label="Flat"
               value={filters.flat}
-              onChange={(e) => handleFilterChange('flat', e.target.value)}
+              onChange={handleSelectChange('flat')}
               sx={fieldStyles}
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 200,
+                    backgroundColor: 'white',
+                  },
+                },
+                anchorOrigin: {
+                  vertical: 'bottom',
+                  horizontal: 'left',
+                },
+                transformOrigin: {
+                  vertical: 'top',
+                  horizontal: 'left',
+                },
+              }}
             >
               <MenuItem value="">
                 <em>Select Flat</em>
@@ -145,10 +200,27 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
             <InputLabel id="stage-label">Stage</InputLabel>
             <MuiSelect
               labelId="stage-label"
+              id="stage-select"
               label="Stage"
               value={filters.stage}
-              onChange={(e) => handleFilterChange('stage', e.target.value)}
+              onChange={handleSelectChange('stage')}
               sx={fieldStyles}
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 200,
+                    backgroundColor: 'white',
+                  },
+                },
+                anchorOrigin: {
+                  vertical: 'bottom',
+                  horizontal: 'left',
+                },
+                transformOrigin: {
+                  vertical: 'top',
+                  horizontal: 'left',
+                },
+              }}
             >
               <MenuItem value="">
                 <em>Select Stage</em>
