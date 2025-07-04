@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
-import { X } from 'lucide-react';
 
 interface SnaggingFilterDialogProps {
   open: boolean;
@@ -28,29 +27,8 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
     stage: ''
   });
 
-  const [openDropdowns, setOpenDropdowns] = useState({
-    tower: false,
-    floor: false,
-    flat: false,
-    stage: false
-  });
-
   const handleFilterChange = (key: keyof FilterValues, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-  };
-
-  const handleDropdownToggle = (dropdown: keyof typeof openDropdowns) => {
-    setOpenDropdowns(prev => ({
-      ...prev,
-      [dropdown]: !prev[dropdown]
-    }));
-  };
-
-  const handleDropdownClose = (dropdown: keyof typeof openDropdowns) => {
-    setOpenDropdowns(prev => ({
-      ...prev,
-      [dropdown]: false
-    }));
   };
 
   const handleApply = () => {
@@ -66,11 +44,6 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
     const resetFilters = { tower: '', floor: '', flat: '', stage: '' };
     setFilters(resetFilters);
     onApplyFilters(resetFilters);
-    setOpenDropdowns({ tower: false, floor: false, flat: false, stage: false });
-  };
-
-  const handleClose = () => {
-    onOpenChange(false);
   };
 
   const fieldStyles = {
@@ -83,16 +56,8 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] bg-white">
-        <DialogHeader className="flex flex-row items-center justify-between">
+        <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Filters</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleClose}
-            className="h-6 w-6 p-0"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
         
         <div className="grid grid-cols-2 gap-4 py-4">
@@ -101,31 +66,12 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
             <MuiSelect
               labelId="tower-label"
               label="Tower"
-              open={openDropdowns.tower}
-              onOpen={() => handleDropdownToggle('tower')}
-              onClose={() => handleDropdownClose('tower')}
+              displayEmpty
               value={filters.tower}
               onChange={(e) => handleFilterChange('tower', e.target.value)}
-              sx={{
-                ...fieldStyles,
-                '& .MuiSelect-icon': {
-                  transform: openDropdowns.tower ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.2s',
-                },
-              }}
-              MenuProps={{
-                PaperProps: {
-                  style: {
-                    backgroundColor: 'white',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    zIndex: 9999,
-                  },
-                },
-              }}
+              sx={fieldStyles}
             >
-              <MenuItem value="">
-                <em>Select Tower</em>
-              </MenuItem>
+              <MenuItem value=""><em>Select Snag Entity</em></MenuItem>
               <MenuItem value="A">Tower A</MenuItem>
               <MenuItem value="B">Tower B</MenuItem>
               <MenuItem value="C">Tower C</MenuItem>
@@ -137,31 +83,12 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
             <MuiSelect
               labelId="floor-label"
               label="Floor"
-              open={openDropdowns.floor}
-              onOpen={() => handleDropdownToggle('floor')}
-              onClose={() => handleDropdownClose('floor')}
+              displayEmpty
               value={filters.floor}
               onChange={(e) => handleFilterChange('floor', e.target.value)}
-              sx={{
-                ...fieldStyles,
-                '& .MuiSelect-icon': {
-                  transform: openDropdowns.floor ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.2s',
-                },
-              }}
-              MenuProps={{
-                PaperProps: {
-                  style: {
-                    backgroundColor: 'white',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    zIndex: 9999,
-                  },
-                },
-              }}
+              sx={fieldStyles}
             >
-              <MenuItem value="">
-                <em>Select Floor</em>
-              </MenuItem>
+              <MenuItem value=""><em>Select Floor</em></MenuItem>
               <MenuItem value="1st">1st Floor</MenuItem>
               <MenuItem value="2nd">2nd Floor</MenuItem>
               <MenuItem value="3rd">3rd Floor</MenuItem>
@@ -178,31 +105,12 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
             <MuiSelect
               labelId="flat-label"
               label="Flat"
-              open={openDropdowns.flat}
-              onOpen={() => handleDropdownToggle('flat')}
-              onClose={() => handleDropdownClose('flat')}
+              displayEmpty
               value={filters.flat}
               onChange={(e) => handleFilterChange('flat', e.target.value)}
-              sx={{
-                ...fieldStyles,
-                '& .MuiSelect-icon': {
-                  transform: openDropdowns.flat ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.2s',
-                },
-              }}
-              MenuProps={{
-                PaperProps: {
-                  style: {
-                    backgroundColor: 'white',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    zIndex: 9999,
-                  },
-                },
-              }}
+              sx={fieldStyles}
             >
-              <MenuItem value="">
-                <em>Select Flat</em>
-              </MenuItem>
+              <MenuItem value=""><em>Select Flat</em></MenuItem>
               <MenuItem value="101">101</MenuItem>
               <MenuItem value="103">103</MenuItem>
               <MenuItem value="301">301</MenuItem>
@@ -217,31 +125,12 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
             <MuiSelect
               labelId="stage-label"
               label="Stage"
-              open={openDropdowns.stage}
-              onOpen={() => handleDropdownToggle('stage')}
-              onClose={() => handleDropdownClose('stage')}
+              displayEmpty
               value={filters.stage}
               onChange={(e) => handleFilterChange('stage', e.target.value)}
-              sx={{
-                ...fieldStyles,
-                '& .MuiSelect-icon': {
-                  transform: openDropdowns.stage ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.2s',
-                },
-              }}
-              MenuProps={{
-                PaperProps: {
-                  style: {
-                    backgroundColor: 'white',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    zIndex: 9999,
-                  },
-                },
-              }}
+              sx={fieldStyles}
             >
-              <MenuItem value="">
-                <em>Select a stage</em>
-              </MenuItem>
+              <MenuItem value=""><em>Select a stage</em></MenuItem>
               <MenuItem value="Units Snagging">Units Snagging</MenuItem>
               <MenuItem value="Common Area Snagging">Common Area Snagging</MenuItem>
               <MenuItem value="Pre-handover Snagging">Pre-handover Snagging</MenuItem>
