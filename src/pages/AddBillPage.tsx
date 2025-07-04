@@ -1,11 +1,21 @@
+
 import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+  '& .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
 
 export const AddBillPage = () => {
   const navigate = useNavigate();
@@ -103,74 +113,94 @@ export const AddBillPage = () => {
               {/* First Column */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Supplier<span className="text-[#C72030]">*</span>
-                  </label>
-                  <Select value={formData.supplier} onValueChange={(value) => updateFormData('supplier', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Supplier" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="supplier1">Supplier 1</SelectItem>
-                      <SelectItem value="supplier2">Supplier 2</SelectItem>
-                      <SelectItem value="supplier3">Supplier 3</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>Supplier*</InputLabel>
+                    <MuiSelect
+                      label="Supplier*"
+                      value={formData.supplier}
+                      onChange={(e) => updateFormData('supplier', e.target.value)}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value=""><em>Select Supplier</em></MenuItem>
+                      <MenuItem value="supplier1">Supplier 1</MenuItem>
+                      <MenuItem value="supplier2">Supplier 2</MenuItem>
+                      <MenuItem value="supplier3">Supplier 3</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Related To</label>
-                  <Input 
-                    placeholder="Related To"
-                    value={formData.relatedTo}
-                    onChange={(e) => updateFormData('relatedTo', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="Related To"
+                  placeholder="Related To"
+                  value={formData.relatedTo}
+                  onChange={(e) => updateFormData('relatedTo', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Deduction</label>
-                  <Input 
-                    placeholder="Deduction"
-                    value={formData.deduction}
-                    onChange={(e) => updateFormData('deduction', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="Deduction"
+                  placeholder="Deduction"
+                  value={formData.deduction}
+                  onChange={(e) => updateFormData('deduction', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Additional Expenses</label>
-                  <Input 
-                    placeholder="Additional Expenses"
-                    value={formData.additionalExpenses}
-                    onChange={(e) => updateFormData('additionalExpenses', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="Additional Expenses"
+                  placeholder="Additional Expenses"
+                  value={formData.additionalExpenses}
+                  onChange={(e) => updateFormData('additionalExpenses', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">CGST Amount</label>
-                  <Input 
-                    placeholder="CGST Amount"
-                    value={formData.cgstAmount}
-                    onChange={(e) => updateFormData('cgstAmount', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="CGST Amount"
+                  placeholder="CGST Amount"
+                  value={formData.cgstAmount}
+                  onChange={(e) => updateFormData('cgstAmount', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">IGST Rate</label>
-                  <Input 
-                    placeholder="IGST Rate"
-                    value={formData.igstRate}
-                    onChange={(e) => updateFormData('igstRate', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="IGST Rate"
+                  placeholder="IGST Rate"
+                  value={formData.igstRate}
+                  onChange={(e) => updateFormData('igstRate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">TCS Amount</label>
-                  <Input 
-                    placeholder="TCS Amount"
-                    value={formData.tcsAmount}
-                    onChange={(e) => updateFormData('tcsAmount', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="TCS Amount"
+                  placeholder="TCS Amount"
+                  value={formData.tcsAmount}
+                  onChange={(e) => updateFormData('tcsAmount', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
               </div>
 
               {/* Second Column */}
@@ -186,127 +216,164 @@ export const AddBillPage = () => {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">TDS(%)</label>
-                  <Input 
-                    placeholder="TDS"
-                    value={formData.tds}
-                    onChange={(e) => updateFormData('tds', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="TDS(%)"
+                  placeholder="TDS"
+                  value={formData.tds}
+                  onChange={(e) => updateFormData('tds', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Deduction Remarks</label>
-                  <Input 
-                    placeholder="Deduction Remarks"
-                    value={formData.deductionRemarks}
-                    onChange={(e) => updateFormData('deductionRemarks', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="Deduction Remarks"
+                  placeholder="Deduction Remarks"
+                  value={formData.deductionRemarks}
+                  onChange={(e) => updateFormData('deductionRemarks', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Payment Tenure(In Days)</label>
-                  <Input 
-                    placeholder="Payment Tenure"
-                    value={formData.paymentTenure}
-                    onChange={(e) => updateFormData('paymentTenure', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="Payment Tenure(In Days)"
+                  placeholder="Payment Tenure"
+                  value={formData.paymentTenure}
+                  onChange={(e) => updateFormData('paymentTenure', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">SGST Rate</label>
-                  <Input 
-                    placeholder="SGST Rate"
-                    value={formData.sgstRate}
-                    onChange={(e) => updateFormData('sgstRate', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="SGST Rate"
+                  placeholder="SGST Rate"
+                  value={formData.sgstRate}
+                  onChange={(e) => updateFormData('sgstRate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">IGST Amount</label>
-                  <Input 
-                    placeholder="IGST Amount"
-                    value={formData.igstAmount}
-                    onChange={(e) => updateFormData('igstAmount', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="IGST Amount"
+                  placeholder="IGST Amount"
+                  value={formData.igstAmount}
+                  onChange={(e) => updateFormData('igstAmount', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Tax Amount</label>
-                  <Input 
-                    placeholder="Tax Amount"
-                    value={formData.taxAmount}
-                    onChange={(e) => updateFormData('taxAmount', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="Tax Amount"
+                  placeholder="Tax Amount"
+                  value={formData.taxAmount}
+                  onChange={(e) => updateFormData('taxAmount', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
               </div>
 
               {/* Third Column */}
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Invoice Number</label>
-                  <Input 
-                    placeholder="Invoice Number"
-                    value={formData.invoiceNumber}
-                    onChange={(e) => updateFormData('invoiceNumber', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="Invoice Number"
+                  placeholder="Invoice Number"
+                  value={formData.invoiceNumber}
+                  onChange={(e) => updateFormData('invoiceNumber', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Retention(%)</label>
-                  <Input 
-                    placeholder="Retention"
-                    value={formData.retention}
-                    onChange={(e) => updateFormData('retention', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="Retention(%)"
+                  placeholder="Retention"
+                  value={formData.retention}
+                  onChange={(e) => updateFormData('retention', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Amount<span className="text-[#C72030]">*</span>
-                  </label>
-                  <Input 
-                    placeholder="Amount"
-                    value={formData.amount}
-                    onChange={(e) => updateFormData('amount', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="Amount*"
+                  placeholder="Amount"
+                  value={formData.amount}
+                  onChange={(e) => updateFormData('amount', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">CGST Rate</label>
-                  <Input 
-                    placeholder="CGST Rate"
-                    value={formData.cgstRate}
-                    onChange={(e) => updateFormData('cgstRate', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="CGST Rate"
+                  placeholder="CGST Rate"
+                  value={formData.cgstRate}
+                  onChange={(e) => updateFormData('cgstRate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">SGST Amount</label>
-                  <Input 
-                    placeholder="SGST Amount"
-                    value={formData.sgstAmount}
-                    onChange={(e) => updateFormData('sgstAmount', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="SGST Amount"
+                  placeholder="SGST Amount"
+                  value={formData.sgstAmount}
+                  onChange={(e) => updateFormData('sgstAmount', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">TCS Rate</label>
-                  <Input 
-                    placeholder="TCS Rate"
-                    value={formData.tcsRate}
-                    onChange={(e) => updateFormData('tcsRate', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="TCS Rate"
+                  placeholder="TCS Rate"
+                  value={formData.tcsRate}
+                  onChange={(e) => updateFormData('tcsRate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Total Amount</label>
-                  <Input 
-                    placeholder="Total Amount"
-                    value={formData.totalAmount}
-                    onChange={(e) => updateFormData('totalAmount', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="Total Amount"
+                  placeholder="Total Amount"
+                  value={formData.totalAmount}
+                  onChange={(e) => updateFormData('totalAmount', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
               </div>
             </div>
 
