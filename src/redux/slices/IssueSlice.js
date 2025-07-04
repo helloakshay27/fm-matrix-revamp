@@ -2,8 +2,6 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { baseURL } from '../../../apiDomain';
 
-const access_token = localStorage.getItem("token");
-
 const createApiSlice = (name, fetchThunk) => createSlice({
     name,
     initialState: {
@@ -194,6 +192,21 @@ export const filterIssue = createAsyncThunk('filterIssue',
     }
 );
 
+export const removeIssueAttachment = createAsyncThunk("removeIssueAttachment", async ({ token, id, image_id }) => {
+    try {
+        const response = await axios.delete(`${baseURL}/issues/${id}/remove_attachemnts/${image_id}.json`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
+        return response.data;
+    }
+    catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
 export const createIssueSlice = createApiSlice('createIssue', createIssue);
 export const fetchIssueSlice = createApiSlice('fetchIssue', fetchIssue);
 export const updateIssueSlice = createApiSlice('updateIssue', updateIssue);
@@ -202,6 +215,7 @@ export const createIssueTypeSlice = createApiSlice('createIssueType', createIssu
 export const updateIssueTypeSlice = createApiSlice('updateIssueType', updateIssueType);
 export const deleteIssueTypeSlice = createApiSlice('deleteIssueType', deleteIssueType);
 export const filterIssueSlice = createApiSlice('filterIssue', filterIssue);
+export const removeIssueAttachmentSlice = createApiSlice('removeIssueAttachment', removeIssueAttachment);
 
 export const createIssueReducer = createIssueSlice.reducer;
 export const fetchIssueReducer = fetchIssueSlice.reducer;
@@ -211,5 +225,6 @@ export const createIssueTypeReducer = createIssueTypeSlice.reducer;
 export const updateIssueTypeReducer = updateIssueTypeSlice.reducer;
 export const deleteIssueTypeReducer = deleteIssueTypeSlice.reducer;
 export const filterIssueReducer = filterIssueSlice.reducer;
+export const removeIssueAttachmentReducer = removeIssueAttachmentSlice.reducer;
 
 export const { resetIssueSuccess } = createIssueSlice.actions;

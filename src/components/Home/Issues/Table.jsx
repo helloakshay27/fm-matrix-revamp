@@ -396,16 +396,48 @@ const IssuesTable = () => {
 
 
   // Set project options
+  // useEffect(() => {
+  //   if (!loadingProjects && projects?.length > 0 && !projectsFetchError) {
+  //     setProjectOptions(
+  //       projects.map((project) => ({
+  //         value: project.id,
+  //         label: project.title,
+  //       }))
+  //     );
+  //   }
+  // }, [projects, loadingProjects, projectsFetchError]);
+
   useEffect(() => {
-    if (!loadingProjects && projects?.length > 0 && !projectsFetchError) {
-      setProjectOptions(
-        projects.map((project) => ({
-          value: project.id,
-          label: project.title,
-        }))
-      );
+    if (loadingProjects) return; // wait for loading to finish
+
+    if (projectsFetchError) {
+      console.error("Failed to fetch projects:", projectsFetchError);
+      setProjectOptions([]); // reset or show fallback
+      return;
+    }
+
+    if (projects && Array.isArray(projects) && projects.length > 0) {
+      try {
+        const options = projects.map((project) => {
+          if (!project?.id || !project?.title) {
+            throw new Error("Invalid project data structure.");
+          }
+          return {
+            value: project.id,
+            label: project.title,
+          };
+        });
+
+        setProjectOptions(options);
+      } catch (err) {
+        console.error("Error while mapping project options:", err);
+        setProjectOptions([]); // fallback to empty
+      }
+    } else {
+      setProjectOptions([]); // no projects case
     }
   }, [projects, loadingProjects, projectsFetchError]);
+
 
   // Process issues data
   useEffect(() => {

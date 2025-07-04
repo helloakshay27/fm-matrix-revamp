@@ -100,7 +100,7 @@ const SideBar = () => {
                         {openSections.groups ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                     </div>
                     {openSections.groups && (
-                        <ul className="mt-2 space-y-4 text-gray-800 font-normal">
+                        <ul className="mt-2 space-y-4 text-gray-800 font-normal overflow-y-scroll max-h-48">
                             {
                                 channels && channels.map(channel => (
                                     <li key={channel.id} className="text-xs cursor-pointer" onClick={() => navigate(`/channels/group/${channel.id}`)}>{channel.name}</li>
@@ -118,7 +118,7 @@ const SideBar = () => {
                         {openSections.users ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                     </div>
                     {openSections.users && (
-                        <ul className="mt-2 space-y-4 text-gray-800 font-normal overflow-y-scroll max-h-60">
+                        <ul className="mt-2 space-y-4 text-gray-800 font-normal overflow-y-scroll max-h-48">
                             {
                                 users ? users
                                     .filter(user => {

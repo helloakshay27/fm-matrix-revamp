@@ -1,9 +1,9 @@
 import { useGSAP } from "@gsap/react";
-import { ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronDownCircle, PencilIcon, Trash2, X } from "lucide-react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { changeTaskStatus, createTaskComment, editTaskComment, taskDetails, attachFiles, editTask, deleteTaskComment, resetCommentEdit } from "../../redux/slices/taskSlice";
+import { changeTaskStatus, createTaskComment, editTaskComment, taskDetails, attachFiles, editTask, deleteTaskComment, resetCommentEdit, removeTaskAttachment } from "../../redux/slices/taskSlice";
 import gsap from "gsap";
 import SubtaskTable from "../../components/Home/Task/Modals/subtaskTable";
 import DependancyKanban from "../../components/Home/DependancyKanban";
@@ -587,7 +587,17 @@ const Attachments = ({ attachments, id }) => {
         }
     };
 
-
+    const handleDeleteFile = async (fileId) => {
+        try {
+            await dispatch(removeTaskAttachment({ token, id, image_id: fileId })).unwrap();
+            toast.dismiss();
+            toast.success("File removed successfully.");
+            setFiles((prevFiles) => prevFiles.filter((file) => file.id !== fileId));
+        } catch (error) {
+            console.error("File deletion failed:", error);
+            toast.error("Failed to delete file. Please try again.");
+        }
+    }
 
     return (
         <div className="flex flex-col gap-3 p-5 ">
@@ -606,8 +616,9 @@ const Attachments = ({ attachments, id }) => {
                             return (
                                 <div
                                     key={index}
-                                    className="border rounded p-2 flex flex-col items-center justify-center text-center shadow-sm bg-white"
+                                    className="border rounded p-2 flex flex-col items-center justify-center text-center shadow-sm bg-white relative"
                                 >
+                                    <X className="absolute top-2 right-2 cursor-pointer" onClick={() => handleDeleteFile(file.id)} />
                                     {/* Preview or icon */}
                                     <div className="w-full h-[100px] flex items-center justify-center bg-gray-100 rounded mb-2 overflow-hidden">
                                         {isImage ? (

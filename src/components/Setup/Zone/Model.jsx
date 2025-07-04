@@ -75,22 +75,16 @@ const AddZoneModel = ({
         response = await dispatch(createZone({ token, payload })).unwrap();
       }
       console.log(response);
-      if (response.payload?.errors) {
-        setError(response.payload.errors);
-      } else if (response.payload.user_exists) {
-        setError(response.payload.message);
-      } else {
-        toast.success(
-          `Zone ${isEditMode ? "updated" : "created"} successfully`,
-          {
-            iconTheme: {
-              primary: "green", // This might directly change the color of the success icon
-              secondary: "white", // The circle background
-            },
-          }
-        );
-        handleSuccess();
-      }
+      toast.success(
+        `Zone ${isEditMode ? "updated" : "created"} successfully`,
+        {
+          iconTheme: {
+            primary: "green", // This might directly change the color of the success icon
+            secondary: "white", // The circle background
+          },
+        }
+      );
+      handleSuccess();
     } catch (error) {
       console.log(error);
       setError(error.message);

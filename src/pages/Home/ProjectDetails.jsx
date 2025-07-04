@@ -1,14 +1,15 @@
 import gsap from "gsap";
 import IssuesTable from "../../components/Home/Issues/Table";
-import { ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronDownCircle, PencilIcon, Trash2, X } from "lucide-react";
 import { useGSAP } from "@gsap/react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { changeProjectStatus, createProject, deleteProject, editProject, fetchProjectDetails } from "../../redux/slices/projectSlice";
+import { changeProjectStatus, createProject, deleteProject, editProject, fetchProjectDetails, removeAttachment } from "../../redux/slices/projectSlice";
 import AddProjectModal from "../../components/Home/Projects/AddProjectModal";
 import { attachFiles } from "../../redux/slices/projectSlice";
 import FolderIcon from '@mui/icons-material/Folder';
+import toast from "react-hot-toast";
 
 const Issues = () => {
     return <IssuesTable />;
@@ -121,7 +122,7 @@ const Attachments = ({ attachments, id }) => {
     const handleFileChange = async (event) => {
         const selectedFiles = Array.from(event.target.files);
         if (!selectedFiles.length) return;
-        console.log(selectedFiles);
+
         const formData = new FormData();
 
         selectedFiles.forEach((file) => {
@@ -139,7 +140,17 @@ const Attachments = ({ attachments, id }) => {
         }
     };
 
-
+    const removeFile = async (fileId) => {
+        try {
+            await dispatch(removeAttachment({ token, id, image_id: fileId })).unwrap();
+            toast.dismiss();
+            toast.success("File removed successfully.");
+            setFiles((prevFiles) => prevFiles.filter((file) => file.id !== fileId));
+        } catch (error) {
+            toast.dismiss();
+            toast.error("Failed to remove file. Please try again.");
+        }
+    }
 
     return (
         <div className="flex flex-col gap-3 p-5">
@@ -158,8 +169,9 @@ const Attachments = ({ attachments, id }) => {
                             return (
                                 <div
                                     key={index}
-                                    className="border rounded p-2 flex flex-col items-center justify-center text-center shadow-sm bg-white"
+                                    className="border rounded p-2 flex flex-col items-center justify-center text-center shadow-sm bg-white relative"
                                 >
+                                    <X className="absolute top-2 right-2 cursor-pointer" onClick={() => removeFile(file.id)} />
                                     {/* Preview or icon */}
                                     <div className="w-[100px] h-[100px] flex items-center justify-center bg-gray-100 rounded mb-2 overflow-hidden">
                                         {isImage ? (
@@ -499,9 +511,9 @@ const ProjectDetails = () => {
                                 </div>
                                 <div className="w-1/2 flex items-center justify-start gap-3">
                                     <div className="text-right text-[12px] font-[500]">
-                                        MileStones :
+                                        Milestones :
                                     </div>
-                                    <div className="text-left text-[12px]"></div>
+                                    <div className="text-left text-[12px]">{`${project.completed_milestone_count}/${project.total_milestone_count}`}</div>
                                 </div>
                             </div>
 
@@ -518,7 +530,7 @@ const ProjectDetails = () => {
                                     <div className="text-right text-[12px] font-semibold">
                                         Tasks :
                                     </div>
-                                    <div className="text-left text-[12px]"></div>
+                                    <div className="text-left text-[12px]">{`${project.completed_task_management_count}/${project.total_task_management_count}`}</div>
                                 </div>
                             </div>
 
@@ -535,7 +547,7 @@ const ProjectDetails = () => {
                                     <div className="text-right text-[12px] font-[500]">
                                         Issues :
                                     </div>
-                                    <div className="text-left text-[12px]"></div>
+                                    <div className="text-left text-[12px]">{`${project.completed_issues_count}/${project.total_issues_count}`}</div>
                                 </div>
                             </div>
                         </div>

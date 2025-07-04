@@ -260,6 +260,24 @@ export const attachFiles = createAsyncThunk('attachFiles', async ({ token, id, p
     }
 })
 
+export const removeTaskAttachment = createAsyncThunk('removeTaskAttachment', async ({ token, id, image_id }) => {
+    try {
+        const response = await axios.delete(`${baseURL}/task_managements/${id}/remove_attachemnts/${image_id}.json`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'Multipart/form-data'
+                }
+            }
+        );
+
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        return error.response.data;
+    }
+})
+
 export const fetchTasksOfProject = createAsyncThunk('fetchTasksOfProject', async ({ token, id }) => {
     try {
         const response = await axios.get(`${baseURL}/task_managements.json?q[project_management_id_eq]=${id}`, {
@@ -360,6 +378,7 @@ export const createDependancySlice = createApiSlice('createDependancy', createDe
 export const updateDependancySlice = createApiSlice('updateDependancy', updateDependancy);
 export const fetchMyTasksSlice = createApiSlice('fetchMyTasks', fetchMyTasks);
 export const fetchTasksOfMilestoneSlice = createApiSlice('fetchTasksOfMilestone', fetchTasksOfMilestone);
+export const removeTaskAttachmentSlice = createApiSlice('removeTaskAttachment', removeTaskAttachment);
 
 export const createTaskReducer = createTaskSlice.reducer;
 export const fetchTasksReducer = fetchTasksSlice.reducer;
@@ -379,5 +398,6 @@ export const createDependancyReducer = createDependancySlice.reducer;
 export const updateDependancyReducer = updateDependancySlice.reducer;
 export const fetchMyTasksReducer = fetchMyTasksSlice.reducer;
 export const fetchTasksOfMilestoneReducer = fetchTasksOfMilestoneSlice.reducer;
+export const removeTaskAttachmentReducer = removeTaskAttachmentSlice.reducer;
 
 export const { resetCommentEdit } = editTaskCommentSlice.actions;

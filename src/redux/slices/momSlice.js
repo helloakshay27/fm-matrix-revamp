@@ -52,11 +52,10 @@ export const fetchMoM = createAsyncThunk('fetchMoM', async ({ token }) => {
 
 export const createMoM = createAsyncThunk('createMoM', async ({ token, payload }) => {
     try {
-        const response = await axios.post(`${baseURL}/mom_details.json`, {
-            mom_detail: payload
-        }, {
+        const response = await axios.post(`${baseURL}/mom_details.json`, payload, {
             headers: {
-                Authorization: `Bearer ${token}`
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'Multipart/form-data'
             }
         })
 
@@ -80,12 +79,29 @@ export const fetchMomDetails = createAsyncThunk('fetchMomDetails', async ({ toke
     }
 })
 
+export const removeMomAttachment = createAsyncThunk("removeMomAttachment", async ({ token, id, image_id }) => {
+    try {
+        const response = await axios.delete(`${baseURL}/mom_details/${id}/remove_attachemnts/${image_id}.json`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
+        return response.data;
+    }
+    catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
 export const fetchMoMSlice = createApiSlice('fetchMoM', fetchMoM);
 export const createMoMSlice = createApiSlice('createMoM', createMoM);
 export const fetchMomDetailsSlice = createApiSlice('fetchMomDetails', fetchMomDetails);
+export const removeMomAttachmentSlice = createApiSlice('removeMomAttachment', removeMomAttachment);
 
 export const fetchMoMReducer = fetchMoMSlice.reducer;
 export const createMoMReducer = createMoMSlice.reducer;
 export const fetchMomDetailsReducer = fetchMomDetailsSlice.reducer;
+export const removeMomAttachmentReducer = removeMomAttachmentSlice.reducer;
 
 export const { resetMomCreateSuccess } = createMoMSlice.actions;
