@@ -11,7 +11,7 @@ interface SearchWithSuggestionsProps {
 }
 
 export const SearchWithSuggestions = ({
-  placeholder = "Search...",
+  placeholder = "Search",
   onSearch,
   suggestions = [],
   className = "",
@@ -33,11 +33,11 @@ export const SearchWithSuggestions = ({
     } else {
       // Show default suggestions when focused but no input
       const defaultSuggestions = [
-        '8Items looking for',
-        '8Items looking for',
-        '8Items looking for',
-        '8Items looking for',
-        '8Items looking for'
+        'Bitem looking ID',
+        'Bitem looking ID',
+        'Bitem looking ID',
+        'Bitem looking ID',
+        'Bitem looking ID'
       ];
       setFilteredSuggestions(defaultSuggestions);
       setShowSuggestions(false);
@@ -79,11 +79,11 @@ export const SearchWithSuggestions = ({
 
   const handleInputFocus = () => {
     const defaultSuggestions = [
-      '8Items looking for',
-      '8Items looking for',
-      '8Items looking for',
-      '8Items looking for',
-      '8Items looking for'
+      'Bitem looking ID',
+      'Bitem looking ID', 
+      'Bitem looking ID',
+      'Bitem looking ID',
+      'Bitem looking ID'
     ];
     setFilteredSuggestions(defaultSuggestions);
     setShowSuggestions(true);
@@ -118,14 +118,17 @@ export const SearchWithSuggestions = ({
           onKeyDown={handleKeyDown}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
-          className="w-full h-9 px-3 pr-10 border border-[#E5E5E5] rounded-md bg-white text-[#333333] placeholder:text-[#A8A8A8] focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          className="w-full h-9 px-3 pr-10 border border-[#D1D5DB] rounded-md bg-white text-[#374151] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#6B7280] focus:border-[#6B7280] text-sm"
           style={{
             borderRadius: '6px',
-            fontSize: '14px'
+            fontSize: '14px',
+            height: '35px',
+            paddingLeft: '12px',
+            paddingRight: '40px'
           }}
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2">
-          <Search className="w-4 h-4 text-[#A8A8A8]" />
+          <Search className="w-4 h-4 text-[#9CA3AF]" />
         </div>
       </div>
 
@@ -133,15 +136,15 @@ export const SearchWithSuggestions = ({
         filteredSuggestions.length > 0 &&
         createPortal(
           <div
-            className="absolute bg-white border border-[#E5E5E5] rounded-md z-[9999] overflow-hidden"
+            className="absolute bg-white border border-[#D1D5DB] rounded-md z-[9999] overflow-hidden"
             style={{
               position: 'absolute',
-              top: `${getSuggestionBoxPosition().top + 2}px`,
+              top: `${getSuggestionBoxPosition().top + 4}px`,
               left: `${getSuggestionBoxPosition().left}px`,
               width: `${getSuggestionBoxPosition().width}px`,
               borderRadius: '6px',
-              boxShadow: '0px 2px 8px rgba(0,0,0,0.1)',
-              maxHeight: '160px'
+              boxShadow: '0px 4px 8px rgba(0,0,0,0.1)',
+              maxHeight: '150px'
             }}
           >
             {filteredSuggestions.map((suggestion, index) => (
@@ -150,15 +153,17 @@ export const SearchWithSuggestions = ({
                 onMouseDown={() => handleSuggestionClick(suggestion)}
                 className={`px-3 py-2 cursor-pointer text-sm transition-colors ${
                   index === activeSuggestion 
-                    ? 'bg-[#E6F3FF] text-[#0066CC] border-l-4 border-[#0066CC]' 
-                    : 'text-[#333333] hover:bg-[#F0F8FF] hover:text-[#0066CC] bg-white'
+                    ? 'bg-[#F3F4F6] text-[#374151]' 
+                    : 'text-[#374151] hover:bg-[#F9FAFB] bg-white'
                 }`}
                 style={{
                   height: '32px',
                   fontSize: '14px',
                   fontWeight: '400',
                   display: 'flex',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  paddingLeft: '12px',
+                  paddingRight: '12px'
                 }}
               >
                 {suggestion}

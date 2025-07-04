@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Eye } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SnaggingFilterDialog } from '@/components/SnaggingFilterDialog';
-import { AsyncSearchableDropdown } from '@/components/AsyncSearchableDropdown';
+import { SearchWithSuggestions } from '@/components/SearchWithSuggestions';
 import { useSearchSuggestions } from '@/hooks/useSearchSuggestions';
 
 interface SnaggingItem {
@@ -55,12 +56,6 @@ export const SnaggingDashboard = () => {
     searchFields: ['checklistName', 'tower', 'floor', 'flat', 'roomType', 'stage']
   });
 
-  // Convert suggestions to options format for react-select
-  const searchOptions = suggestions.map(suggestion => ({
-    value: suggestion,
-    label: suggestion
-  }));
-
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const view = searchParams.get('view');
@@ -92,18 +87,9 @@ export const SnaggingDashboard = () => {
     navigate(`/transitioning/snagging/details/${item.id}`, { state: { item } });
   };
 
-  const handleSearch = async (searchTerm: string) => {
-    // Filter options based on search term
-    const filteredOptions = searchOptions.filter(option =>
-      option.label.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    return filteredOptions.slice(0, 8); // Limit to 8 results
-  };
-
-  const handleSearchSelect = (selectedOption: { value: string; label: string } | null) => {
-    const value = selectedOption?.value || '';
+  const handleSearch = (value: string) => {
     setSearchTerm(value);
-    console.log('Search selected:', value);
+    console.log('Search value:', value);
   };
 
   const handleApplyFilters = (filters: FilterValues) => {
@@ -117,23 +103,22 @@ export const SnaggingDashboard = () => {
         
         {/* Search Section with Filters Button */}
         <div className="flex gap-3 mb-6">
-          <AsyncSearchableDropdown
+          <SearchWithSuggestions
             placeholder="Search"
             onSearch={handleSearch}
-            onChange={handleSearchSelect}
-            className="max-w-md"
-            defaultOptions={searchOptions.slice(0, 5)}
+            suggestions={suggestions}
+            className="w-[290px]"
           />
           <Button 
             onClick={() => handleSearch(searchTerm)}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6 py-2 h-[35px] text-sm font-medium"
           >
             Search
           </Button>
           <Button
             variant="outline"
             onClick={() => setShowFilters(true)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 h-[35px] text-sm font-medium"
           >
             <span className="text-sm">⊞</span>
             Filters
