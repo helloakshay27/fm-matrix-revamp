@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Eye } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SnaggingFilterDialog } from '@/components/SnaggingFilterDialog';
+import { SearchWithSuggestions } from '@/components/SearchWithSuggestions';
+import { useSearchSuggestions } from '@/hooks/useSearchSuggestions';
 
 interface SnaggingItem {
   id: number;
@@ -48,6 +49,12 @@ export const SnaggingDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Generate suggestions from the mock data
+  const suggestions = useSearchSuggestions({
+    data: mockData,
+    searchFields: ['checklistName', 'tower', 'floor', 'flat', 'roomType', 'stage']
+  });
+
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const view = searchParams.get('view');
@@ -79,9 +86,9 @@ export const SnaggingDashboard = () => {
     navigate(`/transitioning/snagging/details/${item.id}`, { state: { item } });
   };
 
-  const handleSearch = () => {
-    // Search functionality is already handled by the filter
-    console.log('Search triggered for:', searchTerm);
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    console.log('Search triggered for:', value);
   };
 
   const handleApplyFilters = (filters: FilterValues) => {
@@ -95,14 +102,14 @@ export const SnaggingDashboard = () => {
         
         {/* Search Section with Filters Button */}
         <div className="flex gap-3 mb-6">
-          <Input
+          <SearchWithSuggestions
             placeholder="Search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onSearch={handleSearch}
+            suggestions={suggestions}
             className="max-w-md"
           />
           <Button 
-            onClick={handleSearch}
+            onClick={() => handleSearch(searchTerm)}
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
           >
             Search
