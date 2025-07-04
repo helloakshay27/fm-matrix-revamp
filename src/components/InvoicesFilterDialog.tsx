@@ -76,7 +76,7 @@ export const InvoicesFilterDialog: React.FC<InvoicesFilterDialogProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <TextField
               label="Invoice Number"
-              placeholder="Search By Invoice Number"
+              placeholder="Find By Invoice Number"
               value={filters.invoiceNumber}
               onChange={(e) => handleInputChange('invoiceNumber', e.target.value)}
               fullWidth
