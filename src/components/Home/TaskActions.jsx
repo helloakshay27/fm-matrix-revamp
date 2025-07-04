@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import {
     ChartNoAxesColumn,
     ChartNoAxesGantt,
@@ -15,17 +14,20 @@ import AddProjectTemplate from "./Projects/AddProjectTempelateModal";
 import ProjectFilterModal from "./Projects/ProjectFilterModel";
 import AddIssueModal from "./Issues/AddIssueModal";
 import { filterProjects } from "../../redux/slices/projectSlice";
-import { fetchMyTasks, filterTask ,fetchTasks} from "../../redux/slices/taskSlice";
-import { useSelector, useDispatch } from "react-redux";
+import { fetchMyTasks, filterTask, fetchTasks } from "../../redux/slices/taskSlice";
+import { useDispatch } from "react-redux";
 import { useParams } from "react-router-dom";
 import IssueFilter from "./Issues/Modal/Filter";
 import { filterIssue } from "../../redux/slices/IssueSlice";
 import Switch from '@mui/joy/Switch';
-import { use } from "react";
-import { set } from "react-hook-form";
-import { all } from "axios";
 
-
+// Define status options for each addType
+const STATUS_OPTIONS_MAP = {
+    Project: ["All", "Active", "In Progress", "Completed", "On Hold", "Overdue"],
+    Issues: ["All", "Open", "In Progress", "Completed", "On Hold"],
+    Task: ["All", "Open", "In Progress", "On Hold", "Completed", "Overdue"],
+    "Sprint-Gantt": ["All", "Active", "Completed"],
+};
 
 const TYPE_OPTIONS = [
     { key: "Kanban", icon: <ChartNoAxesColumn size={18} className="rotate-180 text-[#C72030]" />, label: "Kanban" },
@@ -37,18 +39,6 @@ const SPRINT_TYPE_OPTIONS = [
     { key: "Sprint-Gantt", icon: <ChartNoAxesGantt size={20} className="text-[#C72030]" />, label: "Gantt" },
 ];
 
-const STATUS_OPTIONS = [
-    "All",
-    "On Hold",
-    "Completed",
-    "In Progress",
-    "Overdue",
-    "Active",
-    "Open"
-];
-
-
-
 const TaskActions = ({
     selectedType,
     setSelectedType,
@@ -56,7 +46,7 @@ const TaskActions = ({
     setIsSidebarOpen,
     setFilters,
     filters,
-    context
+    context,
 }) => {
     const { id, mid } = useParams();
     const [isTypeOpen, setIsTypeOpen] = useState(false);
@@ -67,41 +57,56 @@ const TaskActions = ({
     const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
     const [isAddMilestoneModalOpen, setIsAddMilestoneModalOpen] = useState(false);
     const [isAddIssueModalOpen, setIsAddIssueModalOpen] = useState(false);
-    const [selectedStatus, setSelectedStatus] = useState(STATUS_OPTIONS[0]);
     const [isProjectFilter, setIsProjectFilter] = useState(false);
     const [isIssueFilter, setIsIssueFilter] = useState(false);
     const [myTasks, setMyTasks] = useState(false);
     const token = localStorage.getItem("token");
     localStorage.setItem("myTasks", myTasks.toString());
-    
-    useEffect(()=>{
-    localStorage.removeItem("taskFilters");
-    localStorage.removeItem("projectFilters");
-    localStorage.removeItem("IssueFilters");
-    localStorage.removeItem("projectStatus");
-    localStorage.removeItem("issueStatus");
-    localStorage.removeItem("taskStatus");
-    },[]);
 
+    // Set initial selectedStatus based on addType
+    const [selectedStatus, setSelectedStatus] = useState(
+        STATUS_OPTIONS_MAP[addType]?.[0] || "All"
+    );
+
+    const dispatch = useDispatch();
     const typeDropdownRef = useRef(null);
     const statusDropdownRef = useRef(null);
-    const dispatch = useDispatch();
 
-    const filter = useMemo(() =>
-        localStorage.getItem("projectFilters") || localStorage.getItem("taskFilters"),
+    // Reset selectedStatus when addType changes
+    useEffect(() => {
+        setSelectedStatus(STATUS_OPTIONS_MAP[addType]?.[0] || "All");
+    }, [addType]);
+
+    // Clear localStorage on mount
+    useEffect(() => {
+        localStorage.removeItem("taskFilters");
+        localStorage.removeItem("projectFilters");
+        localStorage.removeItem("IssueFilters");
+        localStorage.removeItem("projectStatus");
+        localStorage.removeItem("issueStatus");
+        localStorage.removeItem("taskStatus");
+    }, []);
+
+    const filter = useMemo(
+        () =>
+            localStorage.getItem("projectFilters") ||
+            localStorage.getItem("taskFilters"),
         []
     );
 
-    const handleAllTasks = async(checked) => {
-    console.log(checked);
-    setMyTasks(checked);
-    localStorage.setItem("myTasks", checked.toString());
-    if(checked){
-     await  dispatch(fetchMyTasks({token: localStorage.getItem("token")})).unwrap();
-    }else{
-      await dispatch(fetchTasks({ token: localStorage.getItem("token") ,id:""})).unwrap();
-    }
-}
+    const handleAllTasks = async (checked) => {
+        setMyTasks(checked);
+        localStorage.setItem("myTasks", checked.toString());
+        try {
+            if (checked) {
+                await dispatch(fetchMyTasks({ token })).unwrap();
+            } else {
+                await dispatch(fetchTasks({ token, id: "" })).unwrap();
+            }
+        } catch (error) {
+            console.error("Failed to fetch tasks:", error);
+        }
+    };
 
     // Handle outside click for dropdowns
     useEffect(() => {
@@ -126,51 +131,51 @@ const TaskActions = ({
     }, []);
 
     // Memoized handlers
-    const handleTypeSelect = useCallback((type) => {
-        setSelectedType(type);
-        setIsTypeOpen(false);
-        if (type === "Kanban") setIsSidebarOpen(false);
-    }, [setSelectedType, setIsSidebarOpen]);
+    const handleTypeSelect = useCallback(
+        (type) => {
+            setSelectedType(type);
+            setIsTypeOpen(false);
+            if (type === "Kanban") setIsSidebarOpen(false);
+        },
+        [setSelectedType, setIsSidebarOpen]
+    );
 
-    const handleStatusSelect = useCallback(({ status }) => {
-        let filters = {};
-        const formattedStatus = status.toLowerCase().replace(" ", "_");
+    const handleStatusSelect = useCallback(
+        ({ status }) => {
+            let filters = {};
+            const formattedStatus = status.toLowerCase().replace(" ", "_");
 
-        if (addType === "Project") {
-            if (status !== "All") {
-                filters["q[status_eq]"] = formattedStatus;
-                localStorage.setItem("projectStatus", formattedStatus);
-            }else{
-                localStorage.removeItem("projectStatus");
+            if (addType === "Project") {
+                if (status !== "All") {
+                    filters["q[status_eq]"] = formattedStatus;
+                    localStorage.setItem("projectStatus", formattedStatus);
+                } else {
+                    localStorage.removeItem("projectStatus");
+                }
+                dispatch(filterProjects({ token, filters })).unwrap();
+            } else if (addType === "Issues") {
+                if (status !== "All") {
+                    filters["q[status_eq]"] = formattedStatus;
+                    localStorage.setItem("issueStatus", formattedStatus);
+                } else {
+                    localStorage.removeItem("issueStatus");
+                }
+                dispatch(filterIssue({ token, filter: filters })).unwrap();
+            } else {
+                if (status !== "All") {
+                    filters["q[status_eq]"] = formattedStatus;
+                    localStorage.setItem("taskStatus", formattedStatus);
+                } else {
+                    localStorage.removeItem("taskStatus");
+                }
+                if (mid) filters["q[milestone_id_eq]"] = mid;
+                dispatch(filterTask({ token, filter: filters })).unwrap();
             }
-            dispatch(filterProjects({ token, filters: filters })).unwrap();
-
-        } else if(addType === "Issues") {
-            console.log(formattedStatus);
-            if (status !== "All") {
-                filters["q[status_eq]"] = formattedStatus;
-                localStorage.setItem("issueStatus", formattedStatus);
-            }else{
-                localStorage.removeItem("issueStatus");
-            }
-            dispatch(filterIssue({ token, filter: filters })).unwrap();
-
-        }else{
-            if (status !== "All") {
-                filters["q[status_eq]"] = formattedStatus;
-                localStorage.setItem("taskStatus", formattedStatus);
-            }
-            else{
-                localStorage.removeItem("taskStatus");
-            }
-            if(mid)
-            filters["q[milestone_id_eq]"] = mid;
-            dispatch(filterTask({ token, filter: filters })).unwrap(); 
-
-        }
-        setSelectedStatus(status);
-        setIsStatusOpen(false);
-    }, [dispatch, addType]);
+            setSelectedStatus(status);
+            setIsStatusOpen(false);
+        },
+        [dispatch, addType, mid]
+    );
 
     const handleAddClick = useCallback(() => {
         switch (addType) {
@@ -266,78 +271,84 @@ const TaskActions = ({
         </div>
     );
 
-    const renderStatusDropdown = () => (
-        <div
-            className="flex items-center gap-1 cursor-pointer pl-4"
-            ref={statusDropdownRef}
-        >
-            <div className="relative">
-                <button
-                    className="text-[13px] flex items-center justify-between gap-2"
-                    onClick={() => setIsStatusOpen((v) => !v)}
-                >
-                    <span className="text-[#C72030]">{selectedStatus}</span>
-                    <span>▾</span>
-                </button>
-                {isStatusOpen && (
-                    <ul className="absolute left-0 mt-2 w-[150px] bg-white border border-gray-300 shadow-xl rounded-md z-10">
-                        {STATUS_OPTIONS.map((status) => (
-                            <li key={status}>
-                                <button
-                                    className="w-full text-left px-4 py-2 text-[13px] hover:bg-gray-100"
-                                    onClick={() => handleStatusSelect({ status })}
-                                >
-                                    {status}
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                )}
+    const renderStatusDropdown = () => {
+        const statusOptions = STATUS_OPTIONS_MAP[addType] || ["All"];
+        return (
+            <div className="flex items-center gap-1 cursor-pointer pl-4" ref={statusDropdownRef}>
+                <div className="relative">
+                    <button
+                        className="text-[13px] flex items-center justify-between gap-2"
+                        onClick={() => setIsStatusOpen((v) => !v)}
+                    >
+                        <span className="text-[#C72030]">{selectedStatus}</span>
+                        <span>▾</span>
+                    </button>
+                    {isStatusOpen && (
+                        <ul className="absolute left-0 mt-2 w-[150px] bg-white border border-gray-300 shadow-xl rounded-md z-10">
+                            {statusOptions.map((status) => (
+                                <li key={status}>
+                                    <button
+                                        className="w-full text-left px-4 py-2 text-[13px] hover:bg-gray-100"
+                                        onClick={() => handleStatusSelect({ status })}
+                                    >
+                                        {status}
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     return (
         <>
             <div className="flex items-center justify-end mx-6 mt-4 mb-3 text-sm">
                 <div className="flex items-center gap-3 divide-x divide-gray-400">
-                    {addType != "Issues" && addType != "Project" && addType != "Milestone" && addType != "templates" && addType != "archived" && addType != "Sprint-Gantt"  && !mid && (
-                        <div className="flex justify-center items-center">
-                            <label className="mr-2">All task</label>
-                            <Switch
-                             className={`
-                                "h-[35px] w-21"
-                                `
-                             }
-                             checked={myTasks}
-                             onChange={(e) => {
-                                const checked = e.target.checked;
-                                console.log(checked);
-                                handleAllTasks(checked);}}
-                             color="danger"
-                            />
-                        <label className="ml-2 " >My Task</label>
-                        </div>
-                    )}
-                    {addType !== "Issues" && addType !== "Sprint-Gantt" && addType !== "Sprint-Gantt" && !["Milestone", "templates", "archived"].includes(addType) && renderTypeDropdown()}
-                    {addType !== "Issues" && !["Milestone", "Project", "Task", "active_projects", "templates", "archived"].includes(addType) && renderSprintTypeDropdown()}
-                    {addType !== "Milestone" && addType !== "templates" && addType !== "archived" && (
-                        <div
-                            className="flex items-center gap-1 cursor-pointer pl-4"
-                            onClick={() =>
-                                addType === "Project"
-                                    ? setIsProjectFilter(true):
-                                    addType==="Issues"?
-                                    setIsIssueFilter(true)
-                                    : setIsFilterModalOpen(true)
-
-                            }
-                        >
-                            <Filter size={18} className={`${filter ? ' text-[#C72030]' : 'text-gray-600'}`} />
-                        </div>
-                    )}
-                    {addType !== "Milestone" && addType !== "Sprint-Gantt" && addType !== "templates" && addType !== "archived" && renderStatusDropdown()}
-
+                    {addType !== "Issues" &&
+                        addType !== "Project" &&
+                        addType !== "Milestone" &&
+                        addType !== "templates" &&
+                        addType !== "archived" &&
+                        addType !== "Sprint-Gantt" &&
+                        !mid && (
+                            <div className="flex justify-center items-center">
+                                <label className="mr-2">All task</label>
+                                <Switch
+                                    className="h-[35px] w-21"
+                                    checked={myTasks}
+                                    onChange={(e) => handleAllTasks(e.target.checked)}
+                                    color="danger"
+                                />
+                                <label className="ml-2">My Task</label>
+                            </div>
+                        )}
+                    {addType !== "Issues" &&
+                        addType !== "Sprint-Gantt" &&
+                        !["Milestone", "templates", "archived"].includes(addType) &&
+                        renderTypeDropdown()}
+                    {addType !== "Issues" &&
+                        !["Milestone", "Project", "Task", "active_projects", "templates", "archived"].includes(addType) &&
+                        renderSprintTypeDropdown()}
+                    {addType !== "Milestone" &&
+                        addType !== "templates" &&
+                        addType !== "archived" &&
+                        addType !== "Sprint-Gantt" && ( // Added Sprint-Gantt exclusion
+                            <div
+                                className="flex items-center gap-1 cursor-pointer pl-4"
+                                onClick={() =>
+                                    addType === "Project"
+                                        ? setIsProjectFilter(true)
+                                        : addType === "Issues"
+                                            ? setIsIssueFilter(true)
+                                            : setIsFilterModalOpen(true)
+                                }
+                            >
+                                <Filter size={18} className={`${filter ? "text-[#C72030]" : "text-gray-600"}`} />
+                            </div>
+                        )}
+                    {addType !== "Milestone" && addType !== "templates" && addType !== "archived" && renderStatusDropdown()}
                     {addType !== "templates" && addType !== "archived" && (
                         <button
                             onClick={handleAddClick}
@@ -396,6 +407,13 @@ const TaskActions = ({
                 />
             )}
 
+            {isAddProjectModalOpen && (
+                <AddProjectTemplate
+                    isModalOpen={isAddProjectModalOpen}
+                    setIsModalOpen={setIsAddProjectModalOpen}
+                />
+            )}
+
             {isAddMilestoneModalOpen && (
                 <AddMilestoneModal
                     isModalOpen={isAddMilestoneModalOpen}
@@ -412,7 +430,7 @@ const TaskActions = ({
 
             {isIssueFilter && (
                 <IssueFilter
-                    isModalOpen={isIssueFilter} 
+                    isModalOpen={isIssueFilter}
                     setIsModalOpen={setIsIssueFilter}
                 />
             )}
