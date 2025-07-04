@@ -106,10 +106,10 @@ export const AddPODashboard = () => {
         {/* Supplier Details Section */}
         <div className="bg-white p-6 rounded-lg shadow border">
           <div className="flex items-center gap-2 mb-6">
-           <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-    <FileText className="text-white w-4 h-4" />
-  </div>
-  <h2 className="text-lg font-semibold text-[#C72030]">SUPPLIER DETAILS</h2>
+            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
+              <FileText className="text-white w-4 h-4" />
+            </div>
+            <h2 className="text-lg font-semibold text-[#C72030]">SUPPLIER DETAILS</h2>
           </div>
 
           <div className="grid grid-cols-3 gap-6">
@@ -292,10 +292,10 @@ export const AddPODashboard = () => {
         {/* Item Details Section */}
         <div className="bg-white p-6 rounded-lg shadow border">
           <div className="flex items-center gap-2 mb-6">
-             <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-    <ListChecks className="text-white w-4 h-4" />
-  </div>
-  <h2 className="text-lg font-semibold text-[#C72030]">ITEM DETAILS</h2>
+            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
+              <ListChecks className="text-white w-4 h-4" />
+            </div>
+            <h2 className="text-lg font-semibold text-[#C72030]">ITEM DETAILS</h2>
           </div>
 
           <Button 
@@ -379,10 +379,10 @@ export const AddPODashboard = () => {
         {/* Attachment Section */}
         <div className="bg-white p-6 rounded-lg shadow border">
           <div className="flex items-center gap-2 mb-6">
-             <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-    <Paperclip className="text-white w-4 h-4" />
-  </div>
-  <h2 className="text-lg font-semibold text-[#C72030]">Attachment</h2>
+            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
+              <Paperclip className="text-white w-4 h-4" />
+            </div>
+            <h2 className="text-lg font-semibold text-[#C72030]">Attachment</h2>
           </div>
 
           <div>
