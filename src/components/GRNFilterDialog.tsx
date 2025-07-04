@@ -65,7 +65,7 @@ export const GRNFilterDialog: React.FC<GRNFilterDialogProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <TextField
               label="GRN Number"
-              placeholder="Search By GRN Number"
+              placeholder="Find By GRN Number"
               value={filters.grnNumber}
               onChange={(e) => handleInputChange('grnNumber', e.target.value)}
               fullWidth
@@ -77,7 +77,7 @@ export const GRNFilterDialog: React.FC<GRNFilterDialogProps> = ({
             
             <TextField
               label="PO Number"
-              placeholder="Search By PO Number"
+              placeholder="Find By PO Number"
               value={filters.poNumber}
               onChange={(e) => handleInputChange('poNumber', e.target.value)}
               fullWidth
