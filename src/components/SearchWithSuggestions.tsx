@@ -94,7 +94,7 @@ export const SearchWithSuggestions = ({
   };
 
   return (
-    <div className={`relative ${className}`} ref={containerRef}>
+    <div className={className} ref={containerRef}>
       <div className="relative">
         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] z-10" />
         <input
