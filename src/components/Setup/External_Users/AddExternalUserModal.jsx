@@ -3,7 +3,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import SelectBox from "../../SelectBox";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchRoles } from "../../../redux/slices/roleSlice";
+import { fetchActiveRoles } from "../../../redux/slices/roleSlice";
 import { fetchOrganizations } from "../../../redux/slices/organizationSlice";
 import {
   createExternalUser,
@@ -23,8 +23,8 @@ const AddExternalUserModal = ({
   const token = localStorage.getItem("token");
   const dispatch = useDispatch();
 
-  const { fetchRoles: roles = [] } = useSelector(
-    (state) => state.fetchRoles || {}
+  const { fetchActiveRoles: roles = [] } = useSelector(
+    (state) => state.fetchActiveRoles || {}
   );
   const { fetchOrganizations: organizations = [] } = useSelector(
     (state) => state.fetchOrganizations || {}
@@ -54,7 +54,7 @@ const AddExternalUserModal = ({
     const fetchInitialData = async () => {
       try {
         if (token) {
-          await dispatch(fetchRoles({ token })).unwrap();
+          await dispatch(fetchActiveRoles({ token })).unwrap();
           await dispatch(fetchOrganizations({ token })).unwrap();
           await dispatch(fetchCompany({ token })).unwrap();
         }
