@@ -137,7 +137,11 @@ const AddMilestoneModal = ({
         <div className="w-1/2 flex flex-col justify-between">
           <label className="block mb-2">Depends On</label>
           <SelectBox
-            options={Array.isArray(milestoneOptions) ? milestoneOptions.map((m) => ({ label: m.title, value: m.id })) : []}
+            options={
+              Array.isArray(milestoneOptions)
+                ? milestoneOptions.map((m) => ({ label: m.title, value: m.id }))
+                : []
+            }
             style={{ border: "1px solid #b3b2b2" }}
             onChange={(value) => handleSelectChange("dependsOnId", value)}
             value={formData.dependsOnId || null}
@@ -151,16 +155,22 @@ const AddMilestoneModal = ({
 };
 
 const Milestones = ({ closeModal }) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   const location = useLocation();
   const dispatch = useDispatch();
   const { id } = useParams();
 
   const { fetchUsers: users = [] } = useSelector((state) => state.fetchUsers);
-  const { fetchMilestone: milestone = [] } = useSelector((state) => state.fetchMilestone);
-  const { createProject: project = {} } = useSelector((state) => state.createProject);
+  const { fetchMilestone: milestone = [] } = useSelector(
+    (state) => state.fetchMilestone
+  );
+  const { createProject: project = {} } = useSelector(
+    (state) => state.createProject
+  );
   const { loading } = useSelector((state) => state.createMilestone);
-  const { fetchProjectDetails: projectDetail } = useSelector(state => state.fetchProjectDetails);
+  const { fetchProjectDetails: projectDetail } = useSelector(
+    (state) => state.fetchProjectDetails
+  );
 
   const [nextId, setNextId] = useState(1);
   const [isDelete, setIsDelete] = useState(false);
@@ -194,13 +204,24 @@ const Milestones = ({ closeModal }) => {
 
   const validateForm = (data) => {
     toast.dismiss();
-    if (!data.title) return toast.error("Milestone title is required.") && false;
+    if (!data.title)
+      return toast.error("Milestone title is required.") && false;
     if (!data.ownerId) return toast.error("Select project owner.") && false;
-    if (!data.startDate) return toast.error("Milestone start date is required.") && false;
-    if (!data.endDate) return toast.error("Milestone end date is required.") && false;
-    if (data.startDate < projectDetail.startDate || data.startDate > projectDetail.endDate)
-      return toast.error("Start date must be within project duration.") && false;
-    if (data.endDate < projectDetail.startDate || data.endDate > projectDetail.endDate)
+    if (!data.startDate)
+      return toast.error("Milestone start date is required.") && false;
+    if (!data.endDate)
+      return toast.error("Milestone end date is required.") && false;
+    if (
+      data.startDate < projectDetail.startDate ||
+      data.startDate > projectDetail.endDate
+    )
+      return (
+        toast.error("Start date must be within project duration.") && false
+      );
+    if (
+      data.endDate < projectDetail.startDate ||
+      data.endDate > projectDetail.endDate
+    )
       return toast.error("End date must be within project duration.") && false;
     return true;
   };
@@ -212,7 +233,9 @@ const Milestones = ({ closeModal }) => {
       start_date: data.startDate,
       end_date: data.endDate,
       depends_on_id: data.dependsOnId,
-      project_management_id: location.pathname.includes("/milestones") ? id : project?.id,
+      project_management_id: location.pathname.includes("/milestones")
+        ? id
+        : project?.id,
     },
   });
 
@@ -242,7 +265,7 @@ const Milestones = ({ closeModal }) => {
         dependsOnId: null,
       });
       setNextId(nextId + 1);
-      await dispatch(fetchMilestone({ token, id })).unwrap();
+      await dispatch(fetchMilestone({ token, id: project?.id ? project.id : id })).unwrap();
     } catch {
       toast.error("Error creating milestone.");
     } finally {
@@ -271,7 +294,7 @@ const Milestones = ({ closeModal }) => {
       if (!isDelete) {
         await dispatch(createMilestone({ token, payload })).unwrap();
       }
-      toast.dismiss()
+      toast.dismiss();
       toast.success("Milestone created successfully.");
       await dispatch(fetchMilestone({ token, id }));
       window.location.reload();
@@ -284,13 +307,19 @@ const Milestones = ({ closeModal }) => {
   };
 
   const isFormEmpty =
-    !formData.title && !formData.ownerId && !formData.startDate && !formData.endDate;
+    !formData.title &&
+    !formData.ownerId &&
+    !formData.startDate &&
+    !formData.endDate;
 
   if (isLoading) return <div className="text-center py-4">Loading...</div>;
 
   return (
     <form className="pb-12 h-full text-[12px]" onSubmit={handleSubmit}>
-      <div id="addTask" className="max-w-[90%] mx-auto h-[calc(100%-4rem)] overflow-y-auto pr-3">
+      <div
+        id="addTask"
+        className="max-w-[90%] mx-auto h-[calc(100%-4rem)] overflow-y-auto pr-3"
+      >
         {savedMilestones.map((m) => (
           <AddMilestoneModal
             key={m.id}
@@ -341,7 +370,7 @@ const Milestones = ({ closeModal }) => {
                     endDate: "",
                     dependsOnId: null,
                   });
-                  closeModal()
+                  closeModal();
                 } else {
                   window.location.reload();
                 }
