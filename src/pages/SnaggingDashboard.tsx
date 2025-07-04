@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -102,7 +101,7 @@ export const SnaggingDashboard = () => {
         <h1 className="text-2xl font-bold mb-4">SNAG LIST</h1>
         
         {/* Search Section with Filters Button */}
-        <div className="flex gap-3 mb-6">
+        <div className="flex mb-6">
           <SearchWithSuggestions
             placeholder="Search"
             onSearch={handleSearch}
@@ -111,14 +110,16 @@ export const SnaggingDashboard = () => {
           />
           <Button 
             onClick={() => handleSearch(searchTerm)}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6 py-2 h-[35px] text-sm font-medium"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6 py-2 h-[36px] text-sm font-medium"
+            style={{ borderRadius: '0px' }}
           >
             Search
           </Button>
           <Button
             variant="outline"
             onClick={() => setShowFilters(true)}
-            className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 h-[35px] text-sm font-medium"
+            className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 h-[36px] text-sm font-medium ml-3"
+            style={{ borderRadius: '0px' }}
           >
             <span className="text-sm">⊞</span>
             Filters
