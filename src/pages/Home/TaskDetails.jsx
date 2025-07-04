@@ -601,6 +601,14 @@ const Attachments = ({ attachments, id }) => {
         const selectedFiles = Array.from(event.target.files);
         if (!selectedFiles.length) return;
 
+        // ✅ Validate file sizes (10MB max per file)
+        const oversizedFiles = selectedFiles.filter((file) => file.size > 10 * 1024 * 1024);
+        if (oversizedFiles.length > 0) {
+            const fileNames = oversizedFiles.map((file) => file.name).join(", ");
+            toast.error(`File(s) too large: ${fileNames}. Max allowed size is 10MB.`);
+            return;
+        }
+
         const formData = new FormData();
         selectedFiles.forEach((file) => {
             formData.append("task_management[attachments][]", file);
@@ -689,7 +697,8 @@ const Attachments = ({ attachments, id }) => {
                         className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
                         onClick={handleAttachFile}
                     >
-                        Attach Files
+                        Attach Files{" "}
+                        <span className="text-[10px]">( Max 10 MB )</span>
                     </button>
                 </>
             ) : (
@@ -700,7 +709,8 @@ const Attachments = ({ attachments, id }) => {
                         className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
                         onClick={handleAttachFile}
                     >
-                        Attach Files
+                        Attach Files{" "}
+                        <span className="text-[10px]">( Max 10 MB )</span>
                     </button>
                 </div>
             )}

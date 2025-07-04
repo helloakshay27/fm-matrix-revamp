@@ -768,21 +768,33 @@ const MoMAdd = () => {
                     )}
 
                     <button
-                        className="text-[12px] flex items-center justify-center gap-2 text-[#C72030] px-3 py-2 w-40 bg-white border border-[#C72030] mt-4 mb-6"
+                        className="w-max text-[12px] flex items-center justify-center text-[#C72030] px-3 py-2 bg-white border border-[#C72030] mt-4 mb-6"
                         onClick={() => attachmentRef.current.click()}
                     >
-                        Attach Files
+                        Attach Files{" "}
+                        <span className="text-[10px]">( Max 10 MB )</span>
                     </button>
                     <input
                         ref={attachmentRef}
                         type="file"
                         onChange={(e) => {
                             const files = Array.from(e.target.files);
-                            setFormData((prev) => ({
-                                ...prev,
-                                attachments: [...prev.attachments, ...files],
-                            }));
-                            attachmentRef.current.value = null; // Reset file input
+
+                            const oversizedFiles = files.filter(file => file.size > 10 * 1024 * 1024);
+                            if (oversizedFiles.length > 0) {
+                                const names = oversizedFiles.map(f => f.name).join(", ");
+                                toast.error(`File(s) too large: ${names}. Max 10MB per file.`);
+                            }
+
+                            const validFiles = files.filter(file => file.size <= 10 * 1024 * 1024);
+                            if (validFiles.length > 0) {
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    attachments: [...prev.attachments, ...validFiles],
+                                }));
+                            }
+
+                            attachmentRef.current.value = null;
                         }}
                         multiple
                         hidden

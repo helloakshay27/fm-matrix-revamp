@@ -137,6 +137,13 @@ const Attachments = ({ attachments, id }) => {
         const selectedFiles = Array.from(event.target.files);
         if (!selectedFiles.length) return;
 
+        // ✅ Check for file size limit (10MB per file)
+        const oversizedFiles = selectedFiles.filter((file) => file.size > 10 * 1024 * 1024);
+        if (oversizedFiles.length > 0) {
+            toast.error("Each file must be less than 10MB.");
+            return;
+        }
+
         const formData = new FormData();
         selectedFiles.forEach((file) => {
             formData.append("project_management[attachments][]", file);
@@ -222,7 +229,8 @@ const Attachments = ({ attachments, id }) => {
                         className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
                         onClick={handleAttachFile}
                     >
-                        Attach Files
+                        Attach Files{" "}
+                        <span className="text-[10px]">( Max 10 MB )</span>
                     </button>
                 </>
             ) : (
@@ -233,8 +241,10 @@ const Attachments = ({ attachments, id }) => {
                         className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
                         onClick={handleAttachFile}
                     >
-                        Attach Files
+                        Attach Files{" "}
+                        <span className="text-[10px]">( Max 10 MB )</span>
                     </button>
+
                 </div>
             )}
 
