@@ -2,10 +2,14 @@ import { useEffect, useState, useRef } from "react";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import SelectBox from "../../../SelectBox";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUsers } from "../../../../redux/slices/userSlice";
+import {
+  fetchUsers
+} from "../../../../redux/slices/userSlice";
 import {
   createMilestone,
   fetchMilestone,
+  addSavedMilestone,
+  clearSavedMilestones
 } from "../../../../redux/slices/milestoneSlice";
 import { useLocation, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -137,11 +141,7 @@ const AddMilestoneModal = ({
         <div className="w-1/2 flex flex-col justify-between">
           <label className="block mb-2">Depends On</label>
           <SelectBox
-            options={
-              Array.isArray(milestoneOptions)
-                ? milestoneOptions.map((m) => ({ label: m.title, value: m.id }))
-                : []
-            }
+            options={Array.isArray(milestoneOptions) ? milestoneOptions.map((m) => ({ label: m.title, value: m.id })) : []}
             style={{ border: "1px solid #b3b2b2" }}
             onChange={(value) => handleSelectChange("dependsOnId", value)}
             value={formData.dependsOnId || null}
@@ -161,7 +161,7 @@ const Milestones = ({ closeModal }) => {
   const { id } = useParams();
 
   const { fetchUsers: users = [] } = useSelector((state) => state.fetchUsers);
-  const { fetchMilestone: milestone = [] } = useSelector(
+  const { fetchMilestone: milestone = [], savedMilestones = [] } = useSelector(
     (state) => state.fetchMilestone
   );
   const { createProject: project = {} } = useSelector(
@@ -174,7 +174,6 @@ const Milestones = ({ closeModal }) => {
 
   const [nextId, setNextId] = useState(1);
   const [isDelete, setIsDelete] = useState(false);
-  const [savedMilestones, setSavedMilestones] = useState([]);
   const isSubmittingRef = useRef(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -191,7 +190,7 @@ const Milestones = ({ closeModal }) => {
         setIsLoading(true);
         await Promise.all([
           dispatch(fetchUsers({ token })),
-          dispatch(fetchMilestone({ token, id })),
+          dispatch(fetchMilestone({ token, id: project?.id ? project.id : id })),
         ]);
       } catch (error) {
         toast.error("Failed to load data.");
@@ -256,7 +255,7 @@ const Milestones = ({ closeModal }) => {
     try {
       await dispatch(createMilestone({ token, payload })).unwrap();
       toast.success("Milestone created successfully.");
-      setSavedMilestones([...savedMilestones, { id: nextId, formData }]);
+      dispatch(addSavedMilestone({ id: nextId, formData }));
       setFormData({
         title: "",
         ownerId: null,
@@ -278,6 +277,7 @@ const Milestones = ({ closeModal }) => {
     if (isSubmittingRef.current) return;
 
     if (isDelete && isFormEmpty) {
+      dispatch(clearSavedMilestones());
       window.location.reload();
       return;
     }
@@ -297,6 +297,7 @@ const Milestones = ({ closeModal }) => {
       toast.dismiss();
       toast.success("Milestone created successfully.");
       await dispatch(fetchMilestone({ token, id }));
+      dispatch(clearSavedMilestones());
       window.location.reload();
     } catch {
       toast.error("Error creating milestone.");
@@ -372,6 +373,7 @@ const Milestones = ({ closeModal }) => {
                   });
                   closeModal();
                 } else {
+                  dispatch(clearSavedMilestones());
                   window.location.reload();
                 }
               }}

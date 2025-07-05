@@ -13,16 +13,7 @@ import { fetchTasks } from "../../../../redux/slices/taskSlice";
 
 import toast from "react-hot-toast";
 
-const globalTypesOptions = [
-  { value: 1, label: "bug" },
-  { value: 2, label: "task" },
-  { value: 3, label: "feature" },
-  { value: 4, label: "UI" },
-  { value: 5, label: "UX" },
-];
-
 const globalPriorityOptions = [
-  { value: 1, label: "None" },
   { value: 2, label: "Low" },
   { value: 3, label: "Medium" },
   { value: 4, label: "High" },
@@ -401,7 +392,7 @@ const Issues = ({ closeModal }) => {
         <div className="flex items-center justify-between gap-5">
           <div className="w-1/2 flex flex-col justify-between">
             <label className="block mb-2">
-              Project <span className="text-red-600">*</span>
+              Project
             </label>
             <SelectBox
               options={projectOptions}
@@ -412,7 +403,7 @@ const Issues = ({ closeModal }) => {
           </div>
           <div className="w-1/2 flex flex-col justify-between">
             <label className="block mb-2">
-              Milestone <span className="text-red-600">*</span>
+              Milestone
             </label>
             <SelectBox
               options={milestoneOptions}
