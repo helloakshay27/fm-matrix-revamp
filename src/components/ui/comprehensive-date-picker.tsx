@@ -101,39 +101,39 @@ export const ComprehensiveDatePicker: React.FC<ComprehensiveDatePickerProps> = (
 
   return (
     <div className={cn(
-      "comprehensive-date-picker bg-white rounded-none shadow-lg border-0",
-      "transition-all duration-300 ease-in-out",
+      "comprehensive-date-picker bg-white shadow-lg border-0",
+      "w-[328px] h-[386px]",
       className
     )}>
       {/* Header */}
-      <div className="date-picker-header flex items-center justify-between p-4 border-b border-gray-100">
+      <div className="date-picker-header flex items-center justify-between px-6 py-4">
         <button
           onClick={handlePrevMonth}
-          className="nav-button p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+          className="nav-button p-1 hover:bg-gray-100 rounded transition-colors duration-200"
           aria-label="Previous month"
         >
-          <ChevronLeft className="w-4 h-4 text-gray-600" />
+          <ChevronLeft className="w-5 h-5 text-gray-600" />
         </button>
         
-        <h2 className="month-year-title font-medium text-gray-900">
+        <h2 className="month-year-title text-lg font-normal text-gray-900">
           {format(currentMonth, 'MMMM yyyy')}
         </h2>
         
         <button
           onClick={handleNextMonth}
-          className="nav-button p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+          className="nav-button p-1 hover:bg-gray-100 rounded transition-colors duration-200"
           aria-label="Next month"
         >
-          <ChevronRight className="w-4 h-4 text-gray-600" />
+          <ChevronRight className="w-5 h-5 text-gray-600" />
         </button>
       </div>
 
       {/* Week Days Header */}
-      <div className="week-days-header grid grid-cols-7 border-b border-gray-100">
+      <div className="week-days-header grid grid-cols-7 px-6 pb-2">
         {weekDays.map((day) => (
           <div
             key={day}
-            className="weekday-cell text-center py-2 text-gray-500 font-medium text-sm"
+            className="weekday-cell text-center py-2 text-gray-500 font-normal text-sm"
           >
             {day}
           </div>
@@ -141,7 +141,7 @@ export const ComprehensiveDatePicker: React.FC<ComprehensiveDatePickerProps> = (
       </div>
 
       {/* Calendar Grid */}
-      <div className="calendar-grid grid grid-cols-7 gap-0 p-4">
+      <div className="calendar-grid grid grid-cols-7 gap-1 px-6 pb-6">
         {calendarDays.map((date, index) => {
           if (!date) {
             return <div key={index} className="empty-cell h-10" />;
@@ -160,15 +160,14 @@ export const ComprehensiveDatePicker: React.FC<ComprehensiveDatePickerProps> = (
               onMouseLeave={() => setHoveredDate(undefined)}
               disabled={isDisabled}
               className={cn(
-                "date-cell relative h-10 w-full flex items-center justify-center",
-                "transition-all duration-200 ease-in-out",
-                "hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50",
+                "date-cell relative h-10 w-10 flex items-center justify-center mx-auto",
+                "text-base font-normal transition-all duration-200 ease-in-out",
+                "hover:bg-gray-100 focus:outline-none",
                 {
-                  'bg-red-500 text-white rounded-full': isSelected,
-                  'border border-red-500 text-red-500 font-semibold rounded-full': isTodayDate && !isSelected,
-                  'bg-gray-100': isHovered && !isSelected,
+                  'bg-red-600 text-white rounded-full': isSelected,
+                  'text-gray-900': !isDisabled && !isSelected,
                   'text-gray-400 cursor-not-allowed': isDisabled,
-                  'text-gray-900': !isDisabled && !isSelected && !isTodayDate
+                  'bg-gray-100': isHovered && !isSelected
                 }
               )}
               aria-label={format(date, 'EEEE, MMMM do, yyyy')}
@@ -181,16 +180,16 @@ export const ComprehensiveDatePicker: React.FC<ComprehensiveDatePickerProps> = (
       </div>
 
       {/* Footer with CANCEL and OK buttons */}
-      <div className="date-picker-footer flex items-center justify-end gap-8 p-4 border-t border-gray-100">
+      <div className="date-picker-footer flex items-center justify-end gap-8 px-6 py-4 mt-auto">
         <button
           onClick={handleCancel}
-          className="cancel-button px-4 py-2 text-red-500 font-medium hover:bg-red-50 rounded transition-colors duration-200"
+          className="cancel-button text-red-600 font-medium text-sm hover:bg-red-50 px-3 py-1 rounded transition-colors duration-200"
         >
           CANCEL
         </button>
         <button
           onClick={handleOK}
-          className="ok-button px-4 py-2 text-red-500 font-medium hover:bg-red-50 rounded transition-colors duration-200"
+          className="ok-button text-red-600 font-medium text-sm hover:bg-red-50 px-3 py-1 rounded transition-colors duration-200"
         >
           OK
         </button>
