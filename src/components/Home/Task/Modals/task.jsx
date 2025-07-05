@@ -431,7 +431,7 @@ const Tasks = ({ isEdit, onCloseModal }) => {
 
   const handleAddTask = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true)
+
     if (isDelete) {
       setIsDelete(false);
       return;
@@ -450,6 +450,8 @@ const Tasks = ({ isEdit, onCloseModal }) => {
       toast.error("Please fill all required fields.");
       return;
     }
+
+    setIsSubmitting(true)
 
     const duration = calculateDuration(formData.expected_start_date, formData.target_date);
     if (duration.startsWith("Invalid")) {
@@ -495,7 +497,7 @@ const Tasks = ({ isEdit, onCloseModal }) => {
 
   const handleSubmit = async (e, editId) => {
     e.preventDefault();
-    setIsSubmitting(true);
+
     if (isDelete && isFormEmpty()) {
       window.location.reload();
       return;
@@ -515,6 +517,8 @@ const Tasks = ({ isEdit, onCloseModal }) => {
       toast.error("Please fill all required fields.");
       return;
     }
+
+    setIsSubmitting(true);
 
     const duration = calculateDuration(formData.expected_start_date, formData.target_date);
     if (duration.startsWith("Invalid")) {
@@ -545,8 +549,6 @@ const Tasks = ({ isEdit, onCloseModal }) => {
     } catch (error) {
       console.error(`Error ${isEdit ? "updating" : "creating"} task:`, error);
       toast.error(`Error ${isEdit ? "updating" : "creating"} task.`);
-    } finally {
-      setIsSubmitting(false)
     }
   };
 
