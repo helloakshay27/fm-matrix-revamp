@@ -1,5 +1,5 @@
-
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export const AddDesignInsightDashboard = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [category, setCategory] = useState('');
   const [subCategory, setSubCategory] = useState('');
   const [site, setSite] = useState('');
@@ -43,12 +44,13 @@ export const AddDesignInsightDashboard = () => {
       title: "Success",
       description: "Design Insight saved successfully!",
     });
-    // Navigate back to list
-    window.location.href = '/transitioning/design-insight';
+    // Navigate back to Design Insight list using React Router
+    navigate('/transitioning/design-insight');
   };
 
   const handleBack = () => {
-    window.location.href = '/transitioning/design-insight';
+    // Navigate back to Design Insight list using React Router
+    navigate('/transitioning/design-insight');
   };
 
   const handleMustHaveChange = (checked: boolean | "indeterminate") => {
