@@ -62,23 +62,22 @@ export const BookingsFilterDialog: React.FC<BookingsFilterDialogProps> = ({
           </Button>
         </DialogHeader>
         
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Search by Name or Email</label>
               <Input
-                placeholder="Search by Name or Email"
+                label="Search by Name or Email"
+                placeholder=""
                 value={filters.searchByNameOrEmail}
                 onChange={(e) => setFilters({ ...filters, searchByNameOrEmail: e.target.value })}
-                className="text-sm"
+                className="border-gray-300 focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
               />
             </div>
             
-            <div>
-              <label className="text-sm font-medium mb-2 block">Category</label>
+            <div className="relative">
               <Select value={filters.category} onValueChange={(value) => setFilters({ ...filters, category: value })}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Select Category" />
+                <SelectTrigger className="h-[36px] border-gray-300 focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]">
+                  <SelectValue placeholder="" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="angular-war">Angular War</SelectItem>
@@ -86,25 +85,27 @@ export const BookingsFilterDialog: React.FC<BookingsFilterDialogProps> = ({
                   <SelectItem value="vue-area">Vue Area</SelectItem>
                 </SelectContent>
               </Select>
+              <label className="absolute left-[15px] -top-[10px] text-[0.9em] text-black bg-white px-1 pointer-events-none">
+                Category
+              </label>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Scheduled On</label>
               <Input
-                placeholder="Scheduled on"
+                label="Scheduled On"
+                placeholder=""
                 value={filters.scheduledOn}
                 onChange={(e) => setFilters({ ...filters, scheduledOn: e.target.value })}
-                className="text-sm"
+                className="border-gray-300 focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
               />
             </div>
             
-            <div>
-              <label className="text-sm font-medium mb-2 block">Status</label>
+            <div className="relative">
               <Select value={filters.status} onValueChange={(value) => setFilters({ ...filters, status: value })}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Select Status" />
+                <SelectTrigger className="h-[36px] border-gray-300 focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]">
+                  <SelectValue placeholder="" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="confirmed">Confirmed</SelectItem>
@@ -112,16 +113,19 @@ export const BookingsFilterDialog: React.FC<BookingsFilterDialogProps> = ({
                   <SelectItem value="pending">Pending</SelectItem>
                 </SelectContent>
               </Select>
+              <label className="absolute left-[15px] -top-[10px] text-[0.9em] text-black bg-white px-1 pointer-events-none">
+                Status
+              </label>
             </div>
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-2 block">Booked On</label>
             <Input
-              placeholder="Booked on"
+              label="Booked On"
+              placeholder=""
               value={filters.bookedOn}
               onChange={(e) => setFilters({ ...filters, bookedOn: e.target.value })}
-              className="text-sm"
+              className="border-gray-300 focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
             />
           </div>
         </div>
