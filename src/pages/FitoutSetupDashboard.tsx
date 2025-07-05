@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Upload } from "lucide-react";
@@ -125,7 +124,8 @@ export const FitoutSetupDashboard = () => {
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <Button
           onClick={() => setIsAddCategoryOpen(true)}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+          className="hover:bg-[#C72030]/90 text-white"
+          style={{ backgroundColor: 'rgb(199 32 48 / var(--tw-text-opacity, 1))' }}
         >
           <Plus className="w-4 h-4 mr-2 stroke-[#C72030] text-white" />
           Add
