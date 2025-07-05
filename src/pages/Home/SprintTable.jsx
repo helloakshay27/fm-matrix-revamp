@@ -253,10 +253,6 @@ const SprintTable = (setIsSidebarOpen) => {
         return localStorage.getItem("selectedTaskType") || "List";
     });
 
-    useEffect(() => {
-        localStorage.setItem("selectedTaskType", selectedType);
-    }, [selectedType]);
-
     return (
         <>
             <TaskActions

@@ -33,13 +33,6 @@ const Projects = ({ setIsSidebarOpen }) => {
         }
     }, [activeTab]);
 
-    useEffect(() => {
-        localStorage.setItem("selectedTaskType", selectedType);
-    }, [selectedType]);
-
-    console.log(activeTab)
-
-
     return (
         <div className="h-full overflow-y-auto no-scrollbar">
             <div className="relative flex items-center mx-6 mt-3 mb-0 gap-10 text-sm">

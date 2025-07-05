@@ -26,10 +26,6 @@ const Tasks = ({ setIsSidebarOpen }) => {
         return localStorage.getItem("selectedTaskType") || "List";
     });
 
-    useEffect(() => {
-        localStorage.setItem("selectedTaskType", selectedType);
-    }, [selectedType]);
-
     return (
         <div className="h-full overflow-y-auto no-scrollbar">
             <h3 className="text-[11px] text-gray-400 mx-6 my-4">
