@@ -75,11 +75,11 @@ const Boards = ({ color, add, title, count = 0, children, className, onDrop }) =
                 </h3>
 
                 <div className="flex items-center gap-2 absolute top-0 right-0">
-                    {add && !isCollapsed && (
+                    {/* {add && !isCollapsed && (
                         <button className="bg-white p-1 rounded-md shadow-md">
                             <Plus size={15} className="text-[#E95420]" />
                         </button>
-                    )}
+                    )} */}
                     <button
                         ref={btnRef}
                         className="bg-white p-1 rounded-md shadow-md"
