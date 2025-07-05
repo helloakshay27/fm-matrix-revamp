@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -175,7 +174,7 @@ export const DesignInsightsDashboard = () => {
             {designInsightsData.map((item) => (
               <TableRow key={item.id} className="hover:bg-gray-50">
                 <TableCell 
-                  className="text-blue-600 font-medium cursor-pointer hover:underline"
+                  className="text-gray-900 font-medium cursor-pointer hover:underline"
                   onClick={() => handleRowClick(item.id)}
                 >
                   {item.id}
