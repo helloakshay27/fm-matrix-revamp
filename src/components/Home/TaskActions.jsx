@@ -348,7 +348,8 @@ const TaskActions = ({
                                 <Filter size={18} className={`${filter ? "text-[#C72030]" : "text-gray-600"}`} />
                             </div>
                         )}
-                    {addType !== "Milestone" && addType !== "templates" && addType !== "archived" && renderStatusDropdown()}
+                    {addType !== "Milestone" && addType !== "templates" && addType !== "archived" && addType !== "Sprint-Gantt" && renderStatusDropdown()}
+
                     {addType !== "templates" && addType !== "archived" && (
                         <button
                             onClick={handleAddClick}
