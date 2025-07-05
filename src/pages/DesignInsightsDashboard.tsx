@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Download, Filter, RotateCcw, Eye } from "lucide-react";
+import { Plus, Download, Filter, RotateCcw } from "lucide-react";
 import { DesignInsightFilterModal } from '@/components/DesignInsightFilterModal';
 import { ExportModal } from '@/components/ExportModal';
 
@@ -21,7 +20,6 @@ export const DesignInsightsDashboard = () => {
   const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [activeFilters, setActiveFilters] = useState<FilterState>({
     dateRange: '',
     zone: '',
@@ -175,7 +173,7 @@ export const DesignInsightsDashboard = () => {
     ].join('\n');
 
     // Create and download the CSV file
-    const blob = new Blob([csvData], { type: 'text/csv;charset-utf-8;' });
+    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
@@ -195,22 +193,6 @@ export const DesignInsightsDashboard = () => {
     URL.revokeObjectURL(url);
 
     console.log(`Exported ${filteredData.length} records to CSV`);
-  };
-
-  const handleSelectItem = (itemId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedItems([...selectedItems, itemId]);
-    } else {
-      setSelectedItems(selectedItems.filter(id => id !== itemId));
-    }
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedItems(filteredData.map(item => item.id));
-    } else {
-      setSelectedItems([]);
-    }
   };
 
   const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
@@ -295,177 +277,57 @@ export const DesignInsightsDashboard = () => {
         </div>
       </div>
 
-      {/* Table Container with exact design specifications */}
-      <div className="bg-white rounded-lg border overflow-hidden" style={{ width: '1524px', minHeight: '196px' }}>
-        <div className="overflow-x-auto">
-          <table className="w-full border-separate border-spacing-0">
-            <thead>
-              <tr style={{ backgroundColor: '#C4B89D', height: '40px' }}>
-                <th className="w-5 px-5 py-3 text-left border-b border-gray-200" style={{ paddingLeft: '20px', paddingRight: '16px', paddingTop: '12px', paddingBottom: '12px' }}>
-                  <Checkbox 
-                    checked={selectedItems.length === filteredData.length && filteredData.length > 0}
-                    onCheckedChange={handleSelectAll}
-                    className="w-4 h-4"
-                  />
-                </th>
-                <th className="px-10 py-3 text-left border-b border-gray-200" style={{ paddingLeft: '40px' }}>
-                  <span style={{ fontFamily: 'Work Sans', fontSize: '14px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                    View
-                  </span>
-                </th>
-                <th className="px-4 py-3 text-left border-b border-gray-200">
-                  <span style={{ fontFamily: 'Work Sans', fontSize: '14px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                    ID
-                  </span>
-                </th>
-                <th className="px-4 py-3 text-left border-b border-gray-200">
-                  <span style={{ fontFamily: 'Work Sans', fontSize: '14px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                    Date
-                  </span>
-                </th>
-                <th className="px-4 py-3 text-left border-b border-gray-200">
-                  <span style={{ fontFamily: 'Work Sans', fontSize: '14px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                    Site
-                  </span>
-                </th>
-                <th className="px-4 py-3 text-left border-b border-gray-200">
-                  <span style={{ fontFamily: 'Work Sans', fontSize: '14px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                    Zone
-                  </span>
-                </th>
-                <th className="px-4 py-3 text-left border-b border-gray-200">
-                  <span style={{ fontFamily: 'Work Sans', fontSize: '14px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                    Created by
-                  </span>
-                </th>
-                <th className="px-4 py-3 text-left border-b border-gray-200">
-                  <span style={{ fontFamily: 'Work Sans', fontSize: '14px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                    Location
-                  </span>
-                </th>
-                <th className="px-4 py-3 text-left border-b border-gray-200">
-                  <span style={{ fontFamily: 'Work Sans', fontSize: '14px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                    Observation
-                  </span>
-                </th>
-                <th className="px-4 py-3 text-left border-b border-gray-200">
-                  <span style={{ fontFamily: 'Work Sans', fontSize: '14px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                    Recommendation
-                  </span>
-                </th>
-                <th className="px-4 py-3 text-left border-b border-gray-200">
-                  <span style={{ fontFamily: 'Work Sans', fontSize: '14px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                    Category
-                  </span>
-                </th>
-                <th className="px-4 py-3 text-left border-b border-gray-200">
-                  <span style={{ fontFamily: 'Work Sans', fontSize: '14px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                    Sub category
-                  </span>
-                </th>
-                <th className="px-4 py-3 text-left border-b border-gray-200">
-                  <span style={{ fontFamily: 'Work Sans', fontSize: '14px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                    Categorization
-                  </span>
-                </th>
-                <th className="px-4 py-3 text-left border-b border-gray-200">
-                  <span style={{ fontFamily: 'Work Sans', fontSize: '14px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                    Tag
-                  </span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredData.length === 0 ? (
-                <tr>
-                  <td colSpan={14} className="text-center py-8 text-gray-500">
-                    {hasActiveFilters ? 'No results found for the selected filters.' : 'No data available.'}
-                  </td>
-                </tr>
-              ) : (
-                filteredData.map((item, index) => (
-                  <tr key={item.id} className="hover:bg-gray-50 border-b border-gray-200">
-                    <td className="w-5 px-5 py-3" style={{ paddingLeft: '20px', paddingRight: '16px', paddingTop: '12px', paddingBottom: '12px' }}>
-                      <Checkbox
-                        checked={selectedItems.includes(item.id)}
-                        onCheckedChange={(checked) => handleSelectItem(item.id, checked as boolean)}
-                        className="w-4 h-4"
-                      />
-                    </td>
-                    <td className="px-10 py-3" style={{ paddingLeft: '40px' }}>
-                      <button
-                        onClick={() => handleRowClick(item.id)}
-                        className="text-gray-600 hover:text-gray-800"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span style={{ fontFamily: 'Work Sans', fontSize: '12px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                        {item.id}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span style={{ fontFamily: 'Work Sans', fontSize: '12px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                        {item.date}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span style={{ fontFamily: 'Work Sans', fontSize: '12px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                        {item.site}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span style={{ fontFamily: 'Work Sans', fontSize: '12px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                        {item.zone}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span style={{ fontFamily: 'Work Sans', fontSize: '12px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                        {item.createdBy}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span style={{ fontFamily: 'Work Sans', fontSize: '12px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                        {item.location}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span style={{ fontFamily: 'Work Sans', fontSize: '12px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                        {item.observation}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span style={{ fontFamily: 'Work Sans', fontSize: '12px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                        {item.recommendation}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span style={{ fontFamily: 'Work Sans', fontSize: '12px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                        {item.category}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span style={{ fontFamily: 'Work Sans', fontSize: '12px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                        {item.subCategory}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span style={{ fontFamily: 'Work Sans', fontSize: '12px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                        {item.categorization}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span style={{ fontFamily: 'Work Sans', fontSize: '12px', fontWeight: 'regular', lineHeight: 'auto', letterSpacing: '0%', color: '#1A1A1A', opacity: '100%' }}>
-                        {item.tag}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      {/* Table */}
+      <div className="bg-white rounded-lg border overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50">
+              <TableHead className="font-semibold">ID</TableHead>
+              <TableHead className="font-semibold">Date</TableHead>
+              <TableHead className="font-semibold">Site</TableHead>
+              <TableHead className="font-semibold">Zone</TableHead>
+              <TableHead className="font-semibold">Created by</TableHead>
+              <TableHead className="font-semibold">location</TableHead>
+              <TableHead className="font-semibold">Observation</TableHead>
+              <TableHead className="font-semibold">Recommendation</TableHead>
+              <TableHead className="font-semibold">Category</TableHead>
+              <TableHead className="font-semibold">Sub category</TableHead>
+              <TableHead className="font-semibold">Categorization</TableHead>
+              <TableHead className="font-semibold">Tag</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredData.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={12} className="text-center py-8 text-gray-500">
+                  {hasActiveFilters ? 'No results found for the selected filters.' : 'No data available.'}
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredData.map((item) => (
+                <TableRow key={item.id} className="hover:bg-gray-50">
+                  <TableCell 
+                    className="text-gray-900 font-medium cursor-pointer hover:underline"
+                    onClick={() => handleRowClick(item.id)}
+                  >
+                    {item.id}
+                  </TableCell>
+                  <TableCell>{item.date}</TableCell>
+                  <TableCell>{item.site}</TableCell>
+                  <TableCell>{item.zone}</TableCell>
+                  <TableCell>{item.createdBy}</TableCell>
+                  <TableCell>{item.location}</TableCell>
+                  <TableCell>{item.observation}</TableCell>
+                  <TableCell>{item.recommendation}</TableCell>
+                  <TableCell>{item.category}</TableCell>
+                  <TableCell>{item.subCategory}</TableCell>
+                  <TableCell>{item.categorization}</TableCell>
+                  <TableCell>{item.tag}</TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       <DesignInsightFilterModal 
