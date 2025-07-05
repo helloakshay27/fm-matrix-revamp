@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -5,9 +6,26 @@ import { Plus, Download, Filter, RotateCcw } from "lucide-react";
 import { DesignInsightFilterModal } from '@/components/DesignInsightFilterModal';
 import { ExportModal } from '@/components/ExportModal';
 
+interface FilterState {
+  dateRange: string;
+  zone: string;
+  category: string;
+  subCategory: string;
+  mustHave: string;
+  createdBy: string;
+}
+
 export const DesignInsightsDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<FilterState>({
+    dateRange: '',
+    zone: '',
+    category: '',
+    subCategory: '',
+    mustHave: '',
+    createdBy: ''
+  });
 
   const designInsightsData = [
     {
@@ -82,6 +100,16 @@ export const DesignInsightsDashboard = () => {
     }
   ];
 
+  // Filter the data based on active filters
+  const filteredData = designInsightsData.filter((item) => {
+    const matchesZone = !activeFilters.zone || item.zone.toLowerCase().includes(activeFilters.zone);
+    const matchesCategory = !activeFilters.category || item.category.toLowerCase().includes(activeFilters.category);
+    const matchesSubCategory = !activeFilters.subCategory || item.subCategory.toLowerCase().includes(activeFilters.subCategory);
+    const matchesCreatedBy = !activeFilters.createdBy || item.createdBy.toLowerCase().includes(activeFilters.createdBy);
+    
+    return matchesZone && matchesCategory && matchesSubCategory && matchesCreatedBy;
+  });
+
   const handleAddClick = () => {
     window.location.href = '/transitioning/design-insight/add';
   };
@@ -89,6 +117,24 @@ export const DesignInsightsDashboard = () => {
   const handleRowClick = (id: string) => {
     window.location.href = `/transitioning/design-insight/details${id.replace('#', '/')}`;
   };
+
+  const handleApplyFilters = (filters: FilterState) => {
+    setActiveFilters(filters);
+    console.log('Filters applied to dashboard:', filters);
+  };
+
+  const handleResetFilters = () => {
+    setActiveFilters({
+      dateRange: '',
+      zone: '',
+      category: '',
+      subCategory: '',
+      mustHave: '',
+      createdBy: ''
+    });
+  };
+
+  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
 
   return (
     <div className="flex-1 p-6 bg-white min-h-screen">
@@ -101,13 +147,32 @@ export const DesignInsightsDashboard = () => {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">DESIGN INSIGHTS</h1>
         
+        {/* Active Filters Indicator */}
+        {hasActiveFilters && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-blue-800">
+                Filters active - Showing {filteredData.length} of {designInsightsData.length} results
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResetFilters}
+                className="text-blue-600 border-blue-300 hover:bg-blue-100"
+              >
+                Clear All
+              </Button>
+            </div>
+          </div>
+        )}
+        
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-2">
           <Button 
             onClick={handleAddClick}
             className="bg-[#C72030] hover:bg-[#A61B28] text-white"
           >
-<Plus className="w-4 h-4 mr-2 text-[#C72030] stroke-[#C72030]" />
+            <Plus className="w-4 h-4 mr-2 text-[#C72030] stroke-[#C72030]" />
             Add
           </Button>
           <Button 
@@ -135,17 +200,17 @@ export const DesignInsightsDashboard = () => {
           <Button 
             onClick={() => setIsFilterOpen(true)}
             variant="outline" 
-            className="border-gray-400 text-gray-700 hover:bg-gray-50"
+            className={`border-gray-400 text-gray-700 hover:bg-gray-50 ${hasActiveFilters ? 'bg-blue-50 border-blue-400 text-blue-700' : ''}`}
           >
             <Filter className="w-4 h-4 mr-2" />
-            Filter
+            Filter {hasActiveFilters && `(${Object.values(activeFilters).filter(v => v).length})`}
           </Button>
           <Button 
+            onClick={handleResetFilters}
             variant="outline" 
             className="bg-[#C72030] text-white hover:bg-[#A61B28]"
           >
-           <RotateCcw className="w-4 h-4 mr-2 text-[#D92818]" />
-
+            <RotateCcw className="w-4 h-4 mr-2 text-[#D92818]" />
             Reset
           </Button>
         </div>
@@ -171,34 +236,43 @@ export const DesignInsightsDashboard = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {designInsightsData.map((item) => (
-              <TableRow key={item.id} className="hover:bg-gray-50">
-                <TableCell 
-                  className="text-gray-900 font-medium cursor-pointer hover:underline"
-                  onClick={() => handleRowClick(item.id)}
-                >
-                  {item.id}
+            {filteredData.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={12} className="text-center py-8 text-gray-500">
+                  {hasActiveFilters ? 'No results found for the selected filters.' : 'No data available.'}
                 </TableCell>
-                <TableCell>{item.date}</TableCell>
-                <TableCell>{item.site}</TableCell>
-                <TableCell>{item.zone}</TableCell>
-                <TableCell>{item.createdBy}</TableCell>
-                <TableCell>{item.location}</TableCell>
-                <TableCell>{item.observation}</TableCell>
-                <TableCell>{item.recommendation}</TableCell>
-                <TableCell>{item.category}</TableCell>
-                <TableCell>{item.subCategory}</TableCell>
-                <TableCell>{item.categorization}</TableCell>
-                <TableCell>{item.tag}</TableCell>
               </TableRow>
-            ))}
+            ) : (
+              filteredData.map((item) => (
+                <TableRow key={item.id} className="hover:bg-gray-50">
+                  <TableCell 
+                    className="text-gray-900 font-medium cursor-pointer hover:underline"
+                    onClick={() => handleRowClick(item.id)}
+                  >
+                    {item.id}
+                  </TableCell>
+                  <TableCell>{item.date}</TableCell>
+                  <TableCell>{item.site}</TableCell>
+                  <TableCell>{item.zone}</TableCell>
+                  <TableCell>{item.createdBy}</TableCell>
+                  <TableCell>{item.location}</TableCell>
+                  <TableCell>{item.observation}</TableCell>
+                  <TableCell>{item.recommendation}</TableCell>
+                  <TableCell>{item.category}</TableCell>
+                  <TableCell>{item.subCategory}</TableCell>
+                  <TableCell>{item.categorization}</TableCell>
+                  <TableCell>{item.tag}</TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
 
       <DesignInsightFilterModal 
         isOpen={isFilterOpen} 
-        onClose={() => setIsFilterOpen(false)} 
+        onClose={() => setIsFilterOpen(false)}
+        onApplyFilters={handleApplyFilters}
       />
       
       <ExportModal 

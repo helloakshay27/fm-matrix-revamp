@@ -8,24 +8,88 @@ import { useToast } from '@/hooks/use-toast';
 interface DesignInsightFilterModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onApplyFilters?: (filters: FilterState) => void;
 }
 
-export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> = ({ isOpen, onClose }) => {
+interface FilterState {
+  dateRange: string;
+  zone: string;
+  category: string;
+  subCategory: string;
+  mustHave: string;
+  createdBy: string;
+}
+
+export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onApplyFilters 
+}) => {
   const { toast } = useToast();
-  const [dateRange, setDateRange] = useState('');
-  const [zone, setZone] = useState('');
-  const [category, setCategory] = useState('');
-  const [subCategory, setSubCategory] = useState('');
-  const [mustHave, setMustHave] = useState('');
-  const [createdBy, setCreatedBy] = useState('');
+  const [filters, setFilters] = useState<FilterState>({
+    dateRange: '',
+    zone: '',
+    category: '',
+    subCategory: '',
+    mustHave: '',
+    createdBy: ''
+  });
+
+  // Sample data for suggestions - in real app this would come from API/props
+  const zoneSuggestions = ['Mumbai', 'NCR', 'Bangalore', 'Chennai', 'Delhi'];
+  const categorySuggestions = ['Landscape', 'Façade', 'Security & surveillance', 'Inside Units', 'Electrical', 'Plumbing'];
+  const subCategorySuggestions = ['Access Control', 'CCTV', 'Bedroom', 'Entry-Exit', 'Kitchen', 'Bathroom'];
+  const createdBySuggestions = ['Sony Bhosle', 'Robert Day2', 'Sanket Patil', 'Devesh Jain', 'Admin User'];
+
+  const handleFilterChange = (field: keyof FilterState, value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   const handleApply = () => {
-    console.log('Filter applied:', { dateRange, zone, category, subCategory, mustHave, createdBy });
+    console.log('Applying filters:', filters);
+    
+    // Check if any filters are selected
+    const hasActiveFilters = Object.values(filters).some(value => value !== '');
+    
+    if (!hasActiveFilters) {
+      toast({
+        title: "No filters selected",
+        description: "Please select at least one filter to apply.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Call the callback function to apply filters
+    if (onApplyFilters) {
+      onApplyFilters(filters);
+    }
+
     toast({
       title: "Success",
-      description: "Filter applied successfully!",
+      description: "Filters applied successfully!",
     });
+    
     onClose();
+  };
+
+  const handleReset = () => {
+    setFilters({
+      dateRange: '',
+      zone: '',
+      category: '',
+      subCategory: '',
+      mustHave: '',
+      createdBy: ''
+    });
+    
+    toast({
+      title: "Filters Reset",
+      description: "All filters have been cleared.",
+    });
   };
 
   const fieldStyles = {
@@ -39,14 +103,15 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Filter</DialogTitle>
+          <DialogTitle>Filter Design Insights</DialogTitle>
         </DialogHeader>
         
         <div className="grid grid-cols-2 gap-6 py-4">
           <TextField
+            label="Date Range"
             placeholder="Select Date Range"
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
+            value={filters.dateRange}
+            onChange={(e) => handleFilterChange('dateRange', e.target.value)}
             fullWidth
             variant="outlined"
             InputLabelProps={{ shrink: true }}
@@ -60,14 +125,14 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
               labelId="zone-label"
               label="Zone"
               displayEmpty
-              value={zone}
-              onChange={(e) => setZone(e.target.value)}
+              value={filters.zone}
+              onChange={(e) => handleFilterChange('zone', e.target.value)}
               sx={fieldStyles}
             >
               <MenuItem value=""><em>Select Zone</em></MenuItem>
-              <MenuItem value="mumbai">Mumbai</MenuItem>
-              <MenuItem value="ncr">NCR</MenuItem>
-              <MenuItem value="bangalore">Bangalore</MenuItem>
+              {zoneSuggestions.map((zone) => (
+                <MenuItem key={zone} value={zone.toLowerCase()}>{zone}</MenuItem>
+              ))}
             </MuiSelect>
           </FormControl>
 
@@ -77,15 +142,14 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
               labelId="category-label"
               label="Category"
               displayEmpty
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              value={filters.category}
+              onChange={(e) => handleFilterChange('category', e.target.value)}
               sx={fieldStyles}
             >
               <MenuItem value=""><em>Select Category</em></MenuItem>
-              <MenuItem value="landscape">Landscape</MenuItem>
-              <MenuItem value="facade">Façade</MenuItem>
-              <MenuItem value="security">Security & surveillance</MenuItem>
-              <MenuItem value="inside-units">Inside Units</MenuItem>
+              {categorySuggestions.map((category) => (
+                <MenuItem key={category} value={category.toLowerCase()}>{category}</MenuItem>
+              ))}
             </MuiSelect>
           </FormControl>
 
@@ -95,15 +159,14 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
               labelId="sub-category-label"
               label="Sub-category"
               displayEmpty
-              value={subCategory}
-              onChange={(e) => setSubCategory(e.target.value)}
+              value={filters.subCategory}
+              onChange={(e) => handleFilterChange('subCategory', e.target.value)}
               sx={fieldStyles}
             >
               <MenuItem value=""><em>Select Sub Category</em></MenuItem>
-              <MenuItem value="access-control">Access Control</MenuItem>
-              <MenuItem value="cctv">CCTV</MenuItem>
-              <MenuItem value="bedroom">Bedroom</MenuItem>
-              <MenuItem value="entry-exit">Entry-Exit</MenuItem>
+              {subCategorySuggestions.map((subCategory) => (
+                <MenuItem key={subCategory} value={subCategory.toLowerCase()}>{subCategory}</MenuItem>
+              ))}
             </MuiSelect>
           </FormControl>
 
@@ -113,8 +176,8 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
               labelId="must-have-label"
               label="Must have"
               displayEmpty
-              value={mustHave}
-              onChange={(e) => setMustHave(e.target.value)}
+              value={filters.mustHave}
+              onChange={(e) => handleFilterChange('mustHave', e.target.value)}
               sx={fieldStyles}
             >
               <MenuItem value=""><em>Select</em></MenuItem>
@@ -129,20 +192,26 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
               labelId="created-by-label"
               label="Created by"
               displayEmpty
-              value={createdBy}
-              onChange={(e) => setCreatedBy(e.target.value)}
+              value={filters.createdBy}
+              onChange={(e) => handleFilterChange('createdBy', e.target.value)}
               sx={fieldStyles}
             >
               <MenuItem value=""><em>Select</em></MenuItem>
-              <MenuItem value="sony-bhosle">Sony Bhosle</MenuItem>
-              <MenuItem value="robert-day">Robert Day2</MenuItem>
-              <MenuItem value="sanket-patil">Sanket Patil</MenuItem>
-              <MenuItem value="devesh-jain">Devesh Jain</MenuItem>
+              {createdBySuggestions.map((creator) => (
+                <MenuItem key={creator} value={creator.toLowerCase()}>{creator}</MenuItem>
+              ))}
             </MuiSelect>
           </FormControl>
         </div>
 
-        <div className="flex justify-end pt-4">
+        <div className="flex justify-end gap-3 pt-4">
+          <Button 
+            variant="outline"
+            onClick={handleReset}
+            className="px-6"
+          >
+            Reset
+          </Button>
           <Button 
             className="bg-green-600 hover:bg-green-700 text-white px-8"
             onClick={handleApply}
