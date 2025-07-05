@@ -2,7 +2,9 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
 
 interface DesignInsightFilterModalProps {
@@ -46,6 +48,7 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
       ...prev,
       [field]: value
     }));
+    console.log(`Filter ${field} changed to:`, value);
   };
 
   const handleApply = () => {
@@ -92,13 +95,6 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
     });
   };
 
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-    },
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
@@ -107,101 +103,93 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
         </DialogHeader>
         
         <div className="grid grid-cols-2 gap-6 py-4">
-          <TextField
-            label="Date Range"
-            placeholder="Select Date Range"
-            value={filters.dateRange}
-            onChange={(e) => handleFilterChange('dateRange', e.target.value)}
-            fullWidth
-            variant="outlined"
-            InputLabelProps={{ shrink: true }}
-            InputProps={{ sx: fieldStyles }}
-            sx={{ mt: 1 }}
-          />
+          <div className="space-y-2">
+            <Label htmlFor="dateRange">Date Range</Label>
+            <Input
+              id="dateRange"
+              placeholder="Select Date Range"
+              value={filters.dateRange}
+              onChange={(e) => handleFilterChange('dateRange', e.target.value)}
+              className="h-9"
+            />
+          </div>
 
-          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-            <InputLabel id="zone-label" shrink>Zone</InputLabel>
-            <MuiSelect
-              labelId="zone-label"
-              label="Zone"
-              displayEmpty
-              value={filters.zone}
-              onChange={(e) => handleFilterChange('zone', e.target.value)}
-              sx={fieldStyles}
-            >
-              <MenuItem value=""><em>Select Zone</em></MenuItem>
-              {zoneSuggestions.map((zone) => (
-                <MenuItem key={zone} value={zone.toLowerCase()}>{zone}</MenuItem>
-              ))}
-            </MuiSelect>
-          </FormControl>
+          <div className="space-y-2">
+            <Label htmlFor="zone">Zone</Label>
+            <Select value={filters.zone} onValueChange={(value) => handleFilterChange('zone', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Select Zone" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border shadow-md">
+                {zoneSuggestions.map((zone) => (
+                  <SelectItem key={zone} value={zone.toLowerCase()}>
+                    {zone}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-            <InputLabel id="category-label" shrink>Category</InputLabel>
-            <MuiSelect
-              labelId="category-label"
-              label="Category"
-              displayEmpty
-              value={filters.category}
-              onChange={(e) => handleFilterChange('category', e.target.value)}
-              sx={fieldStyles}
-            >
-              <MenuItem value=""><em>Select Category</em></MenuItem>
-              {categorySuggestions.map((category) => (
-                <MenuItem key={category} value={category.toLowerCase()}>{category}</MenuItem>
-              ))}
-            </MuiSelect>
-          </FormControl>
+          <div className="space-y-2">
+            <Label htmlFor="category">Category</Label>
+            <Select value={filters.category} onValueChange={(value) => handleFilterChange('category', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Select Category" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border shadow-md">
+                {categorySuggestions.map((category) => (
+                  <SelectItem key={category} value={category.toLowerCase()}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-            <InputLabel id="sub-category-label" shrink>Sub-category</InputLabel>
-            <MuiSelect
-              labelId="sub-category-label"
-              label="Sub-category"
-              displayEmpty
-              value={filters.subCategory}
-              onChange={(e) => handleFilterChange('subCategory', e.target.value)}
-              sx={fieldStyles}
-            >
-              <MenuItem value=""><em>Select Sub Category</em></MenuItem>
-              {subCategorySuggestions.map((subCategory) => (
-                <MenuItem key={subCategory} value={subCategory.toLowerCase()}>{subCategory}</MenuItem>
-              ))}
-            </MuiSelect>
-          </FormControl>
+          <div className="space-y-2">
+            <Label htmlFor="subCategory">Sub-category</Label>
+            <Select value={filters.subCategory} onValueChange={(value) => handleFilterChange('subCategory', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Select Sub Category" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border shadow-md">
+                {subCategorySuggestions.map((subCategory) => (
+                  <SelectItem key={subCategory} value={subCategory.toLowerCase()}>
+                    {subCategory}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-            <InputLabel id="must-have-label" shrink>Must have</InputLabel>
-            <MuiSelect
-              labelId="must-have-label"
-              label="Must have"
-              displayEmpty
-              value={filters.mustHave}
-              onChange={(e) => handleFilterChange('mustHave', e.target.value)}
-              sx={fieldStyles}
-            >
-              <MenuItem value=""><em>Select</em></MenuItem>
-              <MenuItem value="yes">Yes</MenuItem>
-              <MenuItem value="no">No</MenuItem>
-            </MuiSelect>
-          </FormControl>
+          <div className="space-y-2">
+            <Label htmlFor="mustHave">Must have</Label>
+            <Select value={filters.mustHave} onValueChange={(value) => handleFilterChange('mustHave', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border shadow-md">
+                <SelectItem value="yes">Yes</SelectItem>
+                <SelectItem value="no">No</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-            <InputLabel id="created-by-label" shrink>Created by</InputLabel>
-            <MuiSelect
-              labelId="created-by-label"
-              label="Created by"
-              displayEmpty
-              value={filters.createdBy}
-              onChange={(e) => handleFilterChange('createdBy', e.target.value)}
-              sx={fieldStyles}
-            >
-              <MenuItem value=""><em>Select</em></MenuItem>
-              {createdBySuggestions.map((creator) => (
-                <MenuItem key={creator} value={creator.toLowerCase()}>{creator}</MenuItem>
-              ))}
-            </MuiSelect>
-          </FormControl>
+          <div className="space-y-2">
+            <Label htmlFor="createdBy">Created by</Label>
+            <Select value={filters.createdBy} onValueChange={(value) => handleFilterChange('createdBy', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border shadow-md">
+                {createdBySuggestions.map((creator) => (
+                  <SelectItem key={creator} value={creator.toLowerCase()}>
+                    {creator}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-4">
