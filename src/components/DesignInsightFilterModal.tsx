@@ -1,11 +1,11 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ResponsiveDatePicker } from "@/components/ui/responsive-date-picker";
 import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
 
 interface DesignInsightFilterModalProps {
   isOpen: boolean;
@@ -49,6 +49,11 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
       [field]: value
     }));
     console.log(`Filter ${field} changed to:`, value);
+  };
+
+  const handleDateChange = (date: Date) => {
+    const formattedDate = format(date, 'dd/MM/yyyy');
+    handleFilterChange('dateRange', formattedDate);
   };
 
   const handleApply = () => {
@@ -105,11 +110,10 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
         <div className="grid grid-cols-2 gap-6 py-4">
           <div className="space-y-2">
             <Label htmlFor="dateRange">Date Range</Label>
-            <Input
-              id="dateRange"
+            <ResponsiveDatePicker
+              value={filters.dateRange ? new Date(filters.dateRange.split('/').reverse().join('-')) : undefined}
+              onChange={handleDateChange}
               placeholder="Select Date Range"
-              value={filters.dateRange}
-              onChange={(e) => handleFilterChange('dateRange', e.target.value)}
               className="h-9"
             />
           </div>
@@ -120,7 +124,7 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
               <SelectTrigger className="h-9">
                 <SelectValue placeholder="Select Zone" />
               </SelectTrigger>
-              <SelectContent className="bg-white border shadow-md">
+              <SelectContent className="bg-white border shadow-md z-50">
                 {zoneSuggestions.map((zone) => (
                   <SelectItem key={zone} value={zone.toLowerCase()}>
                     {zone}
@@ -136,7 +140,7 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
               <SelectTrigger className="h-9">
                 <SelectValue placeholder="Select Category" />
               </SelectTrigger>
-              <SelectContent className="bg-white border shadow-md">
+              <SelectContent className="bg-white border shadow-md z-50">
                 {categorySuggestions.map((category) => (
                   <SelectItem key={category} value={category.toLowerCase()}>
                     {category}
@@ -152,7 +156,7 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
               <SelectTrigger className="h-9">
                 <SelectValue placeholder="Select Sub Category" />
               </SelectTrigger>
-              <SelectContent className="bg-white border shadow-md">
+              <SelectContent className="bg-white border shadow-md z-50">
                 {subCategorySuggestions.map((subCategory) => (
                   <SelectItem key={subCategory} value={subCategory.toLowerCase()}>
                     {subCategory}
@@ -168,7 +172,7 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
               <SelectTrigger className="h-9">
                 <SelectValue placeholder="Select" />
               </SelectTrigger>
-              <SelectContent className="bg-white border shadow-md">
+              <SelectContent className="bg-white border shadow-md z-50">
                 <SelectItem value="yes">Yes</SelectItem>
                 <SelectItem value="no">No</SelectItem>
               </SelectContent>
@@ -181,7 +185,7 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
               <SelectTrigger className="h-9">
                 <SelectValue placeholder="Select" />
               </SelectTrigger>
-              <SelectContent className="bg-white border shadow-md">
+              <SelectContent className="bg-white border shadow-md z-50">
                 {createdBySuggestions.map((creator) => (
                   <SelectItem key={creator} value={creator.toLowerCase()}>
                     {creator}
