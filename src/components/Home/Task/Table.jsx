@@ -1106,7 +1106,7 @@ const TaskTable = () => {
       {renderError}
       {content}
 
-      {data.length > 0 && (
+      {data.length > 0 && !loadingTasks && (
         <div className=" flex items-center justify-start gap-4 mt-4 text-[12px]">
           <button
             onClick={() => table.previousPage()}
