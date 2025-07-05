@@ -41,7 +41,7 @@ export const DesignInsightDetailsDashboard = () => {
 
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="font-['Work_Sans'] font-semibold text-[18px] leading-auto tracking-[0%] text-[#1A1A1A]">
           DESIGN INSIGHT DETAILS ({designInsightData.id})
         </h1>
         <Button 
