@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, isBefore, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -47,8 +47,12 @@ export const ComprehensiveDatePicker: React.FC<ComprehensiveDatePickerProps> = (
     const startWeekday = start.getDay();
     const endWeekday = end.getDay();
     
-    const paddingStart = Array(startWeekday).fill(null);
-    const paddingEnd = Array(6 - endWeekday).fill(null);
+    // Convert Sunday = 0 to Monday = 0 format
+    const mondayStartWeekday = startWeekday === 0 ? 6 : startWeekday - 1;
+    const mondayEndWeekday = endWeekday === 0 ? 6 : endWeekday - 1;
+    
+    const paddingStart = Array(mondayStartWeekday).fill(null);
+    const paddingEnd = Array(6 - mondayEndWeekday).fill(null);
     
     return [...paddingStart, ...days, ...paddingEnd];
   }, [currentMonth]);
@@ -73,12 +77,6 @@ export const ComprehensiveDatePicker: React.FC<ComprehensiveDatePickerProps> = (
     setCurrentMonth(prev => addMonths(prev, 1));
   };
 
-  const handleTodayClick = () => {
-    const today = new Date();
-    setCurrentMonth(today);
-    setSelectedDate(today);
-  };
-
   const handleOK = () => {
     if (selectedDate) {
       onChange?.(selectedDate);
@@ -101,50 +99,50 @@ export const ComprehensiveDatePicker: React.FC<ComprehensiveDatePickerProps> = (
 
   return (
     <div className={cn(
-      "comprehensive-date-picker bg-white shadow-lg border-0",
-      "w-[328px] h-[386px]",
+      "date-picker-container",
       className
     )}>
-      {/* Header */}
-      <div className="date-picker-header flex items-center justify-between px-6 py-4">
-        <button
-          onClick={handlePrevMonth}
-          className="nav-button p-1 hover:bg-gray-100 rounded transition-colors duration-200"
-          aria-label="Previous month"
-        >
-          <ChevronLeft className="w-5 h-5 text-gray-600" />
-        </button>
+      {/* Header with Month/Year and Navigation */}
+      <div className="date-picker-header">
+        <div className="month-year-section">
+          <span className="month-year-text">
+            {format(currentMonth, 'MMMM yyyy')}
+          </span>
+          <ChevronDown className="dropdown-arrow" />
+        </div>
         
-        <h2 className="month-year-title text-lg font-normal text-gray-900">
-          {format(currentMonth, 'MMMM yyyy')}
-        </h2>
-        
-        <button
-          onClick={handleNextMonth}
-          className="nav-button p-1 hover:bg-gray-100 rounded transition-colors duration-200"
-          aria-label="Next month"
-        >
-          <ChevronRight className="w-5 h-5 text-gray-600" />
-        </button>
+        <div className="navigation-arrows">
+          <button
+            onClick={handlePrevMonth}
+            className="nav-arrow-btn"
+            aria-label="Previous month"
+          >
+            <ChevronLeft className="nav-arrow" />
+          </button>
+          <button
+            onClick={handleNextMonth}
+            className="nav-arrow-btn"
+            aria-label="Next month"
+          >
+            <ChevronRight className="nav-arrow" />
+          </button>
+        </div>
       </div>
 
       {/* Week Days Header */}
-      <div className="week-days-header grid grid-cols-7 px-6 pb-2">
-        {weekDays.map((day) => (
-          <div
-            key={day}
-            className="weekday-cell text-center py-2 text-gray-500 font-normal text-sm"
-          >
+      <div className="week-days-row">
+        {weekDays.map((day, index) => (
+          <div key={index} className="week-day-cell">
             {day}
           </div>
         ))}
       </div>
 
       {/* Calendar Grid */}
-      <div className="calendar-grid grid grid-cols-7 gap-1 px-6 pb-6">
+      <div className="calendar-dates-grid">
         {calendarDays.map((date, index) => {
           if (!date) {
-            return <div key={index} className="empty-cell h-10" />;
+            return <div key={index} className="empty-date-cell" />;
           }
 
           const isSelected = selectedDate && isSameDay(date, selectedDate);
@@ -160,14 +158,12 @@ export const ComprehensiveDatePicker: React.FC<ComprehensiveDatePickerProps> = (
               onMouseLeave={() => setHoveredDate(undefined)}
               disabled={isDisabled}
               className={cn(
-                "date-cell relative h-10 w-10 flex items-center justify-center mx-auto",
-                "text-base font-normal transition-all duration-200 ease-in-out",
-                "hover:bg-gray-100 focus:outline-none",
+                "date-number-cell",
                 {
-                  'bg-red-600 text-white rounded-full': isSelected,
-                  'text-gray-900': !isDisabled && !isSelected,
-                  'text-gray-400 cursor-not-allowed': isDisabled,
-                  'bg-gray-100': isHovered && !isSelected
+                  'selected-date': isSelected,
+                  'today-date': isTodayDate && !isSelected,
+                  'disabled-date': isDisabled,
+                  'hovered-date': isHovered && !isSelected && !isDisabled
                 }
               )}
               aria-label={format(date, 'EEEE, MMMM do, yyyy')}
@@ -179,17 +175,17 @@ export const ComprehensiveDatePicker: React.FC<ComprehensiveDatePickerProps> = (
         })}
       </div>
 
-      {/* Footer with CANCEL and OK buttons */}
-      <div className="date-picker-footer flex items-center justify-end gap-8 px-6 py-4 mt-auto">
+      {/* Footer with Action Buttons */}
+      <div className="date-picker-footer">
         <button
           onClick={handleCancel}
-          className="cancel-button text-red-600 font-medium text-sm hover:bg-red-50 px-3 py-1 rounded transition-colors duration-200"
+          className="action-button cancel-btn"
         >
           CANCEL
         </button>
         <button
           onClick={handleOK}
-          className="ok-button text-red-600 font-medium text-sm hover:bg-red-50 px-3 py-1 rounded transition-colors duration-200"
+          className="action-button ok-btn"
         >
           OK
         </button>
