@@ -307,6 +307,7 @@ const Tasks = ({ isEdit, onCloseModal }) => {
   const [nextId, setNextId] = useState(1);
   const [savedTasks, setSavedTasks] = useState([]);
   const [isDelete, setIsDelete] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     project: id,
     milestone: mid,
@@ -430,6 +431,7 @@ const Tasks = ({ isEdit, onCloseModal }) => {
 
   const handleAddTask = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true)
     if (isDelete) {
       setIsDelete(false);
       return;
@@ -486,11 +488,14 @@ const Tasks = ({ isEdit, onCloseModal }) => {
       console.errorovate("Error creating task:", error);
       toast.dismiss();
       toast.error("Error creating task.");
+    } finally {
+      setIsSubmitting(false)
     }
   };
 
   const handleSubmit = async (e, editId) => {
     e.preventDefault();
+    setIsSubmitting(true);
     if (isDelete && isFormEmpty()) {
       window.location.reload();
       return;
@@ -540,6 +545,8 @@ const Tasks = ({ isEdit, onCloseModal }) => {
     } catch (error) {
       console.error(`Error ${isEdit ? "updating" : "creating"} task:`, error);
       toast.error(`Error ${isEdit ? "updating" : "creating"} task.`);
+    } finally {
+      setIsSubmitting(false)
     }
   };
 
@@ -607,6 +614,7 @@ const Tasks = ({ isEdit, onCloseModal }) => {
           <button
             type="submit"
             className="flex items-center justify-center border-2 text-[red] border-[red] px-4 py-2 w-[100px]"
+            disabled={isSubmitting}
           >
             {loading || editLoading
               ? "Processing..."
@@ -629,6 +637,7 @@ const Tasks = ({ isEdit, onCloseModal }) => {
                 type="button"
                 className="flex items-center justify-center border-2 text-[red] border-[red] px-4 py-2 w-max"
                 onClick={handleAddTask}
+                disabled={isSubmitting}
               >
                 Save & Add New
               </button>
