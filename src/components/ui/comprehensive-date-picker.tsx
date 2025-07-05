@@ -63,7 +63,6 @@ export const ComprehensiveDatePicker: React.FC<ComprehensiveDatePickerProps> = (
     if (maxDate && isBefore(startOfDay(maxDate), date)) return;
     
     setSelectedDate(date);
-    onChange?.(date);
   };
 
   const handlePrevMonth = () => {
@@ -78,12 +77,18 @@ export const ComprehensiveDatePicker: React.FC<ComprehensiveDatePickerProps> = (
     const today = new Date();
     setCurrentMonth(today);
     setSelectedDate(today);
-    onChange?.(today);
   };
 
-  const handleClear = () => {
-    setSelectedDate(undefined);
-    onChange?.(undefined);
+  const handleOK = () => {
+    if (selectedDate) {
+      onChange?.(selectedDate);
+    }
+    onClose?.();
+  };
+
+  const handleCancel = () => {
+    setSelectedDate(value); // Reset to original value
+    onClose?.();
   };
 
   const isDateDisabled = (date: Date) => {
@@ -92,7 +97,7 @@ export const ComprehensiveDatePicker: React.FC<ComprehensiveDatePickerProps> = (
     return false;
   };
 
-  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const weekDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   return (
     <div className={cn(
@@ -136,7 +141,7 @@ export const ComprehensiveDatePicker: React.FC<ComprehensiveDatePickerProps> = (
       </div>
 
       {/* Calendar Grid */}
-      <div className="calendar-grid grid grid-cols-7 gap-0">
+      <div className="calendar-grid grid grid-cols-7 gap-0 p-4">
         {calendarDays.map((date, index) => {
           if (!date) {
             return <div key={index} className="empty-cell h-10" />;
@@ -175,33 +180,20 @@ export const ComprehensiveDatePicker: React.FC<ComprehensiveDatePickerProps> = (
         })}
       </div>
 
-      {/* Footer Actions */}
-      <div className="date-picker-footer flex items-center justify-between p-4 border-t border-gray-100">
-        <div className="flex gap-2">
-          {showToday && (
-            <button
-              onClick={handleTodayClick}
-              className="today-button px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded transition-colors duration-200"
-            >
-              Today
-            </button>
-          )}
-          <button
-            onClick={handleClear}
-            className="clear-button px-3 py-1 text-sm text-gray-500 hover:bg-gray-100 rounded transition-colors duration-200"
-          >
-            Clear
-          </button>
-        </div>
-        
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="close-button px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded transition-colors duration-200"
-          >
-            Cancel
-          </button>
-        )}
+      {/* Footer with CANCEL and OK buttons */}
+      <div className="date-picker-footer flex items-center justify-end gap-8 p-4 border-t border-gray-100">
+        <button
+          onClick={handleCancel}
+          className="cancel-button px-4 py-2 text-red-500 font-medium hover:bg-red-50 rounded transition-colors duration-200"
+        >
+          CANCEL
+        </button>
+        <button
+          onClick={handleOK}
+          className="ok-button px-4 py-2 text-red-500 font-medium hover:bg-red-50 rounded transition-colors duration-200"
+        >
+          OK
+        </button>
       </div>
     </div>
   );
