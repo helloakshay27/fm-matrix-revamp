@@ -56,9 +56,9 @@ export const DesignInsightDetailsDashboard = () => {
 
       {/* Design Details Section */}
       <Card className="mb-6">
-        <CardHeader className="bg-orange-100">
-          <CardTitle className="text-orange-600 flex items-center gap-2">
-            <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">⚙</span>
+        <CardHeader className="bg-[#C72030] px-5 py-[50px]">
+          <CardTitle className="text-white flex items-center gap-5 text-[26px] font-semibold leading-auto tracking-[0%] uppercase">
+            <span className="bg-white text-[#C72030] rounded-full w-10 h-10 flex items-center justify-center text-[18px] font-semibold">⚙</span>
             DESIGN DETAILS
           </CardTitle>
         </CardHeader>
@@ -115,9 +115,9 @@ export const DesignInsightDetailsDashboard = () => {
 
       {/* Attachments Section */}
       <Card>
-        <CardHeader className="bg-orange-100">
-          <CardTitle className="text-orange-600 flex items-center gap-2">
-            <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">0</span>
+        <CardHeader className="bg-[#C72030] px-5 py-[50px]">
+          <CardTitle className="text-white flex items-center gap-5 text-[26px] font-semibold leading-auto tracking-[0%] uppercase">
+            <span className="bg-white text-[#C72030] rounded-full w-10 h-10 flex items-center justify-center text-[18px] font-semibold">0</span>
             ATTACHMENTS
           </CardTitle>
         </CardHeader>
