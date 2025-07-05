@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -135,6 +136,65 @@ export const DesignInsightsDashboard = () => {
     });
   };
 
+  const handleExportCSV = () => {
+    // Define CSV headers
+    const headers = [
+      'ID',
+      'Date', 
+      'Site',
+      'Zone',
+      'Created by',
+      'Location',
+      'Observation',
+      'Recommendation',
+      'Category',
+      'Sub category',
+      'Categorization',
+      'Tag'
+    ];
+
+    // Convert filtered data to CSV format
+    const csvData = [
+      headers.join(','), // Header row
+      ...filteredData.map(item => [
+        item.id,
+        item.date,
+        `"${item.site}"`, // Wrap in quotes to handle commas
+        item.zone,
+        `"${item.createdBy}"`,
+        `"${item.location}"`,
+        `"${item.observation}"`,
+        `"${item.recommendation}"`,
+        `"${item.category}"`,
+        `"${item.subCategory}"`,
+        `"${item.categorization}"`,
+        `"${item.tag}"`
+      ].join(','))
+    ].join('\n');
+
+    // Create and download the CSV file
+    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    
+    // Generate filename with timestamp and filter info
+    const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    const filterCount = Object.values(activeFilters).filter(v => v !== '').length;
+    const filename = filterCount > 0 
+      ? `design-insights-filtered-${timestamp}.csv`
+      : `design-insights-${timestamp}.csv`;
+    
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    console.log(`Exported ${filteredData.length} records to CSV`);
+  };
+
   const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
 
   return (
@@ -191,7 +251,7 @@ export const DesignInsightsDashboard = () => {
             Download Report Without Picture
           </Button>
           <Button 
-            onClick={() => setIsExportOpen(true)}
+            onClick={handleExportCSV}
             variant="outline" 
             className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
           >
