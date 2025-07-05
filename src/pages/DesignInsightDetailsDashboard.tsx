@@ -56,9 +56,9 @@ export const DesignInsightDetailsDashboard = () => {
 
       {/* Design Details Section */}
       <Card className="mb-6">
-        <CardHeader className="bg-[#C72030] px-5 py-[50px]">
-          <CardTitle className="text-white flex items-center gap-5 text-[26px] font-semibold leading-auto tracking-[0%] uppercase">
-            <span className="bg-white text-[#C72030] rounded-full w-10 h-10 flex items-center justify-center text-[18px] font-semibold">⚙</span>
+        <CardHeader className="px-[50px] py-[50px]">
+          <CardTitle className="text-[#1A1A1A] flex items-center gap-5 text-[18px] font-semibold leading-auto tracking-[0%] font-['Work_Sans']">
+            <span className="bg-[#C72030] text-white rounded-full w-10 h-10 flex items-center justify-center text-[18px] font-semibold">⚙</span>
             DESIGN DETAILS
           </CardTitle>
         </CardHeader>
@@ -115,9 +115,9 @@ export const DesignInsightDetailsDashboard = () => {
 
       {/* Attachments Section */}
       <Card>
-        <CardHeader className="bg-[#C72030] px-5 py-[50px]">
-          <CardTitle className="text-white flex items-center gap-5 text-[26px] font-semibold leading-auto tracking-[0%] uppercase">
-            <span className="bg-white text-[#C72030] rounded-full w-10 h-10 flex items-center justify-center text-[18px] font-semibold">0</span>
+        <CardHeader className="px-[50px] py-[50px]">
+          <CardTitle className="text-[#1A1A1A] flex items-center gap-5 text-[18px] font-semibold leading-auto tracking-[0%] font-['Work_Sans']">
+            <span className="bg-[#C72030] text-white rounded-full w-10 h-10 flex items-center justify-center text-[18px] font-semibold">0</span>
             ATTACHMENTS
           </CardTitle>
         </CardHeader>
