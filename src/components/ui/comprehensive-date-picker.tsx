@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 interface ComprehensiveDatePickerProps {
   value?: Date;
-  onChange?: (date: Date) => void;
+  onChange?: (date: Date | undefined) => void;
   onClose?: () => void;
   showToday?: boolean;
   disabled?: boolean;
@@ -83,7 +83,7 @@ export const ComprehensiveDatePicker: React.FC<ComprehensiveDatePickerProps> = (
 
   const handleClear = () => {
     setSelectedDate(undefined);
-    onChange?.(undefined as any);
+    onChange?.(undefined);
   };
 
   const isDateDisabled = (date: Date) => {

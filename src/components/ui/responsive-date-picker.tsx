@@ -28,9 +28,11 @@ export const ResponsiveDatePicker: React.FC<ResponsiveDatePickerProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleDateChange = (date: Date) => {
-    onChange?.(date);
-    setIsOpen(false);
+  const handleDateChange = (date: Date | undefined) => {
+    if (date && onChange) {
+      onChange(date);
+      setIsOpen(false);
+    }
   };
 
   const handleClose = () => {
@@ -50,9 +52,10 @@ export const ResponsiveDatePicker: React.FC<ResponsiveDatePickerProps> = ({
       <PopoverContent 
         className={cn(
           "w-auto p-0 bg-white border shadow-lg",
-          "pointer-events-auto"
+          "pointer-events-auto z-50"
         )}
         align="start"
+        sideOffset={4}
       >
         <ComprehensiveDatePicker
           value={value}

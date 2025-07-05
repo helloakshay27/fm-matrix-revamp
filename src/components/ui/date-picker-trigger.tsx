@@ -13,15 +13,17 @@ interface DatePickerTriggerProps {
   disabled?: boolean;
 }
 
-export const DatePickerTrigger: React.FC<DatePickerTriggerProps> = ({
+export const DatePickerTrigger = React.forwardRef<HTMLButtonElement, DatePickerTriggerProps>(({
   value,
   placeholder = "Select date",
   className,
   onClick,
-  disabled = false
-}) => {
+  disabled = false,
+  ...props
+}, ref) => {
   return (
     <Button
+      ref={ref}
       variant="outline"
       onClick={onClick}
       disabled={disabled}
@@ -32,9 +34,12 @@ export const DatePickerTrigger: React.FC<DatePickerTriggerProps> = ({
         !value && "text-gray-500",
         className
       )}
+      {...props}
     >
       <CalendarIcon className="mr-2 h-4 w-4 text-gray-400" />
       {value ? format(value, "dd/MM/yyyy") : placeholder}
     </Button>
   );
-};
+});
+
+DatePickerTrigger.displayName = "DatePickerTrigger";
