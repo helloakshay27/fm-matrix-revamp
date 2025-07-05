@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { ResponsiveDatePicker } from "@/components/ui/responsive-date-picker";
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { X } from 'lucide-react';
 
 interface DesignInsightFilterModalProps {
   isOpen: boolean;
@@ -104,7 +105,17 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Filter Design Insights</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>Filter Design Insights</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </DialogHeader>
         
         <div className="grid grid-cols-2 gap-6 py-4">
