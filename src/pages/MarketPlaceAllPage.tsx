@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building, Target, Phone, Calculator, Download } from 'lucide-react';
+import { Building, Target, Phone, Calculator, Download, Filter, ChevronDown } from 'lucide-react';
 import { SearchWithSuggestions } from '@/components/SearchWithSuggestions';
 import { useSearchSuggestions } from '@/hooks/useSearchSuggestions';
 import { Button } from '@/components/ui/button';
@@ -71,6 +70,25 @@ const MarketPlaceAllPage = () => {
     }, 2000);
   };
 
+  const FilterChip = ({ label, value, isActive = false }: { label: string; value: string; isActive?: boolean }) => (
+    <div className={`group relative flex items-center gap-2 px-4 py-2 rounded-full cursor-pointer transition-all duration-300 border ${
+      isActive 
+        ? 'bg-[#C72030] text-white border-[#C72030] shadow-md' 
+        : 'bg-white text-gray-700 border-gray-200 hover:border-[#C72030] hover:bg-[#C72030]/5'
+    }`}>
+      <span className="text-sm font-medium">{label}:</span>
+      <span className={`text-sm font-semibold ${isActive ? 'text-white' : 'text-[#C72030]'}`}>{value}</span>
+      <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
+        isActive ? 'text-white' : 'text-gray-400 group-hover:text-[#C72030]'
+      }`} />
+      
+      {/* Hover effect */}
+      {!isActive && (
+        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#C72030]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      )}
+    </div>
+  );
+
   const AppCard = ({ app, isEditor = false }: { app: typeof featuredApps[0], isEditor?: boolean }) => (
     <div
       key={`${isEditor ? 'editor-' : ''}${app.id}`}
@@ -127,22 +145,39 @@ const MarketPlaceAllPage = () => {
   );
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header with filters */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <span className="text-sm text-gray-600">Edition: <span className="text-blue-600 underline">All</span></span>
-          <span className="text-sm text-gray-600">Price: <span className="text-blue-600 underline">All</span></span>
-          <span className="text-sm text-gray-600">Rating: <span className="text-blue-600 underline">All</span></span>
-          <span className="text-sm text-gray-600">Deployment type: <span className="text-blue-600 underline">All</span></span>
-        </div>
-        <div className="w-80">
-          <SearchWithSuggestions
-            placeholder="Search apps"
-            onSearch={handleSearch}
-            suggestions={suggestions}
-            className="w-full"
-          />
+    <div className="p-6 space-y-8">
+      {/* Enhanced Header with filters and search */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          {/* Filter Section */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 text-gray-600">
+              <Filter className="w-4 h-4" />
+              <span className="text-sm font-medium">Filters:</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <FilterChip label="Edition" value="All" isActive />
+              <FilterChip label="Price" value="All" />
+              <FilterChip label="Rating" value="All" />
+              <FilterChip label="Deployment" value="All" />
+            </div>
+          </div>
+
+          {/* Enhanced Search Section */}
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-gray-500">
+              {filteredApps.length} apps found
+            </div>
+            <div className="relative">
+              <SearchWithSuggestions
+                placeholder="Search marketplace apps..."
+                onSearch={handleSearch}
+                suggestions={suggestions}
+                className="w-80"
+              />
+              <div className="absolute -inset-1 bg-gradient-to-r from-[#C72030]/20 to-transparent rounded-lg opacity-0 hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+            </div>
+          </div>
         </div>
       </div>
 
