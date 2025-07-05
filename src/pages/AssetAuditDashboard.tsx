@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Download, Filter, Search } from 'lucide-react';
+import { Plus, Download, Filter, Search, Settings, Clock, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const AssetAuditDashboard = () => {
@@ -114,58 +114,65 @@ export const AssetAuditDashboard = () => {
         <h1 className="text-2xl font-bold text-gray-900 mb-6">AUDIT LIST</h1>
         
         {/* Statistics Cards */}
-<div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-  {[
-    { label: 'Scheduled', value: stats.scheduled },
-    { label: 'In Progress', value: stats.inProgress },
-    { label: 'Completed', value: stats.completed },
-    { label: 'Overdue', value: stats.overdue },
-    { label: 'Closed', value: stats.closed },
-  ].map((item, index) => (
-    <div
-      key={index}
-      className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]"
-    >
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12  rounded-lg flex items-center justify-center">
-          <span className="text-2xl font-bold">{item.value}</span>
-        </div>
-        <span className="font-medium">{item.label}</span>
-      </div>
-    </div>
-  ))}
-</div>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+          <div className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center">
+                <Clock className="w-6 h-6 text-[#D92818]" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold">{stats.scheduled}</span>
+                <span className="font-medium text-sm">Scheduled</span>
+              </div>
+            </div>
+          </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4 mb-6">
-          <Button 
-            onClick={handleAddClick}
-            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add
-          </Button>
-          <Button variant="outline" className="border-gray-300">
-            <Download className="w-4 h-4 mr-2" />
-            Import
-          </Button>
-          <Button variant="outline" className="border-gray-300">
-            <Filter className="w-4 h-4 mr-2" />
-            Filters
-          </Button>
-        </div>
+          <div className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center">
+                <Settings className="w-6 h-6 text-[#D92818]" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold">{stats.inProgress}</span>
+                <span className="font-medium text-sm">In Progress</span>
+              </div>
+            </div>
+          </div>
 
-        {/* Search */}
-        <div className="flex justify-end mb-4">
-          <div className="relative w-96">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <Input
-              placeholder="Search"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-[36px]"
-              style={{ height: '36px' }}
-            />
+          <div className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-[#D92818]" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold">{stats.completed}</span>
+                <span className="font-medium text-sm">Completed</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-[#D92818]" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold">{stats.overdue}</span>
+                <span className="font-medium text-sm">Overdue</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)]">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center">
+                <XCircle className="w-6 h-6 text-[#D92818]" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold">{stats.closed}</span>
+                <span className="font-medium text-sm">Closed</span>
+              </div>
+            </div>
           </div>
         </div>
 
