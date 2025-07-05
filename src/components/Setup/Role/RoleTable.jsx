@@ -14,6 +14,11 @@ const ActionIcons = ({ row, onEdit }) => {
   const [isActive, setIsActive] = useState(row.original.active);
   const dispatch = useDispatch();
 
+  // ✅ Sync isActive with updated row.original.active
+  useEffect(() => {
+    setIsActive(row.original.active);
+  }, [row.original.active]);
+
   const handleToggle = async () => {
     const updatedValue = !isActive;
     setIsActive(updatedValue);
@@ -96,6 +101,7 @@ const ActionIcons = ({ row, onEdit }) => {
     </div>
   );
 };
+
 
 const RoleTable = () => {
   const token = localStorage.getItem('token');
