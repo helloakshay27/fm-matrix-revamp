@@ -1,13 +1,15 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building, Target, Phone, Calculator } from 'lucide-react';
+import { Building, Target, Phone, Calculator, Download } from 'lucide-react';
 import { SearchWithSuggestions } from '@/components/SearchWithSuggestions';
 import { useSearchSuggestions } from '@/hooks/useSearchSuggestions';
+import { Button } from '@/components/ui/button';
 
 const MarketPlaceAllPage = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [installingApps, setInstallingApps] = useState<string[]>([]);
 
   const featuredApps = [
     {
@@ -58,6 +60,72 @@ const MarketPlaceAllPage = () => {
     setSearchTerm(value);
   };
 
+  const handleInstall = (appId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setInstallingApps(prev => [...prev, appId]);
+    
+    // Simulate installation process
+    setTimeout(() => {
+      setInstallingApps(prev => prev.filter(id => id !== appId));
+      console.log(`App ${appId} installed successfully`);
+    }, 2000);
+  };
+
+  const AppCard = ({ app, isEditor = false }: { app: typeof featuredApps[0], isEditor?: boolean }) => (
+    <div
+      key={`${isEditor ? 'editor-' : ''}${app.id}`}
+      onClick={() => handleCardClick(app.route)}
+      className={`group relative overflow-hidden rounded-lg cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-xl ${
+        isEditor 
+          ? 'bg-white border border-gray-200 hover:border-[#C72030]/30' 
+          : 'bg-white hover:bg-gradient-to-br hover:from-white hover:to-red-50'
+      }`}
+    >
+      <div className="p-4 relative z-10">
+        <div className="flex items-center justify-between mb-3">
+          <div className="p-2 rounded-lg bg-gray-50 group-hover:bg-[#C72030]/10 transition-colors duration-300">
+            <app.icon className="w-6 h-6 text-[#C72030] group-hover:scale-110 transition-transform duration-300" />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs bg-gray-100 px-2 py-1 rounded font-medium">FREE</span>
+            <Button
+              onClick={(e) => handleInstall(app.id, e)}
+              disabled={installingApps.includes(app.id)}
+              size="sm"
+              className={`opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 bg-[#C72030] hover:bg-[#C72030]/90 text-white px-3 py-1 text-xs ${
+                installingApps.includes(app.id) ? 'opacity-100' : ''
+              }`}
+            >
+              {installingApps.includes(app.id) ? (
+                <>
+                  <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin mr-1"></div>
+                  Installing...
+                </>
+              ) : (
+                <>
+                  <Download className="w-3 h-3 mr-1" />
+                  Install
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+        <h3 className="font-semibold text-gray-900 mb-2 text-base group-hover:text-[#C72030] transition-colors duration-300">
+          {app.name}
+        </h3>
+        <p className="text-sm text-gray-600 leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
+          {app.description}
+        </p>
+      </div>
+      
+      {/* Hover overlay effect */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#C72030]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      
+      {/* Bottom border animation */}
+      <div className="absolute bottom-0 left-0 w-0 h-1 bg-gradient-to-r from-[#C72030] to-red-400 group-hover:w-full transition-all duration-500 ease-out"></div>
+    </div>
+  );
+
   return (
     <div className="p-6 space-y-6">
       {/* Header with filters */}
@@ -83,18 +151,7 @@ const MarketPlaceAllPage = () => {
         <h2 className="text-white text-xl font-semibold mb-4">Featured apps</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {filteredApps.map((app) => (
-            <div
-              key={app.id}
-              onClick={() => handleCardClick(app.route)}
-              className="bg-white rounded-lg p-4 cursor-pointer hover:shadow-lg transition-shadow duration-200"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <app.icon className="w-8 h-8 text-[#C72030]" />
-                <span className="text-xs bg-gray-100 px-2 py-1 rounded font-medium">FREE</span>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2 text-base">{app.name}</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">{app.description}</p>
-            </div>
+            <AppCard key={app.id} app={app} />
           ))}
         </div>
       </div>
@@ -104,18 +161,7 @@ const MarketPlaceAllPage = () => {
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Editor's pick</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {filteredApps.map((app) => (
-            <div
-              key={`editor-${app.id}`}
-              onClick={() => handleCardClick(app.route)}
-              className="bg-white border border-gray-200 rounded-lg p-4 cursor-pointer hover:shadow-lg transition-shadow duration-200"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <app.icon className="w-8 h-8 text-[#C72030]" />
-                <span className="text-xs bg-gray-100 px-2 py-1 rounded font-medium">FREE</span>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2 text-base">{app.name}</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">{app.description}</p>
-            </div>
+            <AppCard key={`editor-${app.id}`} app={app} isEditor={true} />
           ))}
         </div>
       </div>
