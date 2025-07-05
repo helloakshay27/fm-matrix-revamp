@@ -1,5 +1,5 @@
-
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Plus, Download, Filter, RotateCcw } from "lucide-react";
@@ -16,6 +16,7 @@ interface FilterState {
 }
 
 export const DesignInsightsDashboard = () => {
+  const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<FilterState>({
@@ -111,11 +112,11 @@ export const DesignInsightsDashboard = () => {
   });
 
   const handleAddClick = () => {
-    window.location.href = '/transitioning/design-insight/add';
+    navigate('/transitioning/design-insight/add');
   };
 
   const handleRowClick = (id: string) => {
-    window.location.href = `/transitioning/design-insight/details${id.replace('#', '/')}`;
+    navigate(`/transitioning/design-insight/details${id.replace('#', '/')}`);
   };
 
   const handleApplyFilters = (filters: FilterState) => {
