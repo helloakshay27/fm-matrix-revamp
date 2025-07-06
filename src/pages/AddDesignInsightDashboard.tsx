@@ -77,10 +77,10 @@ export const AddDesignInsightDashboard = () => {
             BASIC DETAILS
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
-            <div className="flex flex-col">
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+        <CardContent className="px-[50px] py-[50px]">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-[50px] gap-y-[30px]">
+            <div className="flex flex-col space-y-2">
+              <FormControl fullWidth variant="outlined">
                 <InputLabel id="category-label" shrink>Category*</InputLabel>
                 <MuiSelect
                   labelId="category-label"
@@ -99,8 +99,8 @@ export const AddDesignInsightDashboard = () => {
               </FormControl>
             </div>
 
-            <div className="flex flex-col">
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <div className="flex flex-col space-y-2">
+              <FormControl fullWidth variant="outlined">
                 <InputLabel id="sub-category-label" shrink>Sub-category</InputLabel>
                 <MuiSelect
                   labelId="sub-category-label"
@@ -119,8 +119,8 @@ export const AddDesignInsightDashboard = () => {
               </FormControl>
             </div>
 
-            <div className="flex flex-col">
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <div className="flex flex-col space-y-2">
+              <FormControl fullWidth variant="outlined">
                 <InputLabel id="site-label" shrink>Site*</InputLabel>
                 <MuiSelect
                   labelId="site-label"
@@ -137,7 +137,7 @@ export const AddDesignInsightDashboard = () => {
               </FormControl>
             </div>
 
-            <div className="flex flex-col">
+            <div className="flex flex-col space-y-2">
               <CustomTextField
                 label="Location"
                 placeholder="Enter Location"
@@ -147,8 +147,8 @@ export const AddDesignInsightDashboard = () => {
               />
             </div>
 
-            <div className="flex flex-col">
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <div className="flex flex-col space-y-2">
+              <FormControl fullWidth variant="outlined">
                 <InputLabel id="categorization-label" shrink>Categorization*</InputLabel>
                 <MuiSelect
                   labelId="categorization-label"
@@ -165,8 +165,8 @@ export const AddDesignInsightDashboard = () => {
               </FormControl>
             </div>
 
-            <div className="flex flex-col">
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <div className="flex flex-col space-y-2">
+              <FormControl fullWidth variant="outlined">
                 <InputLabel id="tag-label" shrink>Tag</InputLabel>
                 <MuiSelect
                   labelId="tag-label"
@@ -185,8 +185,8 @@ export const AddDesignInsightDashboard = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mt-8">
-            <div className="flex flex-col">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-[50px] gap-y-[30px] mt-[50px]">
+            <div className="flex flex-col space-y-2">
               <CustomTextField
                 label="Observation"
                 placeholder="Enter Observation"
@@ -198,7 +198,7 @@ export const AddDesignInsightDashboard = () => {
               />
             </div>
 
-            <div className="flex flex-col">
+            <div className="flex flex-col space-y-2">
               <CustomTextField
                 label="Recommendation"
                 placeholder="Enter Recommendation"
@@ -211,7 +211,7 @@ export const AddDesignInsightDashboard = () => {
             </div>
           </div>
 
-          <div className="mt-8">
+          <div className="mt-[50px]">
             <div className="flex items-center space-x-2">
               <Checkbox 
                 id="mustHave" 
@@ -234,7 +234,7 @@ export const AddDesignInsightDashboard = () => {
             ATTACHMENTS
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-8">
+        <CardContent className="px-[50px] py-[50px]">
           <div>
             <div className="mt-2 border-2 border-dashed border-orange-200 rounded-lg p-8 text-center">
               <p className="text-gray-500">
