@@ -58,16 +58,14 @@ export const EditDesignInsightDashboard = () => {
 
       {/* Header */}
       <div className="mb-6">
-        <h1 className="font-['Work_Sans'] font-semibold text-[18px] leading-auto tracking-[0%] text-[#1A1A1A]">
-          EDIT DESIGN INSIGHT (#{id})
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900">EDIT DESIGN INSIGHT (#{id})</h1>
       </div>
 
       {/* Basic Details Section */}
       <Card className="mb-6">
-        <CardHeader className="px-[50px] py-[50px]">
-          <CardTitle className="text-[#1A1A1A] flex items-center gap-5 text-[18px] font-semibold leading-auto tracking-[0%] font-['Work_Sans']">
-            <span className="bg-[#C72030] text-white rounded-full w-10 h-10 flex items-center justify-center text-[18px] font-semibold">⚙</span>
+        <CardHeader className="bg-orange-100">
+          <CardTitle className="text-orange-600 flex items-center gap-2">
+            <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">⚙</span>
             DESIGN DETAILS
           </CardTitle>
         </CardHeader>
@@ -227,9 +225,9 @@ export const EditDesignInsightDashboard = () => {
 
       {/* Attachments Section */}
       <Card className="mb-6">
-        <CardHeader className="px-[50px] py-[50px]">
-          <CardTitle className="text-[#1A1A1A] flex items-center gap-5 text-[18px] font-semibold leading-auto tracking-[0%] font-['Work_Sans']">
-            <span className="bg-[#C72030] text-white rounded-full w-10 h-10 flex items-center justify-center text-[18px] font-semibold">0</span>
+        <CardHeader className="bg-orange-100">
+          <CardTitle className="text-orange-600 flex items-center gap-2">
+            <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">📎</span>
             ATTACHMENTS
           </CardTitle>
         </CardHeader>
