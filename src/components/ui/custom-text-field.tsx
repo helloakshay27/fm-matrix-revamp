@@ -159,6 +159,8 @@ export const CustomTextField: React.FC<CustomTextFieldProps> = ({
     }
   };
 
+  const rowsValue = typeof rows === 'number' ? rows : 4;
+
   return (
     <ThemeProvider theme={textFieldTheme}>
       <StyledTextField
@@ -172,7 +174,7 @@ export const CustomTextField: React.FC<CustomTextFieldProps> = ({
           width: '100%',
           ...(multiline && {
             '& .MuiOutlinedInput-root': {
-              minHeight: rows ? `${(rows * 24) + 32}px` : '100px',
+              minHeight: `${(rowsValue * 24) + 32}px`,
             }
           })
         }}
