@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Edit } from "lucide-react";
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
 export const DesignInsightDetailsDashboard = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
 
   // Mock data for the specific design insight
@@ -26,8 +27,8 @@ export const DesignInsightDetailsDashboard = () => {
 
   const handleEdit = () => {
     setIsEditing(true);
-    // Navigate to edit form
-    window.location.href = `/transitioning/design-insight/edit/${id || '231'}`;
+    // Navigate to edit form using React Router
+    navigate(`/transitioning/design-insight/edit/${id || '231'}`);
   };
 
   return (

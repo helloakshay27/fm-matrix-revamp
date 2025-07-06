@@ -7,10 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
 export const EditDesignInsightDashboard = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [category, setCategory] = useState('Façade');
   const [subCategory, setSubCategory] = useState('');
   const [zone, setZone] = useState('Mumbai');
@@ -36,12 +37,12 @@ export const EditDesignInsightDashboard = () => {
       tag,
       mustHave
     });
-    // Navigate back to details
-    window.location.href = `/transitioning/design-insight/details/${id}`;
+    // Navigate back to details using React Router
+    navigate(`/transitioning/design-insight/details/${id}`);
   };
 
   const handleCancel = () => {
-    window.location.href = `/transitioning/design-insight/details/${id}`;
+    navigate(`/transitioning/design-insight/details/${id}`);
   };
 
   const handleMustHaveChange = (checked: boolean | "indeterminate") => {
