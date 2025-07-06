@@ -27,6 +27,9 @@ const textFieldTheme = createTheme({
             '&.Mui-disabled': {
               opacity: 0.5,
             },
+            '&.MuiOutlinedInput-multiline': {
+              paddingTop: '20px',
+            },
           },
         },
       },
@@ -38,6 +41,11 @@ const textFieldTheme = createTheme({
           fontWeight: 500,
           '&.Mui-focused': {
             color: '#C72030',
+          },
+          '&.MuiInputLabel-shrink': {
+            transform: 'translate(14px, -9px) scale(0.75)',
+            backgroundColor: '#FFFFFF',
+            padding: '0 4px',
           },
         },
       },
@@ -62,11 +70,16 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
   '& .MuiOutlinedInput-root': {
     // Desktop (default)
     width: '316px',
-    height: '56px',
+    minHeight: '56px',
     '& input': {
       fontSize: '14px',
       fontWeight: 400,
       padding: '12px 20px 20px 12px',
+    },
+    '& textarea': {
+      fontSize: '14px',
+      fontWeight: 400,
+      padding: '12px',
     },
     '& .MuiInputLabel-root': {
       fontSize: '14px',
@@ -78,10 +91,14 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
   [theme.breakpoints.down('lg')]: {
     '& .MuiOutlinedInput-root': {
       width: '254px',
-      height: '44px',
+      minHeight: '44px',
       '& input': {
         fontSize: '12px',
         padding: '4px 12px 12px 12px',
+      },
+      '& textarea': {
+        fontSize: '12px',
+        padding: '12px',
       },
       '& .MuiInputLabel-root': {
         fontSize: '14px',
@@ -93,8 +110,12 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
   [theme.breakpoints.down('md')]: {
     '& .MuiOutlinedInput-root': {
       width: '128px',
-      height: '28px',
+      minHeight: '28px',
       '& input': {
+        fontSize: '8px',
+        padding: '8px',
+      },
+      '& textarea': {
         fontSize: '8px',
         padding: '8px',
       },
@@ -113,6 +134,8 @@ interface CustomTextFieldProps extends Omit<TextFieldProps, 'variant'> {
 // Main Custom TextField Component
 export const CustomTextField: React.FC<CustomTextFieldProps> = ({
   state = 'default',
+  multiline,
+  rows,
   ...props
 }) => {
   const getStateProps = () => {
@@ -142,6 +165,16 @@ export const CustomTextField: React.FC<CustomTextFieldProps> = ({
         variant="outlined"
         InputLabelProps={{
           shrink: true,
+        }}
+        multiline={multiline}
+        rows={rows}
+        sx={{
+          width: '100%',
+          ...(multiline && {
+            '& .MuiOutlinedInput-root': {
+              minHeight: rows ? `${(rows * 24) + 32}px` : '100px',
+            }
+          })
         }}
         {...getStateProps()}
         {...props}
