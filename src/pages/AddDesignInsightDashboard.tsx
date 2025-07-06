@@ -78,8 +78,9 @@ export const AddDesignInsightDashboard = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="px-[50px] py-[50px]">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-[50px] gap-y-[30px]">
-            <div className="flex flex-col space-y-2">
+          {/* First row - 3 columns */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-[50px] gap-y-[40px] mb-[40px]">
+            <div className="flex flex-col space-y-3">
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="category-label" shrink>Category*</InputLabel>
                 <MuiSelect
@@ -99,7 +100,7 @@ export const AddDesignInsightDashboard = () => {
               </FormControl>
             </div>
 
-            <div className="flex flex-col space-y-2">
+            <div className="flex flex-col space-y-3">
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="sub-category-label" shrink>Sub-category</InputLabel>
                 <MuiSelect
@@ -119,7 +120,7 @@ export const AddDesignInsightDashboard = () => {
               </FormControl>
             </div>
 
-            <div className="flex flex-col space-y-2">
+            <div className="flex flex-col space-y-3">
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="site-label" shrink>Site*</InputLabel>
                 <MuiSelect
@@ -136,8 +137,11 @@ export const AddDesignInsightDashboard = () => {
                 </MuiSelect>
               </FormControl>
             </div>
+          </div>
 
-            <div className="flex flex-col space-y-2">
+          {/* Second row - 3 columns */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-[50px] gap-y-[40px] mb-[40px]">
+            <div className="flex flex-col space-y-3">
               <CustomTextField
                 label="Location"
                 placeholder="Enter Location"
@@ -147,7 +151,7 @@ export const AddDesignInsightDashboard = () => {
               />
             </div>
 
-            <div className="flex flex-col space-y-2">
+            <div className="flex flex-col space-y-3">
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="categorization-label" shrink>Categorization*</InputLabel>
                 <MuiSelect
@@ -165,7 +169,7 @@ export const AddDesignInsightDashboard = () => {
               </FormControl>
             </div>
 
-            <div className="flex flex-col space-y-2">
+            <div className="flex flex-col space-y-3">
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="tag-label" shrink>Tag</InputLabel>
                 <MuiSelect
@@ -185,8 +189,9 @@ export const AddDesignInsightDashboard = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-[50px] gap-y-[30px] mt-[50px]">
-            <div className="flex flex-col space-y-2">
+          {/* Third row - 2 columns for text areas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-[50px] gap-y-[40px] mb-[40px]">
+            <div className="flex flex-col space-y-3">
               <CustomTextField
                 label="Observation"
                 placeholder="Enter Observation"
@@ -198,7 +203,7 @@ export const AddDesignInsightDashboard = () => {
               />
             </div>
 
-            <div className="flex flex-col space-y-2">
+            <div className="flex flex-col space-y-3">
               <CustomTextField
                 label="Recommendation"
                 placeholder="Enter Recommendation"
@@ -211,7 +216,8 @@ export const AddDesignInsightDashboard = () => {
             </div>
           </div>
 
-          <div className="mt-[50px]">
+          {/* Checkbox section */}
+          <div>
             <div className="flex items-center space-x-2">
               <Checkbox 
                 id="mustHave" 
