@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { CustomTextField } from '@/components/ui/custom-text-field';
 import { useToast } from '@/hooks/use-toast';
 
 export const AddDesignInsightDashboard = () => {
@@ -44,12 +46,10 @@ export const AddDesignInsightDashboard = () => {
       title: "Success",
       description: "Design Insight saved successfully!",
     });
-    // Navigate back to Design Insight list using React Router
     navigate('/transitioning/design-insight');
   };
 
   const handleBack = () => {
-    // Navigate back to Design Insight list using React Router
     navigate('/transitioning/design-insight');
   };
 
@@ -138,15 +138,12 @@ export const AddDesignInsightDashboard = () => {
             </div>
 
             <div>
-              <TextField
+              <CustomTextField
+                label="Location"
                 placeholder="Enter Location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
               />
             </div>
 
@@ -190,32 +187,26 @@ export const AddDesignInsightDashboard = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div>
-              <TextField
+              <CustomTextField
+                label="Observation"
                 placeholder="Enter Observation"
                 value={observation}
                 onChange={(e) => setObservation(e.target.value)}
                 fullWidth
-                variant="outlined"
                 multiline
                 rows={4}
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
               />
             </div>
 
             <div>
-              <TextField
+              <CustomTextField
+                label="Recommendation"
                 placeholder="Enter Recommendation"
                 value={recommendation}
                 onChange={(e) => setRecommendation(e.target.value)}
                 fullWidth
-                variant="outlined"
                 multiline
                 rows={4}
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
               />
             </div>
           </div>
