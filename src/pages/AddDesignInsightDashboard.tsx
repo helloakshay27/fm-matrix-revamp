@@ -1,13 +1,11 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
 
 export const AddDesignInsightDashboard = () => {
@@ -22,6 +20,13 @@ export const AddDesignInsightDashboard = () => {
   const [recommendation, setRecommendation] = useState('');
   const [tag, setTag] = useState('');
   const [mustHave, setMustHave] = useState(false);
+
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+  };
 
   const handleSave = () => {
     console.log('Design Insight saved:', {
@@ -61,138 +66,156 @@ export const AddDesignInsightDashboard = () => {
 
       {/* Header */}
       <div className="mb-6">
-        <h1 className="font-['Work_Sans'] font-semibold text-[18px] leading-auto tracking-[0%] text-[#1A1A1A]">
-          NEW DESIGN INSIGHT
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900">NEW DESIGN INSIGHT</h1>
       </div>
 
       {/* Basic Details Section */}
       <Card className="mb-6">
-        <CardHeader className="px-[50px] py-[50px]">
-          <CardTitle className="text-[#1A1A1A] flex items-center gap-5 text-[18px] font-semibold leading-auto tracking-[0%] font-['Work_Sans']">
-            <span className="bg-[#C72030] text-white rounded-full w-10 h-10 flex items-center justify-center text-[18px] font-semibold">⚙</span>
-            DESIGN DETAILS
+        <CardHeader className="bg-orange-100">
+          <CardTitle className="text-orange-600 flex items-center gap-2">
+            <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">⚙</span>
+            BASIC DETAILS
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <Label htmlFor="category" className="text-sm font-medium">
-                Category<span className="text-red-500">*</span>
-              </Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="landscape">Landscape</SelectItem>
-                  <SelectItem value="facade">Façade</SelectItem>
-                  <SelectItem value="security">Security & surveillance</SelectItem>
-                  <SelectItem value="inside-units">Inside Units</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="category-label" shrink>Category*</InputLabel>
+                <MuiSelect
+                  labelId="category-label"
+                  label="Category*"
+                  displayEmpty
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Category</em></MenuItem>
+                  <MenuItem value="landscape">Landscape</MenuItem>
+                  <MenuItem value="facade">Façade</MenuItem>
+                  <MenuItem value="security">Security & surveillance</MenuItem>
+                  <MenuItem value="inside-units">Inside Units</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div>
-              <Label htmlFor="subCategory" className="text-sm font-medium">Sub-category</Label>
-              <Select value={subCategory} onValueChange={setSubCategory}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select Sub Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="access-control">Access Control</SelectItem>
-                  <SelectItem value="cctv">CCTV</SelectItem>
-                  <SelectItem value="bedroom">Bedroom</SelectItem>
-                  <SelectItem value="entry-exit">Entry-Exit</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="sub-category-label" shrink>Sub-category</InputLabel>
+                <MuiSelect
+                  labelId="sub-category-label"
+                  label="Sub-category"
+                  displayEmpty
+                  value={subCategory}
+                  onChange={(e) => setSubCategory(e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Sub Category</em></MenuItem>
+                  <MenuItem value="access-control">Access Control</MenuItem>
+                  <MenuItem value="cctv">CCTV</MenuItem>
+                  <MenuItem value="bedroom">Bedroom</MenuItem>
+                  <MenuItem value="entry-exit">Entry-Exit</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div>
-              <Label htmlFor="site" className="text-sm font-medium">
-                Site<span className="text-red-500">*</span>
-              </Label>
-              <Select value={site} onValueChange={setSite}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select Site" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="lockated">Lockated</SelectItem>
-                  <SelectItem value="godrej-prime">Godrej Prime,Gurgaon</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="site-label" shrink>Site*</InputLabel>
+                <MuiSelect
+                  labelId="site-label"
+                  label="Site*"
+                  displayEmpty
+                  value={site}
+                  onChange={(e) => setSite(e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Site</em></MenuItem>
+                  <MenuItem value="lockated">Lockated</MenuItem>
+                  <MenuItem value="godrej-prime">Godrej Prime,Gurgaon</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div>
-              <Label htmlFor="location" className="text-sm font-medium">
-                Location<span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="location"
-                type="text"
+              <TextField
+                placeholder="Enter Location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="Enter Location"
-                className="mt-1"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
               />
             </div>
 
             <div>
-              <Label htmlFor="categorization" className="text-sm font-medium">
-                Categorization<span className="text-red-500">*</span>
-              </Label>
-              <Select value={categorization} onValueChange={setCategorization}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select Categorization" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="safety">Safety</SelectItem>
-                  <SelectItem value="workaround">Workaround</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="categorization-label" shrink>Categorization*</InputLabel>
+                <MuiSelect
+                  labelId="categorization-label"
+                  label="Categorization*"
+                  displayEmpty
+                  value={categorization}
+                  onChange={(e) => setCategorization(e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Categorization</em></MenuItem>
+                  <MenuItem value="safety">Safety</MenuItem>
+                  <MenuItem value="workaround">Workaround</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div>
-              <Label htmlFor="tag" className="text-sm font-medium">Tag</Label>
-              <Select value={tag} onValueChange={setTag}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select Tag" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="workaround">Workaround</SelectItem>
-                  <SelectItem value="critical">Critical</SelectItem>
-                  <SelectItem value="minor">Minor</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="tag-label" shrink>Tag</InputLabel>
+                <MuiSelect
+                  labelId="tag-label"
+                  label="Tag"
+                  displayEmpty
+                  value={tag}
+                  onChange={(e) => setTag(e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Tag</em></MenuItem>
+                  <MenuItem value="workaround">Workaround</MenuItem>
+                  <MenuItem value="critical">Critical</MenuItem>
+                  <MenuItem value="minor">Minor</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div>
-              <Label htmlFor="observation" className="text-sm font-medium">
-                Observation<span className="text-red-500">*</span>
-              </Label>
-              <Textarea
-                id="observation"
+              <TextField
+                placeholder="Enter Observation"
                 value={observation}
                 onChange={(e) => setObservation(e.target.value)}
-                placeholder="Enter Observation"
-                className="mt-1"
+                fullWidth
+                variant="outlined"
+                multiline
                 rows={4}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
               />
             </div>
 
             <div>
-              <Label htmlFor="recommendation" className="text-sm font-medium">
-                Recommendation<span className="text-red-500">*</span>
-              </Label>
-              <Textarea
-                id="recommendation"
+              <TextField
+                placeholder="Enter Recommendation"
                 value={recommendation}
                 onChange={(e) => setRecommendation(e.target.value)}
-                placeholder="Enter Recommendation"
-                className="mt-1"
+                fullWidth
+                variant="outlined"
+                multiline
                 rows={4}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
               />
             </div>
           </div>
@@ -204,9 +227,9 @@ export const AddDesignInsightDashboard = () => {
                 checked={mustHave}
                 onCheckedChange={handleMustHaveChange}
               />
-              <Label htmlFor="mustHave" className="text-sm font-medium">
+              <label htmlFor="mustHave" className="text-sm font-medium">
                 Must Have
-              </Label>
+              </label>
             </div>
           </div>
         </CardContent>
@@ -214,15 +237,14 @@ export const AddDesignInsightDashboard = () => {
 
       {/* Attachments Section */}
       <Card className="mb-6">
-        <CardHeader className="px-[50px] py-[50px]">
-          <CardTitle className="text-[#1A1A1A] flex items-center gap-5 text-[18px] font-semibold leading-auto tracking-[0%] font-['Work_Sans']">
-            <span className="bg-[#C72030] text-white rounded-full w-10 h-10 flex items-center justify-center text-[18px] font-semibold">0</span>
+        <CardHeader className="bg-orange-100">
+          <CardTitle className="text-orange-600 flex items-center gap-2">
+            <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">📎</span>
             ATTACHMENTS
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
           <div>
-            <Label className="text-sm font-medium">Manuals Upload</Label>
             <div className="mt-2 border-2 border-dashed border-orange-200 rounded-lg p-8 text-center">
               <p className="text-gray-500">
                 Drag & Drop or <span className="text-orange-600 cursor-pointer">Choose File</span>
