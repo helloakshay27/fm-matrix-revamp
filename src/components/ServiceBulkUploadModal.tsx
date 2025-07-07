@@ -100,7 +100,7 @@ export const ServiceBulkUploadModal = ({ isOpen, onClose }: ServiceBulkUploadMod
 
           {/* File upload area */}
           <div 
-            className="border-2 border-dashed border-orange-300 rounded-lg p-12 text-center"
+            className="border-2 border-dashed border-[#C72030] rounded-lg p-12 text-center"
             onDrop={handleDrop}
             onDragOver={handleDragOver}
           >
@@ -115,7 +115,7 @@ export const ServiceBulkUploadModal = ({ isOpen, onClose }: ServiceBulkUploadMod
               <span className="text-gray-600">Drag & Drop or </span>
               <label 
                 htmlFor="file-upload" 
-                className="text-orange-500 hover:text-orange-600 cursor-pointer underline"
+                className="text-[#C72030] cursor-pointer underline"
               >
                 Choose File
               </label>

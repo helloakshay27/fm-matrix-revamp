@@ -269,7 +269,7 @@ export const AddServicePage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="border-2 border-dashed border-orange-300 rounded-lg p-8">
+          <div className="border-2 border-dashed border-[#C72030] rounded-lg p-8">
             <div className="text-center">
               <input 
                 type="file" 
