@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Eye } from 'lucide-react';
 
 export const EditIncidentDetailsPage = () => {
   const { id } = useParams();
@@ -55,7 +56,25 @@ export const EditIncidentDetailsPage = () => {
           <span className="mx-2">{'>'}</span>
           <span>Edit Incident</span>
         </nav>
-        <h1 className="text-2xl font-bold text-gray-900">EDIT INCIDENT DETAILS</h1>
+        
+        {/* Updated Heading with Icon and Responsive Design */}
+        <div className="flex items-center mb-2">
+          {/* Icon Background - Responsive */}
+          <div className="flex items-center justify-center bg-[#C72030] rounded-sm
+                          w-5 h-5 sm:w-[30px] sm:h-[30px] lg:w-10 lg:h-10
+                          mr-4 sm:mr-2 lg:mr-5">
+            <Eye className="text-white 
+                          w-[10px] h-[10px] sm:w-[14px] sm:h-[14px] lg:w-[18px] lg:h-[18px]" />
+          </div>
+          
+          {/* Heading Title - Responsive */}
+          <h1 className="font-['Work_Sans'] font-semibold text-[#C72030] uppercase tracking-normal
+                        text-base sm:text-xl lg:text-[26px] 
+                        leading-auto">
+            EDIT INCIDENT DETAILS
+          </h1>
+        </div>
+        
         <p className="text-gray-600">Incident #{id}</p>
       </div>
 
