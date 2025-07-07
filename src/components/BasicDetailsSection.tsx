@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   FormControl,
@@ -59,14 +60,14 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
     },
   };
 
-  const textareaStyle = {
+  const textareaStyle: React.CSSProperties = {
     width: '100%',
     fontSize: '16px',
     padding: '12px',
     borderRadius: '4px',
     border: '1px solid #ccc',
     fontFamily: 'inherit',
-    resize: 'vertical',
+    resize: 'vertical' as const,
   };
 
   return (
