@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -239,89 +240,78 @@ export const EditAssetDetailsPage = () => {
           </button>
           
           {locationDetailsExpanded && (
-  <div className="p-6 pt-0 space-y-6">
-    {/* First Row */}
-    <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-      {[
-        {
-          label: 'Site*',
-          key: 'site',
-          options: ['Lockated', 'Other Site']
-        },
-        {
-          label: 'Building',
-          key: 'building',
-          options: ['sebc', 'Building A', 'Building B']
-        },
-        {
-          label: 'Wing',
-          key: 'wing',
-          options: ['North Wing', 'South Wing', 'East Wing', 'West Wing']
-        },
-        {
-          label: 'Area',
-          key: 'area',
-          options: ['Area 1', 'Area 2', 'Area 3']
-        },
-        {
-          label: 'Floor',
-          key: 'floor',
-          options: ['Ground Floor', '1st Floor', '2nd Floor', '3rd Floor']
-        }
-      ].map(({ label, key, options }) => (
-        <FormControl fullWidth key={key} sx={{ ...fieldStyles }}>
-          <InputLabel>{label}</InputLabel>
-          <Select
-            value={locationData[key as keyof typeof locationData] || ''}
-            onChange={(e: SelectChangeEvent) =>
-              handleLocationChange(key, e.target.value)
-            }
-            label={label}
-            MenuProps={{
-              disablePortal: true,
-              PaperProps: { sx: { mt: 0.5, zIndex: 9999, boxShadow: 3 } }
-            }}
-          >
-            <MenuItem value="">
-              <em>Select {label}</em>
-            </MenuItem>
-            {options.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      ))}
-    </div>
+            <div className="p-6 pt-0 space-y-6">
+              {/* First Row */}
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                {[
+                  {
+                    label: 'Site*',
+                    key: 'site',
+                    options: ['Lockated', 'Other Site']
+                  },
+                  {
+                    label: 'Building',
+                    key: 'building',
+                    options: ['sebc', 'Building A', 'Building B']
+                  },
+                  {
+                    label: 'Wing',
+                    key: 'wing',
+                    options: ['North Wing', 'South Wing', 'East Wing', 'West Wing']
+                  },
+                  {
+                    label: 'Area',
+                    key: 'area',
+                    options: ['Area 1', 'Area 2', 'Area 3']
+                  },
+                  {
+                    label: 'Floor',
+                    key: 'floor',
+                    options: ['Ground Floor', '1st Floor', '2nd Floor', '3rd Floor']
+                  }
+                ].map(({ label, key, options }) => (
+                  <div key={key} className="space-y-2">
+                    <Label htmlFor={key} className="text-sm font-medium">{label}</Label>
+                    <Select value={locationData[key as keyof typeof locationData] || ''} onValueChange={(value) => handleLocationChange(key, value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={`Select ${label}`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">
+                          <em>Select {label}</em>
+                        </SelectItem>
+                        {options.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
 
-    {/* Second Row */}
-    <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-      <FormControl fullWidth sx={{ ...fieldStyles }}>
-        <InputLabel>Room</InputLabel>
-        <Select
-          value={locationData.room || ''}
-          onChange={(e: SelectChangeEvent) =>
-            handleLocationChange('room', e.target.value)
-          }
-          label="Room"
-          MenuProps={{
-            disablePortal: true,
-            PaperProps: { sx: { mt: 0.5, zIndex: 9999, boxShadow: 3 } }
-          }}
-        >
-          <MenuItem value="">
-            <em>Select Room</em>
-          </MenuItem>
-          <MenuItem value="Room 101">Room 101</MenuItem>
-          <MenuItem value="Room 102">Room 102</MenuItem>
-          <MenuItem value="Room 103">Room 103</MenuItem>
-        </Select>
-      </FormControl>
-    </div>
-  </div>
-)}
-
+              {/* Second Row */}
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="room" className="text-sm font-medium">Room</Label>
+                  <Select value={locationData.room || ''} onValueChange={(value) => handleLocationChange('room', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Room" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">
+                        <em>Select Room</em>
+                      </SelectItem>
+                      <SelectItem value="Room 101">Room 101</SelectItem>
+                      <SelectItem value="Room 102">Room 102</SelectItem>
+                      <SelectItem value="Room 103">Room 103</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Asset Details Section */}
@@ -700,7 +690,7 @@ export const EditAssetDetailsPage = () => {
                 onClick={handleAddConsumptionMeasure}
                 className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus size={16} color="white" className="mr-2" />
                 Add Consumption Measure
               </Button>
               
@@ -824,7 +814,7 @@ export const EditAssetDetailsPage = () => {
                 onClick={handleAddNonConsumptionMeasure}
                 className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus size={16} color="white" className="mr-2" />
                 Add Non-Consumption Measure
               </Button>
               
@@ -956,7 +946,7 @@ export const EditAssetDetailsPage = () => {
                       id="manuals-upload"
                     />
                     <label htmlFor="manuals-upload" className="cursor-pointer">
-                      <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                      <Plus size={24} color="#9ca3af" className="mx-auto mb-2" style={{ marginBottom: '8px' }} />
                       <p className="text-sm text-gray-500">Click to upload files</p>
                     </label>
                   </div>
@@ -972,7 +962,7 @@ export const EditAssetDetailsPage = () => {
                       id="insurance-upload"
                     />
                     <label htmlFor="insurance-upload" className="cursor-pointer">
-                      <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                      <Plus size={24} color="#9ca3af" className="mx-auto mb-2" style={{ marginBottom: '8px' }} />
                       <p className="text-sm text-gray-500">Click to upload files</p>
                     </label>
                   </div>
@@ -988,7 +978,7 @@ export const EditAssetDetailsPage = () => {
                       id="invoice-upload"
                     />
                     <label htmlFor="invoice-upload" className="cursor-pointer">
-                      <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                      <Plus size={24} color="#9ca3af" className="mx-auto mb-2" style={{ marginBottom: '8px' }} />
                       <p className="text-sm text-gray-500">Click to upload files</p>
                     </label>
                   </div>
@@ -1004,7 +994,7 @@ export const EditAssetDetailsPage = () => {
                       id="amc-upload"
                     />
                     <label htmlFor="amc-upload" className="cursor-pointer">
-                      <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                      <Plus size={24} color="#9ca3af" className="mx-auto mb-2" style={{ marginBottom: '8px' }} />
                       <p className="text-sm text-gray-500">Click to upload files</p>
                     </label>
                   </div>
