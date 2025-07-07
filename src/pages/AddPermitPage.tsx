@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -391,17 +390,22 @@ export const AddPermitPage = () => {
 
             {/* Dynamic Activities */}
             {activities.map((activity, index) => (
-              <div key={index} className="space-y-8 p-6 border border-gray-200 rounded-lg bg-gray-50 relative">
-                {activities.length > 1 && (
-                  <button
-                    onClick={() => handleRemoveActivity(index)}
-                    className="absolute top-4 right-4 text-red-500 hover:text-red-700 w-6 h-6 flex items-center justify-center"
-                  >
-                    ✕
-                  </button>
-                )}
+              <div key={index} className="space-y-6 p-6 border border-gray-200 rounded-lg bg-gray-50">
+                {/* Header with remove button */}
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-sm font-medium text-gray-700">Activity {index + 1}</h4>
+                  {activities.length > 1 && (
+                    <button
+                      onClick={() => handleRemoveActivity(index)}
+                      className="text-red-500 hover:text-red-700 w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 transition-colors"
+                      title="Remove Activity"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                   <FormControl fullWidth variant="outlined">
                     <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Activity*</InputLabel>
                     <MuiSelect
