@@ -47,11 +47,11 @@ export const AttachmentsSection: React.FC = () => {
       </CardHeader>
       <CardContent className="px-[50px] py-[50px]">
         <div>
-          <div className="mt-2 border-2 border-dashed border-orange-200 rounded-lg p-8 text-center">
-            <p className="text-gray-500">
-              Drag & Drop or <span className="text-orange-600 cursor-pointer">Choose File</span>
+          <div className="mt-2 border-2 border-dashed rounded-lg p-8 text-center" style={{ borderColor: '#C72030' }}>
+            <p style={{ color: '#C72030' }}>
+              Drag & Drop or <span className="cursor-pointer underline" style={{ color: '#C72030' }}>Choose File</span>
             </p>
-            <p className="text-sm text-gray-400 mt-1">No file chosen</p>
+            <p className="text-sm mt-1" style={{ color: '#C72030', opacity: 0.7 }}>No file chosen</p>
           </div>
         </div>
       </CardContent>
