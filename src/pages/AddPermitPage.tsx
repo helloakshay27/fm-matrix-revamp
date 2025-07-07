@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,6 +34,7 @@ const fieldStyles = {
     padding: '14px 16px',
     fontSize: '14px',
   },
+  marginBottom: '24px', // Add consistent bottom margin
 };
 
 export const AddPermitPage = () => {
@@ -189,7 +191,7 @@ export const AddPermitPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 bg-white">
-          <div className="space-y-6">
+          <div className="space-y-8">
             <TextField
               label="Permit For*"
               value={permitData.permitFor}
@@ -200,7 +202,7 @@ export const AddPermitPage = () => {
             />
             
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              <FormControl fullWidth variant="outlined">
+              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                 <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Building*</InputLabel>
                 <MuiSelect
                   label="Building*"
@@ -216,7 +218,7 @@ export const AddPermitPage = () => {
                 </MuiSelect>
               </FormControl>
               
-              <FormControl fullWidth variant="outlined">
+              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                 <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Wing</InputLabel>
                 <MuiSelect
                   label="Wing"
@@ -231,7 +233,7 @@ export const AddPermitPage = () => {
                 </MuiSelect>
               </FormControl>
               
-              <FormControl fullWidth variant="outlined">
+              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                 <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Area</InputLabel>
                 <MuiSelect
                   label="Area"
@@ -248,7 +250,7 @@ export const AddPermitPage = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              <FormControl fullWidth variant="outlined">
+              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                 <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Floor</InputLabel>
                 <MuiSelect
                   label="Floor"
@@ -263,7 +265,7 @@ export const AddPermitPage = () => {
                 </MuiSelect>
               </FormControl>
               
-              <FormControl fullWidth variant="outlined">
+              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                 <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Room</InputLabel>
                 <MuiSelect
                   label="Room"
@@ -278,7 +280,7 @@ export const AddPermitPage = () => {
                 </MuiSelect>
               </FormControl>
               
-              <FormControl fullWidth variant="outlined">
+              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                 <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Copy To</InputLabel>
                 <MuiSelect
                   label="Copy To"
@@ -294,8 +296,8 @@ export const AddPermitPage = () => {
               </FormControl>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-3 text-gray-700">Client Specific</label>
+            <div className="mt-6">
+              <label className="block text-sm font-medium mb-4 text-gray-700">Client Specific</label>
               <div className="flex gap-6">
                 <label className="flex items-center cursor-pointer">
                   <input
@@ -334,9 +336,9 @@ export const AddPermitPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 bg-white">
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
-              <label className="block text-sm font-medium mb-3 text-gray-700">Select Permit Type*</label>
+              <label className="block text-sm font-medium mb-4 text-gray-700">Select Permit Type*</label>
               <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
                 <label className="flex items-center cursor-pointer">
                   <input
@@ -366,7 +368,7 @@ export const AddPermitPage = () => {
 
             {/* Dynamic Activities */}
             {activities.map((activity, index) => (
-              <div key={index} className="space-y-4 p-6 border border-gray-200 rounded-lg bg-gray-50 relative">
+              <div key={index} className="space-y-6 p-6 border border-gray-200 rounded-lg bg-gray-50 relative">
                 {activities.length > 1 && (
                   <button
                     onClick={() => handleRemoveActivity(index)}
@@ -377,7 +379,7 @@ export const AddPermitPage = () => {
                 )}
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                  <FormControl fullWidth variant="outlined">
+                  <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                     <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Activity*</InputLabel>
                     <MuiSelect
                       label="Activity*"
@@ -393,7 +395,7 @@ export const AddPermitPage = () => {
                     </MuiSelect>
                   </FormControl>
                   
-                  <FormControl fullWidth variant="outlined">
+                  <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                     <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Sub Activity*</InputLabel>
                     <MuiSelect
                       label="Sub Activity*"
@@ -409,7 +411,7 @@ export const AddPermitPage = () => {
                     </MuiSelect>
                   </FormControl>
                   
-                  <FormControl fullWidth variant="outlined">
+                  <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                     <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Category of Hazards*</InputLabel>
                     <MuiSelect
                       label="Category of Hazards*"
@@ -447,7 +449,7 @@ export const AddPermitPage = () => {
               + Add Activity
             </Button>
 
-            <FormControl fullWidth variant="outlined">
+            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
               <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Vendor</InputLabel>
               <MuiSelect
                 label="Vendor"
