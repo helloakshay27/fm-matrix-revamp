@@ -47,15 +47,11 @@ export const AddDesignInsightDashboard = () => {
   };
 
   return (
-    <div className="p-6 bg-white min-h-screen">
-      {/* Breadcrumb */}
-      <div className="mb-4">
-        <span className="text-sm text-gray-600">Design Insight &gt; NEW Design Insight</span>
-      </div>
-
+    <div className="p-4 sm:p-6 bg-white min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">NEW DESIGN INSIGHT</h1>
+        <p className="text-gray-600 mb-2 text-sm">Design Insight &gt; NEW Design Insight</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] uppercase">NEW DESIGN INSIGHT</h1>
       </div>
 
       {/* Basic Details Section */}

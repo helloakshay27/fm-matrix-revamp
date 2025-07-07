@@ -19,7 +19,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ onSave, onBack }) 
       <Button 
         onClick={onBack}
         variant="outline"
-        className="border-gray-300 text-gray-700 px-8"
+        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-8"
       >
         Back
       </Button>
