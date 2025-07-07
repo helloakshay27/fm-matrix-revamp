@@ -1,44 +1,35 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Textarea } from '@/components/ui/textarea';
-import { TextField } from '@mui/material';
-import { ArrowLeft, ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
-
-const fieldStyles = {
-  '& .MuiOutlinedInput-root': {
-    borderRadius: '8px',
-    backgroundColor: 'white',
-    '& fieldset': {
-      borderColor: '#e5e7eb',
-    },
-    '&:hover fieldset': {
-      borderColor: '#9ca3af',
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
-    },
-  },
-  '& .MuiInputLabel-root': {
-    color: '#6b7280',
-    '&.Mui-focused': {
-      color: '#C72030',
-    },
-  },
-  '& .MuiInputBase-input': {
-    padding: '14px 16px',
-    fontSize: '14px',
-  },
-};
+import {
+  Box,
+  Button,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Checkbox,
+  Typography,
+  IconButton,
+  Collapse,
+} from '@mui/material';
+import {
+  ArrowBack,
+  ExpandLess,
+  ExpandMore,
+  Add,
+  Close,
+} from '@mui/icons-material';
+import { styled } from '@mui/material/styles';
 
 export const EditAssetDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const [locationDetailsExpanded, setLocationDetailsExpanded] = useState(true);
   const [assetDetailsExpanded, setAssetDetailsExpanded] = useState(true);
   const [warrantyDetailsExpanded, setWarrantyDetailsExpanded] = useState(true);
@@ -46,14 +37,14 @@ export const EditAssetDetailsPage = () => {
   const [consumptionExpanded, setConsumptionExpanded] = useState(true);
   const [nonConsumptionExpanded, setNonConsumptionExpanded] = useState(true);
   const [attachmentsExpanded, setAttachmentsExpanded] = useState(true);
-  
+
   const [locationData, setLocationData] = useState({
     site: 'Lockated',
     building: 'sebc',
     wing: '',
     area: '',
     floor: '',
-    room: ''
+    room: '',
   });
 
   const [formData, setFormData] = useState({
@@ -79,17 +70,17 @@ export const EditAssetDetailsPage = () => {
     underWarranty: 'yes',
     warrantyStartDate: '',
     warrantyExpiresOn: '',
-    commissioningDate: ''
+    commissioningDate: '',
   });
 
-  const [selectedMeterTypes, setSelectedMeterTypes] = useState<string[]>([]);
-  const [consumptionMeasures, setConsumptionMeasures] = useState<any[]>([]);
-  const [nonConsumptionMeasures, setNonConsumptionMeasures] = useState<any[]>([]);
+  const [selectedMeterTypes, setSelectedMeterTypes] = useState([]);
+  const [consumptionMeasures, setConsumptionMeasures] = useState([]);
+  const [nonConsumptionMeasures, setNonConsumptionMeasures] = useState([]);
   const [attachments, setAttachments] = useState({
     manuals: [],
     insurance: [],
     invoice: [],
-    amc: []
+    amc: [],
   });
 
   const meterTypes = [
@@ -98,25 +89,32 @@ export const EditAssetDetailsPage = () => {
     { id: 'renewable', label: 'Renewable' },
     { id: 'fresh-water', label: 'Fresh Water' },
     { id: 'recycled', label: 'Recycled' },
-    { id: 'iex-gdam', label: 'IEX-GDAM' }
+    { id: 'iex-gdam', label: 'IEX-GDAM' },
   ];
 
   const unitTypes = [
-    'kWh', 'kW', 'Liters', 'Cubic Meters', 'Units', 'Percentage', 'Temperature', 'Pressure'
+    'kWh',
+    'kW',
+    'Liters',
+    'Cubic Meters',
+    'Units',
+    'Percentage',
+    'Temperature',
+    'Pressure',
   ];
 
-  const handleLocationChange = (field: string, value: string) => {
-    setLocationData(prev => ({ ...prev, [field]: value }));
+  const handleLocationChange = (field, value) => {
+    setLocationData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleMeterTypeToggle = (typeId: string) => {
-    setSelectedMeterTypes(prev => 
-      prev.includes(typeId) 
-        ? prev.filter(id => id !== typeId)
+  const handleMeterTypeToggle = (typeId) => {
+    setSelectedMeterTypes((prev) =>
+      prev.includes(typeId)
+        ? prev.filter((id) => id !== typeId)
         : [...prev, typeId]
     );
   };
@@ -131,9 +129,9 @@ export const EditAssetDetailsPage = () => {
       alertBelowVal: '',
       alertAboveVal: '',
       multiplierFactor: '',
-      checkPreviousReading: false
+      checkPreviousReading: false,
     };
-    setConsumptionMeasures(prev => [...prev, newMeasure]);
+    setConsumptionMeasures((prev) => [...prev, newMeasure]);
   };
 
   const handleAddNonConsumptionMeasure = () => {
@@ -146,36 +144,42 @@ export const EditAssetDetailsPage = () => {
       alertBelowVal: '',
       alertAboveVal: '',
       multiplierFactor: '',
-      checkPreviousReading: false
+      checkPreviousReading: false,
     };
-    setNonConsumptionMeasures(prev => [...prev, newMeasure]);
+    setNonConsumptionMeasures((prev) => [...prev, newMeasure]);
   };
 
-  const handleRemoveConsumptionMeasure = (id: number) => {
-    setConsumptionMeasures(prev => prev.filter(measure => measure.id !== id));
+  const handleRemoveConsumptionMeasure = (id) => {
+    setConsumptionMeasures((prev) => prev.filter((measure) => measure.id !== id));
   };
 
-  const handleRemoveNonConsumptionMeasure = (id: number) => {
-    setNonConsumptionMeasures(prev => prev.filter(measure => measure.id !== id));
+  const handleRemoveNonConsumptionMeasure = (id) => {
+    setNonConsumptionMeasures((prev) =>
+      prev.filter((measure) => measure.id !== id)
+    );
   };
 
-  const handleUpdateConsumptionMeasure = (id: number, field: string, value: string | boolean) => {
-    setConsumptionMeasures(prev => prev.map(measure => 
-      measure.id === id ? { ...measure, [field]: value } : measure
-    ));
+  const handleUpdateConsumptionMeasure = (id, field, value) => {
+    setConsumptionMeasures((prev) =>
+      prev.map((measure) =>
+        measure.id === id ? { ...measure, [field]: value } : measure
+      )
+    );
   };
 
-  const handleUpdateNonConsumptionMeasure = (id: number, field: string, value: string | boolean) => {
-    setNonConsumptionMeasures(prev => prev.map(measure => 
-      measure.id === id ? { ...measure, [field]: value } : measure
-    ));
+  const handleUpdateNonConsumptionMeasure = (id, field, value) => {
+    setNonConsumptionMeasures((prev) =>
+      prev.map((measure) =>
+        measure.id === id ? { ...measure, [field]: value } : measure
+      )
+    );
   };
 
-  const handleFileUpload = (category: string, event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (category, event) => {
     const files = event.target.files;
     if (files) {
       console.log(`Uploading files for ${category}:`, Array.from(files));
-      // In a real app, you would handle the file upload here
+      // Handle file upload logic here
     }
   };
 
@@ -186,7 +190,7 @@ export const EditAssetDetailsPage = () => {
       selectedMeterTypes,
       consumptionMeasures,
       nonConsumptionMeasures,
-      attachments
+      attachments,
     });
     navigate(`/maintenance/asset/details/${id}`);
   };
@@ -198,7 +202,7 @@ export const EditAssetDetailsPage = () => {
       selectedMeterTypes,
       consumptionMeasures,
       nonConsumptionMeasures,
-      attachments
+      attachments,
     });
     navigate('/maintenance/asset/add');
   };
@@ -207,842 +211,803 @@ export const EditAssetDetailsPage = () => {
     navigate(`/maintenance/asset/details/${id}`);
   };
 
+  // Styled Components
+  const SectionHeader = styled(Box)(({ theme }) => ({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: theme.spacing(2),
+    borderBottom: `1px solid ${theme.palette.divider}`,
+    backgroundColor: theme.palette.background.paper,
+  }));
+
+  const SectionTitle = styled(Box)(({ theme }) => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }));
+
+  const Circle = styled(Box)(({ theme }) => ({
+    width: 32,
+    height: 32,
+    backgroundColor: '#C72030',
+    color: theme.palette.common.white,
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '14px',
+    fontWeight: 'bold',
+  }));
+
+  const FileUploadBox = styled(Box)(({ theme }) => ({
+    border: `2px dashed ${theme.palette.grey[400]}`,
+    borderRadius: theme.shape.borderRadius,
+    padding: theme.spacing(4),
+    textAlign: 'center',
+    '&:hover': {
+      borderColor: theme.palette.grey[500],
+    },
+  }));
+
   return (
-    <div className="p-6 bg-[#f6f4ee] min-h-screen">
+    <Box sx={{ p: 4, bgcolor: '#f6f4ee', minHeight: '100vh' }}>
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800">
-            <ArrowLeft className="w-4 h-4" />
-            Asset List
-          </button>
-          <span>&gt;</span>
-          <span>Create New Asset</span>
-        </div>
-        <h1 className="text-2xl font-bold text-[#1a1a1a] uppercase">NEW ASSET</h1>
-      </div>
-
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        {/* Location Details Section */}
-        <div className="border-b border-gray-200">
-          <button
-            onClick={() => setLocationDetailsExpanded(!locationDetailsExpanded)}
-            className="w-full flex items-center justify-between p-4 text-left"
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, color: 'text.secondary' }}>
+          <Button
+            startIcon={<ArrowBack />}
+            onClick={handleBack}
+            sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
           >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold">
-                1
-              </div>
-              <h2 className="text-lg font-semibold text-[#C72030] uppercase">LOCATION DETAILS</h2>
-            </div>
-            {locationDetailsExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </button>
-          
-          {locationDetailsExpanded && (
-            <div className="p-6 pt-0 space-y-6">
-              {/* First Row */}
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="site" className="text-sm font-medium">Site*</Label>
-                  <Select value={locationData.site} onValueChange={(value) => handleLocationChange('site', value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Lockated">Lockated</SelectItem>
-                      <SelectItem value="Other Site">Other Site</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="building" className="text-sm font-medium">Building</Label>
-                  <Select value={locationData.building} onValueChange={(value) => handleLocationChange('building', value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="sebc">sebc</SelectItem>
-                      <SelectItem value="Building A">Building A</SelectItem>
-                      <SelectItem value="Building B">Building B</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            Asset List
+          </Button>
+          <Typography variant="body2">></Typography>
+          <Typography variant="body2">Create New Asset</Typography>
+        </Box>
+        <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1a1a1a', textTransform: 'uppercase' }}>
+          NEW ASSET
+        </Typography>
+      </Box>
 
-                <div className="space-y-2">
-                  <Label htmlFor="wing" className="text-sm font-medium">Wing</Label>
-                  <Select value={locationData.wing} onValueChange={(value) => handleLocationChange('wing', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Wing" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="North Wing">North Wing</SelectItem>
-                      <SelectItem value="South Wing">South Wing</SelectItem>
-                      <SelectItem value="East Wing">East Wing</SelectItem>
-                      <SelectItem value="West Wing">West Wing</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="area" className="text-sm font-medium">Area</Label>
-                  <Select value={locationData.area} onValueChange={(value) => handleLocationChange('area', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Area" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Area 1">Area 1</SelectItem>
-                      <SelectItem value="Area 2">Area 2</SelectItem>
-                      <SelectItem value="Area 3">Area 3</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="floor" className="text-sm font-medium">Floor</Label>
-                  <Select value={locationData.floor} onValueChange={(value) => handleLocationChange('floor', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Floor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Ground Floor">Ground Floor</SelectItem>
-                      <SelectItem value="1st Floor">1st Floor</SelectItem>
-                      <SelectItem value="2nd Floor">2nd Floor</SelectItem>
-                      <SelectItem value="3rd Floor">3rd Floor</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Second Row */}
-              <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="room" className="text-sm font-medium">Room</Label>
-                  <Select value={locationData.room} onValueChange={(value) => handleLocationChange('room', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Room" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Room 101">Room 101</SelectItem>
-                      <SelectItem value="Room 102">Room 102</SelectItem>
-                      <SelectItem value="Room 103">Room 103</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+      <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, border: 1, borderColor: 'divider', boxShadow: 1 }}>
+        {/* Location Details Section */}
+        <SectionHeader>
+          <SectionTitle>
+            <Circle>1</Circle>
+            <Typography variant="h6" sx={{ color: '#C72030', fontWeight: 'bold', textTransform: 'uppercase' }}>
+              LOCATION DETAILS
+            </Typography>
+          </SectionTitle>
+          <IconButton onClick={() => setLocationDetailsExpanded(!locationDetailsExpanded)}>
+            {locationDetailsExpanded ? <ExpandLess /> : <ExpandMore />}
+          </IconButton>
+        </SectionHeader>
+        <Collapse in={locationDetailsExpanded}>
+          <Box sx={{ p: 4, pt: 0 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(5, 1fr)' }, gap: 2, mb: 4 }}>
+              <FormControl fullWidth>
+                <InputLabel>Site*</InputLabel>
+                <Select
+                  value={locationData.site}
+                  onChange={(e) => handleLocationChange('site', e.target.value)}
+                  label="Site*"
+                >
+                  <MenuItem value="Lockated">Lockated</MenuItem>
+                  <MenuItem value="Other Site">Other Site</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl fullWidth>
+                <InputLabel>Building</InputLabel>
+                <Select
+                  value={locationData.building}
+                  onChange={(e) => handleLocationChange('building', e.target.value)}
+                  label="Building"
+                >
+                  <MenuItem value="seakedown">sebc</MenuItem>
+                  <MenuItem value="Building A">Building A</MenuItem>
+                  <MenuItem value="Building B">Building B</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl fullWidth>
+                <InputLabel>Wing</InputLabel>
+                <Select
+                  value={locationData.wing}
+                  onChange={(e) => handleLocationChange('wing', e.target.value)}
+                  label="Wing"
+                >
+                  <MenuItem value="North Wing">North Wing</MenuItem>
+                  <MenuItem value="South Wing">South Wing</MenuItem>
+                  <MenuItem value="East Wing">East Wing</MenuItem>
+                  <MenuItem value="West Wing">West Wing</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl fullWidth>
+                <InputLabel>Area</InputLabel>
+                <Select
+                  value={locationData.area}
+                  onChange={(e) => handleLocationChange('area', e.target.value)}
+                  label="Area"
+                >
+                  <MenuItem value="Area 1">Area 1</MenuItem>
+                  <MenuItem value="Area 2">Area 2</MenuItem>
+                  <MenuItem value="Area 3">Area 3</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl fullWidth>
+                <InputLabel>Floor</InputLabel>
+                <Select
+                  value={locationData.floor}
+                  onChange={(e) => handleLocationChange('floor', e.target.value)}
+                  label="Floor"
+                >
+                  <MenuItem value="Ground Floor">Ground Floor</MenuItem>
+                  <MenuItem value="1st Floor">1st Floor</MenuItem>
+                  <MenuItem value="2nd Floor">2nd Floor</MenuItem>
+                  <MenuItem value="3rd Floor">3rd Floor</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 2 }}>
+              <FormControl fullWidth>
+                <InputLabel>Room</InputLabel>
+                <Select
+                  value={locationData.room}
+                  onChange={(e) => handleLocationChange('room', e.target.value)}
+                  label="Room"
+                >
+                  <MenuItem value="Room 101">Room 101</MenuItem>
+                  <MenuItem value="Room 102">Room 102</MenuItem>
+                  <MenuItem value="Room 103">Room 103</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
+        </Collapse>
 
         {/* Asset Details Section */}
-        <div className="border-b border-gray-200">
-          <button
-            onClick={() => setAssetDetailsExpanded(!assetDetailsExpanded)}
-            className="w-full flex items-center justify-between p-4 text-left"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold">
-                2
-              </div>
-              <h2 className="text-lg font-semibold text-[#C72030] uppercase">ASSET DETAILS</h2>
-            </div>
-            {assetDetailsExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </button>
-          
-          {assetDetailsExpanded && (
-            <div className="p-6 pt-0 space-y-6">
-              {/* First Row */}
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                <TextField
-                  label="Asset Name*"
-                  value={formData.assetName}
-                  onChange={(e) => handleInputChange('assetName', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Asset No.*"
-                  value={formData.assetNo}
-                  onChange={(e) => handleInputChange('assetNo', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Equipment ID*"
-                  placeholder="Enter Number"
-                  value={formData.equipmentId}
-                  onChange={(e) => handleInputChange('equipmentId', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Model No."
-                  value={formData.modelNo}
-                  onChange={(e) => handleInputChange('modelNo', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Serial No."
-                  value={formData.serialNo}
-                  onChange={(e) => handleInputChange('serialNo', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                />
-              </div>
-
-              {/* Second Row */}
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                <TextField
-                  label="Consumer No."
-                  placeholder="Enter Number"
-                  value={formData.consumerNo}
-                  onChange={(e) => handleInputChange('consumerNo', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Purchase Cost*"
-                  value={formData.purchaseCost}
-                  onChange={(e) => handleInputChange('purchaseCost', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Capacity"
-                  value={formData.capacity}
-                  onChange={(e) => handleInputChange('capacity', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Unit"
-                  value={formData.unit}
-                  onChange={(e) => handleInputChange('unit', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                />
-                <div className="space-y-2">
-                  <Label htmlFor="group" className="text-sm font-medium">Group*</Label>
-                  <Select value={formData.group} onValueChange={(value) => handleInputChange('group', value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Electrical">Electrical</SelectItem>
-                      <SelectItem value="Mechanical">Mechanical</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Third Row */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="subgroup" className="text-sm font-medium">Subgroup*</Label>
-                  <Select value={formData.subgroup} onValueChange={(value) => handleInputChange('subgroup', value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Electric Meter">Electric Meter</SelectItem>
-                      <SelectItem value="Water Meter">Water Meter</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <TextField
-                  label="Purchased ON Date"
-                  type="date"
-                  value={formData.purchaseDate}
-                  onChange={(e) => handleInputChange('purchaseDate', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Expiry date"
-                  type="date"
-                  placeholder="Select Date"
-                  value={formData.expiryDate}
-                  onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={fieldStyles}
-                />
-                <div className="space-y-2">
-                  <Label htmlFor="manufacturer" className="text-sm font-medium">Manufacturer</Label>
-                  <Select value={formData.manufacturer} onValueChange={(value) => handleInputChange('manufacturer', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Date" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="manufacturer1">Manufacturer 1</SelectItem>
-                      <SelectItem value="manufacturer2">Manufacturer 2</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Radio Groups */}
-              <div className="space-y-6">
-                {/* Location Type */}
-                <div>
-                  <Label className="text-sm font-medium mb-3 block">Location Type</Label>
-                  <RadioGroup value={formData.locationType} onValueChange={(value) => handleInputChange('locationType', value)} className="flex gap-6">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="common-area" id="common-area" />
-                      <Label htmlFor="common-area">Common Area</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="customer" id="customer" />
-                      <Label htmlFor="customer">Customer</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="na" id="na" />
-                      <Label htmlFor="na">NA</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                {/* Asset Type */}
-                <div>
-                  <Label className="text-sm font-medium mb-3 block">Asset Type</Label>
-                  <RadioGroup value={formData.assetType} onValueChange={(value) => handleInputChange('assetType', value)} className="flex gap-6">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="parent" id="parent" />
-                      <Label htmlFor="parent">Parent</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="sub" id="sub" />
-                      <Label htmlFor="sub">Sub</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                {/* Status */}
-                <div>
-                  <Label className="text-sm font-medium mb-3 block">Status</Label>
-                  <RadioGroup value={formData.status} onValueChange={(value) => handleInputChange('status', value)} className="flex gap-6">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="in-use" id="in-use" />
-                      <Label htmlFor="in-use">In Use</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="breakdown" id="breakdown" />
-                      <Label htmlFor="breakdown">Breakdown</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                {/* Critical */}
-                <div>
-                  <Label className="text-sm font-medium mb-3 block">Critical</Label>
-                  <RadioGroup value={formData.critical} onValueChange={(value) => handleInputChange('critical', value)} className="flex gap-6">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="yes" id="yes" />
-                      <Label htmlFor="yes">Yes</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="no" id="no" />
-                      <Label htmlFor="no">No</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                {/* Meter Applicable */}
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="meter-applicable" 
+        <SectionHeader>
+          <SectionTitle>
+            <Circle>2</Circle>
+            <Typography variant="h6" sx={{ color: '#C72030', fontWeight: 'bold', textTransform: 'uppercase' }}>
+              ASSET DETAILS
+            </Typography>
+          </SectionTitle>
+          <IconButton onClick={() => setAssetDetailsExpanded(!assetDetailsExpanded)}>
+            {assetDetailsExpanded ? <ExpandLess /> : <ExpandMore />}
+          </IconButton>
+        </SectionHeader>
+        <Collapse in={assetDetailsExpanded}>
+          <Box sx={{ p: 4, pt: 0 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(5, 1fr)' }, gap: 2, mb: 4 }}>
+              <TextField
+                label="Asset Name*"
+                value={formData.assetName}
+                onChange={(e) => handleInputChange('assetName', e.target.value)}
+                fullWidth
+                variant="outlined"
+              />
+              <TextField
+                label="Asset No.*"
+                value={formData.assetNo}
+                onChange={(e) => handleInputChange('assetNo', e.target.value)}
+                fullWidth
+                variant="outlined"
+              />
+              <TextField
+                label="Equipment ID*"
+                value={formData.equipmentId}
+                onChange={(e) => handleInputChange('equipmentId', e.target.value)}
+                fullWidth
+                variant="outlined"
+              />
+              <TextField
+                label="Model No."
+                value={formData.modelNo}
+                onChange={(e) => handleInputChange('modelNo', e.target.value)}
+                fullWidth
+                variant="outlined"
+              />
+              <TextField
+                label="Serial No."
+                value={formData.serialNo}
+                onChange={(e) => handleInputChange('serialNo', e.target.value)}
+                fullWidth
+                variant="outlined"
+              />
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(5, 1fr)' }, gap: 2, mb: 4 }}>
+              <TextField
+                label="Consumer No."
+                value={formData.consumerNo}
+                onChange={(e) => handleInputChange('consumerNo', e.target.value)}
+                fullWidth
+                variant="outlined"
+              />
+              <TextField
+                label="Purchase Cost*"
+                value={formData.purchaseCost}
+                onChange={(e) => handleInputChange('purchaseCost', e.target.value)}
+                fullWidth
+                variant="outlined"
+              />
+              <TextField
+                label="Capacity"
+                value={formData.capacity}
+                onChange={(e) => handleInputChange('capacity', e.target.value)}
+                fullWidth
+                variant="outlined"
+              />
+              <TextField
+                label="Unit"
+                value={formData.unit}
+                onChange={(e) => handleInputChange('unit', e.target.value)}
+                fullWidth
+                variant="outlined"
+              />
+              <FormControl fullWidth>
+                <InputLabel>Group*</InputLabel>
+                <Select
+                  value={formData.group}
+                  onChange={(e) => handleInputChange('group', e.target.value)}
+                  label="Group*"
+                >
+                  <MenuItem value="Electrical">Electrical</MenuItem>
+                  <MenuItem value="Mechanical">Mechanical</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 2, mb: 4 }}>
+              <FormControl fullWidth>
+                <InputLabel>Subgroup*</InputLabel>
+                <Select
+                  value={formData.subgroup}
+                  onChange={(e) => handleInputChange('subgroup', e.target.value)}
+                  label="Subgroup*"
+                >
+                  <MenuItem value="Electric Meter">Electric Meter</MenuItem>
+                  <MenuItem value="Water Meter">Water Meter</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                label="Purchased ON Date"
+                type="date"
+                value={formData.purchaseDate}
+                onChange={(e) => handleInputChange('purchaseDate', e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+              />
+              <TextField
+                label="Expiry Date"
+                type="date"
+                value={formData.expiryDate}
+                onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+              />
+              <FormControl fullWidth>
+                <InputLabel>Manufacturer</InputLabel>
+                <Select
+                  value={formData.manufacturer}
+                  onChange={(e) => handleInputChange('manufacturer', e.target.value)}
+                  label="Manufacturer"
+                >
+                  <MenuItem value="manufacturer1">Manufacturer 1</MenuItem>
+                  <MenuItem value="manufacturer2">Manufacturer 2</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <FormControl component="fieldset">
+                <FormLabel component="legend">Location Type</FormLabel>
+                <RadioGroup
+                  row
+                  value={formData.locationType}
+                  onChange={(e) => handleInputChange('locationType', e.target.value)}
+                >
+                  <FormControlLabel value="common-area" control={<Radio />} label="Common Area" />
+                  <FormControlLabel value="customer" control={<Radio />} label="Customer" />
+                  <FormControlLabel value="na" control={<Radio />} label="NA" />
+                </RadioGroup>
+              </FormControl>
+              <FormControl component="fieldset">
+                <FormLabel component="legend">Asset Type</FormLabel>
+                <RadioGroup
+                  row
+                  value={formData.assetType}
+                  onChange={(e) => handleInputChange('assetType', e.target.value)}
+                >
+                  <FormControlLabel value="parent" control={<Radio />} label="Parent" />
+                  <FormControlLabel value="sub" control={<Radio />} label="Sub" />
+                </RadioGroup>
+              </FormControl>
+              <FormControl component="fieldset">
+                <FormLabel component="legend">Status</FormLabel>
+                <RadioGroup
+                  row
+                  value={formData.status}
+                  onChange={(e) => handleInputChange('status', e.target.value)}
+                >
+                  <FormControlLabel value="in-use" control={<Radio />} label="In Use" />
+                  <FormControlLabel value="breakdown" control={<Radio />} label="Breakdown" />
+                </RadioGroup>
+              </FormControl>
+              <FormControl component="fieldset">
+                <FormLabel component="legend">Critical</FormLabel>
+                <RadioGroup
+                  row
+                  value={formData.critical}
+                  onChange={(e) => handleInputChange('critical', e.target.value)}
+                >
+                  <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+                  <FormControlLabel value="no" control={<Radio />} label="No" />
+                </RadioGroup>
+              </FormControl>
+              <FormControlLabel
+                control={
+                  <Checkbox
                     checked={formData.meterApplicable}
-                    onCheckedChange={(checked) => handleInputChange('meterApplicable', checked === true)}
+                    onChange={(e) => handleInputChange('meterApplicable', e.target.checked)}
                   />
-                  <Label htmlFor="meter-applicable">Meter Applicable</Label>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+                }
+                label="Meter Applicable"
+              />
+            </Box>
+          </Box>
+        </Collapse>
 
         {/* Warranty Details Section */}
-        <div className="border-b border-gray-200">
-          <button
-            onClick={() => setWarrantyDetailsExpanded(!warrantyDetailsExpanded)}
-            className="w-full flex items-center justify-between p-4 text-left"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold">
-                3
-              </div>
-              <h2 className="text-lg font-semibold text-[#C72030] uppercase">WARRANTY DETAILS</h2>
-            </div>
-            {warrantyDetailsExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </button>
-          
-          {warrantyDetailsExpanded && (
-            <div className="p-6 pt-0 space-y-6">
-              {/* Under Warranty */}
-              <div>
-                <Label className="text-sm font-medium mb-3 block">Under Warranty</Label>
-                <RadioGroup value={formData.underWarranty} onValueChange={(value) => handleInputChange('underWarranty', value)} className="flex gap-6">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="warranty-yes" />
-                    <Label htmlFor="warranty-yes">Yes</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="warranty-no" />
-                    <Label htmlFor="warranty-no">No</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              {/* Warranty Dates */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <TextField
-                  label="Warranty Start Date"
-                  type="date"
-                  placeholder="Select Date"
-                  value={formData.warrantyStartDate}
-                  onChange={(e) => handleInputChange('warrantyStartDate', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Warranty expires on"
-                  type="date"
-                  placeholder="Select Date"
-                  value={formData.warrantyExpiresOn}
-                  onChange={(e) => handleInputChange('warrantyExpiresOn', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Commissioning Date"
-                  type="date"
-                  placeholder="Select Date"
-                  value={formData.commissioningDate}
-                  onChange={(e) => handleInputChange('commissioningDate', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={fieldStyles}
-                />
-              </div>
-            </div>
-          )}
-        </div>
+        <SectionHeader>
+          <SectionTitle>
+            <Circle>3</Circle>
+            <Typography variant="h6" sx={{ color: '#C72030', fontWeight: 'bold', textTransform: 'uppercase' }}>
+              WARRANTY DETAILS
+            </Typography>
+          </SectionTitle>
+          <IconButton onClick={() => setWarrantyDetailsExpanded(!warrantyDetailsExpanded)}>
+            {warrantyDetailsExpanded ? <ExpandLess /> : <ExpandMore />}
+          </IconButton>
+        </SectionHeader>
+        <Collapse in={warrantyDetailsExpanded}>
+          <Box sx={{ p: 4, pt: 0 }}>
+            <FormControl component="fieldset" sx={{ mb: 4 }}>
+              <FormLabel component="legend">Under Warranty</FormLabel>
+              <RadioGroup
+                row
+                value={formData.underWarranty}
+                onChange={(e) => handleInputChange('underWarranty', e.target.value)}
+              >
+                <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+                <FormControlLabel value="no" control={<Radio />} label="No" />
+              </RadioGroup>
+            </FormControl>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
+              <TextField
+                label="Warranty Start Date"
+                type="date"
+                value={formData.warrantyStartDate}
+                onChange={(e) => handleInputChange('warrantyStartDate', e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+              />
+              <TextField
+                label="Warranty Expires On"
+                type="date"
+                value={formData.warrantyExpiresOn}
+                onChange={(e) => handleInputChange('warrantyExpiresOn', e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+              />
+              <TextField
+                label="Commissioning Date"
+                type="date"
+                value={formData.commissioningDate}
+                onChange={(e) => handleInputChange('commissioningDate', e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+              />
+            </Box>
+          </Box>
+        </Collapse>
 
         {/* Meter Category Type Section */}
-        <div className="border-b border-gray-200">
-          <button
-            onClick={() => setMeterCategoryExpanded(!meterCategoryExpanded)}
-            className="w-full flex items-center justify-between p-4 text-left"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold">
-                4
-              </div>
-              <h2 className="text-lg font-semibold text-[#C72030] uppercase">METER CATEGORY TYPE</h2>
-            </div>
-            {meterCategoryExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </button>
-          
-          {meterCategoryExpanded && (
-            <div className="p-6 pt-0">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {meterTypes.map((type) => (
-                  <div
-                    key={type.id}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-colors ${
-                      selectedMeterTypes.includes(type.id)
-                        ? 'border-[#C72030] bg-[#C72030]/10'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                    onClick={() => handleMeterTypeToggle(type.id)}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <div className={`w-4 h-4 rounded-full border-2 ${
-                        selectedMeterTypes.includes(type.id)
-                          ? 'border-[#C72030] bg-[#C72030]'
-                          : 'border-gray-300'
-                      }`} />
-                      <span className="text-sm font-medium">{type.label}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+        <SectionHeader>
+          <SectionTitle>
+            <Circle>4</Circle>
+            <Typography variant="h6" sx={{ color: '#C72030', fontWeight: 'bold', textTransform: 'uppercase' }}>
+              METER CATEGORY TYPE
+            </Typography>
+          </SectionTitle>
+          <IconButton onClick={() => setMeterCategoryExpanded(!meterCategoryExpanded)}>
+            {meterCategoryExpanded ? <ExpandLess /> : <ExpandMore />}
+          </IconButton>
+        </SectionHeader>
+        <Collapse in={meterCategoryExpanded}>
+          <Box sx={{ p: 4, pt: 0 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
+              {meterTypes.map((type) => (
+                <Box
+                  key={type.id}
+                  onClick={() => handleMeterTypeToggle(type.id)}
+                  sx={{
+                    p: 2,
+                    border: 2,
+                    borderColor: selectedMeterTypes.includes(type.id) ? '#C72030' : 'grey.200',
+                    bgcolor: selectedMeterTypes.includes(type.id) ? '#C72030' + '1A' : 'background.paper',
+                    borderRadius: 1,
+                    cursor: 'pointer',
+                    '&:hover': { borderColor: selectedMeterTypes.includes(type.id) ? '#C72030' : 'grey.300' },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box
+                      sx={{
+                        width: 16,
+                        height: 16,
+                        borderRadius: '50%',
+                        border: 28,
+                        borderColor: selectedMeterTypes.includes(type.id) ? '#C72030' : 'grey.300',
+                        bgcolor: selectedMeterTypes.includes(type.id) ? '#C72030' : 'transparent',
+                      }}
+                    />
+                    <Typography variant="body2">{type.label}</Typography>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        </Collapse>
 
         {/* Consumption Asset Measure Section */}
-        <div className="border-b border-gray-200">
-          <button
-            onClick={() => setConsumptionExpanded(!consumptionExpanded)}
-            className="w-full flex items-center justify-between p-4 text-left"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold">
-                5
-              </div>
-              <h2 className="text-lg font-semibold text-[#C72030] uppercase">CONSUMPTION ASSET MEASURE</h2>
-            </div>
-            {consumptionExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </button>
-          
-          {consumptionExpanded && (
-            <div className="p-6 pt-0 space-y-4">
-              <Button 
-                onClick={handleAddConsumptionMeasure}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Consumption Measure
-              </Button>
-              
-              {consumptionMeasures.map((measure, index) => (
-                <div key={measure.id} className="p-4 border border-gray-200 rounded-lg space-y-4">
-                  <div className="flex justify-end">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleRemoveConsumptionMeasure(measure.id)}
-                      className="text-red-500 hover:text-red-700"
+        <SectionHeader>
+          <SectionTitle>
+            <Circle>5</Circle>
+            <Typography variant="h6" sx={{ color: '#C72030', fontWeight: 'bold', textTransform: 'uppercase' }}>
+              CONSUMPTION ASSET MEASURE
+            </Typography>
+          </SectionTitle>
+          <IconButton onClick={() => setConsumptionExpanded(!consumptionExpanded)}>
+            {consumptionExpanded ? <ExpandLess /> : <ExpandMore />}
+          </IconButton>
+        </SectionHeader>
+        <Collapse in={consumptionExpanded}>
+          <Box sx={{ p: 4, pt: 0 }}>
+            <Button
+              startIcon={<Add />}
+              onClick={handleAddConsumptionMeasure}
+              sx={{ bgcolor: '#C72030', color: 'white', '&:hover': { bgcolor: '#C72030CC' }, mb: 2 }}
+            >
+              Add Consumption Measure
+            </Button>
+            {consumptionMeasures.map((measure) => (
+              <Box key={measure.id} sx={{ p: 2, border: 1, borderColor: 'grey.200', borderRadius: 1, mb: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <IconButton
+                    onClick={() => handleRemoveConsumptionMeasure(measure.id)}
+                    sx={{ color: 'error.main' }}
+                  >
+                    <Close />
+                  </IconButton>
+                </Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(5, 1fr)' }, gap: 2, mb: 2 }}>
+                  <TextField
+                    label="Name"
+                    value={measure.name}
+                    onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'name', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                  />
+                  <FormControl fullWidth>
+                    <InputLabel>Unit Type</InputLabel>
+                    <Select
+                      value={measure.unitType}
+                      onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'unitType', e.target.value)}
+                      label="Unit Type"
                     >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    <TextField
-                      label="Name"
-                      placeholder="Enter Text"
-                      value={measure.name}
-                      onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'name', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Unit Type</Label>
-                      <Select value={measure.unitType} onValueChange={(value) => handleUpdateConsumptionMeasure(measure.id, 'unitType', value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Unit Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {unitTypes.map((unit) => (
-                            <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <TextField
-                      label="Min"
-                      placeholder="Enter Number"
-                      value={measure.min}
-                      onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'min', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
-                    <TextField
-                      label="Max"
-                      placeholder="Enter Number"
-                      value={measure.max}
-                      onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'max', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
-                    <TextField
-                      label="Alert Below Val."
-                      placeholder="Enter Value"
-                      value={measure.alertBelowVal}
-                      onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <TextField
-                      label="Alert Above Val."
-                      placeholder="Enter Value"
-                      value={measure.alertAboveVal}
-                      onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
-                    <TextField
-                      label="Multiplier Factor"
-                      placeholder="Enter Text"
-                      value={measure.multiplierFactor}
-                      onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
-                    <div className="flex items-center space-x-2 pt-8">
-                      <Checkbox 
-                        id={`check-previous-reading-${measure.id}`}
+                      {unitTypes.map((unit) => (
+                        <MenuItem key={unit} value={unit}>
+                          {unit}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    label="Min"
+                    value={measure.min}
+                    onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'min', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                  />
+                  <TextField
+                    label="Max"
+                    value={measure.max}
+                    onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'max', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                  />
+                  <TextField
+                    label="Alert Below Val."
+                    value={measure.alertBelowVal}
+                    onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                  />
+                </Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
+                  <TextField
+                    label="Alert Above Val."
+                    value={measure.alertAboveVal}
+                    onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                  />
+                  <TextField
+                    label="Multiplier Factor"
+                    value={measure.multiplierFactor}
+                    onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
                         checked={measure.checkPreviousReading}
-                        onCheckedChange={(checked) => handleUpdateConsumptionMeasure(measure.id, 'checkPreviousReading', checked === true)}
+                        onChange={(e) =>
+                          handleUpdateConsumptionMeasure(measure.id, 'checkPreviousReading', e.target.checked)
+                        }
                       />
-                      <Label htmlFor={`check-previous-reading-${measure.id}`} className="text-sm font-medium">Check Previous Reading</Label>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                    }
+                    label="Check Previous Reading"
+                    sx={{ pt: 2 }}
+                  />
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        </Collapse>
 
         {/* Non Consumption Asset Measure Section */}
-        <div className="border-b border-gray-200">
-          <button
-            onClick={() => setNonConsumptionExpanded(!nonConsumptionExpanded)}
-            className="w-full flex items-center justify-between p-4 text-left"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold">
-                6
-              </div>
-              <h2 className="text-lg font-semibold text-[#C72030] uppercase">NON CONSUMPTION ASSET MEASURE</h2>
-            </div>
-            {nonConsumptionExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </button>
-          
-          {nonConsumptionExpanded && (
-            <div className="p-6 pt-0 space-y-4">
-              <Button 
-                onClick={handleAddNonConsumptionMeasure}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Non-Consumption Measure
-              </Button>
-              
-              {nonConsumptionMeasures.map((measure, index) => (
-                <div key={measure.id} className="p-4 border border-gray-200 rounded-lg space-y-4">
-                  <div className="flex justify-end">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleRemoveNonConsumptionMeasure(measure.id)}
-                      className="text-red-500 hover:text-red-700"
+        <SectionHeader>
+          <SectionTitle>
+            <Circle>6</Circle>
+            <Typography variant="h6" sx={{ color: '#C72030', fontWeight: 'bold', textTransform: 'uppercase' }}>
+              NON CONSUMPTION ASSET MEASURE
+            </Typography>
+          </SectionTitle>
+          <IconButton onClick={() => setNonConsumptionExpanded(!nonConsumptionExpanded)}>
+            {nonConsumptionExpanded ? <ExpandLess /> : <ExpandMore />}
+          </IconButton>
+        </SectionHeader>
+        <Collapse in={nonConsumptionExpanded}>
+          <Box sx={{ p: 4, pt: 0 }}>
+            <Button
+              startIcon={<Add />}
+              onClick={handleAddNonConsumptionMeasure}
+              sx={{ bgcolor: '#C72030', color: 'white', '&:hover': { bgcolor: '#C72030CC' }, mb: 2 }}
+            >
+              Add Non-Consumption Measure
+            </Button>
+            {nonConsumptionMeasures.map((measure) => (
+              <Box key={measure.id} sx={{ p: 2, border: 1, borderColor: 'grey.200', borderRadius: 1, mb: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <IconButton
+                    onClick={() => handleRemoveNonConsumptionMeasure(measure.id)}
+                    sx={{ color: 'error.main' }}
+                  >
+                    <Close />
+                  </IconButton>
+                </Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(5, 1fr)' }, gap: 2, mb: 2 }}>
+                  <TextField
+                    label="Name"
+                    value={measure.name}
+                    onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'name', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                  />
+                  <FormControl fullWidth>
+                    <InputLabel>Unit Type</InputLabel>
+                    <Select
+                      value={measure.unitType}
+                      onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'unitType', e.target.value)}
+                      label="Unit Type"
                     >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    <TextField
-                      label="Name"
-                      placeholder="Name"
-                      value={measure.name}
-                      onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'name', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Unit Type</Label>
-                      <Select value={measure.unitType} onValueChange={(value) => handleUpdateNonConsumptionMeasure(measure.id, 'unitType', value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Unit Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {unitTypes.map((unit) => (
-                            <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <TextField
-                      label="Min"
-                      placeholder="Min"
-                      value={measure.min}
-                      onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'min', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
-                    <TextField
-                      label="Max"
-                      placeholder="Max"
-                      value={measure.max}
-                      onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'max', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
-                    <TextField
-                      label="Alert Below Val."
-                      placeholder="Alert Below Value"
-                      value={measure.alertBelowVal}
-                      onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <TextField
-                      label="Alert Above Val."
-                      placeholder="Alert Above Value"
-                      value={measure.alertAboveVal}
-                      onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
-                    <TextField
-                      label="Multiplier Factor"
-                      placeholder="Multiplier Factor"
-                      value={measure.multiplierFactor}
-                      onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
-                    <div className="flex items-center space-x-2 pt-8">
-                      <Checkbox 
-                        id={`check-previous-reading-nc-${measure.id}`}
+                      {unitTypes.map((unit) => (
+                        <MenuItem key={unit} value={unit}>
+                          {unit}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    label="Min"
+                    value={measure.min}
+                    onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'min', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                  />
+                  <TextField
+                    label="Max"
+                    value={measure.max}
+                    onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'max', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                  />
+                  <TextField
+                    label="Alert Below Val."
+                    value={measure.alertBelowVal}
+                    onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                  />
+                </Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
+                  <TextField
+                    label="Alert Above Val."
+                    value={measure.alertAboveVal}
+                    onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                  />
+                  <TextField
+                    label="Multiplier Factor"
+                    value={measure.multiplierFactor}
+                    onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
                         checked={measure.checkPreviousReading}
-                        onCheckedChange={(checked) => handleUpdateNonConsumptionMeasure(measure.id, 'checkPreviousReading', checked === true)}
+                        onChange={(e) =>
+                          handleUpdateNonConsumptionMeasure(measure.id, 'checkPreviousReading', e.target.checked)
+                        }
                       />
-                      <Label htmlFor={`check-previous-reading-nc-${measure.id}`} className="text-sm font-medium">Check Previous Reading</Label>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                    }
+                    label="Check Previous Reading"
+                    sx={{ pt: 2 }}
+                  />
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        </Collapse>
 
         {/* Attachments Section */}
-        <div className="border-b border-gray-200">
-          <button
-            onClick={() => setAttachmentsExpanded(!attachmentsExpanded)}
-            className="w-full flex items-center justify-between p-4 text-left"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold">
-                7
-              </div>
-              <h2 className="text-lg font-semibold text-[#C72030] uppercase">ATTACHMENTS</h2>
-            </div>
-            {attachmentsExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </button>
-          
-          {attachmentsExpanded && (
-            <div className="p-6 pt-0 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Manuals Upload</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <input
-                      type="file"
-                      multiple
-                      onChange={(e) => handleFileUpload('manuals', e)}
-                      className="hidden"
-                      id="manuals-upload"
-                    />
-                    <label htmlFor="manuals-upload" className="cursor-pointer">
-                      <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-500">Click to upload files</p>
-                    </label>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Insurance Details</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <input
-                      type="file"
-                      multiple
-                      onChange={(e) => handleFileUpload('insurance', e)}
-                      className="hidden"
-                      id="insurance-upload"
-                    />
-                    <label htmlFor="insurance-upload" className="cursor-pointer">
-                      <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-500">Click to upload files</p>
-                    </label>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Purchase Invoice</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <input
-                      type="file"
-                      multiple
-                      onChange={(e) => handleFileUpload('invoice', e)}
-                      className="hidden"
-                      id="invoice-upload"
-                    />
-                    <label htmlFor="invoice-upload" className="cursor-pointer">
-                      <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-500">Click to upload files</p>
-                    </label>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">AMC</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <input
-                      type="file"
-                      multiple
-                      onChange={(e) => handleFileUpload('amc', e)}
-                      className="hidden"
-                      id="amc-upload"
-                    />
-                    <label htmlFor="amc-upload" className="cursor-pointer">
-                      <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-500">Click to upload files</p>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <SectionHeader>
+          <SectionTitle>
+            <Circle>7</Circle>
+            <Typography variant="h6" sx={{ color: '#C72030', fontWeight: 'bold', textTransform: 'uppercase' }}>
+              ATTACHMENTS
+            </Typography>
+          </SectionTitle>
+          <IconButton onClick={() => setAttachmentsExpanded(!attachmentsExpanded)}>
+            {attachmentsExpanded ? <ExpandLess /> : <ExpandMore />}
+          </IconButton>
+        </SectionHeader>
+        <Collapse in={attachmentsExpanded}>
+          <Box sx={{ p: 4, pt: 0 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                  Manuals Upload
+                </Typography>
+                <FileUploadBox>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={(e) => handleFileUpload('manuals', e)}
+                    style={{ display: 'none' }}
+                    id="manuals-upload"
+                  />
+                  <label htmlFor="manuals-upload">
+                    <Box sx={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <Add sx={{ fontSize: 24, color: 'grey.400', mb: 1 }} />
+                      <Typography variant="body2" sx={{ color: 'grey.500' }}>
+                        Click to upload files
+                      </Typography>
+                    </Box>
+                  </label>
+                </FileUploadBox>
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                  Insurance Details
+                </Typography>
+                <FileUploadBox>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={(e) => handleFileUpload('insurance', e)}
+                    style={{ display: 'none' }}
+                    id="insurance-upload"
+                  />
+                  <label htmlFor="insurance-upload">
+                    <Box sx={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <Add sx={{ fontSize: 24, color: 'grey.400', mb: 1 }} />
+                      <Typography variant="body2" sx={{ color: 'grey.500' }}>
+                        Click to upload files
+                      </Typography>
+                    </Box>
+                  </label>
+                </FileUploadBox>
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                  Purchase Invoice
+                </Typography>
+                <FileUploadBox>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={(e) => handleFileUpload('invoice', e)}
+                    style={{ display: 'none' }}
+                    id="invoice-upload"
+                  />
+                  <label htmlFor="invoice-upload">
+                    <Box sx={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <Add sx={{ fontSize: 24, color: 'grey.400', mb: 1 }} />
+                      <Typography variant="body2" sx={{ color: 'grey.500' }}>
+                        Click to upload files
+                      </Typography>
+                    </Box>
+                  </label>
+                </FileUploadBox>
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                  AMC
+                </Typography>
+                <FileUploadBox>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={(e) => handleFileUpload('amc', e)}
+                    style={{ display: 'none' }}
+                    id="amc-upload"
+                  />
+                  <label htmlFor="amc-upload">
+                    <Box sx={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <Add sx={{ fontSize: 24, color: 'grey.400', mb: 1 }} />
+                      <Typography variant="body2" sx={{ color: 'grey.500' }}>
+                        Click to upload files
+                      </Typography>
+                    </Box>
+                  </label>
+                </FileUploadBox>
+              </Box>
+            </Box>
+          </Box>
+        </Collapse>
 
         {/* Action Buttons */}
-        <div className="p-6">
-          <div className="flex gap-4">
-            <Button 
-              onClick={handleSaveAndShowDetails}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
-            >
-              Save & Show Details
-            </Button>
-            <Button 
-              onClick={handleSaveAndCreateNew}
-              variant="outline"
-              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 px-8"
-            >
-              Save & Create New Asset
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
+        <Box sx={{ p: 4, display: 'flex', gap: 2 }}>
+          <Button
+            onClick={handleSaveAndShowDetails}
+            sx={{ bgcolor: '#C72030', color: 'white', '&:hover': { bgcolor: '#C72030CC' }, px: 4 }}
+          >
+            Save & Show Details
+          </Button>
+          <Button
+            onClick={handleSaveAndCreateNew}
+            variant="outlined"
+            sx={{
+              borderColor: '#C72030',
+              color: '#C72030',
+              '&:hover': { bgcolor: '#C720301A', borderColor: '#C72030' },
+              px: 4,
+            }}
+          >
+            Save & Create New Asset
+          </Button>
+        </Box>
+      </Box>
+    </Box>
   );
 };
