@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -116,7 +117,6 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   onChange={(e) => setGroup(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
-                  disablePortal
                 >
                   <MenuItem value=""><em>Select Category</em></MenuItem>
                   <MenuItem value="category1">Category 1</MenuItem>
@@ -132,7 +132,6 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   onChange={(e) => setSubgroup(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
-                  disablePortal
                 >
                   <MenuItem value=""><em>Select Sub Group</em></MenuItem>
                   <MenuItem value="subgroup1">Sub Group 1</MenuItem>
@@ -155,7 +154,6 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   onChange={(e) => setBuilding(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
-                  disablePortal
                 >
                   <MenuItem value=""><em>Select Building</em></MenuItem>
                   <MenuItem value="building1">Building 1</MenuItem>
@@ -171,7 +169,6 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   onChange={(e) => setWing(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
-                  disablePortal
                 >
                   <MenuItem value=""><em>Select Wing</em></MenuItem>
                   <MenuItem value="wing1">Wing 1</MenuItem>
@@ -187,7 +184,6 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   onChange={(e) => setArea(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
-                  disablePortal
                 >
                   <MenuItem value=""><em>Select Area</em></MenuItem>
                   <MenuItem value="area1">Area 1</MenuItem>
@@ -205,7 +201,6 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   onChange={(e) => setFloor(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
-                  disablePortal
                 >
                   <MenuItem value=""><em>Select Floor</em></MenuItem>
                   <MenuItem value="floor1">Floor 1</MenuItem>
@@ -221,7 +216,6 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   onChange={(e) => setRoom(e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
-                  disablePortal
                 >
                   <MenuItem value=""><em>Select Room</em></MenuItem>
                   <MenuItem value="room1">Room 1</MenuItem>
