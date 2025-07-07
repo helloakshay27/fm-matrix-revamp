@@ -135,7 +135,7 @@ export const TicketDetailsPage = () => {
 
       {/* Creator's Information Section */}
       <Card>
-        <CardHeader className="bg-orange-50 border-b">
+        <CardHeader className="border-b bg-white">
           <CardTitle className="flex items-center gap-2" style={{
           color: '#C72030'
         }}>
