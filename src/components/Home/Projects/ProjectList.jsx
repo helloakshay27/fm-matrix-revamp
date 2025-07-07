@@ -108,6 +108,7 @@ const ActionIcons = ({ row }) => {
             ).unwrap();
 
             if (response?.error === "You are not authorized to delete this project") {
+                toast.dismiss()
                 toast.error("You cannot delete this project — unauthorized access.", {
                     icon: "🚫",
                 });
@@ -791,6 +792,7 @@ const ProjectList = () => {
         anyFilterError ||
         fetchProjectTypesError
     ) {
+        toast.dismiss()
         toast.error("Internal Server Error, Refresh Once");
     } else {
         content = (
