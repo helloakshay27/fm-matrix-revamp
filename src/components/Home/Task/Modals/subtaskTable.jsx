@@ -324,7 +324,7 @@ const SubtaskTable = () => {
       try {
         await dispatch(fetchProjectTeamMembers({ token, id })).unwrap();
       } catch (error) {
-        console.error("❌ Failed to fetch team members:", error);
+        console.error("Failed to fetch team members:", error);
       }
     };
 

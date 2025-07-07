@@ -37,6 +37,7 @@ import SelectBox from "../../SelectBox";
 import Loader from "../../Loader";
 import { useLocation } from "react-router-dom";
 import qs from "qs";
+import { fetchProjectTeamMembers } from "../../../redux/slices/projectSlice";
 
 const globalPriorityOptions = ["None", "Low", "Medium", "High", "Urgent"];
 const globalStatusOptions = [
@@ -231,6 +232,8 @@ const TaskTable = () => {
     fetchTasks: tasksFromStore,
   } = useSelector((state) => state.fetchTasks);
 
+  const { fetchProjectTeamMembers: projectTeamMembers } = useSelector(state => state.fetchProjectTeamMembers)
+
   const {
     fetchMyTasks: myTasksFromStore,
     loading: loadingMyTasks,
@@ -299,6 +302,18 @@ const TaskTable = () => {
     }),
     []
   );
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        await dispatch(fetchProjectTeamMembers({ token, id })).unwrap();
+      } catch (error) {
+        console.error("Failed to fetch team members:", error);
+      }
+    };
+
+    fetchMembers();
+  }, [dispatch, token, id]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -730,9 +745,9 @@ const TaskTable = () => {
       cell: ({ getValue, row }) => {
         return (
           <SelectBox
-            options={users.map((user) => ({
-              value: user.id,
-              label: `${user.firstname} ${user.lastname}`,
+            options={projectTeamMembers.map((user) => ({
+              value: user.user_id,
+              label: user?.user?.name,
             }))}
             value={getValue()}
             onChange={(newValue) =>
@@ -974,11 +989,10 @@ const TaskTable = () => {
                   <td className="p-0 align-middle border-r-2">
                     <SelectBox
                       options={[
-                        { value: null, label: "Unassigned" },
-                        ...(Array.isArray(users)
-                          ? users.map((u) => ({
-                            value: u.id,
-                            label: `${u.firstname || ""} ${u.lastname || ""}`.trim(),
+                        ...(Array.isArray(projectTeamMembers)
+                          ? projectTeamMembers.map((u) => ({
+                            value: u.user_id,
+                            label: u?.user?.name,
                           }))
                           : []),
                       ]}
