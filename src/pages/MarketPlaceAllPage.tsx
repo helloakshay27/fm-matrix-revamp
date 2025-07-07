@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building, Target, Phone, Calculator, Download, Filter, ChevronDown } from 'lucide-react';
@@ -145,59 +146,67 @@ const MarketPlaceAllPage = () => {
   );
 
   return (
-    <div className="p-6 space-y-8">
-      {/* Enhanced Header with filters and search */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          {/* Filter Section */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 text-gray-600">
-              <Filter className="w-4 h-4" />
-              <span className="text-sm font-medium">Filters:</span>
-            </div>
+    <div className="p-4 sm:p-6 bg-white min-h-screen">
+      {/* Header */}
+      <div className="mb-6">
+        <p className="text-gray-600 mb-2 text-sm">Market Place &gt; All Apps</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] uppercase">MARKET PLACE</h1>
+      </div>
+
+      <div className="space-y-6">
+        {/* Enhanced Header with filters and search */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            {/* Filter Section */}
             <div className="flex flex-wrap items-center gap-3">
-              <FilterChip label="Edition" value="All" isActive />
-              <FilterChip label="Price" value="All" />
-              <FilterChip label="Rating" value="All" />
-              <FilterChip label="Deployment" value="All" />
+              <div className="flex items-center gap-2 text-gray-600">
+                <Filter className="w-4 h-4" />
+                <span className="text-sm font-medium">Filters:</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <FilterChip label="Edition" value="All" isActive />
+                <FilterChip label="Price" value="All" />
+                <FilterChip label="Rating" value="All" />
+                <FilterChip label="Deployment" value="All" />
+              </div>
             </div>
-          </div>
 
-          {/* Enhanced Search Section */}
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-gray-500">
-              {filteredApps.length} apps found
-            </div>
-            <div className="relative">
-              <SearchWithSuggestions
-                placeholder="Search marketplace apps..."
-                onSearch={handleSearch}
-                suggestions={suggestions}
-                className="w-80"
-              />
-              <div className="absolute -inset-1 bg-gradient-to-r from-[#C72030]/20 to-transparent rounded-lg opacity-0 hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+            {/* Enhanced Search Section */}
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-gray-500">
+                {filteredApps.length} apps found
+              </div>
+              <div className="relative">
+                <SearchWithSuggestions
+                  placeholder="Search marketplace apps..."
+                  onSearch={handleSearch}
+                  suggestions={suggestions}
+                  className="w-full sm:w-80"
+                />
+                <div className="absolute -inset-1 bg-gradient-to-r from-[#C72030]/20 to-transparent rounded-lg opacity-0 hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Featured Apps Section */}
-      <div className="bg-[#C72030] rounded-lg p-6">
-        <h2 className="text-white text-xl font-semibold mb-4">Featured apps</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {filteredApps.map((app) => (
-            <AppCard key={app.id} app={app} />
-          ))}
+        {/* Featured Apps Section */}
+        <div className="bg-[#C72030] rounded-lg p-4 sm:p-6">
+          <h2 className="text-white text-lg sm:text-xl font-semibold mb-4">Featured apps</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {filteredApps.map((app) => (
+              <AppCard key={app.id} app={app} />
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Editor's Pick Section */}
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Editor's pick</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {filteredApps.map((app) => (
-            <AppCard key={`editor-${app.id}`} app={app} isEditor={true} />
-          ))}
+        {/* Editor's Pick Section */}
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Editor's pick</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {filteredApps.map((app) => (
+              <AppCard key={`editor-${app.id}`} app={app} isEditor={true} />
+            ))}
+          </div>
         </div>
       </div>
     </div>
