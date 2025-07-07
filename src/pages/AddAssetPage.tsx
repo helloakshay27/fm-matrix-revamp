@@ -422,7 +422,8 @@ const AddAssetPage = () => {
                             name={field.name}
                             value={option.value}
                             defaultChecked={option.value === field.defaultValue}
-                            className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                            className="w-4 h-4 text-[#C72030] border-gray-300"
+                            style={{ accentColor: '#C72030' }}
                           />
                           <label htmlFor={`${field.name}-${option.value}`} className="text-xs sm:text-sm">{option.label}</label>
                         </div>
@@ -437,6 +438,7 @@ const AddAssetPage = () => {
                   type="checkbox"
                   id="meterApplicable"
                   className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]"
+                  style={{ accentColor: '#C72030' }}
                 />
                 <label htmlFor="meterApplicable" className="text-xs sm:text-sm">Meter Applicable</label>
               </div>
@@ -473,7 +475,8 @@ const AddAssetPage = () => {
                           name="underWarranty"
                           value={option.value}
                           defaultChecked={option.value === 'no'}
-                          className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                          className="w-4 h-4 text-[#C72030] border-gray-300"
+                          style={{ accentColor: '#C72030' }}
                         />
                         <label htmlFor={`warranty-${option.value}`} className="text-xs sm:text-sm">{option.label}</label>
                       </div>
@@ -660,6 +663,7 @@ const AddAssetPage = () => {
                         checked={measure.checkPreviousReading}
                         onChange={(e) => updateConsumptionMeasure(measure.id, 'checkPreviousReading', e.target.checked)}
                         className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]"
+                        style={{ accentColor: '#C72030' }}
                       />
                       <label htmlFor={`checkPrevious-${measure.id}`} className="text-xs sm:text-sm">Check Previous Reading</label>
                     </div>
@@ -776,6 +780,7 @@ const AddAssetPage = () => {
                         checked={measure.checkPreviousReading}
                         onChange={(e) => updateNonConsumptionMeasure(measure.id, 'checkPreviousReading', e.target.checked)}
                         className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]"
+                        style={{ accentColor: '#C72030' }}
                       />
                       <label htmlFor={`nc-checkPrevious-${measure.id}`} className="text-xs sm:text-sm">Check Previous Reading</label>
                     </div>
