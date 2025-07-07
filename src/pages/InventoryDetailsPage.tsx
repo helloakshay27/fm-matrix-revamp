@@ -48,7 +48,7 @@ export const InventoryDetailsPage = () => {
           <Card>
             <CardHeader className="bg-orange-50 border-b">
               <CardTitle className="text-orange-600 flex items-center gap-2">
-                <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm">!</div>
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{ backgroundColor: '#C72030' }}>!</div>
                 INVENTORY DETAIL
               </CardTitle>
             </CardHeader>
