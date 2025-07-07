@@ -239,99 +239,89 @@ export const EditAssetDetailsPage = () => {
           </button>
           
           {locationDetailsExpanded && (
-            <div className="p-6 pt-0 space-y-6">
-              {/* First Row */}
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="site" className="text-sm font-medium">Site*</Label>
-                  <Select value={locationData.site} onValueChange={(value) => handleLocationChange('site', value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Lockated">Lockated</SelectItem>
-                      <SelectItem value="Other Site">Other Site</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="building" className="text-sm font-medium">Building</Label>
-                  <Select value={locationData.building} onValueChange={(value) => handleLocationChange('building', value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="sebc">sebc</SelectItem>
-                      <SelectItem value="Building A">Building A</SelectItem>
-                      <SelectItem value="Building B">Building B</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+  <div className="p-6 pt-0 space-y-6">
+    {/* First Row */}
+    <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      {[
+        {
+          label: 'Site*',
+          key: 'site',
+          options: ['Lockated', 'Other Site']
+        },
+        {
+          label: 'Building',
+          key: 'building',
+          options: ['sebc', 'Building A', 'Building B']
+        },
+        {
+          label: 'Wing',
+          key: 'wing',
+          options: ['North Wing', 'South Wing', 'East Wing', 'West Wing']
+        },
+        {
+          label: 'Area',
+          key: 'area',
+          options: ['Area 1', 'Area 2', 'Area 3']
+        },
+        {
+          label: 'Floor',
+          key: 'floor',
+          options: ['Ground Floor', '1st Floor', '2nd Floor', '3rd Floor']
+        }
+      ].map(({ label, key, options }) => (
+        <FormControl fullWidth key={key} sx={{ ...fieldStyles }}>
+          <InputLabel>{label}</InputLabel>
+          <Select
+            value={locationData[key as keyof typeof locationData] || ''}
+            onChange={(e: SelectChangeEvent) =>
+              handleLocationChange(key, e.target.value)
+            }
+            label={label}
+            MenuProps={{
+              disablePortal: true,
+              PaperProps: { sx: { mt: 0.5, zIndex: 9999, boxShadow: 3 } }
+            }}
+          >
+            <MenuItem value="">
+              <em>Select {label}</em>
+            </MenuItem>
+            {options.map((option) => (
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      ))}
+    </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="wing" className="text-sm font-medium">Wing</Label>
-                  <Select value={locationData.wing} onValueChange={(value) => handleLocationChange('wing', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Wing" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="North Wing">North Wing</SelectItem>
-                      <SelectItem value="South Wing">South Wing</SelectItem>
-                      <SelectItem value="East Wing">East Wing</SelectItem>
-                      <SelectItem value="West Wing">West Wing</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+    {/* Second Row */}
+    <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+      <FormControl fullWidth sx={{ ...fieldStyles }}>
+        <InputLabel>Room</InputLabel>
+        <Select
+          value={locationData.room || ''}
+          onChange={(e: SelectChangeEvent) =>
+            handleLocationChange('room', e.target.value)
+          }
+          label="Room"
+          MenuProps={{
+            disablePortal: true,
+            PaperProps: { sx: { mt: 0.5, zIndex: 9999, boxShadow: 3 } }
+          }}
+        >
+          <MenuItem value="">
+            <em>Select Room</em>
+          </MenuItem>
+          <MenuItem value="Room 101">Room 101</MenuItem>
+          <MenuItem value="Room 102">Room 102</MenuItem>
+          <MenuItem value="Room 103">Room 103</MenuItem>
+        </Select>
+      </FormControl>
+    </div>
+  </div>
+)}
 
-                <div className="space-y-2">
-                  <Label htmlFor="area" className="text-sm font-medium">Area</Label>
-                  <Select value={locationData.area} onValueChange={(value) => handleLocationChange('area', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Area" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Area 1">Area 1</SelectItem>
-                      <SelectItem value="Area 2">Area 2</SelectItem>
-                      <SelectItem value="Area 3">Area 3</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="floor" className="text-sm font-medium">Floor</Label>
-                  <Select value={locationData.floor} onValueChange={(value) => handleLocationChange('floor', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Floor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Ground Floor">Ground Floor</SelectItem>
-                      <SelectItem value="1st Floor">1st Floor</SelectItem>
-                      <SelectItem value="2nd Floor">2nd Floor</SelectItem>
-                      <SelectItem value="3rd Floor">3rd Floor</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Second Row */}
-              <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="room" className="text-sm font-medium">Room</Label>
-                  <Select value={locationData.room} onValueChange={(value) => handleLocationChange('room', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Room" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Room 101">Room 101</SelectItem>
-                      <SelectItem value="Room 102">Room 102</SelectItem>
-                      <SelectItem value="Room 103">Room 103</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Asset Details Section */}
