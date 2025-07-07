@@ -146,7 +146,7 @@ export const InventoryDetailsPage = () => {
 
           {/* Asset Information Section */}
           <Card className="mt-6">
-            <CardHeader className="bg-orange-50 border-b">
+            <CardHeader className="border-b bg-white">
               <CardTitle className="flex items-center gap-2" style={{
               color: '#C72030'
             }}>
