@@ -208,7 +208,7 @@ export const AddProjectDashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
+          <div className="md:col-span-1">
             <TextField
               label="Description"
               placeholder="Enter description"
@@ -232,7 +232,7 @@ export const AddProjectDashboard = () => {
             />
           </div>
 
-          <div>
+          <div className="md:col-span-1">
             <TextField
               label="Request Date"
               type="date"
@@ -246,7 +246,7 @@ export const AddProjectDashboard = () => {
             />
           </div>
 
-          <div>
+          <div className="md:col-span-1">
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
               <InputLabel id="vendor-label" shrink>Vendor</InputLabel>
               <MuiSelect
