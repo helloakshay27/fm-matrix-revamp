@@ -93,8 +93,8 @@ export const TicketDetailsPage = () => {
       {/* Ticket Details Section */}
       <Card className="mb-6">
         <CardHeader className="bg-orange-50 border-b">
-          <CardTitle className="text-orange-600 flex items-center gap-2">
-            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">1</div>
+          <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
+            <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: '#C72030' }}>1</div>
             TICKET DETAILS
           </CardTitle>
         </CardHeader>
@@ -147,8 +147,8 @@ export const TicketDetailsPage = () => {
       {/* Creator's Information Section */}
       <Card>
         <CardHeader className="bg-orange-50 border-b">
-          <CardTitle className="text-orange-600 flex items-center gap-2">
-            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">2</div>
+          <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
+            <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: '#C72030' }}>2</div>
             CREATOR'S INFORMATION
           </CardTitle>
         </CardHeader>
