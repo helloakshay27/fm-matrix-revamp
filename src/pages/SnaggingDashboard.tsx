@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye } from 'lucide-react';
+import { Eye, Filter } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SnaggingFilterDialog } from '@/components/SnaggingFilterDialog';
 import { SearchWithSuggestions } from '@/components/SearchWithSuggestions';
-import { useSearchSuggestions } from '@/hooks/useSearchSuggestions';
 
 interface SnaggingItem {
   id: number;
@@ -49,7 +48,6 @@ export const SnaggingDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Generate suggestions from checklist names specifically
   const checklistSuggestions = Array.from(new Set(mockData.map(item => item.checklistName))).sort();
 
   useEffect(() => {
@@ -65,9 +63,9 @@ export const SnaggingDashboard = () => {
   const applyFilters = (data: SnaggingItem[]) => {
     return data.filter(item => {
       const matchesSearch = item.checklistName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           item.tower.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           item.flat.toLowerCase().includes(searchTerm.toLowerCase());
-      
+        item.tower.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.flat.toLowerCase().includes(searchTerm.toLowerCase());
+
       const matchesTower = !appliedFilters.tower || item.tower === appliedFilters.tower;
       const matchesFloor = !appliedFilters.floor || item.floor === appliedFilters.floor;
       const matchesFlat = !appliedFilters.flat || item.flat === appliedFilters.flat;
@@ -85,7 +83,6 @@ export const SnaggingDashboard = () => {
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    console.log('Search value:', value);
   };
 
   const handleApplyFilters = (filters: FilterValues) => {
@@ -93,62 +90,62 @@ export const SnaggingDashboard = () => {
   };
 
   return (
-    <div className="p-6 bg-white">
+    <div className="p-4 sm:p-6 bg-white">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-4">SNAG LIST</h1>
-        
-        {/* Search Section with Filters Button */}
-        <div className="flex mb-6 gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold mb-4">SNAG LIST</h1>
+
+        {/* Search + Filters */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 gap-3 mb-6">
           <SearchWithSuggestions
             placeholder="Search"
             onSearch={handleSearch}
             suggestions={checklistSuggestions}
-            className="w-[290px]"
+            className="w-full sm:w-[290px]"
           />
-          <Button 
-            onClick={() => handleSearch(searchTerm)}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6 py-2 h-[36px] text-sm font-medium"
-            style={{ borderRadius: '0px' }}
-          >
-            Search
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setShowFilters(true)}
-            className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 h-[36px] text-sm font-medium ml-3"
-            style={{ borderRadius: '0px' }}
-          >
-            <span className="text-sm">⊞</span>
-            Filters
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => handleSearch(searchTerm)}
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 sm:px-6 py-2 h-[36px] text-sm font-medium"
+            >
+              Search
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(true)}
+              className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 h-[36px] text-sm font-medium"
+            >
+              <Filter className="w-4 h-4" />
+              Filters
+            </Button>
+          </div>
         </div>
 
-        {/* Content based on active view */}
+        {/* View title */}
         <div className="mb-4">
-          <h2 className="text-lg font-semibold text-gray-700">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-700">
             {activeView === 'User Snag' ? 'User Snagging Items' : 'My Snagging Items'}
           </h2>
         </div>
 
-        {/* Table */}
-        <div className="border rounded-lg overflow-hidden">
+        {/* Table - Responsive */}
+        <div className="overflow-x-auto border rounded-lg">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold">Sr.no.</TableHead>
-                <TableHead className="font-semibold">Checklist Name</TableHead>
-                <TableHead className="font-semibold">Tower</TableHead>
-                <TableHead className="font-semibold">Floor</TableHead>
-                <TableHead className="font-semibold">Flat</TableHead>
-                <TableHead className="font-semibold">Room Type</TableHead>
-                <TableHead className="font-semibold">Stage</TableHead>
-                <TableHead className="font-semibold">No. Of Questions</TableHead>
-                <TableHead className="font-semibold">View Detail</TableHead>
+              <TableRow className="bg-gray-50 text-xs sm:text-sm">
+                <TableHead>Sr.no.</TableHead>
+                <TableHead>Checklist Name</TableHead>
+                <TableHead>Tower</TableHead>
+                <TableHead>Floor</TableHead>
+                <TableHead>Flat</TableHead>
+                <TableHead>Room Type</TableHead>
+                <TableHead>Stage</TableHead>
+                <TableHead>No. Of Questions</TableHead>
+                <TableHead>View Detail</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredData.map((item, index) => (
-                <TableRow key={item.id} className="hover:bg-gray-50">
+                <TableRow key={item.id} className="hover:bg-gray-50 text-xs sm:text-sm">
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{item.checklistName}</TableCell>
                   <TableCell>{item.tower}</TableCell>
