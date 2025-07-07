@@ -1,15 +1,14 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building, Target, Phone, Calculator, Download, Filter, ChevronDown } from 'lucide-react';
-import { SearchWithSuggestions } from '@/components/SearchWithSuggestions';
-import { useSearchSuggestions } from '@/hooks/useSearchSuggestions';
+import { Building, Target, Phone, Calculator, Download, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 const MarketPlaceAllPage = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
   const [installingApps, setInstallingApps] = useState<string[]>([]);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const featuredApps = [
     {
@@ -42,22 +41,8 @@ const MarketPlaceAllPage = () => {
     }
   ];
 
-  const suggestions = useSearchSuggestions({
-    data: featuredApps,
-    searchFields: ['name', 'description']
-  });
-
-  const filteredApps = featuredApps.filter(app =>
-    app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    app.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   const handleCardClick = (route: string) => {
     navigate(route);
-  };
-
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
   };
 
   const handleInstall = (appId: string, event: React.MouseEvent) => {
@@ -71,23 +56,55 @@ const MarketPlaceAllPage = () => {
     }, 2000);
   };
 
-  const FilterChip = ({ label, value, isActive = false }: { label: string; value: string; isActive?: boolean }) => (
-    <div className={`group relative flex items-center gap-2 px-4 py-2 rounded-full cursor-pointer transition-all duration-300 border ${
-      isActive 
-        ? 'bg-[#C72030] text-white border-[#C72030] shadow-md' 
-        : 'bg-white text-gray-700 border-gray-200 hover:border-[#C72030] hover:bg-[#C72030]/5'
-    }`}>
-      <span className="text-sm font-medium">{label}:</span>
-      <span className={`text-sm font-semibold ${isActive ? 'text-white' : 'text-[#C72030]'}`}>{value}</span>
-      <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
-        isActive ? 'text-white' : 'text-gray-400 group-hover:text-[#C72030]'
-      }`} />
-      
-      {/* Hover effect */}
-      {!isActive && (
-        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#C72030]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      )}
-    </div>
+  const MarketPlaceFilterModal = () => (
+    <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Filter Applications</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">Edition</label>
+            <select className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+              <option>All</option>
+              <option>Basic</option>
+              <option>Premium</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">Price</label>
+            <select className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+              <option>All</option>
+              <option>Free</option>
+              <option>Paid</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">Rating</label>
+            <select className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+              <option>All</option>
+              <option>4+ Stars</option>
+              <option>3+ Stars</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex gap-3 mt-6">
+          <Button 
+            onClick={() => setIsFilterOpen(false)} 
+            className="flex-1 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+          >
+            Apply Filters
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setIsFilterOpen(false)}
+            className="flex-1 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          >
+            Reset
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 
   const AppCard = ({ app, isEditor = false }: { app: typeof featuredApps[0], isEditor?: boolean }) => (
@@ -146,7 +163,7 @@ const MarketPlaceAllPage = () => {
   );
 
   return (
-    <div className="p-4 sm:p-6 bg-white min-h-screen">
+    <div className="p-4 sm:p-6 min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <p className="text-gray-600 mb-2 text-sm">Market Place &gt; All Apps</p>
@@ -154,46 +171,26 @@ const MarketPlaceAllPage = () => {
       </div>
 
       <div className="space-y-6">
-        {/* Enhanced Header with filters and search */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            {/* Filter Section */}
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 text-gray-600">
-                <Filter className="w-4 h-4" />
-                <span className="text-sm font-medium">Filters:</span>
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <FilterChip label="Edition" value="All" isActive />
-                <FilterChip label="Price" value="All" />
-                <FilterChip label="Rating" value="All" />
-                <FilterChip label="Deployment" value="All" />
-              </div>
-            </div>
-
-            {/* Enhanced Search Section */}
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-gray-500">
-                {filteredApps.length} apps found
-              </div>
-              <div className="relative">
-                <SearchWithSuggestions
-                  placeholder="Search marketplace apps..."
-                  onSearch={handleSearch}
-                  suggestions={suggestions}
-                  className="w-full sm:w-80"
-                />
-                <div className="absolute -inset-1 bg-gradient-to-r from-[#C72030]/20 to-transparent rounded-lg opacity-0 hover:opacity-100 transition-opacity duration-300 -z-10"></div>
-              </div>
-            </div>
+        {/* Filter Button */}
+        <div className="flex justify-between items-center">
+          <div className="text-sm text-gray-500">
+            {featuredApps.length} apps found
           </div>
+          <Button
+            onClick={() => setIsFilterOpen(true)}
+            variant="outline"
+            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          >
+            <Filter className="w-4 h-4 mr-2" />
+            Filters
+          </Button>
         </div>
 
         {/* Featured Apps Section */}
         <div className="bg-[#C72030] rounded-lg p-4 sm:p-6">
           <h2 className="text-white text-lg sm:text-xl font-semibold mb-4">Featured apps</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {filteredApps.map((app) => (
+            {featuredApps.map((app) => (
               <AppCard key={app.id} app={app} />
             ))}
           </div>
@@ -203,12 +200,14 @@ const MarketPlaceAllPage = () => {
         <div>
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Editor's pick</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {filteredApps.map((app) => (
+            {featuredApps.map((app) => (
               <AppCard key={`editor-${app.id}`} app={app} isEditor={true} />
             ))}
           </div>
         </div>
       </div>
+
+      <MarketPlaceFilterModal />
     </div>
   );
 };
