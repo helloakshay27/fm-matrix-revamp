@@ -8,7 +8,7 @@ export const AttachmentsSection: React.FC = () => {
   return (
     <Card className="mb-6">
       <CardHeader 
-        className="flex flex-row items-center gap-2 py-[50px] px-[50px]"
+        className="flex flex-row items-center py-[50px] px-[50px]"
       >
 <div 
   className="flex items-center justify-center border border-[#C72030]"
