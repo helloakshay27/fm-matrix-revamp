@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,7 +66,7 @@ export const InventoryFeedsPage = () => {
           </button>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm">L</div>
+          <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{ backgroundColor: '#C72030' }}>L</div>
           <h1 className="text-2xl font-bold text-[#1a1a1a]">LOGS</h1>
         </div>
       </div>
