@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Upload } from "lucide-react";
@@ -382,7 +383,7 @@ export const FitoutSetupDashboard = () => {
             onClick={() => setActiveTab(tab)}
             className={`px-6 py-2 font-medium border-b-2 whitespace-nowrap ${
               activeTab === tab
-                ? 'text-orange-500 border-orange-500'
+                ? 'text-[#C72030] border-[#C72030]'
                 : 'text-gray-500 border-transparent hover:text-gray-700'
             }`}
           >
@@ -425,3 +426,4 @@ export const FitoutSetupDashboard = () => {
 };
 
 export default FitoutSetupDashboard;
+
