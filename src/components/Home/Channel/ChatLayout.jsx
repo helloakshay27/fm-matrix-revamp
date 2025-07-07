@@ -76,7 +76,13 @@ const ChatLayout = () => {
 
       {/* Tabs */}
       <div className="flex-1 overflow-y-auto">
-        {activeTab === "chat" && <ChatView channel={channel} type={path.includes("group") ? "group" : "chat"} id={id} />}
+        {activeTab === "chat" && id && (
+          <ChatView
+            channel={channel}
+            type={path.includes("group") ? "group" : "chat"}
+            id={id}
+          />
+        )}
         {activeTab === "task" && <TaskView />}
         {activeTab === "shared" && <SharedView />}
       </div>

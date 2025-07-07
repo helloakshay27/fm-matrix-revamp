@@ -46,12 +46,14 @@ import Region from "./pages/Setup/Region.jsx";
 import Country from "./pages/Setup/Country.jsx";
 import Company from "./pages/Setup/Company.jsx";
 import Organizations from "./pages/Setup/Organizations.jsx";
+import { WebSocketProvider } from "./contexts/WebSocketContext.jsx";
 
 const App = () => {
+  const token = localStorage.getItem('token');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
-    <>
+    <WebSocketProvider accessToken={token} wsUrl={'wss://uat-tasks.lockated.com/cable'}>
       <Toaster />
       <Routes>
         <Route path="/login" element={<Login />} />
@@ -158,7 +160,7 @@ const App = () => {
           }
         />
       </Routes>
-    </>
+    </WebSocketProvider>
   );
 };
 
