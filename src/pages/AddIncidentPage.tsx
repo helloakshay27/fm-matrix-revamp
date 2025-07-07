@@ -168,28 +168,46 @@ export const AddIncidentPage = () => {
             />
           </div>
 
-          <div className="mt-4">
+          <div className="mt-6">
             <TextField
               label="Description*"
+              placeholder="Enter description"
               value={incidentData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
               fullWidth
               variant="outlined"
               multiline
-              minRows={4}
-              maxRows={10}
+              rows={4}
               InputLabelProps={{ shrink: true }}
               InputProps={{
                 sx: {
-                  '& textarea': {
-                    height: 'auto',
-                    overflow: 'hidden',
-                    resize: 'none',
-                    padding: '8px 14px',
+                  '& .MuiInputBase-inputMultiline': {
+                    padding: '12px 14px',
+                    minHeight: '80px',
                   },
                 },
               }}
-              sx={{ mt: 1 }}
+              sx={{ 
+                mt: 1,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '4px',
+                  '& fieldset': {
+                    borderColor: '#ccc',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#666',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#C72030',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#676767',
+                  '&.Mui-focused': {
+                    color: '#C72030',
+                  },
+                },
+              }}
             />
           </div>
         </CardContent>
