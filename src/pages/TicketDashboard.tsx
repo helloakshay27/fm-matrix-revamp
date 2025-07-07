@@ -127,13 +127,14 @@ export const TicketDashboard = () => {
         ].map((item, i) => {
           const IconComponent = item.icon;
           return (
-            <div key={i} className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 flex flex-col items-center text-center">
-              <div className="mb-2">
-                <IconComponent className="w-6 h-6" />
+            <div key={i} className="bg-[#F5F3F0] p-4 rounded-lg shadow-sm h-[132px] flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-[#FFE8E9] flex items-center justify-center flex-shrink-0">
+                <IconComponent className="w-6 h-6 text-[#C72030]" />
               </div>
-              <div className="text-2xl font-bold">{item.value}</div>
-              <div className="text-sm">{item.label}</div>
-              <div className="text-xs text-gray-500 mt-1">{item.iconName}</div>
+              <div className="flex flex-col">
+                <div className="text-2xl font-bold text-[#C72030] leading-tight">{item.value}</div>
+                <div className="text-sm text-gray-600 font-medium">{item.label}</div>
+              </div>
             </div>
           );
         })}
