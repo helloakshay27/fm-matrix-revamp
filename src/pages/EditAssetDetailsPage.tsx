@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,7 +11,7 @@ import {
   FormControl,
   InputLabel,
   MenuItem,
-  Select,
+  Select as MuiSelect,
   SelectChangeEvent
 } from '@mui/material';
 
@@ -279,7 +278,7 @@ export const EditAssetDetailsPage = () => {
       ].map(({ label, key, options }) => (
         <FormControl fullWidth key={key} sx={{ ...fieldStyles }}>
           <InputLabel>{label}</InputLabel>
-          <Select
+          <MuiSelect
             value={locationData[key as keyof typeof locationData] || ''}
             onChange={(e: SelectChangeEvent) =>
               handleLocationChange(key, e.target.value)
@@ -298,7 +297,7 @@ export const EditAssetDetailsPage = () => {
                 {option}
               </MenuItem>
             ))}
-          </Select>
+          </MuiSelect>
         </FormControl>
       ))}
     </div>
@@ -307,7 +306,7 @@ export const EditAssetDetailsPage = () => {
     <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
       <FormControl fullWidth sx={{ ...fieldStyles }}>
         <InputLabel>Room</InputLabel>
-        <Select
+        <MuiSelect
           value={locationData.room || ''}
           onChange={(e: SelectChangeEvent) =>
             handleLocationChange('room', e.target.value)
@@ -324,7 +323,7 @@ export const EditAssetDetailsPage = () => {
           <MenuItem value="Room 101">Room 101</MenuItem>
           <MenuItem value="Room 102">Room 102</MenuItem>
           <MenuItem value="Room 103">Room 103</MenuItem>
-        </Select>
+        </MuiSelect>
       </FormControl>
     </div>
   </div>
@@ -429,34 +428,40 @@ export const EditAssetDetailsPage = () => {
                   variant="outlined"
                   sx={fieldStyles}
                 />
-                <div className="space-y-2">
-                  <Label htmlFor="group" className="text-sm font-medium">Group*</Label>
-                  <Select value={formData.group} onValueChange={(value) => handleInputChange('group', value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Electrical">Electrical</SelectItem>
-                      <SelectItem value="Mechanical">Mechanical</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <FormControl fullWidth sx={{ ...fieldStyles }}>
+                  <InputLabel>Group*</InputLabel>
+                  <MuiSelect
+                    value={formData.group}
+                    onChange={(e: SelectChangeEvent) => handleInputChange('group', e.target.value)}
+                    label="Group*"
+                    MenuProps={{
+                      disablePortal: true,
+                      PaperProps: { sx: { mt: 0.5, zIndex: 9999, boxShadow: 3 } }
+                    }}
+                  >
+                    <MenuItem value="Electrical">Electrical</MenuItem>
+                    <MenuItem value="Mechanical">Mechanical</MenuItem>
+                  </MuiSelect>
+                </FormControl>
               </div>
 
               {/* Third Row */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="subgroup" className="text-sm font-medium">Subgroup*</Label>
-                  <Select value={formData.subgroup} onValueChange={(value) => handleInputChange('subgroup', value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Electric Meter">Electric Meter</SelectItem>
-                      <SelectItem value="Water Meter">Water Meter</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <FormControl fullWidth sx={{ ...fieldStyles }}>
+                  <InputLabel>Subgroup*</InputLabel>
+                  <MuiSelect
+                    value={formData.subgroup}
+                    onChange={(e: SelectChangeEvent) => handleInputChange('subgroup', e.target.value)}
+                    label="Subgroup*"
+                    MenuProps={{
+                      disablePortal: true,
+                      PaperProps: { sx: { mt: 0.5, zIndex: 9999, boxShadow: 3 } }
+                    }}
+                  >
+                    <MenuItem value="Electric Meter">Electric Meter</MenuItem>
+                    <MenuItem value="Water Meter">Water Meter</MenuItem>
+                  </MuiSelect>
+                </FormControl>
                 <TextField
                   label="Purchased ON Date"
                   type="date"
@@ -478,18 +483,25 @@ export const EditAssetDetailsPage = () => {
                   InputLabelProps={{ shrink: true }}
                   sx={fieldStyles}
                 />
-                <div className="space-y-2">
-                  <Label htmlFor="manufacturer" className="text-sm font-medium">Manufacturer</Label>
-                  <Select value={formData.manufacturer} onValueChange={(value) => handleInputChange('manufacturer', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Date" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="manufacturer1">Manufacturer 1</SelectItem>
-                      <SelectItem value="manufacturer2">Manufacturer 2</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <FormControl fullWidth sx={{ ...fieldStyles }}>
+                  <InputLabel>Manufacturer</InputLabel>
+                  <MuiSelect
+                    value={formData.manufacturer}
+                    onChange={(e: SelectChangeEvent) => handleInputChange('manufacturer', e.target.value)}
+                    label="Manufacturer"
+                    displayEmpty
+                    MenuProps={{
+                      disablePortal: true,
+                      PaperProps: { sx: { mt: 0.5, zIndex: 9999, boxShadow: 3 } }
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Select Date</em>
+                    </MenuItem>
+                    <MenuItem value="manufacturer1">Manufacturer 1</MenuItem>
+                    <MenuItem value="manufacturer2">Manufacturer 2</MenuItem>
+                  </MuiSelect>
+                </FormControl>
               </div>
 
               {/* Radio Groups */}
@@ -735,19 +747,26 @@ export const EditAssetDetailsPage = () => {
                       variant="outlined"
                       sx={fieldStyles}
                     />
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Unit Type</Label>
-                      <Select value={measure.unitType} onValueChange={(value) => handleUpdateConsumptionMeasure(measure.id, 'unitType', value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Unit Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {unitTypes.map((unit) => (
-                            <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <FormControl fullWidth sx={{ ...fieldStyles }}>
+                      <InputLabel>Unit Type</InputLabel>
+                      <MuiSelect
+                        value={measure.unitType}
+                        onChange={(e: SelectChangeEvent) => handleUpdateConsumptionMeasure(measure.id, 'unitType', e.target.value)}
+                        label="Unit Type"
+                        displayEmpty
+                        MenuProps={{
+                          disablePortal: true,
+                          PaperProps: { sx: { mt: 0.5, zIndex: 9999, boxShadow: 3 } }
+                        }}
+                      >
+                        <MenuItem value="">
+                          <em>Select Unit Type</em>
+                        </MenuItem>
+                        {unitTypes.map((unit) => (
+                          <MenuItem key={unit} value={unit}>{unit}</MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
                     <TextField
                       label="Min"
                       placeholder="Enter Number"
@@ -859,19 +878,26 @@ export const EditAssetDetailsPage = () => {
                       variant="outlined"
                       sx={fieldStyles}
                     />
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Unit Type</Label>
-                      <Select value={measure.unitType} onValueChange={(value) => handleUpdateNonConsumptionMeasure(measure.id, 'unitType', value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Unit Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {unitTypes.map((unit) => (
-                            <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <FormControl fullWidth sx={{ ...fieldStyles }}>
+                      <InputLabel>Unit Type</InputLabel>
+                      <MuiSelect
+                        value={measure.unitType}
+                        onChange={(e: SelectChangeEvent) => handleUpdateNonConsumptionMeasure(measure.id, 'unitType', e.target.value)}
+                        label="Unit Type"
+                        displayEmpty
+                        MenuProps={{
+                          disablePortal: true,
+                          PaperProps: { sx: { mt: 0.5, zIndex: 9999, boxShadow: 3 } }
+                        }}
+                      >
+                        <MenuItem value="">
+                          <em>Select Unit Type</em>
+                        </MenuItem>
+                        {unitTypes.map((unit) => (
+                          <MenuItem key={unit} value={unit}>{unit}</MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
                     <TextField
                       label="Min"
                       placeholder="Min"
