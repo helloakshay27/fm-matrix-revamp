@@ -63,9 +63,9 @@ export const EditDesignInsightDashboard = () => {
 
       {/* Basic Details Section */}
       <Card className="mb-6">
-        <CardHeader className="bg-orange-100">
-          <CardTitle className="text-orange-600 flex items-center gap-2">
-            <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">⚙</span>
+        <CardHeader className="bg-white">
+          <CardTitle style={{ color: '#C72030' }} className="flex items-center gap-2">
+            <span className="text-white rounded-full w-6 h-6 flex items-center justify-center text-sm" style={{ backgroundColor: '#C72030' }}>⚙</span>
             DESIGN DETAILS
           </CardTitle>
         </CardHeader>
