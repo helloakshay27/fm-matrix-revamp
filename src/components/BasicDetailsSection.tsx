@@ -59,8 +59,8 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
       <CardHeader 
         className="flex flex-row items-center gap-5 py-[50px] px-[50px]"
       >
-        <div 
-  className="flex items-center justify-center"
+<div 
+  className="flex items-center justify-center border border-[#C72030]"
   style={{
     width: '40px',
     height: '40px',
