@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,10 @@ const fieldStyles = {
   },
   '& .MuiInputLabel-root': {
     color: '#6b7280',
+    position: 'relative',
+    transform: 'none',
+    fontSize: '14px',
+    marginBottom: '8px',
     '&.Mui-focused': {
       color: '#C72030',
     },
@@ -32,6 +37,13 @@ const fieldStyles = {
   '& .MuiInputBase-input': {
     padding: '14px 16px',
     fontSize: '14px',
+  },
+  '& .MuiFormLabel-root': {
+    position: 'relative',
+    transform: 'none',
+    marginBottom: '8px',
+    fontSize: '14px',
+    color: '#6b7280',
   },
 };
 
@@ -353,84 +365,118 @@ export const EditAssetDetailsPage = () => {
             <div className="p-6 pt-0 space-y-6">
               {/* First Row */}
               <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                <TextField
-                  label="Asset Name*"
-                  value={formData.assetName}
-                  onChange={(e) => handleInputChange('assetName', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Asset No.*"
-                  value={formData.assetNo}
-                  onChange={(e) => handleInputChange('assetNo', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Equipment ID*"
-                  placeholder="Enter Number"
-                  value={formData.equipmentId}
-                  onChange={(e) => handleInputChange('equipmentId', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Model No."
-                  value={formData.modelNo}
-                  onChange={(e) => handleInputChange('modelNo', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Serial No."
-                  value={formData.serialNo}
-                  onChange={(e) => handleInputChange('serialNo', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                />
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Asset Name*</Label>
+                  <TextField
+                    value={formData.assetName}
+                    onChange={(e) => handleInputChange('assetName', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Enter Asset Name"
+                    sx={fieldStyles}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Asset No.*</Label>
+                  <TextField
+                    value={formData.assetNo}
+                    onChange={(e) => handleInputChange('assetNo', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Enter Asset No."
+                    sx={fieldStyles}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Equipment ID*</Label>
+                  <TextField
+                    placeholder="Enter Number"
+                    value={formData.equipmentId}
+                    onChange={(e) => handleInputChange('equipmentId', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    sx={fieldStyles}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Model No.</Label>
+                  <TextField
+                    value={formData.modelNo}
+                    onChange={(e) => handleInputChange('modelNo', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Enter Model No."
+                    sx={fieldStyles}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Serial No.</Label>
+                  <TextField
+                    value={formData.serialNo}
+                    onChange={(e) => handleInputChange('serialNo', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Enter Serial No."
+                    sx={fieldStyles}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
               </div>
 
               {/* Second Row */}
               <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                <TextField
-                  label="Consumer No."
-                  placeholder="Enter Number"
-                  value={formData.consumerNo}
-                  onChange={(e) => handleInputChange('consumerNo', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Purchase Cost*"
-                  value={formData.purchaseCost}
-                  onChange={(e) => handleInputChange('purchaseCost', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Capacity"
-                  value={formData.capacity}
-                  onChange={(e) => handleInputChange('capacity', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Unit"
-                  value={formData.unit}
-                  onChange={(e) => handleInputChange('unit', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  sx={fieldStyles}
-                />
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Consumer No.</Label>
+                  <TextField
+                    placeholder="Enter Number"
+                    value={formData.consumerNo}
+                    onChange={(e) => handleInputChange('consumerNo', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    sx={fieldStyles}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Purchase Cost*</Label>
+                  <TextField
+                    value={formData.purchaseCost}
+                    onChange={(e) => handleInputChange('purchaseCost', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Enter Purchase Cost"
+                    sx={fieldStyles}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Capacity</Label>
+                  <TextField
+                    value={formData.capacity}
+                    onChange={(e) => handleInputChange('capacity', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Enter Capacity"
+                    sx={fieldStyles}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Unit</Label>
+                  <TextField
+                    value={formData.unit}
+                    onChange={(e) => handleInputChange('unit', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Enter Unit"
+                    sx={fieldStyles}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="group" className="text-sm font-medium">Group*</Label>
                   <Select value={formData.group} onValueChange={(value) => handleInputChange('group', value)}>
@@ -459,27 +505,31 @@ export const EditAssetDetailsPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <TextField
-                  label="Purchased ON Date"
-                  type="date"
-                  value={formData.purchaseDate}
-                  onChange={(e) => handleInputChange('purchaseDate', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Expiry date"
-                  type="date"
-                  placeholder="Select Date"
-                  value={formData.expiryDate}
-                  onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={fieldStyles}
-                />
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Purchased ON Date</Label>
+                  <TextField
+                    type="date"
+                    value={formData.purchaseDate}
+                    onChange={(e) => handleInputChange('purchaseDate', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    sx={fieldStyles}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Expiry date</Label>
+                  <TextField
+                    type="date"
+                    placeholder="Select Date"
+                    value={formData.expiryDate}
+                    onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    sx={fieldStyles}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="manufacturer" className="text-sm font-medium">Manufacturer</Label>
                   <Select value={formData.manufacturer} onValueChange={(value) => handleInputChange('manufacturer', value)}>
@@ -608,39 +658,45 @@ export const EditAssetDetailsPage = () => {
 
               {/* Warranty Dates */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <TextField
-                  label="Warranty Start Date"
-                  type="date"
-                  placeholder="Select Date"
-                  value={formData.warrantyStartDate}
-                  onChange={(e) => handleInputChange('warrantyStartDate', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Warranty expires on"
-                  type="date"
-                  placeholder="Select Date"
-                  value={formData.warrantyExpiresOn}
-                  onChange={(e) => handleInputChange('warrantyExpiresOn', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={fieldStyles}
-                />
-                <TextField
-                  label="Commissioning Date"
-                  type="date"
-                  placeholder="Select Date"
-                  value={formData.commissioningDate}
-                  onChange={(e) => handleInputChange('commissioningDate', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={fieldStyles}
-                />
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Warranty Start Date</Label>
+                  <TextField
+                    type="date"
+                    placeholder="Select Date"
+                    value={formData.warrantyStartDate}
+                    onChange={(e) => handleInputChange('warrantyStartDate', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    sx={fieldStyles}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Warranty expires on</Label>
+                  <TextField
+                    type="date"
+                    placeholder="Select Date"
+                    value={formData.warrantyExpiresOn}
+                    onChange={(e) => handleInputChange('warrantyExpiresOn', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    sx={fieldStyles}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Commissioning Date</Label>
+                  <TextField
+                    type="date"
+                    placeholder="Select Date"
+                    value={formData.commissioningDate}
+                    onChange={(e) => handleInputChange('commissioningDate', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    sx={fieldStyles}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -728,15 +784,18 @@ export const EditAssetDetailsPage = () => {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    <TextField
-                      label="Name"
-                      placeholder="Enter Text"
-                      value={measure.name}
-                      onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'name', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Name</Label>
+                      <TextField
+                        placeholder="Enter Text"
+                        value={measure.name}
+                        onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'name', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        sx={fieldStyles}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Unit Type</Label>
                       <Select value={measure.unitType} onValueChange={(value) => handleUpdateConsumptionMeasure(measure.id, 'unitType', value)}>
@@ -750,54 +809,69 @@ export const EditAssetDetailsPage = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    <TextField
-                      label="Min"
-                      placeholder="Enter Number"
-                      value={measure.min}
-                      onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'min', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
-                    <TextField
-                      label="Max"
-                      placeholder="Enter Number"
-                      value={measure.max}
-                      onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'max', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
-                    <TextField
-                      label="Alert Below Val."
-                      placeholder="Enter Value"
-                      value={measure.alertBelowVal}
-                      onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Min</Label>
+                      <TextField
+                        placeholder="Enter Number"
+                        value={measure.min}
+                        onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'min', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        sx={fieldStyles}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Max</Label>
+                      <TextField
+                        placeholder="Enter Number"
+                        value={measure.max}
+                        onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'max', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        sx={fieldStyles}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Alert Below Val.</Label>
+                      <TextField
+                        placeholder="Enter Value"
+                        value={measure.alertBelowVal}
+                        onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        sx={fieldStyles}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <TextField
-                      label="Alert Above Val."
-                      placeholder="Enter Value"
-                      value={measure.alertAboveVal}
-                      onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
-                    <TextField
-                      label="Multiplier Factor"
-                      placeholder="Enter Text"
-                      value={measure.multiplierFactor}
-                      onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Alert Above Val.</Label>
+                      <TextField
+                        placeholder="Enter Value"
+                        value={measure.alertAboveVal}
+                        onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        sx={fieldStyles}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Multiplier Factor</Label>
+                      <TextField
+                        placeholder="Enter Text"
+                        value={measure.multiplierFactor}
+                        onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        sx={fieldStyles}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
                     <div className="flex items-center space-x-2 pt-8">
                       <Checkbox 
                         id={`check-previous-reading-${measure.id}`}
@@ -852,15 +926,18 @@ export const EditAssetDetailsPage = () => {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    <TextField
-                      label="Name"
-                      placeholder="Name"
-                      value={measure.name}
-                      onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'name', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Name</Label>
+                      <TextField
+                        placeholder="Name"
+                        value={measure.name}
+                        onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'name', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        sx={fieldStyles}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Unit Type</Label>
                       <Select value={measure.unitType} onValueChange={(value) => handleUpdateNonConsumptionMeasure(measure.id, 'unitType', value)}>
@@ -874,54 +951,69 @@ export const EditAssetDetailsPage = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    <TextField
-                      label="Min"
-                      placeholder="Min"
-                      value={measure.min}
-                      onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'min', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
-                    <TextField
-                      label="Max"
-                      placeholder="Max"
-                      value={measure.max}
-                      onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'max', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
-                    <TextField
-                      label="Alert Below Val."
-                      placeholder="Alert Below Value"
-                      value={measure.alertBelowVal}
-                      onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Min</Label>
+                      <TextField
+                        placeholder="Min"
+                        value={measure.min}
+                        onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'min', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        sx={fieldStyles}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Max</Label>
+                      <TextField
+                        placeholder="Max"
+                        value={measure.max}
+                        onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'max', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        sx={fieldStyles}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Alert Below Val.</Label>
+                      <TextField
+                        placeholder="Alert Below Value"
+                        value={measure.alertBelowVal}
+                        onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        sx={fieldStyles}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <TextField
-                      label="Alert Above Val."
-                      placeholder="Alert Above Value"
-                      value={measure.alertAboveVal}
-                      onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
-                    <TextField
-                      label="Multiplier Factor"
-                      placeholder="Multiplier Factor"
-                      value={measure.multiplierFactor}
-                      onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Alert Above Val.</Label>
+                      <TextField
+                        placeholder="Alert Above Value"
+                        value={measure.alertAboveVal}
+                        onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        sx={fieldStyles}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Multiplier Factor</Label>
+                      <TextField
+                        placeholder="Multiplier Factor"
+                        value={measure.multiplierFactor}
+                        onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        sx={fieldStyles}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
                     <div className="flex items-center space-x-2 pt-8">
                       <Checkbox 
                         id={`check-previous-reading-nc-${measure.id}`}
