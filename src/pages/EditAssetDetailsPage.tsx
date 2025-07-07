@@ -1,13 +1,39 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
+import { TextField } from '@mui/material';
 import { ArrowLeft, ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
+
+const fieldStyles = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '8px',
+    backgroundColor: 'white',
+    '& fieldset': {
+      borderColor: '#e5e7eb',
+    },
+    '&:hover fieldset': {
+      borderColor: '#9ca3af',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    color: '#6b7280',
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+  },
+  '& .MuiInputBase-input': {
+    padding: '14px 16px',
+    fontSize: '14px',
+  },
+};
 
 export const EditAssetDetailsPage = () => {
   const { id } = useParams();
@@ -327,84 +353,84 @@ export const EditAssetDetailsPage = () => {
             <div className="p-6 pt-0 space-y-6">
               {/* First Row */}
               <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="assetName" className="text-sm font-medium">Asset Name*</Label>
-                  <Input
-                    id="assetName"
-                    value={formData.assetName}
-                    onChange={(e) => handleInputChange('assetName', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="assetNo" className="text-sm font-medium">Asset No.*</Label>
-                  <Input
-                    id="assetNo"
-                    value={formData.assetNo}
-                    onChange={(e) => handleInputChange('assetNo', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="equipmentId" className="text-sm font-medium">Equipment ID*</Label>
-                  <Input
-                    id="equipmentId"
-                    placeholder="Enter Number"
-                    value={formData.equipmentId}
-                    onChange={(e) => handleInputChange('equipmentId', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="modelNo" className="text-sm font-medium">Model No.</Label>
-                  <Input
-                    id="modelNo"
-                    value={formData.modelNo}
-                    onChange={(e) => handleInputChange('modelNo', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="serialNo" className="text-sm font-medium">Serial No.</Label>
-                  <Input
-                    id="serialNo"
-                    value={formData.serialNo}
-                    onChange={(e) => handleInputChange('serialNo', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="Asset Name*"
+                  value={formData.assetName}
+                  onChange={(e) => handleInputChange('assetName', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                />
+                <TextField
+                  label="Asset No.*"
+                  value={formData.assetNo}
+                  onChange={(e) => handleInputChange('assetNo', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                />
+                <TextField
+                  label="Equipment ID*"
+                  placeholder="Enter Number"
+                  value={formData.equipmentId}
+                  onChange={(e) => handleInputChange('equipmentId', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                />
+                <TextField
+                  label="Model No."
+                  value={formData.modelNo}
+                  onChange={(e) => handleInputChange('modelNo', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                />
+                <TextField
+                  label="Serial No."
+                  value={formData.serialNo}
+                  onChange={(e) => handleInputChange('serialNo', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                />
               </div>
 
               {/* Second Row */}
               <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="consumerNo" className="text-sm font-medium">Consumer No.</Label>
-                  <Input
-                    id="consumerNo"
-                    placeholder="Enter Number"
-                    value={formData.consumerNo}
-                    onChange={(e) => handleInputChange('consumerNo', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="purchaseCost" className="text-sm font-medium">Purchase Cost*</Label>
-                  <Input
-                    id="purchaseCost"
-                    value={formData.purchaseCost}
-                    onChange={(e) => handleInputChange('purchaseCost', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="capacity" className="text-sm font-medium">Capacity</Label>
-                  <Input
-                    id="capacity"
-                    value={formData.capacity}
-                    onChange={(e) => handleInputChange('capacity', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="unit" className="text-sm font-medium">Unit</Label>
-                  <Input
-                    id="unit"
-                    value={formData.unit}
-                    onChange={(e) => handleInputChange('unit', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="Consumer No."
+                  placeholder="Enter Number"
+                  value={formData.consumerNo}
+                  onChange={(e) => handleInputChange('consumerNo', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                />
+                <TextField
+                  label="Purchase Cost*"
+                  value={formData.purchaseCost}
+                  onChange={(e) => handleInputChange('purchaseCost', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                />
+                <TextField
+                  label="Capacity"
+                  value={formData.capacity}
+                  onChange={(e) => handleInputChange('capacity', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                />
+                <TextField
+                  label="Unit"
+                  value={formData.unit}
+                  onChange={(e) => handleInputChange('unit', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                />
                 <div className="space-y-2">
                   <Label htmlFor="group" className="text-sm font-medium">Group*</Label>
                   <Select value={formData.group} onValueChange={(value) => handleInputChange('group', value)}>
@@ -433,25 +459,27 @@ export const EditAssetDetailsPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="purchaseDate" className="text-sm font-medium">Purchased ON Date</Label>
-                  <Input
-                    id="purchaseDate"
-                    type="date"
-                    value={formData.purchaseDate}
-                    onChange={(e) => handleInputChange('purchaseDate', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="expiryDate" className="text-sm font-medium">Expiry date</Label>
-                  <Input
-                    id="expiryDate"
-                    type="date"
-                    placeholder="Select Date"
-                    value={formData.expiryDate}
-                    onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="Purchased ON Date"
+                  type="date"
+                  value={formData.purchaseDate}
+                  onChange={(e) => handleInputChange('purchaseDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  sx={fieldStyles}
+                />
+                <TextField
+                  label="Expiry date"
+                  type="date"
+                  placeholder="Select Date"
+                  value={formData.expiryDate}
+                  onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  sx={fieldStyles}
+                />
                 <div className="space-y-2">
                   <Label htmlFor="manufacturer" className="text-sm font-medium">Manufacturer</Label>
                   <Select value={formData.manufacturer} onValueChange={(value) => handleInputChange('manufacturer', value)}>
@@ -580,36 +608,39 @@ export const EditAssetDetailsPage = () => {
 
               {/* Warranty Dates */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="warrantyStartDate" className="text-sm font-medium">Warranty Start Date</Label>
-                  <Input
-                    id="warrantyStartDate"
-                    type="date"
-                    placeholder="Select Date"
-                    value={formData.warrantyStartDate}
-                    onChange={(e) => handleInputChange('warrantyStartDate', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="warrantyExpiresOn" className="text-sm font-medium">Warranty expires on</Label>
-                  <Input
-                    id="warrantyExpiresOn"
-                    type="date"
-                    placeholder="Select Date"
-                    value={formData.warrantyExpiresOn}
-                    onChange={(e) => handleInputChange('warrantyExpiresOn', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="commissioningDate" className="text-sm font-medium">Commissioning Date</Label>
-                  <Input
-                    id="commissioningDate"
-                    type="date"
-                    placeholder="Select Date"
-                    value={formData.commissioningDate}
-                    onChange={(e) => handleInputChange('commissioningDate', e.target.value)}
-                  />
-                </div>
+                <TextField
+                  label="Warranty Start Date"
+                  type="date"
+                  placeholder="Select Date"
+                  value={formData.warrantyStartDate}
+                  onChange={(e) => handleInputChange('warrantyStartDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  sx={fieldStyles}
+                />
+                <TextField
+                  label="Warranty expires on"
+                  type="date"
+                  placeholder="Select Date"
+                  value={formData.warrantyExpiresOn}
+                  onChange={(e) => handleInputChange('warrantyExpiresOn', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  sx={fieldStyles}
+                />
+                <TextField
+                  label="Commissioning Date"
+                  type="date"
+                  placeholder="Select Date"
+                  value={formData.commissioningDate}
+                  onChange={(e) => handleInputChange('commissioningDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  sx={fieldStyles}
+                />
               </div>
             </div>
           )}
@@ -697,14 +728,15 @@ export const EditAssetDetailsPage = () => {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Name</Label>
-                      <Input
-                        placeholder="Enter Text"
-                        value={measure.name}
-                        onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'name', e.target.value)}
-                      />
-                    </div>
+                    <TextField
+                      label="Name"
+                      placeholder="Enter Text"
+                      value={measure.name}
+                      onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'name', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Unit Type</Label>
                       <Select value={measure.unitType} onValueChange={(value) => handleUpdateConsumptionMeasure(measure.id, 'unitType', value)}>
@@ -718,49 +750,54 @@ export const EditAssetDetailsPage = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Min</Label>
-                      <Input
-                        placeholder="Enter Number"
-                        value={measure.min}
-                        onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'min', e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Max</Label>
-                      <Input
-                        placeholder="Enter Number"
-                        value={measure.max}
-                        onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'max', e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Alert Below Val.</Label>
-                      <Input
-                        placeholder="Enter Value"
-                        value={measure.alertBelowVal}
-                        onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
-                      />
-                    </div>
+                    <TextField
+                      label="Min"
+                      placeholder="Enter Number"
+                      value={measure.min}
+                      onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'min', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
+                    <TextField
+                      label="Max"
+                      placeholder="Enter Number"
+                      value={measure.max}
+                      onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'max', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
+                    <TextField
+                      label="Alert Below Val."
+                      placeholder="Enter Value"
+                      value={measure.alertBelowVal}
+                      onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Alert Above Val.</Label>
-                      <Input
-                        placeholder="Enter Value"
-                        value={measure.alertAboveVal}
-                        onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Multiplier Factor</Label>
-                      <Input
-                        placeholder="Enter Text"
-                        value={measure.multiplierFactor}
-                        onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
-                      />
-                    </div>
+                    <TextField
+                      label="Alert Above Val."
+                      placeholder="Enter Value"
+                      value={measure.alertAboveVal}
+                      onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
+                    <TextField
+                      label="Multiplier Factor"
+                      placeholder="Enter Text"
+                      value={measure.multiplierFactor}
+                      onChange={(e) => handleUpdateConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
                     <div className="flex items-center space-x-2 pt-8">
                       <Checkbox 
                         id={`check-previous-reading-${measure.id}`}
@@ -815,14 +852,15 @@ export const EditAssetDetailsPage = () => {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Name</Label>
-                      <Input
-                        placeholder="Name"
-                        value={measure.name}
-                        onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'name', e.target.value)}
-                      />
-                    </div>
+                    <TextField
+                      label="Name"
+                      placeholder="Name"
+                      value={measure.name}
+                      onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'name', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Unit Type</Label>
                       <Select value={measure.unitType} onValueChange={(value) => handleUpdateNonConsumptionMeasure(measure.id, 'unitType', value)}>
@@ -836,49 +874,54 @@ export const EditAssetDetailsPage = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Min</Label>
-                      <Input
-                        placeholder="Min"
-                        value={measure.min}
-                        onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'min', e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Max</Label>
-                      <Input
-                        placeholder="Max"
-                        value={measure.max}
-                        onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'max', e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Alert Below Val.</Label>
-                      <Input
-                        placeholder="Alert Below Value"
-                        value={measure.alertBelowVal}
-                        onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
-                      />
-                    </div>
+                    <TextField
+                      label="Min"
+                      placeholder="Min"
+                      value={measure.min}
+                      onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'min', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
+                    <TextField
+                      label="Max"
+                      placeholder="Max"
+                      value={measure.max}
+                      onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'max', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
+                    <TextField
+                      label="Alert Below Val."
+                      placeholder="Alert Below Value"
+                      value={measure.alertBelowVal}
+                      onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Alert Above Val.</Label>
-                      <Input
-                        placeholder="Alert Above Value"
-                        value={measure.alertAboveVal}
-                        onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Multiplier Factor</Label>
-                      <Input
-                        placeholder="Multiplier Factor"
-                        value={measure.multiplierFactor}
-                        onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
-                      />
-                    </div>
+                    <TextField
+                      label="Alert Above Val."
+                      placeholder="Alert Above Value"
+                      value={measure.alertAboveVal}
+                      onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
+                    <TextField
+                      label="Multiplier Factor"
+                      placeholder="Multiplier Factor"
+                      value={measure.multiplierFactor}
+                      onChange={(e) => handleUpdateNonConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
                     <div className="flex items-center space-x-2 pt-8">
                       <Checkbox 
                         id={`check-previous-reading-nc-${measure.id}`}
