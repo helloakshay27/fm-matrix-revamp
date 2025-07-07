@@ -73,7 +73,7 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-white">
+      <DialogContent className="w-full sm:max-w-[500px] bg-white">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-semibold">Filters</DialogTitle>
@@ -88,8 +88,9 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
           </div>
         </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-4 py-4">
-          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+        {/* Responsive Grid: 1 column on mobile, 2 on sm+ */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+          <FormControl fullWidth variant="outlined">
             <InputLabel id="tower-label">Tower</InputLabel>
             <MuiSelect
               labelId="tower-label"
@@ -106,7 +107,7 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
             </MuiSelect>
           </FormControl>
 
-          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+          <FormControl fullWidth variant="outlined">
             <InputLabel id="floor-label">Floor</InputLabel>
             <MuiSelect
               labelId="floor-label"
@@ -128,7 +129,7 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
             </MuiSelect>
           </FormControl>
 
-          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+          <FormControl fullWidth variant="outlined">
             <InputLabel id="flat-label">Flat</InputLabel>
             <MuiSelect
               labelId="flat-label"
@@ -148,7 +149,7 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
             </MuiSelect>
           </FormControl>
 
-          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+          <FormControl fullWidth variant="outlined">
             <InputLabel id="stage-label">Stage</InputLabel>
             <MuiSelect
               labelId="stage-label"
@@ -166,17 +167,18 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
           </FormControl>
         </div>
 
-        <div className="flex justify-center gap-4 pt-4">
+        {/* Buttons */}
+        <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
           <Button
             onClick={handleApply}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 w-full sm:w-auto"
           >
             APPLY
           </Button>
           <Button
             variant="outline"
             onClick={handleReset}
-            className="px-8 border-[#C72030] text-[#C72030]"
+            className="border-[#C72030] text-[#C72030] px-8 w-full sm:w-auto"
           >
             RESET
           </Button>
