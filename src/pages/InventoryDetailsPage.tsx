@@ -15,7 +15,7 @@ export const InventoryDetailsPage = () => {
   const handleFeeds = () => {
     navigate(`/maintenance/inventory/feeds/${id}`);
   };
-  return <div className="p-6 bg-[#f6f4ee] min-h-screen">
+  return <div className="p-6 min-h-screen bg-white">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
