@@ -225,11 +225,11 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
                   backgroundColor: '#FFFFFF',
                   borderRadius: '0px',
                   '& fieldset': {
-                    borderColor: '#C72030',
+                    borderColor: '#E0E0E0',
                     borderRadius: '0px',
                   },
                   '&:hover fieldset': {
-                    borderColor: '#C72030',
+                    borderColor: '#1A1A1A',
                   },
                   '&.Mui-focused fieldset': {
                     borderColor: '#C72030',
@@ -238,19 +238,19 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
                   '& textarea': {
                     fontSize: '14px',
                     fontWeight: 400,
-                    color: '#C72030',
-                    opacity: 1,
+                    color: '#1A1A1A',
+                    opacity: 0.54,
                     padding: '12px',
                     '&::placeholder': {
-                      color: '#C72030',
-                      opacity: 0.7,
+                      color: '#1A1A1A',
+                      opacity: 0.54,
                     },
                   },
                 },
                 '& .MuiInputLabel-root': {
                   fontSize: '14px',
                   fontWeight: 500,
-                  color: '#C72030',
+                  color: '#1A1A1A',
                   '&.Mui-focused': {
                     color: '#C72030',
                   },
@@ -307,11 +307,11 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
                   backgroundColor: '#FFFFFF',
                   borderRadius: '0px',
                   '& fieldset': {
-                    borderColor: '#C72030',
+                    borderColor: '#E0E0E0',
                     borderRadius: '0px',
                   },
                   '&:hover fieldset': {
-                    borderColor: '#C72030',
+                    borderColor: '#1A1A1A',
                   },
                   '&.Mui-focused fieldset': {
                     borderColor: '#C72030',
@@ -320,19 +320,19 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
                   '& textarea': {
                     fontSize: '14px',
                     fontWeight: 400,
-                    color: '#C72030',
-                    opacity: 1,
+                    color: '#1A1A1A',
+                    opacity: 0.54,
                     padding: '12px',
                     '&::placeholder': {
-                      color: '#C72030',
-                      opacity: 0.7,
+                      color: '#1A1A1A',
+                      opacity: 0.54,
                     },
                   },
                 },
                 '& .MuiInputLabel-root': {
                   fontSize: '14px',
                   fontWeight: 500,
-                  color: '#C72030',
+                  color: '#1A1A1A',
                   '&.Mui-focused': {
                     color: '#C72030',
                   },
