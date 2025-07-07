@@ -60,20 +60,17 @@ const AddWasteGenerationPage = () => {
   };
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <div>
-          <nav className="text-sm text-gray-600 mb-2">
-            Waste Generation &gt; NEW Waste Generation
-          </nav>
-          <h2 className="text-3xl font-bold tracking-tight">NEW WASTE GENERATION</h2>
-        </div>
+    <div className="p-4 sm:p-6 bg-white min-h-screen">
+      {/* Header */}
+      <div className="mb-6">
+        <p className="text-gray-600 mb-2 text-sm">Waste Generation &gt; NEW Waste Generation</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] uppercase">NEW WASTE GENERATION</h1>
       </div>
 
-      <Card>
+      <Card className="border border-gray-200">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-orange-600">
-            <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center">
+          <CardTitle className="flex items-center gap-2 text-[#C72030]">
+            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
               <div className="w-3 h-3 bg-white rounded-full"></div>
             </div>
             WASTE GENERATION DETAILS
@@ -253,76 +250,71 @@ const AddWasteGenerationPage = () => {
             </div>
 
             <div className="space-y-1">
-  <TextField
-    id="agencyName"
-    name="agencyName"
-    value={formData.agencyName}
-    onChange={(e) => handleInputChange('agencyName', e.target.value)}
-    placeholder="Enter Agency Name"
-    fullWidth
-    variant="outlined"
-    InputLabelProps={{ shrink: false }} // prevent floating label
-    InputProps={{ sx: fieldStyles }}
-    sx={{ mt: 0.5 }}
-  />
-</div>
+              <TextField
+                id="agencyName"
+                name="agencyName"
+                value={formData.agencyName}
+                onChange={(e) => handleInputChange('agencyName', e.target.value)}
+                placeholder="Enter Agency Name"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: false }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 0.5 }}
+              />
+            </div>
 
+            <div className="space-y-1">
+              <TextField
+                id="generatedUnit"
+                name="generatedUnit"
+                type="number"
+                value={formData.generatedUnit}
+                onChange={(e) => handleInputChange('generatedUnit', e.target.value)}
+                placeholder="Enter Unit"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: false }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 0.5 }}
+              />
+            </div>
 
-           <div className="space-y-1">
- 
-  <TextField
-    id="generatedUnit"
-    name="generatedUnit"
-    type="number"
-    value={formData.generatedUnit}
-    onChange={(e) => handleInputChange('generatedUnit', e.target.value)}
-    placeholder="Enter Unit"
-    fullWidth
-    variant="outlined"
-    InputLabelProps={{ shrink: false }} // disable floating label
-    InputProps={{ sx: fieldStyles }}
-    sx={{ mt: 0.5 }}
-  />
-</div>
-
-
-           <div className="space-y-1">
-  
-  <TextField
-    id="recycledUnit"
-    name="recycledUnit"
-    type="number"
-    value={formData.recycledUnit}
-    onChange={(e) => handleInputChange('recycledUnit', e.target.value)}
-    placeholder="0"
-    fullWidth
-    variant="outlined"
-    InputLabelProps={{ shrink: false }} // disable floating label
-    InputProps={{ sx: fieldStyles }}
-    sx={{ mt: 0.5 }}
-  />
-</div>
-
-          </div>
-
-          <div className="flex justify-center gap-4 pt-6">
-            <Button
-              onClick={handleSave}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#A01B26] px-8"
-            >
-              Save
-            </Button>
-            <Button
-              onClick={handleBack}
-              variant="outline"
-              className="px-8"
-            >
-              Back
-            </Button>
+            <div className="space-y-1">
+              <TextField
+                id="recycledUnit"
+                name="recycledUnit"
+                type="number"
+                value={formData.recycledUnit}
+                onChange={(e) => handleInputChange('recycledUnit', e.target.value)}
+                placeholder="0"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: false }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 0.5 }}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-4 mt-6">
+        <Button
+          onClick={handleSave}
+          className="bg-[#C72030] hover:bg-[#A61B28] text-white px-8"
+        >
+          Save
+        </Button>
+        <Button
+          onClick={handleBack}
+          variant="outline"
+          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-8"
+        >
+          Back
+        </Button>
+      </div>
     </div>
   );
 };
