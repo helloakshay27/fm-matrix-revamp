@@ -35,6 +35,30 @@ const fieldStyles = {
   },
 };
 
+const menuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 300,
+      zIndex: 9999,
+      backgroundColor: 'white',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    },
+  },
+  MenuListProps: {
+    style: {
+      padding: 0,
+    },
+  },
+  anchorOrigin: {
+    vertical: 'bottom',
+    horizontal: 'left',
+  },
+  transformOrigin: {
+    vertical: 'top',
+    horizontal: 'left',
+  },
+};
+
 export const AddPermitPage = () => {
   const navigate = useNavigate();
   const [permitData, setPermitData] = useState({
@@ -189,7 +213,7 @@ export const AddPermitPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 bg-white">
-          <div className="space-y-6">
+          <div className="space-y-8">
             <TextField
               label="Permit For*"
               value={permitData.permitFor}
@@ -208,6 +232,7 @@ export const AddPermitPage = () => {
                   onChange={(e) => handleInputChange('building', e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  MenuProps={menuProps}
                 >
                   <MenuItem value=""><em>Select Building</em></MenuItem>
                   <MenuItem value="building-a">Building A</MenuItem>
@@ -224,6 +249,7 @@ export const AddPermitPage = () => {
                   onChange={(e) => handleInputChange('wing', e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  MenuProps={menuProps}
                 >
                   <MenuItem value=""><em>Select Building First</em></MenuItem>
                   <MenuItem value="wing-1">Wing 1</MenuItem>
@@ -239,6 +265,7 @@ export const AddPermitPage = () => {
                   onChange={(e) => handleInputChange('area', e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  MenuProps={menuProps}
                 >
                   <MenuItem value=""><em>Select Floor First</em></MenuItem>
                   <MenuItem value="area-1">Area 1</MenuItem>
@@ -256,6 +283,7 @@ export const AddPermitPage = () => {
                   onChange={(e) => handleInputChange('floor', e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  MenuProps={menuProps}
                 >
                   <MenuItem value=""><em>Select Wing First</em></MenuItem>
                   <MenuItem value="floor-1">Floor 1</MenuItem>
@@ -271,6 +299,7 @@ export const AddPermitPage = () => {
                   onChange={(e) => handleInputChange('room', e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  MenuProps={menuProps}
                 >
                   <MenuItem value=""><em>Select Wing First</em></MenuItem>
                   <MenuItem value="room-1">Room 1</MenuItem>
@@ -286,6 +315,7 @@ export const AddPermitPage = () => {
                   onChange={(e) => handleInputChange('copyTo', e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
+                  MenuProps={menuProps}
                 >
                   <MenuItem value=""><em>Select</em></MenuItem>
                   <MenuItem value="manager">Manager</MenuItem>
@@ -334,7 +364,7 @@ export const AddPermitPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 bg-white">
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
               <label className="block text-sm font-medium mb-3 text-gray-700">Select Permit Type*</label>
               <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
@@ -366,7 +396,7 @@ export const AddPermitPage = () => {
 
             {/* Dynamic Activities */}
             {activities.map((activity, index) => (
-              <div key={index} className="space-y-4 p-6 border border-gray-200 rounded-lg bg-gray-50 relative">
+              <div key={index} className="space-y-6 p-6 border border-gray-200 rounded-lg bg-gray-50 relative">
                 {activities.length > 1 && (
                   <button
                     onClick={() => handleRemoveActivity(index)}
@@ -385,6 +415,7 @@ export const AddPermitPage = () => {
                       onChange={(e) => handleActivityChange(index, 'activity', e.target.value)}
                       displayEmpty
                       sx={fieldStyles}
+                      MenuProps={menuProps}
                     >
                       <MenuItem value=""><em>Select Activity</em></MenuItem>
                       <MenuItem value="maintenance">Maintenance</MenuItem>
@@ -401,6 +432,7 @@ export const AddPermitPage = () => {
                       onChange={(e) => handleActivityChange(index, 'subActivity', e.target.value)}
                       displayEmpty
                       sx={fieldStyles}
+                      MenuProps={menuProps}
                     >
                       <MenuItem value=""><em>Select Sub Activity</em></MenuItem>
                       <MenuItem value="electrical">Electrical</MenuItem>
@@ -417,6 +449,7 @@ export const AddPermitPage = () => {
                       onChange={(e) => handleActivityChange(index, 'categoryOfHazards', e.target.value)}
                       displayEmpty
                       sx={fieldStyles}
+                      MenuProps={menuProps}
                     >
                       <MenuItem value=""><em>Select Category of Hazards</em></MenuItem>
                       <MenuItem value="low">Low Risk</MenuItem>
@@ -455,6 +488,7 @@ export const AddPermitPage = () => {
                 onChange={(e) => handleInputChange('vendor', e.target.value)}
                 displayEmpty
                 sx={fieldStyles}
+                MenuProps={menuProps}
               >
                 <MenuItem value=""><em>Select Vendor</em></MenuItem>
                 <MenuItem value="vendor-1">Vendor 1</MenuItem>
