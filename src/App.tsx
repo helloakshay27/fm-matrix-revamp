@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
@@ -159,7 +158,7 @@ import { EditAMCPage } from './pages/EditAMCPage';
 import { ServiceDashboard } from './pages/ServiceDashboard';
 import { AddServicePage } from './pages/AddServicePage';
 import { ServiceDetailsPage } from './pages/ServiceDetailsPage';
-import { EditServicePage } from './pages/EditServicePage';
+import EditServicePage from './pages/EditServicePage';
 
 // Import Attendance pages
 import { AttendanceDashboard } from './pages/AttendanceDashboard';
