@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { X, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import TextareaAutosize from '@mui/material/TextareaAutosize';
+
 
 interface UserAssociationModalProps {
   isOpen: boolean;
@@ -179,18 +181,22 @@ export const UserAssociationModal = ({ isOpen, onClose, checklistName }: UserAss
           </div>
 
           <div className="space-y-4">
-            <TextField
-              placeholder="Enter Notes"
-              value={formData.notes}
-              onChange={(e) => handleInputChange('notes', e.target.value)}
-              fullWidth
-              variant="outlined"
-              multiline
-              rows={3}
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
+            <TextareaAutosize
+  minRows={4}
+  placeholder="Enter Notes"
+  value={formData.notes}
+  onChange={(e) => handleInputChange('notes', e.target.value)}
+  style={{
+    width: '100%',
+    padding: '12px',
+    borderColor: '#ccc',
+    borderRadius: 6,
+    fontSize: 14,
+    borderWidth: 1,
+    fontFamily: 'inherit',
+  }}
+/>
+
 
             <div className="space-y-2">
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
