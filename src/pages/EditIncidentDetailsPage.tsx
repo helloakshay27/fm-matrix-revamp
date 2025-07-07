@@ -85,7 +85,7 @@ export const EditIncidentDetailsPage = () => {
                   }}
                   className="time-input-custom"
                 />
-                <style jsx>{`
+                <style>{`
                   .time-input-custom::-webkit-calendar-picker-indicator {
                     background-color: #C72030 !important;
                     color: white !important;
