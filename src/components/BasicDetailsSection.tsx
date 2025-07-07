@@ -3,6 +3,8 @@ import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/mat
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomTextField } from '@/components/ui/custom-text-field';
+import { Settings } from 'lucide-react';
+
 
 interface BasicDetailsSectionProps {
   category: string;
@@ -58,25 +60,15 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
         className="flex flex-row items-center gap-5 py-[50px] px-[50px]"
       >
         <div 
-          className="flex items-center justify-center"
-          style={{
-            width: '40px',
-            height: '40px',
-            backgroundColor: '#C72030',
-            borderRadius: '50%'
-          }}
-        >
-          <span 
-            className="flex items-center justify-center"
-            style={{
-              width: '18px',
-              height: '18px',
-              color: '#FFFFFF'
-            }}
-          >
-            ⚙
-          </span>
-        </div>
+  className="flex items-center justify-center"
+  style={{
+    width: '40px',
+    height: '40px',
+    borderRadius: '50%',
+  }}
+>
+  <Settings size={18} color="#C72030" />
+</div>
         <CardTitle 
           className="font-['Work_Sans']"
           style={{

@@ -1,6 +1,8 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Paperclip } from 'lucide-react';
+
 
 export const AttachmentsSection: React.FC = () => {
   return (
@@ -8,26 +10,17 @@ export const AttachmentsSection: React.FC = () => {
       <CardHeader 
         className="flex flex-row items-center gap-5 py-[50px] px-[50px]"
       >
-        <div 
-          className="flex items-center justify-center"
-          style={{
-            width: '40px',
-            height: '40px',
-            backgroundColor: '#C72030',
-            borderRadius: '50%'
-          }}
-        >
-          <span 
-            className="flex items-center justify-center"
-            style={{
-              width: '18px',
-              height: '18px',
-              color: '#FFFFFF'
-            }}
-          >
-            📎
-          </span>
-        </div>
+<div 
+  className="flex items-center justify-center"
+  style={{
+    width: '40px',
+    height: '40px',
+    borderRadius: '50%',
+  }}
+>
+  <Paperclip size={18} color="#C72030" />
+</div>
+
         <CardTitle 
           className="font-['Work_Sans']"
           style={{
