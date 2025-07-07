@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -130,7 +129,7 @@ export const AddPermitPage = () => {
       {/* Permit Requestor Details */}
       <Card className="mb-6 shadow-sm border-0">
         <CardHeader className="bg-white border-b border-gray-100">
-          <CardTitle className="flex items-center text-[#C72030] text-lg font-semibold">
+          <CardTitle className="text-[#C72030] flex items-center text-lg font-semibold">
             <span className="mr-3 w-2 h-2 bg-[#C72030] rounded-full"></span>
             PERMIT REQUESTOR DETAILS
           </CardTitle>
