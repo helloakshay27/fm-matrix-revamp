@@ -85,7 +85,7 @@ const AddInternalUser = ({
         if (!formData.name.trim()) return setError("Please enter name");
         if (!formData.mobile) return setError("Please enter mobile number");
         if (!formData.email.trim()) return setError("Please enter email");
-        if (!formData.password) return setError("Please enter password");
+        if (!isEditMode && !formData.password) return setError("Please enter password");
         if (!formData.company) return setError("Please select company");
         if (!formData.role) return setError("Please select role");
         if (!formData.reportTo) return setError("Please select report to");
