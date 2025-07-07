@@ -502,6 +502,21 @@ export const removeAttachment = createAsyncThunk('removeAttachment', async ({ to
     }
 })
 
+export const fetchProjectTeamMembers = createAsyncThunk('fetchProjectTeamMembers', async ({ token, id }) => {
+    try {
+        const response = await axios.get(`${baseURL}/project_teams.json?q[project_managements_id_eq]=${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
+        return response.data[0].project_team_members;
+    }
+    catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
 
 export const createProjectSlice = createApiSlice('createProject', createProject);
 export const fetchProjectsSlice = createApiSlice('fetchProjects', fetchProjects);
@@ -529,6 +544,8 @@ export const removeMembersFromGroupSlice = createApiSlice('removeMembersFromGrou
 export const deleteProjectTeamSlice = createApiSlice('deleteProjectTeam', deleteProjectTeam);
 export const deleteProjectGroupSlice = createApiSlice('deleteProjectGroup', deleteProjectGroup);
 export const removeAttachmentSlice = createApiSlice('removeAttachment', removeAttachment);
+export const fetchProjectTeamMembersSlice = createApiSlice('fetchProjectTeamMembers', fetchProjectTeamMembers);
+
 
 export const createProjectReducer = createProjectSlice.reducer;
 export const fetchProjectsReducer = fetchProjectsSlice.reducer;
@@ -556,6 +573,7 @@ export const removeMembersFromGroupReducer = removeMembersFromGroupSlice.reducer
 export const deleteProjectTeamReducer = deleteProjectTeamSlice.reducer;
 export const deleteProjectGroupReducer = deleteProjectGroupSlice.reducer;
 export const removeAttachmentReducer = removeAttachmentSlice.reducer;
+export const fetchProjectTeamMembersReducer = fetchProjectTeamMembersSlice.reducer;
 
 export const { resetSuccess } = createProjectTeamSlice.actions;
 export const { resetProjectSuccess } = createProjectSlice.actions;

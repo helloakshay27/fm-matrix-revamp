@@ -120,17 +120,32 @@ export const startConversation = createAsyncThunk('startConversation', async ({ 
     }
 })
 
+export const fetchMessagesOfConversation = createAsyncThunk('fetchMessagesOfConversation', async ({ token, id }) => {
+    try {
+        const response = await axios.get(`${baseURL}/messages.json?q[conversation_id_eq]=${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.log(error)
+    }
+})
+
 export const fetchChannelsSlice = createApiSlice('fetchChannels', fetchChannels);
 export const fetchConversationsSlice = createApiSlice('fetchConversations', fetchConversations);
 export const fetchChannelByIdSlice = createApiSlice('fetchChannelById', fetchChannelById);
 export const createMessageSlice = createApiSlice('createMessage', createMessage);
 export const startConversationSlice = createApiSlice('startConversation', startConversation);
+export const fetchMessagesOfConversationSlice = createApiSlice('fetchMessagesOfConversation', fetchMessagesOfConversation);
 
 export const fetchChannelsReducer = fetchChannelsSlice.reducer;
 export const fetchConversationsReducer = fetchConversationsSlice.reducer;
 export const fetchChannelByIdReducer = fetchChannelByIdSlice.reducer;
 export const createMessageReducer = createMessageSlice.reducer;
 export const startConversationReducer = startConversationSlice.reducer;
+export const fetchMessagesOfConversationReducer = fetchMessagesOfConversationSlice.reducer;
 
 export const { resetSendMessage } = createMessageSlice.actions;
 export const { resetstartConversation } = startConversationSlice.actions;
