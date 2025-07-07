@@ -1,3 +1,5 @@
+
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Upload } from "lucide-react";
@@ -7,8 +9,7 @@ import { EditCategoryModal } from "@/components/EditCategoryModal";
 import { AddDeviationStatusModal } from "@/components/AddDeviationStatusModal";
 import { AddStatusModal } from "@/components/AddStatusModal";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import { CustomTextField } from '@/components/ui/custom-text-field';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useToast } from "@/hooks/use-toast";
 
 interface Category {
@@ -170,10 +171,13 @@ export const FitoutSetupDashboard = () => {
     <div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <div>
-          <CustomTextField
-            label="Status"
+          <TextField
             placeholder="Enter status"
             fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
           />
         </div>
         <div>
@@ -192,17 +196,23 @@ export const FitoutSetupDashboard = () => {
           </FormControl>
         </div>
         <div>
-          <CustomTextField
-            label="Color"
+          <TextField
             type="color"
             fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
           />
         </div>
         <div>
-          <CustomTextField
-            label="Status Order"
+          <TextField
             placeholder="Enter status order"
             fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
           />
         </div>
       </div>
@@ -416,3 +426,4 @@ export const FitoutSetupDashboard = () => {
 };
 
 export default FitoutSetupDashboard;
+
