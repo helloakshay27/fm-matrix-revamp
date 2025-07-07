@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Checkbox } from "@/components/ui/checkbox";
@@ -206,7 +207,7 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
           </div>
         </div>
 
-        {/* Third row - 2 columns for text areas */}
+        {/* Third row - 2 columns for responsive text areas */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-[50px] gap-y-[40px] mb-[40px]">
           <div className="flex flex-col space-y-3">
             <CustomTextField
