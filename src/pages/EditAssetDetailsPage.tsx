@@ -262,7 +262,7 @@ export const EditAssetDetailsPage = () => {
           >
             Asset List
           </Button>
-          <Typography variant="body2">></Typography>
+          <Typography variant="body2">&gt;</Typography>
           <Typography variant="body2">Create New Asset</Typography>
         </Box>
         <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1a1a1a', textTransform: 'uppercase' }}>
@@ -292,6 +292,11 @@ export const EditAssetDetailsPage = () => {
                   value={locationData.site}
                   onChange={(e) => handleLocationChange('site', e.target.value)}
                   label="Site*"
+                  sx={{
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                  }}
                 >
                   <MenuItem value="Lockated">Lockated</MenuItem>
                   <MenuItem value="Other Site">Other Site</MenuItem>
@@ -303,8 +308,13 @@ export const EditAssetDetailsPage = () => {
                   value={locationData.building}
                   onChange={(e) => handleLocationChange('building', e.target.value)}
                   label="Building"
+                  sx={{
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                  }}
                 >
-                  <MenuItem value="seakedown">sebc</MenuItem>
+                  <MenuItem value="sebc">sebc</MenuItem>
                   <MenuItem value="Building A">Building A</MenuItem>
                   <MenuItem value="Building B">Building B</MenuItem>
                 </Select>
@@ -315,6 +325,11 @@ export const EditAssetDetailsPage = () => {
                   value={locationData.wing}
                   onChange={(e) => handleLocationChange('wing', e.target.value)}
                   label="Wing"
+                  sx={{
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                  }}
                 >
                   <MenuItem value="North Wing">North Wing</MenuItem>
                   <MenuItem value="South Wing">South Wing</MenuItem>
@@ -328,6 +343,11 @@ export const EditAssetDetailsPage = () => {
                   value={locationData.area}
                   onChange={(e) => handleLocationChange('area', e.target.value)}
                   label="Area"
+                  sx={{
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                  }}
                 >
                   <MenuItem value="Area 1">Area 1</MenuItem>
                   <MenuItem value="Area 2">Area 2</MenuItem>
@@ -340,6 +360,11 @@ export const EditAssetDetailsPage = () => {
                   value={locationData.floor}
                   onChange={(e) => handleLocationChange('floor', e.target.value)}
                   label="Floor"
+                  sx={{
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                  }}
                 >
                   <MenuItem value="Ground Floor">Ground Floor</MenuItem>
                   <MenuItem value="1st Floor">1st Floor</MenuItem>
@@ -355,6 +380,11 @@ export const EditAssetDetailsPage = () => {
                   value={locationData.room}
                   onChange={(e) => handleLocationChange('room', e.target.value)}
                   label="Room"
+                  sx={{
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                  }}
                 >
                   <MenuItem value="Room 101">Room 101</MenuItem>
                   <MenuItem value="Room 102">Room 102</MenuItem>
@@ -386,6 +416,14 @@ export const EditAssetDetailsPage = () => {
                 onChange={(e) => handleInputChange('assetName', e.target.value)}
                 fullWidth
                 variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#C72030',
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#C72030',
+                  },
+                }}
               />
               <TextField
                 label="Asset No.*"
@@ -393,6 +431,14 @@ export const EditAssetDetailsPage = () => {
                 onChange={(e) => handleInputChange('assetNo', e.target.value)}
                 fullWidth
                 variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#C72030',
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#C72030',
+                  },
+                }}
               />
               <TextField
                 label="Equipment ID*"
@@ -400,6 +446,14 @@ export const EditAssetDetailsPage = () => {
                 onChange={(e) => handleInputChange('equipmentId', e.target.value)}
                 fullWidth
                 variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#C72030',
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#C72030',
+                  },
+                }}
               />
               <TextField
                 label="Model No."
@@ -407,6 +461,14 @@ export const EditAssetDetailsPage = () => {
                 onChange={(e) => handleInputChange('modelNo', e.target.value)}
                 fullWidth
                 variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#C72030',
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#C72030',
+                  },
+                }}
               />
               <TextField
                 label="Serial No."
@@ -414,6 +476,14 @@ export const EditAssetDetailsPage = () => {
                 onChange={(e) => handleInputChange('serialNo', e.target.value)}
                 fullWidth
                 variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#C72030',
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#C72030',
+                  },
+                }}
               />
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(5, 1fr)' }, gap: 2, mb: 4 }}>
@@ -423,6 +493,14 @@ export const EditAssetDetailsPage = () => {
                 onChange={(e) => handleInputChange('consumerNo', e.target.value)}
                 fullWidth
                 variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#C72030',
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#C72030',
+                  },
+                }}
               />
               <TextField
                 label="Purchase Cost*"
@@ -430,6 +508,14 @@ export const EditAssetDetailsPage = () => {
                 onChange={(e) => handleInputChange('purchaseCost', e.target.value)}
                 fullWidth
                 variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#C72030',
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#C72030',
+                  },
+                }}
               />
               <TextField
                 label="Capacity"
@@ -437,6 +523,14 @@ export const EditAssetDetailsPage = () => {
                 onChange={(e) => handleInputChange('capacity', e.target.value)}
                 fullWidth
                 variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#C72030',
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#C72030',
+                  },
+                }}
               />
               <TextField
                 label="Unit"
@@ -444,6 +538,14 @@ export const EditAssetDetailsPage = () => {
                 onChange={(e) => handleInputChange('unit', e.target.value)}
                 fullWidth
                 variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#C72030',
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#C72030',
+                  },
+                }}
               />
               <FormControl fullWidth>
                 <InputLabel>Group*</InputLabel>
@@ -451,6 +553,11 @@ export const EditAssetDetailsPage = () => {
                   value={formData.group}
                   onChange={(e) => handleInputChange('group', e.target.value)}
                   label="Group*"
+                  sx={{
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                  }}
                 >
                   <MenuItem value="Electrical">Electrical</MenuItem>
                   <MenuItem value="Mechanical">Mechanical</MenuItem>
@@ -464,6 +571,11 @@ export const EditAssetDetailsPage = () => {
                   value={formData.subgroup}
                   onChange={(e) => handleInputChange('subgroup', e.target.value)}
                   label="Subgroup*"
+                  sx={{
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                  }}
                 >
                   <MenuItem value="Electric Meter">Electric Meter</MenuItem>
                   <MenuItem value="Water Meter">Water Meter</MenuItem>
@@ -477,6 +589,14 @@ export const EditAssetDetailsPage = () => {
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
+                sx={{
+                  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#C72030',
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#C72030',
+                  },
+                }}
               />
               <TextField
                 label="Expiry Date"
@@ -486,6 +606,14 @@ export const EditAssetDetailsPage = () => {
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
+                sx={{
+                  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#C72030',
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#C72030',
+                  },
+                }}
               />
               <FormControl fullWidth>
                 <InputLabel>Manufacturer</InputLabel>
@@ -493,6 +621,11 @@ export const EditAssetDetailsPage = () => {
                   value={formData.manufacturer}
                   onChange={(e) => handleInputChange('manufacturer', e.target.value)}
                   label="Manufacturer"
+                  sx={{
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                  }}
                 >
                   <MenuItem value="manufacturer1">Manufacturer 1</MenuItem>
                   <MenuItem value="manufacturer2">Manufacturer 2</MenuItem>
