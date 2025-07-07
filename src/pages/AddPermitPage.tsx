@@ -11,6 +11,24 @@ const fieldStyles = {
   '& .MuiInputBase-input, & .MuiSelect-select': {
     padding: { xs: '8px', sm: '10px', md: '12px' },
   },
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '4px',
+    '& fieldset': {
+      borderColor: '#d1d5db',
+    },
+    '&:hover fieldset': {
+      borderColor: '#9ca3af',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    color: '#6b7280',
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+  },
 };
 
 export const AddPermitPage = () => {
@@ -107,7 +125,7 @@ export const AddPermitPage = () => {
       {/* Permit Requestor Details */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center">
+          <CardTitle className="flex items-center" style={{ color: '#C72030' }}>
             <span className="mr-2">🔸</span>
             PERMIT REQUESTOR DETAILS
           </CardTitle>
@@ -121,8 +139,7 @@ export const AddPermitPage = () => {
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
+              sx={fieldStyles}
             />
             <TextField
               label="Contact Number"
@@ -131,8 +148,7 @@ export const AddPermitPage = () => {
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
+              sx={fieldStyles}
             />
             <TextField
               label="Site"
@@ -141,8 +157,7 @@ export const AddPermitPage = () => {
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
+              sx={fieldStyles}
             />
             <TextField
               label="Department"
@@ -151,8 +166,7 @@ export const AddPermitPage = () => {
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
+              sx={fieldStyles}
             />
             <TextField
               label="Unit"
@@ -161,8 +175,7 @@ export const AddPermitPage = () => {
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
+              sx={fieldStyles}
             />
           </div>
         </CardContent>
@@ -171,7 +184,7 @@ export const AddPermitPage = () => {
       {/* Basic Details */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center">
+          <CardTitle className="flex items-center" style={{ color: '#C72030' }}>
             <span className="mr-2">🔸</span>
             BASIC DETAILS
           </CardTitle>
@@ -185,13 +198,12 @@ export const AddPermitPage = () => {
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
+              sx={fieldStyles}
             />
             
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Building*</InputLabel>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Building*</InputLabel>
                 <MuiSelect
                   label="Building*"
                   value={permitData.building}
@@ -206,8 +218,8 @@ export const AddPermitPage = () => {
                 </MuiSelect>
               </FormControl>
               
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Wing</InputLabel>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Wing</InputLabel>
                 <MuiSelect
                   label="Wing"
                   value={permitData.wing}
@@ -221,8 +233,8 @@ export const AddPermitPage = () => {
                 </MuiSelect>
               </FormControl>
               
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Area</InputLabel>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Area</InputLabel>
                 <MuiSelect
                   label="Area"
                   value={permitData.area}
@@ -238,8 +250,8 @@ export const AddPermitPage = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Floor</InputLabel>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Floor</InputLabel>
                 <MuiSelect
                   label="Floor"
                   value={permitData.floor}
@@ -253,8 +265,8 @@ export const AddPermitPage = () => {
                 </MuiSelect>
               </FormControl>
               
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Room</InputLabel>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Room</InputLabel>
                 <MuiSelect
                   label="Room"
                   value={permitData.room}
@@ -268,8 +280,8 @@ export const AddPermitPage = () => {
                 </MuiSelect>
               </FormControl>
               
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Copy To</InputLabel>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Copy To</InputLabel>
                 <MuiSelect
                   label="Copy To"
                   value={permitData.copyTo}
@@ -318,7 +330,7 @@ export const AddPermitPage = () => {
       {/* Permit Details */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center">
+          <CardTitle className="flex items-center" style={{ color: '#C72030' }}>
             <span className="mr-2">🔸</span>
             PERMIT DETAILS
           </CardTitle>
@@ -352,17 +364,7 @@ export const AddPermitPage = () => {
               minRows={4}
               maxRows={10}
               InputLabelProps={{ shrink: true }}
-              InputProps={{
-                sx: {
-                  '& textarea': {
-                    height: 'auto',
-                    overflow: 'hidden',
-                    resize: 'none',
-                    padding: '8px 14px',
-                  },
-                },
-              }}
-              sx={{ mt: 1 }}
+              sx={fieldStyles}
             />
 
             {/* Dynamic Activities */}
@@ -378,8 +380,8 @@ export const AddPermitPage = () => {
                 )}
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                    <InputLabel shrink>Activity*</InputLabel>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Activity*</InputLabel>
                     <MuiSelect
                       label="Activity*"
                       value={activity.activity}
@@ -394,8 +396,8 @@ export const AddPermitPage = () => {
                     </MuiSelect>
                   </FormControl>
                   
-                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                    <InputLabel shrink>Sub Activity*</InputLabel>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Sub Activity*</InputLabel>
                     <MuiSelect
                       label="Sub Activity*"
                       value={activity.subActivity}
@@ -410,8 +412,8 @@ export const AddPermitPage = () => {
                     </MuiSelect>
                   </FormControl>
                   
-                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                    <InputLabel shrink>Category of Hazards*</InputLabel>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Category of Hazards*</InputLabel>
                     <MuiSelect
                       label="Category of Hazards*"
                       value={activity.categoryOfHazards}
@@ -437,17 +439,7 @@ export const AddPermitPage = () => {
                   minRows={3}
                   maxRows={6}
                   InputLabelProps={{ shrink: true }}
-                  InputProps={{
-                    sx: {
-                      '& textarea': {
-                        height: 'auto',
-                        overflow: 'hidden',
-                        resize: 'none',
-                        padding: '8px 14px',
-                      },
-                    },
-                  }}
-                  sx={{ mt: 1 }}
+                  sx={fieldStyles}
                 />
               </div>
             ))}
@@ -460,8 +452,8 @@ export const AddPermitPage = () => {
               + Add Activity
             </Button>
 
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Vendor</InputLabel>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Vendor</InputLabel>
               <MuiSelect
                 label="Vendor"
                 value={permitData.vendor}
@@ -485,17 +477,7 @@ export const AddPermitPage = () => {
               minRows={3}
               maxRows={6}
               InputLabelProps={{ shrink: true }}
-              InputProps={{
-                sx: {
-                  '& textarea': {
-                    height: 'auto',
-                    overflow: 'hidden',
-                    resize: 'none',
-                    padding: '8px 14px',
-                  },
-                },
-              }}
-              sx={{ mt: 1 }}
+              sx={fieldStyles}
             />
           </div>
         </CardContent>
@@ -504,7 +486,7 @@ export const AddPermitPage = () => {
       {/* Attachments */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center">
+          <CardTitle className="flex items-center" style={{ color: '#C72030' }}>
             <span className="mr-2">📎</span>
             ATTACHMENTS
           </CardTitle>
