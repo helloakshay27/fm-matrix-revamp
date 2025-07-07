@@ -3,10 +3,10 @@ import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft } from 'lucide-react';
+import { FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
 
 export const TicketTagVendorPage = () => {
   const navigate = useNavigate();
@@ -60,6 +60,14 @@ export const TicketTagVendorPage = () => {
     }
   };
 
+  const handleOptionsChange = (event: SelectChangeEvent) => {
+    setSelectedOptions(event.target.value);
+  };
+
+  const handleOptionChange = (event: SelectChangeEvent) => {
+    setSelectedOption(event.target.value);
+  };
+
   return (
     <div className="p-6 bg-white min-h-screen">
       <div className="max-w-6xl mx-auto">
@@ -84,17 +92,19 @@ export const TicketTagVendorPage = () => {
         {/* Form Section */}
         <div className="grid grid-cols-2 gap-6 mb-6">
           <div>
-            <label className="text-sm font-medium mb-2 block">Select Some Options</label>
-            <Select value={selectedOptions} onValueChange={setSelectedOptions}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Some Options" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="option1">Option 1</SelectItem>
-                <SelectItem value="option2">Option 2</SelectItem>
-                <SelectItem value="option3">Option 3</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth size="small">
+              <InputLabel id="select-options-label">Select Some Options</InputLabel>
+              <Select
+                labelId="select-options-label"
+                value={selectedOptions}
+                label="Select Some Options"
+                onChange={handleOptionsChange}
+              >
+                <MenuItem value="option1">Option 1</MenuItem>
+                <MenuItem value="option2">Option 2</MenuItem>
+                <MenuItem value="option3">Option 3</MenuItem>
+              </Select>
+            </FormControl>
           </div>
           
           <div className="flex items-end">
@@ -110,17 +120,19 @@ export const TicketTagVendorPage = () => {
 
         <div className="grid grid-cols-2 gap-6 mb-6">
           <div>
-            <label className="text-sm font-medium mb-2 block">Select an Option</label>
-            <Select value={selectedOption} onValueChange={setSelectedOption}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select an Option" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="option-a">Option A</SelectItem>
-                <SelectItem value="option-b">Option B</SelectItem>
-                <SelectItem value="option-c">Option C</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth size="small">
+              <InputLabel id="select-option-label">Select an Option</InputLabel>
+              <Select
+                labelId="select-option-label"
+                value={selectedOption}
+                label="Select an Option"
+                onChange={handleOptionChange}
+              >
+                <MenuItem value="option-a">Option A</MenuItem>
+                <MenuItem value="option-b">Option B</MenuItem>
+                <MenuItem value="option-c">Option C</MenuItem>
+              </Select>
+            </FormControl>
           </div>
         </div>
 
