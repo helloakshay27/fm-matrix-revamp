@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { Heading } from '@/components/ui/heading';
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -62,19 +63,27 @@ export const AddIncidentPage = () => {
       {/* Header */}
       <div className="mb-6">
         <nav className="flex items-center text-sm text-gray-600 mb-4">
-          <span>Incidents</span>
+          <span>Home</span>
           <span className="mx-2">{'>'}</span>
-          <span>New Incident</span>
+          <span>Safety</span>
+          <span className="mx-2">{'>'}</span>
+          <span>Incident</span>
         </nav>
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">NEW INCIDENT</h1>
+        <Heading level="h1" variant="primary" spacing="none" className="text-[#C72030] font-semibold">
+          NEW INCIDENT
+        </Heading>
       </div>
 
       {/* Basic Details */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center">
-            <span className="mr-2">🔸</span>
-            INCIDENT DETAILS
+          <CardTitle className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
+              <span className="text-white text-sm">ℹ️</span>
+            </div>
+            <Heading level="h2" variant="primary" spacing="none" className="text-[#C72030] font-semibold">
+              INCIDENT DETAILS
+            </Heading>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -189,9 +198,13 @@ export const AddIncidentPage = () => {
       {/* Attachments */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center">
-            <span className="mr-2">📎</span>
-            ATTACHMENTS
+          <CardTitle className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
+              <span className="text-white text-sm">📎</span>
+            </div>
+            <Heading level="h2" variant="primary" spacing="none" className="text-[#C72030] font-semibold">
+              ATTACHMENTS
+            </Heading>
           </CardTitle>
         </CardHeader>
         <CardContent>
