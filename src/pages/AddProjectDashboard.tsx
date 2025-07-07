@@ -228,7 +228,12 @@ export const AddProjectDashboard = () => {
                   },
                 }
               }}
-              sx={{ mt: 1 }}
+              sx={{ 
+                mt: 1,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '4px',
+                }
+              }}
             />
           </div>
 
