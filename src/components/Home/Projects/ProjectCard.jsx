@@ -45,19 +45,23 @@ const ProjectCard = ({ project }) => {
         const interval = setInterval(() => {
             const now = new Date();
             const end = new Date(project.end_date);
-            const diff = end - now;
+            const endMidnight = new Date(end.getFullYear(), end.getMonth(), end.getDate() + 1);
+
+            const diff = endMidnight - now;
 
             if (diff <= 0 && project.status !== "completed") {
-                setCountdown("Overdued");
-                dispatch(changeProjectStatus({ token, id: project.id, payload: { status: "overdue" } }));
+                setCountdown("Overdue");
+                dispatch(changeTaskStatus({ token, id: task.id, payload: { status: "overdue" } }));
                 clearInterval(interval);
             } else {
-                setCountdown(formatCountdown(diff));
+                const endOfDay = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999);
+                const displayDiff = endOfDay - now;
+                setCountdown(formatCountdown(displayDiff));
             }
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [project.end_date]);
+    }, [project.end_date, project.status, project.id, token, dispatch]);
 
     const memberColors = useMemo(() => {
         const colors = {};
@@ -117,8 +121,8 @@ const ProjectCard = ({ project }) => {
                             className="absolute top-0 left-0 h-4 rounded-full bg-blue-500"
                             style={{
                                 width: `${project.total_milestone_count > 0
-                                        ? (project.completed_milestone_count / project.total_milestone_count) * 100
-                                        : 0
+                                    ? (project.completed_milestone_count / project.total_milestone_count) * 100
+                                    : 0
                                     }%`,
                             }}
                         ></div>
@@ -142,9 +146,9 @@ const ProjectCard = ({ project }) => {
                             className="absolute top-0 left-0 h-4 rounded-full bg-green-500"
                             style={{
                                 width: `${project.total_task_management_count > 0
-                                        ? (project.completed_task_management_count / project.total_task_management_count) *
-                                        100
-                                        : 0
+                                    ? (project.completed_task_management_count / project.total_task_management_count) *
+                                    100
+                                    : 0
                                     }%`,
                             }}
                         ></div>
@@ -168,8 +172,8 @@ const ProjectCard = ({ project }) => {
                             className="absolute top-0 left-0 h-4 rounded-full bg-red-500"
                             style={{
                                 width: `${project.total_issues_count > 0
-                                        ? (project.completed_issues_count / project.total_issues_count) * 100
-                                        : 0
+                                    ? (project.completed_issues_count / project.total_issues_count) * 100
+                                    : 0
                                     }%`,
                             }}
                         ></div>
