@@ -35,7 +35,7 @@ const EditServicePage = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 max-w-5xl mx-auto">
+    <div className="p-4 sm:p-6 md:p-8 mx-auto">
       <h1 className="text-2xl font-bold mb-6 text-[#1a1a1a]">
         Edit Service - ID: {id}
       </h1>
