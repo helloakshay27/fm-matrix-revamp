@@ -3,7 +3,7 @@ import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 
 export const TicketFeedsPage = () => {
   const navigate = useNavigate();
@@ -71,8 +71,10 @@ export const TicketFeedsPage = () => {
         {/* Feeds Section */}
         <Card>
           <CardHeader className="bg-orange-50">
-            <CardTitle className="flex items-center gap-2 text-orange-800">
-              <span className="bg-orange-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">📋</span>
+            <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
+              <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{ backgroundColor: '#C72030' }}>
+                <FileText className="w-4 h-4" />
+              </span>
               FEEDS DETAILS
             </CardTitle>
           </CardHeader>
