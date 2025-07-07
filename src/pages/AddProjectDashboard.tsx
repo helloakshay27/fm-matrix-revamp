@@ -216,23 +216,27 @@ export const AddProjectDashboard = () => {
               fullWidth
               variant="outlined"
               multiline
-              rows={4}
+              rows={1}
               InputLabelProps={{ shrink: true }}
               InputProps={{ 
                 sx: {
                   padding: '0',
                   '& .MuiInputBase-inputMultiline': {
                     padding: '12px',
-                    minHeight: '80px',
+                    minHeight: '32px',
+                    maxHeight: '120px',
                     resize: 'vertical',
                     boxSizing: 'border-box',
+                    overflow: 'auto',
                   },
                 }
               }}
               sx={{ 
                 mt: 1,
+                height: fieldStyles.height,
                 '& .MuiOutlinedInput-root': {
                   borderRadius: '4px',
+                  height: fieldStyles.height,
                   '& fieldset': {
                     borderColor: '#e5e7eb',
                   },
