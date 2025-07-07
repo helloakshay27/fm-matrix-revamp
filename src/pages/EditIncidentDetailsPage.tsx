@@ -80,11 +80,30 @@ export const EditIncidentDetailsPage = () => {
                   type="time"
                   value={formData.incidentTime}
                   onChange={(e) => handleInputChange('incidentTime', e.target.value)}
-                  className="[&::-webkit-calendar-picker-indicator]:bg-[#C72030] [&::-webkit-calendar-picker-indicator]:text-white [&::-webkit-calendar-picker-indicator]:rounded [&::-webkit-calendar-picker-indicator]:px-2 [&::-webkit-calendar-picker-indicator]:py-1 [&::-webkit-inner-spin-button]:bg-[#C72030] [&::-webkit-inner-spin-button]:text-white"
                   style={{
-                    colorScheme: 'light'
+                    colorScheme: 'light',
                   }}
+                  className="time-input-custom"
                 />
+                <style jsx>{`
+                  .time-input-custom::-webkit-calendar-picker-indicator {
+                    background-color: #C72030 !important;
+                    color: white !important;
+                    border-radius: 4px !important;
+                    padding: 4px 8px !important;
+                    cursor: pointer !important;
+                  }
+                  .time-input-custom::-webkit-inner-spin-button {
+                    background-color: #C72030 !important;
+                    color: white !important;
+                  }
+                  .time-input-custom::-webkit-datetime-edit-ampm-field {
+                    background-color: #C72030 !important;
+                    color: white !important;
+                    border-radius: 4px !important;
+                    padding: 2px 4px !important;
+                  }
+                `}</style>
               </div>
             </div>
             
