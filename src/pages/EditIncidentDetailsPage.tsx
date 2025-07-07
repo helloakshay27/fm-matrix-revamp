@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,6 +80,10 @@ export const EditIncidentDetailsPage = () => {
                   type="time"
                   value={formData.incidentTime}
                   onChange={(e) => handleInputChange('incidentTime', e.target.value)}
+                  className="[&::-webkit-calendar-picker-indicator]:bg-[#C72030] [&::-webkit-calendar-picker-indicator]:text-white [&::-webkit-calendar-picker-indicator]:rounded [&::-webkit-calendar-picker-indicator]:px-2 [&::-webkit-calendar-picker-indicator]:py-1 [&::-webkit-inner-spin-button]:bg-[#C72030] [&::-webkit-inner-spin-button]:text-white"
+                  style={{
+                    colorScheme: 'light'
+                  }}
                 />
               </div>
             </div>
