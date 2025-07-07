@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Checkbox } from "@/components/ui/checkbox";
@@ -218,12 +216,12 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
               onChange={(e) => setObservation(e.target.value)}
               fullWidth
               multiline
-              rows={4}
+              rows={2}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   // Desktop (default)
                   width: '100%',
-                  minHeight: '128px',
+                  minHeight: '72px',
                   backgroundColor: '#FFFFFF',
                   borderRadius: '0px',
                   '& fieldset': {
@@ -265,7 +263,7 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
                 // Tablet breakpoint
                 '@media (max-width: 1024px)': {
                   '& .MuiOutlinedInput-root': {
-                    minHeight: '108px',
+                    minHeight: '56px',
                     '& textarea': {
                       fontSize: '12px',
                       padding: '12px',
@@ -278,7 +276,7 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
                 // Mobile breakpoint
                 '@media (max-width: 768px)': {
                   '& .MuiOutlinedInput-root': {
-                    minHeight: '88px',
+                    minHeight: '44px',
                     '& textarea': {
                       fontSize: '8px',
                       padding: '8px',
@@ -300,12 +298,12 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
               onChange={(e) => setRecommendation(e.target.value)}
               fullWidth
               multiline
-              rows={4}
+              rows={2}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   // Desktop (default)
                   width: '100%',
-                  minHeight: '128px',
+                  minHeight: '72px',
                   backgroundColor: '#FFFFFF',
                   borderRadius: '0px',
                   '& fieldset': {
@@ -347,7 +345,7 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
                 // Tablet breakpoint
                 '@media (max-width: 1024px)': {
                   '& .MuiOutlinedInput-root': {
-                    minHeight: '108px',
+                    minHeight: '56px',
                     '& textarea': {
                       fontSize: '12px',
                       padding: '12px',
@@ -360,7 +358,7 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
                 // Mobile breakpoint
                 '@media (max-width: 768px)': {
                   '& .MuiOutlinedInput-root': {
-                    minHeight: '88px',
+                    minHeight: '44px',
                     '& textarea': {
                       fontSize: '8px',
                       padding: '8px',
@@ -392,4 +390,3 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
     </Card>
   );
 };
-
