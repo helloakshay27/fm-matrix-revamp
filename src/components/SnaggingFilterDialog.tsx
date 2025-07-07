@@ -87,6 +87,7 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               value={filters.tower}
               onChange={(e) => handleFilterChange('tower', e.target.value)}
               sx={fieldStyles}
+             MenuProps={{ disablePortal: true }}
             >
               <MenuItem value="">
                 <em>Select Tower</em>
@@ -105,6 +106,7 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               value={filters.floor}
               onChange={(e) => handleFilterChange('floor', e.target.value)}
               sx={fieldStyles}
+              MenuProps={{ disablePortal: true }}
             >
               <MenuItem value="">
                 <em>Select Floor</em>
@@ -128,6 +130,7 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               value={filters.flat}
               onChange={(e) => handleFilterChange('flat', e.target.value)}
               sx={fieldStyles}
+              MenuProps={{ disablePortal: true }}
             >
               <MenuItem value="">
                 <em>Select Flat</em>
@@ -149,6 +152,7 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               value={filters.stage}
               onChange={(e) => handleFilterChange('stage', e.target.value)}
               sx={fieldStyles}
+              MenuProps={{ disablePortal: true }}
             >
               <MenuItem value="">
                 <em>Select Stage</em>
