@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,12 +51,12 @@ const menuProps = {
     },
   },
   anchorOrigin: {
-    vertical: 'bottom',
-    horizontal: 'left',
+    vertical: 'bottom' as const,
+    horizontal: 'left' as const,
   },
   transformOrigin: {
-    vertical: 'top',
-    horizontal: 'left',
+    vertical: 'top' as const,
+    horizontal: 'left' as const,
   },
 };
 
@@ -151,7 +152,7 @@ export const AddPermitPage = () => {
       </div>
 
       {/* Permit Requestor Details */}
-      <Card className="mb-6 shadow-sm border-0">
+      <Card className="mb-8 shadow-sm border-0">
         <CardHeader className="bg-white border-b border-gray-100">
           <CardTitle className="text-[#C72030] flex items-center text-lg font-semibold">
             <span className="mr-3 w-2 h-2 bg-[#C72030] rounded-full"></span>
@@ -205,7 +206,7 @@ export const AddPermitPage = () => {
       </Card>
 
       {/* Basic Details */}
-      <Card className="mb-6 shadow-sm border-0">
+      <Card className="mb-8 shadow-sm border-0">
         <CardHeader className="bg-white border-b border-gray-100">
           <CardTitle className="flex items-center text-[#C72030] text-lg font-semibold">
             <span className="mr-3 w-2 h-2 bg-[#C72030] rounded-full"></span>
@@ -223,7 +224,7 @@ export const AddPermitPage = () => {
               sx={fieldStyles}
             />
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
               <FormControl fullWidth variant="outlined">
                 <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Building*</InputLabel>
                 <MuiSelect
@@ -274,7 +275,7 @@ export const AddPermitPage = () => {
               </FormControl>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
               <FormControl fullWidth variant="outlined">
                 <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Floor</InputLabel>
                 <MuiSelect
@@ -356,7 +357,7 @@ export const AddPermitPage = () => {
       </Card>
 
       {/* Permit Details */}
-      <Card className="mb-6 shadow-sm border-0">
+      <Card className="mb-8 shadow-sm border-0">
         <CardHeader className="bg-white border-b border-gray-100">
           <CardTitle className="flex items-center text-[#C72030] text-lg font-semibold">
             <span className="mr-3 w-2 h-2 bg-[#C72030] rounded-full"></span>
@@ -396,7 +397,7 @@ export const AddPermitPage = () => {
 
             {/* Dynamic Activities */}
             {activities.map((activity, index) => (
-              <div key={index} className="space-y-6 p-6 border border-gray-200 rounded-lg bg-gray-50 relative">
+              <div key={index} className="space-y-8 p-6 border border-gray-200 rounded-lg bg-gray-50 relative">
                 {activities.length > 1 && (
                   <button
                     onClick={() => handleRemoveActivity(index)}
@@ -406,7 +407,7 @@ export const AddPermitPage = () => {
                   </button>
                 )}
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
                   <FormControl fullWidth variant="outlined">
                     <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Activity*</InputLabel>
                     <MuiSelect
@@ -512,7 +513,7 @@ export const AddPermitPage = () => {
       </Card>
 
       {/* Attachments */}
-      <Card className="mb-6 shadow-sm border-0">
+      <Card className="mb-8 shadow-sm border-0">
         <CardHeader className="bg-white border-b border-gray-100">
           <CardTitle className="flex items-center text-[#C72030] text-lg font-semibold">
             <span className="mr-3 w-2 h-2 bg-[#C72030] rounded-full"></span>
