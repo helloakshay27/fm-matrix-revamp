@@ -99,6 +99,7 @@ export const TicketTagVendorPage = () => {
                 value={selectedOptions}
                 label="Select Some Options"
                 onChange={handleOptionsChange}
+                sx={{ height: '36px' }}
               >
                 <MenuItem value="option1">Option 1</MenuItem>
                 <MenuItem value="option2">Option 2</MenuItem>
@@ -127,6 +128,7 @@ export const TicketTagVendorPage = () => {
                 value={selectedOption}
                 label="Select an Option"
                 onChange={handleOptionChange}
+                sx={{ height: '36px' }}
               >
                 <MenuItem value="option-a">Option A</MenuItem>
                 <MenuItem value="option-b">Option B</MenuItem>
