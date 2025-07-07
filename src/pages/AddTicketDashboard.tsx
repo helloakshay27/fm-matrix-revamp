@@ -412,7 +412,7 @@ export const AddTicketDashboard = () => {
             <label htmlFor="file-upload" className="cursor-pointer">
               <p className="text-gray-600">
                 Drag & Drop or{' '}
-                <span className="text-orange-500 underline">Choose Files</span>
+                <span className="text-[#C72030] underline">Choose Files</span>
               </p>
             </label>
             <p className="text-sm text-gray-500 mt-1">
