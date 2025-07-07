@@ -226,7 +226,6 @@ export const AddPermitPage = () => {
             
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
               <FormControl fullWidth variant="outlined">
-                <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Building*</InputLabel>
                 <MuiSelect
                   label="Building*"
                   value={permitData.building}
@@ -243,7 +242,6 @@ export const AddPermitPage = () => {
               </FormControl>
               
               <FormControl fullWidth variant="outlined">
-                <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Wing</InputLabel>
                 <MuiSelect
                   label="Wing"
                   value={permitData.wing}
@@ -259,7 +257,6 @@ export const AddPermitPage = () => {
               </FormControl>
               
               <FormControl fullWidth variant="outlined">
-                <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Area</InputLabel>
                 <MuiSelect
                   label="Area"
                   value={permitData.area}
@@ -277,7 +274,6 @@ export const AddPermitPage = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
               <FormControl fullWidth variant="outlined">
-                <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Floor</InputLabel>
                 <MuiSelect
                   label="Floor"
                   value={permitData.floor}
@@ -293,7 +289,6 @@ export const AddPermitPage = () => {
               </FormControl>
               
               <FormControl fullWidth variant="outlined">
-                <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Room</InputLabel>
                 <MuiSelect
                   label="Room"
                   value={permitData.room}
@@ -309,7 +304,6 @@ export const AddPermitPage = () => {
               </FormControl>
               
               <FormControl fullWidth variant="outlined">
-                <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Copy To</InputLabel>
                 <MuiSelect
                   label="Copy To"
                   value={permitData.copyTo}
