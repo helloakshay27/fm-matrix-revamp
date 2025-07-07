@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Checkbox } from "@/components/ui/checkbox";
@@ -57,10 +56,6 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
     <Card className="mb-6">
       <CardHeader 
         className="flex flex-row items-center gap-5 py-[50px] px-[50px]"
-        style={{
-          backgroundColor: '#C72030',
-          color: '#FFFFFF'
-        }}
       >
         <div 
           className="flex items-center justify-center"
