@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -128,7 +129,7 @@ Reported By: ${incident.reportedBy}
       {/* Basic Details Section */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center">
+          <CardTitle style={{ color: '#C72030' }} className="flex items-center">
             <span className="mr-2">🔥</span>
             BASIC DETAILS
           </CardTitle>
@@ -190,7 +191,7 @@ Reported By: ${incident.reportedBy}
       {/* Description Details */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center">
+          <CardTitle style={{ color: '#C72030' }} className="flex items-center">
             <span className="mr-2">🔥</span>
             DESCRIPTION DETAILS
           </CardTitle>
@@ -206,7 +207,7 @@ Reported By: ${incident.reportedBy}
       {/* Injuries Section */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center">
+          <CardTitle style={{ color: '#C72030' }} className="flex items-center">
             <span className="mr-2">🩹</span>
             INJURIES - 0
           </CardTitle>
@@ -219,7 +220,7 @@ Reported By: ${incident.reportedBy}
       {/* Attachments Section */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center">
+          <CardTitle style={{ color: '#C72030' }} className="flex items-center">
             <span className="mr-2">📎</span>
             Attachments - 0
           </CardTitle>
