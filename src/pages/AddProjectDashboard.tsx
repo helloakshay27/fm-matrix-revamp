@@ -222,9 +222,12 @@ export const AddProjectDashboard = () => {
               InputProps={{ 
                 sx: {
                   ...fieldStyles,
+                  minHeight: '100px',
                   '& .MuiInputBase-inputMultiline': {
                     padding: '12px',
-                    minHeight: '80px',
+                    minHeight: '76px !important',
+                    height: 'auto',
+                    overflow: 'auto',
                   },
                 }
               }}
