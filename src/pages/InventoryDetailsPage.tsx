@@ -1,25 +1,21 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, QrCode } from 'lucide-react';
-
 export const InventoryDetailsPage = () => {
-  const { id } = useParams();
+  const {
+    id
+  } = useParams();
   const navigate = useNavigate();
-
   const handleBack = () => {
     navigate('/maintenance/inventory');
   };
-
   const handleFeeds = () => {
     navigate(`/maintenance/inventory/feeds/${id}`);
   };
-
-  return (
-    <div className="p-6 bg-[#f6f4ee] min-h-screen">
+  return <div className="p-6 bg-[#f6f4ee] min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
@@ -32,11 +28,9 @@ export const InventoryDetailsPage = () => {
         </div>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">test12</h1>
-          <Button 
-            onClick={handleFeeds}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
-          >
+          <Button onClick={handleFeeds} style={{
+          backgroundColor: '#C72030'
+        }} className="text-white hover:bg-[#C72030]/90">
             Feeds
           </Button>
         </div>
@@ -46,9 +40,13 @@ export const InventoryDetailsPage = () => {
         {/* Inventory Detail Section */}
         <div className="lg:col-span-2">
           <Card>
-            <CardHeader className="bg-orange-50 border-b">
-              <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
-                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{ backgroundColor: '#C72030' }}>!</div>
+            <CardHeader className="border-b bg-white">
+              <CardTitle className="flex items-center gap-2" style={{
+              color: '#C72030'
+            }}>
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{
+                backgroundColor: '#C72030'
+              }}>!</div>
                 INVENTORY DETAIL
               </CardTitle>
             </CardHeader>
@@ -149,8 +147,12 @@ export const InventoryDetailsPage = () => {
           {/* Asset Information Section */}
           <Card className="mt-6">
             <CardHeader className="bg-orange-50 border-b">
-              <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
-                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{ backgroundColor: '#C72030' }}>i</div>
+              <CardTitle className="flex items-center gap-2" style={{
+              color: '#C72030'
+            }}>
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{
+                backgroundColor: '#C72030'
+              }}>i</div>
                 ASSET INFORMATION
               </CardTitle>
             </CardHeader>
@@ -201,7 +203,9 @@ export const InventoryDetailsPage = () => {
         <div>
           <Card>
             <CardHeader className="bg-orange-50 border-b">
-              <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
+              <CardTitle className="flex items-center gap-2" style={{
+              color: '#C72030'
+            }}>
                 <QrCode className="w-5 h-5" />
                 QR Code
               </CardTitle>
@@ -214,6 +218,5 @@ export const InventoryDetailsPage = () => {
           </Card>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
