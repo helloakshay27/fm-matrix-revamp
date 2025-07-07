@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { TextField } from '@mui/material';
+import { CustomTextField } from '@/components/ui/custom-text-field';
 import { useToast } from '@/hooks/use-toast';
 
 interface Category {
@@ -72,13 +72,6 @@ export const EditCategoryModal = ({
     onClose();
   };
 
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-    },
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-sm">
@@ -87,40 +80,31 @@ export const EditCategoryModal = ({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <TextField
+          <CustomTextField
+            label="Category Name"
             placeholder="Enter Category Name"
             value={formData.category}
             onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
             fullWidth
-            variant="outlined"
-            InputLabelProps={{ shrink: true }}
-            InputProps={{ sx: fieldStyles }}
-            sx={{ mt: 1 }}
           />
 
           {showTimings && (
-            <TextField
+            <CustomTextField
+              label="Timings"
               placeholder="Enter Timings"
               value={formData.timings}
               onChange={(e) => setFormData(prev => ({ ...prev, timings: e.target.value }))}
               fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
             />
           )}
 
           {showAmount && (
-            <TextField
+            <CustomTextField
+              label="Amount"
               placeholder="Enter Amount"
               value={formData.amount}
               onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
               fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
             />
           )}
         </div>
