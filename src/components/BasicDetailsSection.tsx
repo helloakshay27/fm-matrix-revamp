@@ -1,8 +1,13 @@
 import React from 'react';
-import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import {
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+  TextareaAutosize,
+} from '@mui/material';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CustomTextField } from '@/components/ui/custom-text-field';
 import { Settings } from 'lucide-react';
 
 interface BasicDetailsSectionProps {
@@ -51,6 +56,16 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
     '& .MuiInputBase-input, & .MuiSelect-select': {
       padding: { xs: '8px', sm: '10px', md: '12px' },
     },
+  };
+
+  const textareaStyle = {
+    width: '100%',
+    fontSize: '16px',
+    padding: '12px',
+    borderRadius: '4px',
+    border: '1px solid #ccc',
+    fontFamily: 'inherit',
+    resize: 'vertical',
   };
 
   return (
@@ -115,20 +130,23 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
             >
               <MenuItem value=""><em>Select Site</em></MenuItem>
               <MenuItem value="lockated">Lockated</MenuItem>
-              <MenuItem value="godrej-prime">Godrej Prime,Gurgaon</MenuItem>
+              <MenuItem value="godrej-prime">Godrej Prime, Gurgaon</MenuItem>
             </MuiSelect>
           </FormControl>
         </div>
 
         {/* Row 2 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <CustomTextField
-            label="Location"
-            placeholder="Enter Location"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            fullWidth
-          />
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700">Location</label>
+            <TextareaAutosize
+              minRows={2}
+              placeholder="Enter Location"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              style={textareaStyle}
+            />
+          </div>
 
           <FormControl fullWidth variant="outlined">
             <InputLabel id="categorization-label" shrink>Categorization*</InputLabel>
@@ -164,27 +182,29 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
           </FormControl>
         </div>
 
-        {/* Row 3 - Textareas */}
+        {/* Row 3 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-          <CustomTextField
-            label="Observation"
-            placeholder="Enter Observation"
-            value={observation}
-            onChange={(e) => setObservation(e.target.value)}
-            fullWidth
-            multiline
-            rows={3}
-          />
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700">Observation</label>
+            <TextareaAutosize
+              minRows={4}
+              placeholder="Enter Observation"
+              value={observation}
+              onChange={(e) => setObservation(e.target.value)}
+              style={textareaStyle}
+            />
+          </div>
 
-          <CustomTextField
-            label="Recommendation"
-            placeholder="Enter Recommendation"
-            value={recommendation}
-            onChange={(e) => setRecommendation(e.target.value)}
-            fullWidth
-            multiline
-            rows={3}
-          />
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700">Recommendation</label>
+            <TextareaAutosize
+              minRows={4}
+              placeholder="Enter Recommendation"
+              value={recommendation}
+              onChange={(e) => setRecommendation(e.target.value)}
+              style={textareaStyle}
+            />
+          </div>
         </div>
 
         {/* Checkbox */}
