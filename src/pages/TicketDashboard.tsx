@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Search, Eye, Filter, Download } from 'lucide-react';
+import { Plus, Search, Eye, Filter, Download, Ticket, Clock, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
 
 const ticketData = [
@@ -118,12 +118,25 @@ export const TicketDashboard = () => {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-        {[{ label: 'Total Tickets', value: totalTickets }, { label: 'Open', value: openTickets }, { label: 'In Progress', value: inProgressTickets }, { label: 'Pending', value: pendingTickets }, { label: 'Closed', value: closedTickets }].map((item, i) => (
-          <div key={i} className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 flex flex-col items-center text-center">
-            <div className="text-2xl font-bold">{item.value}</div>
-            <div className="text-sm">{item.label}</div>
-          </div>
-        ))}
+        {[
+          { label: 'Total Tickets', value: totalTickets, icon: Ticket, iconName: 'Ticket' }, 
+          { label: 'Open', value: openTickets, icon: AlertCircle, iconName: 'AlertCircle' }, 
+          { label: 'In Progress', value: inProgressTickets, icon: Clock, iconName: 'Clock' }, 
+          { label: 'Pending', value: pendingTickets, icon: Clock, iconName: 'Clock' }, 
+          { label: 'Closed', value: closedTickets, icon: CheckCircle, iconName: 'CheckCircle' }
+        ].map((item, i) => {
+          const IconComponent = item.icon;
+          return (
+            <div key={i} className="bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 flex flex-col items-center text-center">
+              <div className="mb-2">
+                <IconComponent className="w-6 h-6" />
+              </div>
+              <div className="text-2xl font-bold">{item.value}</div>
+              <div className="text-sm">{item.label}</div>
+              <div className="text-xs text-gray-500 mt-1">{item.iconName}</div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="flex flex-wrap gap-3 items-center mb-6">
