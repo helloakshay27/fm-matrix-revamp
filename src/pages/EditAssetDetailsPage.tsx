@@ -1041,7 +1041,7 @@ export const EditAssetDetailsPage = () => {
                   />
                   <label htmlFor="manuals-upload">
                     <Box sx={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <Plus sx={{ fontSize: 24, color: 'grey.400', mb: 1 }} />
+                      <Plus size={24} color="#9CA3AF" style={{ marginBottom: '8px' }} />
                       <Typography variant="body2" sx={{ color: 'grey.500' }}>
                         Click to upload files
                       </Typography>
@@ -1063,7 +1063,7 @@ export const EditAssetDetailsPage = () => {
                   />
                   <label htmlFor="insurance-upload">
                     <Box sx={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <Plus sx={{ fontSize: 24, color: 'grey.400', mb: 1 }} />
+                      <Plus size={24} color="#9CA3AF" style={{ marginBottom: '8px' }} />
                       <Typography variant="body2" sx={{ color: 'grey.500' }}>
                         Click to upload files
                       </Typography>
@@ -1085,7 +1085,7 @@ export const EditAssetDetailsPage = () => {
                   />
                   <label htmlFor="invoice-upload">
                     <Box sx={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <Plus sx={{ fontSize: 24, color: 'grey.400', mb: 1 }} />
+                      <Plus size={24} color="#9CA3AF" style={{ marginBottom: '8px' }} />
                       <Typography variant="body2" sx={{ color: 'grey.500' }}>
                         Click to upload files
                       </Typography>
@@ -1107,7 +1107,7 @@ export const EditAssetDetailsPage = () => {
                   />
                   <label htmlFor="amc-upload">
                     <Box sx={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <Plus sx={{ fontSize: 24, color: 'grey.400', mb: 1 }} />
+                      <Plus size={24} color="#9CA3AF" style={{ marginBottom: '8px' }} />
                       <Typography variant="body2" sx={{ color: 'grey.500' }}>
                         Click to upload files
                       </Typography>
