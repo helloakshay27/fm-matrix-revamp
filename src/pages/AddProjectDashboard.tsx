@@ -207,58 +207,50 @@ export const AddProjectDashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-1 relative">
-            <div className="w-full box-border">
-              <TextField
-                label="Description"
-                placeholder="Enter description"
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({...prev, description: e.target.value}))}
-                fullWidth
-                variant="outlined"
-                multiline
-                rows={4}
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ 
-                  sx: {
-                    ...fieldStyles,
-                    '& .MuiInputBase-inputMultiline': {
-                      padding: '12px',
-                      minHeight: '80px',
-                      boxSizing: 'border-box',
-                      width: '100%',
-                      resize: 'vertical',
-                    },
-                  }
-                }}
-                sx={{ 
-                  mt: 1,
-                  width: '100%',
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '4px',
-                    position: 'relative',
-                    display: 'flex',
-                    alignItems: 'flex-start',
+          <div className="md:col-span-1">
+            <TextField
+              label="Description"
+              placeholder="Enter description"
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({...prev, description: e.target.value}))}
+              fullWidth
+              variant="outlined"
+              multiline
+              rows={4}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ 
+                sx: {
+                  padding: '0',
+                  '& .MuiInputBase-inputMultiline': {
+                    padding: '12px',
+                    minHeight: '80px',
+                    resize: 'vertical',
                     boxSizing: 'border-box',
-                    '& fieldset': {
-                      borderColor: '#e5e7eb',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: '#9ca3af',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#C72030',
-                    },
                   },
-                  '& .MuiInputLabel-root': {
-                    color: '#6b7280',
-                    '&.Mui-focused': {
-                      color: '#C72030',
-                    },
+                }
+              }}
+              sx={{ 
+                mt: 1,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '4px',
+                  '& fieldset': {
+                    borderColor: '#e5e7eb',
                   },
-                }}
-              />
-            </div>
+                  '&:hover fieldset': {
+                    borderColor: '#9ca3af',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#C72030',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#6b7280',
+                  '&.Mui-focused': {
+                    color: '#C72030',
+                  },
+                },
+              }}
+            />
           </div>
 
           <div className="md:col-span-1">
