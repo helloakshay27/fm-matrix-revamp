@@ -105,7 +105,7 @@ export const SearchWithSuggestions = ({
         onKeyDown={handleKeyDown}
         onFocus={handleInputFocus}
         onBlur={handleInputBlur}
-        className="w-full h-[36px] pl-10 pr-3 border border-[#D1D5DB] bg-white text-[#374151] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#6B7280] focus:border-[#6B7280] text-sm border-r-0"
+        className="w-full h-[36px] pl-10 pr-3 border border-[#D1D5DB] bg-white text-[#374151] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#6B7280] focus:border-[#6B7280] text-sm"
         style={{
           borderRadius: '0px',
           fontSize: '14px',
