@@ -1,7 +1,14 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -97,20 +104,42 @@ export const AttendanceDetailsPage = () => {
           </TableBody>
         </Table>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-center gap-2 p-4">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((page) => (
-            <Button
-              key={page}
-              variant={page === 1 ? "default" : "outline"}
-              size="sm"
-              style={page === 1 ? { backgroundColor: '#C72030' } : {}}
-              className={page === 1 ? "text-white hover:bg-[#C72030]/90" : ""}
-            >
-              {page}
-            </Button>
-          ))}
-          <Button variant="outline" size="sm">Last »</Button>
+        {/* New Pagination */}
+        <div className="p-4">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious href="#" />
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink href="#" isActive>1</PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink href="#">2</PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink href="#">3</PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink href="#">4</PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink href="#">5</PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink href="#">6</PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink href="#">7</PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink href="#">8</PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext href="#" />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       </div>
 
