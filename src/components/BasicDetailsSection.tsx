@@ -76,7 +76,7 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
             fontWeight: '600',
             lineHeight: 'auto',
             letterSpacing: '0%',
-            color: '#C72030',
+            color: 'black',
             backgroundColor: '#FFFFFF',
             paddingLeft: '20px',
             textAlign: 'center',
