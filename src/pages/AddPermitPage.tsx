@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,14 +6,11 @@ import { toast } from 'sonner';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 const fieldStyles = {
-  height: { xs: 28, sm: 36, md: 45 },
-  '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: { xs: '8px', sm: '10px', md: '12px' },
-  },
   '& .MuiOutlinedInput-root': {
-    borderRadius: '4px',
+    borderRadius: '8px',
+    backgroundColor: 'white',
     '& fieldset': {
-      borderColor: '#d1d5db',
+      borderColor: '#e5e7eb',
     },
     '&:hover fieldset': {
       borderColor: '#9ca3af',
@@ -28,6 +24,14 @@ const fieldStyles = {
     '&.Mui-focused': {
       color: '#C72030',
     },
+  },
+  '& .MuiInputBase-input': {
+    padding: '14px 16px',
+    fontSize: '14px',
+  },
+  '& .MuiSelect-select': {
+    padding: '14px 16px',
+    fontSize: '14px',
   },
 };
 
@@ -111,7 +115,7 @@ export const AddPermitPage = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 max-w-6xl mx-auto bg-white min-h-screen">
+    <div className="p-4 sm:p-6 md:p-8 max-w-6xl mx-auto bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <nav className="flex items-center text-sm text-gray-600 mb-4">
@@ -123,22 +127,21 @@ export const AddPermitPage = () => {
       </div>
 
       {/* Permit Requestor Details */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center" style={{ color: '#C72030' }}>
-            <span className="mr-2">🔸</span>
+      <Card className="mb-6 shadow-sm border-0">
+        <CardHeader className="bg-white border-b border-gray-100">
+          <CardTitle className="flex items-center text-[#C72030] text-lg font-semibold">
+            <span className="mr-3 w-2 h-2 bg-[#C72030] rounded-full"></span>
             PERMIT REQUESTOR DETAILS
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <CardContent className="p-6 bg-white">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             <TextField
               label="Name"
               value={permitData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
               fullWidth
               variant="outlined"
-              InputLabelProps={{ shrink: true }}
               sx={fieldStyles}
             />
             <TextField
@@ -147,7 +150,6 @@ export const AddPermitPage = () => {
               onChange={(e) => handleInputChange('contactNumber', e.target.value)}
               fullWidth
               variant="outlined"
-              InputLabelProps={{ shrink: true }}
               sx={fieldStyles}
             />
             <TextField
@@ -156,7 +158,6 @@ export const AddPermitPage = () => {
               onChange={(e) => handleInputChange('site', e.target.value)}
               fullWidth
               variant="outlined"
-              InputLabelProps={{ shrink: true }}
               sx={fieldStyles}
             />
             <TextField
@@ -165,7 +166,6 @@ export const AddPermitPage = () => {
               onChange={(e) => handleInputChange('department', e.target.value)}
               fullWidth
               variant="outlined"
-              InputLabelProps={{ shrink: true }}
               sx={fieldStyles}
             />
             <TextField
@@ -174,7 +174,6 @@ export const AddPermitPage = () => {
               onChange={(e) => handleInputChange('unit', e.target.value)}
               fullWidth
               variant="outlined"
-              InputLabelProps={{ shrink: true }}
               sx={fieldStyles}
             />
           </div>
@@ -182,28 +181,27 @@ export const AddPermitPage = () => {
       </Card>
 
       {/* Basic Details */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center" style={{ color: '#C72030' }}>
-            <span className="mr-2">🔸</span>
+      <Card className="mb-6 shadow-sm border-0">
+        <CardHeader className="bg-white border-b border-gray-100">
+          <CardTitle className="flex items-center text-[#C72030] text-lg font-semibold">
+            <span className="mr-3 w-2 h-2 bg-[#C72030] rounded-full"></span>
             BASIC DETAILS
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+        <CardContent className="p-6 bg-white">
+          <div className="space-y-6">
             <TextField
               label="Permit For*"
               value={permitData.permitFor}
               onChange={(e) => handleInputChange('permitFor', e.target.value)}
               fullWidth
               variant="outlined"
-              InputLabelProps={{ shrink: true }}
               sx={fieldStyles}
             />
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Building*</InputLabel>
+                <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Building*</InputLabel>
                 <MuiSelect
                   label="Building*"
                   value={permitData.building}
@@ -219,7 +217,7 @@ export const AddPermitPage = () => {
               </FormControl>
               
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Wing</InputLabel>
+                <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Wing</InputLabel>
                 <MuiSelect
                   label="Wing"
                   value={permitData.wing}
@@ -234,7 +232,7 @@ export const AddPermitPage = () => {
               </FormControl>
               
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Area</InputLabel>
+                <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Area</InputLabel>
                 <MuiSelect
                   label="Area"
                   value={permitData.area}
@@ -249,9 +247,9 @@ export const AddPermitPage = () => {
               </FormControl>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Floor</InputLabel>
+                <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Floor</InputLabel>
                 <MuiSelect
                   label="Floor"
                   value={permitData.floor}
@@ -266,7 +264,7 @@ export const AddPermitPage = () => {
               </FormControl>
               
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Room</InputLabel>
+                <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Room</InputLabel>
                 <MuiSelect
                   label="Room"
                   value={permitData.room}
@@ -281,7 +279,7 @@ export const AddPermitPage = () => {
               </FormControl>
               
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Copy To</InputLabel>
+                <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Copy To</InputLabel>
                 <MuiSelect
                   label="Copy To"
                   value={permitData.copyTo}
@@ -297,29 +295,29 @@ export const AddPermitPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Client Specific</label>
-              <div className="flex gap-4">
-                <label className="flex items-center">
+              <label className="block text-sm font-medium mb-3 text-gray-700">Client Specific</label>
+              <div className="flex gap-6">
+                <label className="flex items-center cursor-pointer">
                   <input
                     type="radio"
                     name="clientSpecific"
                     value="Internal"
                     checked={permitData.clientSpecific === 'Internal'}
                     onChange={(e) => handleInputChange('clientSpecific', e.target.value)}
-                    className="mr-2"
+                    className="mr-2 w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                   />
-                  Internal
+                  <spanClassName="text-sm text-gray-700">Internal</span>
                 </label>
-                <label className="flex items-center">
+                <label className="flex items-center cursor-pointer">
                   <input
                     type="radio"
                     name="clientSpecific"
                     value="Client"
                     checked={permitData.clientSpecific === 'Client'}
                     onChange={(e) => handleInputChange('clientSpecific', e.target.value)}
-                    className="mr-2"
+                    className="mr-2 w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                   />
-                  Client
+                  <span className="text-sm text-gray-700">Client</span>
                 </label>
               </div>
             </div>
@@ -328,28 +326,28 @@ export const AddPermitPage = () => {
       </Card>
 
       {/* Permit Details */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center" style={{ color: '#C72030' }}>
-            <span className="mr-2">🔸</span>
+      <Card className="mb-6 shadow-sm border-0">
+        <CardHeader className="bg-white border-b border-gray-100">
+          <CardTitle className="flex items-center text-[#C72030] text-lg font-semibold">
+            <span className="mr-3 w-2 h-2 bg-[#C72030] rounded-full"></span>
             PERMIT DETAILS
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+        <CardContent className="p-6 bg-white">
+          <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium mb-2">Select Permit Type*</label>
-              <div className="p-4 border rounded-lg">
-                <label className="flex items-center">
+              <label className="block text-sm font-medium mb-3 text-gray-700">Select Permit Type*</label>
+              <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <label className="flex items-center cursor-pointer">
                   <input
                     type="radio"
                     name="permitType"
                     value="test"
                     checked={permitData.permitType === 'test'}
                     onChange={(e) => handleInputChange('permitType', e.target.value)}
-                    className="mr-2"
+                    className="mr-2 w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                   />
-                  test
+                  <span className="text-sm text-gray-700">test</span>
                 </label>
               </div>
             </div>
@@ -363,25 +361,24 @@ export const AddPermitPage = () => {
               multiline
               minRows={4}
               maxRows={10}
-              InputLabelProps={{ shrink: true }}
               sx={fieldStyles}
             />
 
             {/* Dynamic Activities */}
             {activities.map((activity, index) => (
-              <div key={index} className="space-y-4 p-4 border rounded-lg relative">
+              <div key={index} className="space-y-4 p-6 border border-gray-200 rounded-lg bg-gray-50 relative">
                 {activities.length > 1 && (
                   <button
                     onClick={() => handleRemoveActivity(index)}
-                    className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                    className="absolute top-4 right-4 text-red-500 hover:text-red-700 w-6 h-6 flex items-center justify-center"
                   >
                     ✕
                   </button>
                 )}
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Activity*</InputLabel>
+                    <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Activity*</InputLabel>
                     <MuiSelect
                       label="Activity*"
                       value={activity.activity}
@@ -397,7 +394,7 @@ export const AddPermitPage = () => {
                   </FormControl>
                   
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Sub Activity*</InputLabel>
+                    <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Sub Activity*</InputLabel>
                     <MuiSelect
                       label="Sub Activity*"
                       value={activity.subActivity}
@@ -413,7 +410,7 @@ export const AddPermitPage = () => {
                   </FormControl>
                   
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Category of Hazards*</InputLabel>
+                    <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Category of Hazards*</InputLabel>
                     <MuiSelect
                       label="Category of Hazards*"
                       value={activity.categoryOfHazards}
@@ -438,7 +435,6 @@ export const AddPermitPage = () => {
                   multiline
                   minRows={3}
                   maxRows={6}
-                  InputLabelProps={{ shrink: true }}
                   sx={fieldStyles}
                 />
               </div>
@@ -446,14 +442,13 @@ export const AddPermitPage = () => {
 
             <Button
               onClick={handleAddActivity}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:opacity-90"
+              className="bg-[#C72030] hover:bg-[#A61B28] text-white px-6 py-2 rounded-lg font-medium"
             >
               + Add Activity
             </Button>
 
             <FormControl fullWidth variant="outlined">
-              <InputLabel shrink sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Vendor</InputLabel>
+              <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Vendor</InputLabel>
               <MuiSelect
                 label="Vendor"
                 value={permitData.vendor}
@@ -476,7 +471,6 @@ export const AddPermitPage = () => {
               multiline
               minRows={3}
               maxRows={6}
-              InputLabelProps={{ shrink: true }}
               sx={fieldStyles}
             />
           </div>
@@ -484,14 +478,14 @@ export const AddPermitPage = () => {
       </Card>
 
       {/* Attachments */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center" style={{ color: '#C72030' }}>
-            <span className="mr-2">📎</span>
+      <Card className="mb-6 shadow-sm border-0">
+        <CardHeader className="bg-white border-b border-gray-100">
+          <CardTitle className="flex items-center text-[#C72030] text-lg font-semibold">
+            <span className="mr-3">📎</span>
             ATTACHMENTS
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6 bg-white">
           <div className="space-y-4">
             <div>
               <input
@@ -503,7 +497,7 @@ export const AddPermitPage = () => {
               />
               <label
                 htmlFor="file-upload"
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50"
+                className="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors font-medium text-gray-700"
               >
                 Choose Files
               </label>
@@ -519,8 +513,7 @@ export const AddPermitPage = () => {
       <div className="flex justify-center pt-6">
         <Button
           onClick={handleSubmit}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:opacity-90 px-8 py-3 text-lg"
+          className="bg-[#C72030] hover:bg-[#A61B28] text-white px-12 py-4 text-lg font-semibold rounded-lg"
         >
           Raise a Request
         </Button>
