@@ -142,19 +142,21 @@ export const AddSchedulePage = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate('/maintenance/schedule')}
-          className="p-2"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
+      <div className="mb-6">
+        <div className="flex items-center gap-4 mb-4">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate('/maintenance/schedule')}
+            className="p-2 hover:bg-gray-100"
+          >
+            <ArrowLeft className="w-5 h-5 text-[#C72030]" />
+          </Button>
+        </div>
         <div>
-          <div className="text-sm text-gray-600 mb-1">Schedule</div>
-          <h1 className="text-2xl font-bold">Add Schedule</h1>
+          <p className="text-gray-600 mb-2 text-sm">Schedule &gt; Add Schedule</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] uppercase">ADD SCHEDULE</h1>
         </div>
       </div>
 
@@ -292,7 +294,7 @@ export const AddSchedulePage = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <span className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm">1</span>
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">1</span>
             Basic Info
           </CardTitle>
         </CardHeader>
@@ -382,13 +384,12 @@ export const AddSchedulePage = () => {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm">2</span>
+              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">2</span>
               Task
             </div>
             <Button 
               onClick={handleAddSection}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white"
+              className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Section
@@ -539,7 +540,7 @@ export const AddSchedulePage = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <span className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm">3</span>
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">3</span>
             Schedule
           </CardTitle>
         </CardHeader>
@@ -839,7 +840,7 @@ export const AddSchedulePage = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <span className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm">4</span>
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">4</span>
             Cron form
           </CardTitle>
         </CardHeader>
@@ -1089,13 +1090,12 @@ export const AddSchedulePage = () => {
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-4">
-        <Button variant="outline" onClick={() => navigate('/maintenance/schedule')}>
+        <Button variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white" onClick={() => navigate('/maintenance/schedule')}>
           Cancel
         </Button>
         <Button 
           onClick={handleSubmit}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white"
+          className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
         >
           Save Schedule
         </Button>
