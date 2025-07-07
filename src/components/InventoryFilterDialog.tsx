@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -14,6 +15,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
+import { X } from 'lucide-react';
 
 interface InventoryFilterDialogProps {
   open: boolean;
@@ -72,8 +74,16 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl overflow-visible">
-        <DialogHeader>
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+            className="h-6 w-6 p-0 hover:bg-gray-100"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </DialogHeader>
 
         <div className="space-y-4">
