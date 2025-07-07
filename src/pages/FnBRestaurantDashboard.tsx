@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, Plus, Search, Filter } from 'lucide-react';
-import { AddRestaurantForm } from '../components/AddRestaurantForm';
+
 
 interface Restaurant {
   id: number;
@@ -27,7 +27,7 @@ const mockRestaurants: Restaurant[] = [
 export const FnBRestaurantDashboard = () => {
   const navigate = useNavigate();
   const [restaurants, setRestaurants] = useState<Restaurant[]>(mockRestaurants);
-  const [isAddFormOpen, setIsAddFormOpen] = useState(false);
+  
 
   const handleViewRestaurant = (id: number) => {
     navigate(`/vas/fnb/details/${id}`);
@@ -65,7 +65,7 @@ export const FnBRestaurantDashboard = () => {
       {/* Action Buttons */}
       <div className="flex gap-4 mb-6">
         <Button
-          onClick={() => setIsAddFormOpen(true)}
+          onClick={() => navigate('/vas/fnb/add')}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0"
         >
           <Plus className="w-4 h-4" />
@@ -143,15 +143,6 @@ export const FnBRestaurantDashboard = () => {
         </div>
       </div>
 
-      {/* Add Restaurant Form Modal */}
-      <AddRestaurantForm 
-        isOpen={isAddFormOpen}
-        onClose={() => setIsAddFormOpen(false)}
-        onSubmit={(data) => {
-          console.log('Restaurant data:', data);
-          setIsAddFormOpen(false);
-        }}
-      />
     </div>
   );
 };

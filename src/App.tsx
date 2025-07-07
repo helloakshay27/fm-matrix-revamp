@@ -97,6 +97,7 @@ import { EditStaffPage } from './pages/EditStaffPage';
 import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
 import { FnBRestaurantDetailsPage } from './pages/FnBRestaurantDetailsPage';
 import { FnBDiscountsPage } from './pages/FnBDiscountsPage';
+import { AddRestaurantPage } from './pages/AddRestaurantPage';
 import ParkingDashboard from './pages/ParkingDashboard';
 import ParkingDetailsPage from './pages/ParkingDetailsPage';
 import ParkingBookingsDashboard from './pages/ParkingBookingsDashboard';
@@ -602,6 +603,7 @@ function App() {
 
                             {/* Value Added Services Routes */}
                             <Route path="/vas/fnb" element={<FnBRestaurantDashboard />} />
+                            <Route path="/vas/fnb/add" element={<AddRestaurantPage />} />
                             <Route path="/vas/fnb/details/:id" element={<FnBRestaurantDetailsPage />} />
                             <Route path="/vas/fnb/discounts" element={<FnBDiscountsPage />} />
                             <Route path="/vas/parking" element={<ParkingDashboard />} />
