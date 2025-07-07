@@ -34,6 +34,7 @@ import {
 } from "../../../../redux/slices/taskSlice";
 import { fetchUsers } from "../../../../redux/slices/userSlice";
 import { fetchTags } from "../../../../redux/slices/tagsSlice";
+import { fetchProjectTeamMembers } from "../../../../redux/slices/projectSlice";
 
 const UserCustomDropdownMultiple = ({
   options = [],
@@ -267,7 +268,7 @@ const calculateDuration = (startDateStr, endDateStr) => {
 
 const SubtaskTable = () => {
   const token = localStorage.getItem("token");
-  const { mid = "", tid: parentId } = useParams();
+  const { id, mid = "", tid: parentId } = useParams();
   const dispatch = useDispatch();
 
   const {
@@ -283,6 +284,8 @@ const SubtaskTable = () => {
   } = useSelector(
     (state) => state.fetchUsers || { users: [], loading: false, error: null }
   );
+
+  const { fetchProjectTeamMembers: projectTeamMembers } = useSelector(state => state.fetchProjectTeamMembers)
 
   const {
     fetchTags: tagList,
@@ -315,6 +318,19 @@ const SubtaskTable = () => {
   const userFetchInitiatedRef = useRef(false);
   const allTasksFetchInitiatedRef = useRef(false);
   const tagsFetchInitiatedRef = useRef(false);
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        await dispatch(fetchProjectTeamMembers({ token, id })).unwrap();
+      } catch (error) {
+        console.error("❌ Failed to fetch team members:", error);
+      }
+    };
+
+    fetchMembers();
+  }, [dispatch, token, id]);
+
 
   const handleOnChange = useCallback(
     async (taskId, fieldName, newValue) => {
@@ -521,7 +537,7 @@ const SubtaskTable = () => {
       : null;
 
 
-    if (parentEnd && start >= parentEnd) {
+    if (parentEnd && start > parentEnd) {
       setLocalError("Subtask start date cannot be after parent task end date");
       setValidator(true);
       return;
@@ -650,11 +666,10 @@ const SubtaskTable = () => {
 
   const userOptionsForSelectBox = useMemo(
     () => [
-      { value: null, label: "Unassigned" },
-      ...(Array.isArray(users)
-        ? users.map((u) => ({
-          value: u.id,
-          label: `${u.firstname || ""} ${u.lastname || ""}`.trim(),
+      ...(Array.isArray(projectTeamMembers)
+        ? projectTeamMembers.map((u) => ({
+          value: u.user_id,
+          label: u?.user?.name,
         }))
         : []),
     ],

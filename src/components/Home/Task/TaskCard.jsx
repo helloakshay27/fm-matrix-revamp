@@ -5,15 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { changeTaskStatus } from "../../../redux/slices/taskSlice";
 import { useDispatch } from "react-redux";
 
-const formatCountdown = (ms) => {
-    const totalSeconds = Math.floor(ms / 1000);
-    const days = Math.floor(totalSeconds / (3600 * 24));
-    const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-};
-
 const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232", count }) => {
     const token = localStorage.getItem("token");
     const dispatch = useDispatch();
@@ -37,19 +28,31 @@ const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232", coun
         const interval = setInterval(() => {
             const now = new Date();
             const end = new Date(task.target_date);
-            const diff = end - now;
+            const endMidnight = new Date(end.getFullYear(), end.getMonth(), end.getDate() + 1);
+
+            const diff = endMidnight - now;
 
             if (diff <= 0 && task.status !== "completed") {
-                setCountdown("Overdued");
+                setCountdown("Overdue");
                 dispatch(changeTaskStatus({ token, id: task.id, payload: { status: "overdue" } }));
                 clearInterval(interval);
             } else {
-                setCountdown(formatCountdown(diff));
+                const endOfDay = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999);
+                const displayDiff = endOfDay - now;
+                setCountdown(formatCountdown(displayDiff));
             }
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [task.target_date]);
+    }, [task.target_date, task.status, task.id, token, dispatch]);
+
+    const formatCountdown = (ms) => {
+        const absMs = Math.abs(ms); // Handle negative values for overdue display
+        const hours = Math.floor(absMs / (1000 * 60 * 60));
+        const minutes = Math.floor((absMs % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((absMs % (1000 * 60)) / 1000);
+        return ms <= 0 ? `Overdued` : `${hours}h ${minutes}m ${seconds}s`;
+    };
 
     return (
         <div
