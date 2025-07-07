@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Checkbox } from "@/components/ui/checkbox";
@@ -217,20 +216,20 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
               onChange={(e) => setObservation(e.target.value)}
               fullWidth
               multiline
-              rows={1}
+              rows={2}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   // Desktop (default)
                   width: '100%',
-                  minHeight: '56px',
+                  minHeight: '72px',
                   backgroundColor: '#FFFFFF',
                   borderRadius: '0px',
                   '& fieldset': {
-                    borderColor: '#C72030',
+                    borderColor: '#E0E0E0',
                     borderRadius: '0px',
                   },
                   '&:hover fieldset': {
-                    borderColor: '#C72030',
+                    borderColor: '#1A1A1A',
                   },
                   '&.Mui-focused fieldset': {
                     borderColor: '#C72030',
@@ -239,11 +238,11 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
                   '& textarea': {
                     fontSize: '14px',
                     fontWeight: 400,
-                    color: '#C72030',
+                    color: '#1A1A1A',
                     opacity: 0.54,
                     padding: '12px',
                     '&::placeholder': {
-                      color: '#C72030',
+                      color: '#1A1A1A',
                       opacity: 0.54,
                     },
                   },
@@ -251,7 +250,7 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
                 '& .MuiInputLabel-root': {
                   fontSize: '14px',
                   fontWeight: 500,
-                  color: '#C72030',
+                  color: '#1A1A1A',
                   '&.Mui-focused': {
                     color: '#C72030',
                   },
@@ -264,7 +263,7 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
                 // Tablet breakpoint
                 '@media (max-width: 1024px)': {
                   '& .MuiOutlinedInput-root': {
-                    minHeight: '44px',
+                    minHeight: '56px',
                     '& textarea': {
                       fontSize: '12px',
                       padding: '12px',
@@ -277,7 +276,7 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
                 // Mobile breakpoint
                 '@media (max-width: 768px)': {
                   '& .MuiOutlinedInput-root': {
-                    minHeight: '28px',
+                    minHeight: '44px',
                     '& textarea': {
                       fontSize: '8px',
                       padding: '8px',
@@ -299,20 +298,20 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
               onChange={(e) => setRecommendation(e.target.value)}
               fullWidth
               multiline
-              rows={1}
+              rows={2}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   // Desktop (default)
                   width: '100%',
-                  minHeight: '56px',
+                  minHeight: '72px',
                   backgroundColor: '#FFFFFF',
                   borderRadius: '0px',
                   '& fieldset': {
-                    borderColor: '#C72030',
+                    borderColor: '#E0E0E0',
                     borderRadius: '0px',
                   },
                   '&:hover fieldset': {
-                    borderColor: '#C72030',
+                    borderColor: '#1A1A1A',
                   },
                   '&.Mui-focused fieldset': {
                     borderColor: '#C72030',
@@ -321,11 +320,11 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
                   '& textarea': {
                     fontSize: '14px',
                     fontWeight: 400,
-                    color: '#C72030',
+                    color: '#1A1A1A',
                     opacity: 0.54,
                     padding: '12px',
                     '&::placeholder': {
-                      color: '#C72030',
+                      color: '#1A1A1A',
                       opacity: 0.54,
                     },
                   },
@@ -333,7 +332,7 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
                 '& .MuiInputLabel-root': {
                   fontSize: '14px',
                   fontWeight: 500,
-                  color: '#C72030',
+                  color: '#1A1A1A',
                   '&.Mui-focused': {
                     color: '#C72030',
                   },
@@ -346,7 +345,7 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
                 // Tablet breakpoint
                 '@media (max-width: 1024px)': {
                   '& .MuiOutlinedInput-root': {
-                    minHeight: '44px',
+                    minHeight: '56px',
                     '& textarea': {
                       fontSize: '12px',
                       padding: '12px',
@@ -359,7 +358,7 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
                 // Mobile breakpoint
                 '@media (max-width: 768px)': {
                   '& .MuiOutlinedInput-root': {
-                    minHeight: '28px',
+                    minHeight: '44px',
                     '& textarea': {
                       fontSize: '8px',
                       padding: '8px',
