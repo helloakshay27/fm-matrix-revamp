@@ -367,7 +367,7 @@ export const AddTicketDashboard = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
-              <TextField label="Description" placeholder="Enter Description" value={formData.description} onChange={e => setFormData({
+              <TextField label="Description" value={formData.description} onChange={e => setFormData({
               ...formData,
               description: e.target.value
             })} fullWidth variant="outlined" multiline rows={3} InputLabelProps={{
