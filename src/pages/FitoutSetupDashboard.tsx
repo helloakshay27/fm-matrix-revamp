@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Upload } from "lucide-react";
@@ -269,9 +267,9 @@ export const FitoutSetupDashboard = () => {
   const renderFitoutGuideTab = () => (
     <div>
       <div className="mb-6">
-        <div className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center">
+        <div className="border-2 border-dashed rounded-lg p-8 text-center" style={{ borderColor: '#C72030' }}>
           <div className="mb-4">
-            <span className="text-orange-500 font-medium">Choose File</span>
+            <span className="font-medium" style={{ color: '#C72030' }}>Choose File</span>
             <span className="text-gray-500 ml-2">No file chosen</span>
           </div>
           <label htmlFor="file-upload">
@@ -426,4 +424,3 @@ export const FitoutSetupDashboard = () => {
 };
 
 export default FitoutSetupDashboard;
-
