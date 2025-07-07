@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -169,46 +168,22 @@ export const AddIncidentPage = () => {
           </div>
 
           <div className="mt-6">
-            <TextField
-              label="Description*"
-              placeholder="Enter description"
-              value={incidentData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              fullWidth
-              variant="outlined"
-              multiline
-              rows={4}
-              InputLabelProps={{ shrink: true }}
-              InputProps={{
-                sx: {
-                  '& .MuiInputBase-inputMultiline': {
-                    padding: '12px 14px',
-                    minHeight: '80px',
-                  },
-                },
-              }}
-              sx={{ 
-                mt: 1,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '4px',
-                  '& fieldset': {
-                    borderColor: '#ccc',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: '#666',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#C72030',
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  color: '#676767',
-                  '&.Mui-focused': {
-                    color: '#C72030',
-                  },
-                },
-              }}
-            />
+            <div className="relative">
+              <textarea
+                id="description"
+                placeholder=" "
+                value={incidentData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                className="w-full px-3 py-3 border border-gray-300 rounded-md resize-vertical min-h-[100px] text-base placeholder-transparent focus:outline-none focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030] peer"
+                rows={4}
+              />
+              <label
+                htmlFor="description"
+                className="absolute left-3 -top-2.5 bg-white px-1 text-sm font-medium text-gray-700 transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#C72030]"
+              >
+                Description*
+              </label>
+            </div>
           </div>
         </CardContent>
       </Card>
