@@ -1,14 +1,10 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import { CustomTextField } from '@/components/ui/custom-text-field';
 import { useToast } from '@/hooks/use-toast';
+import { BasicDetailsSection } from '@/components/BasicDetailsSection';
+import { AttachmentsSection } from '@/components/AttachmentsSection';
+import { ActionButtons } from '@/components/ActionButtons';
 
 export const AddDesignInsightDashboard = () => {
   const { toast } = useToast();
@@ -22,13 +18,6 @@ export const AddDesignInsightDashboard = () => {
   const [recommendation, setRecommendation] = useState('');
   const [tag, setTag] = useState('');
   const [mustHave, setMustHave] = useState(false);
-
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-    },
-  };
 
   const handleSave = () => {
     console.log('Design Insight saved:', {
@@ -70,242 +59,32 @@ export const AddDesignInsightDashboard = () => {
       </div>
 
       {/* Basic Details Section */}
-      <Card className="mb-6">
-        <CardHeader 
-          className="flex flex-row items-center gap-5 py-[50px] px-[50px]"
-          style={{
-            backgroundColor: '#C72030',
-            color: '#FFFFFF'
-          }}
-        >
-          <div 
-            className="flex items-center justify-center"
-            style={{
-              width: '40px',
-              height: '40px',
-              backgroundColor: '#C72030',
-              borderRadius: '50%'
-            }}
-          >
-            <span 
-              className="flex items-center justify-center"
-              style={{
-                width: '18px',
-                height: '18px',
-                color: '#FFFFFF'
-              }}
-            >
-              ⚙
-            </span>
-          </div>
-          <CardTitle 
-            className="font-['Work_Sans']"
-            style={{
-              fontSize: '26px',
-              fontWeight: '600',
-              lineHeight: 'auto',
-              letterSpacing: '0%',
-              color: '#C72030',
-              backgroundColor: '#FFFFFF',
-              paddingLeft: '20px',
-              textAlign: 'center',
-              textTransform: 'uppercase'
-            }}
-          >
-            BASIC DETAILS
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-[50px] py-[50px]">
-          {/* First row - 3 columns */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-[50px] gap-y-[40px] mb-[40px]">
-            <div className="flex flex-col space-y-3">
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="category-label" shrink>Category*</InputLabel>
-                <MuiSelect
-                  labelId="category-label"
-                  label="Category*"
-                  displayEmpty
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Category</em></MenuItem>
-                  <MenuItem value="landscape">Landscape</MenuItem>
-                  <MenuItem value="facade">Façade</MenuItem>
-                  <MenuItem value="security">Security & surveillance</MenuItem>
-                  <MenuItem value="inside-units">Inside Units</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-
-            <div className="flex flex-col space-y-3">
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="sub-category-label" shrink>Sub-category</InputLabel>
-                <MuiSelect
-                  labelId="sub-category-label"
-                  label="Sub-category"
-                  displayEmpty
-                  value={subCategory}
-                  onChange={(e) => setSubCategory(e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Sub Category</em></MenuItem>
-                  <MenuItem value="access-control">Access Control</MenuItem>
-                  <MenuItem value="cctv">CCTV</MenuItem>
-                  <MenuItem value="bedroom">Bedroom</MenuItem>
-                  <MenuItem value="entry-exit">Entry-Exit</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-
-            <div className="flex flex-col space-y-3">
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="site-label" shrink>Site*</InputLabel>
-                <MuiSelect
-                  labelId="site-label"
-                  label="Site*"
-                  displayEmpty
-                  value={site}
-                  onChange={(e) => setSite(e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Site</em></MenuItem>
-                  <MenuItem value="lockated">Lockated</MenuItem>
-                  <MenuItem value="godrej-prime">Godrej Prime,Gurgaon</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-          </div>
-
-          {/* Second row - 3 columns */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-[50px] gap-y-[40px] mb-[40px]">
-            <div className="flex flex-col space-y-3">
-              <CustomTextField
-                label="Location"
-                placeholder="Enter Location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                fullWidth
-              />
-            </div>
-
-            <div className="flex flex-col space-y-3">
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="categorization-label" shrink>Categorization*</InputLabel>
-                <MuiSelect
-                  labelId="categorization-label"
-                  label="Categorization*"
-                  displayEmpty
-                  value={categorization}
-                  onChange={(e) => setCategorization(e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Categorization</em></MenuItem>
-                  <MenuItem value="safety">Safety</MenuItem>
-                  <MenuItem value="workaround">Workaround</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-
-            <div className="flex flex-col space-y-3">
-              <FormControl fullWidth variant="outlined">
-                <InputLabel id="tag-label" shrink>Tag</InputLabel>
-                <MuiSelect
-                  labelId="tag-label"
-                  label="Tag"
-                  displayEmpty
-                  value={tag}
-                  onChange={(e) => setTag(e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Tag</em></MenuItem>
-                  <MenuItem value="workaround">Workaround</MenuItem>
-                  <MenuItem value="critical">Critical</MenuItem>
-                  <MenuItem value="minor">Minor</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-          </div>
-
-          {/* Third row - 2 columns for text areas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-[50px] gap-y-[40px] mb-[40px]">
-            <div className="flex flex-col space-y-3">
-              <CustomTextField
-                label="Observation"
-                placeholder="Enter Observation"
-                value={observation}
-                onChange={(e) => setObservation(e.target.value)}
-                fullWidth
-                multiline
-                rows={4}
-              />
-            </div>
-
-            <div className="flex flex-col space-y-3">
-              <CustomTextField
-                label="Recommendation"
-                placeholder="Enter Recommendation"
-                value={recommendation}
-                onChange={(e) => setRecommendation(e.target.value)}
-                fullWidth
-                multiline
-                rows={4}
-              />
-            </div>
-          </div>
-
-          {/* Checkbox section */}
-          <div>
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="mustHave" 
-                checked={mustHave}
-                onCheckedChange={handleMustHaveChange}
-              />
-              <label htmlFor="mustHave" className="text-sm font-medium">
-                Must Have
-              </label>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <BasicDetailsSection
+        category={category}
+        setCategory={setCategory}
+        subCategory={subCategory}
+        setSubCategory={setSubCategory}
+        site={site}
+        setSite={setSite}
+        location={location}
+        setLocation={setLocation}
+        categorization={categorization}
+        setCategorization={setCategorization}
+        observation={observation}
+        setObservation={setObservation}
+        recommendation={recommendation}
+        setRecommendation={setRecommendation}
+        tag={tag}
+        setTag={setTag}
+        mustHave={mustHave}
+        handleMustHaveChange={handleMustHaveChange}
+      />
 
       {/* Attachments Section */}
-      <Card className="mb-6">
-        <CardHeader className="bg-orange-100">
-          <CardTitle className="text-orange-600 flex items-center gap-2">
-            <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">📎</span>
-            ATTACHMENTS
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-[50px] py-[50px]">
-          <div>
-            <div className="mt-2 border-2 border-dashed border-orange-200 rounded-lg p-8 text-center">
-              <p className="text-gray-500">
-                Drag & Drop or <span className="text-orange-600 cursor-pointer">Choose File</span>
-              </p>
-              <p className="text-sm text-gray-400 mt-1">No file chosen</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <AttachmentsSection />
 
       {/* Action Buttons */}
-      <div className="flex justify-end gap-4">
-        <Button 
-          onClick={handleSave}
-          className="bg-[#C72030] hover:bg-[#A61B28] text-white px-8"
-        >
-          Save
-        </Button>
-        <Button 
-          onClick={handleBack}
-          variant="outline"
-          className="border-gray-300 text-gray-700 px-8"
-        >
-          Back
-        </Button>
-      </div>
+      <ActionButtons onSave={handleSave} onBack={handleBack} />
     </div>
   );
 };
