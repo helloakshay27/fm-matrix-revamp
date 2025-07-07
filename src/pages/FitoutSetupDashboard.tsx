@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Upload } from "lucide-react";
@@ -154,6 +155,7 @@ export const FitoutSetupDashboard = () => {
                   <Checkbox
                     checked={category.active}
                     onCheckedChange={() => handleToggleActive(category.id)}
+                    className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] border-[#C72030]"
                   />
                 </TableCell>
               </TableRow>
