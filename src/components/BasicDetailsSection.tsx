@@ -57,7 +57,7 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
   return (
     <Card className="mb-6">
       <CardHeader 
-        className="flex flex-row items-center py-[50px] px-[50px]"
+        className="flex flex-row items-center px-[50px]"
       >
 <div 
   className="flex items-center justify-center border border-[#C72030]"
@@ -86,7 +86,7 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
           BASIC DETAILS
         </CardTitle>
       </CardHeader>
-      <CardContent className="px-[50px] py-[50px]">
+      <CardContent className="px-[50px] ">
         {/* First row - 3 columns */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-[50px] gap-y-[40px] mb-[40px]">
           <div className="flex flex-col space-y-3">
