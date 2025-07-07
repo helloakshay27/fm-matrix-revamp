@@ -18,12 +18,12 @@ import {
   Collapse,
 } from '@mui/material';
 import {
-  ArrowBack,
-  ExpandLess,
-  ExpandMore,
-  Add,
-  Close,
-} from '@mui/icons-material';
+  ArrowLeft,
+  ChevronUp,
+  ChevronDown,
+  Plus,
+  X,
+} from 'lucide-react';
 import { styled } from '@mui/material/styles';
 
 export const EditAssetDetailsPage = () => {
@@ -256,7 +256,7 @@ export const EditAssetDetailsPage = () => {
       <Box sx={{ mb: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, color: 'text.secondary' }}>
           <Button
-            startIcon={<ArrowBack />}
+            startIcon={<ArrowLeft />}
             onClick={handleBack}
             sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
           >
@@ -280,7 +280,7 @@ export const EditAssetDetailsPage = () => {
             </Typography>
           </SectionTitle>
           <IconButton onClick={() => setLocationDetailsExpanded(!locationDetailsExpanded)}>
-            {locationDetailsExpanded ? <ExpandLess /> : <ExpandMore />}
+            {locationDetailsExpanded ? <ChevronUp /> : <ChevronDown />}
           </IconButton>
         </SectionHeader>
         <Collapse in={locationDetailsExpanded}>
@@ -404,7 +404,7 @@ export const EditAssetDetailsPage = () => {
             </Typography>
           </SectionTitle>
           <IconButton onClick={() => setAssetDetailsExpanded(!assetDetailsExpanded)}>
-            {assetDetailsExpanded ? <ExpandLess /> : <ExpandMore />}
+            {assetDetailsExpanded ? <ChevronUp /> : <ChevronDown />}
           </IconButton>
         </SectionHeader>
         <Collapse in={assetDetailsExpanded}>
@@ -700,7 +700,7 @@ export const EditAssetDetailsPage = () => {
             </Typography>
           </SectionTitle>
           <IconButton onClick={() => setWarrantyDetailsExpanded(!warrantyDetailsExpanded)}>
-            {warrantyDetailsExpanded ? <ExpandLess /> : <ExpandMore />}
+            {warrantyDetailsExpanded ? <ChevronUp /> : <ChevronDown />}
           </IconButton>
         </SectionHeader>
         <Collapse in={warrantyDetailsExpanded}>
@@ -757,7 +757,7 @@ export const EditAssetDetailsPage = () => {
             </Typography>
           </SectionTitle>
           <IconButton onClick={() => setMeterCategoryExpanded(!meterCategoryExpanded)}>
-            {meterCategoryExpanded ? <ExpandLess /> : <ExpandMore />}
+            {meterCategoryExpanded ? <ChevronUp /> : <ChevronDown />}
           </IconButton>
         </SectionHeader>
         <Collapse in={meterCategoryExpanded}>
@@ -805,13 +805,13 @@ export const EditAssetDetailsPage = () => {
             </Typography>
           </SectionTitle>
           <IconButton onClick={() => setConsumptionExpanded(!consumptionExpanded)}>
-            {consumptionExpanded ? <ExpandLess /> : <ExpandMore />}
+            {consumptionExpanded ? <ChevronUp /> : <ChevronDown />}
           </IconButton>
         </SectionHeader>
         <Collapse in={consumptionExpanded}>
           <Box sx={{ p: 4, pt: 0 }}>
             <Button
-              startIcon={<Add />}
+              startIcon={<Plus />}
               onClick={handleAddConsumptionMeasure}
               sx={{ bgcolor: '#C72030', color: 'white', '&:hover': { bgcolor: '#C72030CC' }, mb: 2 }}
             >
@@ -824,7 +824,7 @@ export const EditAssetDetailsPage = () => {
                     onClick={() => handleRemoveConsumptionMeasure(measure.id)}
                     sx={{ color: 'error.main' }}
                   >
-                    <Close />
+                    <X />
                   </IconButton>
                 </Box>
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(5, 1fr)' }, gap: 2, mb: 2 }}>
@@ -913,13 +913,13 @@ export const EditAssetDetailsPage = () => {
             </Typography>
           </SectionTitle>
           <IconButton onClick={() => setNonConsumptionExpanded(!nonConsumptionExpanded)}>
-            {nonConsumptionExpanded ? <ExpandLess /> : <ExpandMore />}
+            {nonConsumptionExpanded ? <ChevronUp /> : <ChevronDown />}
           </IconButton>
         </SectionHeader>
         <Collapse in={nonConsumptionExpanded}>
           <Box sx={{ p: 4, pt: 0 }}>
             <Button
-              startIcon={<Add />}
+              startIcon={<Plus />}
               onClick={handleAddNonConsumptionMeasure}
               sx={{ bgcolor: '#C72030', color: 'white', '&:hover': { bgcolor: '#C72030CC' }, mb: 2 }}
             >
@@ -932,7 +932,7 @@ export const EditAssetDetailsPage = () => {
                     onClick={() => handleRemoveNonConsumptionMeasure(measure.id)}
                     sx={{ color: 'error.main' }}
                   >
-                    <Close />
+                    <X />
                   </IconButton>
                 </Box>
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(5, 1fr)' }, gap: 2, mb: 2 }}>
@@ -1021,7 +1021,7 @@ export const EditAssetDetailsPage = () => {
             </Typography>
           </SectionTitle>
           <IconButton onClick={() => setAttachmentsExpanded(!attachmentsExpanded)}>
-            {attachmentsExpanded ? <ExpandLess /> : <ExpandMore />}
+            {attachmentsExpanded ? <ChevronUp /> : <ChevronDown />}
           </IconButton>
         </SectionHeader>
         <Collapse in={attachmentsExpanded}>
@@ -1041,7 +1041,7 @@ export const EditAssetDetailsPage = () => {
                   />
                   <label htmlFor="manuals-upload">
                     <Box sx={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <Add sx={{ fontSize: 24, color: 'grey.400', mb: 1 }} />
+                      <Plus sx={{ fontSize: 24, color: 'grey.400', mb: 1 }} />
                       <Typography variant="body2" sx={{ color: 'grey.500' }}>
                         Click to upload files
                       </Typography>
@@ -1063,7 +1063,7 @@ export const EditAssetDetailsPage = () => {
                   />
                   <label htmlFor="insurance-upload">
                     <Box sx={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <Add sx={{ fontSize: 24, color: 'grey.400', mb: 1 }} />
+                      <Plus sx={{ fontSize: 24, color: 'grey.400', mb: 1 }} />
                       <Typography variant="body2" sx={{ color: 'grey.500' }}>
                         Click to upload files
                       </Typography>
@@ -1085,7 +1085,7 @@ export const EditAssetDetailsPage = () => {
                   />
                   <label htmlFor="invoice-upload">
                     <Box sx={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <Add sx={{ fontSize: 24, color: 'grey.400', mb: 1 }} />
+                      <Plus sx={{ fontSize: 24, color: 'grey.400', mb: 1 }} />
                       <Typography variant="body2" sx={{ color: 'grey.500' }}>
                         Click to upload files
                       </Typography>
@@ -1107,7 +1107,7 @@ export const EditAssetDetailsPage = () => {
                   />
                   <label htmlFor="amc-upload">
                     <Box sx={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <Add sx={{ fontSize: 24, color: 'grey.400', mb: 1 }} />
+                      <Plus sx={{ fontSize: 24, color: 'grey.400', mb: 1 }} />
                       <Typography variant="body2" sx={{ color: 'grey.500' }}>
                         Click to upload files
                       </Typography>
