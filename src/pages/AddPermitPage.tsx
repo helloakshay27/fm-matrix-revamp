@@ -481,7 +481,7 @@ export const AddPermitPage = () => {
       <Card className="mb-6 shadow-sm border-0">
         <CardHeader className="bg-white border-b border-gray-100">
           <CardTitle className="flex items-center text-[#C72030] text-lg font-semibold">
-            <span className="mr-3">📎</span>
+            <span className="mr-3 w-2 h-2 bg-[#C72030] rounded-full"></span>
             ATTACHMENTS
           </CardTitle>
         </CardHeader>
