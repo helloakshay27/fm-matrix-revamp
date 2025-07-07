@@ -39,6 +39,9 @@ export const AddProjectDashboard = () => {
     '& .MuiInputBase-input, & .MuiSelect-select': {
       padding: { xs: '8px', sm: '10px', md: '12px' },
     },
+    '& .MuiInputBase-inputMultiline': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -216,7 +219,15 @@ export const AddProjectDashboard = () => {
               multiline
               rows={4}
               InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
+              InputProps={{ 
+                sx: {
+                  ...fieldStyles,
+                  '& .MuiInputBase-inputMultiline': {
+                    padding: '12px',
+                    minHeight: '80px',
+                  },
+                }
+              }}
               sx={{ mt: 1 }}
             />
           </div>
