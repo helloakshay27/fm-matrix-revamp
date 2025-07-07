@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -51,6 +50,17 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
     onOpenChange(false);
   };
 
+  const menuProps = {
+    disablePortal: true,
+    PaperProps: {
+      sx: {
+        mt: 0.5,
+        zIndex: 9999,
+        boxShadow: 3,
+      },
+    },
+  };
+
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
     '& .MuiInputBase-input, & .MuiSelect-select': {
@@ -77,7 +87,7 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
             </Button>
           </div>
         </DialogHeader>
-        
+
         <div className="grid grid-cols-2 gap-4 py-4">
           <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
             <InputLabel id="tower-label">Tower</InputLabel>
@@ -87,11 +97,9 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               value={filters.tower}
               onChange={(e) => handleFilterChange('tower', e.target.value)}
               sx={fieldStyles}
-             MenuProps={{ disablePortal: true }}
+              MenuProps={menuProps}
             >
-              <MenuItem value="">
-                <em>Select Tower</em>
-              </MenuItem>
+              <MenuItem value=""><em>Select Tower</em></MenuItem>
               <MenuItem value="A">Tower A</MenuItem>
               <MenuItem value="B">Tower B</MenuItem>
               <MenuItem value="C">Tower C</MenuItem>
@@ -106,11 +114,9 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               value={filters.floor}
               onChange={(e) => handleFilterChange('floor', e.target.value)}
               sx={fieldStyles}
-              MenuProps={{ disablePortal: true }}
+              MenuProps={menuProps}
             >
-              <MenuItem value="">
-                <em>Select Floor</em>
-              </MenuItem>
+              <MenuItem value=""><em>Select Floor</em></MenuItem>
               <MenuItem value="1st">1st Floor</MenuItem>
               <MenuItem value="2nd">2nd Floor</MenuItem>
               <MenuItem value="3rd">3rd Floor</MenuItem>
@@ -130,11 +136,9 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               value={filters.flat}
               onChange={(e) => handleFilterChange('flat', e.target.value)}
               sx={fieldStyles}
-              MenuProps={{ disablePortal: true }}
+              MenuProps={menuProps}
             >
-              <MenuItem value="">
-                <em>Select Flat</em>
-              </MenuItem>
+              <MenuItem value=""><em>Select Flat</em></MenuItem>
               <MenuItem value="101">101</MenuItem>
               <MenuItem value="103">103</MenuItem>
               <MenuItem value="301">301</MenuItem>
@@ -152,11 +156,9 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               value={filters.stage}
               onChange={(e) => handleFilterChange('stage', e.target.value)}
               sx={fieldStyles}
-              MenuProps={{ disablePortal: true }}
+              MenuProps={menuProps}
             >
-              <MenuItem value="">
-                <em>Select Stage</em>
-              </MenuItem>
+              <MenuItem value=""><em>Select Stage</em></MenuItem>
               <MenuItem value="Units Snagging">Units Snagging</MenuItem>
               <MenuItem value="Common Area Snagging">Common Area Snagging</MenuItem>
               <MenuItem value="Pre-handover Snagging">Pre-handover Snagging</MenuItem>
@@ -174,7 +176,7 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
           <Button
             variant="outline"
             onClick={handleReset}
-            className="px-8"
+            className="px-8 border-[#C72030] text-[#C72030]"
           >
             RESET
           </Button>
