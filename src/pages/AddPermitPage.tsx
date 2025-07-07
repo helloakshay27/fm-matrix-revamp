@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -306,7 +307,7 @@ export const AddPermitPage = () => {
                     onChange={(e) => handleInputChange('clientSpecific', e.target.value)}
                     className="mr-2 w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                   />
-                  <spanClassName="text-sm text-gray-700">Internal</span>
+                  <span className="text-sm text-gray-700">Internal</span>
                 </label>
                 <label className="flex items-center cursor-pointer">
                   <input
