@@ -115,6 +115,7 @@ export const AddAMCPage = () => {
                     checked={formData.details === 'Asset'}
                     onChange={(e) => handleInputChange('details', e.target.value)}
                     className="mr-2"
+                    style={{ accentColor: '#C72030' }}
                   />
                   Asset
                 </label>
@@ -126,6 +127,7 @@ export const AddAMCPage = () => {
                     checked={formData.details === 'Service'}
                     onChange={(e) => handleInputChange('details', e.target.value)}
                     className="mr-2"
+                    style={{ accentColor: '#C72030' }}
                   />
                   Service
                 </label>
@@ -143,6 +145,7 @@ export const AddAMCPage = () => {
                     checked={formData.type === 'Individual'}
                     onChange={(e) => handleInputChange('type', e.target.value)}
                     className="mr-2"
+                    style={{ accentColor: '#C72030' }}
                   />
                   Individual
                 </label>
@@ -154,6 +157,7 @@ export const AddAMCPage = () => {
                     checked={formData.type === 'Group'}
                     onChange={(e) => handleInputChange('type', e.target.value)}
                     className="mr-2"
+                    style={{ accentColor: '#C72030' }}
                   />
                   Group
                 </label>

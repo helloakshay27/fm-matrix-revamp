@@ -63,7 +63,7 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
         <div className="space-y-6">
           {/* Service Details */}
           <div>
-            <h3 className="text-orange-500 font-medium mb-4">Service Details</h3>
+            <h3 className="text-[14px] text-[#C72030] font-medium mb-4 ">Service Details</h3>
             <div className="space-y-4">
               <div>
                 <TextField
@@ -87,7 +87,7 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
 
           {/* Location Details */}
           <div>
-            <h3 className="text-orange-500 font-medium mb-4">Location Details</h3>
+            <h3 className="font-medium mb-4 text-[14px] text-[#C72030]">Location Details</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <FormControl fullWidth variant="outlined">
