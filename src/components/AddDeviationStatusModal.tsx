@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { CustomTextField } from '@/components/ui/custom-text-field';
 import { useToast } from '@/hooks/use-toast';
 
 interface AddDeviationStatusModalProps {
@@ -44,15 +45,10 @@ export const AddDeviationStatusModal = ({ isOpen, onClose }: AddDeviationStatusM
 
         <div className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
-            <TextField
+            <CustomTextField
               placeholder="Enter status"
               value={formData.status}
               onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value }))}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
             />
 
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
@@ -73,24 +69,18 @@ export const AddDeviationStatusModal = ({ isOpen, onClose }: AddDeviationStatusM
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <TextField
+            <CustomTextField
               placeholder="Enter status order"
               value={formData.order}
               onChange={(e) => setFormData(prev => ({ ...prev, order: e.target.value }))}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
             />
 
             <div className="flex items-center gap-2">
-              <TextField
+              <CustomTextField
                 type="color"
                 value={formData.color}
                 onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
-                InputProps={{ sx: { ...fieldStyles, width: '60px' } }}
-                sx={{ mt: 1 }}
+                sx={{ width: '60px' }}
               />
               <div 
                 className="w-10 h-10 border rounded"
