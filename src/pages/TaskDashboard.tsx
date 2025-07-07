@@ -212,9 +212,9 @@ export const TaskDashboard = () => {
       </div>
 
       <TaskAdvancedFilterDialog
-        isOpen={isFilterOpen}
-        onClose={() => setIsFilterOpen(false)}
-        onApplyFilters={(filters) => {
+        open={isFilterOpen}
+        onOpenChange={setIsFilterOpen}
+        onApply={(filters) => {
           console.log('Applied filters:', filters);
           setIsFilterOpen(false);
         }}
