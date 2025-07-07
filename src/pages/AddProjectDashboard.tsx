@@ -123,7 +123,7 @@ export const AddProjectDashboard = () => {
           <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
             <span className="text-white text-sm">🏢</span>
           </div>
-          <Heading level="h2" variant="primary" spacing="none" className="text-[#C72030] font-semibold">
+          <Heading level="h2" variant="primary" spacing="none" className="text-[#C72030]">
             BASIC DETAILS
           </Heading>
         </div>
@@ -298,7 +298,7 @@ export const AddProjectDashboard = () => {
           <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
             <span className="text-white text-sm">📂</span>
           </div>
-          <Heading level="h2" variant="primary" spacing="none" className="text-[#C72030] font-semibold">
+          <Heading level="h2" variant="primary" spacing="none" className="text-[#C72030]">
             CATEGORY AND ATTACHMENT
           </Heading>
         </div>
