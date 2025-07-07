@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomTextField } from '@/components/ui/custom-text-field';
 import { Settings } from 'lucide-react';
 
-
 interface BasicDetailsSectionProps {
   category: string;
   setCategory: (value: string) => void;
@@ -56,320 +55,143 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
 
   return (
     <Card className="mb-6">
-      <CardHeader 
-        className="flex flex-row items-center px-[50px]"
-      >
-<div 
-  className="flex items-center justify-center border border-[#C72030]"
-  style={{
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-  }}
->
-  <Settings size={18} color="#C72030" />
-</div>
-        <CardTitle 
-          className="font-['Work_Sans']"
-          style={{
-            fontSize: '26px',
-            fontWeight: '600',
-            lineHeight: 'auto',
-            letterSpacing: '0%',
-            color: 'black',
-            backgroundColor: '#FFFFFF',
-            paddingLeft: '20px',
-            textAlign: 'center',
-            textTransform: 'uppercase'
-          }}
-        >
-          BASIC DETAILS
+      <CardHeader className="flex flex-row items-center px-4 sm:px-6 md:px-[50px]">
+        <div className="flex items-center justify-center border border-[#C72030] w-10 h-10 rounded-full">
+          <Settings size={18} color="#C72030" />
+        </div>
+        <CardTitle className="pl-4 text-lg sm:text-xl md:text-2xl font-semibold uppercase text-black font-['Work_Sans']">
+          Basic Details
         </CardTitle>
       </CardHeader>
-      <CardContent className="px-[50px] ">
-        {/* First row - 3 columns */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-[50px] gap-y-[40px] mb-[40px]">
-          <div className="flex flex-col space-y-3">
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="category-label" shrink>Category*</InputLabel>
-              <MuiSelect
-                labelId="category-label"
-                label="Category*"
-                displayEmpty
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Category</em></MenuItem>
-                <MenuItem value="landscape">Landscape</MenuItem>
-                <MenuItem value="facade">Façade</MenuItem>
-                <MenuItem value="security">Security & surveillance</MenuItem>
-                <MenuItem value="inside-units">Inside Units</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
 
-          <div className="flex flex-col space-y-3">
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="sub-category-label" shrink>Sub-category</InputLabel>
-              <MuiSelect
-                labelId="sub-category-label"
-                label="Sub-category"
-                displayEmpty
-                value={subCategory}
-                onChange={(e) => setSubCategory(e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Sub Category</em></MenuItem>
-                <MenuItem value="access-control">Access Control</MenuItem>
-                <MenuItem value="cctv">CCTV</MenuItem>
-                <MenuItem value="bedroom">Bedroom</MenuItem>
-                <MenuItem value="entry-exit">Entry-Exit</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
+      <CardContent className="px-4 sm:px-6 md:px-[50px]">
+        {/* Row 1 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="category-label" shrink>Category*</InputLabel>
+            <MuiSelect
+              labelId="category-label"
+              label="Category*"
+              displayEmpty
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value=""><em>Select Category</em></MenuItem>
+              <MenuItem value="landscape">Landscape</MenuItem>
+              <MenuItem value="facade">Façade</MenuItem>
+              <MenuItem value="security">Security & surveillance</MenuItem>
+              <MenuItem value="inside-units">Inside Units</MenuItem>
+            </MuiSelect>
+          </FormControl>
 
-          <div className="flex flex-col space-y-3">
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="site-label" shrink>Site*</InputLabel>
-              <MuiSelect
-                labelId="site-label"
-                label="Site*"
-                displayEmpty
-                value={site}
-                onChange={(e) => setSite(e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Site</em></MenuItem>
-                <MenuItem value="lockated">Lockated</MenuItem>
-                <MenuItem value="godrej-prime">Godrej Prime,Gurgaon</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="sub-category-label" shrink>Sub-category</InputLabel>
+            <MuiSelect
+              labelId="sub-category-label"
+              label="Sub-category"
+              displayEmpty
+              value={subCategory}
+              onChange={(e) => setSubCategory(e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value=""><em>Select Sub Category</em></MenuItem>
+              <MenuItem value="access-control">Access Control</MenuItem>
+              <MenuItem value="cctv">CCTV</MenuItem>
+              <MenuItem value="bedroom">Bedroom</MenuItem>
+              <MenuItem value="entry-exit">Entry-Exit</MenuItem>
+            </MuiSelect>
+          </FormControl>
+
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="site-label" shrink>Site*</InputLabel>
+            <MuiSelect
+              labelId="site-label"
+              label="Site*"
+              displayEmpty
+              value={site}
+              onChange={(e) => setSite(e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value=""><em>Select Site</em></MenuItem>
+              <MenuItem value="lockated">Lockated</MenuItem>
+              <MenuItem value="godrej-prime">Godrej Prime,Gurgaon</MenuItem>
+            </MuiSelect>
+          </FormControl>
         </div>
 
-        {/* Second row - 3 columns */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-[50px] gap-y-[40px] mb-[40px]">
-          <div className="flex flex-col space-y-3">
-            <CustomTextField
-              label="Location"
-              placeholder="Enter Location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              fullWidth
-            />
-          </div>
+        {/* Row 2 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <CustomTextField
+            label="Location"
+            placeholder="Enter Location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            fullWidth
+          />
 
-          <div className="flex flex-col space-y-3">
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="categorization-label" shrink>Categorization*</InputLabel>
-              <MuiSelect
-                labelId="categorization-label"
-                label="Categorization*"
-                displayEmpty
-                value={categorization}
-                onChange={(e) => setCategorization(e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Categorization</em></MenuItem>
-                <MenuItem value="safety">Safety</MenuItem>
-                <MenuItem value="workaround">Workaround</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="categorization-label" shrink>Categorization*</InputLabel>
+            <MuiSelect
+              labelId="categorization-label"
+              label="Categorization*"
+              displayEmpty
+              value={categorization}
+              onChange={(e) => setCategorization(e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value=""><em>Select Categorization</em></MenuItem>
+              <MenuItem value="safety">Safety</MenuItem>
+              <MenuItem value="workaround">Workaround</MenuItem>
+            </MuiSelect>
+          </FormControl>
 
-          <div className="flex flex-col space-y-3">
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="tag-label" shrink>Tag</InputLabel>
-              <MuiSelect
-                labelId="tag-label"
-                label="Tag"
-                displayEmpty
-                value={tag}
-                onChange={(e) => setTag(e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Tag</em></MenuItem>
-                <MenuItem value="workaround">Workaround</MenuItem>
-                <MenuItem value="critical">Critical</MenuItem>
-                <MenuItem value="minor">Minor</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="tag-label" shrink>Tag</InputLabel>
+            <MuiSelect
+              labelId="tag-label"
+              label="Tag"
+              displayEmpty
+              value={tag}
+              onChange={(e) => setTag(e.target.value)}
+              sx={fieldStyles}
+            >
+              <MenuItem value=""><em>Select Tag</em></MenuItem>
+              <MenuItem value="workaround">Workaround</MenuItem>
+              <MenuItem value="critical">Critical</MenuItem>
+              <MenuItem value="minor">Minor</MenuItem>
+            </MuiSelect>
+          </FormControl>
         </div>
 
-        {/* Third row - 2 columns for responsive text areas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-[50px] gap-y-[40px] mb-[40px]">
-          <div className="flex flex-col space-y-3">
-            <CustomTextField
-              label="Observation"
-              placeholder="Enter Observation"
-              value={observation}
-              onChange={(e) => setObservation(e.target.value)}
-              fullWidth
-              multiline
-              rows={2}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  // Desktop (default)
-                  width: '100%',
-                  minHeight: '72px',
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: '0px',
-                  '& fieldset': {
-                    borderColor: '#E0E0E0',
-                    borderRadius: '0px',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: '#1A1A1A',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#C72030',
-                    borderWidth: '2px',
-                  },
-                  '& textarea': {
-                    fontSize: '14px',
-                    fontWeight: 400,
-                    color: '#1A1A1A',
-                    opacity: 0.54,
-                    padding: '12px',
-                    '&::placeholder': {
-                      color: '#1A1A1A',
-                      opacity: 0.54,
-                    },
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#1A1A1A',
-                  '&.Mui-focused': {
-                    color: '#C72030',
-                  },
-                  '&.MuiInputLabel-shrink': {
-                    transform: 'translate(14px, -9px) scale(0.75)',
-                    backgroundColor: '#FFFFFF',
-                    padding: '0 4px',
-                  },
-                },
-                // Tablet breakpoint
-                '@media (max-width: 1024px)': {
-                  '& .MuiOutlinedInput-root': {
-                    minHeight: '56px',
-                    '& textarea': {
-                      fontSize: '12px',
-                      padding: '12px',
-                    },
-                  },
-                  '& .MuiInputLabel-root': {
-                    fontSize: '14px',
-                  },
-                },
-                // Mobile breakpoint
-                '@media (max-width: 768px)': {
-                  '& .MuiOutlinedInput-root': {
-                    minHeight: '44px',
-                    '& textarea': {
-                      fontSize: '8px',
-                      padding: '8px',
-                    },
-                  },
-                  '& .MuiInputLabel-root': {
-                    fontSize: '10px',
-                  },
-                },
-              }}
-            />
-          </div>
+        {/* Row 3 - Textareas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+          <CustomTextField
+            label="Observation"
+            placeholder="Enter Observation"
+            value={observation}
+            onChange={(e) => setObservation(e.target.value)}
+            fullWidth
+            multiline
+            rows={3}
+          />
 
-          <div className="flex flex-col space-y-3">
-            <CustomTextField
-              label="Recommendation"
-              placeholder="Enter Recommendation"
-              value={recommendation}
-              onChange={(e) => setRecommendation(e.target.value)}
-              fullWidth
-              multiline
-              rows={2}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  // Desktop (default)
-                  width: '100%',
-                  minHeight: '72px',
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: '0px',
-                  '& fieldset': {
-                    borderColor: '#E0E0E0',
-                    borderRadius: '0px',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: '#1A1A1A',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#C72030',
-                    borderWidth: '2px',
-                  },
-                  '& textarea': {
-                    fontSize: '14px',
-                    fontWeight: 400,
-                    color: '#1A1A1A',
-                    opacity: 0.54,
-                    padding: '12px',
-                    '&::placeholder': {
-                      color: '#1A1A1A',
-                      opacity: 0.54,
-                    },
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#1A1A1A',
-                  '&.Mui-focused': {
-                    color: '#C72030',
-                  },
-                  '&.MuiInputLabel-shrink': {
-                    transform: 'translate(14px, -9px) scale(0.75)',
-                    backgroundColor: '#FFFFFF',
-                    padding: '0 4px',
-                  },
-                },
-                // Tablet breakpoint
-                '@media (max-width: 1024px)': {
-                  '& .MuiOutlinedInput-root': {
-                    minHeight: '56px',
-                    '& textarea': {
-                      fontSize: '12px',
-                      padding: '12px',
-                    },
-                  },
-                  '& .MuiInputLabel-root': {
-                    fontSize: '14px',
-                  },
-                },
-                // Mobile breakpoint
-                '@media (max-width: 768px)': {
-                  '& .MuiOutlinedInput-root': {
-                    minHeight: '44px',
-                    '& textarea': {
-                      fontSize: '8px',
-                      padding: '8px',
-                    },
-                  },
-                  '& .MuiInputLabel-root': {
-                    fontSize: '10px',
-                  },
-                },
-              }}
-            />
-          </div>
+          <CustomTextField
+            label="Recommendation"
+            placeholder="Enter Recommendation"
+            value={recommendation}
+            onChange={(e) => setRecommendation(e.target.value)}
+            fullWidth
+            multiline
+            rows={3}
+          />
         </div>
 
-        {/* Checkbox section */}
-        <div>
+        {/* Checkbox */}
+        <div className="mt-4">
           <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="mustHave" 
+            <Checkbox
+              id="mustHave"
               checked={mustHave}
               onCheckedChange={handleMustHaveChange}
             />

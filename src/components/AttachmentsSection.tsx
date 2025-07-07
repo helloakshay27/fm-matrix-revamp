@@ -1,52 +1,25 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Paperclip } from 'lucide-react';
 
-
 export const AttachmentsSection: React.FC = () => {
   return (
     <Card className="mb-6">
-      <CardHeader 
-        className="flex flex-row items-center py-[50px] px-[50px]"
-      >
-<div 
-  className="flex items-center justify-center border border-[#C72030]"
-  style={{
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-  }}
->
-  <Paperclip size={18} color="#C72030" />
-</div>
-
-
-        <CardTitle 
-          className="font-['Work_Sans']"
-          style={{
-            fontSize: '26px',
-            fontWeight: '600',
-            lineHeight: 'auto',
-            letterSpacing: '0%',
-            color: 'black',
-            backgroundColor: '#FFFFFF',
-            paddingLeft: '20px',
-            textAlign: 'center',
-            textTransform: 'uppercase'
-          }}
-        >
-          ATTACHMENTS
+      <CardHeader className="flex flex-row items-center px-4 sm:px-6 md:px-[50px] py-6 md:py-[50px]">
+        <div className="flex items-center justify-center border border-[#C72030] w-10 h-10 rounded-full">
+          <Paperclip size={18} color="#C72030" />
+        </div>
+        <CardTitle className="pl-4 text-lg sm:text-xl md:text-2xl font-semibold uppercase text-black font-['Work_Sans']">
+          Attachments
         </CardTitle>
       </CardHeader>
-      <CardContent className="px-[50px] py-[50px]">
-        <div>
-          <div className="mt-2 border-2 border-dashed rounded-lg p-8 text-center" style={{ borderColor: '#C72030' }}>
-            <p style={{ color: '#C72030' }}>
-              Drag & Drop or <span className="cursor-pointer underline" style={{ color: '#C72030' }}>Choose File</span>
-            </p>
-            <p className="text-sm mt-1" style={{ color: '#C72030', opacity: 0.7 }}>No file chosen</p>
-          </div>
+
+      <CardContent className="px-4 sm:px-6 md:px-[50px] py-6 md:py-[50px]">
+        <div className="mt-2 border-2 border-dashed rounded-lg text-center p-6 sm:p-8" style={{ borderColor: '#C72030' }}>
+          <p className="text-base sm:text-lg text-[#C72030]">
+            Drag & Drop or <span className="cursor-pointer underline">Choose File</span>
+          </p>
+          <p className="text-sm mt-1 text-[#C72030]/70">No file chosen</p>
         </div>
       </CardContent>
     </Card>
