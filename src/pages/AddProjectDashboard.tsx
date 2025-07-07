@@ -207,7 +207,8 @@ export const AddProjectDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <TextField
-              placeholder="Description"
+              label="Description"
+              placeholder="Enter description"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({...prev, description: e.target.value}))}
               fullWidth
@@ -222,6 +223,7 @@ export const AddProjectDashboard = () => {
 
           <div>
             <TextField
+              label="Request Date"
               type="date"
               value={formData.requestDate}
               onChange={(e) => setFormData(prev => ({...prev, requestDate: e.target.value}))}
