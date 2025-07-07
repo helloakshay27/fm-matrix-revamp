@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { AddCategoryModal } from '@/components/AddCategoryModal';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
+import { Heading } from '@/components/ui/heading';
 
 interface Category {
   id: number;
@@ -117,10 +118,12 @@ export const AddProjectDashboard = () => {
       {/* Basic Details Section */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-6">
-          <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+          <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
             <span className="text-white text-sm">🏢</span>
           </div>
-          <h2 className="text-xl font-bold text-orange-500">BASIC DETAILS</h2>
+          <Heading level="h2" variant="primary" spacing="none" className="text-[#C72030] font-semibold">
+            BASIC DETAILS
+          </Heading>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
@@ -254,10 +257,12 @@ export const AddProjectDashboard = () => {
       {/* Category and Attachment Section */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-6">
-          <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+          <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
             <span className="text-white text-sm">📂</span>
           </div>
-          <h2 className="text-xl font-bold text-orange-500">CATEGORY AND ATTACHMENT</h2>
+          <Heading level="h2" variant="primary" spacing="none" className="text-[#C72030] font-semibold">
+            CATEGORY AND ATTACHMENT
+          </Heading>
         </div>
 
         {/* Dynamic Categories */}
