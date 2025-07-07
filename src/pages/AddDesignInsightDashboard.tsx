@@ -71,9 +71,47 @@ export const AddDesignInsightDashboard = () => {
 
       {/* Basic Details Section */}
       <Card className="mb-6">
-        <CardHeader className="bg-orange-100">
-          <CardTitle className="text-orange-600 flex items-center gap-2">
-            <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">⚙</span>
+        <CardHeader 
+          className="flex flex-row items-center gap-5 py-[50px] px-[50px]"
+          style={{
+            backgroundColor: '#C72030',
+            color: '#FFFFFF'
+          }}
+        >
+          <div 
+            className="flex items-center justify-center"
+            style={{
+              width: '40px',
+              height: '40px',
+              backgroundColor: '#C72030',
+              borderRadius: '50%'
+            }}
+          >
+            <span 
+              className="flex items-center justify-center"
+              style={{
+                width: '18px',
+                height: '18px',
+                color: '#FFFFFF'
+              }}
+            >
+              ⚙
+            </span>
+          </div>
+          <CardTitle 
+            className="font-['Work_Sans']"
+            style={{
+              fontSize: '26px',
+              fontWeight: '600',
+              lineHeight: 'auto',
+              letterSpacing: '0%',
+              color: '#C72030',
+              backgroundColor: '#FFFFFF',
+              paddingLeft: '20px',
+              textAlign: 'center',
+              textTransform: 'uppercase'
+            }}
+          >
             BASIC DETAILS
           </CardTitle>
         </CardHeader>
