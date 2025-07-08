@@ -707,7 +707,7 @@ const AddAssetPage = () => {
                     </div>
                   </div>)}
                 
-                <button onClick={addNonConsumptionMeasure} className="bg-[#C72030] text-white px-4 py-2 rounded-md hover:bg-[#a61b26] flex items-center text-sm sm:text-base">
+                <button onClick={addNonConsumptionMeasure} className="px-4 py-2 rounded-md flex items-center text-sm sm:text-base bg-[#f6f4ee] text-orange-700">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Measure
                 </button>
