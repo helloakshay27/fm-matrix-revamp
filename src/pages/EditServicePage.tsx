@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -54,7 +53,7 @@ const EditServicePage = () => {
     },
     '& .MuiInputLabel-root': {
       color: '#666666',
-      fontSize: '14px',
+      fontSize: '16px',
       '&.Mui-focused': {
         color: '#C72030',
       },
