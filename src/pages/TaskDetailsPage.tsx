@@ -269,15 +269,27 @@ export const TaskDetailsPage = () => {
                       fullWidth 
                       variant="outlined" 
                       multiline 
-                      rows={4} 
+                      rows={4}
+                      minRows={4}
+                      maxRows={8}
                       InputLabelProps={{
                         shrink: true
                       }} 
                       InputProps={{
-                        sx: fieldStyles
+                        sx: {
+                          ...fieldStyles,
+                          alignItems: 'flex-start',
+                          '& .MuiInputBase-inputMultiline': {
+                            minHeight: '80px',
+                            resize: 'vertical'
+                          }
+                        }
                       }} 
                       sx={{
-                        mt: 1
+                        mt: 1,
+                        '& .MuiOutlinedInput-root': {
+                          minHeight: '100px'
+                        }
                       }} 
                     />
                   </div>
