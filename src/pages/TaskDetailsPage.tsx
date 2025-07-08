@@ -276,7 +276,7 @@ export const TaskDetailsPage = () => {
                       sx={{
                         mt: 1,
                         '& .MuiOutlinedInput-root': {
-                          minHeight: '100px',
+                          minHeight: '60px',
                           alignItems: 'flex-start'
                         }
                       }} 
