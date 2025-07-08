@@ -53,7 +53,8 @@ const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
-    <WebSocketProvider accessToken={token} wsUrl={'wss://uat-tasks.lockated.com/cable'}>
+    <>
+      {/* <WebSocketProvider accessToken={token} wsUrl={'wss://uat-tasks.lockated.com/cable'}> */}
       <Toaster />
       <Routes>
         <Route path="/login" element={<Login />} />
@@ -160,7 +161,8 @@ const App = () => {
           }
         />
       </Routes>
-    </WebSocketProvider>
+      {/* </WebSocketProvider> */}
+    </>
   );
 };
 
