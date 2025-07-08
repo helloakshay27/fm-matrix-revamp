@@ -572,7 +572,7 @@ export const EditSchedulePage = () => {
           
           <div className="flex items-center gap-3">
             <Label htmlFor="weightage">Weightage</Label>
-            <Switch id="weightage" checked={weightage} onCheckedChange={setWeightage} className="data-[state=checked]:bg-[#C72030]" />
+            <Switch id="weightage" checked={weightage} onCheckedChange={setWeightage} className="bg-green-500 hover:bg-green-400" />
           </div>
         </div>
 
