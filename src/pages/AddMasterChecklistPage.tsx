@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -31,7 +32,7 @@ const fieldStyles = {
   },
   '& .MuiInputLabel-root': {
     color: '#666666',
-    fontSize: '14px',
+    fontSize: '16px',
     '&.Mui-focused': {
       color: '#C72030',
     },
