@@ -42,6 +42,11 @@ const mockMappingData = [
 export const SurveyMappingTable = () => {
   const [mappings, setMappings] = useState(mockMappingData);
 
+  const handleDownloadQRCode = () => {
+    console.log('Downloading QR Code...');
+    // QR Code download functionality would be implemented here
+  };
+
   const handleStatusToggle = (mappingId: number) => {
     console.log(`Toggling status for Survey Mapping ${mappingId}`);
     
@@ -71,13 +76,12 @@ export const SurveyMappingTable = () => {
       {/* Action Buttons */}
       <div className="flex items-center gap-4">
         <button
-  onClick={handleDownloadQRCode}
-  className="flex items-center bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6 py-2 rounded-md transition-colors"
->
-  <Download className="w-4 h-4 mr-2" style={{ color: '#BF213E' }} />
-  Download QR Code
-</button>
-
+          onClick={handleDownloadQRCode}
+          className="flex items-center bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6 py-2 rounded-md transition-colors"
+        >
+          <Download className="w-4 h-4 mr-2" style={{ color: '#BF213E' }} />
+          Download QR Code
+        </button>
       </div>
 
       {/* Table */}
