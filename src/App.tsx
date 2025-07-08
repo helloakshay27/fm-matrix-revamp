@@ -381,6 +381,9 @@ import { ViewChecklistMasterPage } from './pages/ViewChecklistMasterPage';
 // Import Unit Master page
 import { UnitMasterPage } from './pages/UnitMasterPage';
 
+// Import Address Master page
+import { AddressMasterPage } from './pages/AddressMasterPage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -414,6 +417,7 @@ function App() {
                             <Route path="/settings/masters/checklist-master/edit/:id" element={<EditChecklistMasterPage />} />
                             <Route path="/settings/masters/checklist-master/view/:id" element={<ViewChecklistMasterPage />} />
                             <Route path="/settings/masters/unit" element={<UnitMasterPage />} />
+                            <Route path="/settings/masters/address" element={<AddressMasterPage />} />
 
                             {/* CRM Routes */}
                             <Route path="/crm/campaign" element={<CRMCampaignPage />} />
