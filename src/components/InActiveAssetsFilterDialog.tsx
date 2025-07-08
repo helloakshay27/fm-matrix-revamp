@@ -112,7 +112,7 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-center justify-between pb-4">
+        <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle className="text-lg font-semibold text-gray-900">FILTER BY</DialogTitle>
           <Button
             variant="ghost"
