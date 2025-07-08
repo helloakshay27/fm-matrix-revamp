@@ -1,36 +1,15 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Plus, X } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 const fieldStyles = {
-  height: { xs: 28, sm: 36, md: 45 },
+  height: { xs: 36, sm: 40, md: 44 },
   '& .MuiInputBase-input, & .MuiSelect-select': {
     padding: { xs: '8px', sm: '10px', md: '12px' },
-  },
-  '& .MuiOutlinedInput-root': {
-    borderRadius: '8px',
-    backgroundColor: 'white',
-    '& fieldset': {
-      borderColor: '#e5e7eb',
-    },
-    '&:hover fieldset': {
-      borderColor: '#9ca3af',
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
-    },
-  },
-  '& .MuiInputLabel-root': {
-    color: '#6b7280',
-    '&.Mui-focused': {
-      color: '#C72030',
-    },
   },
 };
 
@@ -136,48 +115,26 @@ export const AddMasterChecklistPage = () => {
               </div>
             </div>
 
-            <Input
-              label="Activity Name *"
-              value={activityName}
-              onChange={(e) => setActivityName(e.target.value)}
-              required
-            />
-
-            <div className="md:col-span-2">
-              <div className="field-group relative" style={{ margin: '20px 0' }}>
-                <textarea
-                  rows={3}
-                  className="floating-label flex min-h-[80px] w-full pt-4 pb-2 px-[15px] text-base border border-[#ccc] rounded transition-colors focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[#C72030] resize-vertical"
-                  placeholder=""
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-                <label className={`absolute left-[15px] transition-all duration-150 ease-in text-[#676767] pointer-events-none ${description ? 'field-active -translate-y-[25px] text-[0.9em] text-black' : 'top-4 text-base'}`}
-                  style={{
-                    textShadow: description ? '1px 0 0 #fff, -1px 0 0 #fff, 2px 0 0 #fff, -2px 0 0 #fff, 0 1px 0 #fff, 0 -1px 0 #fff, 0 2px 0 #fff, 0 -2px 0 #fff' : 'none'
-                  }}>
-                  Description
-                </label>
-              </div>
+            <div>
+              <Label className="block mb-2 text-sm font-medium">Activity Name <span className="text-red-500">*</span></Label>
+              <TextField fullWidth required placeholder="Enter Activity" value={activityName} onChange={(e) => setActivityName(e.target.value)} variant="outlined" InputProps={{ sx: fieldStyles }} />
             </div>
 
-            <div className="field-group relative" style={{ margin: '20px 0' }}>
-              <select
-                className="floating-label w-full pt-4 pb-2 px-[15px] text-base border border-[#ccc] rounded transition-colors focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[#C72030] bg-white"
-                value={assetType}
-                onChange={(e) => setAssetType(e.target.value)}
-              >
-                <option value="">Select Asset Type</option>
-                {['electrical', 'mechanical', 'hvac', 'plumbing', 'fire-safety'].map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-              <label className={`absolute left-[15px] transition-all duration-150 ease-in text-[#676767] pointer-events-none ${assetType ? 'field-active -translate-y-[25px] text-[0.9em] text-black' : 'top-4 text-base'}`}
-                style={{
-                  textShadow: assetType ? '1px 0 0 #fff, -1px 0 0 #fff, 2px 0 0 #fff, -2px 0 0 #fff, 0 1px 0 #fff, 0 -1px 0 #fff, 0 2px 0 #fff, 0 -2px 0 #fff' : 'none'
-                }}>
-                Select Asset Type
-              </label>
+            <div className="md:col-span-2">
+              <Label className="block mb-2 text-sm font-medium">Description</Label>
+              <TextField multiline minRows={3} fullWidth placeholder="Enter Description" value={description} onChange={(e) => setDescription(e.target.value)} variant="outlined" InputProps={{ sx: fieldStyles }} />
+            </div>
+
+            <div>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Select Asset Type</InputLabel>
+                <MuiSelect displayEmpty value={assetType} onChange={(e) => setAssetType(e.target.value)} sx={fieldStyles}>
+                  <MenuItem value=""><em>Select Asset Type</em></MenuItem>
+                  {['electrical', 'mechanical', 'hvac', 'plumbing', 'fire-safety'].map(type => (
+                    <MenuItem key={type} value={type}>{type}</MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
         </div>
@@ -200,16 +157,10 @@ export const AddMasterChecklistPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               {['group', 'subGroup'].map((field, i) => (
                 <div key={i}>
-                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                    <InputLabel id={`${field}-label-${section.id}`} shrink>Select {field === 'group' ? 'Group' : 'Sub Group'}</InputLabel>
-                    <MuiSelect 
-                      labelId={`${field}-label-${section.id}`}
-                      label={`Select ${field === 'group' ? 'Group' : 'Sub Group'}`}
-                      displayEmpty 
-                      value={section[field]} 
-                      onChange={(e) => updateTaskSection(section.id, field, e.target.value)} 
-                      sx={fieldStyles}
-                    >
+                  <Label className="text-sm font-medium mb-2 block">Select {field === 'group' ? 'Group' : 'Sub Group'}</Label>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Select</InputLabel>
+                    <MuiSelect displayEmpty value={section[field]} onChange={(e) => updateTaskSection(section.id, field, e.target.value)} sx={fieldStyles}>
                       <MenuItem value=""><em>Select</em></MenuItem>
                       {['electrical', 'mechanical', 'safety', 'maintenance', 'lighting', 'power', 'ventilation', 'cleaning'].map(opt => (
                         <MenuItem key={opt} value={opt}>{opt}</MenuItem>
@@ -222,21 +173,10 @@ export const AddMasterChecklistPage = () => {
 
             {section.tasks.map(task => (
               <div key={task.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 border p-4 rounded">
-                <Input
-                  label="Task *"
-                  value={task.taskName}
-                  onChange={(e) => updateTask(section.id, task.id, 'taskName', e.target.value)}
-                />
-                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                  <InputLabel id={`input-type-label-${task.id}`} shrink>Select Input Type</InputLabel>
-                  <MuiSelect 
-                    labelId={`input-type-label-${task.id}`}
-                    label="Select Input Type"
-                    displayEmpty 
-                    value={task.inputType} 
-                    onChange={(e) => updateTask(section.id, task.id, 'inputType', e.target.value)} 
-                    sx={fieldStyles}
-                  >
+                <TextField placeholder="Enter Task" fullWidth value={task.taskName} onChange={(e) => updateTask(section.id, task.id, 'taskName', e.target.value)} variant="outlined" label="Task *" InputProps={{ sx: fieldStyles }} />
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Select Input Type</InputLabel>
+                  <MuiSelect displayEmpty value={task.inputType} onChange={(e) => updateTask(section.id, task.id, 'inputType', e.target.value)} sx={fieldStyles}>
                     <MenuItem value=""><em>Select Input Type</em></MenuItem>
                     {['text', 'number', 'checkbox', 'dropdown', 'date'].map(opt => (
                       <MenuItem key={opt} value={opt}>{opt}</MenuItem>
