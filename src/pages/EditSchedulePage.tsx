@@ -1,16 +1,25 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Plus, Upload, X } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { 
+  TextField, 
+  Select, 
+  MenuItem, 
+  FormControl, 
+  InputLabel, 
+  Radio, 
+  RadioGroup, 
+  FormControlLabel, 
+  Checkbox, 
+  FormGroup,
+  Box
+} from '@mui/material';
 
 export const EditSchedulePage = () => {
   const { id } = useParams();
@@ -180,12 +189,16 @@ export const EditSchedulePage = () => {
                     <Checkbox 
                       id={`minute-${minute}`}
                       checked={selectedMinutes.includes(minute)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
+                      onChange={(e) => {
+                        if (e.target.checked) {
                           setSelectedMinutes([...selectedMinutes, minute]);
                         } else {
                           setSelectedMinutes(selectedMinutes.filter(m => m !== minute));
                         }
+                      }}
+                      sx={{
+                        color: '#C72030',
+                        '&.Mui-checked': { color: '#C72030' }
                       }}
                     />
                     <Label htmlFor={`minute-${minute}`} className="text-sm font-medium">{minute}</Label>
@@ -207,27 +220,37 @@ export const EditSchedulePage = () => {
               className="text-blue-600"
             />
             <Label htmlFor="every-minute" className="font-medium">Every minute between minute</Label>
-            <Select>
-              <SelectTrigger className="w-20">
-                <SelectValue placeholder="00" />
-              </SelectTrigger>
-              <SelectContent>
+            <FormControl size="small" sx={{ minWidth: 80 }}>
+              <Select
+                value="00"
+                displayEmpty
+                sx={{
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                }}
+              >
                 {minutes.map((minute) => (
-                  <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+                  <MenuItem key={minute} value={minute}>{minute}</MenuItem>
                 ))}
-              </SelectContent>
-            </Select>
+              </Select>
+            </FormControl>
             <span className="text-sm">and minute</span>
-            <Select>
-              <SelectTrigger className="w-20">
-                <SelectValue placeholder="00" />
-              </SelectTrigger>
-              <SelectContent>
+            <FormControl size="small" sx={{ minWidth: 80 }}>
+              <Select
+                value="00"
+                displayEmpty
+                sx={{
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                }}
+              >
                 {minutes.map((minute) => (
-                  <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+                  <MenuItem key={minute} value={minute}>{minute}</MenuItem>
                 ))}
-              </SelectContent>
-            </Select>
+              </Select>
+            </FormControl>
           </div>
         </div>
       </div>
@@ -260,12 +283,16 @@ export const EditSchedulePage = () => {
                     <Checkbox 
                       id={`hour-${hour}`}
                       checked={selectedHours.includes(hour)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
+                      onChange={(e) => {
+                        if (e.target.checked) {
                           setSelectedHours([...selectedHours, hour]);
                         } else {
                           setSelectedHours(selectedHours.filter(h => h !== hour));
                         }
+                      }}
+                      sx={{
+                        color: '#C72030',
+                        '&.Mui-checked': { color: '#C72030' }
                       }}
                     />
                     <Label htmlFor={`hour-${hour}`} className="text-sm font-medium">{hour}</Label>
@@ -287,27 +314,37 @@ export const EditSchedulePage = () => {
               className="text-blue-600"
             />
             <Label htmlFor="every-hour" className="font-medium">Every hour between hour</Label>
-            <Select>
-              <SelectTrigger className="w-20">
-                <SelectValue placeholder="00" />
-              </SelectTrigger>
-              <SelectContent>
+            <FormControl size="small" sx={{ minWidth: 80 }}>
+              <Select
+                value="00"
+                displayEmpty
+                sx={{
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                }}
+              >
                 {hours.map((hour) => (
-                  <SelectItem key={hour} value={hour}>{hour}</SelectItem>
+                  <MenuItem key={hour} value={hour}>{hour}</MenuItem>
                 ))}
-              </SelectContent>
-            </Select>
+              </Select>
+            </FormControl>
             <span className="text-sm">and hour</span>
-            <Select>
-              <SelectTrigger className="w-20">
-                <SelectValue placeholder="23" />
-              </SelectTrigger>
-              <SelectContent>
+            <FormControl size="small" sx={{ minWidth: 80 }}>
+              <Select
+                value="23"
+                displayEmpty
+                sx={{
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                }}
+              >
                 {hours.map((hour) => (
-                  <SelectItem key={hour} value={hour}>{hour}</SelectItem>
+                  <MenuItem key={hour} value={hour}>{hour}</MenuItem>
                 ))}
-              </SelectContent>
-            </Select>
+              </Select>
+            </FormControl>
           </div>
         </div>
       </div>
@@ -340,12 +377,16 @@ export const EditSchedulePage = () => {
                     <Checkbox 
                       id={`day-${day}`}
                       checked={selectedDays.includes(day)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
+                      onChange={(e) => {
+                        if (e.target.checked) {
                           setSelectedDays([...selectedDays, day]);
                         } else {
                           setSelectedDays(selectedDays.filter(d => d !== day));
                         }
+                      }}
+                      sx={{
+                        color: '#C72030',
+                        '&.Mui-checked': { color: '#C72030' }
                       }}
                     />
                     <Label htmlFor={`day-${day}`} className="text-sm font-medium">{day}</Label>
@@ -367,27 +408,37 @@ export const EditSchedulePage = () => {
               className="text-blue-600"
             />
             <Label htmlFor="every-day" className="font-medium">Every day between day</Label>
-            <Select>
-              <SelectTrigger className="w-20">
-                <SelectValue placeholder="1" />
-              </SelectTrigger>
-              <SelectContent>
+            <FormControl size="small" sx={{ minWidth: 80 }}>
+              <Select
+                value="1"
+                displayEmpty
+                sx={{
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                }}
+              >
                 {days.map((day) => (
-                  <SelectItem key={day} value={day}>{day}</SelectItem>
+                  <MenuItem key={day} value={day}>{day}</MenuItem>
                 ))}
-              </SelectContent>
-            </Select>
+              </Select>
+            </FormControl>
             <span className="text-sm">and day</span>
-            <Select>
-              <SelectTrigger className="w-20">
-                <SelectValue placeholder="31" />
-              </SelectTrigger>
-              <SelectContent>
+            <FormControl size="small" sx={{ minWidth: 80 }}>
+              <Select
+                value="31"
+                displayEmpty
+                sx={{
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                }}
+              >
                 {days.map((day) => (
-                  <SelectItem key={day} value={day}>{day}</SelectItem>
+                  <MenuItem key={day} value={day}>{day}</MenuItem>
                 ))}
-              </SelectContent>
-            </Select>
+              </Select>
+            </FormControl>
           </div>
         </div>
       </div>
@@ -433,12 +484,16 @@ export const EditSchedulePage = () => {
                     <Checkbox 
                       id={`month-${month.value}`}
                       checked={selectedMonths.includes(month.value)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
+                      onChange={(e) => {
+                        if (e.target.checked) {
                           setSelectedMonths([...selectedMonths, month.value]);
                         } else {
                           setSelectedMonths(selectedMonths.filter(m => m !== month.value));
                         }
+                      }}
+                      sx={{
+                        color: '#C72030',
+                        '&.Mui-checked': { color: '#C72030' }
                       }}
                     />
                     <Label htmlFor={`month-${month.value}`} className="text-sm font-medium">{month.label}</Label>
@@ -460,27 +515,37 @@ export const EditSchedulePage = () => {
               className="text-blue-600"
             />
             <Label htmlFor="every-month" className="font-medium">Every month between month</Label>
-            <Select>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="January" />
-              </SelectTrigger>
-              <SelectContent>
+            <FormControl size="small" sx={{ minWidth: 128 }}>
+              <Select
+                value="1"
+                displayEmpty
+                sx={{
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                }}
+              >
                 {months.map((month) => (
-                  <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                  <MenuItem key={month.value} value={month.value}>{month.label}</MenuItem>
                 ))}
-              </SelectContent>
-            </Select>
+              </Select>
+            </FormControl>
             <span className="text-sm">and month</span>
-            <Select>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="December" />
-              </SelectTrigger>
-              <SelectContent>
+            <FormControl size="small" sx={{ minWidth: 128 }}>
+              <Select
+                value="12"
+                displayEmpty
+                sx={{
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                }}
+              >
                 {months.map((month) => (
-                  <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                  <MenuItem key={month.value} value={month.value}>{month.label}</MenuItem>
                 ))}
-              </SelectContent>
-            </Select>
+              </Select>
+            </FormControl>
           </div>
         </div>
       </div>
@@ -488,7 +553,7 @@ export const EditSchedulePage = () => {
   };
 
   return (
-    <div className="p-6 mx-auto">
+    <div className="p-6 max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1a1a1a] mb-4">Edit Schedule</h1>
@@ -543,17 +608,24 @@ export const EditSchedulePage = () => {
             </div>
             
             <div>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-64">
-                  <SelectValue placeholder="Select Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="technical">Technical</SelectItem>
-                  <SelectItem value="non-technical">Non Technical</SelectItem>
-                  <SelectItem value="safety">Safety</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl sx={{ minWidth: 256 }}>
+                <InputLabel>Select Category</InputLabel>
+                <Select
+                  value={selectedCategory}
+                  label="Select Category"
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                  }}
+                >
+                  <MenuItem value="technical">Technical</MenuItem>
+                  <MenuItem value="non-technical">Non Technical</MenuItem>
+                  <MenuItem value="safety">Safety</MenuItem>
+                  <MenuItem value="maintenance">Maintenance</MenuItem>
+                </Select>
+              </FormControl>
             </div>
           </div>
         )}
@@ -563,8 +635,8 @@ export const EditSchedulePage = () => {
         {/* Basic Info */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-orange-600 flex items-center gap-2">
-              <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+            <CardTitle className="text-[#C72030] flex items-center gap-2">
+              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
               Basic Info
             </CardTitle>
           </CardHeader>
@@ -572,72 +644,110 @@ export const EditSchedulePage = () => {
             <div className="space-y-4">
               <div className="space-y-3">
                 <Label className="text-base font-medium">Type</Label>
-                <RadioGroup value={type} onValueChange={setType} className="flex gap-6 flex-wrap">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="PPM" id="ppm" />
-                    <Label htmlFor="ppm">PPM</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="AMC" id="amc" />
-                    <Label htmlFor="amc">AMC</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Preparedness" id="preparedness" />
-                    <Label htmlFor="preparedness">Preparedness</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Hoto" id="hoto" />
-                    <Label htmlFor="hoto">Hoto</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Routine" id="routine" />
-                    <Label htmlFor="routine">Routine</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Audit" id="audit" />
-                    <Label htmlFor="audit">Audit</Label>
-                  </div>
+                <RadioGroup 
+                  value={type} 
+                  onChange={(e) => setType(e.target.value)} 
+                  row
+                  sx={{ gap: 3, flexWrap: 'wrap' }}
+                >
+                  <FormControlLabel 
+                    value="PPM" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="PPM" 
+                  />
+                  <FormControlLabel 
+                    value="AMC" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="AMC" 
+                  />
+                  <FormControlLabel 
+                    value="Preparedness" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Preparedness" 
+                  />
+                  <FormControlLabel 
+                    value="Hoto" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Hoto" 
+                  />
+                  <FormControlLabel 
+                    value="Routine" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Routine" 
+                  />
+                  <FormControlLabel 
+                    value="Audit" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Audit" 
+                  />
                 </RadioGroup>
               </div>
               
               <div className="space-y-3">
                 <Label className="text-base font-medium">Schedule For</Label>
-                <RadioGroup value={scheduleFor} onValueChange={setScheduleFor} className="flex gap-6 flex-wrap">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Asset" id="asset-schedule" />
-                    <Label htmlFor="asset-schedule">Asset</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Service" id="service" />
-                    <Label htmlFor="service">Service</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Vendor" id="vendor" />
-                    <Label htmlFor="vendor">Vendor</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Training" id="training" />
-                    <Label htmlFor="training">Training</Label>
-                  </div>
+                <RadioGroup 
+                  value={scheduleFor} 
+                  onChange={(e) => setScheduleFor(e.target.value)} 
+                  row
+                  sx={{ gap: 3, flexWrap: 'wrap' }}
+                >
+                  <FormControlLabel 
+                    value="Asset" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Asset" 
+                  />
+                  <FormControlLabel 
+                    value="Service" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Service" 
+                  />
+                  <FormControlLabel 
+                    value="Vendor" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Vendor" 
+                  />
+                  <FormControlLabel 
+                    value="Training" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Training" 
+                  />
                 </RadioGroup>
               </div>
             </div>
             
             <div className="space-y-2">
               <Label>Activity Name*</Label>
-              <Input
+              <TextField
                 value={activityName}
                 onChange={(e) => setActivityName(e.target.value)}
                 placeholder="Activity Name"
+                fullWidth
+                size="medium"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': { borderColor: '#e5e7eb' },
+                    '&:hover fieldset': { borderColor: '#C72030' },
+                    '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                  }
+                }}
               />
             </div>
             <div className="space-y-2">
               <Label>Description</Label>
-              <Textarea
+              <TextField
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Enter Description"
-                className="min-h-[100px]"
+                multiline
+                rows={4}
+                fullWidth
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': { borderColor: '#e5e7eb' },
+                    '&:hover fieldset': { borderColor: '#C72030' },
+                    '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                  }
+                }}
               />
             </div>
           </CardContent>
@@ -647,8 +757,8 @@ export const EditSchedulePage = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-orange-600 flex items-center gap-2">
-                <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
+              <CardTitle className="text-[#C72030] flex items-center gap-2">
+                <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
                 Task
               </CardTitle>
               <Button 
@@ -665,27 +775,41 @@ export const EditSchedulePage = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Group</Label>
-                <Select value={group} onValueChange={setGroup}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="group1">Group 1</SelectItem>
-                    <SelectItem value="group2">Group 2</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth>
+                  <InputLabel>Select Group</InputLabel>
+                  <Select
+                    value={group}
+                    label="Select Group"
+                    onChange={(e) => setGroup(e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                    }}
+                  >
+                    <MenuItem value="group1">Group 1</MenuItem>
+                    <MenuItem value="group2">Group 2</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
                 <Label>SubGroup</Label>
-                <Select value={subGroup} onValueChange={setSubGroup}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Sub Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="subgroup1">Sub Group 1</SelectItem>
-                    <SelectItem value="subgroup2">Sub Group 2</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth>
+                  <InputLabel>Select Sub Group</InputLabel>
+                  <Select
+                    value={subGroup}
+                    label="Select Sub Group"
+                    onChange={(e) => setSubGroup(e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                    }}
+                  >
+                    <MenuItem value="subgroup1">Sub Group 1</MenuItem>
+                    <MenuItem value="subgroup2">Sub Group 2</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
             </div>
             
@@ -695,14 +819,21 @@ export const EditSchedulePage = () => {
                 <div key={section.id} className="border rounded-lg p-4 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Input
+                      <TextField
                         value={section.name}
                         onChange={(e) => {
                           setSections(sections.map(s => 
                             s.id === section.id ? { ...s, name: e.target.value } : s
                           ));
                         }}
-                        className="font-medium"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            fontWeight: 'medium',
+                            '& fieldset': { borderColor: '#e5e7eb' },
+                            '&:hover fieldset': { borderColor: '#C72030' },
+                            '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                          }
+                        }}
                       />
                     </div>
                     <div className="flex items-center gap-2">
@@ -744,43 +875,65 @@ export const EditSchedulePage = () => {
                         {section.tasks.map((task) => (
                           <TableRow key={task.id}>
                             <TableCell>
-                              <Input
+                              <TextField
                                 value={task.task}
                                 onChange={(e) => handleUpdateTask(section.id, task.id, 'task', e.target.value)}
+                                size="small"
+                                sx={{
+                                  '& .MuiOutlinedInput-root': {
+                                    '& fieldset': { borderColor: '#e5e7eb' },
+                                    '&:hover fieldset': { borderColor: '#C72030' },
+                                    '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                                  }
+                                }}
                               />
                             </TableCell>
                             <TableCell>
-                              <Select 
-                                value={task.inputType} 
-                                onValueChange={(value) => handleUpdateTask(section.id, task.id, 'inputType', value)}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Text">Text</SelectItem>
-                                  <SelectItem value="Numeric">Numeric</SelectItem>
-                                  <SelectItem value="Date">Date</SelectItem>
-                                  <SelectItem value="Boolean">Boolean</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              <FormControl size="small" sx={{ minWidth: 120 }}>
+                                <Select
+                                  value={task.inputType}
+                                  onChange={(e) => handleUpdateTask(section.id, task.id, 'inputType', e.target.value)}
+                                  sx={{
+                                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                                  }}
+                                >
+                                  <MenuItem value="Text">Text</MenuItem>
+                                  <MenuItem value="Numeric">Numeric</MenuItem>
+                                  <MenuItem value="Date">Date</MenuItem>
+                                  <MenuItem value="Boolean">Boolean</MenuItem>
+                                </Select>
+                              </FormControl>
                             </TableCell>
                             <TableCell>
                               <Checkbox 
                                 checked={task.mandatory}
-                                onCheckedChange={(checked) => handleUpdateTask(section.id, task.id, 'mandatory', checked)}
+                                onChange={(e) => handleUpdateTask(section.id, task.id, 'mandatory', e.target.checked)}
+                                sx={{
+                                  color: '#C72030',
+                                  '&.Mui-checked': { color: '#C72030' }
+                                }}
                               />
                             </TableCell>
                             <TableCell>
                               <Checkbox 
                                 checked={task.reading}
-                                onCheckedChange={(checked) => handleUpdateTask(section.id, task.id, 'reading', checked)}
+                                onChange={(e) => handleUpdateTask(section.id, task.id, 'reading', e.target.checked)}
+                                sx={{
+                                  color: '#C72030',
+                                  '&.Mui-checked': { color: '#C72030' }
+                                }}
                               />
                             </TableCell>
                             <TableCell>
                               <Checkbox 
                                 checked={task.helpText}
-                                onCheckedChange={(checked) => handleUpdateTask(section.id, task.id, 'helpText', checked)}
+                                onChange={(e) => handleUpdateTask(section.id, task.id, 'helpText', e.target.checked)}
+                                sx={{
+                                  color: '#C72030',
+                                  '&.Mui-checked': { color: '#C72030' }
+                                }}
                               />
                             </TableCell>
                             <TableCell>
@@ -807,67 +960,96 @@ export const EditSchedulePage = () => {
         {/* Schedule */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-orange-600 flex items-center gap-2">
-              <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
+            <CardTitle className="text-[#C72030] flex items-center gap-2">
+              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
               Schedule
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Asset</Label>
-              <Select value={asset} onValueChange={setAsset}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Energy Meter 1[584931186764c2f8b565]">Energy Meter 1[584931186764c2f8b565]</SelectItem>
-                  <SelectItem value="Energy Meter 23[03835269926136105d:1]">Energy Meter 23[03835269926136105d:1]</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth>
+                <Select
+                  value={asset}
+                  onChange={(e) => setAsset(e.target.value)}
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                  }}
+                >
+                  <MenuItem value="Energy Meter 1[584931186764c2f8b565]">Energy Meter 1[584931186764c2f8b565]</MenuItem>
+                  <MenuItem value="Energy Meter 23[03835269926136105d:1]">Energy Meter 23[03835269926136105d:1]</MenuItem>
+                </Select>
+              </FormControl>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Assign To</Label>
-                <Select value={assignTo} onValueChange={setAssignTo}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Users">Users</SelectItem>
-                    <SelectItem value="Groups">Groups</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth>
+                  <Select
+                    value={assignTo}
+                    onChange={(e) => setAssignTo(e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                    }}
+                  >
+                    <MenuItem value="Users">Users</MenuItem>
+                    <MenuItem value="Groups">Groups</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
                 <Label>Scan Type</Label>
-                <Select value={scanType} onValueChange={setScanType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Scan Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="qr">QR Code</SelectItem>
-                    <SelectItem value="barcode">Barcode</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth>
+                  <InputLabel>Select Scan Type</InputLabel>
+                  <Select
+                    value={scanType}
+                    label="Select Scan Type"
+                    onChange={(e) => setScanType(e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                    }}
+                  >
+                    <MenuItem value="qr">QR Code</MenuItem>
+                    <MenuItem value="barcode">Barcode</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
                 <Label>Plan Duration</Label>
                 <div className="flex gap-2">
-                  <Select value={planDuration} onValueChange={setPlanDuration}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Day">Day</SelectItem>
-                      <SelectItem value="Hour">Hour</SelectItem>
-                      <SelectItem value="Week">Week</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input
+                  <FormControl>
+                    <Select
+                      value={planDuration}
+                      onChange={(e) => setPlanDuration(e.target.value)}
+                      sx={{
+                        '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                      }}
+                    >
+                      <MenuItem value="Day">Day</MenuItem>
+                      <MenuItem value="Hour">Hour</MenuItem>
+                      <MenuItem value="Week">Week</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <TextField
                     value={planDurationField}
                     onChange={(e) => setPlanDurationField(e.target.value)}
-                    className="w-20"
+                    sx={{
+                      width: 80,
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': { borderColor: '#e5e7eb' },
+                        '&:hover fieldset': { borderColor: '#C72030' },
+                        '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                      }
+                    }}
                   />
                 </div>
               </div>
@@ -876,73 +1058,114 @@ export const EditSchedulePage = () => {
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Priority</Label>
-                <Select value={priority} onValueChange={setPriority}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth>
+                  <InputLabel>Select Priority</InputLabel>
+                  <Select
+                    value={priority}
+                    label="Select Priority"
+                    onChange={(e) => setPriority(e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                    }}
+                  >
+                    <MenuItem value="high">High</MenuItem>
+                    <MenuItem value="medium">Medium</MenuItem>
+                    <MenuItem value="low">Low</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
                 <Label>Email Trigger Rule</Label>
-                <Select value={emailTriggerRule} onValueChange={setEmailTriggerRule}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Email Trigger Rule" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="rule1">Rule 1</SelectItem>
-                    <SelectItem value="rule2">Rule 2</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth>
+                  <InputLabel>Select Email Trigger Rule</InputLabel>
+                  <Select
+                    value={emailTriggerRule}
+                    label="Select Email Trigger Rule"
+                    onChange={(e) => setEmailTriggerRule(e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                    }}
+                  >
+                    <MenuItem value="rule1">Rule 1</MenuItem>
+                    <MenuItem value="rule2">Rule 2</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
                 <Label>Supervisors</Label>
-                <Select value={supervisors} onValueChange={setSupervisors}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Supervisors" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="supervisor1">Supervisor 1</SelectItem>
-                    <SelectItem value="supervisor2">Supervisor 2</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth>
+                  <InputLabel>Select Supervisors</InputLabel>
+                  <Select
+                    value={supervisors}
+                    label="Select Supervisors"
+                    onChange={(e) => setSupervisors(e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                    }}
+                  >
+                    <MenuItem value="supervisor1">Supervisor 1</MenuItem>
+                    <MenuItem value="supervisor2">Supervisor 2</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Technical">Technical</SelectItem>
-                    <SelectItem value="Non Technical">Non Technical</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth>
+                  <Select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                    }}
+                  >
+                    <MenuItem value="Technical">Technical</MenuItem>
+                    <MenuItem value="Non Technical">Non Technical</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
                 <Label>Submission Time</Label>
-                <Select value={submissionTime} onValueChange={setSubmissionTime}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Submission Time" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="immediate">Immediate</SelectItem>
-                    <SelectItem value="delayed">Delayed</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth>
+                  <InputLabel>Select Submission Time</InputLabel>
+                  <Select
+                    value={submissionTime}
+                    label="Select Submission Time"
+                    onChange={(e) => setSubmissionTime(e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                    }}
+                  >
+                    <MenuItem value="immediate">Immediate</MenuItem>
+                    <MenuItem value="delayed">Delayed</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
                 <Label>Submission Time Field</Label>
-                <Input
+                <TextField
                   value={submissionTimeField}
                   onChange={(e) => setSubmissionTimeField(e.target.value)}
+                  fullWidth
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': { borderColor: '#e5e7eb' },
+                      '&:hover fieldset': { borderColor: '#C72030' },
+                      '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                    }
+                  }}
                 />
               </div>
             </div>
@@ -951,87 +1174,144 @@ export const EditSchedulePage = () => {
               <div className="space-y-2">
                 <Label>Grace Time</Label>
                 <div className="flex gap-2">
-                  <Select value={graceTime} onValueChange={setGraceTime}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Day">Day</SelectItem>
-                      <SelectItem value="Hour">Hour</SelectItem>
-                      <SelectItem value="Week">Week</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input
+                  <FormControl>
+                    <Select
+                      value={graceTime}
+                      onChange={(e) => setGraceTime(e.target.value)}
+                      sx={{
+                        '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                      }}
+                    >
+                      <MenuItem value="Day">Day</MenuItem>
+                      <MenuItem value="Hour">Hour</MenuItem>
+                      <MenuItem value="Week">Week</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <TextField
                     value={graceTimeField}
                     onChange={(e) => setGraceTimeField(e.target.value)}
-                    className="w-20"
+                    sx={{
+                      width: 80,
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': { borderColor: '#e5e7eb' },
+                        '&:hover fieldset': { borderColor: '#C72030' },
+                        '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                      }
+                    }}
                   />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Lock Overdue Task</Label>
-                <Select value={lockOverdueTask} onValueChange={setLockOverdueTask}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Lock Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="yes">Yes</SelectItem>
-                    <SelectItem value="no">No</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth>
+                  <InputLabel>Select Lock Status</InputLabel>
+                  <Select
+                    value={lockOverdueTask}
+                    label="Select Lock Status"
+                    onChange={(e) => setLockOverdueTask(e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                    }}
+                  >
+                    <MenuItem value="yes">Yes</MenuItem>
+                    <MenuItem value="no">No</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
                 <Label>Frequency</Label>
-                <Select value={frequency} onValueChange={setFrequency}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Frequency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth>
+                  <InputLabel>Select Frequency</InputLabel>
+                  <Select
+                    value={frequency}
+                    label="Select Frequency"
+                    onChange={(e) => setFrequency(e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                    }}
+                  >
+                    <MenuItem value="daily">Daily</MenuItem>
+                    <MenuItem value="weekly">Weekly</MenuItem>
+                    <MenuItem value="monthly">Monthly</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Cron Expression</Label>
-                <Input
+                <TextField
                   value={cronExpression}
                   onChange={(e) => setCronExpression(e.target.value)}
+                  fullWidth
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': { borderColor: '#e5e7eb' },
+                      '&:hover fieldset': { borderColor: '#C72030' },
+                      '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                    }
+                  }}
                 />
               </div>
               <div className="space-y-2">
                 <Label>Start From</Label>
-                <Input
+                <TextField
                   type="date"
                   value={startFrom}
                   onChange={(e) => setStartFrom(e.target.value)}
+                  fullWidth
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': { borderColor: '#e5e7eb' },
+                      '&:hover fieldset': { borderColor: '#C72030' },
+                      '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                    }
+                  }}
                 />
               </div>
               <div className="space-y-2">
                 <Label>End At</Label>
-                <Input
+                <TextField
                   type="date"
                   value={endAt}
                   onChange={(e) => setEndAt(e.target.value)}
+                  fullWidth
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': { borderColor: '#e5e7eb' },
+                      '&:hover fieldset': { borderColor: '#C72030' },
+                      '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                    }
+                  }}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label>Select Supplier</Label>
-              <Select value={selectSupplier} onValueChange={setSelectSupplier}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Supplier" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="supplier1">Supplier 1</SelectItem>
-                  <SelectItem value="supplier2">Supplier 2</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth>
+                <InputLabel>Select Supplier</InputLabel>
+                <Select
+                  value={selectSupplier}
+                  label="Select Supplier"
+                  onChange={(e) => setSelectSupplier(e.target.value)}
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
+                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
+                  }}
+                >
+                  <MenuItem value="supplier1">Supplier 1</MenuItem>
+                  <MenuItem value="supplier2">Supplier 2</MenuItem>
+                </Select>
+              </FormControl>
             </div>
           </CardContent>
         </Card>
@@ -1040,8 +1320,8 @@ export const EditSchedulePage = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-orange-600 flex items-center gap-2">
-                <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">4</span>
+              <CardTitle className="text-[#C72030] flex items-center gap-2">
+                <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">4</span>
                 Cron Settings
               </CardTitle>
               <div className="flex items-center space-x-2">
@@ -1049,7 +1329,11 @@ export const EditSchedulePage = () => {
                 <Checkbox 
                   id="edit-timings"
                   checked={editTimings}
-                  onCheckedChange={(checked) => setEditTimings(checked === true)}
+                  onChange={(e) => setEditTimings(e.target.checked)}
+                  sx={{
+                    color: '#C72030',
+                    '&.Mui-checked': { color: '#C72030' }
+                  }}
                 />
               </div>
             </div>
@@ -1118,8 +1402,8 @@ export const EditSchedulePage = () => {
         {/* Associations */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-orange-600 flex items-center gap-2">
-              <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">5</span>
+            <CardTitle className="text-[#C72030] flex items-center gap-2">
+              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">5</span>
               Associations
             </CardTitle>
           </CardHeader>
@@ -1154,8 +1438,8 @@ export const EditSchedulePage = () => {
         {/* Email Trigger Rule */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-orange-600 flex items-center gap-2">
-              <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
+            <CardTitle className="text-[#C72030] flex items-center gap-2">
+              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
               Email Trigger Rule
             </CardTitle>
           </CardHeader>
@@ -1183,8 +1467,8 @@ export const EditSchedulePage = () => {
         {/* Asset Mapping List */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-orange-600 flex items-center gap-2">
-              <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">7</span>
+            <CardTitle className="text-[#C72030] flex items-center gap-2">
+              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">7</span>
               Asset Mapping List
             </CardTitle>
           </CardHeader>
