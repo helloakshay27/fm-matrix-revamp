@@ -20,6 +20,56 @@ import {
   Box
 } from '@mui/material';
 
+const muiFieldStyles = {
+  width: '100%',
+  '& .MuiOutlinedInput-root': {
+    height: { xs: '36px', md: '45px' },
+    borderRadius: '8px',
+    backgroundColor: '#FFFFFF',
+    '& fieldset': {
+      borderColor: '#E0E0E0',
+    },
+    '&:hover fieldset': {
+      borderColor: '#1A1A1A',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+      borderWidth: 2,
+    },
+  },
+  '& .MuiInputLabel-root': {
+    color: '#666666',
+    fontSize: '16px',
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+    '&.MuiInputLabel-shrink': {
+      transform: 'translate(14px, -9px) scale(0.75)',
+      backgroundColor: '#FFFFFF',
+      padding: '0 4px',
+    },
+  },
+  '& .MuiOutlinedInput-input, & .MuiSelect-select': {
+    color: '#1A1A1A',
+    fontSize: '14px',
+    padding: { xs: '8px 14px', md: '12px 14px' },
+    height: 'auto',
+    '&::placeholder': {
+      color: '#999999',
+      opacity: 1,
+    },
+  },
+};
+
+const multilineFieldStyles = {
+  ...muiFieldStyles,
+  '& .MuiOutlinedInput-root': {
+    ...muiFieldStyles['& .MuiOutlinedInput-root'],
+    height: 'auto',
+    alignItems: 'flex-start',
+  },
+};
+
 export const EditSchedulePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -621,12 +671,7 @@ export const EditSchedulePage = () => {
                   value={selectedCategory}
                   label="Select Category"
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  sx={{
-                    height: { xs: '36px', md: '45px' },
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
-                  }}
+                  sx={muiFieldStyles}
                 >
                   <MenuItem value="technical">Technical</MenuItem>
                   <MenuItem value="non-technical">Non Technical</MenuItem>
@@ -724,78 +769,33 @@ export const EditSchedulePage = () => {
             </div>
             
             <div className="space-y-2">
-              <Label>Activity Name*</Label>
               <TextField
+                label="Activity Name*"
                 value={activityName}
                 onChange={(e) => setActivityName(e.target.value)}
                 placeholder="Activity Name"
                 fullWidth
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    height: { xs: '36px', md: '45px' },
-                    '& fieldset': { borderColor: '#e5e7eb' },
-                    '&:hover fieldset': { borderColor: '#C72030' },
-                    '&.Mui-focused fieldset': { borderColor: '#C72030' },
-                    '& input': {
-                      textAlign: 'left',
-                      padding: '0 14px',
-                      display: 'flex',
-                      alignItems: 'center'
-                    }
-                  },
-                  '& .MuiInputBase-input::placeholder': {
-                    textAlign: 'left',
-                    opacity: 0.6
-                  }
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
                 }}
-                InputProps={{
-                  sx: {
-                    '& input': {
-                      textAlign: 'left',
-                      '&::placeholder': {
-                        textAlign: 'left',
-                        opacity: 0.6
-                      }
-                    }
-                  }
-                }}
+                sx={muiFieldStyles}
               />
             </div>
             <div className="space-y-2">
-              <Label>Description</Label>
               <TextField
+                label="Description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Enter Description"
                 multiline
                 rows={4}
                 fullWidth
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': { borderColor: '#e5e7eb' },
-                    '&:hover fieldset': { borderColor: '#C72030' },
-                    '&.Mui-focused fieldset': { borderColor: '#C72030' },
-                    '& textarea': {
-                      textAlign: 'left',
-                      padding: '14px'
-                    }
-                  },
-                  '& .MuiInputBase-input::placeholder': {
-                    textAlign: 'left',
-                    opacity: 0.6
-                  }
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
                 }}
-                InputProps={{
-                  sx: {
-                    '& textarea': {
-                      textAlign: 'left',
-                      '&::placeholder': {
-                        textAlign: 'left',
-                        opacity: 0.6
-                      }
-                    }
-                  }
-                }}
+                sx={multilineFieldStyles}
               />
             </div>
           </CardContent>
@@ -822,19 +822,13 @@ export const EditSchedulePage = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Group</Label>
-                <FormControl fullWidth>
-                  <InputLabel>Select Group</InputLabel>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Select Group</InputLabel>
                   <Select
                     value={group}
-                    label="Select Group"
+                    label="Group"
                     onChange={(e) => setGroup(e.target.value)}
-                    sx={{
-                      height: { xs: '36px', md: '45px' },
-                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
-                    }}
+                    sx={muiFieldStyles}
                   >
                     <MenuItem value="group1">Group 1</MenuItem>
                     <MenuItem value="group2">Group 2</MenuItem>
@@ -842,19 +836,13 @@ export const EditSchedulePage = () => {
                 </FormControl>
               </div>
               <div className="space-y-2">
-                <Label>SubGroup</Label>
-                <FormControl fullWidth>
-                  <InputLabel>Select Sub Group</InputLabel>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Select Sub Group</InputLabel>
                   <Select
                     value={subGroup}
-                    label="Select Sub Group"
+                    label="SubGroup"
                     onChange={(e) => setSubGroup(e.target.value)}
-                    sx={{
-                      height: { xs: '36px', md: '45px' },
-                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
-                    }}
+                    sx={muiFieldStyles}
                   >
                     <MenuItem value="subgroup1">Sub Group 1</MenuItem>
                     <MenuItem value="subgroup2">Sub Group 2</MenuItem>
@@ -876,21 +864,7 @@ export const EditSchedulePage = () => {
                             s.id === section.id ? { ...s, name: e.target.value } : s
                           ));
                         }}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            height: { xs: '36px', md: '45px' },
-                            fontWeight: 'medium',
-                            '& fieldset': { borderColor: '#e5e7eb' },
-                            '&:hover fieldset': { borderColor: '#C72030' },
-                            '&.Mui-focused fieldset': { borderColor: '#C72030' },
-                            '& input': {
-                              textAlign: 'left',
-                              padding: '0 14px',
-                              display: 'flex',
-                              alignItems: 'center'
-                            }
-                          }
-                        }}
+                        sx={muiFieldStyles}
                       />
                     </div>
                     <div className="flex items-center gap-2">
@@ -936,20 +910,7 @@ export const EditSchedulePage = () => {
                                 value={task.task}
                                 onChange={(e) => handleUpdateTask(section.id, task.id, 'task', e.target.value)}
                                 size="small"
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    height: { xs: '36px', md: '45px' },
-                                    '& fieldset': { borderColor: '#e5e7eb' },
-                                    '&:hover fieldset': { borderColor: '#C72030' },
-                                    '&.Mui-focused fieldset': { borderColor: '#C72030' },
-                                    '& input': {
-                                      textAlign: 'left',
-                                      padding: '0 14px',
-                                      display: 'flex',
-                                      alignItems: 'center'
-                                    }
-                                  }
-                                }}
+                                sx={muiFieldStyles}
                               />
                             </TableCell>
                             <TableCell>
@@ -957,12 +918,7 @@ export const EditSchedulePage = () => {
                                 <Select
                                   value={task.inputType}
                                   onChange={(e) => handleUpdateTask(section.id, task.id, 'inputType', e.target.value)}
-                                  sx={{
-                                    height: { xs: '36px', md: '45px' },
-                                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-                                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
-                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
-                                  }}
+                                  sx={muiFieldStyles}
                                 >
                                   <MenuItem value="Text">Text</MenuItem>
                                   <MenuItem value="Numeric">Numeric</MenuItem>
@@ -1032,17 +988,13 @@ export const EditSchedulePage = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Asset</Label>
-              <FormControl fullWidth>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Select Asset</InputLabel>
                 <Select
                   value={asset}
+                  label="Asset"
                   onChange={(e) => setAsset(e.target.value)}
-                  sx={{
-                    height: { xs: '36px', md: '45px' },
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
-                  }}
+                  sx={muiFieldStyles}
                 >
                   <MenuItem value="Energy Meter 1[584931186764c2f8b565]">Energy Meter 1[584931186764c2f8b565]</MenuItem>
                   <MenuItem value="Energy Meter 23[03835269926136105d:1]">Energy Meter 23[03835269926136105d:1]</MenuItem>
@@ -1052,17 +1004,13 @@ export const EditSchedulePage = () => {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Assign To</Label>
-                <FormControl fullWidth>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Assign To</InputLabel>
                   <Select
                     value={assignTo}
+                    label="Assign To"
                     onChange={(e) => setAssignTo(e.target.value)}
-                    sx={{
-                      height: { xs: '36px', md: '45px' },
-                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
-                    }}
+                    sx={muiFieldStyles}
                   >
                     <MenuItem value="Users">Users</MenuItem>
                     <MenuItem value="Groups">Groups</MenuItem>
@@ -1070,19 +1018,13 @@ export const EditSchedulePage = () => {
                 </FormControl>
               </div>
               <div className="space-y-2">
-                <Label>Scan Type</Label>
-                <FormControl fullWidth>
-                  <InputLabel>Select Scan Type</InputLabel>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Scan Type</InputLabel>
                   <Select
                     value={scanType}
-                    label="Select Scan Type"
+                    label="Scan Type"
                     onChange={(e) => setScanType(e.target.value)}
-                    sx={{
-                      height: { xs: '36px', md: '45px' },
-                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
-                    }}
+                    sx={muiFieldStyles}
                   >
                     <MenuItem value="qr">QR Code</MenuItem>
                     <MenuItem value="barcode">Barcode</MenuItem>
@@ -1092,16 +1034,11 @@ export const EditSchedulePage = () => {
               <div className="space-y-2">
                 <Label>Plan Duration</Label>
                 <div className="flex gap-2">
-                  <FormControl>
+                  <FormControl variant="outlined">
                     <Select
                       value={planDuration}
                       onChange={(e) => setPlanDuration(e.target.value)}
-                      sx={{
-                        height: { xs: '36px', md: '45px' },
-                        '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-                        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
-                      }}
+                      sx={muiFieldStyles}
                     >
                       <MenuItem value="Day">Day</MenuItem>
                       <MenuItem value="Hour">Hour</MenuItem>
@@ -1113,18 +1050,7 @@ export const EditSchedulePage = () => {
                     onChange={(e) => setPlanDurationField(e.target.value)}
                     sx={{
                       width: 80,
-                      '& .MuiOutlinedInput-root': {
-                        height: { xs: '36px', md: '45px' },
-                        '& fieldset': { borderColor: '#e5e7eb' },
-                        '&:hover fieldset': { borderColor: '#C72030' },
-                        '&.Mui-focused fieldset': { borderColor: '#C72030' },
-                        '& input': {
-                          textAlign: 'left',
-                          padding: '0 14px',
-                          display: 'flex',
-                          alignItems: 'center'
-                        }
-                      }
+                      ...muiFieldStyles
                     }}
                   />
                 </div>
@@ -1133,19 +1059,13 @@ export const EditSchedulePage = () => {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Priority</Label>
-                <FormControl fullWidth>
-                  <InputLabel>Select Priority</InputLabel>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Priority</InputLabel>
                   <Select
                     value={priority}
-                    label="Select Priority"
+                    label="Priority"
                     onChange={(e) => setPriority(e.target.value)}
-                    sx={{
-                      height: { xs: '36px', md: '45px' },
-                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
-                    }}
+                    sx={muiFieldStyles}
                   >
                     <MenuItem value="high">High</MenuItem>
                     <MenuItem value="medium">Medium</MenuItem>
@@ -1154,19 +1074,13 @@ export const EditSchedulePage = () => {
                 </FormControl>
               </div>
               <div className="space-y-2">
-                <Label>Email Trigger Rule</Label>
-                <FormControl fullWidth>
-                  <InputLabel>Select Email Trigger Rule</InputLabel>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Email Trigger Rule</InputLabel>
                   <Select
                     value={emailTriggerRule}
-                    label="Select Email Trigger Rule"
+                    label="Email Trigger Rule"
                     onChange={(e) => setEmailTriggerRule(e.target.value)}
-                    sx={{
-                      height: { xs: '36px', md: '45px' },
-                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
-                    }}
+                    sx={muiFieldStyles}
                   >
                     <MenuItem value="rule1">Rule 1</MenuItem>
                     <MenuItem value="rule2">Rule 2</MenuItem>
@@ -1174,19 +1088,13 @@ export const EditSchedulePage = () => {
                 </FormControl>
               </div>
               <div className="space-y-2">
-                <Label>Supervisors</Label>
-                <FormControl fullWidth>
-                  <InputLabel>Select Supervisors</InputLabel>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Supervisors</InputLabel>
                   <Select
                     value={supervisors}
-                    label="Select Supervisors"
+                    label="Supervisors"
                     onChange={(e) => setSupervisors(e.target.value)}
-                    sx={{
-                      height: { xs: '36px', md: '45px' },
-                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
-                    }}
+                    sx={muiFieldStyles}
                   >
                     <MenuItem value="supervisor1">Supervisor 1</MenuItem>
                     <MenuItem value="supervisor2">Supervisor 2</MenuItem>
@@ -1197,17 +1105,13 @@ export const EditSchedulePage = () => {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Category</Label>
-                <FormControl fullWidth>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Category</InputLabel>
                   <Select
                     value={category}
+                    label="Category"
                     onChange={(e) => setCategory(e.target.value)}
-                    sx={{
-                      height: { xs: '36px', md: '45px' },
-                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
-                    }}
+                    sx={muiFieldStyles}
                   >
                     <MenuItem value="Technical">Technical</MenuItem>
                     <MenuItem value="Non Technical">Non Technical</MenuItem>
@@ -1215,19 +1119,13 @@ export const EditSchedulePage = () => {
                 </FormControl>
               </div>
               <div className="space-y-2">
-                <Label>Submission Time</Label>
-                <FormControl fullWidth>
-                  <InputLabel>Select Submission Time</InputLabel>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Submission Time</InputLabel>
                   <Select
                     value={submissionTime}
-                    label="Select Submission Time"
+                    label="Submission Time"
                     onChange={(e) => setSubmissionTime(e.target.value)}
-                    sx={{
-                      height: { xs: '36px', md: '45px' },
-                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
-                    }}
+                    sx={muiFieldStyles}
                   >
                     <MenuItem value="immediate">Immediate</MenuItem>
                     <MenuItem value="delayed">Delayed</MenuItem>
@@ -1235,25 +1133,16 @@ export const EditSchedulePage = () => {
                 </FormControl>
               </div>
               <div className="space-y-2">
-                <Label>Submission Time Field</Label>
                 <TextField
+                  label="Submission Time Field"
                   value={submissionTimeField}
                   onChange={(e) => setSubmissionTimeField(e.target.value)}
                   fullWidth
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      height: { xs: '36px', md: '45px' },
-                      '& fieldset': { borderColor: '#e5e7eb' },
-                      '&:hover fieldset': { borderColor: '#C72030' },
-                      '&.Mui-focused fieldset': { borderColor: '#C72030' },
-                      '& input': {
-                        textAlign: 'left',
-                        padding: '0 14px',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }
-                    }
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true,
                   }}
+                  sx={muiFieldStyles}
                 />
               </div>
             </div>
@@ -1262,16 +1151,11 @@ export const EditSchedulePage = () => {
               <div className="space-y-2">
                 <Label>Grace Time</Label>
                 <div className="flex gap-2">
-                  <FormControl>
+                  <FormControl variant="outlined">
                     <Select
                       value={graceTime}
                       onChange={(e) => setGraceTime(e.target.value)}
-                      sx={{
-                        height: { xs: '36px', md: '45px' },
-                        '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-                        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
-                      }}
+                      sx={muiFieldStyles}
                     >
                       <MenuItem value="Day">Day</MenuItem>
                       <MenuItem value="Hour">Hour</MenuItem>
@@ -1283,36 +1167,19 @@ export const EditSchedulePage = () => {
                     onChange={(e) => setGraceTimeField(e.target.value)}
                     sx={{
                       width: 80,
-                      '& .MuiOutlinedInput-root': {
-                        height: { xs: '36px', md: '45px' },
-                        '& fieldset': { borderColor: '#e5e7eb' },
-                        '&:hover fieldset': { borderColor: '#C72030' },
-                        '&.Mui-focused fieldset': { borderColor: '#C72030' },
-                        '& input': {
-                          textAlign: 'left',
-                          padding: '0 14px',
-                          display: 'flex',
-                          alignItems: 'center'
-                        }
-                      }
+                      ...muiFieldStyles
                     }}
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Lock Overdue Task</Label>
-                <FormControl fullWidth>
-                  <InputLabel>Select Lock Status</InputLabel>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Lock Overdue Task</InputLabel>
                   <Select
                     value={lockOverdueTask}
-                    label="Select Lock Status"
+                    label="Lock Overdue Task"
                     onChange={(e) => setLockOverdueTask(e.target.value)}
-                    sx={{
-                      height: { xs: '36px', md: '45px' },
-                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
-                    }}
+                    sx={muiFieldStyles}
                   >
                     <MenuItem value="yes">Yes</MenuItem>
                     <MenuItem value="no">No</MenuItem>
@@ -1320,19 +1187,13 @@ export const EditSchedulePage = () => {
                 </FormControl>
               </div>
               <div className="space-y-2">
-                <Label>Frequency</Label>
-                <FormControl fullWidth>
-                  <InputLabel>Select Frequency</InputLabel>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Frequency</InputLabel>
                   <Select
                     value={frequency}
-                    label="Select Frequency"
+                    label="Frequency"
                     onChange={(e) => setFrequency(e.target.value)}
-                    sx={{
-                      height: { xs: '36px', md: '45px' },
-                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
-                    }}
+                    sx={muiFieldStyles}
                   >
                     <MenuItem value="daily">Daily</MenuItem>
                     <MenuItem value="weekly">Weekly</MenuItem>
@@ -1344,89 +1205,56 @@ export const EditSchedulePage = () => {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Cron Expression</Label>
                 <TextField
+                  label="Cron Expression"
                   value={cronExpression}
                   onChange={(e) => setCronExpression(e.target.value)}
                   fullWidth
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      height: { xs: '36px', md: '45px' },
-                      '& fieldset': { borderColor: '#e5e7eb' },
-                      '&:hover fieldset': { borderColor: '#C72030' },
-                      '&.Mui-focused fieldset': { borderColor: '#C72030' },
-                      '& input': {
-                        textAlign: 'left',
-                        padding: '0 14px',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }
-                    }
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true,
                   }}
+                  sx={muiFieldStyles}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Start From</Label>
                 <TextField
+                  label="Start From"
                   type="date"
                   value={startFrom}
                   onChange={(e) => setStartFrom(e.target.value)}
                   fullWidth
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      height: { xs: '36px', md: '45px' },
-                      '& fieldset': { borderColor: '#e5e7eb' },
-                      '&:hover fieldset': { borderColor: '#C72030' },
-                      '&.Mui-focused fieldset': { borderColor: '#C72030' },
-                      '& input': {
-                        textAlign: 'left',
-                        padding: '0 14px',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }
-                    }
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true,
                   }}
+                  sx={muiFieldStyles}
                 />
               </div>
               <div className="space-y-2">
-                <Label>End At</Label>
                 <TextField
+                  label="End At"
                   type="date"
                   value={endAt}
                   onChange={(e) => setEndAt(e.target.value)}
                   fullWidth
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      height: { xs: '36px', md: '45px' },
-                      '& fieldset': { borderColor: '#e5e7eb' },
-                      '&:hover fieldset': { borderColor: '#C72030' },
-                      '&.Mui-focused fieldset': { borderColor: '#C72030' },
-                      '& input': {
-                        textAlign: 'left',
-                        padding: '0 14px',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }
-                    }
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true,
                   }}
+                  sx={muiFieldStyles}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label>Select Supplier</Label>
-              <FormControl fullWidth>
-                <InputLabel>Select Supplier</InputLabel>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Select Supplier</InputLabel>
                 <Select
                   value={selectSupplier}
                   label="Select Supplier"
                   onChange={(e) => setSelectSupplier(e.target.value)}
-                  sx={{
-                    height: { xs: '36px', md: '45px' },
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
-                  }}
+                  sx={muiFieldStyles}
                 >
                   <MenuItem value="supplier1">Supplier 1</MenuItem>
                   <MenuItem value="supplier2">Supplier 2</MenuItem>
