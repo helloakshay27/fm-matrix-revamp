@@ -284,7 +284,8 @@ export const AddMasterChecklistPage = () => {
                 />
 
                 <FormControl fullWidth>
-                  <InputLabel shrink>Select Input Type</InputLabel>
+                <InputLabel  shrink>Select Input Type</InputLabel>
+
                   <MuiSelect
                     displayEmpty
                     value={task.inputType}
