@@ -1,16 +1,15 @@
 
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useParams, useNavigate } from 'react-router-dom';
 import { SetApprovalModal } from '@/components/SetApprovalModal';
+import { TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 
 export const ViewSchedulePage = () => {
   const { id } = useParams();
@@ -203,11 +202,42 @@ export const ViewSchedulePage = () => {
             </div>
             <div className="space-y-2">
               <Label>Activity Name</Label>
-              <Input value={scheduleData.activityName} readOnly />
+              <TextField
+                value={scheduleData.activityName}
+                InputProps={{ readOnly: true }}
+                fullWidth
+                variant="outlined"
+                size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    height: { xs: '36px', sm: '45px' },
+                    '& input': {
+                      padding: { xs: '8px 14px', sm: '10px 14px' },
+                      display: 'flex',
+                      alignItems: 'center',
+                    },
+                  },
+                }}
+              />
             </div>
             <div className="space-y-2">
               <Label>Description</Label>
-              <Textarea value={scheduleData.description} readOnly className="min-h-[100px]" />
+              <TextField
+                value={scheduleData.description}
+                InputProps={{ readOnly: true }}
+                fullWidth
+                multiline
+                rows={4}
+                variant="outlined"
+                placeholder="Enter description"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& textarea': {
+                      padding: '10px 14px',
+                    },
+                  },
+                }}
+              />
             </div>
           </CardContent>
         </Card>
@@ -224,22 +254,86 @@ export const ViewSchedulePage = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Checklist Group</Label>
-                <Input value="Select Group" readOnly />
+                <TextField
+                  value="Select Group"
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', sm: '45px' },
+                      '& input': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    },
+                  }}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Checklist Group</Label>
-                <Input value="Select Sub Group" readOnly />
+                <TextField
+                  value="Select Sub Group"
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', sm: '45px' },
+                      '& input': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    },
+                  }}
+                />
               </div>
             </div>
             
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Task</Label>
-                <Input value="Kwah" readOnly />
+                <TextField
+                  value="Kwah"
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', sm: '45px' },
+                      '& input': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    },
+                  }}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Input Type</Label>
-                <Input value="Numeric" readOnly />
+                <TextField
+                  value="Numeric"
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', sm: '45px' },
+                      '& input': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    },
+                  }}
+                />
               </div>
               <div className="space-y-2 flex items-center gap-4 pt-6">
                 <div className="flex items-center space-x-2">
@@ -289,86 +383,349 @@ export const ViewSchedulePage = () => {
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Assign to</Label>
-                <Input value={scheduleData.assignTo} readOnly />
+                <TextField
+                  value={scheduleData.assignTo}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', sm: '45px' },
+                      '& input': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    },
+                  }}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Scan Type</Label>
-                <Input value={scheduleData.scanType} readOnly />
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={scheduleData.scanType}
+                    readOnly
+                    sx={{
+                      height: { xs: '36px', sm: '45px' },
+                      '& .MuiSelect-select': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    }}
+                  >
+                    <MenuItem value={scheduleData.scanType}>{scheduleData.scanType}</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
                 <Label>Plan Duration Type</Label>
-                <Input value={scheduleData.planDurationType} readOnly />
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={scheduleData.planDurationType}
+                    readOnly
+                    sx={{
+                      height: { xs: '36px', sm: '45px' },
+                      '& .MuiSelect-select': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    }}
+                  >
+                    <MenuItem value={scheduleData.planDurationType}>{scheduleData.planDurationType}</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Plan value</Label>
-                <Input value={scheduleData.planValue} readOnly />
+                <TextField
+                  value={scheduleData.planValue}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', sm: '45px' },
+                      '& input': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    },
+                  }}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Email Trigger Rule</Label>
-                <Input value={scheduleData.emailTriggerRule} readOnly />
+                <TextField
+                  value={scheduleData.emailTriggerRule}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', sm: '45px' },
+                      '& input': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    },
+                  }}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Supervisors</Label>
-                <Input value={scheduleData.supervisors} readOnly />
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={scheduleData.supervisors}
+                    readOnly
+                    sx={{
+                      height: { xs: '36px', sm: '45px' },
+                      '& .MuiSelect-select': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    }}
+                  >
+                    <MenuItem value={scheduleData.supervisors}>{scheduleData.supervisors}</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Priority</Label>
-                <Input value={scheduleData.priority} readOnly />
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={scheduleData.priority}
+                    readOnly
+                    sx={{
+                      height: { xs: '36px', sm: '45px' },
+                      '& .MuiSelect-select': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    }}
+                  >
+                    <MenuItem value={scheduleData.priority}>{scheduleData.priority}</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
                 <Label>Submission Type</Label>
-                <Input value={scheduleData.submissionType} readOnly />
+                <TextField
+                  value={scheduleData.submissionType}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', sm: '45px' },
+                      '& input': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    },
+                  }}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Submission Time Value</Label>
-                <Input value={scheduleData.submissionTimeValue} readOnly />
+                <TextField
+                  value={scheduleData.submissionTimeValue}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', sm: '45px' },
+                      '& input': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    },
+                  }}
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Input value={scheduleData.category} readOnly />
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={scheduleData.category}
+                    readOnly
+                    sx={{
+                      height: { xs: '36px', sm: '45px' },
+                      '& .MuiSelect-select': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    }}
+                  >
+                    <MenuItem value={scheduleData.category}>{scheduleData.category}</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
                 <Label>Grace Time Value</Label>
-                <Input value={scheduleData.graceTimeValue} readOnly />
+                <TextField
+                  value={scheduleData.graceTimeValue}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', sm: '45px' },
+                      '& input': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    },
+                  }}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Lock Overdue Task</Label>
-                <Input value={scheduleData.lockOverdueTask} readOnly />
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={scheduleData.lockOverdueTask}
+                    readOnly
+                    sx={{
+                      height: { xs: '36px', sm: '45px' },
+                      '& .MuiSelect-select': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    }}
+                  >
+                    <MenuItem value={scheduleData.lockOverdueTask}>{scheduleData.lockOverdueTask}</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Grace Time</Label>
-                <Input value={scheduleData.graceTime} readOnly />
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={scheduleData.graceTime}
+                    readOnly
+                    sx={{
+                      height: { xs: '36px', sm: '45px' },
+                      '& .MuiSelect-select': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    }}
+                  >
+                    <MenuItem value={scheduleData.graceTime}>{scheduleData.graceTime}</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
                 <Label>Frequency</Label>
-                <Input value={scheduleData.frequency} readOnly />
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={scheduleData.frequency}
+                    readOnly
+                    sx={{
+                      height: { xs: '36px', sm: '45px' },
+                      '& .MuiSelect-select': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    }}
+                  >
+                    <MenuItem value={scheduleData.frequency}>{scheduleData.frequency}</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
                 <Label>Start Time</Label>
-                <Input value={scheduleData.startTime} readOnly />
+                <TextField
+                  value={scheduleData.startTime}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', sm: '45px' },
+                      '& input': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    },
+                  }}
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>End At</Label>
-                <Input value={scheduleData.endAt} readOnly />
+                <TextField
+                  value={scheduleData.endAt}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', sm: '45px' },
+                      '& input': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    },
+                  }}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Select Supplier</Label>
-                <Input value={scheduleData.selectSupplier} readOnly />
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={scheduleData.selectSupplier}
+                    readOnly
+                    sx={{
+                      height: { xs: '36px', sm: '45px' },
+                      '& .MuiSelect-select': {
+                        padding: { xs: '8px 14px', sm: '10px 14px' },
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
+                    }}
+                  >
+                    <MenuItem value={scheduleData.selectSupplier}>{scheduleData.selectSupplier}</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
             </div>
           </CardContent>
@@ -500,3 +857,4 @@ export const ViewSchedulePage = () => {
     </div>
   );
 };
+
