@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -7,9 +8,28 @@ import { useNavigate } from 'react-router-dom';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 const fieldStyles = {
-  height: { xs: 36, sm: 40, md: 44 },
+  height: { xs: 28, sm: 36, md: 45 },
   '& .MuiInputBase-input, & .MuiSelect-select': {
     padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '8px',
+    backgroundColor: 'white',
+    '& fieldset': {
+      borderColor: '#e5e7eb',
+    },
+    '&:hover fieldset': {
+      borderColor: '#9ca3af',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    color: '#6b7280',
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
   },
 };
 
@@ -116,19 +136,45 @@ export const AddMasterChecklistPage = () => {
             </div>
 
             <div>
-              <Label className="block mb-2 text-sm font-medium">Activity Name <span className="text-red-500">*</span></Label>
-              <TextField fullWidth required placeholder="Enter Activity" value={activityName} onChange={(e) => setActivityName(e.target.value)} variant="outlined" InputProps={{ sx: fieldStyles }} />
+              <TextField 
+                fullWidth 
+                required 
+                label="Activity Name *"
+                placeholder="Enter Activity" 
+                value={activityName} 
+                onChange={(e) => setActivityName(e.target.value)} 
+                variant="outlined" 
+                InputLabelProps={{ shrink: true }}
+                sx={fieldStyles}
+              />
             </div>
 
             <div className="md:col-span-2">
-              <Label className="block mb-2 text-sm font-medium">Description</Label>
-              <TextField multiline minRows={3} fullWidth placeholder="Enter Description" value={description} onChange={(e) => setDescription(e.target.value)} variant="outlined" InputProps={{ sx: fieldStyles }} />
+              <TextField 
+                multiline 
+                minRows={3} 
+                fullWidth 
+                label="Description"
+                placeholder="Enter Description" 
+                value={description} 
+                onChange={(e) => setDescription(e.target.value)} 
+                variant="outlined" 
+                InputLabelProps={{ shrink: true }}
+                sx={fieldStyles}
+              />
             </div>
 
             <div>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Select Asset Type</InputLabel>
-                <MuiSelect displayEmpty value={assetType} onChange={(e) => setAssetType(e.target.value)} sx={fieldStyles}>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel id="asset-type-label" shrink>Select Asset Type</InputLabel>
+                <MuiSelect 
+                  labelId="asset-type-label"
+                  label="Select Asset Type"
+                  displayEmpty 
+                  value={assetType} 
+                  onChange={(e) => setAssetType(e.target.value)} 
+                  sx={fieldStyles}
+                >
                   <MenuItem value=""><em>Select Asset Type</em></MenuItem>
                   {['electrical', 'mechanical', 'hvac', 'plumbing', 'fire-safety'].map(type => (
                     <MenuItem key={type} value={type}>{type}</MenuItem>
@@ -157,10 +203,16 @@ export const AddMasterChecklistPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               {['group', 'subGroup'].map((field, i) => (
                 <div key={i}>
-                  <Label className="text-sm font-medium mb-2 block">Select {field === 'group' ? 'Group' : 'Sub Group'}</Label>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select</InputLabel>
-                    <MuiSelect displayEmpty value={section[field]} onChange={(e) => updateTaskSection(section.id, field, e.target.value)} sx={fieldStyles}>
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel id={`${field}-label-${section.id}`} shrink>Select {field === 'group' ? 'Group' : 'Sub Group'}</InputLabel>
+                    <MuiSelect 
+                      labelId={`${field}-label-${section.id}`}
+                      label={`Select ${field === 'group' ? 'Group' : 'Sub Group'}`}
+                      displayEmpty 
+                      value={section[field]} 
+                      onChange={(e) => updateTaskSection(section.id, field, e.target.value)} 
+                      sx={fieldStyles}
+                    >
                       <MenuItem value=""><em>Select</em></MenuItem>
                       {['electrical', 'mechanical', 'safety', 'maintenance', 'lighting', 'power', 'ventilation', 'cleaning'].map(opt => (
                         <MenuItem key={opt} value={opt}>{opt}</MenuItem>
@@ -173,10 +225,26 @@ export const AddMasterChecklistPage = () => {
 
             {section.tasks.map(task => (
               <div key={task.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 border p-4 rounded">
-                <TextField placeholder="Enter Task" fullWidth value={task.taskName} onChange={(e) => updateTask(section.id, task.id, 'taskName', e.target.value)} variant="outlined" label="Task *" InputProps={{ sx: fieldStyles }} />
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Select Input Type</InputLabel>
-                  <MuiSelect displayEmpty value={task.inputType} onChange={(e) => updateTask(section.id, task.id, 'inputType', e.target.value)} sx={fieldStyles}>
+                <TextField 
+                  placeholder="Enter Task" 
+                  fullWidth 
+                  value={task.taskName} 
+                  onChange={(e) => updateTask(section.id, task.id, 'taskName', e.target.value)} 
+                  variant="outlined" 
+                  label="Task *" 
+                  InputLabelProps={{ shrink: true }}
+                  sx={fieldStyles} 
+                />
+                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                  <InputLabel id={`input-type-label-${task.id}`} shrink>Select Input Type</InputLabel>
+                  <MuiSelect 
+                    labelId={`input-type-label-${task.id}`}
+                    label="Select Input Type"
+                    displayEmpty 
+                    value={task.inputType} 
+                    onChange={(e) => updateTask(section.id, task.id, 'inputType', e.target.value)} 
+                    sx={fieldStyles}
+                  >
                     <MenuItem value=""><em>Select Input Type</em></MenuItem>
                     {['text', 'number', 'checkbox', 'dropdown', 'date'].map(opt => (
                       <MenuItem key={opt} value={opt}>{opt}</MenuItem>
