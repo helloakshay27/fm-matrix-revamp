@@ -141,9 +141,9 @@ export const TaskDetailsPage = () => {
 
         {/* Task Details Section */}
         <Card className="mb-6">
-          <CardHeader style={{ backgroundColor: '#C72030' }} className="border-b">
-            <CardTitle className="text-white flex items-center gap-2">
-              <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center text-[#C72030] text-sm font-bold">T</div>
+          <CardHeader className="bg-orange-50 border-b">
+            <CardTitle className="text-orange-600 flex items-center gap-2">
+              <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm">T</div>
               Task Details
             </CardTitle>
           </CardHeader>
@@ -211,9 +211,9 @@ export const TaskDetailsPage = () => {
 
         {/* Activity Section */}
         <Card>
-          <CardHeader style={{ backgroundColor: '#C72030' }} className="border-b">
-            <CardTitle className="text-white flex items-center gap-2">
-              <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center text-[#C72030] text-sm font-bold">A</div>
+          <CardHeader className="bg-orange-50 border-b">
+            <CardTitle className="text-orange-600 flex items-center gap-2">
+              <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm">A</div>
               Activity
             </CardTitle>
           </CardHeader>
