@@ -13,7 +13,7 @@ export const LogsTab = () => {
       </div>
 
       {/* Log Entry */}
-      <div className="flex items-start gap-4">
+      <div className="flex items-center gap-4">
         <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
           <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
             <User className="w-4 h-4 text-white" />
