@@ -153,7 +153,7 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
               dragOver 
                 ? 'border-[#C72030] bg-red-50' 
-                : 'border-gray-300 bg-gray-50'
+                : 'border-[#C72030] bg-[#ffff]'
             }`}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
