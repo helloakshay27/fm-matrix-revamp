@@ -143,8 +143,8 @@ export const TaskDetailsPage = () => {
         {/* Task Details Section */}
         <Card className="mb-6">
           <CardHeader className="border-b bg-white">
-            <CardTitle className="text-orange-600 flex items-center gap-2">
-              <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm">T</div>
+            <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
+              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{ backgroundColor: '#C72030' }}>T</div>
               Task Details
             </CardTitle>
           </CardHeader>
