@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   TextField,
@@ -11,6 +11,9 @@ import {
   InputLabel,
   Select as MuiSelect,
   MenuItem,
+  RadioGroup,
+  Radio,
+  FormControlLabel,
 } from '@mui/material';
 
 const fieldStyles = {
@@ -68,6 +71,12 @@ export const AddChecklistMasterPage = () => {
     ]);
   };
 
+  const removeTaskSection = (sectionId: number) => {
+    if (taskSections.length > 1) {
+      setTaskSections((prev) => prev.filter((section) => section.id !== sectionId));
+    }
+  };
+
   const updateTaskSection = (sectionId: number, field: string, value: string) => {
     setTaskSections((prev) =>
       prev.map((section) =>
@@ -112,6 +121,19 @@ export const AddChecklistMasterPage = () => {
     );
   };
 
+  const removeTask = (sectionId: number, taskId: number) => {
+    setTaskSections((prev) =>
+      prev.map((section) => {
+        if (section.id !== sectionId) return section;
+        if (section.tasks.length <= 1) return section;
+        return {
+          ...section,
+          tasks: section.tasks.filter((task) => task.id !== taskId),
+        };
+      })
+    );
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log({ type, scheduleFor, activityName, description, assetType, taskSections });
@@ -143,45 +165,61 @@ export const AddChecklistMasterPage = () => {
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="bg-white border rounded-lg p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm">1</div>
-            <h2 className="font-semibold text-lg">Basic Info</h2>
+            <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">1</div>
+            <h2 className="font-semibold text-lg" style={{ color: '#C72030' }}>Basic Info</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label className="mb-2 block text-sm font-medium">Type</Label>
-              <div className="flex gap-4">
+              <RadioGroup
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+                row
+                sx={{
+                  '& .MuiFormControlLabel-root .MuiRadio-root': {
+                    color: '#C72030',
+                    '&.Mui-checked': {
+                      color: '#C72030',
+                    },
+                  },
+                }}
+              >
                 {['PPM', 'AMC', 'Preparedness', 'HSC', 'Routine'].map((typeOption) => (
-                  <label key={typeOption} className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="type"
-                      value={typeOption}
-                      checked={type === typeOption}
-                      onChange={(e) => setType(e.target.value)}
-                    />
-                    <span>{typeOption}</span>
-                  </label>
+                  <FormControlLabel
+                    key={typeOption}
+                    value={typeOption}
+                    control={<Radio />}
+                    label={typeOption}
+                  />
                 ))}
-              </div>
+              </RadioGroup>
             </div>
 
             <div>
               <Label className="mb-2 block text-sm font-medium">Schedule For</Label>
-              <div className="flex gap-4">
+              <RadioGroup
+                value={scheduleFor}
+                onChange={(e) => setScheduleFor(e.target.value)}
+                row
+                sx={{
+                  '& .MuiFormControlLabel-root .MuiRadio-root': {
+                    color: '#C72030',
+                    '&.Mui-checked': {
+                      color: '#C72030',
+                    },
+                  },
+                }}
+              >
                 {['Asset', 'Service', 'Vendor'].map((scheduleOption) => (
-                  <label key={scheduleOption} className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="scheduleFor"
-                      value={scheduleOption}
-                      checked={scheduleFor === scheduleOption}
-                      onChange={(e) => setScheduleFor(e.target.value)}
-                    />
-                    <span>{scheduleOption}</span>
-                  </label>
+                  <FormControlLabel
+                    key={scheduleOption}
+                    value={scheduleOption}
+                    control={<Radio />}
+                    label={scheduleOption}
+                  />
                 ))}
-              </div>
+              </RadioGroup>
             </div>
 
             <TextField
@@ -235,21 +273,34 @@ export const AddChecklistMasterPage = () => {
           </div>
         </div>
 
-        {taskSections.map((section) => (
+        {taskSections.map((section, sectionIndex) => (
           <div key={section.id} className="bg-white border rounded-lg p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm">2</div>
-                <h2 className="font-semibold text-lg">Task</h2>
+                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">2</div>
+                <h2 className="font-semibold text-lg" style={{ color: '#C72030' }}>Task</h2>
               </div>
-              <Button
-                type="button"
-                style={{ backgroundColor: '#C72030' }}
-                className="text-white hover:opacity-90"
-                onClick={addTaskSection}
-              >
-                + Add Section
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  style={{ backgroundColor: '#C72030' }}
+                  className="text-white hover:opacity-90"
+                  onClick={addTaskSection}
+                >
+                  + Add Section
+                </Button>
+                {taskSections.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeTaskSection(section.id)}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -292,11 +343,26 @@ export const AddChecklistMasterPage = () => {
               </FormControl>
             </div>
 
-            {section.tasks.map((task) => (
+            {section.tasks.map((task, taskIndex) => (
               <div
                 key={task.id}
                 className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 border p-4 rounded"
               >
+                <div className="flex items-center justify-between md:col-span-2">
+                  <h4 className="font-medium">Task {taskIndex + 1}</h4>
+                  {section.tasks.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeTask(section.id, task.id)}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+
                 <TextField
                   fullWidth
                   label="Task"
