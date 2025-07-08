@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -225,6 +224,7 @@ export const EditSchedulePage = () => {
                 value="00"
                 displayEmpty
                 sx={{
+                  height: { xs: '36px', md: '45px' },
                   '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                   '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -241,6 +241,7 @@ export const EditSchedulePage = () => {
                 value="00"
                 displayEmpty
                 sx={{
+                  height: { xs: '36px', md: '45px' },
                   '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                   '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -319,6 +320,7 @@ export const EditSchedulePage = () => {
                 value="00"
                 displayEmpty
                 sx={{
+                  height: { xs: '36px', md: '45px' },
                   '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                   '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -335,6 +337,7 @@ export const EditSchedulePage = () => {
                 value="23"
                 displayEmpty
                 sx={{
+                  height: { xs: '36px', md: '45px' },
                   '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                   '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -413,6 +416,7 @@ export const EditSchedulePage = () => {
                 value="1"
                 displayEmpty
                 sx={{
+                  height: { xs: '36px', md: '45px' },
                   '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                   '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -429,6 +433,7 @@ export const EditSchedulePage = () => {
                 value="31"
                 displayEmpty
                 sx={{
+                  height: { xs: '36px', md: '45px' },
                   '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                   '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -520,6 +525,7 @@ export const EditSchedulePage = () => {
                 value="1"
                 displayEmpty
                 sx={{
+                  height: { xs: '36px', md: '45px' },
                   '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                   '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -536,6 +542,7 @@ export const EditSchedulePage = () => {
                 value="12"
                 displayEmpty
                 sx={{
+                  height: { xs: '36px', md: '45px' },
                   '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                   '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -615,6 +622,7 @@ export const EditSchedulePage = () => {
                   label="Select Category"
                   onChange={(e) => setSelectedCategory(e.target.value)}
                   sx={{
+                    height: { xs: '36px', md: '45px' },
                     '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                     '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                     '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -722,9 +730,9 @@ export const EditSchedulePage = () => {
                 onChange={(e) => setActivityName(e.target.value)}
                 placeholder="Activity Name"
                 fullWidth
-                size="medium"
                 sx={{
                   '& .MuiOutlinedInput-root': {
+                    height: { xs: '36px', md: '45px' },
                     '& fieldset': { borderColor: '#e5e7eb' },
                     '&:hover fieldset': { borderColor: '#C72030' },
                     '&.Mui-focused fieldset': { borderColor: '#C72030' }
@@ -782,6 +790,7 @@ export const EditSchedulePage = () => {
                     label="Select Group"
                     onChange={(e) => setGroup(e.target.value)}
                     sx={{
+                      height: { xs: '36px', md: '45px' },
                       '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                       '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -801,6 +810,7 @@ export const EditSchedulePage = () => {
                     label="Select Sub Group"
                     onChange={(e) => setSubGroup(e.target.value)}
                     sx={{
+                      height: { xs: '36px', md: '45px' },
                       '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                       '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -828,6 +838,7 @@ export const EditSchedulePage = () => {
                         }}
                         sx={{
                           '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' },
                             fontWeight: 'medium',
                             '& fieldset': { borderColor: '#e5e7eb' },
                             '&:hover fieldset': { borderColor: '#C72030' },
@@ -881,6 +892,7 @@ export const EditSchedulePage = () => {
                                 size="small"
                                 sx={{
                                   '& .MuiOutlinedInput-root': {
+                                    height: { xs: '36px', md: '45px' },
                                     '& fieldset': { borderColor: '#e5e7eb' },
                                     '&:hover fieldset': { borderColor: '#C72030' },
                                     '&.Mui-focused fieldset': { borderColor: '#C72030' }
@@ -894,6 +906,7 @@ export const EditSchedulePage = () => {
                                   value={task.inputType}
                                   onChange={(e) => handleUpdateTask(section.id, task.id, 'inputType', e.target.value)}
                                   sx={{
+                                    height: { xs: '36px', md: '45px' },
                                     '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                                     '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                                     '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -973,6 +986,7 @@ export const EditSchedulePage = () => {
                   value={asset}
                   onChange={(e) => setAsset(e.target.value)}
                   sx={{
+                    height: { xs: '36px', md: '45px' },
                     '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                     '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                     '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -992,6 +1006,7 @@ export const EditSchedulePage = () => {
                     value={assignTo}
                     onChange={(e) => setAssignTo(e.target.value)}
                     sx={{
+                      height: { xs: '36px', md: '45px' },
                       '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                       '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -1011,6 +1026,7 @@ export const EditSchedulePage = () => {
                     label="Select Scan Type"
                     onChange={(e) => setScanType(e.target.value)}
                     sx={{
+                      height: { xs: '36px', md: '45px' },
                       '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                       '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -1029,6 +1045,7 @@ export const EditSchedulePage = () => {
                       value={planDuration}
                       onChange={(e) => setPlanDuration(e.target.value)}
                       sx={{
+                        height: { xs: '36px', md: '45px' },
                         '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                         '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -1045,6 +1062,7 @@ export const EditSchedulePage = () => {
                     sx={{
                       width: 80,
                       '& .MuiOutlinedInput-root': {
+                        height: { xs: '36px', md: '45px' },
                         '& fieldset': { borderColor: '#e5e7eb' },
                         '&:hover fieldset': { borderColor: '#C72030' },
                         '&.Mui-focused fieldset': { borderColor: '#C72030' }
@@ -1065,6 +1083,7 @@ export const EditSchedulePage = () => {
                     label="Select Priority"
                     onChange={(e) => setPriority(e.target.value)}
                     sx={{
+                      height: { xs: '36px', md: '45px' },
                       '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                       '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -1085,6 +1104,7 @@ export const EditSchedulePage = () => {
                     label="Select Email Trigger Rule"
                     onChange={(e) => setEmailTriggerRule(e.target.value)}
                     sx={{
+                      height: { xs: '36px', md: '45px' },
                       '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                       '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -1104,6 +1124,7 @@ export const EditSchedulePage = () => {
                     label="Select Supervisors"
                     onChange={(e) => setSupervisors(e.target.value)}
                     sx={{
+                      height: { xs: '36px', md: '45px' },
                       '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                       '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -1124,6 +1145,7 @@ export const EditSchedulePage = () => {
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                     sx={{
+                      height: { xs: '36px', md: '45px' },
                       '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                       '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -1143,6 +1165,7 @@ export const EditSchedulePage = () => {
                     label="Select Submission Time"
                     onChange={(e) => setSubmissionTime(e.target.value)}
                     sx={{
+                      height: { xs: '36px', md: '45px' },
                       '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                       '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -1161,6 +1184,7 @@ export const EditSchedulePage = () => {
                   fullWidth
                   sx={{
                     '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', md: '45px' },
                       '& fieldset': { borderColor: '#e5e7eb' },
                       '&:hover fieldset': { borderColor: '#C72030' },
                       '&.Mui-focused fieldset': { borderColor: '#C72030' }
@@ -1179,6 +1203,7 @@ export const EditSchedulePage = () => {
                       value={graceTime}
                       onChange={(e) => setGraceTime(e.target.value)}
                       sx={{
+                        height: { xs: '36px', md: '45px' },
                         '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                         '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -1195,6 +1220,7 @@ export const EditSchedulePage = () => {
                     sx={{
                       width: 80,
                       '& .MuiOutlinedInput-root': {
+                        height: { xs: '36px', md: '45px' },
                         '& fieldset': { borderColor: '#e5e7eb' },
                         '&:hover fieldset': { borderColor: '#C72030' },
                         '&.Mui-focused fieldset': { borderColor: '#C72030' }
@@ -1212,6 +1238,7 @@ export const EditSchedulePage = () => {
                     label="Select Lock Status"
                     onChange={(e) => setLockOverdueTask(e.target.value)}
                     sx={{
+                      height: { xs: '36px', md: '45px' },
                       '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                       '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -1231,6 +1258,7 @@ export const EditSchedulePage = () => {
                     label="Select Frequency"
                     onChange={(e) => setFrequency(e.target.value)}
                     sx={{
+                      height: { xs: '36px', md: '45px' },
                       '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                       '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
@@ -1253,6 +1281,7 @@ export const EditSchedulePage = () => {
                   fullWidth
                   sx={{
                     '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', md: '45px' },
                       '& fieldset': { borderColor: '#e5e7eb' },
                       '&:hover fieldset': { borderColor: '#C72030' },
                       '&.Mui-focused fieldset': { borderColor: '#C72030' }
@@ -1269,6 +1298,7 @@ export const EditSchedulePage = () => {
                   fullWidth
                   sx={{
                     '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', md: '45px' },
                       '& fieldset': { borderColor: '#e5e7eb' },
                       '&:hover fieldset': { borderColor: '#C72030' },
                       '&.Mui-focused fieldset': { borderColor: '#C72030' }
@@ -1285,6 +1315,7 @@ export const EditSchedulePage = () => {
                   fullWidth
                   sx={{
                     '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', md: '45px' },
                       '& fieldset': { borderColor: '#e5e7eb' },
                       '&:hover fieldset': { borderColor: '#C72030' },
                       '&.Mui-focused fieldset': { borderColor: '#C72030' }
@@ -1303,6 +1334,7 @@ export const EditSchedulePage = () => {
                   label="Select Supplier"
                   onChange={(e) => setSelectSupplier(e.target.value)}
                   sx={{
+                    height: { xs: '36px', md: '45px' },
                     '& .MuiOutlinedInput-notchedOutline': { borderColor: '#e5e7eb' },
                     '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
                     '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' }
