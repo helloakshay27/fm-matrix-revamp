@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 import { SelectChangeEvent } from '@mui/material/Select';
 import { useToast } from '@/hooks/use-toast';
+import { X } from 'lucide-react';
 
 interface Filters {
   type: string;
@@ -73,8 +74,16 @@ export const TaskAdvancedFilterDialog: React.FC<TaskAdvancedFilterDialogProps> =
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
+        <DialogHeader className="relative">
           <DialogTitle className="text-lg font-semibold">Advanced Filter</DialogTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+            className="absolute right-0 top-0 h-8 w-8 p-0 hover:bg-gray-100"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </DialogHeader>
         
         <div className="space-y-4">
