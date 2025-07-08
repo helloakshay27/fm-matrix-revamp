@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useLayout } from '../contexts/LayoutContext';
 
@@ -29,8 +30,8 @@ export const DynamicHeader = () => {
     >
       <div className="flex items-center h-full px-4">
         <div className="w-full overflow-x-auto md:overflow-visible no-scrollbar">
-          {/* Mobile: scroll + spacing; Desktop: full width and justify-between */}
-          <div className="flex w-max md:w-full space-x-4 md:space-x-0 md:justify-between whitespace-nowrap">
+          {/* Mobile: scroll + spacing; Tablet: scroll + spacing; Desktop: full width and justify-between */}
+          <div className="flex w-max md:w-full space-x-4 md:space-x-6 lg:space-x-0 md:justify-start lg:justify-between whitespace-nowrap">
             {packages.map((packageName) => (
               <button
                 key={packageName}
