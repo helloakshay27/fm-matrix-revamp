@@ -768,8 +768,8 @@ const AddAssetPage = () => {
                         </div>}
                       <div className="mt-2">
                         <label htmlFor={field.id}>
-                          <button className="bg-[#C72030] text-white px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#a61b26] flex items-center mx-auto text-xs sm:text-sm">
-                            <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+                          <button className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto">
+                            <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
                             Upload Files
                           </button>
                         </label>
@@ -785,7 +785,7 @@ const AddAssetPage = () => {
           <button onClick={handleSaveAndShow} className="border border-[#C72030] text-[#C72030] px-6 sm:px-8 py-2 rounded-md hover:bg-[#C72030] hover:text-white text-sm sm:text-base">
             Save & Show Details
           </button>
-          <button onClick={handleSaveAndCreate} className="px-6 sm:px-8 py-2 rounded-md text-sm sm:text-base text-[#c72030] bg-[#f6f4ee]">
+          <button onClick={handleSaveAndCreate} className="bg-[#C72030] text-white px-6 sm:px-8 py-2 rounded-md hover:bg-[#a61b26] text-sm sm:text-base">
             Save & Create New Asset
           </button>
         </div>
