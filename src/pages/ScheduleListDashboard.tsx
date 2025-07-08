@@ -6,36 +6,31 @@ import { Plus, Upload, Filter, Download, Eye, Edit, Copy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { ScheduleFilterDialog } from '@/components/ScheduleFilterDialog';
-
-const scheduleData = [
-  {
-    id: '11878',
-    activityName: 'meter reading',
-    amcId: '',
-    type: 'PPM',
-    scheduleType: 'Asset',
-    noOfAssociation: '2',
-    validFrom: '01/05/2025, 12:00 AM',
-    validTill: '31/05/2025, 11:59 PM',
-    category: 'Technical',
-    active: true,
-    createdOn: '21/05/2025, 01:51 PM'
-  },
-  {
-    id: '11372',
-    activityName: 'All task types 123',
-    amcId: '',
-    type: 'Routine',
-    scheduleType: 'Service',
-    noOfAssociation: '1',
-    validFrom: '14/08/2024, 05:30 AM',
-    validTill: '31/08/2025, 05:30 AM',
-    category: 'Non Technical',
-    active: true,
-    createdOn: '14/08/2024, 04:17 PM'
-  },
-];
-
+const scheduleData = [{
+  id: '11878',
+  activityName: 'meter reading',
+  amcId: '',
+  type: 'PPM',
+  scheduleType: 'Asset',
+  noOfAssociation: '2',
+  validFrom: '01/05/2025, 12:00 AM',
+  validTill: '31/05/2025, 11:59 PM',
+  category: 'Technical',
+  active: true,
+  createdOn: '21/05/2025, 01:51 PM'
+}, {
+  id: '11372',
+  activityName: 'All task types 123',
+  amcId: '',
+  type: 'Routine',
+  scheduleType: 'Service',
+  noOfAssociation: '1',
+  validFrom: '14/08/2024, 05:30 AM',
+  validTill: '31/08/2025, 05:30 AM',
+  category: 'Non Technical',
+  active: true,
+  createdOn: '14/08/2024, 04:17 PM'
+}];
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
@@ -43,39 +38,27 @@ export const ScheduleListDashboard = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
   const [schedules, setSchedules] = useState(scheduleData);
-
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    const filtered = value
-      ? scheduleData.filter(schedule =>
-          schedule.activityName.toLowerCase().includes(value.toLowerCase()) ||
-          schedule.id.toLowerCase().includes(value.toLowerCase()) ||
-          schedule.type.toLowerCase().includes(value.toLowerCase())
-        )
-      : scheduleData;
+    const filtered = value ? scheduleData.filter(schedule => schedule.activityName.toLowerCase().includes(value.toLowerCase()) || schedule.id.toLowerCase().includes(value.toLowerCase()) || schedule.type.toLowerCase().includes(value.toLowerCase())) : scheduleData;
     setFilteredSchedules(filtered);
   };
-
   const handleAddSchedule = () => navigate('/maintenance/schedule/add');
   const handleExport = () => navigate('/maintenance/schedule/export');
   const handleToggleActive = (scheduleId: string) => {
-    setSchedules(prev =>
-      prev.map(schedule =>
-        schedule.id === scheduleId ? { ...schedule, active: !schedule.active } : schedule
-      )
-    );
-    setFilteredSchedules(prev =>
-      prev.map(schedule =>
-        schedule.id === scheduleId ? { ...schedule, active: !schedule.active } : schedule
-      )
-    );
+    setSchedules(prev => prev.map(schedule => schedule.id === scheduleId ? {
+      ...schedule,
+      active: !schedule.active
+    } : schedule));
+    setFilteredSchedules(prev => prev.map(schedule => schedule.id === scheduleId ? {
+      ...schedule,
+      active: !schedule.active
+    } : schedule));
   };
   const handleEditSchedule = (id: string) => navigate(`/maintenance/schedule/edit/${id}`);
   const handleCopySchedule = (id: string) => navigate(`/maintenance/schedule/copy/${id}`);
   const handleViewSchedule = (id: string) => navigate(`/maintenance/schedule/view/${id}`);
-
-  return (
-    <div className="p-4 sm:p-6">
+  return <div className="p-4 sm:p-6">
       {/* Header */}
       <div className="mb-6">
         <p className="text-[#1a1a1a] opacity-70 mb-1">Schedule</p>
@@ -97,21 +80,15 @@ export const ScheduleListDashboard = () => {
           <Download className="w-4 h-4 mr-2" /> Export
         </Button>
         <div className="flex items-center gap-2">
-          <input 
-            type="checkbox" 
-            id="allowMapping" 
-            className="w-4 h-4 text-[#C72030] bg-gray-100 border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 accent-[#C72030]"
-          />
+          <input type="checkbox" id="allowMapping" className="w-4 h-4 text-[#C72030] bg-gray-100 border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 accent-[#C72030]" />
           <label htmlFor="allowMapping" className="text-sm">Allow Automatic Mapping</label>
         </div>
         <div className="w-full sm:w-auto sm:ml-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-3 sm:mt-0">
-          <Input
-            placeholder="Enter Activity Name"
-            value={searchTerm}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="w-full sm:w-64"
-          />
-          <Button style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }} className="hover:opacity-90 px-4">
+          <Input placeholder="Enter Activity Name" value={searchTerm} onChange={e => handleSearch(e.target.value)} className="w-full sm:w-64 bg-white" />
+          <Button style={{
+          backgroundColor: '#F2F0E9',
+          color: '#BF213E'
+        }} className="hover:opacity-90 px-4">
             Go!
           </Button>
           <Button variant="outline" className="border-[#C72030] text-[#C72030]">
@@ -142,8 +119,7 @@ export const ScheduleListDashboard = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredSchedules.map((schedule) => (
-              <TableRow key={schedule.id}>
+            {filteredSchedules.map(schedule => <TableRow key={schedule.id}>
                 <TableCell><Button variant="ghost" size="sm" onClick={() => handleEditSchedule(schedule.id)}><Edit className="w-4 h-4" /></Button></TableCell>
                 <TableCell><Button variant="ghost" size="sm" onClick={() => handleCopySchedule(schedule.id)}><Copy className="w-4 h-4" /></Button></TableCell>
                 <TableCell><Button variant="ghost" size="sm" onClick={() => handleViewSchedule(schedule.id)}><Eye className="w-4 h-4" /></Button></TableCell>
@@ -162,23 +138,13 @@ export const ScheduleListDashboard = () => {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center">
-                    <div
-                      className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-                        schedule.active ? 'bg-green-500' : 'bg-gray-300'
-                      }`}
-                      onClick={() => handleToggleActive(schedule.id)}
-                    >
-                      <span
-                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                          schedule.active ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
+                    <div className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${schedule.active ? 'bg-green-500' : 'bg-gray-300'}`} onClick={() => handleToggleActive(schedule.id)}>
+                      <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${schedule.active ? 'translate-x-6' : 'translate-x-1'}`} />
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>{schedule.createdOn}</TableCell>
-              </TableRow>
-            ))}
+              </TableRow>)}
           </TableBody>
         </Table>
       </div>
@@ -186,6 +152,5 @@ export const ScheduleListDashboard = () => {
       {/* Modals */}
       <BulkUploadDialog open={showImportModal} onOpenChange={setShowImportModal} title="Bulk Upload" />
       <ScheduleFilterDialog open={showFilterDialog} onOpenChange={setShowFilterDialog} />
-    </div>
-  );
+    </div>;
 };
