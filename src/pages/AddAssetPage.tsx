@@ -717,7 +717,7 @@ const AddAssetPage = () => {
 
         {/* Attachments */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-          <div className="cursor-pointer bg-orange-50 border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center" onClick={() => toggleSection('attachments')}>
+          <div onClick={() => toggleSection('attachments')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
               <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">7</span>
               ATTACHMENTS
