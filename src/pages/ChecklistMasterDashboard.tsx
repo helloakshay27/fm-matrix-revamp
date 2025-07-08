@@ -77,17 +77,16 @@ export const ChecklistMasterDashboard = () => {
         </Button>
       </div>
 
-      {/* File Upload Section */}
-      <div className="flex gap-4 mb-6">
+      {/* File Upload Section - All in one row */}
+      <div className="flex items-center gap-4 mb-6">
         <div 
-          className="flex-1 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50"
+          className="flex-1 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center bg-gray-50"
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
-          <div className="flex flex-col items-center">
-            <p className="text-gray-600 mb-2">
-              Choose File <span className="text-gray-400">No file chosen</span>
-            </p>
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-gray-600">Choose File</span>
+            <span className="text-gray-400">{selectedFile ? selectedFile.name : 'No file chosen'}</span>
             <input
               type="file"
               id="fileInput"
@@ -97,29 +96,28 @@ export const ChecklistMasterDashboard = () => {
             />
             <label
               htmlFor="fileInput"
-              className="text-blue-600 underline cursor-pointer hover:text-blue-700"
+              className="text-blue-600 underline cursor-pointer hover:text-blue-700 ml-2"
             >
               Browse files
             </label>
           </div>
         </div>
         
-        <div className="flex flex-col gap-2">
-          <Button 
-            onClick={handleDownloadSampleFormat}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:opacity-90"
-          >
-            Download Sample Format
-          </Button>
-          <Button 
-            onClick={handleImportQuestions}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:opacity-90"
-          >
-            Import Questions
-          </Button>
-        </div>
+        <Button 
+          onClick={handleDownloadSampleFormat}
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:opacity-90 whitespace-nowrap"
+        >
+          Download Sample Format
+        </Button>
+        
+        <Button 
+          onClick={handleImportQuestions}
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:opacity-90 whitespace-nowrap"
+        >
+          Import Questions
+        </Button>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200">
