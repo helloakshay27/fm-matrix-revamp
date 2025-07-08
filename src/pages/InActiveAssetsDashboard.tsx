@@ -31,7 +31,7 @@ export const InActiveAssetsDashboard = () => {
   };
 
   return (
-    <div className="p-6 bg-white min-h-screen">
+    <div className="p-4 sm:p-6 bg-white min-h-screen">
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
           <span>Assets</span>
@@ -60,31 +60,36 @@ export const InActiveAssetsDashboard = () => {
         />
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex items-center gap-3 mb-6">
-        <Button 
-          onClick={handleExportAll}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-        >
-         <Download className="w-4 h-4 mr-2" />
-          Export All
-        </Button>
-        <Button 
-          onClick={() => setIsFilterOpen(true)}
-          variant="outline" 
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
-        >
-         <Filter className="w-4 h-4 mr-2" />
-          Filters
-        </Button>
-        <div className="ml-auto flex items-center gap-3">
-          <div className="relative">
+      {/* Action Buttons - Fully Responsive */}
+      <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-3 mb-6">
+        {/* Left side buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-3">
+          <Button 
+            onClick={handleExportAll}
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white w-full sm:w-auto"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export All
+          </Button>
+          <Button 
+            onClick={() => setIsFilterOpen(true)}
+            variant="outline" 
+            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 w-full sm:w-auto"
+          >
+            <Filter className="w-4 h-4 mr-2" />
+            Filters
+          </Button>
+        </div>
+        
+        {/* Right side search */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 lg:ml-auto w-full lg:w-auto">
+          <div className="relative flex-1 sm:flex-initial">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
               placeholder="Search assets..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64 bg-white h-[36px]"
+              className="pl-10 bg-white h-[36px] w-full sm:w-64"
               style={{ height: '36px' }}
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
@@ -95,7 +100,7 @@ export const InActiveAssetsDashboard = () => {
           </div>
           <Button 
             onClick={handleSearch}
-            className="bg-green-600 hover:bg-green-700 text-white"
+            className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
           >
             Go!
           </Button>
