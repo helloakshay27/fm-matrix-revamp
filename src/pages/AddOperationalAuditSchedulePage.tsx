@@ -60,7 +60,7 @@ interface TaskSection {
 export const AddOperationalAuditSchedulePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [createNew, setCreateNew] = useState(false);
+  const [createNew, setCreateNew] = useState(true);
   const [createTicket, setCreateTicket] = useState(false);
   const [weightage, setWeightage] = useState(false);
   
