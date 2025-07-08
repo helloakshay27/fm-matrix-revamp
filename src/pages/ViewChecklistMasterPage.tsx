@@ -128,6 +128,10 @@ export const ViewChecklistMasterPage = () => {
     }
   }, [id]);
 
+  const handleEditDetails = () => {
+    navigate(`/settings/masters/checklist-master/edit/${id}`);
+  };
+
   if (!checklistData) {
     return (
       <div className="p-6">
@@ -140,8 +144,8 @@ export const ViewChecklistMasterPage = () => {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-screen-xl mx-auto">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
           <Button 
             onClick={() => navigate('/settings/masters/checklist-master')}
             variant="outline"
@@ -149,6 +153,14 @@ export const ViewChecklistMasterPage = () => {
             ← Back to List
           </Button>
         </div>
+
+        <Button 
+          onClick={handleEditDetails}
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:opacity-90"
+        >
+          Edit Details
+        </Button>
       </div>
 
       <div className="flex flex-wrap gap-4 mb-6">
