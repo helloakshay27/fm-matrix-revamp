@@ -152,76 +152,70 @@ export const UtilityWasteGenerationSetupDashboard = () => {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleWasteCategorySubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category Name*</Label>
-                    <TextField
-                      id="category"
-                      placeholder="Enter category name"
-                      value={wasteCategoryForm.category}
-                      onChange={(e) =>
-                        setWasteCategoryForm((prev) => ({ ...prev, category: e.target.value }))
+                  <TextField
+                    label="Category Name*"
+                    placeholder="Enter category name"
+                    value={wasteCategoryForm.category}
+                    onChange={(e) =>
+                      setWasteCategoryForm((prev) => ({ ...prev, category: e.target.value }))
+                    }
+                    required
+                    fullWidth
+                    variant="outlined"
+                    sx={fieldStyles}
+                  />
+
+                  <TextField
+                    label="Category Code*"
+                    placeholder="Enter category code"
+                    value={wasteCategoryForm.categoryCode}
+                    onChange={(e) =>
+                      setWasteCategoryForm((prev) => ({
+                        ...prev,
+                        categoryCode: e.target.value,
+                      }))
+                    }
+                    required
+                    fullWidth
+                    variant="outlined"
+                    sx={fieldStyles}
+                  />
+
+                  <TextField
+                    label="Description"
+                    placeholder="Enter description"
+                    value={wasteCategoryForm.description}
+                    onChange={(e) =>
+                      setWasteCategoryForm((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
+                    fullWidth
+                    variant="outlined"
+                    multiline
+                    minRows={3}
+                    sx={multilineFieldStyles}
+                  />
+
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel sx={{
+                      color: '#999999',
+                      fontSize: '16px',
+                      '&.Mui-focused': {
+                        color: '#C72030'
                       }
-                      required
-                      fullWidth
-                      variant="outlined"
+                    }}>Status</InputLabel>
+                    <MuiSelect
+                      value={wasteCategoryForm.status}
+                      onChange={(e) => setWasteCategoryForm(prev => ({ ...prev, status: e.target.value }))}
+                      label="Status"
                       sx={fieldStyles}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="categoryCode">Category Code*</Label>
-                    <TextField
-                      id="categoryCode"
-                      placeholder="Enter category code"
-                      value={wasteCategoryForm.categoryCode}
-                      onChange={(e) =>
-                        setWasteCategoryForm((prev) => ({
-                          ...prev,
-                          categoryCode: e.target.value,
-                        }))
-                      }
-                      required
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <TextField
-                      id="description"
-                      placeholder="Enter description"
-                      value={wasteCategoryForm.description}
-                      onChange={(e) =>
-                        setWasteCategoryForm((prev) => ({
-                          ...prev,
-                          description: e.target.value,
-                        }))
-                      }
-                      fullWidth
-                      variant="outlined"
-                      multiline
-                      minRows={3}
-                      sx={multilineFieldStyles}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <FormControl fullWidth variant="outlined">
-                      <MuiSelect
-                        id="status"
-                        value={wasteCategoryForm.status}
-                        onChange={(e) => setWasteCategoryForm(prev => ({ ...prev, status: e.target.value }))}
-                        displayEmpty
-                        sx={fieldStyles}
-                      >
-                        <MenuItem value="active">Active</MenuItem>
-                        <MenuItem value="inactive">Inactive</MenuItem>
-                      </MuiSelect>
-                    </FormControl>
-                  </div>
+                    >
+                      <MenuItem value="active">Active</MenuItem>
+                      <MenuItem value="inactive">Inactive</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                   
                   <Button type="submit" className="w-full" style={{ backgroundColor: '#C72030' }}>
                     <Plus className="w-4 h-4 mr-2" />
