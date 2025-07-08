@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import KeyboardArrowLeftOutlinedIcon from "@mui/icons-material/KeyboardArrowLeftOutlined";
 import Modal from "./Modal";
 import { Link, useParams } from "react-router-dom";
@@ -39,11 +39,25 @@ const Details = () => {
     const token = localStorage.getItem("token");
 
     useEffect(() => {
-        dispatch(fetchInternalUserDetails({ token, id }));
-        dispatch(fetchUsers({ token }));
-        dispatch(fetchRoles({ token }));
-        dispatch(fetchAssociatedProjects({ token, id }));
-    }, [dispatch]);
+        const fetchData = async () => {
+            try {
+                await Promise.all([
+                    dispatch(fetchInternalUserDetails({ token, id })).unwrap(),
+                    dispatch(fetchUsers({ token })).unwrap(),
+                    dispatch(fetchRoles({ token })).unwrap(),
+                    dispatch(fetchAssociatedProjects({ token, id })).unwrap()
+                ]);
+            } catch (error) {
+                console.error("Data fetch error:", error);
+                toast.error("Failed to load some data. Please try again.");
+            }
+        };
+
+        if (token && id) {
+            fetchData();
+        }
+    }, [dispatch, token, id]);
+
 
     useEffect(() => {
         if (roles) {
@@ -52,8 +66,9 @@ const Details = () => {
             )?.display_name;
             const formattedValue = value?.replace(/_/g, " ");
             setRole(
-                formattedValue?.charAt(0).toUpperCase() + formattedValue?.slice(1)
+                formattedValue ? formattedValue.charAt(0).toUpperCase() + formattedValue.slice(1) : ''
             );
+
         }
         if (users) {
             const user = users.find((user) => user.id == details?.report_to_id);
