@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -7,6 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
@@ -96,20 +96,11 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
             <h3 className="text-sm font-medium text-[#C72030] mb-4">Asset Details</h3>
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="assetName" className="text-sm font-medium">Asset Name</Label>
-                <TextField
-                  id="assetName"
-                  placeholder="Enter Asset Name"
+                <Input
+                  label="Asset Name"
                   value={assetName}
                   onChange={(e) => setAssetName(e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    shrink: true
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
