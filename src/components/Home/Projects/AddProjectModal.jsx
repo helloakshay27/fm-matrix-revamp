@@ -68,6 +68,12 @@ const CreateNewTeam = ({ setOpenModal }) => {
 
   useEffect(() => {
     if (success) {
+      toast.success("Project team created successfully", {
+        iconTheme: {
+          primary: 'green', // This might directly change the color of the success icon
+          secondary: 'white', // The circle background
+        },
+      });
       dispatch(fetchProjectTeams({ token }))
       setOpenModal(false);
       dispatch(resetSuccess());
