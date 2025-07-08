@@ -49,7 +49,7 @@ export const TicketFeedsPage = () => {
 
   return (
     <div className="p-6 bg-white min-h-screen">
-      <div className="max-w-4xl mx-auto">
+      <div className="mx-auto">
         {/* Header */}
         <div className="mb-6">
           <Button 
