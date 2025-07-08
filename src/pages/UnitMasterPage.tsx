@@ -180,9 +180,9 @@ export const UnitMasterPage = () => {
             <h3 className="text-lg font-semibold" style={{ color: '#C72030' }}>Add New Unit</h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <FormControl fullWidth>
-              <InputLabel shrink>Select Building</InputLabel>
+              <InputLabel shrink sx={{ color: '#666', fontSize: '14px' }}>Select Building</InputLabel>
               <MuiSelect
                 value={formData.building}
                 onChange={(e) => handleInputChange('building', e.target.value)}
@@ -200,7 +200,7 @@ export const UnitMasterPage = () => {
             </FormControl>
 
             <FormControl fullWidth>
-              <InputLabel shrink>Select Wing</InputLabel>
+              <InputLabel shrink sx={{ color: '#666', fontSize: '14px' }}>Select Wing</InputLabel>
               <MuiSelect
                 value={formData.wing}
                 onChange={(e) => handleInputChange('wing', e.target.value)}
@@ -219,7 +219,7 @@ export const UnitMasterPage = () => {
             </FormControl>
 
             <FormControl fullWidth>
-              <InputLabel shrink>Select Area</InputLabel>
+              <InputLabel shrink sx={{ color: '#666', fontSize: '14px' }}>Select Area</InputLabel>
               <MuiSelect
                 value={formData.area}
                 onChange={(e) => handleInputChange('area', e.target.value)}
@@ -231,9 +231,11 @@ export const UnitMasterPage = () => {
                 <MenuItem value="east">east</MenuItem>
               </MuiSelect>
             </FormControl>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <FormControl fullWidth>
-              <InputLabel shrink>Select Floor</InputLabel>
+              <InputLabel shrink sx={{ color: '#666', fontSize: '14px' }}>Select Floor</InputLabel>
               <MuiSelect
                 value={formData.floor}
                 onChange={(e) => handleInputChange('floor', e.target.value)}
@@ -253,7 +255,7 @@ export const UnitMasterPage = () => {
             </FormControl>
 
             <FormControl fullWidth>
-              <InputLabel shrink>Select Entity</InputLabel>
+              <InputLabel shrink sx={{ color: '#666', fontSize: '14px' }}>Select Entity</InputLabel>
               <MuiSelect
                 value={formData.entity}
                 onChange={(e) => handleInputChange('entity', e.target.value)}
@@ -276,7 +278,10 @@ export const UnitMasterPage = () => {
               value={formData.unitName}
               onChange={(e) => handleInputChange('unitName', e.target.value)}
               variant="outlined"
-              InputLabelProps={{ shrink: true }}
+              InputLabelProps={{ 
+                shrink: true,
+                sx: { color: '#666', fontSize: '14px' }
+              }}
               sx={fieldStyles}
             />
           </div>
