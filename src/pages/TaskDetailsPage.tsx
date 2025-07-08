@@ -221,7 +221,7 @@ export const TaskDetailsPage = () => {
           <CardContent className="p-0">
             {/* Tab Navigation */}
             <div className="flex border-b overflow-x-auto">
-              {tabs.map(tab => <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-3 text-sm whitespace-nowrap border-b-2 transition-colors ${activeTab === tab ? 'border-orange-500 text-orange-600 bg-orange-50' : 'border-transparent text-gray-600 hover:text-gray-800'}`}>
+              {tabs.map(tab => <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-3 text-sm whitespace-nowrap border-b-2 transition-colors ${activeTab === tab ? 'border-[#C72030] text-[#C72030] ' : 'border-transparent text-gray-600 hover:text-gray-800'}`}>
                   {tab}
                 </button>)}
             </div>
