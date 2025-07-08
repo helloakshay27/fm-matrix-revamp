@@ -200,6 +200,10 @@ import { AssetAuditDetailsPage } from './pages/AssetAuditDetailsPage';
 // Import Master Checklist page
 import { AddMasterChecklistPage } from './pages/AddMasterChecklistPage';
 
+// Import Checklist Master pages
+import { ChecklistMasterDashboard } from './pages/ChecklistMasterDashboard';
+import { AddChecklistMasterPage } from './pages/AddChecklistMasterPage';
+
 // Import RVehiclesInDashboard and RVehiclesOutDashboard
 import { RVehiclesInDashboard } from './pages/RVehiclesInDashboard';
 import { RVehiclesOutDashboard } from './pages/RVehiclesOutDashboard';
@@ -393,6 +397,10 @@ function App() {
                             <Route path="/settings/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
                             <Route path="/settings/roles/department" element={<DepartmentDashboard />} />
                             <Route path="/settings/roles/role" element={<RoleDashboard />} />
+                            
+                            {/* Settings Masters Routes */}
+                            <Route path="/settings/masters/checklist" element={<ChecklistMasterDashboard />} />
+                            <Route path="/settings/masters/checklist-master/add" element={<AddChecklistMasterPage />} />
 
                             {/* CRM Routes */}
                             <Route path="/crm/campaign" element={<CRMCampaignPage />} />
