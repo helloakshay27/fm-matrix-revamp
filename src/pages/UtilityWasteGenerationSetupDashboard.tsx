@@ -6,25 +6,29 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Search } from "lucide-react";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-
 const fieldStyles = {
-  height: { xs: 28, sm: 36, md: 45 },
-  '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: { xs: '8px', sm: '10px', md: '12px' },
+  height: {
+    xs: 28,
+    sm: 36,
+    md: 45
   },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: {
+      xs: '8px',
+      sm: '10px',
+      md: '12px'
+    }
+  }
 };
-
 export const UtilityWasteGenerationSetupDashboard = () => {
   const [activeTab, setActiveTab] = useState("waste-category");
   const [searchTerm, setSearchTerm] = useState("");
-  
   const [wasteCategoryForm, setWasteCategoryForm] = useState({
     category: '',
     categoryCode: '',
     description: '',
     status: 'active'
   });
-
   const [commodityForm, setCommodityForm] = useState({
     commodity: '',
     commodityCode: '',
@@ -32,7 +36,6 @@ export const UtilityWasteGenerationSetupDashboard = () => {
     description: '',
     status: 'active'
   });
-
   const [uomForm, setUomForm] = useState({
     uom: '',
     uomCode: '',
@@ -41,24 +44,66 @@ export const UtilityWasteGenerationSetupDashboard = () => {
   });
 
   // Sample data
-  const wasteCategories = [
-    { id: 1, category: "Recyclable", code: "REC001", description: "Materials that can be recycled", status: "Active" },
-    { id: 2, category: "Non-Recyclable", code: "NRC001", description: "Materials that cannot be recycled", status: "Active" },
-    { id: 3, category: "Hazardous", code: "HAZ001", description: "Dangerous waste materials", status: "Inactive" }
-  ];
-
-  const commodities = [
-    { id: 1, commodity: "Paper", code: "PAP001", category: "Recyclable", description: "All paper materials", status: "Active" },
-    { id: 2, commodity: "Plastic", code: "PLA001", category: "Recyclable", description: "Plastic containers and bottles", status: "Active" },
-    { id: 3, commodity: "Metal", code: "MET001", category: "Recyclable", description: "Metal scraps and containers", status: "Active" }
-  ];
-
-  const uoms = [
-    { id: 1, uom: "Kilogram", code: "KG", description: "Weight in kilograms", status: "Active" },
-    { id: 2, uom: "Ton", code: "TON", description: "Weight in tons", status: "Active" },
-    { id: 3, uom: "Liter", code: "LTR", description: "Volume in liters", status: "Active" }
-  ];
-
+  const wasteCategories = [{
+    id: 1,
+    category: "Recyclable",
+    code: "REC001",
+    description: "Materials that can be recycled",
+    status: "Active"
+  }, {
+    id: 2,
+    category: "Non-Recyclable",
+    code: "NRC001",
+    description: "Materials that cannot be recycled",
+    status: "Active"
+  }, {
+    id: 3,
+    category: "Hazardous",
+    code: "HAZ001",
+    description: "Dangerous waste materials",
+    status: "Inactive"
+  }];
+  const commodities = [{
+    id: 1,
+    commodity: "Paper",
+    code: "PAP001",
+    category: "Recyclable",
+    description: "All paper materials",
+    status: "Active"
+  }, {
+    id: 2,
+    commodity: "Plastic",
+    code: "PLA001",
+    category: "Recyclable",
+    description: "Plastic containers and bottles",
+    status: "Active"
+  }, {
+    id: 3,
+    commodity: "Metal",
+    code: "MET001",
+    category: "Recyclable",
+    description: "Metal scraps and containers",
+    status: "Active"
+  }];
+  const uoms = [{
+    id: 1,
+    uom: "Kilogram",
+    code: "KG",
+    description: "Weight in kilograms",
+    status: "Active"
+  }, {
+    id: 2,
+    uom: "Ton",
+    code: "TON",
+    description: "Weight in tons",
+    status: "Active"
+  }, {
+    id: 3,
+    uom: "Liter",
+    code: "LTR",
+    description: "Volume in liters",
+    status: "Active"
+  }];
   const handleWasteCategorySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Waste Category Form:', wasteCategoryForm);
@@ -70,7 +115,6 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       status: 'active'
     });
   };
-
   const handleCommoditySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Commodity Form:', commodityForm);
@@ -83,7 +127,6 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       status: 'active'
     });
   };
-
   const handleUomSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('UOM Form:', uomForm);
@@ -95,9 +138,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       status: 'active'
     });
   };
-
-  return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+  return <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">UTILITY WASTE GENERATION SETUP</h2>
@@ -108,10 +149,10 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="waste-category">Waste Category</TabsTrigger>
-          <TabsTrigger value="commodity">Commodity</TabsTrigger>
-          <TabsTrigger value="uom">UOM</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 bg-[#F2EEE9] text-white">
+          <TabsTrigger value="waste-category" className="text-white">Waste Category</TabsTrigger>
+          <TabsTrigger value="commodity" className="text-white">Commodity</TabsTrigger>
+          <TabsTrigger value="uom" className="text-white">UOM</TabsTrigger>
         </TabsList>
 
         {/* Waste Category Tab */}
@@ -126,98 +167,78 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                 <form onSubmit={handleWasteCategorySubmit} className="space-y-4">
                   <div className="space-y-1">
  
-  <TextField
-    id="category"
-    name="category"
-    placeholder="Enter category name"
-    value={wasteCategoryForm.category}
-    onChange={(e) =>
-      setWasteCategoryForm((prev) => ({ ...prev, category: e.target.value }))
-    }
-    required
-    fullWidth
-    variant="outlined"
-    InputLabelProps={{ shrink: false }} // disable floating label
-    InputProps={{ sx: fieldStyles }}
-    sx={{ mt: 0.5 }}
-  />
-</div>
+  <TextField id="category" name="category" placeholder="Enter category name" value={wasteCategoryForm.category} onChange={e => setWasteCategoryForm(prev => ({
+                    ...prev,
+                    category: e.target.value
+                  }))} required fullWidth variant="outlined" InputLabelProps={{
+                    shrink: false
+                  }} // disable floating label
+                  InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 0.5
+                  }} />
+                </div>
 
                   
                   <div className="space-y-1">
   
-  <TextField
-    id="categoryCode"
-    name="categoryCode"
-    placeholder="Enter category code"
-    value={wasteCategoryForm.categoryCode}
-    onChange={(e) =>
-      setWasteCategoryForm((prev) => ({
-        ...prev,
-        categoryCode: e.target.value,
-      }))
-    }
-    required
-    fullWidth
-    variant="outlined"
-    InputLabelProps={{ shrink: false }} // Disable floating label
-    InputProps={{ sx: fieldStyles }}
-    sx={{ mt: 0.5 }}
-  />
-</div>
+  <TextField id="categoryCode" name="categoryCode" placeholder="Enter category code" value={wasteCategoryForm.categoryCode} onChange={e => setWasteCategoryForm(prev => ({
+                    ...prev,
+                    categoryCode: e.target.value
+                  }))} required fullWidth variant="outlined" InputLabelProps={{
+                    shrink: false
+                  }} // Disable floating label
+                  InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 0.5
+                  }} />
+                </div>
 
                   
                   <div className="space-y-1">
   
-  <TextField
-    id="description"
-    name="description"
-    placeholder="Enter description"
-    value={wasteCategoryForm.description}
-    onChange={(e) =>
-      setWasteCategoryForm((prev) => ({
-        ...prev,
-        description: e.target.value,
-      }))
-    }
-    fullWidth
-    variant="outlined"
-    multiline
-    minRows={3}
-    InputLabelProps={{ shrink: false }} // disables floating label
-    InputProps={{
-      sx: {
-        '& textarea': {
-          height: 'auto',
-          overflow: 'hidden',
-          resize: 'none',
-          padding: '8px 14px',
-        },
-      },
-    }}
-    sx={{ mt: 0.5 }}
-  />
-</div>
+  <TextField id="description" name="description" placeholder="Enter description" value={wasteCategoryForm.description} onChange={e => setWasteCategoryForm(prev => ({
+                    ...prev,
+                    description: e.target.value
+                  }))} fullWidth variant="outlined" multiline minRows={3} InputLabelProps={{
+                    shrink: false
+                  }} // disables floating label
+                  InputProps={{
+                    sx: {
+                      '& textarea': {
+                        height: 'auto',
+                        overflow: 'hidden',
+                        resize: 'none',
+                        padding: '8px 14px'
+                      }
+                    }
+                  }} sx={{
+                    mt: 0.5
+                  }} />
+                </div>
 
                   
                   <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <FormControl fullWidth variant="outlined" sx={{
+                    mt: 1
+                  }}>
                       <InputLabel id="status-label" shrink>Select Status</InputLabel>
-                      <MuiSelect
-                        labelId="status-label"
-                        label="Select Status"
-                        value={wasteCategoryForm.status}
-                        onChange={(e) => setWasteCategoryForm(prev => ({ ...prev, status: e.target.value }))}
-                        sx={fieldStyles}
-                      >
+                      <MuiSelect labelId="status-label" label="Select Status" value={wasteCategoryForm.status} onChange={e => setWasteCategoryForm(prev => ({
+                      ...prev,
+                      status: e.target.value
+                    }))} sx={fieldStyles}>
                         <MenuItem value="active">Active</MenuItem>
                         <MenuItem value="inactive">Inactive</MenuItem>
                       </MuiSelect>
                     </FormControl>
                   </div>
                   
-                  <Button type="submit" className="w-full" style={{ backgroundColor: '#C72030' }}>
+                  <Button type="submit" className="w-full" style={{
+                  backgroundColor: '#C72030'
+                }}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Category
                   </Button>
@@ -231,23 +252,19 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                 <CardTitle className="flex items-center justify-between">
                   Waste Categories
                   <div className="flex items-center space-x-2">
-                    <TextField
-                      placeholder="Find categories..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      size="small"
-                      InputProps={{
-                        startAdornment: <Search className="w-4 h-4 mr-2 text-gray-400" />,
-                        sx: { height: 40, padding: '8px 14px' }
-                      }}
-                    />
+                    <TextField placeholder="Find categories..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} size="small" InputProps={{
+                    startAdornment: <Search className="w-4 h-4 mr-2 text-gray-400" />,
+                    sx: {
+                      height: 40,
+                      padding: '8px 14px'
+                    }
+                  }} />
                   </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {wasteCategories.map((category) => (
-                    <div key={category.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  {wasteCategories.map(category => <div key={category.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h4 className="font-medium">{category.category}</h4>
@@ -266,8 +283,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
               </CardContent>
             </Card>
@@ -286,48 +302,42 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                 <form onSubmit={handleCommoditySubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="commodity">Commodity Name*</Label>
-                    <TextField
-                      id="commodity"
-                      placeholder="Enter commodity name"
-                      value={commodityForm.commodity}
-                      onChange={(e) => setCommodityForm(prev => ({ ...prev, commodity: e.target.value }))}
-                      required
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
-                      sx={{ mt: 1 }}
-                    />
+                    <TextField id="commodity" placeholder="Enter commodity name" value={commodityForm.commodity} onChange={e => setCommodityForm(prev => ({
+                    ...prev,
+                    commodity: e.target.value
+                  }))} required fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="commodityCode">Commodity Code*</Label>
-                    <TextField
-                      id="commodityCode"
-                      placeholder="Enter commodity code"
-                      value={commodityForm.commodityCode}
-                      onChange={(e) => setCommodityForm(prev => ({ ...prev, commodityCode: e.target.value }))}
-                      required
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
-                      sx={{ mt: 1 }}
-                    />
+                    <TextField id="commodityCode" placeholder="Enter commodity code" value={commodityForm.commodityCode} onChange={e => setCommodityForm(prev => ({
+                    ...prev,
+                    commodityCode: e.target.value
+                  }))} required fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="commodityCategory">Category*</Label>
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <FormControl fullWidth variant="outlined" sx={{
+                    mt: 1
+                  }}>
                       <InputLabel id="commodity-category-label" shrink>Select Category</InputLabel>
-                      <MuiSelect
-                        labelId="commodity-category-label"
-                        label="Select Category"
-                        displayEmpty
-                        value={commodityForm.category}
-                        onChange={(e) => setCommodityForm(prev => ({ ...prev, category: e.target.value }))}
-                        sx={fieldStyles}
-                      >
+                      <MuiSelect labelId="commodity-category-label" label="Select Category" displayEmpty value={commodityForm.category} onChange={e => setCommodityForm(prev => ({
+                      ...prev,
+                      category: e.target.value
+                    }))} sx={fieldStyles}>
                         <MenuItem value=""><em>Select Category</em></MenuItem>
                         <MenuItem value="recyclable">Recyclable</MenuItem>
                         <MenuItem value="non-recyclable">Non-Recyclable</MenuItem>
@@ -338,48 +348,44 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                   
                   <div className="space-y-2">
                     <Label htmlFor="commodityDescription">Description</Label>
-                    <TextField
-                      id="commodityDescription"
-                      placeholder="Enter description"
-                      value={commodityForm.description}
-                      onChange={(e) => setCommodityForm(prev => ({ ...prev, description: e.target.value }))}
-                      fullWidth
-                      variant="outlined"
-                      multiline
-                      minRows={3}
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{
-                        sx: {
-                          '& textarea': {
-                            height: 'auto',
-                            overflow: 'hidden',
-                            resize: 'none',
-                            padding: '8px 14px',
-                          },
-                        },
-                      }}
-                      sx={{ mt: 1 }}
-                    />
+                    <TextField id="commodityDescription" placeholder="Enter description" value={commodityForm.description} onChange={e => setCommodityForm(prev => ({
+                    ...prev,
+                    description: e.target.value
+                  }))} fullWidth variant="outlined" multiline minRows={3} InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: {
+                      '& textarea': {
+                        height: 'auto',
+                        overflow: 'hidden',
+                        resize: 'none',
+                        padding: '8px 14px'
+                      }
+                    }
+                  }} sx={{
+                    mt: 1
+                  }} />
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="commodityStatus">Status</Label>
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <FormControl fullWidth variant="outlined" sx={{
+                    mt: 1
+                  }}>
                       <InputLabel id="commodity-status-label" shrink>Select Status</InputLabel>
-                      <MuiSelect
-                        labelId="commodity-status-label"
-                        label="Select Status"
-                        value={commodityForm.status}
-                        onChange={(e) => setCommodityForm(prev => ({ ...prev, status: e.target.value }))}
-                        sx={fieldStyles}
-                      >
+                      <MuiSelect labelId="commodity-status-label" label="Select Status" value={commodityForm.status} onChange={e => setCommodityForm(prev => ({
+                      ...prev,
+                      status: e.target.value
+                    }))} sx={fieldStyles}>
                         <MenuItem value="active">Active</MenuItem>
                         <MenuItem value="inactive">Inactive</MenuItem>
                       </MuiSelect>
                     </FormControl>
                   </div>
                   
-                  <Button type="submit" className="w-full" style={{ backgroundColor: '#C72030' }}>
+                  <Button type="submit" className="w-full" style={{
+                  backgroundColor: '#C72030'
+                }}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Commodity
                   </Button>
@@ -393,23 +399,19 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                 <CardTitle className="flex items-center justify-between">
                   Commodities
                   <div className="flex items-center space-x-2">
-                    <TextField
-                      placeholder="Find commodities..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      size="small"
-                      InputProps={{
-                        startAdornment: <Search className="w-4 h-4 mr-2 text-gray-400" />,
-                        sx: { height: 40, padding: '8px 14px' }
-                      }}
-                    />
+                    <TextField placeholder="Find commodities..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} size="small" InputProps={{
+                    startAdornment: <Search className="w-4 h-4 mr-2 text-gray-400" />,
+                    sx: {
+                      height: 40,
+                      padding: '8px 14px'
+                    }
+                  }} />
                   </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {commodities.map((commodity) => (
-                    <div key={commodity.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  {commodities.map(commodity => <div key={commodity.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h4 className="font-medium">{commodity.commodity}</h4>
@@ -428,8 +430,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
               </CardContent>
             </Card>
@@ -448,80 +449,72 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                 <form onSubmit={handleUomSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="uom">UOM Name*</Label>
-                    <TextField
-                      id="uom"
-                      placeholder="Enter UOM name"
-                      value={uomForm.uom}
-                      onChange={(e) => setUomForm(prev => ({ ...prev, uom: e.target.value }))}
-                      required
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
-                      sx={{ mt: 1 }}
-                    />
+                    <TextField id="uom" placeholder="Enter UOM name" value={uomForm.uom} onChange={e => setUomForm(prev => ({
+                    ...prev,
+                    uom: e.target.value
+                  }))} required fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="uomCode">UOM Code*</Label>
-                    <TextField
-                      id="uomCode"
-                      placeholder="Enter UOM code"
-                      value={uomForm.uomCode}
-                      onChange={(e) => setUomForm(prev => ({ ...prev, uomCode: e.target.value }))}
-                      required
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
-                      sx={{ mt: 1 }}
-                    />
+                    <TextField id="uomCode" placeholder="Enter UOM code" value={uomForm.uomCode} onChange={e => setUomForm(prev => ({
+                    ...prev,
+                    uomCode: e.target.value
+                  }))} required fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="uomDescription">Description</Label>
-                    <TextField
-                      id="uomDescription"
-                      placeholder="Enter description"
-                      value={uomForm.description}
-                      onChange={(e) => setUomForm(prev => ({ ...prev, description: e.target.value }))}
-                      fullWidth
-                      variant="outlined"
-                      multiline
-                      minRows={3}
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{
-                        sx: {
-                          '& textarea': {
-                            height: 'auto',
-                            overflow: 'hidden',
-                            resize: 'none',
-                            padding: '8px 14px',
-                          },
-                        },
-                      }}
-                      sx={{ mt: 1 }}
-                    />
+                    <TextField id="uomDescription" placeholder="Enter description" value={uomForm.description} onChange={e => setUomForm(prev => ({
+                    ...prev,
+                    description: e.target.value
+                  }))} fullWidth variant="outlined" multiline minRows={3} InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: {
+                      '& textarea': {
+                        height: 'auto',
+                        overflow: 'hidden',
+                        resize: 'none',
+                        padding: '8px 14px'
+                      }
+                    }
+                  }} sx={{
+                    mt: 1
+                  }} />
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="uomStatus">Status</Label>
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <FormControl fullWidth variant="outlined" sx={{
+                    mt: 1
+                  }}>
                       <InputLabel id="uom-status-label" shrink>Select Status</InputLabel>
-                      <MuiSelect
-                        labelId="uom-status-label"
-                        label="Select Status"
-                        value={uomForm.status}
-                        onChange={(e) => setUomForm(prev => ({ ...prev, status: e.target.value }))}
-                        sx={fieldStyles}
-                      >
+                      <MuiSelect labelId="uom-status-label" label="Select Status" value={uomForm.status} onChange={e => setUomForm(prev => ({
+                      ...prev,
+                      status: e.target.value
+                    }))} sx={fieldStyles}>
                         <MenuItem value="active">Active</MenuItem>
                         <MenuItem value="inactive">Inactive</MenuItem>
                       </MuiSelect>
                     </FormControl>
                   </div>
                   
-                  <Button type="submit" className="w-full" style={{ backgroundColor: '#C72030' }}>
+                  <Button type="submit" className="w-full" style={{
+                  backgroundColor: '#C72030'
+                }}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add UOM
                   </Button>
@@ -535,23 +528,19 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                 <CardTitle className="flex items-center justify-between">
                   Unit of Measurements
                   <div className="flex items-center space-x-2">
-                    <TextField
-                      placeholder="Find UOMs..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      size="small"
-                      InputProps={{
-                        startAdornment: <Search className="w-4 h-4 mr-2 text-gray-400" />,
-                        sx: { height: 40, padding: '8px 14px' }
-                      }}
-                    />
+                    <TextField placeholder="Find UOMs..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} size="small" InputProps={{
+                    startAdornment: <Search className="w-4 h-4 mr-2 text-gray-400" />,
+                    sx: {
+                      height: 40,
+                      padding: '8px 14px'
+                    }
+                  }} />
                   </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {uoms.map((uom) => (
-                    <div key={uom.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  {uoms.map(uom => <div key={uom.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h4 className="font-medium">{uom.uom}</h4>
@@ -570,14 +559,12 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>;
 };
