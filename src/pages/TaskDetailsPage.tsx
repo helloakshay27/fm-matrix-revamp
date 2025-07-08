@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -523,13 +524,20 @@ export const TaskDetailsPage = () => {
       {/* Task Reschedule Dialog */}
       <Dialog open={showRescheduleDialog} onOpenChange={setShowRescheduleDialog}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
+          <DialogHeader className="flex flex-row items-center justify-between">
             <DialogTitle>Task Reschedule</DialogTitle>
+            <button 
+              onClick={() => setShowRescheduleDialog(false)}
+              className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </button>
           </DialogHeader>
           
           <div className="space-y-4">
             <div>
-              <h3 className="font-medium mb-4">New Schedule</h3>
+              <h3 className="font-medium mb-4" style={{ color: '#C72030' }}>New Schedule</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <TextField label="Schedule Date" type="date" value={rescheduleData.scheduleDate} onChange={e => setRescheduleData(prev => ({
@@ -559,7 +567,7 @@ export const TaskDetailsPage = () => {
             </div>
 
             <div>
-              <h3 className="font-medium mb-2">Notify Users</h3>
+              <h3 className="font-medium mb-2" style={{ color: '#C72030' }}>Notify Users</h3>
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" sx={{
                 mt: 1
