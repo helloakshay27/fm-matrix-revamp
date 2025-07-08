@@ -315,7 +315,7 @@ export const AddSchedulePage = () => {
       {/* Basic Info Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base text-[#C72030]">
             <span className="w-5 h-5 sm:w-6 sm:h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs sm:text-sm">1</span>
             Basic Info
           </CardTitle>
@@ -454,7 +454,7 @@ export const AddSchedulePage = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-[#C72030]">
               <span className="w-5 h-5 sm:w-6 sm:h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs sm:text-sm">2</span>
               <span className="text-sm sm:text-base">Task</span>
             </div>
@@ -622,7 +622,7 @@ export const AddSchedulePage = () => {
       {/* Schedule Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base text-[#C72030]">
             <span className="w-5 h-5 sm:w-6 sm:h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs sm:text-sm">3</span>
             Schedule
           </CardTitle>
@@ -926,7 +926,7 @@ export const AddSchedulePage = () => {
       {/* Cron Form Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base text-[#C72030]">
             <span className="w-5 h-5 sm:w-6 sm:h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs sm:text-sm">4</span>
             Cron form
           </CardTitle>
