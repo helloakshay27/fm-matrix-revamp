@@ -46,6 +46,7 @@ export const TaskDetailsPage = () => {
     email: false,
     sms: false
   });
+
   const handleBack = () => {
     navigate('/maintenance/task');
   };
@@ -113,6 +114,7 @@ export const TaskDetailsPage = () => {
       }
     }
   };
+
   return <>
       <div className="p-6 bg-white min-h-screen">
         {/* Header */}
@@ -250,7 +252,7 @@ export const TaskDetailsPage = () => {
                 }} />
                   </div>
                   <div>
-                    <TextField label="Notes" placeholder="Enter Notes" fullWidth variant="outlined" multiline rows={4} InputLabelProps={{
+                    <TextField label="Notes" fullWidth variant="outlined" multiline rows={4} InputLabelProps={{
                   shrink: true
                 }} InputProps={{
                   sx: fieldStyles
