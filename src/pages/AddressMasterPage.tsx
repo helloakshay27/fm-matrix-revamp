@@ -30,6 +30,9 @@ export const AddressMasterPage = () => {
 
   const handleEditClick = (address) => {
     console.log('Edit address:', address);
+    navigate('/settings/masters/address/edit', { 
+      state: { addressData: address } 
+    });
   };
 
   return (

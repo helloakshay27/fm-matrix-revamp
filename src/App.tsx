@@ -387,6 +387,9 @@ import { AddressMasterPage } from './pages/AddressMasterPage';
 // Import Add Address page
 import { AddAddressPage } from './pages/AddAddressPage';
 
+// Import Edit Address page
+import { EditAddressPage } from './pages/EditAddressPage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -422,6 +425,7 @@ function App() {
                             <Route path="/settings/masters/unit" element={<UnitMasterPage />} />
                             <Route path="/settings/masters/address" element={<AddressMasterPage />} />
                             <Route path="/settings/masters/address/add" element={<AddAddressPage />} />
+                            <Route path="/settings/masters/address/edit" element={<EditAddressPage />} />
 
                             {/* CRM Routes */}
                             <Route path="/crm/campaign" element={<CRMCampaignPage />} />
