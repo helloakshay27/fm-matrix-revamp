@@ -211,7 +211,7 @@ export const TaskDetailsPage = () => {
 
         {/* Activity Section */}
         <Card>
-          <CardHeader className="bg-orange-50 border-b">
+          <CardHeader className="border-b bg-white">
             <CardTitle className="text-orange-600 flex items-center gap-2">
               <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm">A</div>
               Activity
