@@ -265,13 +265,15 @@ export const TaskDetailsPage = () => {
     mt: 1,
     '& .MuiOutlinedInput-root': {
       alignItems: 'flex-start',
-      padding: 0
+      padding: 0,
+      minHeight: '100px'
     },
     '& .MuiInputBase-inputMultiline': {
       padding: '12px',
-      minHeight: 'auto',
+      minHeight: '76px !important',
       height: 'auto',
-      lineHeight: 1.5
+      lineHeight: 1.5,
+      resize: 'vertical'
     }
   }} 
 />
@@ -292,20 +294,19 @@ export const TaskDetailsPage = () => {
                       InputLabelProps={{
                         shrink: true
                       }} 
-                      InputProps={{
-                        sx: {
-                          ...fieldStyles,
-                          alignItems: 'flex-start',
-                          '& .MuiInputBase-inputMultiline': {
-                            minHeight: '80px',
-                            resize: 'vertical'
-                          }
-                        }
-                      }} 
                       sx={{
                         mt: 1,
                         '& .MuiOutlinedInput-root': {
+                          alignItems: 'flex-start',
+                          padding: 0,
                           minHeight: '100px'
+                        },
+                        '& .MuiInputBase-inputMultiline': {
+                          padding: '12px',
+                          minHeight: '76px !important',
+                          height: 'auto',
+                          lineHeight: 1.5,
+                          resize: 'vertical'
                         }
                       }} 
                     />
@@ -523,13 +524,19 @@ export const TaskDetailsPage = () => {
       {/* Task Reschedule Dialog */}
       <Dialog open={showRescheduleDialog} onOpenChange={setShowRescheduleDialog}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
+          <DialogHeader className="flex flex-row items-center justify-between pb-0">
             <DialogTitle>Task Reschedule</DialogTitle>
+            <button
+              onClick={() => setShowRescheduleDialog(false)}
+              className="text-red-500 hover:text-red-700"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </DialogHeader>
           
           <div className="space-y-4">
             <div>
-              <h3 className="font-medium mb-4">New Schedule</h3>
+              <h3 className="font-medium mb-4" style={{ color: '#C72030' }}>New Schedule</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <TextField label="Schedule Date" type="date" value={rescheduleData.scheduleDate} onChange={e => setRescheduleData(prev => ({
@@ -559,7 +566,7 @@ export const TaskDetailsPage = () => {
             </div>
 
             <div>
-              <h3 className="font-medium mb-2">Notify Users</h3>
+              <h3 className="font-medium mb-2" style={{ color: '#C72030' }}>Notify Users</h3>
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" sx={{
                 mt: 1
