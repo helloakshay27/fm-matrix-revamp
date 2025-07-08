@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,6 +28,21 @@ const fieldStyles = {
   '& .MuiInputBase-input, & .MuiSelect-select': {
     padding: { xs: '8px', sm: '10px', md: '12px' },
   },
+};
+
+// Custom styles for radio buttons and checkboxes
+const customRadioStyles = {
+  accentColor: '#C72030',
+  outline: 'none',
+  boxShadow: 'none',
+  border: 'none',
+};
+
+const customCheckboxStyles = {
+  accentColor: '#C72030',
+  outline: 'none',
+  boxShadow: 'none',
+  border: 'none',
 };
 
 export const AddSchedulePage = () => {
@@ -231,6 +245,8 @@ export const AddSchedulePage = () => {
                     value="Checklist Level"
                     checked={formData.ticketLevel === 'Checklist Level'}
                     onChange={(e) => handleInputChange('ticketLevel', e.target.value)}
+                    style={customRadioStyles}
+                    className="focus:outline-none focus:ring-0"
                   />
                   <Label htmlFor="checklist-level" className="text-sm">Checklist Level</Label>
                 </div>
@@ -242,6 +258,8 @@ export const AddSchedulePage = () => {
                     value="Question Level"
                     checked={formData.ticketLevel === 'Question Level'}
                     onChange={(e) => handleInputChange('ticketLevel', e.target.value)}
+                    style={customRadioStyles}
+                    className="focus:outline-none focus:ring-0"
                   />
                   <Label htmlFor="question-level" className="text-sm">Question Level</Label>
                 </div>
@@ -303,15 +321,36 @@ export const AddSchedulePage = () => {
             <Label className="text-sm font-medium">Type</Label>
             <div className="flex flex-wrap gap-2 sm:gap-4">
               <div className="flex items-center space-x-2">
-                <input type="radio" id="ppm" name="type" value="PPM" />
+                <input 
+                  type="radio" 
+                  id="ppm" 
+                  name="type" 
+                  value="PPM" 
+                  style={customRadioStyles}
+                  className="focus:outline-none focus:ring-0"
+                />
                 <Label htmlFor="ppm" className="text-sm">PPM</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <input type="radio" id="amc" name="type" value="AMC" />
+                <input 
+                  type="radio" 
+                  id="amc" 
+                  name="type" 
+                  value="AMC" 
+                  style={customRadioStyles}
+                  className="focus:outline-none focus:ring-0"
+                />
                 <Label htmlFor="amc" className="text-sm">AMC</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <input type="radio" id="preparedness" name="type" value="Preparedness" />
+                <input 
+                  type="radio" 
+                  id="preparedness" 
+                  name="type" 
+                  value="Preparedness" 
+                  style={customRadioStyles}
+                  className="focus:outline-none focus:ring-0"
+                />
                 <Label htmlFor="preparedness" className="text-sm">Preparedness</Label>
               </div>
             </div>
@@ -321,19 +360,47 @@ export const AddSchedulePage = () => {
             <Label className="text-sm font-medium">Schedule For</Label>
             <div className="flex flex-wrap gap-2 sm:gap-4">
               <div className="flex items-center space-x-2">
-                <input type="radio" id="asset" name="scheduleFor" value="Asset" />
+                <input 
+                  type="radio" 
+                  id="asset" 
+                  name="scheduleFor" 
+                  value="Asset" 
+                  style={customRadioStyles}
+                  className="focus:outline-none focus:ring-0"
+                />
                 <Label htmlFor="asset" className="text-sm">Asset</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <input type="radio" id="service" name="scheduleFor" value="Service" />
+                <input 
+                  type="radio" 
+                  id="service" 
+                  name="scheduleFor" 
+                  value="Service" 
+                  style={customRadioStyles}
+                  className="focus:outline-none focus:ring-0"
+                />
                 <Label htmlFor="service" className="text-sm">Service</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <input type="radio" id="vendor" name="scheduleFor" value="Vendor" />
+                <input 
+                  type="radio" 
+                  id="vendor" 
+                  name="scheduleFor" 
+                  value="Vendor" 
+                  style={customRadioStyles}
+                  className="focus:outline-none focus:ring-0"
+                />
                 <Label htmlFor="vendor" className="text-sm">Vendor</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <input type="radio" id="training" name="scheduleFor" value="Training" />
+                <input 
+                  type="radio" 
+                  id="training" 
+                  name="scheduleFor" 
+                  value="Training" 
+                  style={customRadioStyles}
+                  className="focus:outline-none focus:ring-0"
+                />
                 <Label htmlFor="training" className="text-sm">Training</Label>
               </div>
             </div>
@@ -480,26 +547,35 @@ export const AddSchedulePage = () => {
                 </div>
                 <div className="lg:col-span-1 flex flex-wrap items-center gap-2 sm:gap-4 pt-2 sm:pt-6">
                   <div className="flex items-center space-x-2">
-                    <Checkbox 
+                    <input
+                      type="checkbox"
                       id={`mandatory-${section.id}`}
                       checked={section.mandatory}
-                      onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'mandatory', checked)}
+                      onChange={(e) => handleTaskSectionChange(section.id, 'mandatory', e.target.checked)}
+                      style={customCheckboxStyles}
+                      className="focus:outline-none focus:ring-0"
                     />
                     <Label htmlFor={`mandatory-${section.id}`} className="text-xs sm:text-sm">Mandatory</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Checkbox 
+                    <input
+                      type="checkbox"
                       id={`reading-${section.id}`}
                       checked={section.reading}
-                      onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'reading', checked)}
+                      onChange={(e) => handleTaskSectionChange(section.id, 'reading', e.target.checked)}
+                      style={customCheckboxStyles}
+                      className="focus:outline-none focus:ring-0"
                     />
                     <Label htmlFor={`reading-${section.id}`} className="text-xs sm:text-sm">Reading</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Checkbox 
+                    <input
+                      type="checkbox"
                       id={`help-text-${section.id}`}
                       checked={!!section.helpText}
-                      onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'helpText', checked ? 'Help text' : '')}
+                      onChange={(e) => handleTaskSectionChange(section.id, 'helpText', e.target.checked ? 'Help text' : '')}
+                      style={customCheckboxStyles}
+                      className="focus:outline-none focus:ring-0"
                     />
                     <Label htmlFor={`help-text-${section.id}`} className="text-xs sm:text-sm">Help Text</Label>
                   </div>
@@ -522,10 +598,13 @@ export const AddSchedulePage = () => {
                     />
                   </div>
                   <div className="flex items-center space-x-2 pt-2 sm:pt-6">
-                    <Checkbox 
+                    <input
+                      type="checkbox"
                       id={`failing-${section.id}`}
                       checked={section.failing}
-                      onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'failing', checked)}
+                      onChange={(e) => handleTaskSectionChange(section.id, 'failing', e.target.checked)}
+                      style={customCheckboxStyles}
+                      className="focus:outline-none focus:ring-0"
                     />
                     <Label htmlFor={`failing-${section.id}`} className="text-sm">Failing</Label>
                   </div>
@@ -556,6 +635,8 @@ export const AddSchedulePage = () => {
                   value="Individual" 
                   checked={formData.checklistType === 'Individual'}
                   onChange={(e) => handleInputChange('checklistType', e.target.value)}
+                  style={customRadioStyles}
+                  className="focus:outline-none focus:ring-0"
                 />
                 <Label htmlFor="individual" className="text-sm">Individual</Label>
               </div>
@@ -567,6 +648,8 @@ export const AddSchedulePage = () => {
                   value="Asset Group"
                   checked={formData.checklistType === 'Asset Group'}
                   onChange={(e) => handleInputChange('checklistType', e.target.value)}
+                  style={customRadioStyles}
+                  className="focus:outline-none focus:ring-0"
                 />
                 <Label htmlFor="asset-group" className="text-sm">Asset Group</Label>
               </div>
@@ -867,21 +950,39 @@ export const AddSchedulePage = () => {
               {activeTab === 'Minutes' && (
                 <>
                   <div className="flex items-center space-x-2">
-                    <input type="radio" id="specific-minutes" name="minutes-option" defaultChecked />
+                    <input 
+                      type="radio" 
+                      id="specific-minutes" 
+                      name="minutes-option" 
+                      defaultChecked 
+                      style={customRadioStyles}
+                      className="focus:outline-none focus:ring-0"
+                    />
                     <Label htmlFor="specific-minutes" className="text-sm">Specific minute (choose one or many)</Label>
                   </div>
 
                   <div className="grid grid-cols-6 sm:grid-cols-10 lg:grid-cols-12 gap-2 text-sm">
                     {Array.from({ length: 60 }, (_, i) => (
                       <div key={i} className="flex items-center space-x-1">
-                        <Checkbox id={`minute-${i}`} />
+                        <input 
+                          type="checkbox" 
+                          id={`minute-${i}`} 
+                          style={customCheckboxStyles}
+                          className="focus:outline-none focus:ring-0"
+                        />
                         <Label htmlFor={`minute-${i}`} className="text-xs">{i.toString().padStart(2, '0')}</Label>
                       </div>
                     ))}
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                    <input type="radio" id="every-minute" name="minutes-option" />
+                    <input 
+                      type="radio" 
+                      id="every-minute" 
+                      name="minutes-option" 
+                      style={customRadioStyles}
+                      className="focus:outline-none focus:ring-0"
+                    />
                     <Label htmlFor="every-minute" className="text-sm">Every minute between minute</Label>
                     <FormControl size="small" sx={{ minWidth: 80 }}>
                       <MuiSelect
@@ -915,21 +1016,39 @@ export const AddSchedulePage = () => {
               {activeTab === 'Hours' && (
                 <>
                   <div className="flex items-center space-x-2">
-                    <input type="radio" id="specific-hours" name="hours-option" defaultChecked />
+                    <input 
+                      type="radio" 
+                      id="specific-hours" 
+                      name="hours-option" 
+                      defaultChecked 
+                      style={customRadioStyles}
+                      className="focus:outline-none focus:ring-0"
+                    />
                     <Label htmlFor="specific-hours">Specific hour (choose one or many)</Label>
                   </div>
 
                   <div className="grid grid-cols-12 gap-2 text-sm">
                     {Array.from({ length: 24 }, (_, i) => (
                       <div key={i} className="flex items-center space-x-1">
-                        <Checkbox id={`hour-${i}`} />
+                        <input 
+                          type="checkbox" 
+                          id={`hour-${i}`} 
+                          style={customCheckboxStyles}
+                          className="focus:outline-none focus:ring-0"
+                        />
                         <Label htmlFor={`hour-${i}`} className="text-xs">{i.toString().padStart(2, '0')}</Label>
                       </div>
                     ))}
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <input type="radio" id="every-hour" name="hours-option" />
+                    <input 
+                      type="radio" 
+                      id="every-hour" 
+                      name="hours-option" 
+                      style={customRadioStyles}
+                      className="focus:outline-none focus:ring-0"
+                    />
                     <Label htmlFor="every-hour">Every hour between hour</Label>
                     <FormControl size="small" sx={{ minWidth: 80 }}>
                       <MuiSelect
@@ -963,21 +1082,39 @@ export const AddSchedulePage = () => {
               {activeTab === 'Day' && (
                 <>
                   <div className="flex items-center space-x-2">
-                    <input type="radio" id="specific-days" name="days-option" defaultChecked />
+                    <input 
+                      type="radio" 
+                      id="specific-days" 
+                      name="days-option" 
+                      defaultChecked 
+                      style={customRadioStyles}
+                      className="focus:outline-none focus:ring-0"
+                    />
                     <Label htmlFor="specific-days">Specific day (choose one or many)</Label>
                   </div>
 
                   <div className="grid grid-cols-8 gap-2 text-sm">
                     {Array.from({ length: 31 }, (_, i) => (
                       <div key={i} className="flex items-center space-x-1">
-                        <Checkbox id={`day-${i + 1}`} />
+                        <input 
+                          type="checkbox" 
+                          id={`day-${i + 1}`} 
+                          style={customCheckboxStyles}
+                          className="focus:outline-none focus:ring-0"
+                        />
                         <Label htmlFor={`day-${i + 1}`} className="text-xs">{(i + 1).toString()}</Label>
                       </div>
                     ))}
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <input type="radio" id="every-day" name="days-option" />
+                    <input 
+                      type="radio" 
+                      id="every-day" 
+                      name="days-option" 
+                      style={customRadioStyles}
+                      className="focus:outline-none focus:ring-0"
+                    />
                     <Label htmlFor="every-day">Every day between day</Label>
                     <FormControl size="small" sx={{ minWidth: 80 }}>
                       <MuiSelect
@@ -1011,21 +1148,39 @@ export const AddSchedulePage = () => {
               {activeTab === 'Month' && (
                 <>
                   <div className="flex items-center space-x-2">
-                    <input type="radio" id="specific-months" name="months-option" defaultChecked />
+                    <input 
+                      type="radio" 
+                      id="specific-months" 
+                      name="months-option" 
+                      defaultChecked 
+                      style={customRadioStyles}
+                      className="focus:outline-none focus:ring-0"
+                    />
                     <Label htmlFor="specific-months">Specific month (choose one or many)</Label>
                   </div>
 
                   <div className="grid grid-cols-4 gap-2 text-sm">
                     {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
                       <div key={i} className="flex items-center space-x-1">
-                        <Checkbox id={`month-${i + 1}`} />
+                        <input 
+                          type="checkbox" 
+                          id={`month-${i + 1}`} 
+                          style={customCheckboxStyles}
+                          className="focus:outline-none focus:ring-0"
+                        />
                         <Label htmlFor={`month-${i + 1}`} className="text-xs">{month}</Label>
                       </div>
                     ))}
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <input type="radio" id="every-month" name="months-option" />
+                    <input 
+                      type="radio" 
+                      id="every-month" 
+                      name="months-option" 
+                      style={customRadioStyles}
+                      className="focus:outline-none focus:ring-0"
+                    />
                     <Label htmlFor="every-month">Every month between month</Label>
                     <FormControl size="small" sx={{ minWidth: 100 }}>
                       <MuiSelect
