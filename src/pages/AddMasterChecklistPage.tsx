@@ -135,52 +135,59 @@ export const AddMasterChecklistPage = () => {
               </div>
             </div>
 
-            <div>
-              <TextField 
-                fullWidth 
-                required 
-                label="Activity Name *"
-                placeholder="Enter Activity" 
-                value={activityName} 
-                onChange={(e) => setActivityName(e.target.value)} 
-                variant="outlined" 
-                InputLabelProps={{ shrink: true }}
-                sx={fieldStyles}
+            <div className="field-group relative" style={{ margin: '20px 0' }}>
+              <input
+                required
+                className="floating-label w-full pt-4 pb-2 px-[15px] text-base border border-[#ccc] rounded transition-colors focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[#C72030]"
+                placeholder=""
+                value={activityName}
+                onChange={(e) => setActivityName(e.target.value)}
               />
+              <label className={`absolute left-[15px] transition-all duration-150 ease-in text-[#676767] pointer-events-none ${activityName ? 'field-active -translate-y-[25px] text-[0.9em] text-black' : 'top-4 text-base'}`}
+                style={{
+                  textShadow: activityName ? '1px 0 0 #fff, -1px 0 0 #fff, 2px 0 0 #fff, -2px 0 0 #fff, 0 1px 0 #fff, 0 -1px 0 #fff, 0 2px 0 #fff, 0 -2px 0 #fff' : 'none'
+                }}>
+                Activity Name *
+              </label>
             </div>
 
             <div className="md:col-span-2">
-              <TextField 
-                multiline 
-                minRows={3} 
-                fullWidth 
-                label="Description"
-                placeholder="Enter Description" 
-                value={description} 
-                onChange={(e) => setDescription(e.target.value)} 
-                variant="outlined" 
-                InputLabelProps={{ shrink: true }}
-                sx={fieldStyles}
-              />
+              <div className="field-group relative" style={{ margin: '20px 0' }}>
+                <textarea
+                  rows={3}
+                  className="floating-label flex min-h-[80px] w-full pt-4 pb-2 px-[15px] text-base border border-[#ccc] rounded transition-colors focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[#C72030] resize-vertical"
+                  placeholder=""
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+                <label className={`absolute left-[15px] transition-all duration-150 ease-in text-[#676767] pointer-events-none ${description ? 'field-active -translate-y-[25px] text-[0.9em] text-black' : 'top-4 text-base'}`}
+                  style={{
+                    textShadow: description ? '1px 0 0 #fff, -1px 0 0 #fff, 2px 0 0 #fff, -2px 0 0 #fff, 0 1px 0 #fff, 0 -1px 0 #fff, 0 2px 0 #fff, 0 -2px 0 #fff' : 'none'
+                  }}>
+                  Description
+                </label>
+              </div>
             </div>
 
             <div>
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel id="asset-type-label" shrink>Select Asset Type</InputLabel>
-                <MuiSelect 
-                  labelId="asset-type-label"
-                  label="Select Asset Type"
-                  displayEmpty 
-                  value={assetType} 
-                  onChange={(e) => setAssetType(e.target.value)} 
-                  sx={fieldStyles}
+              <div className="field-group relative" style={{ margin: '20px 0' }}>
+                <select
+                  className="floating-label w-full pt-4 pb-2 px-[15px] text-base border border-[#ccc] rounded transition-colors focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[#C72030] bg-white"
+                  value={assetType}
+                  onChange={(e) => setAssetType(e.target.value)}
                 >
-                  <MenuItem value=""><em>Select Asset Type</em></MenuItem>
+                  <option value="">Select Asset Type</option>
                   {['electrical', 'mechanical', 'hvac', 'plumbing', 'fire-safety'].map(type => (
-                    <MenuItem key={type} value={type}>{type}</MenuItem>
+                    <option key={type} value={type}>{type}</option>
                   ))}
-                </MuiSelect>
-              </FormControl>
+                </select>
+                <label className={`absolute left-[15px] transition-all duration-150 ease-in text-[#676767] pointer-events-none ${assetType ? 'field-active -translate-y-[25px] text-[0.9em] text-black' : 'top-4 text-base'}`}
+                  style={{
+                    textShadow: assetType ? '1px 0 0 #fff, -1px 0 0 #fff, 2px 0 0 #fff, -2px 0 0 #fff, 0 1px 0 #fff, 0 -1px 0 #fff, 0 2px 0 #fff, 0 -2px 0 #fff' : 'none'
+                  }}>
+                  Select Asset Type
+                </label>
+              </div>
             </div>
           </div>
         </div>
