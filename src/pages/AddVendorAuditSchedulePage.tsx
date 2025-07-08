@@ -12,7 +12,7 @@ import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } fro
 const fieldStyles = {
   width: '100%',
   '& .MuiOutlinedInput-root': {
-    height: { xs: '36px', md: '45px' },
+    height: { xs: '36px', sm: '40px', md: '45px' },
     borderRadius: '8px',
     backgroundColor: '#FFFFFF',
     '& fieldset': {
@@ -28,20 +28,20 @@ const fieldStyles = {
   },
   '& .MuiInputLabel-root': {
     color: '#666666',
-    fontSize: '14px',
+    fontSize: { xs: '12px', sm: '13px', md: '14px' },
     '&.Mui-focused': {
       color: '#C72030',
     },
     '&.MuiInputLabel-shrink': {
-      transform: 'translate(14px, -9px) scale(0.75)',
+      transform: { xs: 'translate(14px, -7px) scale(0.75)', md: 'translate(14px, -9px) scale(0.75)' },
       backgroundColor: '#FFFFFF',
       padding: '0 4px',
     },
   },
   '& .MuiOutlinedInput-input, & .MuiSelect-select': {
     color: '#1A1A1A',
-    fontSize: '14px',
-    padding: { xs: '8px 14px', md: '12px 14px' },
+    fontSize: { xs: '12px', sm: '13px', md: '14px' },
+    padding: { xs: '6px 12px', sm: '8px 14px', md: '12px 14px' },
     height: 'auto',
     '&::placeholder': {
       color: '#999999',
@@ -431,28 +431,28 @@ export const AddVendorAuditSchedulePage = () => {
   };
 
   return (
-    <div className="flex-1 p-6 bg-white min-h-screen">
+    <div className="flex-1 p-3 sm:p-4 md:p-6 bg-white min-h-screen">
       {/* Breadcrumb */}
-      <div className="mb-6">
-        <nav className="flex items-center text-sm text-gray-600 mb-4">
+      <div className="mb-4 sm:mb-6">
+        <nav className="flex flex-wrap items-center text-xs sm:text-sm text-gray-600 mb-2 sm:mb-4">
           <span>Maintenance</span>
-          <span className="mx-2">{'>'}</span>
+          <span className="mx-1 sm:mx-2">{'>'}</span>
           <span>Audit</span>
-          <span className="mx-2">{'>'}</span>
+          <span className="mx-1 sm:mx-2">{'>'}</span>
           <span>Vendor</span>
-          <span className="mx-2">{'>'}</span>
+          <span className="mx-1 sm:mx-2">{'>'}</span>
           <span>Scheduled</span>
-          <span className="mx-2">{'>'}</span>
+          <span className="mx-1 sm:mx-2">{'>'}</span>
           <span>Copy</span>
         </nav>
-        <h1 className="text-2xl font-bold text-gray-900">COPY VENDOR AUDIT SCHEDULE</h1>
+        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">COPY VENDOR AUDIT SCHEDULE</h1>
       </div>
 
       {/* Top Controls */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-        <div className="flex items-center gap-8 flex-wrap">
+      <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-8">
           {/* Create New */}
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
             <div className="flex items-center space-x-2">
               <Label htmlFor="createNew" className="text-sm font-medium">Create New</Label>
               <Switch 
@@ -463,25 +463,27 @@ export const AddVendorAuditSchedulePage = () => {
               />
             </div>
             {createNew && (
-              <FormControl variant="outlined" sx={fieldStyles}>
-                <InputLabel shrink>Select from existing Template</InputLabel>
-                <MuiSelect
-                  value={templateSelection}
-                  onChange={(e) => setTemplateSelection(e.target.value)}
-                  label="Select from existing Template"
-                  displayEmpty
-                >
-                  <MenuItem value=""><em>Select Template</em></MenuItem>
-                  <MenuItem value="template1">Template 1</MenuItem>
-                  <MenuItem value="template2">Template 2</MenuItem>
-                  <MenuItem value="template3">Template 3</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <div className="w-full sm:w-auto sm:min-w-[200px]">
+                <FormControl variant="outlined" sx={fieldStyles}>
+                  <InputLabel shrink>Select from existing Template</InputLabel>
+                  <MuiSelect
+                    value={templateSelection}
+                    onChange={(e) => setTemplateSelection(e.target.value)}
+                    label="Select from existing Template"
+                    displayEmpty
+                  >
+                    <MenuItem value=""><em>Select Template</em></MenuItem>
+                    <MenuItem value="template1">Template 1</MenuItem>
+                    <MenuItem value="template2">Template 2</MenuItem>
+                    <MenuItem value="template3">Template 3</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </div>
             )}
           </div>
 
           {/* Create Ticket */}
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-2">
             <div className="flex items-center space-x-2">
               <Label htmlFor="createTicket" className="text-sm font-medium">Create Ticket</Label>
               <Switch 
@@ -492,11 +494,11 @@ export const AddVendorAuditSchedulePage = () => {
               />
             </div>
             {createTicket && (
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col gap-3">
                 <RadioGroup 
                   value={ticketLevel} 
                   onValueChange={setTicketLevel}
-                  className="flex gap-4"
+                  className="flex flex-col sm:flex-row gap-2 sm:gap-4"
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="checklist" id="checklist-level" />
@@ -508,35 +510,37 @@ export const AddVendorAuditSchedulePage = () => {
                   </div>
                 </RadioGroup>
                 
-                <FormControl variant="outlined" sx={fieldStyles}>
-                  <InputLabel shrink>Select Assigned To</InputLabel>
-                  <MuiSelect
-                    value={assignedTo}
-                    onChange={(e) => setAssignedTo(e.target.value)}
-                    label="Select Assigned To"
-                    displayEmpty
-                  >
-                    <MenuItem value=""><em>Select User</em></MenuItem>
-                    <MenuItem value="user1">User 1</MenuItem>
-                    <MenuItem value="user2">User 2</MenuItem>
-                    <MenuItem value="user3">User 3</MenuItem>
-                  </MuiSelect>
-                </FormControl>
-                
-                <FormControl variant="outlined" sx={fieldStyles}>
-                  <InputLabel shrink>Select Category</InputLabel>
-                  <MuiSelect
-                    value={ticketCategory}
-                    onChange={(e) => setTicketCategory(e.target.value)}
-                    label="Select Category"
-                    displayEmpty
-                  >
-                    <MenuItem value=""><em>Select Category</em></MenuItem>
-                    <MenuItem value="category1">Category 1</MenuItem>
-                    <MenuItem value="category2">Category 2</MenuItem>
-                    <MenuItem value="category3">Category 3</MenuItem>
-                  </MuiSelect>
-                </FormControl>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <FormControl variant="outlined" sx={fieldStyles}>
+                    <InputLabel shrink>Select Assigned To</InputLabel>
+                    <MuiSelect
+                      value={assignedTo}
+                      onChange={(e) => setAssignedTo(e.target.value)}
+                      label="Select Assigned To"
+                      displayEmpty
+                    >
+                      <MenuItem value=""><em>Select User</em></MenuItem>
+                      <MenuItem value="user1">User 1</MenuItem>
+                      <MenuItem value="user2">User 2</MenuItem>
+                      <MenuItem value="user3">User 3</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                  
+                  <FormControl variant="outlined" sx={fieldStyles}>
+                    <InputLabel shrink>Select Category</InputLabel>
+                    <MuiSelect
+                      value={ticketCategory}
+                      onChange={(e) => setTicketCategory(e.target.value)}
+                      label="Select Category"
+                      displayEmpty
+                    >
+                      <MenuItem value=""><em>Select Category</em></MenuItem>
+                      <MenuItem value="category1">Category 1</MenuItem>
+                      <MenuItem value="category2">Category 2</MenuItem>
+                      <MenuItem value="category3">Category 3</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                </div>
               </div>
             )}
           </div>
@@ -554,7 +558,7 @@ export const AddVendorAuditSchedulePage = () => {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Basic Info Section */}
         <Card>
           <CardHeader>
@@ -563,20 +567,20 @@ export const AddVendorAuditSchedulePage = () => {
               Basic Info
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-2 gap-8">
+          <CardContent className="space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
               {/* Type Section */}
               <div>
                 <Label className="text-sm font-medium mb-3 block">Type</Label>
                 <RadioGroup 
                   value={basicInfo.type} 
                   onValueChange={(value) => setBasicInfo(prev => ({...prev, type: value}))}
-                  className="flex flex-wrap gap-4"
+                  className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4"
                 >
                   {['PPM', 'AMC', 'Preparedness', 'HOTO', 'Routine', 'Audit'].map((type) => (
                     <div key={type} className="flex items-center space-x-2">
                       <RadioGroupItem value={type} id={type.toLowerCase()} />
-                      <Label htmlFor={type.toLowerCase()}>{type}</Label>
+                      <Label htmlFor={type.toLowerCase()} className="text-sm">{type}</Label>
                     </div>
                   ))}
                 </RadioGroup>
@@ -588,19 +592,19 @@ export const AddVendorAuditSchedulePage = () => {
                 <RadioGroup 
                   value={basicInfo.scheduleFor} 
                   onValueChange={(value) => setBasicInfo(prev => ({...prev, scheduleFor: value}))}
-                  className="flex flex-wrap gap-4"
+                  className="grid grid-cols-2 sm:grid-cols-2 gap-2 sm:gap-4"
                 >
                   {['Asset', 'Service', 'Vendor', 'Training'].map((schedule) => (
                     <div key={schedule} className="flex items-center space-x-2">
                       <RadioGroupItem value={schedule} id={schedule.toLowerCase()} />
-                      <Label htmlFor={schedule.toLowerCase()}>{schedule}</Label>
+                      <Label htmlFor={schedule.toLowerCase()} className="text-sm">{schedule}</Label>
                     </div>
                   ))}
                 </RadioGroup>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               <TextField
                 label="Activity Name *"
                 placeholder="Enter Activity Name"
@@ -633,7 +637,7 @@ export const AddVendorAuditSchedulePage = () => {
         {/* Task Section */}
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
               <CardTitle className="flex items-center gap-2 text-[#C72030]">
                 <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
                 Task
@@ -641,16 +645,16 @@ export const AddVendorAuditSchedulePage = () => {
               <Button 
                 onClick={addNewQuestion}
                 style={{ backgroundColor: '#C72030' }}
-                className="text-white hover:opacity-90"
+                className="text-white hover:opacity-90 w-full sm:w-auto"
               >
                 + Add Section
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4 sm:space-y-6">
             {tasks.map((task, index) => (
-              <div key={task.id} className="space-y-4 border-b pb-6 last:border-b-0">
-                <div className="grid grid-cols-2 gap-4">
+              <div key={task.id} className="space-y-4 border-b pb-4 sm:pb-6 last:border-b-0">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormControl variant="outlined" sx={fieldStyles}>
                     <InputLabel shrink>Select Group</InputLabel>
                     <MuiSelect label="Select Group" displayEmpty>
@@ -670,7 +674,7 @@ export const AddVendorAuditSchedulePage = () => {
                   </FormControl>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <TextField
                     label="Task"
                     placeholder="Enter Task"
@@ -699,7 +703,7 @@ export const AddVendorAuditSchedulePage = () => {
                     </MuiSelect>
                   </FormControl>
 
-                  <div className="flex items-end gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-end gap-2 sm:gap-4">
                     <div className="flex items-center space-x-2">
                       <Switch 
                         id={`mandatory-${task.id}`}
@@ -707,7 +711,7 @@ export const AddVendorAuditSchedulePage = () => {
                         onCheckedChange={(checked) => updateQuestion(task.id, 'mandatory', checked)}
                         className="data-[state=checked]:bg-green-500"
                       />
-                      <Label htmlFor={`mandatory-${task.id}`}>Mandatory</Label>
+                      <Label htmlFor={`mandatory-${task.id}`} className="text-sm">Mandatory</Label>
                     </div>
 
                     <div className="flex items-center space-x-2">
@@ -717,7 +721,7 @@ export const AddVendorAuditSchedulePage = () => {
                         onCheckedChange={(checked) => updateQuestion(task.id, 'reading', checked)}
                         className="data-[state=checked]:bg-green-500"
                       />
-                      <Label htmlFor={`reading-${task.id}`}>Reading</Label>
+                      <Label htmlFor={`reading-${task.id}`} className="text-sm">Reading</Label>
                     </div>
 
                     <div className="flex items-center space-x-2">
@@ -727,7 +731,7 @@ export const AddVendorAuditSchedulePage = () => {
                         onCheckedChange={(checked) => updateQuestion(task.id, 'helpText', checked)}
                         className="data-[state=checked]:bg-green-500"
                       />
-                      <Label htmlFor={`helpText-${task.id}`}>Help Text</Label>
+                      <Label htmlFor={`helpText-${task.id}`} className="text-sm">Help Text</Label>
                     </div>
                   </div>
                 </div>
@@ -735,49 +739,53 @@ export const AddVendorAuditSchedulePage = () => {
                 {/* Options Section */}
                 {task.inputType === 'Radio Button' && (
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                       <Label className="text-sm font-medium">Selected Enter Value</Label>
                       <Button
                         onClick={() => addOption(task.id)}
                         size="sm"
                         style={{ backgroundColor: '#C72030' }}
-                        className="text-white hover:opacity-90"
+                        className="text-white hover:opacity-90 w-full sm:w-auto"
                       >
                         Add Option
                       </Button>
                     </div>
                     
                     {task.options.map((option, optIndex) => (
-                      <div key={option.id} className="flex items-center gap-4">
-                        <div className="w-4">
+                      <div key={option.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                        <div className="w-4 flex-shrink-0">
                           <input type="radio" name={`task-${task.id}`} />
                         </div>
-                        <TextField
-                          placeholder="Option text"
-                          value={option.text}
-                          onChange={(e) => updateOption(task.id, option.id, 'text', e.target.value)}
-                          variant="outlined"
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          sx={fieldStyles}
-                        />
-                        <TextField
-                          placeholder="Value"
-                          value={option.value}
-                          onChange={(e) => updateOption(task.id, option.id, 'value', e.target.value)}
-                          variant="outlined"
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          sx={{ ...fieldStyles, width: '100px' }}
-                        />
+                        <div className="flex-1">
+                          <TextField
+                            placeholder="Option text"
+                            value={option.text}
+                            onChange={(e) => updateOption(task.id, option.id, 'text', e.target.value)}
+                            variant="outlined"
+                            InputLabelProps={{
+                              shrink: true,
+                            }}
+                            sx={fieldStyles}
+                          />
+                        </div>
+                        <div className="w-full sm:w-24">
+                          <TextField
+                            placeholder="Value"
+                            value={option.value}
+                            onChange={(e) => updateOption(task.id, option.id, 'value', e.target.value)}
+                            variant="outlined"
+                            InputLabelProps={{
+                              shrink: true,
+                            }}
+                            sx={fieldStyles}
+                          />
+                        </div>
                         {task.options.length > 1 && (
                           <Button
                             onClick={() => removeOption(task.id, option.id)}
                             size="sm"
                             variant="ghost"
-                            className="text-red-500 hover:text-red-700"
+                            className="text-red-500 hover:text-red-700 w-full sm:w-auto"
                           >
                             <X className="w-4 h-4" />
                           </Button>
@@ -803,11 +811,11 @@ export const AddVendorAuditSchedulePage = () => {
               </div>
             ))}
 
-            <div className="flex justify-end gap-4">
+            <div className="flex justify-end">
               <Button 
                 onClick={addNewQuestion}
                 style={{ backgroundColor: '#C72030' }}
-                className="text-white hover:opacity-90"
+                className="text-white hover:opacity-90 w-full sm:w-auto"
               >
                 + Add Question
               </Button>
@@ -829,7 +837,7 @@ export const AddVendorAuditSchedulePage = () => {
               <RadioGroup 
                 value={scheduleInfo.checklistType} 
                 onValueChange={(value) => setScheduleInfo(prev => ({...prev, checklistType: value}))}
-                className="flex gap-6"
+                className="flex flex-col sm:flex-row gap-4 sm:gap-6"
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="Individual" id="individual" />
@@ -842,7 +850,7 @@ export const AddVendorAuditSchedulePage = () => {
               </RadioGroup>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <FormControl variant="outlined" sx={fieldStyles}>
                 <InputLabel shrink>Asset</InputLabel>
                 <MuiSelect
@@ -886,7 +894,7 @@ export const AddVendorAuditSchedulePage = () => {
               </FormControl>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <FormControl variant="outlined" sx={fieldStyles}>
                 <InputLabel shrink>Plan Duration</InputLabel>
                 <MuiSelect
@@ -932,7 +940,7 @@ export const AddVendorAuditSchedulePage = () => {
               </FormControl>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <FormControl variant="outlined" sx={fieldStyles}>
                 <InputLabel shrink>Supervision</InputLabel>
                 <MuiSelect
@@ -976,7 +984,7 @@ export const AddVendorAuditSchedulePage = () => {
               </FormControl>
             </div>
 
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <FormControl variant="outlined" sx={fieldStyles}>
                 <InputLabel shrink>Grace Time</InputLabel>
                 <MuiSelect
@@ -1033,7 +1041,7 @@ export const AddVendorAuditSchedulePage = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <TextField
                 label="End At"
                 type="date"
@@ -1072,70 +1080,70 @@ export const AddVendorAuditSchedulePage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-4 mb-4">
+            <div className="flex flex-wrap gap-2 sm:gap-4 mb-4">
               {['Minutes', 'Hours', 'Day', 'Month'].map((tab) => (
                 <Button
                   key={tab}
                   variant={cronSettings.activeTab === tab ? "default" : "outline"}
                   onClick={() => setCronSettings(prev => ({...prev, activeTab: tab}))}
                   style={cronSettings.activeTab === tab ? { backgroundColor: '#C72030' } : {}}
-                  className={cronSettings.activeTab === tab ? "text-white hover:bg-[#A01A28]" : ""}
+                  className={`${cronSettings.activeTab === tab ? "text-white hover:bg-[#A01A28]" : ""} flex-1 sm:flex-none`}
                 >
                   {tab}
                 </Button>
               ))}
             </div>
 
-            <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="bg-blue-50 p-3 sm:p-4 rounded-lg">
               {renderCronTabContent()}
             </div>
 
-            <div className="mt-6">
+            <div className="mt-4 sm:mt-6">
               <Label className="text-sm font-medium">Resulting Cron Expression:</Label>
-              <div className="mt-2 p-3 bg-gray-100 rounded border text-lg font-mono">
+              <div className="mt-2 p-3 bg-gray-100 rounded border text-sm sm:text-lg font-mono break-all">
                 {generateCronExpression()}
               </div>
             </div>
 
-            <div className="grid grid-cols-5 gap-4 text-center">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 text-center">
               <div>
-                <Label className="text-sm font-medium">Minutes</Label>
-                <div className="mt-1 text-lg">
+                <Label className="text-xs sm:text-sm font-medium">Minutes</Label>
+                <div className="mt-1 text-sm sm:text-lg break-all">
                   {cronSettings.selectedMinutes.length > 0 ? cronSettings.selectedMinutes.join(',') : '*'}
                 </div>
               </div>
               <div>
-                <Label className="text-sm font-medium">Hours</Label>
-                <div className="mt-1 text-lg">
+                <Label className="text-xs sm:text-sm font-medium">Hours</Label>
+                <div className="mt-1 text-sm sm:text-lg break-all">
                   {cronSettings.selectedHours.length > 0 ? cronSettings.selectedHours.join(',') : '*'}
                 </div>
               </div>
               <div>
-                <Label className="text-sm font-medium">Day Of Month</Label>
-                <div className="mt-1 text-lg">
+                <Label className="text-xs sm:text-sm font-medium">Day Of Month</Label>
+                <div className="mt-1 text-sm sm:text-lg break-all">
                   {cronSettings.selectedDays.length > 0 ? cronSettings.selectedDays.join(',') : '*'}
                 </div>
               </div>
               <div>
-                <Label className="text-sm font-medium">Month</Label>
-                <div className="mt-1 text-lg">
+                <Label className="text-xs sm:text-sm font-medium">Month</Label>
+                <div className="mt-1 text-sm sm:text-lg break-all">
                   {cronSettings.selectedMonths.length > 0 ? cronSettings.selectedMonths.join(',') : '*'}
                 </div>
               </div>
-              <div>
-                <Label className="text-sm font-medium">Day Of Week</Label>
-                <div className="mt-1 text-lg">*</div>
+              <div className="col-span-2 sm:col-span-3 lg:col-span-1">
+                <Label className="text-xs sm:text-sm font-medium">Day Of Week</Label>
+                <div className="mt-1 text-sm sm:text-lg">*</div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Submit Button */}
-        <div className="flex justify-center pt-6">
+        <div className="flex justify-center pt-4 sm:pt-6">
           <Button 
             onClick={handleSubmit}
             style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:opacity-90 px-8 py-3"
+            className="text-white hover:opacity-90 px-6 sm:px-8 py-2 sm:py-3 w-full sm:w-auto"
             size="lg"
           >
             Submit
