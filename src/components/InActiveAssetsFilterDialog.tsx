@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -75,6 +74,45 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
     }
   };
 
+  const assetNameFieldStyles = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '8px',
+      backgroundColor: '#FFFFFF',
+      height: '56px',
+      '& fieldset': {
+        borderColor: '#E0E0E0',
+      },
+      '&:hover fieldset': {
+        borderColor: '#1A1A1A',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+        borderWidth: 2,
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: '#666666',
+      fontSize: '16px',
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+      '&.MuiInputLabel-shrink': {
+        transform: 'translate(14px, -9px) scale(0.75)',
+        backgroundColor: '#FFFFFF',
+        padding: '0 4px',
+      },
+    },
+    '& .MuiOutlinedInput-input': {
+      color: '#1A1A1A',
+      fontSize: '16px',
+      padding: '16px 14px',
+      '&::placeholder': {
+        color: '#999999',
+        opacity: 1,
+      },
+    },
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -96,10 +134,9 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
             <h3 className="text-sm font-medium text-[#C72030] mb-4">Asset Details</h3>
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="assetName" className="text-sm font-medium">Asset Name</Label>
                 <TextField
-                  id="assetName"
-                  placeholder="Enter Asset Name"
+                  label="Asset Name *"
+                  placeholder="Enter Name"
                   value={assetName}
                   onChange={(e) => setAssetName(e.target.value)}
                   fullWidth
@@ -107,9 +144,7 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
                   InputLabelProps={{
                     shrink: true
                   }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
+                  sx={assetNameFieldStyles}
                 />
               </div>
               <div className="space-y-2">
