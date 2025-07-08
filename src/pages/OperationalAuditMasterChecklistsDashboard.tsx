@@ -3,21 +3,26 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Upload } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+
 export const OperationalAuditMasterChecklistsDashboard = () => {
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   const handleAddMasterChecklist = () => {
     navigate('/maintenance/audit/operational/master-checklists/add');
   };
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
     }
   };
+
   const handleDragOver = (event: React.DragEvent) => {
     event.preventDefault();
   };
+
   const handleDrop = (event: React.DragEvent) => {
     event.preventDefault();
     const file = event.dataTransfer.files[0];
@@ -25,10 +30,12 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
       setSelectedFile(file);
     }
   };
+
   const handleDownloadSampleFormat = () => {
     console.log('Downloading sample format...');
     // Add download logic here
   };
+
   const handleImportQuestions = () => {
     if (selectedFile) {
       console.log('Importing questions from file:', selectedFile.name);
@@ -40,7 +47,9 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
 
   // Sample data - empty table as shown in image
   const masterChecklistData: any[] = [];
-  return <div className="p-6">
+
+  return (
+    <div className="p-6">
       <div className="mb-6">
         <div>
           <p className="text-[#1a1a1a] opacity-70 mb-2">Master Checklist &gt; Master Checklist List</p>
@@ -61,10 +70,10 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
       <div className="mb-6 flex gap-4">
         <div onDragOver={handleDragOver} onDrop={handleDrop} className="flex-1 border-2 border-dashed border-[#C72030] rounded-lg p-8 text-center ">
           <div className="flex flex-col items-center">
-            <Upload className="w-8 h-8 text-orange-500 mb-2" />
-            <p className="text-orange-600 mb-2">Drag & Drop or</p>
+            <Upload className="w-8 h-8 text-[#C72030] mb-2" />
+            <p className="text-[#C72030] mb-2">Drag & Drop or</p>
             <input type="file" id="fileInput" className="hidden" onChange={handleFileSelect} accept=".xlsx,.xls,.csv" />
-            <label htmlFor="fileInput" className="text-orange-600 underline cursor-pointer hover:text-orange-700">
+            <label htmlFor="fileInput" className="text-[#C72030] underline cursor-pointer hover:opacity-75">
               Choose File
             </label>
             <p className="text-sm text-gray-500 mt-2">
@@ -109,5 +118,6 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
           </TableBody>
         </Table>
       </div>
-    </div>;
+    </div>
+  );
 };
