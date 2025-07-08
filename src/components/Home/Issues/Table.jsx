@@ -836,11 +836,13 @@ const IssuesTable = () => {
         accessorKey: "projectName",
         header: "Project Name",
         size: 150,
+        cell: ({ getValue }) => getValue() || "Not selected",
       },
       {
         accessorKey: "milestoneName",
         header: "Milestone Name",
         size: 150,
+        cell: ({ getValue }) => getValue() || "Not selected",
       },
       {
         accessorKey: "taskName",
