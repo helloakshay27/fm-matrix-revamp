@@ -368,14 +368,13 @@ export const UnitMasterPage = () => {
       <Dialog 
         open={showEditModal} 
         onClose={handleCloseEditModal}
-        maxWidth="md"
-        fullWidth
+        maxWidth={false}
         PaperProps={{
           sx: {
             borderRadius: '8px',
             boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-            width: '600px',
-            maxWidth: '600px'
+            width: '700px',
+            maxWidth: '90vw'
           }
         }}
       >
@@ -386,7 +385,8 @@ export const UnitMasterPage = () => {
           borderBottom: '1px solid #e0e0e0',
           pb: 2,
           fontSize: '18px',
-          fontWeight: 600
+          fontWeight: 600,
+          mb: 2
         }}>
           <span style={{ color: '#333' }}>Edit Details</span>
           <IconButton onClick={handleCloseEditModal} size="small">
@@ -394,31 +394,44 @@ export const UnitMasterPage = () => {
           </IconButton>
         </DialogTitle>
         
-        <DialogContent sx={{ pt: 4, pb: 3, px: 3 }}>
+        <DialogContent sx={{ pt: 0, pb: 3, px: 4 }}>
           {/* First Row: Select Building and Select Wing */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <FormControl fullWidth sx={fieldStyles}>
-              <InputLabel sx={{ 
-                fontSize: '14px', 
-                color: '#666',
-                transform: 'translate(14px, -9px) scale(0.75)',
-                '&.MuiInputLabel-shrink': {
-                  transform: 'translate(14px, -9px) scale(0.75)',
-                }
-              }}>
+          <div className="grid grid-cols-2 gap-8 mb-8">
+            <FormControl fullWidth>
+              <InputLabel 
+                shrink
+                sx={{ 
+                  fontSize: '16px', 
+                  color: '#666',
+                  fontWeight: 500,
+                  position: 'relative',
+                  transform: 'none',
+                  marginBottom: '8px'
+                }}
+              >
                 Select Building
               </InputLabel>
               <MuiSelect
                 value={editFormData.building}
                 onChange={(e) => handleEditInputChange('building', e.target.value)}
-                label="Select Building"
+                displayEmpty
                 sx={{
-                  height: '40px',
+                  height: '45px',
                   fontSize: '14px',
+                  marginTop: '8px',
                   '& .MuiSelect-select': {
-                    padding: '8px 14px',
+                    padding: '12px 14px',
                     display: 'flex',
                     alignItems: 'center',
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#d1d5db',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#9ca3af',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#C72030',
                   }
                 }}
               >
@@ -431,28 +444,41 @@ export const UnitMasterPage = () => {
               </MuiSelect>
             </FormControl>
 
-            <FormControl fullWidth sx={fieldStyles}>
-              <InputLabel sx={{ 
-                fontSize: '14px', 
-                color: '#666',
-                transform: 'translate(14px, -9px) scale(0.75)',
-                '&.MuiInputLabel-shrink': {
-                  transform: 'translate(14px, -9px) scale(0.75)',
-                }
-              }}>
+            <FormControl fullWidth>
+              <InputLabel 
+                shrink
+                sx={{ 
+                  fontSize: '16px', 
+                  color: '#666',
+                  fontWeight: 500,
+                  position: 'relative',
+                  transform: 'none',
+                  marginBottom: '8px'
+                }}
+              >
                 Select Wing
               </InputLabel>
               <MuiSelect
                 value={editFormData.wing}
                 onChange={(e) => handleEditInputChange('wing', e.target.value)}
-                label="Select Wing"
+                displayEmpty
                 sx={{
-                  height: '40px',
+                  height: '45px',
                   fontSize: '14px',
+                  marginTop: '8px',
                   '& .MuiSelect-select': {
-                    padding: '8px 14px',
+                    padding: '12px 14px',
                     display: 'flex',
                     alignItems: 'center',
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#d1d5db',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#9ca3af',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#C72030',
                   }
                 }}
               >
@@ -468,29 +494,42 @@ export const UnitMasterPage = () => {
           </div>
 
           {/* Second Row: Select Area and Select Floor */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <FormControl fullWidth sx={fieldStyles}>
-              <InputLabel sx={{ 
-                fontSize: '14px', 
-                color: '#666',
-                transform: 'translate(14px, -9px) scale(0.75)',
-                '&.MuiInputLabel-shrink': {
-                  transform: 'translate(14px, -9px) scale(0.75)',
-                }
-              }}>
+          <div className="grid grid-cols-2 gap-8 mb-8">
+            <FormControl fullWidth>
+              <InputLabel 
+                shrink
+                sx={{ 
+                  fontSize: '16px', 
+                  color: '#666',
+                  fontWeight: 500,
+                  position: 'relative',
+                  transform: 'none',
+                  marginBottom: '8px'
+                }}
+              >
                 Select Area
               </InputLabel>
               <MuiSelect
                 value={editFormData.area}
                 onChange={(e) => handleEditInputChange('area', e.target.value)}
-                label="Select Area"
+                displayEmpty
                 sx={{
-                  height: '40px',
+                  height: '45px',
                   fontSize: '14px',
+                  marginTop: '8px',
                   '& .MuiSelect-select': {
-                    padding: '8px 14px',
+                    padding: '12px 14px',
                     display: 'flex',
                     alignItems: 'center',
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#d1d5db',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#9ca3af',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#C72030',
                   }
                 }}
               >
@@ -499,28 +538,41 @@ export const UnitMasterPage = () => {
               </MuiSelect>
             </FormControl>
 
-            <FormControl fullWidth sx={fieldStyles}>
-              <InputLabel sx={{ 
-                fontSize: '14px', 
-                color: '#666',
-                transform: 'translate(14px, -9px) scale(0.75)',
-                '&.MuiInputLabel-shrink': {
-                  transform: 'translate(14px, -9px) scale(0.75)',
-                }
-              }}>
+            <FormControl fullWidth>
+              <InputLabel 
+                shrink
+                sx={{ 
+                  fontSize: '16px', 
+                  color: '#666',
+                  fontWeight: 500,
+                  position: 'relative',
+                  transform: 'none',
+                  marginBottom: '8px'
+                }}
+              >
                 Select Floor
               </InputLabel>
               <MuiSelect
                 value={editFormData.floor}
                 onChange={(e) => handleEditInputChange('floor', e.target.value)}
-                label="Select Floor"
+                displayEmpty
                 sx={{
-                  height: '40px',
+                  height: '45px',
                   fontSize: '14px',
+                  marginTop: '8px',
                   '& .MuiSelect-select': {
-                    padding: '8px 14px',
+                    padding: '12px 14px',
                     display: 'flex',
                     alignItems: 'center',
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#d1d5db',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#9ca3af',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#C72030',
                   }
                 }}
               >
@@ -537,54 +589,72 @@ export const UnitMasterPage = () => {
           </div>
 
           {/* Third Row: Unit Name and Select Entity */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <TextField
-              fullWidth
-              label="Unit Name"
-              value={editFormData.unitName}
-              onChange={(e) => handleEditInputChange('unitName', e.target.value)}
-              variant="outlined"
-              sx={{
-                ...fieldStyles,
-                '& .MuiInputLabel-root': {
-                  fontSize: '14px',
-                  color: '#666',
-                  '&.Mui-focused': {
-                    color: '#C72030',
-                  },
-                },
-                '& .MuiOutlinedInput-root': {
-                  height: '40px',
-                  fontSize: '14px',
-                  '& input': {
-                    padding: '8px 14px',
+          <div className="grid grid-cols-2 gap-8 mb-8">
+            <div>
+              <label className="block text-base font-medium text-gray-600 mb-2">
+                Unit Name
+              </label>
+              <TextField
+                fullWidth
+                value={editFormData.unitName}
+                onChange={(e) => handleEditInputChange('unitName', e.target.value)}
+                variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    height: '45px',
+                    fontSize: '14px',
+                    '& input': {
+                      padding: '12px 14px',
+                    },
+                    '& fieldset': {
+                      borderColor: '#d1d5db',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#9ca3af',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#C72030',
+                    },
                   }
-                }
-              }}
-            />
+                }}
+              />
+            </div>
 
-            <FormControl fullWidth sx={fieldStyles}>
-              <InputLabel sx={{ 
-                fontSize: '14px', 
-                color: '#666',
-                transform: 'translate(14px, -9px) scale(0.75)',
-                '&.MuiInputLabel-shrink': {
-                  transform: 'translate(14px, -9px) scale(0.75)',
-                }
-              }}>
+            <FormControl fullWidth>
+              <InputLabel 
+                shrink
+                sx={{ 
+                  fontSize: '16px', 
+                  color: '#666',
+                  fontWeight: 500,
+                  position: 'relative',
+                  transform: 'none',
+                  marginBottom: '8px'
+                }}
+              >
                 Select Entity
               </InputLabel>
               <MuiSelect
                 value={editFormData.entity}
                 onChange={(e) => handleEditInputChange('entity', e.target.value)}
-                label="Select Entity"
+                displayEmpty
                 sx={{
-                  height: '40px',
+                  height: '45px',
                   fontSize: '14px',
+                  marginTop: '8px',
                   '& .MuiSelect-select': {
-                    padding: '8px 14px',
+                    padding: '12px 14px',
                     display: 'flex',
                     alignItems: 'center',
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#d1d5db',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#9ca3af',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#C72030',
                   }
                 }}
               >
@@ -597,27 +667,30 @@ export const UnitMasterPage = () => {
 
           {/* Fourth Row: Area (full width) */}
           <div className="mb-4">
+            <label className="block text-base font-medium text-gray-600 mb-2">
+              Area
+            </label>
             <TextField
               fullWidth
-              label="Area"
               value={editFormData.areaValue}
               onChange={(e) => handleEditInputChange('areaValue', e.target.value)}
               variant="outlined"
               sx={{
-                ...fieldStyles,
-                '& .MuiInputLabel-root': {
-                  fontSize: '14px',
-                  color: '#666',
-                  '&.Mui-focused': {
-                    color: '#C72030',
-                  },
-                },
                 '& .MuiOutlinedInput-root': {
-                  height: '40px',
+                  height: '45px',
                   fontSize: '14px',
                   '& input': {
-                    padding: '8px 14px',
-                  }
+                    padding: '12px 14px',
+                  },
+                  '& fieldset': {
+                    borderColor: '#d1d5db',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#9ca3af',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#C72030',
+                  },
                 }
               }}
             />
