@@ -77,7 +77,7 @@ export const SurveyListTable = ({
   return <div className="space-y-4">
       {/* Action Buttons */}
       <div className="flex items-center gap-4">
-       <button onClick={handleAddSurvey} className="\nflex items-center text-[#BF213E] px-6 py-2 rounded-md transition-colors bg-sidebar-DEFAULT bg-[#F2EEE9]">
+       <button onClick={handleAddSurvey} className="flex items-center text-[#BF213E] px-6 py-2 rounded-md transition-colors bg-sidebar-DEFAULT flex ">
   <Plus className="w-4 h-4 mr-2" style={{
           color: '#BF213E'
         }} />
