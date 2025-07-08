@@ -12,9 +12,43 @@ interface ScheduleFilterDialogProps {
 }
 
 const fieldStyles = {
-  height: { xs: 28, sm: 36, md: 45 },
-  '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: { xs: '8px', sm: '10px', md: '12px' },
+  width: '100%',
+  '& .MuiOutlinedInput-root': {
+    height: { xs: '36px', md: '45px' },
+    borderRadius: '8px',
+    backgroundColor: '#FFFFFF',
+    '& fieldset': {
+      borderColor: '#E0E0E0',
+    },
+    '&:hover fieldset': {
+      borderColor: '#1A1A1A',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+      borderWidth: 2,
+    },
+  },
+  '& .MuiInputLabel-root': {
+    color: '#666666',
+    fontSize: '14px',
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+    '&.MuiInputLabel-shrink': {
+      transform: 'translate(14px, -9px) scale(0.75)',
+      backgroundColor: '#FFFFFF',
+      padding: '0 4px',
+    },
+  },
+  '& .MuiOutlinedInput-input, & .MuiSelect-select': {
+    color: '#1A1A1A',
+    fontSize: '14px',
+    padding: { xs: '8px 14px', md: '12px 14px' },
+    height: 'auto',
+    '&::placeholder': {
+      color: '#999999',
+      opacity: 1,
+    },
   },
 };
 
@@ -65,22 +99,23 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
         
         <div className="space-y-4">
           {/* Activity Name */}
-          <div className="space-y-2">
+          <div className="flex flex-col">
             <TextField
-              placeholder="Enter Activity"
+              label="Enter Activity"
+              placeholder="Enter Name"
               value={activityName}
               onChange={(e) => setActivityName(e.target.value)}
-              fullWidth
               variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              sx={fieldStyles}
             />
           </div>
 
           {/* Select Type */}
-          <div className="space-y-2">
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+          <div className="flex flex-col">
+            <FormControl variant="outlined" sx={fieldStyles}>
               <InputLabel id="type-label" shrink>Select Type</InputLabel>
               <MuiSelect
                 labelId="type-label"
@@ -88,7 +123,6 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
                 displayEmpty
                 value={type}
                 onChange={(e) => setType(e.target.value)}
-                sx={fieldStyles}
               >
                 <MenuItem value=""><em>Select Type</em></MenuItem>
                 <MenuItem value="PPM">PPM</MenuItem>
@@ -99,8 +133,8 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
           </div>
 
           {/* Select Category */}
-          <div className="space-y-2">
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+          <div className="flex flex-col">
+            <FormControl variant="outlined" sx={fieldStyles}>
               <InputLabel id="category-label" shrink>Select Category</InputLabel>
               <MuiSelect
                 labelId="category-label"
@@ -108,7 +142,6 @@ export const ScheduleFilterDialog: React.FC<ScheduleFilterDialogProps> = ({
                 displayEmpty
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                sx={fieldStyles}
               >
                 <MenuItem value=""><em>Select Category</em></MenuItem>
                 <MenuItem value="Technical">Technical</MenuItem>
