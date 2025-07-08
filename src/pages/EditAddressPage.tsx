@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CustomTextField } from '@/components/ui/custom-text-field';
 import { ChevronDown, ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { TextField, MenuItem } from '@mui/material';
@@ -67,6 +66,26 @@ export const EditAddressPage = () => {
     'Uttar Pradesh'
   ];
 
+  const fieldSx = {
+    '& .MuiOutlinedInput-root': {
+      height: '56px',
+      '& fieldset': {
+        borderColor: '#ccc',
+      },
+      '&:hover fieldset': {
+        borderColor: '#C72030',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+      },
+    },
+    '& .MuiInputLabel-root': {
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+    },
+  };
+
   return (
     <div className="p-4 md:p-6 space-y-4 md:space-y-6 bg-gray-50 min-h-screen">
       <div className="flex items-center gap-4">
@@ -95,140 +114,150 @@ export const EditAddressPage = () => {
         <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6">
           {/* First Row: Address Title, Building Name, Email, State, Phone Number */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
-            <div className="space-y-2">
-              <CustomTextField
-                label="Address Title*"
-                placeholder="Enter Address Title"
-                value={formData.addressTitle}
-                onChange={(e) => handleInputChange('addressTitle', e.target.value)}
-                fullWidth
-              />
-            </div>
+            <TextField
+              label="Address Title*"
+              placeholder="Enter Address Title"
+              value={formData.addressTitle}
+              onChange={(e) => handleInputChange('addressTitle', e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={fieldSx}
+            />
 
-            <div className="space-y-2">
-              <CustomTextField
-                label="Building Name*"
-                placeholder="Enter Building Name"
-                value={formData.buildingName}
-                onChange={(e) => handleInputChange('buildingName', e.target.value)}
-                fullWidth
-              />
-            </div>
+            <TextField
+              label="Building Name*"
+              placeholder="Enter Building Name"
+              value={formData.buildingName}
+              onChange={(e) => handleInputChange('buildingName', e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={fieldSx}
+            />
 
-            <div className="space-y-2">
-              <CustomTextField
-                label="Email*"
-                type="email"
-                placeholder="Enter Email Address"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                fullWidth
-              />
-            </div>
+            <TextField
+              label="Email*"
+              type="email"
+              placeholder="Enter Email Address"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={fieldSx}
+            />
 
-            <div className="space-y-2">
-              <TextField
-                select
-                label="State*"
-                value={formData.state}
-                onChange={(e) => handleInputChange('state', e.target.value)}
-                fullWidth
-                variant="outlined"
-                placeholder="Select State"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    height: '56px',
-                    '& fieldset': {
-                      borderColor: '#ccc',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: '#C72030',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#C72030',
-                    },
-                  },
-                  '& .MuiInputLabel-root': {
-                    '&.Mui-focused': {
-                      color: '#C72030',
-                    },
-                  },
-                }}
-              >
-                {states.map((state) => (
-                  <MenuItem key={state} value={state}>
-                    {state}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </div>
+            <TextField
+              select
+              label="State*"
+              value={formData.state}
+              onChange={(e) => handleInputChange('state', e.target.value)}
+              fullWidth
+              variant="outlined"
+              placeholder="Select State"
+              sx={fieldSx}
+            >
+              {states.map((state) => (
+                <MenuItem key={state} value={state}>
+                  {state}
+                </MenuItem>
+              ))}
+            </TextField>
 
-            <div className="space-y-2">
-              <CustomTextField
-                label="Phone Number*"
-                placeholder="Enter Phone Number"
-                value={formData.phoneNumber}
-                onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                fullWidth
-              />
-            </div>
+            <TextField
+              label="Phone Number*"
+              placeholder="Enter Phone Number"
+              value={formData.phoneNumber}
+              onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={fieldSx}
+            />
           </div>
 
           {/* Second Row: Fax Number, Pan Number, GST Number, Address, Notes */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
-            <div className="space-y-2">
-              <CustomTextField
-                label="Fax Number*"
-                placeholder="Enter Fax Number"
-                value={formData.faxNumber}
-                onChange={(e) => handleInputChange('faxNumber', e.target.value)}
-                fullWidth
-              />
-            </div>
+            <TextField
+              label="Fax Number*"
+              placeholder="Enter Fax Number"
+              value={formData.faxNumber}
+              onChange={(e) => handleInputChange('faxNumber', e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={fieldSx}
+            />
 
-            <div className="space-y-2">
-              <CustomTextField
-                label="Pan Number*"
-                placeholder="Enter PAN Number"
-                value={formData.panNumber}
-                onChange={(e) => handleInputChange('panNumber', e.target.value)}
-                fullWidth
-              />
-            </div>
+            <TextField
+              label="Pan Number*"
+              placeholder="Enter PAN Number"
+              value={formData.panNumber}
+              onChange={(e) => handleInputChange('panNumber', e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={fieldSx}
+            />
 
-            <div className="space-y-2">
-              <CustomTextField
-                label="GST Number*"
-                placeholder="Enter GST Number"
-                value={formData.gstNumber}
-                onChange={(e) => handleInputChange('gstNumber', e.target.value)}
-                fullWidth
-              />
-            </div>
+            <TextField
+              label="GST Number*"
+              placeholder="Enter GST Number"
+              value={formData.gstNumber}
+              onChange={(e) => handleInputChange('gstNumber', e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={fieldSx}
+            />
 
-            <div className="space-y-2">
-              <CustomTextField
-                label="Address*"
-                placeholder="Enter Address"
-                value={formData.address}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-                multiline
-                rows={3}
-                fullWidth
-              />
-            </div>
+            <TextField
+              label="Address*"
+              placeholder="Enter Address"
+              value={formData.address}
+              onChange={(e) => handleInputChange('address', e.target.value)}
+              multiline
+              rows={3}
+              fullWidth
+              variant="outlined"
+              sx={{
+                ...fieldSx,
+                '& .MuiOutlinedInput-root': {
+                  height: 'auto',
+                  minHeight: '56px',
+                  '& fieldset': {
+                    borderColor: '#ccc',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#C72030',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#C72030',
+                  },
+                },
+              }}
+            />
 
-            <div className="space-y-2">
-              <CustomTextField
-                label="Notes*"
-                placeholder="Notes"
-                value={formData.notes}
-                onChange={(e) => handleInputChange('notes', e.target.value)}
-                multiline
-                rows={3}
-                fullWidth
-              />
-            </div>
+            <TextField
+              label="Notes*"
+              placeholder="Notes"
+              value={formData.notes}
+              onChange={(e) => handleInputChange('notes', e.target.value)}
+              multiline
+              rows={3}
+              fullWidth
+              variant="outlined"
+              sx={{
+                ...fieldSx,
+                '& .MuiOutlinedInput-root': {
+                  height: 'auto',
+                  minHeight: '56px',
+                  '& fieldset': {
+                    borderColor: '#ccc',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#C72030',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#C72030',
+                  },
+                },
+              }}
+            />
           </div>
 
           <div className="flex justify-center pt-4 md:pt-6">
