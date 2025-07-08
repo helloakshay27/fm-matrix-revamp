@@ -65,7 +65,8 @@ export const AddAddressPage = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          {/* First Row: Address Title, Building Name, Email, State, Phone Number */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
             <div className="space-y-2">
               <CustomTextField
                 label="Address Title*"
@@ -88,7 +89,7 @@ export const AddAddressPage = () => {
 
             <div className="space-y-2">
               <CustomTextField
-                label="Email"
+                label="Email*"
                 type="email"
                 placeholder="Enter Email Address"
                 value={formData.email}
@@ -96,9 +97,7 @@ export const AddAddressPage = () => {
                 fullWidth
               />
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 block mb-1">
                 State*
@@ -120,29 +119,30 @@ export const AddAddressPage = () => {
 
             <div className="space-y-2">
               <CustomTextField
-                label="Phone Number"
+                label="Phone Number*"
                 placeholder="Enter Phone Number"
                 value={formData.phoneNumber}
                 onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
                 fullWidth
               />
             </div>
+          </div>
 
+          {/* Second Row: Fax Number, Pan Number, GST Number, Address, Notes */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
             <div className="space-y-2">
               <CustomTextField
-                label="Fax Number"
+                label="Fax Number*"
                 placeholder="Enter Fax Number"
                 value={formData.faxNumber}
                 onChange={(e) => handleInputChange('faxNumber', e.target.value)}
                 fullWidth
               />
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             <div className="space-y-2">
               <CustomTextField
-                label="Pan Number"
+                label="Pan Number*"
                 placeholder="Enter PAN Number"
                 value={formData.panNumber}
                 onChange={(e) => handleInputChange('panNumber', e.target.value)}
@@ -152,7 +152,7 @@ export const AddAddressPage = () => {
 
             <div className="space-y-2">
               <CustomTextField
-                label="GST Number"
+                label="GST Number*"
                 placeholder="Enter GST Number"
                 value={formData.gstNumber}
                 onChange={(e) => handleInputChange('gstNumber', e.target.value)}
@@ -162,25 +162,27 @@ export const AddAddressPage = () => {
 
             <div className="space-y-2">
               <CustomTextField
-                label="Address"
+                label="Address*"
                 placeholder="Enter Address"
                 value={formData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
+                multiline
+                rows={3}
                 fullWidth
               />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <CustomTextField
-              label="Notes"
-              placeholder="Notes"
-              value={formData.notes}
-              onChange={(e) => handleInputChange('notes', e.target.value)}
-              multiline
-              rows={3}
-              fullWidth
-            />
+            <div className="space-y-2">
+              <CustomTextField
+                label="Notes*"
+                placeholder="Notes"
+                value={formData.notes}
+                onChange={(e) => handleInputChange('notes', e.target.value)}
+                multiline
+                rows={3}
+                fullWidth
+              />
+            </div>
           </div>
 
           <div className="flex justify-center pt-4 md:pt-6">
