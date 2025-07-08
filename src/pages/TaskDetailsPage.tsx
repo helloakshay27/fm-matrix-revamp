@@ -243,7 +243,7 @@ export const TaskDetailsPage = () => {
 
               {activeTab === 'Input' && <div className="space-y-4">
                   <div>
-                    <TextField label="Input Value" placeholder="Enter Input Value" fullWidth variant="outlined" InputLabelProps={{
+                    <TextField label="Input Value" fullWidth variant="outlined" InputLabelProps={{
                   shrink: true
                 }} InputProps={{
                   sx: fieldStyles
@@ -264,13 +264,22 @@ export const TaskDetailsPage = () => {
 
               {activeTab === 'Comments' && <div className="space-y-4">
                   <div>
-                    <TextField label="Comment" placeholder="Enter Comment" fullWidth variant="outlined" multiline rows={4} InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} sx={{
-                  mt: 1
-                }} />
+                    <TextField 
+                      label="Comment" 
+                      fullWidth 
+                      variant="outlined" 
+                      multiline 
+                      rows={4} 
+                      InputLabelProps={{
+                        shrink: true
+                      }} 
+                      InputProps={{
+                        sx: fieldStyles
+                      }} 
+                      sx={{
+                        mt: 1
+                      }} 
+                    />
                   </div>
                   <Button style={{
                 backgroundColor: '#C72030'
