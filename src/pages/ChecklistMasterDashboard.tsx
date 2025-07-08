@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -69,8 +68,7 @@ export const ChecklistMasterDashboard = () => {
   };
 
   const handleViewClick = (id: number) => {
-    console.log('Viewing checklist:', id);
-    // Future implementation for view functionality
+    navigate(`/settings/masters/checklist-master/view/${id}`);
   };
 
   return (
