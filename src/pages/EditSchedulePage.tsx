@@ -563,8 +563,8 @@ export const EditSchedulePage = () => {
         {/* Basic Info */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-orange-600 flex items-center gap-2">
-              <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+            <CardTitle className="text-[#C72030] flex items-center gap-2">
+              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
               Basic Info
             </CardTitle>
           </CardHeader>
@@ -647,8 +647,8 @@ export const EditSchedulePage = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-orange-600 flex items-center gap-2">
-                <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
+              <CardTitle className="text-[#C72030] flex items-center gap-2">
+                <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
                 Task
               </CardTitle>
               <Button 
@@ -807,8 +807,8 @@ export const EditSchedulePage = () => {
         {/* Schedule */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-orange-600 flex items-center gap-2">
-              <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
+            <CardTitle className="text-[#C72030] flex items-center gap-2">
+              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
               Schedule
             </CardTitle>
           </CardHeader>
@@ -1040,8 +1040,8 @@ export const EditSchedulePage = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-orange-600 flex items-center gap-2">
-                <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">4</span>
+              <CardTitle className="text-[#C72030] flex items-center gap-2">
+                <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">4</span>
                 Cron Settings
               </CardTitle>
               <div className="flex items-center space-x-2">
@@ -1118,8 +1118,8 @@ export const EditSchedulePage = () => {
         {/* Associations */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-orange-600 flex items-center gap-2">
-              <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">5</span>
+            <CardTitle className="text-[#C72030] flex items-center gap-2">
+              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">5</span>
               Associations
             </CardTitle>
           </CardHeader>
@@ -1154,8 +1154,8 @@ export const EditSchedulePage = () => {
         {/* Email Trigger Rule */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-orange-600 flex items-center gap-2">
-              <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
+            <CardTitle className="text-[#C72030] flex items-center gap-2">
+              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
               Email Trigger Rule
             </CardTitle>
           </CardHeader>
@@ -1183,8 +1183,8 @@ export const EditSchedulePage = () => {
         {/* Asset Mapping List */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-orange-600 flex items-center gap-2">
-              <span className="bg-orange-100 rounded-full w-6 h-6 flex items-center justify-center text-sm">7</span>
+            <CardTitle className="text-[#C72030] flex items-center gap-2">
+              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">7</span>
               Asset Mapping List
             </CardTitle>
           </CardHeader>
