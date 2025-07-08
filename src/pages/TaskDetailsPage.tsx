@@ -8,6 +8,7 @@ import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } fro
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+
 export const TaskDetailsPage = () => {
   const {
     id
@@ -212,8 +213,8 @@ export const TaskDetailsPage = () => {
         {/* Activity Section */}
         <Card>
           <CardHeader className="border-b bg-white">
-            <CardTitle className="text-orange-600 flex items-center gap-2">
-              <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm">A</div>
+            <CardTitle style={{ color: '#C72030' }} className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{ backgroundColor: '#C72030' }}>A</div>
               Activity
             </CardTitle>
           </CardHeader>
