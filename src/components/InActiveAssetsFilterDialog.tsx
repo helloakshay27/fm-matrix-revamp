@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -59,26 +60,18 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
     setRoom('');
   };
 
-  const fieldStyles = {
+  const commonFieldStyles = {
     height: {
-      xs: 28,
-      sm: 36,
-      md: 45
+      xs: '36px',
+      md: '45px'
     },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: {
-        xs: '8px',
-        sm: '10px',
-        md: '12px'
-      }
-    }
-  };
-
-  const assetNameFieldStyles = {
     '& .MuiOutlinedInput-root': {
       borderRadius: '8px',
       backgroundColor: '#FFFFFF',
-      height: '56px',
+      height: {
+        xs: '36px',
+        md: '45px'
+      },
       '& fieldset': {
         borderColor: '#E0E0E0',
       },
@@ -102,10 +95,13 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
         padding: '0 4px',
       },
     },
-    '& .MuiOutlinedInput-input': {
+    '& .MuiOutlinedInput-input, & .MuiSelect-select': {
       color: '#1A1A1A',
       fontSize: '16px',
-      padding: '16px 14px',
+      padding: {
+        xs: '8px 14px',
+        md: '12px 14px'
+      },
       '&::placeholder': {
         color: '#999999',
         opacity: 1,
@@ -133,7 +129,7 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
           <div>
             <h3 className="text-sm font-medium text-[#C72030] mb-4">Asset Details</h3>
             <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2">
+              <div>
                 <TextField
                   label="Asset Name *"
                   placeholder="Enter Name"
@@ -144,14 +140,13 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
                   InputLabelProps={{
                     shrink: true
                   }}
-                  sx={assetNameFieldStyles}
+                  sx={commonFieldStyles}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="dateRange" className="text-sm font-medium">Date Range*</Label>
+              <div>
                 <TextField
-                  id="dateRange"
-                  placeholder="Select Date Range"
+                  label="Date Range*"
+                  placeholder="dd/mm/yyyy"
                   value={dateRange}
                   onChange={(e) => setDateRange(e.target.value)}
                   type="date"
@@ -160,15 +155,12 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
                   InputLabelProps={{
                     shrink: true
                   }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
+                  sx={commonFieldStyles}
                 />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-6 mt-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Group</Label>
+              <div>
                 <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
                   <InputLabel id="group-select-label" shrink>Group</InputLabel>
                   <MuiSelect
@@ -177,7 +169,7 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
                     displayEmpty
                     value={group}
                     onChange={(e) => setGroup(e.target.value)}
-                    sx={fieldStyles}
+                    sx={commonFieldStyles}
                   >
                     <MenuItem value=""><em>Select Category</em></MenuItem>
                     <MenuItem value="category1">Category 1</MenuItem>
@@ -185,8 +177,7 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
                   </MuiSelect>
                 </FormControl>
               </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Subgroup</Label>
+              <div>
                 <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
                   <InputLabel id="subgroup-select-label" shrink>Subgroup</InputLabel>
                   <MuiSelect
@@ -195,7 +186,7 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
                     displayEmpty
                     value={subgroup}
                     onChange={(e) => setSubgroup(e.target.value)}
-                    sx={fieldStyles}
+                    sx={commonFieldStyles}
                   >
                     <MenuItem value=""><em>Select Sub Group</em></MenuItem>
                     <MenuItem value="subgroup1">Sub Group 1</MenuItem>
@@ -210,8 +201,7 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
           <div>
             <h3 className="text-sm font-medium text-[#C72030] mb-4">Location Details</h3>
             <div className="grid grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Building</Label>
+              <div>
                 <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
                   <InputLabel id="building-select-label" shrink>Building</InputLabel>
                   <MuiSelect
@@ -220,7 +210,7 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
                     displayEmpty
                     value={building}
                     onChange={(e) => setBuilding(e.target.value)}
-                    sx={fieldStyles}
+                    sx={commonFieldStyles}
                   >
                     <MenuItem value=""><em>Select Building</em></MenuItem>
                     <MenuItem value="building1">Building 1</MenuItem>
@@ -228,8 +218,7 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
                   </MuiSelect>
                 </FormControl>
               </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Wing</Label>
+              <div>
                 <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
                   <InputLabel id="wing-select-label" shrink>Wing</InputLabel>
                   <MuiSelect
@@ -238,7 +227,7 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
                     displayEmpty
                     value={wing}
                     onChange={(e) => setWing(e.target.value)}
-                    sx={fieldStyles}
+                    sx={commonFieldStyles}
                   >
                     <MenuItem value=""><em>Select Wing</em></MenuItem>
                     <MenuItem value="wing1">Wing 1</MenuItem>
@@ -246,8 +235,7 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
                   </MuiSelect>
                 </FormControl>
               </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Area</Label>
+              <div>
                 <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
                   <InputLabel id="area-select-label" shrink>Area</InputLabel>
                   <MuiSelect
@@ -256,7 +244,7 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
                     displayEmpty
                     value={area}
                     onChange={(e) => setArea(e.target.value)}
-                    sx={fieldStyles}
+                    sx={commonFieldStyles}
                   >
                     <MenuItem value=""><em>Select Area</em></MenuItem>
                     <MenuItem value="area1">Area 1</MenuItem>
@@ -266,8 +254,7 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
               </div>
             </div>
             <div className="grid grid-cols-2 gap-6 mt-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Floor</Label>
+              <div>
                 <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
                   <InputLabel id="floor-select-label" shrink>Floor</InputLabel>
                   <MuiSelect
@@ -276,7 +263,7 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
                     displayEmpty
                     value={floor}
                     onChange={(e) => setFloor(e.target.value)}
-                    sx={fieldStyles}
+                    sx={commonFieldStyles}
                   >
                     <MenuItem value=""><em>Select Floor</em></MenuItem>
                     <MenuItem value="floor1">Floor 1</MenuItem>
@@ -284,8 +271,7 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
                   </MuiSelect>
                 </FormControl>
               </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Room</Label>
+              <div>
                 <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
                   <InputLabel id="room-select-label" shrink>Room</InputLabel>
                   <MuiSelect
@@ -294,7 +280,7 @@ export const InActiveAssetsFilterDialog: React.FC<InActiveAssetsFilterDialogProp
                     displayEmpty
                     value={room}
                     onChange={(e) => setRoom(e.target.value)}
-                    sx={fieldStyles}
+                    sx={commonFieldStyles}
                   >
                     <MenuItem value=""><em>Select Room</em></MenuItem>
                     <MenuItem value="room1">Room 1</MenuItem>
