@@ -1,6 +1,8 @@
+
 import React, { useState } from 'react';
 import { Download } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
 const mockMappingData = [{
   id: 1,
   title: "Building A Survey",
@@ -26,12 +28,15 @@ const mockMappingData = [{
   active: true,
   qrCode: "QR002"
 }];
+
 export const SurveyMappingTable = () => {
   const [mappings, setMappings] = useState(mockMappingData);
+
   const handleDownloadQRCode = () => {
     console.log('Downloading QR Code...');
     // QR Code download functionality would be implemented here
   };
+
   const handleStatusToggle = (mappingId: number) => {
     console.log(`Toggling status for Survey Mapping ${mappingId}`);
     setMappings(prev => prev.map(mapping => mapping.id === mappingId ? {
@@ -39,6 +44,7 @@ export const SurveyMappingTable = () => {
       status: mapping.status === 'Active' ? 'Inactive' : 'Active'
     } : mapping));
   };
+
   const handleActiveToggle = (mappingId: number) => {
     console.log(`Toggling active status for Survey Mapping ${mappingId}`);
     setMappings(prev => prev.map(mapping => mapping.id === mappingId ? {
@@ -46,10 +52,11 @@ export const SurveyMappingTable = () => {
       active: !mapping.active
     } : mapping));
   };
+
   return <div className="space-y-4">
       {/* Action Buttons */}
       <div className="flex items-center gap-4">
-        <button onClick={handleDownloadQRCode} className="flex items-center text-[#BF213E] px-6 py-2 rounded-md transition-colors bg-sidebar-DEFAULT bg-[#F2EEE9]">
+        <button onClick={handleDownloadQRCode} className="flex items-center text-[#BF213E] px-6 rounded-md transition-colors bg-sidebar-DEFAULT bg-[#F2EEE9] h-[36px]">
           <Download className="w-4 h-4 mr-2" style={{
           color: '#BF213E'
         }} />
