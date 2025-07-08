@@ -252,13 +252,35 @@ export const TaskDetailsPage = () => {
                 }} />
                   </div>
                   <div>
-                    <TextField label="Notes" fullWidth variant="outlined" multiline rows={4} InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} sx={{
-                  mt: 1
-                }} />
+                    <TextField 
+                      label="Notes" 
+                      fullWidth 
+                      variant="outlined" 
+                      multiline 
+                      rows={4}
+                      minRows={4}
+                      maxRows={8}
+                      InputLabelProps={{
+                        shrink: true
+                      }} 
+                      InputProps={{
+                        sx: {
+                          alignItems: 'flex-start',
+                          '& .MuiInputBase-inputMultiline': {
+                            minHeight: '80px',
+                            padding: '12px',
+                            lineHeight: '1.5'
+                          }
+                        }
+                      }} 
+                      sx={{
+                        mt: 1,
+                        '& .MuiOutlinedInput-root': {
+                          minHeight: '100px',
+                          alignItems: 'flex-start'
+                        }
+                      }} 
+                    />
                   </div>
                 </div>}
 
