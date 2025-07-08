@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
 interface SurveyListTableProps {
   onAddSurvey: () => void;
 }
+
 const mockSurveyData = [{
   id: 1,
   title: "Customer Satisfaction Survey",
@@ -26,6 +28,7 @@ const mockSurveyData = [{
   lastModified: "2024-01-14",
   responses: 0
 }];
+
 export const SurveyListTable = ({
   onAddSurvey
 }: SurveyListTableProps) => {
@@ -33,6 +36,7 @@ export const SurveyListTable = ({
     toast
   } = useToast();
   const [surveys, setSurveys] = useState(mockSurveyData);
+
   const handleStatusToggle = (surveyId: number) => {
     console.log(`Toggling status for Survey ${surveyId}`);
     setSurveys(prevSurveys => prevSurveys.map(survey => survey.id === surveyId ? {
@@ -44,6 +48,7 @@ export const SurveyListTable = ({
       description: "Survey status has been updated successfully"
     });
   };
+
   const handleTicketCreationToggle = (surveyId: number) => {
     console.log(`Toggling ticket creation for Survey ${surveyId}`);
     setSurveys(prevSurveys => prevSurveys.map(survey => survey.id === surveyId ? {
@@ -55,6 +60,7 @@ export const SurveyListTable = ({
       description: "Ticket creation setting has been updated successfully"
     });
   };
+
   const handleActiveToggle = (surveyId: number) => {
     console.log(`Toggling active status for Survey ${surveyId}`);
     setSurveys(prevSurveys => prevSurveys.map(survey => survey.id === surveyId ? {
@@ -66,6 +72,7 @@ export const SurveyListTable = ({
       description: "Survey active status has been updated successfully"
     });
   };
+
   const handleAddSurvey = () => {
     console.log("Adding new survey...");
     toast({
@@ -74,10 +81,11 @@ export const SurveyListTable = ({
     });
     onAddSurvey();
   };
+
   return <div className="space-y-4">
       {/* Action Buttons */}
       <div className="flex items-center gap-4">
-       <button onClick={handleAddSurvey} className="\nflex items-center text-[#BF213E] px-6 py-2 rounded-md transition-colors bg-sidebar-DEFAULT bg-[#F2EEE9]">
+       <button onClick={handleAddSurvey} className="flex items-center text-[#BF213E] px-6 rounded-md transition-colors bg-sidebar-DEFAULT bg-[#F2EEE9] h-[36px]">
   <Plus className="w-4 h-4 mr-2" style={{
           color: '#BF213E'
         }} />
