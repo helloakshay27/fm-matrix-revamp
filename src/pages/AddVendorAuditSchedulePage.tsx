@@ -8,6 +8,7 @@ import { Plus, X } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
 const fieldStyles = {
   width: '100%',
   '& .MuiOutlinedInput-root': {
@@ -31,11 +32,7 @@ const fieldStyles = {
   },
   '& .MuiInputLabel-root': {
     color: '#666666',
-    fontSize: {
-      xs: '12px',
-      sm: '13px',
-      md: '14px'
-    },
+    fontSize: '16px',
     '&.Mui-focused': {
       color: '#C72030'
     },
@@ -67,6 +64,7 @@ const fieldStyles = {
     }
   }
 };
+
 const multilineFieldStyles = {
   ...fieldStyles,
   '& .MuiOutlinedInput-root': {
@@ -75,6 +73,7 @@ const multilineFieldStyles = {
     alignItems: 'flex-start'
   }
 };
+
 interface Question {
   id: number;
   text: string;
@@ -88,6 +87,7 @@ interface Question {
     value: string;
   }>;
 }
+
 export const AddVendorAuditSchedulePage = () => {
   const navigate = useNavigate();
 
@@ -175,6 +175,7 @@ export const AddVendorAuditSchedulePage = () => {
     dayOption: 'specific',
     monthOption: 'specific'
   });
+
   const addNewQuestion = () => {
     const newQuestion: Question = {
       id: Date.now(),
@@ -187,17 +188,20 @@ export const AddVendorAuditSchedulePage = () => {
     };
     setTasks(prev => [...prev, newQuestion]);
   };
+
   const removeQuestion = (id: number) => {
     if (tasks.length > 1) {
       setTasks(prev => prev.filter(q => q.id !== id));
     }
   };
+
   const updateQuestion = (id: number, field: keyof Question, value: any) => {
     setTasks(prev => prev.map(q => q.id === id ? {
       ...q,
       [field]: value
     } : q));
   };
+
   const addOption = (questionId: number) => {
     setTasks(prev => prev.map(q => q.id === questionId ? {
       ...q,
@@ -208,12 +212,14 @@ export const AddVendorAuditSchedulePage = () => {
       }]
     } : q));
   };
+
   const removeOption = (questionId: number, optionId: number) => {
     setTasks(prev => prev.map(q => q.id === questionId ? {
       ...q,
       options: q.options.filter(opt => opt.id !== optionId)
     } : q));
   };
+
   const updateOption = (questionId: number, optionId: number, field: string, value: string) => {
     setTasks(prev => prev.map(q => q.id === questionId ? {
       ...q,
@@ -223,30 +229,35 @@ export const AddVendorAuditSchedulePage = () => {
       } : opt)
     } : q));
   };
+
   const toggleMinute = (minute: number) => {
     setCronSettings(prev => ({
       ...prev,
       selectedMinutes: prev.selectedMinutes.includes(minute) ? prev.selectedMinutes.filter(m => m !== minute) : [...prev.selectedMinutes, minute]
     }));
   };
+
   const toggleHour = (hour: number) => {
     setCronSettings(prev => ({
       ...prev,
       selectedHours: prev.selectedHours.includes(hour) ? prev.selectedHours.filter(h => h !== hour) : [...prev.selectedHours, hour]
     }));
   };
+
   const toggleDay = (day: number) => {
     setCronSettings(prev => ({
       ...prev,
       selectedDays: prev.selectedDays.includes(day) ? prev.selectedDays.filter(d => d !== day) : [...prev.selectedDays, day]
     }));
   };
+
   const toggleMonth = (month: number) => {
     setCronSettings(prev => ({
       ...prev,
       selectedMonths: prev.selectedMonths.includes(month) ? prev.selectedMonths.filter(m => m !== month) : [...prev.selectedMonths, month]
     }));
   };
+
   const generateCronExpression = () => {
     const {
       selectedMinutes,
@@ -273,6 +284,7 @@ export const AddVendorAuditSchedulePage = () => {
     }
     return `${minutes} ${hours} ${days} ${months} *`;
   };
+
   const renderCronTabContent = () => {
     const {
       activeTab
@@ -369,6 +381,7 @@ export const AddVendorAuditSchedulePage = () => {
         return null;
     }
   };
+
   const handleSubmit = () => {
     console.log('Submitting audit schedule:', {
       basicInfo,
@@ -388,6 +401,7 @@ export const AddVendorAuditSchedulePage = () => {
     toast.success('Vendor audit schedule created successfully!');
     navigate('/maintenance/audit/vendor/scheduled');
   };
+
   return <div className="flex-1 p-3 sm:p-4 md:p-6 bg-white min-h-screen">
       {/* Breadcrumb */}
       <div className="mb-4 sm:mb-6">
