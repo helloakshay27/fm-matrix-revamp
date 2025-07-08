@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -101,26 +99,22 @@ export const ViewSchedulePage = () => {
         <div className="flex gap-3 mb-6">
           {/* Create Ticket Toggle */}
           <div className="flex items-center space-x-2">
-            <input 
-              type="radio" 
-              id="create-ticket-toggle" 
-              name="create-ticket" 
-              checked={createTicketEnabled}
-              onChange={() => setCreateTicketEnabled(!createTicketEnabled)}
-            />
-            <Label htmlFor="create-ticket-toggle">Create Ticket</Label>
+            <RadioGroup value={createTicketEnabled ? "enabled" : "disabled"}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="enabled" id="create-ticket-enabled" />
+                <Label htmlFor="create-ticket-enabled">Create Ticket</Label>
+              </div>
+            </RadioGroup>
           </div>
 
           {/* Weightage Toggle */}
           <div className="flex items-center space-x-2">
-            <input 
-              type="radio" 
-              id="weightage-toggle" 
-              name="weightage" 
-              checked={weightageEnabled}
-              onChange={() => setWeightageEnabled(!weightageEnabled)}
-            />
-            <Label htmlFor="weightage-toggle">Weightage</Label>
+            <RadioGroup value={weightageEnabled ? "enabled" : "disabled"}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="enabled" id="weightage-enabled" />
+                <Label htmlFor="weightage-enabled">Weightage</Label>
+              </div>
+            </RadioGroup>
           </div>
 
           <Button 
@@ -153,51 +147,49 @@ export const ViewSchedulePage = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Type</Label>
-                <div className="flex gap-4">
+                <RadioGroup value={scheduleData.type} className="grid grid-cols-2 gap-4">
                   <div className="flex items-center space-x-2">
-                    <input type="radio" checked={scheduleData.type === 'PPM'} readOnly />
-                    <Label>PPM</Label>
+                    <RadioGroupItem value="PPM" id="type-ppm" />
+                    <Label htmlFor="type-ppm">PPM</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <input type="radio" checked={scheduleData.type === 'AMC'} readOnly />
-                    <Label>AMC</Label>
+                    <RadioGroupItem value="AMC" id="type-amc" />
+                    <Label htmlFor="type-amc">AMC</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <input type="radio" checked={scheduleData.type === 'Preparedness'} readOnly />
-                    <Label>Preparedness</Label>
+                    <RadioGroupItem value="Preparedness" id="type-preparedness" />
+                    <Label htmlFor="type-preparedness">Preparedness</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <input type="radio" checked={scheduleData.type === 'Hoto'} readOnly />
-                    <Label>Hoto</Label>
-                  </div>
-                </div>
-                <div className="flex gap-4 mt-2">
-                  <div className="flex items-center space-x-2">
-                    <input type="radio" checked={scheduleData.type === 'Routine'} readOnly />
-                    <Label>Routine</Label>
+                    <RadioGroupItem value="Hoto" id="type-hoto" />
+                    <Label htmlFor="type-hoto">Hoto</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <input type="radio" checked={scheduleData.type === 'Audit'} readOnly />
-                    <Label>Audit</Label>
+                    <RadioGroupItem value="Routine" id="type-routine" />
+                    <Label htmlFor="type-routine">Routine</Label>
                   </div>
-                </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="Audit" id="type-audit" />
+                    <Label htmlFor="type-audit">Audit</Label>
+                  </div>
+                </RadioGroup>
               </div>
               <div className="space-y-2">
                 <Label>Schedule for</Label>
-                <div className="flex gap-4">
+                <RadioGroup value={scheduleData.scheduleFor} className="flex gap-4">
                   <div className="flex items-center space-x-2">
-                    <input type="radio" checked={scheduleData.scheduleFor === 'Asset'} readOnly />
-                    <Label>Asset</Label>
+                    <RadioGroupItem value="Asset" id="schedule-asset" />
+                    <Label htmlFor="schedule-asset">Asset</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <input type="radio" checked={scheduleData.scheduleFor === 'Service'} readOnly />
-                    <Label>Service</Label>
+                    <RadioGroupItem value="Service" id="schedule-service" />
+                    <Label htmlFor="schedule-service">Service</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <input type="radio" checked={scheduleData.scheduleFor === 'Vendor'} readOnly />
-                    <Label>Vendor</Label>
+                    <RadioGroupItem value="Vendor" id="schedule-vendor" />
+                    <Label htmlFor="schedule-vendor">Vendor</Label>
                   </div>
-                </div>
+                </RadioGroup>
               </div>
             </div>
             <div className="space-y-2">
@@ -360,16 +352,16 @@ export const ViewSchedulePage = () => {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Checklist Type</Label>
-              <div className="flex gap-4">
+              <RadioGroup value={scheduleData.checklistType} className="flex gap-4">
                 <div className="flex items-center space-x-2">
-                  <input type="radio" checked={scheduleData.checklistType === 'Individual'} readOnly />
-                  <Label>Individual</Label>
+                  <RadioGroupItem value="Individual" id="checklist-individual" />
+                  <Label htmlFor="checklist-individual">Individual</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <input type="radio" checked={scheduleData.checklistType === 'Asset Group'} readOnly />
-                  <Label>Asset Group</Label>
+                  <RadioGroupItem value="Asset Group" id="checklist-asset-group" />
+                  <Label htmlFor="checklist-asset-group">Asset Group</Label>
                 </div>
-              </div>
+              </RadioGroup>
             </div>
 
             <div className="space-y-2">
@@ -857,4 +849,3 @@ export const ViewSchedulePage = () => {
     </div>
   );
 };
-
