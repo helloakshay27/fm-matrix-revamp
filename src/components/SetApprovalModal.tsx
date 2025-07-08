@@ -133,7 +133,6 @@ export const SetApprovalModal = ({ isOpen, onClose }: SetApprovalModalProps) => 
               Users
             </InputLabel>
             <MuiSelect
-              labelId="users-select-label"
               label="Users"
               value={users}
               onChange={(e) => setUsers(e.target.value)}
