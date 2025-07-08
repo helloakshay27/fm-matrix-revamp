@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Plus, Upload, X } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TextField, Select, MenuItem, FormControl, InputLabel, Radio, RadioGroup, FormControlLabel, Checkbox, FormGroup, Box } from '@mui/material';
+
 const muiFieldStyles = {
   width: '100%',
   '& .MuiOutlinedInput-root': {
@@ -53,6 +54,7 @@ const muiFieldStyles = {
     }
   }
 };
+
 const multilineFieldStyles = {
   ...muiFieldStyles,
   '& .MuiOutlinedInput-root': {
@@ -61,6 +63,7 @@ const multilineFieldStyles = {
     alignItems: 'flex-start'
   }
 };
+
 export const EditSchedulePage = () => {
   const {
     id
@@ -144,6 +147,7 @@ export const EditSchedulePage = () => {
     purchaseCost: '',
     createdOn: ''
   }];
+
   const handleAddSection = () => {
     console.log('Add Section clicked');
     const newSection = {
@@ -153,10 +157,12 @@ export const EditSchedulePage = () => {
     };
     setSections([...sections, newSection]);
   };
+
   const handleRemoveSection = (sectionId: number) => {
     console.log('Remove Section clicked', sectionId);
     setSections(sections.filter(section => section.id !== sectionId));
   };
+
   const handleAddQuestion = (sectionId: number) => {
     console.log('Add Question clicked for section', sectionId);
     const newTask = {
@@ -172,6 +178,7 @@ export const EditSchedulePage = () => {
       tasks: [...section.tasks, newTask]
     } : section));
   };
+
   const handleRemoveQuestion = (sectionId: number, taskId: number) => {
     console.log('Remove Question clicked', sectionId, taskId);
     setSections(sections.map(section => section.id === sectionId ? {
@@ -179,6 +186,7 @@ export const EditSchedulePage = () => {
       tasks: section.tasks.filter(task => task.id !== taskId)
     } : section));
   };
+
   const handleUpdateTask = (sectionId: number, taskId: number, field: string, value: any) => {
     setSections(sections.map(section => section.id === sectionId ? {
       ...section,
@@ -188,10 +196,12 @@ export const EditSchedulePage = () => {
       } : task)
     } : section));
   };
+
   const handleSubmit = () => {
     console.log('Schedule updated successfully');
     navigate('/maintenance/schedule');
   };
+
   const renderCronMinutes = () => {
     const minutes = Array.from({
       length: 60
@@ -275,6 +285,7 @@ export const EditSchedulePage = () => {
         </div>
       </div>;
   };
+
   const renderCronHours = () => {
     const hours = Array.from({
       length: 24
@@ -358,6 +369,7 @@ export const EditSchedulePage = () => {
         </div>
       </div>;
   };
+
   const renderCronDay = () => {
     const days = Array.from({
       length: 31
@@ -441,6 +453,7 @@ export const EditSchedulePage = () => {
         </div>
       </div>;
   };
+
   const renderCronMonth = () => {
     const months = [{
       value: '1',
@@ -558,6 +571,7 @@ export const EditSchedulePage = () => {
         </div>
       </div>;
   };
+
   return <div className="p-6 mx-auto">
       {/* Header */}
       <div className="mb-6">
@@ -580,12 +594,58 @@ export const EditSchedulePage = () => {
         {createTicket && <div className="mb-4 space-y-3">
             <div className="flex items-center gap-4">
               <div className="flex items-center space-x-2">
-                <input type="radio" id="checklist-level" name="category-level" checked={categoryLevel === 'checklist-level'} onChange={() => setCategoryLevel('checklist-level')} />
-                <Label htmlFor="checklist-level">Checklist Level</Label>
+                <div className="relative">
+                  <input 
+                    type="radio" 
+                    id="checklist-level" 
+                    name="category-level" 
+                    checked={categoryLevel === 'checklist-level'} 
+                    onChange={() => setCategoryLevel('checklist-level')}
+                    className="sr-only"
+                  />
+                  <label 
+                    htmlFor="checklist-level" 
+                    className="flex items-center cursor-pointer"
+                  >
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mr-2 ${
+                      categoryLevel === 'checklist-level' 
+                        ? 'border-[#C72030] bg-white' 
+                        : 'border-gray-300 bg-white'
+                    }`}>
+                      {categoryLevel === 'checklist-level' && (
+                        <div className="w-3 h-3 rounded-full bg-[#C72030]"></div>
+                      )}
+                    </div>
+                    <span className="text-sm">Checklist Level</span>
+                  </label>
+                </div>
               </div>
               <div className="flex items-center space-x-2">
-                <input type="radio" id="question-level" name="category-level" checked={categoryLevel === 'question-level'} onChange={() => setCategoryLevel('question-level')} />
-                <Label htmlFor="question-level">Question Level</Label>
+                <div className="relative">
+                  <input 
+                    type="radio" 
+                    id="question-level" 
+                    name="category-level" 
+                    checked={categoryLevel === 'question-level'} 
+                    onChange={() => setCategoryLevel('question-level')}
+                    className="sr-only"
+                  />
+                  <label 
+                    htmlFor="question-level" 
+                    className="flex items-center cursor-pointer"
+                  >
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mr-2 ${
+                      categoryLevel === 'question-level' 
+                        ? 'border-[#C72030] bg-white' 
+                        : 'border-gray-300 bg-white'
+                    }`}>
+                      {categoryLevel === 'question-level' && (
+                        <div className="w-3 h-3 rounded-full bg-[#C72030]"></div>
+                      )}
+                    </div>
+                    <span className="text-sm">Question Level</span>
+                  </label>
+                </div>
               </div>
             </div>
             
