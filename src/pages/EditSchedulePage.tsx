@@ -23,7 +23,7 @@ import {
 const muiFieldStyles = {
   width: '100%',
   '& .MuiOutlinedInput-root': {
-    height: { xs: '36px', md: '45px' },
+    height: { xs: '56px', md: '56px' },
     borderRadius: '8px',
     backgroundColor: '#FFFFFF',
     '& fieldset': {
@@ -38,7 +38,7 @@ const muiFieldStyles = {
     },
   },
   '& .MuiInputLabel-root': {
-    color: '#666666',
+    color: '#999999',
     fontSize: '16px',
     '&.Mui-focused': {
       color: '#C72030',
@@ -51,8 +51,8 @@ const muiFieldStyles = {
   },
   '& .MuiOutlinedInput-input, & .MuiSelect-select': {
     color: '#1A1A1A',
-    fontSize: '14px',
-    padding: { xs: '8px 14px', md: '12px 14px' },
+    fontSize: '16px',
+    padding: { xs: '16px 14px', md: '16px 14px' },
     height: 'auto',
     '&::placeholder': {
       color: '#999999',
@@ -770,15 +770,12 @@ export const EditSchedulePage = () => {
             
             <div className="space-y-2">
               <TextField
-                label="Activity Name*"
+                label="Activity Name"
                 value={activityName}
                 onChange={(e) => setActivityName(e.target.value)}
-                placeholder="Activity Name"
+                placeholder="Enter Activity Name"
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{
-                  shrink: true,
-                }}
                 sx={muiFieldStyles}
               />
             </div>
@@ -792,9 +789,6 @@ export const EditSchedulePage = () => {
                 rows={4}
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{
-                  shrink: true,
-                }}
                 sx={multilineFieldStyles}
               />
             </div>
@@ -823,10 +817,10 @@ export const EditSchedulePage = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Select Group</InputLabel>
+                  <InputLabel>Select Group</InputLabel>
                   <Select
                     value={group}
-                    label="Group"
+                    label="Select Group"
                     onChange={(e) => setGroup(e.target.value)}
                     sx={muiFieldStyles}
                   >
@@ -837,10 +831,10 @@ export const EditSchedulePage = () => {
               </div>
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Select Sub Group</InputLabel>
+                  <InputLabel>Select Sub Group</InputLabel>
                   <Select
                     value={subGroup}
-                    label="SubGroup"
+                    label="Select Sub Group"
                     onChange={(e) => setSubGroup(e.target.value)}
                     sx={muiFieldStyles}
                   >
@@ -989,10 +983,10 @@ export const EditSchedulePage = () => {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Select Asset</InputLabel>
+                <InputLabel>Select Asset</InputLabel>
                 <Select
                   value={asset}
-                  label="Asset"
+                  label="Select Asset"
                   onChange={(e) => setAsset(e.target.value)}
                   sx={muiFieldStyles}
                 >
@@ -1005,7 +999,7 @@ export const EditSchedulePage = () => {
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Assign To</InputLabel>
+                  <InputLabel>Assign To</InputLabel>
                   <Select
                     value={assignTo}
                     label="Assign To"
@@ -1019,7 +1013,7 @@ export const EditSchedulePage = () => {
               </div>
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Scan Type</InputLabel>
+                  <InputLabel>Scan Type</InputLabel>
                   <Select
                     value={scanType}
                     label="Scan Type"
@@ -1035,8 +1029,10 @@ export const EditSchedulePage = () => {
                 <Label>Plan Duration</Label>
                 <div className="flex gap-2">
                   <FormControl variant="outlined">
+                    <InputLabel>Duration</InputLabel>
                     <Select
                       value={planDuration}
+                      label="Duration"
                       onChange={(e) => setPlanDuration(e.target.value)}
                       sx={muiFieldStyles}
                     >
@@ -1046,6 +1042,7 @@ export const EditSchedulePage = () => {
                     </Select>
                   </FormControl>
                   <TextField
+                    label="Value"
                     value={planDurationField}
                     onChange={(e) => setPlanDurationField(e.target.value)}
                     sx={{
@@ -1060,7 +1057,7 @@ export const EditSchedulePage = () => {
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Priority</InputLabel>
+                  <InputLabel>Priority</InputLabel>
                   <Select
                     value={priority}
                     label="Priority"
@@ -1075,7 +1072,7 @@ export const EditSchedulePage = () => {
               </div>
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Email Trigger Rule</InputLabel>
+                  <InputLabel>Email Trigger Rule</InputLabel>
                   <Select
                     value={emailTriggerRule}
                     label="Email Trigger Rule"
@@ -1089,7 +1086,7 @@ export const EditSchedulePage = () => {
               </div>
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Supervisors</InputLabel>
+                  <InputLabel>Supervisors</InputLabel>
                   <Select
                     value={supervisors}
                     label="Supervisors"
@@ -1106,7 +1103,7 @@ export const EditSchedulePage = () => {
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Category</InputLabel>
+                  <InputLabel>Category</InputLabel>
                   <Select
                     value={category}
                     label="Category"
@@ -1120,7 +1117,7 @@ export const EditSchedulePage = () => {
               </div>
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Submission Time</InputLabel>
+                  <InputLabel>Submission Time</InputLabel>
                   <Select
                     value={submissionTime}
                     label="Submission Time"
@@ -1139,9 +1136,6 @@ export const EditSchedulePage = () => {
                   onChange={(e) => setSubmissionTimeField(e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
                   sx={muiFieldStyles}
                 />
               </div>
@@ -1152,8 +1146,10 @@ export const EditSchedulePage = () => {
                 <Label>Grace Time</Label>
                 <div className="flex gap-2">
                   <FormControl variant="outlined">
+                    <InputLabel>Grace Time</InputLabel>
                     <Select
                       value={graceTime}
+                      label="Grace Time"
                       onChange={(e) => setGraceTime(e.target.value)}
                       sx={muiFieldStyles}
                     >
@@ -1163,6 +1159,7 @@ export const EditSchedulePage = () => {
                     </Select>
                   </FormControl>
                   <TextField
+                    label="Value"
                     value={graceTimeField}
                     onChange={(e) => setGraceTimeField(e.target.value)}
                     sx={{
@@ -1174,7 +1171,7 @@ export const EditSchedulePage = () => {
               </div>
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Lock Overdue Task</InputLabel>
+                  <InputLabel>Lock Overdue Task</InputLabel>
                   <Select
                     value={lockOverdueTask}
                     label="Lock Overdue Task"
@@ -1188,7 +1185,7 @@ export const EditSchedulePage = () => {
               </div>
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Frequency</InputLabel>
+                  <InputLabel>Frequency</InputLabel>
                   <Select
                     value={frequency}
                     label="Frequency"
@@ -1211,9 +1208,6 @@ export const EditSchedulePage = () => {
                   onChange={(e) => setCronExpression(e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
                   sx={muiFieldStyles}
                 />
               </div>
@@ -1249,7 +1243,7 @@ export const EditSchedulePage = () => {
 
             <div className="space-y-2">
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Select Supplier</InputLabel>
+                <InputLabel>Select Supplier</InputLabel>
                 <Select
                   value={selectSupplier}
                   label="Select Supplier"
