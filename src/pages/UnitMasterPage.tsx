@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Edit, Plus } from 'lucide-react';
+import { Edit, Plus, X } from 'lucide-react';
 import {
   TextField,
   FormControl,
@@ -10,6 +10,11 @@ import {
   Select as MuiSelect,
   MenuItem,
   Checkbox,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
 } from '@mui/material';
 
 const fieldStyles = {
@@ -124,6 +129,8 @@ const unitData = [
 
 export const UnitMasterPage = () => {
   const [showForm, setShowForm] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedUnit, setSelectedUnit] = useState(null);
   const [formData, setFormData] = useState({
     building: '',
     wing: '',
@@ -131,6 +138,15 @@ export const UnitMasterPage = () => {
     floor: '',
     entity: '',
     unitName: ''
+  });
+  const [editFormData, setEditFormData] = useState({
+    building: '',
+    wing: '',
+    area: '',
+    floor: '',
+    entity: '',
+    unitName: '',
+    areaValue: ''
   });
 
   const handleAddUnitClick = () => {
@@ -144,9 +160,22 @@ export const UnitMasterPage = () => {
     }));
   };
 
+  const handleEditInputChange = (field: string, value: string) => {
+    setEditFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const handleSubmit = () => {
     console.log('Submitting unit data:', formData);
     // Add submit logic here
+  };
+
+  const handleEditSubmit = () => {
+    console.log('Updating unit data:', editFormData);
+    // Add update logic here
+    setShowEditModal(false);
   };
 
   const handleSampleFormat = () => {
@@ -157,8 +186,23 @@ export const UnitMasterPage = () => {
     console.log('Import units');
   };
 
-  const handleEditClick = (id: number) => {
-    console.log('Edit unit:', id);
+  const handleEditClick = (unit) => {
+    setSelectedUnit(unit);
+    setEditFormData({
+      building: unit.building,
+      wing: unit.wing,
+      area: unit.area,
+      floor: unit.floor,
+      entity: unit.entity,
+      unitName: unit.unit,
+      areaValue: '50000' // Default area value as shown in image
+    });
+    setShowEditModal(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setSelectedUnit(null);
   };
 
   return (
@@ -314,6 +358,165 @@ export const UnitMasterPage = () => {
         </div>
       )}
 
+      {/* Edit Unit Modal */}
+      <Dialog 
+        open={showEditModal} 
+        onClose={handleCloseEditModal}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: '8px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          borderBottom: '1px solid #e0e0e0',
+          pb: 2
+        }}>
+          <span style={{ color: '#333', fontWeight: 600 }}>Edit Details</span>
+          <IconButton onClick={handleCloseEditModal} size="small">
+            <X size={20} />
+          </IconButton>
+        </DialogTitle>
+        
+        <DialogContent sx={{ pt: 3 }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <FormControl fullWidth>
+              <InputLabel shrink sx={{ color: '#666', fontSize: '14px' }}>Select Building</InputLabel>
+              <MuiSelect
+                value={editFormData.building}
+                onChange={(e) => handleEditInputChange('building', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value="">Select Building</MenuItem>
+                <MenuItem value="Tower 4">Tower 4</MenuItem>
+                <MenuItem value="The Address by Wadhwa Boulevard">The Address by Wadhwa Boulevard</MenuItem>
+                <MenuItem value="ABS">ABS</MenuItem>
+                <MenuItem value="Chicago plaza">Chicago plaza</MenuItem>
+                <MenuItem value="TCS Lab">TCS Lab</MenuItem>
+                <MenuItem value="Jyoti Tower">Jyoti Tower</MenuItem>
+              </MuiSelect>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel shrink sx={{ color: '#666', fontSize: '14px' }}>Select Wing</InputLabel>
+              <MuiSelect
+                value={editFormData.wing}
+                onChange={(e) => handleEditInputChange('wing', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value="">Select Wing</MenuItem>
+                <MenuItem value="Wing1">Wing1</MenuItem>
+                <MenuItem value="B4">B4</MenuItem>
+                <MenuItem value="B3">B3</MenuItem>
+                <MenuItem value="B2">B2</MenuItem>
+                <MenuItem value="B1">B1</MenuItem>
+                <MenuItem value="A">A</MenuItem>
+                <MenuItem value="A6">A6</MenuItem>
+              </MuiSelect>
+            </FormControl>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <FormControl fullWidth>
+              <InputLabel shrink sx={{ color: '#666', fontSize: '14px' }}>Select Area</InputLabel>
+              <MuiSelect
+                value={editFormData.area}
+                onChange={(e) => handleEditInputChange('area', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value="">Select Area</MenuItem>
+                <MenuItem value="North">North</MenuItem>
+                <MenuItem value="east">east</MenuItem>
+              </MuiSelect>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel shrink sx={{ color: '#666', fontSize: '14px' }}>Select Floor</InputLabel>
+              <MuiSelect
+                value={editFormData.floor}
+                onChange={(e) => handleEditInputChange('floor', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value="">Select Floor</MenuItem>
+                <MenuItem value="1st">1st</MenuItem>
+                <MenuItem value="29D">29D</MenuItem>
+                <MenuItem value="29C">29C</MenuItem>
+                <MenuItem value="29B">29B</MenuItem>
+                <MenuItem value="29A">29A</MenuItem>
+                <MenuItem value="2nd floor">2nd floor</MenuItem>
+                <MenuItem value="12th Floor">12th Floor</MenuItem>
+                <MenuItem value="2nd Floor">2nd Floor</MenuItem>
+              </MuiSelect>
+            </FormControl>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <TextField
+              fullWidth
+              label="Unit Name"
+              value={editFormData.unitName}
+              onChange={(e) => handleEditInputChange('unitName', e.target.value)}
+              variant="outlined"
+              InputLabelProps={{ 
+                shrink: true,
+                sx: { color: '#666', fontSize: '14px' }
+              }}
+              sx={fieldStyles}
+            />
+
+            <FormControl fullWidth>
+              <InputLabel shrink sx={{ color: '#666', fontSize: '14px' }}>Select Entity</InputLabel>
+              <MuiSelect
+                value={editFormData.entity}
+                onChange={(e) => handleEditInputChange('entity', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value="">Select Entity</MenuItem>
+                <MenuItem value="Noid 62">Noid 62</MenuItem>
+                <MenuItem value="TCS">TCS</MenuItem>
+                <MenuItem value="GoPhygital">GoPhygital</MenuItem>
+              </MuiSelect>
+            </FormControl>
+          </div>
+
+          <div className="mb-4">
+            <TextField
+              fullWidth
+              label="Area"
+              value={editFormData.areaValue}
+              onChange={(e) => handleEditInputChange('areaValue', e.target.value)}
+              variant="outlined"
+              InputLabelProps={{ 
+                shrink: true,
+                sx: { color: '#666', fontSize: '14px' }
+              }}
+              sx={fieldStyles}
+            />
+          </div>
+        </DialogContent>
+        
+        <DialogActions sx={{ p: 3, pt: 2 }}>
+          <Button
+            onClick={handleEditSubmit}
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:opacity-90"
+          >
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <div className="bg-white rounded-lg border border-gray-200">
         <Table>
           <TableHeader>
@@ -336,7 +539,7 @@ export const UnitMasterPage = () => {
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    onClick={() => handleEditClick(item.id)}
+                    onClick={() => handleEditClick(item)}
                   >
                     <Edit className="w-4 h-4" />
                   </Button>
