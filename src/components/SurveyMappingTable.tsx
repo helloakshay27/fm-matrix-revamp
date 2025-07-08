@@ -70,10 +70,14 @@ export const SurveyMappingTable = () => {
     <div className="space-y-4">
       {/* Action Buttons */}
       <div className="flex items-center gap-4">
-        <button className="flex items-center gap-2 bg-[#C72030] text-white px-4 py-2 rounded-lg hover:bg-[#A01B28] transition-colors">
-          <Download className="w-4 h-4" />
-          Download QR Code
-        </button>
+        <button
+  onClick={handleDownloadQRCode}
+  className="flex items-center bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6 py-2 rounded-md transition-colors"
+>
+  <Download className="w-4 h-4 mr-2" style={{ color: '#BF213E' }} />
+  Download QR Code
+</button>
+
       </div>
 
       {/* Table */}

@@ -108,13 +108,14 @@ export const SurveyListTable = ({ onAddSurvey }: SurveyListTableProps) => {
     <div className="space-y-4">
       {/* Action Buttons */}
       <div className="flex items-center gap-4">
-        <button
-          onClick={handleAddSurvey}
-          className="flex items-center gap-2 bg-[#C72030] text-white px-4 py-2 rounded-lg hover:bg-[#C72030]/90 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Add
-        </button>
+       <button
+  onClick={handleAddSurvey}
+  className="flex items-center bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6 py-2 rounded-md transition-colors"
+>
+  <Plus className="w-4 h-4 mr-2" style={{ color: '#BF213E' }} />
+  Add
+</button>
+
       </div>
 
       {/* Table */}
