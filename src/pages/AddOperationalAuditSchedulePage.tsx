@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,33 @@ const fieldStyles = {
   '& .MuiInputBase-input, & .MuiSelect-select': {
     padding: { xs: '8px', sm: '10px', md: '12px' },
   },
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '8px',
+    backgroundColor: 'white',
+    '& fieldset': {
+      borderColor: '#e5e7eb',
+    },
+    '&:hover fieldset': {
+      borderColor: '#9ca3af',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    color: '#6b7280',
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+  },
+};
+
+// Custom styles for radio buttons
+const customRadioStyles = {
+  accentColor: '#C72030',
+  outline: 'none',
+  boxShadow: 'none',
+  border: 'none',
 };
 
 interface TaskSection {
@@ -94,20 +122,34 @@ export const AddOperationalAuditSchedulePage = () => {
 
       <div className="flex flex-wrap gap-6">
         <div className="flex items-center space-x-2">
-          <Switch checked={createNew} onCheckedChange={setCreateNew} id="create-new" />
+          <Switch 
+            checked={createNew} 
+            onCheckedChange={setCreateNew} 
+            id="create-new"
+            className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-gray-300"
+          />
           <Label htmlFor="create-new">Create New</Label>
         </div>
         <div className="flex items-center space-x-2">
-          <Switch checked={createTicket} onCheckedChange={setCreateTicket} id="create-ticket" />
+          <Switch 
+            checked={createTicket} 
+            onCheckedChange={setCreateTicket} 
+            id="create-ticket"
+            className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-gray-300"
+          />
           <Label htmlFor="create-ticket">Create Ticket</Label>
         </div>
         <div className="flex items-center space-x-2">
-          <Switch checked={weightage} onCheckedChange={setWeightage} id="weightage" />
+          <Switch 
+            checked={weightage} 
+            onCheckedChange={setWeightage} 
+            id="weightage"
+            className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-gray-300"
+          />
           <Label htmlFor="weightage">Weightage</Label>
         </div>
       </div>
 
-      {/* Responsive Sections for CreateNew and CreateTicket */}
       {createNew && (
         <Card><CardContent className="pt-6">
           <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
@@ -134,42 +176,75 @@ export const AddOperationalAuditSchedulePage = () => {
         <Card><CardContent className="pt-6">
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-4">
-              {["Checklist Level", "Question Level"].map(level => (
-                <div key={level} className="flex items-center space-x-2">
-                  <input
-                    type="radio" id={level} name="ticketLevel" value={level}
-                    checked={formData.ticketLevel === level}
-                    onChange={(e) => handleInputChange('ticketLevel', e.target.value)}
-                  />
-                  <Label htmlFor={level}>{level}</Label>
-                </div>
-              ))}
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio" 
+                  id="checklist-level" 
+                  name="ticketLevel" 
+                  value="Checklist Level"
+                  checked={formData.ticketLevel === 'Checklist Level'}
+                  onChange={(e) => handleInputChange('ticketLevel', e.target.value)}
+                  style={customRadioStyles}
+                  className="focus:outline-none focus:ring-0"
+                />
+                <Label htmlFor="checklist-level">Checklist Level</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio" 
+                  id="question-level" 
+                  name="ticketLevel" 
+                  value="Question Level"
+                  checked={formData.ticketLevel === 'Question Level'}
+                  onChange={(e) => handleInputChange('ticketLevel', e.target.value)}
+                  style={customRadioStyles}
+                  className="focus:outline-none focus:ring-0"
+                />
+                <Label htmlFor="question-level">Question Level</Label>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {['assignedTo', 'ticketCategory'].map((field, i) => (
-                <FormControl key={field} fullWidth variant="outlined" sx={{ mt: 1 }}>
-                  <InputLabel id={`${field}-label`} shrink>{`Select ${field === 'assignedTo' ? 'Assigned To' : 'Category'}`}</InputLabel>
+              <div>
+                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                  <InputLabel id="assigned-to-label" shrink>Select Assigned To</InputLabel>
                   <MuiSelect
-                    labelId={`${field}-label`}
-                    value={formData[field]}
-                    onChange={(e) => handleInputChange(field, e.target.value)}
+                    labelId="assigned-to-label"
+                    label="Select Assigned To"
                     displayEmpty
+                    value={formData.assignedTo}
+                    onChange={(e) => handleInputChange('assignedTo', e.target.value)}
                     sx={fieldStyles}
                   >
-                    <MenuItem value=""><em>Select {field}</em></MenuItem>
+                    <MenuItem value=""><em>Select Assigned To</em></MenuItem>
                     <MenuItem value="admin">Admin</MenuItem>
                     <MenuItem value="supervisor">Supervisor</MenuItem>
                     <MenuItem value="technician">Technician</MenuItem>
                   </MuiSelect>
                 </FormControl>
-              ))}
+              </div>
+              <div>
+                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                  <InputLabel id="ticket-category-label" shrink>Select Category</InputLabel>
+                  <MuiSelect
+                    labelId="ticket-category-label"
+                    label="Select Category"
+                    displayEmpty
+                    value={formData.ticketCategory}
+                    onChange={(e) => handleInputChange('ticketCategory', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Category</em></MenuItem>
+                    <MenuItem value="technical">Technical</MenuItem>
+                    <MenuItem value="non-technical">Non Technical</MenuItem>
+                    <MenuItem value="maintenance">Maintenance</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </div>
             </div>
           </div>
         </CardContent></Card>
       )}
-
-      {/* More responsive fields and cards continue here, just repeat this approach */}
 
       <div className="flex justify-end gap-4 flex-wrap">
         <Button variant="outline" onClick={() => navigate('/maintenance/audit/operational')}>Cancel</Button>
