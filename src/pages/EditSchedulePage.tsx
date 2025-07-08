@@ -735,7 +735,28 @@ export const EditSchedulePage = () => {
                     height: { xs: '36px', md: '45px' },
                     '& fieldset': { borderColor: '#e5e7eb' },
                     '&:hover fieldset': { borderColor: '#C72030' },
-                    '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                    '&.Mui-focused fieldset': { borderColor: '#C72030' },
+                    '& input': {
+                      textAlign: 'left',
+                      padding: '0 14px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }
+                  },
+                  '& .MuiInputBase-input::placeholder': {
+                    textAlign: 'left',
+                    opacity: 0.6
+                  }
+                }}
+                InputProps={{
+                  sx: {
+                    '& input': {
+                      textAlign: 'left',
+                      '&::placeholder': {
+                        textAlign: 'left',
+                        opacity: 0.6
+                      }
+                    }
                   }
                 }}
               />
@@ -753,7 +774,26 @@ export const EditSchedulePage = () => {
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': { borderColor: '#e5e7eb' },
                     '&:hover fieldset': { borderColor: '#C72030' },
-                    '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                    '&.Mui-focused fieldset': { borderColor: '#C72030' },
+                    '& textarea': {
+                      textAlign: 'left',
+                      padding: '14px'
+                    }
+                  },
+                  '& .MuiInputBase-input::placeholder': {
+                    textAlign: 'left',
+                    opacity: 0.6
+                  }
+                }}
+                InputProps={{
+                  sx: {
+                    '& textarea': {
+                      textAlign: 'left',
+                      '&::placeholder': {
+                        textAlign: 'left',
+                        opacity: 0.6
+                      }
+                    }
                   }
                 }}
               />
@@ -842,7 +882,13 @@ export const EditSchedulePage = () => {
                             fontWeight: 'medium',
                             '& fieldset': { borderColor: '#e5e7eb' },
                             '&:hover fieldset': { borderColor: '#C72030' },
-                            '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                            '&.Mui-focused fieldset': { borderColor: '#C72030' },
+                            '& input': {
+                              textAlign: 'left',
+                              padding: '0 14px',
+                              display: 'flex',
+                              alignItems: 'center'
+                            }
                           }
                         }}
                       />
@@ -895,7 +941,13 @@ export const EditSchedulePage = () => {
                                     height: { xs: '36px', md: '45px' },
                                     '& fieldset': { borderColor: '#e5e7eb' },
                                     '&:hover fieldset': { borderColor: '#C72030' },
-                                    '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                                    '&.Mui-focused fieldset': { borderColor: '#C72030' },
+                                    '& input': {
+                                      textAlign: 'left',
+                                      padding: '0 14px',
+                                      display: 'flex',
+                                      alignItems: 'center'
+                                    }
                                   }
                                 }}
                               />
@@ -1065,7 +1117,13 @@ export const EditSchedulePage = () => {
                         height: { xs: '36px', md: '45px' },
                         '& fieldset': { borderColor: '#e5e7eb' },
                         '&:hover fieldset': { borderColor: '#C72030' },
-                        '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                        '&.Mui-focused fieldset': { borderColor: '#C72030' },
+                        '& input': {
+                          textAlign: 'left',
+                          padding: '0 14px',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }
                       }
                     }}
                   />
@@ -1187,7 +1245,13 @@ export const EditSchedulePage = () => {
                       height: { xs: '36px', md: '45px' },
                       '& fieldset': { borderColor: '#e5e7eb' },
                       '&:hover fieldset': { borderColor: '#C72030' },
-                      '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                      '&.Mui-focused fieldset': { borderColor: '#C72030' },
+                      '& input': {
+                        textAlign: 'left',
+                        padding: '0 14px',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }
                     }
                   }}
                 />
@@ -1223,7 +1287,13 @@ export const EditSchedulePage = () => {
                         height: { xs: '36px', md: '45px' },
                         '& fieldset': { borderColor: '#e5e7eb' },
                         '&:hover fieldset': { borderColor: '#C72030' },
-                        '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                        '&.Mui-focused fieldset': { borderColor: '#C72030' },
+                        '& input': {
+                          textAlign: 'left',
+                          padding: '0 14px',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }
                       }
                     }}
                   />
@@ -1284,7 +1354,13 @@ export const EditSchedulePage = () => {
                       height: { xs: '36px', md: '45px' },
                       '& fieldset': { borderColor: '#e5e7eb' },
                       '&:hover fieldset': { borderColor: '#C72030' },
-                      '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                      '&.Mui-focused fieldset': { borderColor: '#C72030' },
+                      '& input': {
+                        textAlign: 'left',
+                        padding: '0 14px',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }
                     }
                   }}
                 />
@@ -1301,7 +1377,13 @@ export const EditSchedulePage = () => {
                       height: { xs: '36px', md: '45px' },
                       '& fieldset': { borderColor: '#e5e7eb' },
                       '&:hover fieldset': { borderColor: '#C72030' },
-                      '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                      '&.Mui-focused fieldset': { borderColor: '#C72030' },
+                      '& input': {
+                        textAlign: 'left',
+                        padding: '0 14px',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }
                     }
                   }}
                 />
@@ -1318,7 +1400,13 @@ export const EditSchedulePage = () => {
                       height: { xs: '36px', md: '45px' },
                       '& fieldset': { borderColor: '#e5e7eb' },
                       '&:hover fieldset': { borderColor: '#C72030' },
-                      '&.Mui-focused fieldset': { borderColor: '#C72030' }
+                      '&.Mui-focused fieldset': { borderColor: '#C72030' },
+                      '& input': {
+                        textAlign: 'left',
+                        padding: '0 14px',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }
                     }
                   }}
                 />
