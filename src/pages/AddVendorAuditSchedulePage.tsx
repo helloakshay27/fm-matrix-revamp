@@ -1,15 +1,63 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, X } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
+const fieldStyles = {
+  width: '100%',
+  '& .MuiOutlinedInput-root': {
+    height: { xs: '36px', md: '45px' },
+    borderRadius: '8px',
+    backgroundColor: '#FFFFFF',
+    '& fieldset': {
+      borderColor: '#E0E0E0',
+    },
+    '&:hover fieldset': {
+      borderColor: '#1A1A1A',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+      borderWidth: 2,
+    },
+  },
+  '& .MuiInputLabel-root': {
+    color: '#666666',
+    fontSize: '14px',
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+    '&.MuiInputLabel-shrink': {
+      transform: 'translate(14px, -9px) scale(0.75)',
+      backgroundColor: '#FFFFFF',
+      padding: '0 4px',
+    },
+  },
+  '& .MuiOutlinedInput-input, & .MuiSelect-select': {
+    color: '#1A1A1A',
+    fontSize: '14px',
+    padding: { xs: '8px 14px', md: '12px 14px' },
+    height: 'auto',
+    '&::placeholder': {
+      color: '#999999',
+      opacity: 1,
+    },
+  },
+};
+
+const multilineFieldStyles = {
+  ...fieldStyles,
+  '& .MuiOutlinedInput-root': {
+    ...fieldStyles['& .MuiOutlinedInput-root'],
+    height: 'auto',
+    alignItems: 'flex-start',
+  },
+};
 
 interface Question {
   id: number;
@@ -251,43 +299,43 @@ export const AddVendorAuditSchedulePage = () => {
                 />
                 <Label htmlFor="every-minute">Every minute between minute</Label>
               </div>
-              <Select 
-                value={cronSettings.minuteRange.start.toString().padStart(2, '0')} 
-                onValueChange={(value) => setCronSettings(prev => ({
-                  ...prev, 
-                  minuteRange: { ...prev.minuteRange, start: parseInt(value) }
-                }))}
-              >
-                <SelectTrigger className="w-20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
+              <FormControl variant="outlined" sx={fieldStyles}>
+                <InputLabel shrink>Start</InputLabel>
+                <MuiSelect
+                  value={cronSettings.minuteRange.start.toString().padStart(2, '0')}
+                  onChange={(e) => setCronSettings(prev => ({
+                    ...prev, 
+                    minuteRange: { ...prev.minuteRange, start: parseInt(e.target.value as string) }
+                  }))}
+                  label="Start"
+                  displayEmpty
+                >
                   {Array.from({ length: 60 }, (_, i) => (
-                    <SelectItem key={i} value={i.toString().padStart(2, '0')}>
+                    <MenuItem key={i} value={i.toString().padStart(2, '0')}>
                       {i.toString().padStart(2, '0')}
-                    </SelectItem>
+                    </MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
+                </MuiSelect>
+              </FormControl>
               <span>and minute</span>
-              <Select 
-                value={cronSettings.minuteRange.end.toString().padStart(2, '0')} 
-                onValueChange={(value) => setCronSettings(prev => ({
-                  ...prev, 
-                  minuteRange: { ...prev.minuteRange, end: parseInt(value) }
-                }))}
-              >
-                <SelectTrigger className="w-20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
+              <FormControl variant="outlined" sx={fieldStyles}>
+                <InputLabel shrink>End</InputLabel>
+                <MuiSelect
+                  value={cronSettings.minuteRange.end.toString().padStart(2, '0')}
+                  onChange={(e) => setCronSettings(prev => ({
+                    ...prev, 
+                    minuteRange: { ...prev.minuteRange, end: parseInt(e.target.value as string) }
+                  }))}
+                  label="End"
+                  displayEmpty
+                >
                   {Array.from({ length: 60 }, (_, i) => (
-                    <SelectItem key={i} value={i.toString().padStart(2, '0')}>
+                    <MenuItem key={i} value={i.toString().padStart(2, '0')}>
                       {i.toString().padStart(2, '0')}
-                    </SelectItem>
+                    </MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
         );
@@ -411,19 +459,24 @@ export const AddVendorAuditSchedulePage = () => {
                 id="createNew" 
                 checked={createNew}
                 onCheckedChange={(checked) => setCreateNew(checked)}
+                className="data-[state=checked]:bg-green-500"
               />
             </div>
             {createNew && (
-              <Select value={templateSelection} onValueChange={setTemplateSelection}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Select from the existing Template" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="template1">Template 1</SelectItem>
-                  <SelectItem value="template2">Template 2</SelectItem>
-                  <SelectItem value="template3">Template 3</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl variant="outlined" sx={fieldStyles}>
+                <InputLabel shrink>Select from existing Template</InputLabel>
+                <MuiSelect
+                  value={templateSelection}
+                  onChange={(e) => setTemplateSelection(e.target.value)}
+                  label="Select from existing Template"
+                  displayEmpty
+                >
+                  <MenuItem value=""><em>Select Template</em></MenuItem>
+                  <MenuItem value="template1">Template 1</MenuItem>
+                  <MenuItem value="template2">Template 2</MenuItem>
+                  <MenuItem value="template3">Template 3</MenuItem>
+                </MuiSelect>
+              </FormControl>
             )}
           </div>
 
@@ -435,6 +488,7 @@ export const AddVendorAuditSchedulePage = () => {
                 id="createTicket" 
                 checked={createTicket}
                 onCheckedChange={(checked) => setCreateTicket(checked)}
+                className="data-[state=checked]:bg-green-500"
               />
             </div>
             {createTicket && (
@@ -454,27 +508,35 @@ export const AddVendorAuditSchedulePage = () => {
                   </div>
                 </RadioGroup>
                 
-                <Select value={assignedTo} onValueChange={setAssignedTo}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Select Assigned To" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user1">User 1</SelectItem>
-                    <SelectItem value="user2">User 2</SelectItem>
-                    <SelectItem value="user3">User 3</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl variant="outlined" sx={fieldStyles}>
+                  <InputLabel shrink>Select Assigned To</InputLabel>
+                  <MuiSelect
+                    value={assignedTo}
+                    onChange={(e) => setAssignedTo(e.target.value)}
+                    label="Select Assigned To"
+                    displayEmpty
+                  >
+                    <MenuItem value=""><em>Select User</em></MenuItem>
+                    <MenuItem value="user1">User 1</MenuItem>
+                    <MenuItem value="user2">User 2</MenuItem>
+                    <MenuItem value="user3">User 3</MenuItem>
+                  </MuiSelect>
+                </FormControl>
                 
-                <Select value={ticketCategory} onValueChange={setTicketCategory}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Select Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="category1">Category 1</SelectItem>
-                    <SelectItem value="category2">Category 2</SelectItem>
-                    <SelectItem value="category3">Category 3</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl variant="outlined" sx={fieldStyles}>
+                  <InputLabel shrink>Select Category</InputLabel>
+                  <MuiSelect
+                    value={ticketCategory}
+                    onChange={(e) => setTicketCategory(e.target.value)}
+                    label="Select Category"
+                    displayEmpty
+                  >
+                    <MenuItem value=""><em>Select Category</em></MenuItem>
+                    <MenuItem value="category1">Category 1</MenuItem>
+                    <MenuItem value="category2">Category 2</MenuItem>
+                    <MenuItem value="category3">Category 3</MenuItem>
+                  </MuiSelect>
+                </FormControl>
               </div>
             )}
           </div>
@@ -486,6 +548,7 @@ export const AddVendorAuditSchedulePage = () => {
               id="weightage" 
               checked={weightage}
               onCheckedChange={(checked) => setWeightage(checked)}
+              className="data-[state=checked]:bg-green-500"
             />
           </div>
         </div>
@@ -538,29 +601,31 @@ export const AddVendorAuditSchedulePage = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="activityName" className="text-sm font-medium">
-                  Activity Name <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="activityName"
-                  value={basicInfo.activityName}
-                  onChange={(e) => setBasicInfo(prev => ({...prev, activityName: e.target.value}))}
-                  className="mt-1"
-                />
-              </div>
+              <TextField
+                label="Activity Name *"
+                placeholder="Enter Activity Name"
+                value={basicInfo.activityName}
+                onChange={(e) => setBasicInfo(prev => ({...prev, activityName: e.target.value}))}
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={fieldStyles}
+              />
 
-              <div>
-                <Label htmlFor="description" className="text-sm font-medium">Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Enter Description"
-                  value={basicInfo.description}
-                  onChange={(e) => setBasicInfo(prev => ({...prev, description: e.target.value}))}
-                  className="mt-1"
-                  rows={3}
-                />
-              </div>
+              <TextField
+                label="Description"
+                placeholder="Enter Description"
+                value={basicInfo.description}
+                onChange={(e) => setBasicInfo(prev => ({...prev, description: e.target.value}))}
+                variant="outlined"
+                multiline
+                rows={3}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={multilineFieldStyles}
+              />
             </div>
           </CardContent>
         </Card>
@@ -586,61 +651,53 @@ export const AddVendorAuditSchedulePage = () => {
             {tasks.map((task, index) => (
               <div key={task.id} className="space-y-4 border-b pb-6 last:border-b-0">
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium">Select Group</Label>
-                    <Select>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Daily Calculation Log" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="daily-calc">Daily Calculation Log</SelectItem>
-                        <SelectItem value="weekly-report">Weekly Report</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <FormControl variant="outlined" sx={fieldStyles}>
+                    <InputLabel shrink>Select Group</InputLabel>
+                    <MuiSelect label="Select Group" displayEmpty>
+                      <MenuItem value=""><em>Select Group</em></MenuItem>
+                      <MenuItem value="daily-calc">Daily Calculation Log</MenuItem>
+                      <MenuItem value="weekly-report">Weekly Report</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
 
-                  <div>
-                    <Label className="text-sm font-medium">Select Sub-Group</Label>
-                    <Select>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="IT Block MLT" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="it-block-mlt">IT Block MLT</SelectItem>
-                        <SelectItem value="main-block">Main Block</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <FormControl variant="outlined" sx={fieldStyles}>
+                    <InputLabel shrink>Select Sub-Group</InputLabel>
+                    <MuiSelect label="Select Sub-Group" displayEmpty>
+                      <MenuItem value=""><em>Select Sub-Group</em></MenuItem>
+                      <MenuItem value="it-block-mlt">IT Block MLT</MenuItem>
+                      <MenuItem value="main-block">Main Block</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium">Task</Label>
-                    <Input 
-                      placeholder="Question 1"
-                      value={task.text}
-                      onChange={(e) => updateQuestion(task.id, 'text', e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
+                  <TextField
+                    label="Task"
+                    placeholder="Enter Task"
+                    value={task.text}
+                    onChange={(e) => updateQuestion(task.id, 'text', e.target.value)}
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    sx={fieldStyles}
+                  />
 
-                  <div>
-                    <Label className="text-sm font-medium">Input Type</Label>
-                    <Select 
-                      value={task.inputType} 
-                      onValueChange={(value) => updateQuestion(task.id, 'inputType', value)}
+                  <FormControl variant="outlined" sx={fieldStyles}>
+                    <InputLabel shrink>Input Type</InputLabel>
+                    <MuiSelect
+                      value={task.inputType}
+                      onChange={(e) => updateQuestion(task.id, 'inputType', e.target.value)}
+                      label="Input Type"
+                      displayEmpty
                     >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Radio Button" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Radio Button">Radio Button</SelectItem>
-                        <SelectItem value="Checkbox">Checkbox</SelectItem>
-                        <SelectItem value="Text">Text</SelectItem>
-                        <SelectItem value="Number">Number</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      <MenuItem value=""><em>Select Input Type</em></MenuItem>
+                      <MenuItem value="Radio Button">Radio Button</MenuItem>
+                      <MenuItem value="Checkbox">Checkbox</MenuItem>
+                      <MenuItem value="Text">Text</MenuItem>
+                      <MenuItem value="Number">Number</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
 
                   <div className="flex items-end gap-4">
                     <div className="flex items-center space-x-2">
@@ -648,6 +705,7 @@ export const AddVendorAuditSchedulePage = () => {
                         id={`mandatory-${task.id}`}
                         checked={task.mandatory}
                         onCheckedChange={(checked) => updateQuestion(task.id, 'mandatory', checked)}
+                        className="data-[state=checked]:bg-green-500"
                       />
                       <Label htmlFor={`mandatory-${task.id}`}>Mandatory</Label>
                     </div>
@@ -657,6 +715,7 @@ export const AddVendorAuditSchedulePage = () => {
                         id={`reading-${task.id}`}
                         checked={task.reading}
                         onCheckedChange={(checked) => updateQuestion(task.id, 'reading', checked)}
+                        className="data-[state=checked]:bg-green-500"
                       />
                       <Label htmlFor={`reading-${task.id}`}>Reading</Label>
                     </div>
@@ -666,6 +725,7 @@ export const AddVendorAuditSchedulePage = () => {
                         id={`helpText-${task.id}`}
                         checked={task.helpText}
                         onCheckedChange={(checked) => updateQuestion(task.id, 'helpText', checked)}
+                        className="data-[state=checked]:bg-green-500"
                       />
                       <Label htmlFor={`helpText-${task.id}`}>Help Text</Label>
                     </div>
@@ -692,17 +752,25 @@ export const AddVendorAuditSchedulePage = () => {
                         <div className="w-4">
                           <input type="radio" name={`task-${task.id}`} />
                         </div>
-                        <Input
+                        <TextField
                           placeholder="Option text"
                           value={option.text}
                           onChange={(e) => updateOption(task.id, option.id, 'text', e.target.value)}
-                          className="flex-1"
+                          variant="outlined"
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          sx={fieldStyles}
                         />
-                        <Input
+                        <TextField
                           placeholder="Value"
                           value={option.value}
                           onChange={(e) => updateOption(task.id, option.id, 'value', e.target.value)}
-                          className="w-20"
+                          variant="outlined"
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          sx={{ ...fieldStyles, width: '100px' }}
                         />
                         {task.options.length > 1 && (
                           <Button
@@ -775,205 +843,222 @@ export const AddVendorAuditSchedulePage = () => {
             </div>
 
             <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label className="text-sm font-medium">Asset</Label>
-                <Select value={scheduleInfo.asset} onValueChange={(value) => setScheduleInfo(prev => ({...prev, asset: value}))}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Asset" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="asset1">Asset 1</SelectItem>
-                    <SelectItem value="asset2">Asset 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl variant="outlined" sx={fieldStyles}>
+                <InputLabel shrink>Asset</InputLabel>
+                <MuiSelect
+                  value={scheduleInfo.asset}
+                  onChange={(e) => setScheduleInfo(prev => ({...prev, asset: e.target.value}))}
+                  label="Asset"
+                  displayEmpty
+                >
+                  <MenuItem value=""><em>Select Asset</em></MenuItem>
+                  <MenuItem value="asset1">Asset 1</MenuItem>
+                  <MenuItem value="asset2">Asset 2</MenuItem>
+                </MuiSelect>
+              </FormControl>
 
-              <div>
-                <Label className="text-sm font-medium">Assign To</Label>
-                <Select value={scheduleInfo.assignTo} onValueChange={(value) => setScheduleInfo(prev => ({...prev, assignTo: value}))}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Assign To" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user1">User 1</SelectItem>
-                    <SelectItem value="user2">User 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl variant="outlined" sx={fieldStyles}>
+                <InputLabel shrink>Assign To</InputLabel>
+                <MuiSelect
+                  value={scheduleInfo.assignTo}
+                  onChange={(e) => setScheduleInfo(prev => ({...prev, assignTo: e.target.value}))}
+                  label="Assign To"
+                  displayEmpty
+                >
+                  <MenuItem value=""><em>Select User</em></MenuItem>
+                  <MenuItem value="user1">User 1</MenuItem>
+                  <MenuItem value="user2">User 2</MenuItem>
+                </MuiSelect>
+              </FormControl>
 
-              <div>
-                <Label className="text-sm font-medium">Scan Type</Label>
-                <Select value={scheduleInfo.scanType} onValueChange={(value) => setScheduleInfo(prev => ({...prev, scanType: value}))}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Scan Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="qr">QR Code</SelectItem>
-                    <SelectItem value="barcode">Barcode</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl variant="outlined" sx={fieldStyles}>
+                <InputLabel shrink>Scan Type</InputLabel>
+                <MuiSelect
+                  value={scheduleInfo.scanType}
+                  onChange={(e) => setScheduleInfo(prev => ({...prev, scanType: e.target.value}))}
+                  label="Scan Type"
+                  displayEmpty
+                >
+                  <MenuItem value=""><em>Select Scan Type</em></MenuItem>
+                  <MenuItem value="qr">QR Code</MenuItem>
+                  <MenuItem value="barcode">Barcode</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label className="text-sm font-medium">Plan Duration</Label>
-                <Select value={scheduleInfo.planDuration} onValueChange={(value) => setScheduleInfo(prev => ({...prev, planDuration: value}))}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Plan Duration" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="30min">30 Minutes</SelectItem>
-                    <SelectItem value="1hour">1 Hour</SelectItem>
-                    <SelectItem value="2hours">2 Hours</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl variant="outlined" sx={fieldStyles}>
+                <InputLabel shrink>Plan Duration</InputLabel>
+                <MuiSelect
+                  value={scheduleInfo.planDuration}
+                  onChange={(e) => setScheduleInfo(prev => ({...prev, planDuration: e.target.value}))}
+                  label="Plan Duration"
+                  displayEmpty
+                >
+                  <MenuItem value=""><em>Select Duration</em></MenuItem>
+                  <MenuItem value="30min">30 Minutes</MenuItem>
+                  <MenuItem value="1hour">1 Hour</MenuItem>
+                  <MenuItem value="2hours">2 Hours</MenuItem>
+                </MuiSelect>
+              </FormControl>
 
-              <div>
-                <Label className="text-sm font-medium">Priority</Label>
-                <Select value={scheduleInfo.priority} onValueChange={(value) => setScheduleInfo(prev => ({...prev, priority: value}))}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl variant="outlined" sx={fieldStyles}>
+                <InputLabel shrink>Priority</InputLabel>
+                <MuiSelect
+                  value={scheduleInfo.priority}
+                  onChange={(e) => setScheduleInfo(prev => ({...prev, priority: e.target.value}))}
+                  label="Priority"
+                  displayEmpty
+                >
+                  <MenuItem value=""><em>Select Priority</em></MenuItem>
+                  <MenuItem value="high">High</MenuItem>
+                  <MenuItem value="medium">Medium</MenuItem>
+                  <MenuItem value="low">Low</MenuItem>
+                </MuiSelect>
+              </FormControl>
 
-              <div>
-                <Label className="text-sm font-medium">Email Trigger Rule</Label>
-                <Select value={scheduleInfo.emailTriggerRule} onValueChange={(value) => setScheduleInfo(prev => ({...prev, emailTriggerRule: value}))}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Email Trigger Rule" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="immediate">Immediate</SelectItem>
-                    <SelectItem value="daily">Daily</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl variant="outlined" sx={fieldStyles}>
+                <InputLabel shrink>Email Trigger Rule</InputLabel>
+                <MuiSelect
+                  value={scheduleInfo.emailTriggerRule}
+                  onChange={(e) => setScheduleInfo(prev => ({...prev, emailTriggerRule: e.target.value}))}
+                  label="Email Trigger Rule"
+                  displayEmpty
+                >
+                  <MenuItem value=""><em>Select Rule</em></MenuItem>
+                  <MenuItem value="immediate">Immediate</MenuItem>
+                  <MenuItem value="daily">Daily</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label className="text-sm font-medium">Supervision</Label>
-                <Select value={scheduleInfo.supervision} onValueChange={(value) => setScheduleInfo(prev => ({...prev, supervision: value}))}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Supervision" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="supervisor1">Supervisor 1</SelectItem>
-                    <SelectItem value="supervisor2">Supervisor 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl variant="outlined" sx={fieldStyles}>
+                <InputLabel shrink>Supervision</InputLabel>
+                <MuiSelect
+                  value={scheduleInfo.supervision}
+                  onChange={(e) => setScheduleInfo(prev => ({...prev, supervision: e.target.value}))}
+                  label="Supervision"
+                  displayEmpty
+                >
+                  <MenuItem value=""><em>Select Supervisor</em></MenuItem>
+                  <MenuItem value="supervisor1">Supervisor 1</MenuItem>
+                  <MenuItem value="supervisor2">Supervisor 2</MenuItem>
+                </MuiSelect>
+              </FormControl>
 
-              <div>
-                <Label className="text-sm font-medium">Category</Label>
-                <Select value={scheduleInfo.category} onValueChange={(value) => setScheduleInfo(prev => ({...prev, category: value}))}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="maintenance">Maintenance</SelectItem>
-                    <SelectItem value="inspection">Inspection</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl variant="outlined" sx={fieldStyles}>
+                <InputLabel shrink>Category</InputLabel>
+                <MuiSelect
+                  value={scheduleInfo.category}
+                  onChange={(e) => setScheduleInfo(prev => ({...prev, category: e.target.value}))}
+                  label="Category"
+                  displayEmpty
+                >
+                  <MenuItem value=""><em>Select Category</em></MenuItem>
+                  <MenuItem value="maintenance">Maintenance</MenuItem>
+                  <MenuItem value="inspection">Inspection</MenuItem>
+                </MuiSelect>
+              </FormControl>
 
-              <div>
-                <Label className="text-sm font-medium">Submission Time</Label>
-                <Select value={scheduleInfo.submissionTime} onValueChange={(value) => setScheduleInfo(prev => ({...prev, submissionTime: value}))}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Submission Time" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="09:00">09:00 AM</SelectItem>
-                    <SelectItem value="17:00">05:00 PM</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl variant="outlined" sx={fieldStyles}>
+                <InputLabel shrink>Submission Time</InputLabel>
+                <MuiSelect
+                  value={scheduleInfo.submissionTime}
+                  onChange={(e) => setScheduleInfo(prev => ({...prev, submissionTime: e.target.value}))}
+                  label="Submission Time"
+                  displayEmpty
+                >
+                  <MenuItem value=""><em>Select Time</em></MenuItem>
+                  <MenuItem value="09:00">09:00 AM</MenuItem>
+                  <MenuItem value="17:00">05:00 PM</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div className="grid grid-cols-4 gap-4">
-              <div>
-                <Label className="text-sm font-medium">Grace Time</Label>
-                <Select value={scheduleInfo.graceTime} onValueChange={(value) => setScheduleInfo(prev => ({...prev, graceTime: value}))}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Grace Time" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="15min">15 Minutes</SelectItem>
-                    <SelectItem value="30min">30 Minutes</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl variant="outlined" sx={fieldStyles}>
+                <InputLabel shrink>Grace Time</InputLabel>
+                <MuiSelect
+                  value={scheduleInfo.graceTime}
+                  onChange={(e) => setScheduleInfo(prev => ({...prev, graceTime: e.target.value}))}
+                  label="Grace Time"
+                  displayEmpty
+                >
+                  <MenuItem value=""><em>Select Grace Time</em></MenuItem>
+                  <MenuItem value="15min">15 Minutes</MenuItem>
+                  <MenuItem value="30min">30 Minutes</MenuItem>
+                </MuiSelect>
+              </FormControl>
 
-              <div>
-                <Label className="text-sm font-medium">Lock Overdue Task</Label>
-                <Select value={scheduleInfo.lockOverdueTask} onValueChange={(value) => setScheduleInfo(prev => ({...prev, lockOverdueTask: value}))}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Lock Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="yes">Yes</SelectItem>
-                    <SelectItem value="no">No</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl variant="outlined" sx={fieldStyles}>
+                <InputLabel shrink>Lock Overdue Task</InputLabel>
+                <MuiSelect
+                  value={scheduleInfo.lockOverdueTask}
+                  onChange={(e) => setScheduleInfo(prev => ({...prev, lockOverdueTask: e.target.value}))}
+                  label="Lock Overdue Task"
+                  displayEmpty
+                >
+                  <MenuItem value=""><em>Select</em></MenuItem>
+                  <MenuItem value="yes">Yes</MenuItem>
+                  <MenuItem value="no">No</MenuItem>
+                </MuiSelect>
+              </FormControl>
 
-              <div>
-                <Label className="text-sm font-medium">Frequency</Label>
-                <Select value={scheduleInfo.frequency} onValueChange={(value) => setScheduleInfo(prev => ({...prev, frequency: value}))}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Frequency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl variant="outlined" sx={fieldStyles}>
+                <InputLabel shrink>Frequency</InputLabel>
+                <MuiSelect
+                  value={scheduleInfo.frequency}
+                  onChange={(e) => setScheduleInfo(prev => ({...prev, frequency: e.target.value}))}
+                  label="Frequency"
+                  displayEmpty
+                >
+                  <MenuItem value=""><em>Select Frequency</em></MenuItem>
+                  <MenuItem value="daily">Daily</MenuItem>
+                  <MenuItem value="weekly">Weekly</MenuItem>
+                  <MenuItem value="monthly">Monthly</MenuItem>
+                </MuiSelect>
+              </FormControl>
 
-              <div>
-                <Label className="text-sm font-medium">Start From</Label>
-                <Input
-                  type="date"
-                  value={scheduleInfo.startFrom}
-                  onChange={(e) => setScheduleInfo(prev => ({...prev, startFrom: e.target.value}))}
-                  className="mt-1"
-                />
-              </div>
+              <TextField
+                label="Start From"
+                type="date"
+                value={scheduleInfo.startFrom}
+                onChange={(e) => setScheduleInfo(prev => ({...prev, startFrom: e.target.value}))}
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={fieldStyles}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm font-medium">End At</Label>
-                <Input
-                  type="date"
-                  value={scheduleInfo.endAt}
-                  onChange={(e) => setScheduleInfo(prev => ({...prev, endAt: e.target.value}))}
-                  className="mt-1"
-                />
-              </div>
+              <TextField
+                label="End At"
+                type="date"
+                value={scheduleInfo.endAt}
+                onChange={(e) => setScheduleInfo(prev => ({...prev, endAt: e.target.value}))}
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={fieldStyles}
+              />
 
-              <div>
-                <Label className="text-sm font-medium">Select Supplier</Label>
-                <Select value={scheduleInfo.selectSupplier} onValueChange={(value) => setScheduleInfo(prev => ({...prev, selectSupplier: value}))}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Supplier" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="supplier1">Supplier 1</SelectItem>
-                    <SelectItem value="supplier2">Supplier 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl variant="outlined" sx={fieldStyles}>
+                <InputLabel shrink>Select Supplier</InputLabel>
+                <MuiSelect
+                  value={scheduleInfo.selectSupplier}
+                  onChange={(e) => setScheduleInfo(prev => ({...prev, selectSupplier: e.target.value}))}
+                  label="Select Supplier"
+                  displayEmpty
+                >
+                  <MenuItem value=""><em>Select Supplier</em></MenuItem>
+                  <MenuItem value="supplier1">Supplier 1</MenuItem>
+                  <MenuItem value="supplier2">Supplier 2</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </CardContent>
         </Card>
