@@ -2,10 +2,10 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CustomTextField } from '@/components/ui/custom-text-field';
 import { ChevronDown, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { TextField, MenuItem } from '@mui/material';
 
 export const AddAddressPage = () => {
   const navigate = useNavigate();
@@ -31,13 +31,21 @@ export const AddAddressPage = () => {
 
   const handleSubmit = () => {
     console.log('Submitting address:', formData);
-    // After submission, navigate back to the main page
     navigate('/settings/masters/address');
   };
 
   const handleBack = () => {
     navigate('/settings/masters/address');
   };
+
+  const states = [
+    'Maharashtra',
+    'Gujarat', 
+    'Karnataka',
+    'Tamil Nadu',
+    'Rajasthan',
+    'Uttar Pradesh'
+  ];
 
   return (
     <div className="p-4 md:p-6 space-y-4 md:space-y-6 bg-gray-50 min-h-screen">
@@ -99,22 +107,40 @@ export const AddAddressPage = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 block mb-1">
-                State*
-              </label>
-              <Select value={formData.state} onValueChange={(value) => handleInputChange('state', value)}>
-                <SelectTrigger className="w-full h-12 md:h-14">
-                  <SelectValue placeholder="Select State" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="maharashtra">Maharashtra</SelectItem>
-                  <SelectItem value="gujarat">Gujarat</SelectItem>
-                  <SelectItem value="karnataka">Karnataka</SelectItem>
-                  <SelectItem value="tamil-nadu">Tamil Nadu</SelectItem>
-                  <SelectItem value="rajasthan">Rajasthan</SelectItem>
-                  <SelectItem value="uttar-pradesh">Uttar Pradesh</SelectItem>
-                </SelectContent>
-              </Select>
+              <TextField
+                select
+                label="State*"
+                value={formData.state}
+                onChange={(e) => handleInputChange('state', e.target.value)}
+                fullWidth
+                variant="outlined"
+                placeholder="Select State"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    height: '56px',
+                    '& fieldset': {
+                      borderColor: '#ccc',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#C72030',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#C72030',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    '&.Mui-focused': {
+                      color: '#C72030',
+                    },
+                  },
+                }}
+              >
+                {states.map((state) => (
+                  <MenuItem key={state} value={state}>
+                    {state}
+                  </MenuItem>
+                ))}
+              </TextField>
             </div>
 
             <div className="space-y-2">
