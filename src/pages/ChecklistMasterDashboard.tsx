@@ -64,6 +64,15 @@ export const ChecklistMasterDashboard = () => {
     navigate('/settings/masters/checklist-master/add');
   };
 
+  const handleEditClick = (id: number) => {
+    navigate(`/settings/masters/checklist-master/edit/${id}`);
+  };
+
+  const handleViewClick = (id: number) => {
+    console.log('Viewing checklist:', id);
+    // Future implementation for view functionality
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center gap-3 mb-6">
@@ -137,12 +146,20 @@ export const ChecklistMasterDashboard = () => {
             {checklistData.map((item) => (
               <TableRow key={item.id} className="hover:bg-gray-50">
                 <TableCell>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleEditClick(item.id)}
+                  >
                     <Edit className="w-4 h-4" />
                   </Button>
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleViewClick(item.id)}
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
                 </TableCell>
