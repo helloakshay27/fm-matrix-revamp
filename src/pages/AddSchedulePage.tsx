@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -32,28 +33,52 @@ const fieldStyles = {
 
 // Floating MUI TextField styles
 const floatingFieldStyles = {
+  width: '100%',
   '& .MuiOutlinedInput-root': {
+    height: { xs: '36px', md: '45px' },
     borderRadius: '8px',
-    backgroundColor: 'white',
+    backgroundColor: '#FFFFFF',
     '& fieldset': {
-      borderColor: '#e5e7eb',
+      borderColor: '#E0E0E0',
     },
     '&:hover fieldset': {
-      borderColor: '#9ca3af',
+      borderColor: '#1A1A1A',
     },
     '&.Mui-focused fieldset': {
       borderColor: '#C72030',
+      borderWidth: 2,
     },
   },
   '& .MuiInputLabel-root': {
-    color: '#6b7280',
+    color: '#666666',
+    fontSize: '16px',
     '&.Mui-focused': {
       color: '#C72030',
     },
+    '&.MuiInputLabel-shrink': {
+      transform: 'translate(14px, -9px) scale(0.75)',
+      backgroundColor: '#FFFFFF',
+      padding: '0 4px',
+    },
   },
-  '& .MuiInputBase-input': {
-    padding: '12px 14px',
+  '& .MuiOutlinedInput-input, & .MuiSelect-select': {
+    color: '#1A1A1A',
     fontSize: '14px',
+    padding: { xs: '8px 14px', md: '12px 14px' },
+    height: 'auto',
+    '&::placeholder': {
+      color: '#999999',
+      opacity: 1,
+    },
+  },
+};
+
+const multilineFieldStyles = {
+  ...floatingFieldStyles,
+  '& .MuiOutlinedInput-root': {
+    ...floatingFieldStyles['& .MuiOutlinedInput-root'],
+    height: 'auto',
+    alignItems: 'flex-start',
   },
 };
 
@@ -439,10 +464,14 @@ export const AddSchedulePage = () => {
           <div>
             <TextField
               label="Activity Name"
+              placeholder="Enter Activity Name"
               value={formData.activityName}
               onChange={(e) => handleInputChange('activityName', e.target.value)}
               fullWidth
               variant="outlined"
+              InputLabelProps={{
+                shrink: true,
+              }}
               sx={floatingFieldStyles}
             />
           </div>
@@ -450,14 +479,17 @@ export const AddSchedulePage = () => {
           <div>
             <TextField
               label="Description"
+              placeholder="Enter Description"
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
               fullWidth
               variant="outlined"
               multiline
-              minRows={3}
-              maxRows={6}
-              sx={floatingFieldStyles}
+              rows={3}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              sx={multilineFieldStyles}
             />
           </div>
         </CardContent>
@@ -535,10 +567,14 @@ export const AddSchedulePage = () => {
                 <div className="lg:col-span-1">
                   <TextField
                     label="Task"
+                    placeholder="Enter Task"
                     value={section.task}
                     onChange={(e) => handleTaskSectionChange(section.id, 'task', e.target.value)}
                     fullWidth
                     variant="outlined"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
                     sx={floatingFieldStyles}
                   />
                 </div>
@@ -603,10 +639,14 @@ export const AddSchedulePage = () => {
                   <div>
                     <TextField
                       label="Weightage"
+                      placeholder="Enter Weightage"
                       value={section.weightageValue}
                       onChange={(e) => handleTaskSectionChange(section.id, 'weightageValue', e.target.value)}
                       fullWidth
                       variant="outlined"
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
                       sx={floatingFieldStyles}
                     />
                   </div>
@@ -814,41 +854,35 @@ export const AddSchedulePage = () => {
               </FormControl>
             </div>
             <div>
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel id="submission-time-label" shrink>Submission Time</InputLabel>
-                <MuiSelect
-                  labelId="submission-time-label"
-                  label="Submission Time"
-                  displayEmpty
-                  value={formData.submissionTime}
-                  onChange={(e) => handleInputChange('submissionTime', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Submission Time</em></MenuItem>
-                  <MenuItem value="24hours">24 Hours</MenuItem>
-                  <MenuItem value="48hours">48 Hours</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <TextField
+                label="Submission Time"
+                type="time"
+                value={formData.submissionTime}
+                onChange={(e) => handleInputChange('submissionTime', e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={floatingFieldStyles}
+              />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel id="grace-time-label" shrink>Grace Time</InputLabel>
-                <MuiSelect
-                  labelId="grace-time-label"
-                  label="Grace Time"
-                  displayEmpty
-                  value={formData.graceTime}
-                  onChange={(e) => handleInputChange('graceTime', e.target.value)}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Grace Time</em></MenuItem>
-                  <MenuItem value="1hour">1 Hour</MenuItem>
-                  <MenuItem value="2hours">2 Hours</MenuItem>
-                </MuiSelect>
-              </FormControl>
+              <TextField
+                label="Grace Time"
+                placeholder="Enter Grace Time"
+                value={formData.graceTime}
+                onChange={(e) => handleInputChange('graceTime', e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={floatingFieldStyles}
+              />
             </div>
             <div>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
@@ -861,7 +895,7 @@ export const AddSchedulePage = () => {
                   onChange={(e) => handleInputChange('lockOverdueTask', e.target.value)}
                   sx={fieldStyles}
                 >
-                  <MenuItem value=""><em>Select Lock Status</em></MenuItem>
+                  <MenuItem value=""><em>Select</em></MenuItem>
                   <MenuItem value="yes">Yes</MenuItem>
                   <MenuItem value="no">No</MenuItem>
                 </MuiSelect>
@@ -885,9 +919,6 @@ export const AddSchedulePage = () => {
                 </MuiSelect>
               </FormControl>
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
               <TextField
                 label="Start From"
@@ -896,10 +927,15 @@ export const AddSchedulePage = () => {
                 onChange={(e) => handleInputChange('startFrom', e.target.value)}
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                }}
                 sx={floatingFieldStyles}
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <TextField
                 label="End At"
@@ -908,368 +944,23 @@ export const AddSchedulePage = () => {
                 onChange={(e) => handleInputChange('endAt', e.target.value)}
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                }}
                 sx={floatingFieldStyles}
               />
             </div>
           </div>
-
-          <div>
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel id="supplier-label" shrink>Select Supplier</InputLabel>
-              <MuiSelect
-                labelId="supplier-label"
-                label="Select Supplier"
-                displayEmpty
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                <MenuItem value="supplier1">Supplier 1</MenuItem>
-                <MenuItem value="supplier2">Supplier 2</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
         </CardContent>
       </Card>
 
-      {/* Cron Form Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-            <span className="w-5 h-5 sm:w-6 sm:h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs sm:text-sm">4</span>
-            Cron form
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex flex-wrap border rounded-lg overflow-hidden">
-              {['Minutes', 'Hours', 'Day', 'Month'].map((tab, index) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-3 py-2 sm:px-4 sm:py-2 flex-1 min-w-0 text-xs sm:text-sm transition-colors ${
-                    activeTab === tab 
-                      ? 'text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  style={activeTab === tab ? { backgroundColor: '#C72030' } : {}}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-
-            <div className="space-y-4">
-              {activeTab === 'Minutes' && (
-                <>
-                  <div className="flex items-center space-x-2">
-                    <input 
-                      type="radio" 
-                      id="specific-minutes" 
-                      name="minutes-option" 
-                      defaultChecked 
-                      style={customRadioStyles}
-                      className="focus:outline-none focus:ring-0"
-                    />
-                    <Label htmlFor="specific-minutes" className="text-sm">Specific minute (choose one or many)</Label>
-                  </div>
-
-                  <div className="grid grid-cols-6 sm:grid-cols-10 lg:grid-cols-12 gap-2 text-sm">
-                    {Array.from({ length: 60 }, (_, i) => (
-                      <div key={i} className="flex items-center space-x-1">
-                        <input 
-                          type="checkbox" 
-                          id={`minute-${i}`} 
-                          style={customCheckboxStyles}
-                          className="focus:outline-none focus:ring-0"
-                        />
-                        <Label htmlFor={`minute-${i}`} className="text-xs">{i.toString().padStart(2, '0')}</Label>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                    <input 
-                      type="radio" 
-                      id="every-minute" 
-                      name="minutes-option" 
-                      style={customRadioStyles}
-                      className="focus:outline-none focus:ring-0"
-                    />
-                    <Label htmlFor="every-minute" className="text-sm">Every minute between minute</Label>
-                    <FormControl size="small" sx={{ minWidth: 80 }}>
-                      <MuiSelect
-                        value={cronFormData.minuteStart}
-                        onChange={(e) => handleCronFormChange('minuteStart', e.target.value)}
-                        displayEmpty
-                        sx={{ height: 40 }}
-                      >
-                        {Array.from({ length: 60 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}</MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
-                    <span className="text-sm">and minute</span>
-                    <FormControl size="small" sx={{ minWidth: 80 }}>
-                      <MuiSelect
-                        value={cronFormData.minuteEnd}
-                        onChange={(e) => handleCronFormChange('minuteEnd', e.target.value)}
-                        displayEmpty
-                        sx={{ height: 40 }}
-                      >
-                        {Array.from({ length: 60 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}</MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
-                  </div>
-                </>
-              )}
-
-              {activeTab === 'Hours' && (
-                <>
-                  <div className="flex items-center space-x-2">
-                    <input 
-                      type="radio" 
-                      id="specific-hours" 
-                      name="hours-option" 
-                      defaultChecked 
-                      style={customRadioStyles}
-                      className="focus:outline-none focus:ring-0"
-                    />
-                    <Label htmlFor="specific-hours">Specific hour (choose one or many)</Label>
-                  </div>
-
-                  <div className="grid grid-cols-12 gap-2 text-sm">
-                    {Array.from({ length: 24 }, (_, i) => (
-                      <div key={i} className="flex items-center space-x-1">
-                        <input 
-                          type="checkbox" 
-                          id={`hour-${i}`} 
-                          style={customCheckboxStyles}
-                          className="focus:outline-none focus:ring-0"
-                        />
-                        <Label htmlFor={`hour-${i}`} className="text-xs">{i.toString().padStart(2, '0')}</Label>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <input 
-                      type="radio" 
-                      id="every-hour" 
-                      name="hours-option" 
-                      style={customRadioStyles}
-                      className="focus:outline-none focus:ring-0"
-                    />
-                    <Label htmlFor="every-hour">Every hour between hour</Label>
-                    <FormControl size="small" sx={{ minWidth: 80 }}>
-                      <MuiSelect
-                        value={cronFormData.hourStart}
-                        onChange={(e) => handleCronFormChange('hourStart', e.target.value)}
-                        displayEmpty
-                        sx={{ height: 40 }}
-                      >
-                        {Array.from({ length: 24 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}</MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
-                    <span>and hour</span>
-                    <FormControl size="small" sx={{ minWidth: 80 }}>
-                      <MuiSelect
-                        value={cronFormData.hourEnd}
-                        onChange={(e) => handleCronFormChange('hourEnd', e.target.value)}
-                        displayEmpty
-                        sx={{ height: 40 }}
-                      >
-                        {Array.from({ length: 24 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}</MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
-                  </div>
-                </>
-              )}
-
-              {activeTab === 'Day' && (
-                <>
-                  <div className="flex items-center space-x-2">
-                    <input 
-                      type="radio" 
-                      id="specific-days" 
-                      name="days-option" 
-                      defaultChecked 
-                      style={customRadioStyles}
-                      className="focus:outline-none focus:ring-0"
-                    />
-                    <Label htmlFor="specific-days">Specific day (choose one or many)</Label>
-                  </div>
-
-                  <div className="grid grid-cols-8 gap-2 text-sm">
-                    {Array.from({ length: 31 }, (_, i) => (
-                      <div key={i} className="flex items-center space-x-1">
-                        <input 
-                          type="checkbox" 
-                          id={`day-${i + 1}`} 
-                          style={customCheckboxStyles}
-                          className="focus:outline-none focus:ring-0"
-                        />
-                        <Label htmlFor={`day-${i + 1}`} className="text-xs">{(i + 1).toString()}</Label>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <input 
-                      type="radio" 
-                      id="every-day" 
-                      name="days-option" 
-                      style={customRadioStyles}
-                      className="focus:outline-none focus:ring-0"
-                    />
-                    <Label htmlFor="every-day">Every day between day</Label>
-                    <FormControl size="small" sx={{ minWidth: 80 }}>
-                      <MuiSelect
-                        value={cronFormData.dayStart}
-                        onChange={(e) => handleCronFormChange('dayStart', e.target.value)}
-                        displayEmpty
-                        sx={{ height: 40 }}
-                      >
-                        {Array.from({ length: 31 }, (_, i) => (
-                          <MenuItem key={i} value={(i + 1).toString().padStart(2, '0')}>{(i + 1).toString().padStart(2, '0')}</MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
-                    <span>and day</span>
-                    <FormControl size="small" sx={{ minWidth: 80 }}>
-                      <MuiSelect
-                        value={cronFormData.dayEnd}
-                        onChange={(e) => handleCronFormChange('dayEnd', e.target.value)}
-                        displayEmpty
-                        sx={{ height: 40 }}
-                      >
-                        {Array.from({ length: 31 }, (_, i) => (
-                          <MenuItem key={i} value={(i + 1).toString().padStart(2, '0')}>{(i + 1).toString().padStart(2, '0')}</MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
-                  </div>
-                </>
-              )}
-
-              {activeTab === 'Month' && (
-                <>
-                  <div className="flex items-center space-x-2">
-                    <input 
-                      type="radio" 
-                      id="specific-months" 
-                      name="months-option" 
-                      defaultChecked 
-                      style={customRadioStyles}
-                      className="focus:outline-none focus:ring-0"
-                    />
-                    <Label htmlFor="specific-months">Specific month (choose one or many)</Label>
-                  </div>
-
-                  <div className="grid grid-cols-4 gap-2 text-sm">
-                    {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
-                      <div key={i} className="flex items-center space-x-1">
-                        <input 
-                          type="checkbox" 
-                          id={`month-${i + 1}`} 
-                          style={customCheckboxStyles}
-                          className="focus:outline-none focus:ring-0"
-                        />
-                        <Label htmlFor={`month-${i + 1}`} className="text-xs">{month}</Label>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <input 
-                      type="radio" 
-                      id="every-month" 
-                      name="months-option" 
-                      style={customRadioStyles}
-                      className="focus:outline-none focus:ring-0"
-                    />
-                    <Label htmlFor="every-month">Every month between month</Label>
-                    <FormControl size="small" sx={{ minWidth: 100 }}>
-                      <MuiSelect
-                        value={cronFormData.monthStart}
-                        onChange={(e) => handleCronFormChange('monthStart', e.target.value)}
-                        displayEmpty
-                        sx={{ height: 40 }}
-                      >
-                        {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
-                          <MenuItem key={i} value={month}>{month}</MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
-                    <span>and month</span>
-                    <FormControl size="small" sx={{ minWidth: 100 }}>
-                      <MuiSelect
-                        value={cronFormData.monthEnd}
-                        onChange={(e) => handleCronFormChange('monthEnd', e.target.value)}
-                        displayEmpty
-                        sx={{ height: 40 }}
-                      >
-                        {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
-                          <MenuItem key={i} value={month}>{month}</MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
-                  </div>
-                </>
-              )}
-
-              <div className="bg-gray-50 p-4 rounded">
-                <Label className="text-sm font-medium">Resulting Cron Expression:</Label>
-                <div className="mt-2 font-mono text-sm">0 0 ? * *</div>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
-                <div className="text-center">
-                  <div className="font-medium mb-2 text-xs sm:text-sm">Minutes</div>
-                  <div className="text-sm">*</div>
-                </div>
-                <div className="text-center">
-                  <div className="font-medium mb-2 text-xs sm:text-sm">Hours</div>
-                  <div className="text-sm">*</div>
-                </div>
-                <div className="text-center">
-                  <div className="font-medium mb-2 text-xs sm:text-sm">Day Of Month</div>
-                  <div className="text-sm">*</div>
-                </div>
-                <div className="text-center">
-                  <div className="font-medium mb-2 text-xs sm:text-sm">Month</div>
-                  <div className="text-sm">*</div>
-                </div>
-                <div className="text-center">
-                  <div className="font-medium mb-2 text-xs sm:text-sm">Day Of Week</div>
-                  <div className="text-sm">*</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
-        <Button 
-          variant="outline" 
-          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white order-2 sm:order-1" 
-          onClick={() => navigate('/maintenance/schedule')}
-        >
-          Cancel
-        </Button>
-        <Button 
+      {/* Submit Button */}
+      <div className="flex justify-center">
+        <Button
           onClick={handleSubmit}
-          className="bg-[#C72030] text-white hover:bg-[#C72030]/90 order-1 sm:order-2"
+          className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-6 py-2"
         >
-          Save Schedule
+          Submit
         </Button>
       </div>
     </div>
