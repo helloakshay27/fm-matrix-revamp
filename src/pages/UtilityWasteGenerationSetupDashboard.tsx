@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Search } from "lucide-react";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
 const fieldStyles = {
   height: {
     xs: 28,
@@ -20,6 +21,7 @@ const fieldStyles = {
     }
   }
 };
+
 export const UtilityWasteGenerationSetupDashboard = () => {
   const [activeTab, setActiveTab] = useState("waste-category");
   const [searchTerm, setSearchTerm] = useState("");
@@ -104,6 +106,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
     description: "Volume in liters",
     status: "Active"
   }];
+
   const handleWasteCategorySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Waste Category Form:', wasteCategoryForm);
@@ -115,6 +118,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       status: 'active'
     });
   };
+
   const handleCommoditySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Commodity Form:', commodityForm);
@@ -127,6 +131,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       status: 'active'
     });
   };
+
   const handleUomSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('UOM Form:', uomForm);
@@ -138,6 +143,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       status: 'active'
     });
   };
+
   return <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
@@ -149,10 +155,10 @@ export const UtilityWasteGenerationSetupDashboard = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-[#F2EEE9] text-white">
-          <TabsTrigger value="waste-category" className="text-white">Waste Category</TabsTrigger>
-          <TabsTrigger value="commodity" className="text-white">Commodity</TabsTrigger>
-          <TabsTrigger value="uom" className="text-white">UOM</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 bg-[#F2EEE9]">
+          <TabsTrigger value="waste-category" className="text-black data-[state=active]:text-white">Waste Category</TabsTrigger>
+          <TabsTrigger value="commodity" className="text-black data-[state=active]:text-white">Commodity</TabsTrigger>
+          <TabsTrigger value="uom" className="text-black data-[state=active]:text-white">UOM</TabsTrigger>
         </TabsList>
 
         {/* Waste Category Tab */}
