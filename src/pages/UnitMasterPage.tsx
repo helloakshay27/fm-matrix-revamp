@@ -368,14 +368,14 @@ export const UnitMasterPage = () => {
       <Dialog 
         open={showEditModal} 
         onClose={handleCloseEditModal}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
         PaperProps={{
           sx: {
             borderRadius: '8px',
             boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-            width: '500px',
-            maxWidth: '500px'
+            width: '600px',
+            maxWidth: '600px'
           }
         }}
       >
@@ -394,11 +394,20 @@ export const UnitMasterPage = () => {
           </IconButton>
         </DialogTitle>
         
-        <DialogContent sx={{ pt: 3, pb: 2 }}>
+        <DialogContent sx={{ pt: 4, pb: 3, px: 3 }}>
           {/* First Row: Select Building and Select Wing */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-2 gap-6 mb-6">
             <FormControl fullWidth sx={fieldStyles}>
-              <InputLabel sx={{ fontSize: '14px', color: '#666' }}>Select Building</InputLabel>
+              <InputLabel sx={{ 
+                fontSize: '14px', 
+                color: '#666',
+                transform: 'translate(14px, -9px) scale(0.75)',
+                '&.MuiInputLabel-shrink': {
+                  transform: 'translate(14px, -9px) scale(0.75)',
+                }
+              }}>
+                Select Building
+              </InputLabel>
               <MuiSelect
                 value={editFormData.building}
                 onChange={(e) => handleEditInputChange('building', e.target.value)}
@@ -408,6 +417,8 @@ export const UnitMasterPage = () => {
                   fontSize: '14px',
                   '& .MuiSelect-select': {
                     padding: '8px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
                   }
                 }}
               >
@@ -421,7 +432,16 @@ export const UnitMasterPage = () => {
             </FormControl>
 
             <FormControl fullWidth sx={fieldStyles}>
-              <InputLabel sx={{ fontSize: '14px', color: '#666' }}>Select Wing</InputLabel>
+              <InputLabel sx={{ 
+                fontSize: '14px', 
+                color: '#666',
+                transform: 'translate(14px, -9px) scale(0.75)',
+                '&.MuiInputLabel-shrink': {
+                  transform: 'translate(14px, -9px) scale(0.75)',
+                }
+              }}>
+                Select Wing
+              </InputLabel>
               <MuiSelect
                 value={editFormData.wing}
                 onChange={(e) => handleEditInputChange('wing', e.target.value)}
@@ -431,6 +451,8 @@ export const UnitMasterPage = () => {
                   fontSize: '14px',
                   '& .MuiSelect-select': {
                     padding: '8px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
                   }
                 }}
               >
@@ -446,9 +468,18 @@ export const UnitMasterPage = () => {
           </div>
 
           {/* Second Row: Select Area and Select Floor */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-2 gap-6 mb-6">
             <FormControl fullWidth sx={fieldStyles}>
-              <InputLabel sx={{ fontSize: '14px', color: '#666' }}>Select Area</InputLabel>
+              <InputLabel sx={{ 
+                fontSize: '14px', 
+                color: '#666',
+                transform: 'translate(14px, -9px) scale(0.75)',
+                '&.MuiInputLabel-shrink': {
+                  transform: 'translate(14px, -9px) scale(0.75)',
+                }
+              }}>
+                Select Area
+              </InputLabel>
               <MuiSelect
                 value={editFormData.area}
                 onChange={(e) => handleEditInputChange('area', e.target.value)}
@@ -458,6 +489,8 @@ export const UnitMasterPage = () => {
                   fontSize: '14px',
                   '& .MuiSelect-select': {
                     padding: '8px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
                   }
                 }}
               >
@@ -467,7 +500,16 @@ export const UnitMasterPage = () => {
             </FormControl>
 
             <FormControl fullWidth sx={fieldStyles}>
-              <InputLabel sx={{ fontSize: '14px', color: '#666' }}>Select Floor</InputLabel>
+              <InputLabel sx={{ 
+                fontSize: '14px', 
+                color: '#666',
+                transform: 'translate(14px, -9px) scale(0.75)',
+                '&.MuiInputLabel-shrink': {
+                  transform: 'translate(14px, -9px) scale(0.75)',
+                }
+              }}>
+                Select Floor
+              </InputLabel>
               <MuiSelect
                 value={editFormData.floor}
                 onChange={(e) => handleEditInputChange('floor', e.target.value)}
@@ -477,6 +519,8 @@ export const UnitMasterPage = () => {
                   fontSize: '14px',
                   '& .MuiSelect-select': {
                     padding: '8px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
                   }
                 }}
               >
@@ -493,7 +537,7 @@ export const UnitMasterPage = () => {
           </div>
 
           {/* Third Row: Unit Name and Select Entity */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-2 gap-6 mb-6">
             <TextField
               fullWidth
               label="Unit Name"
@@ -520,7 +564,16 @@ export const UnitMasterPage = () => {
             />
 
             <FormControl fullWidth sx={fieldStyles}>
-              <InputLabel sx={{ fontSize: '14px', color: '#666' }}>Select Entity</InputLabel>
+              <InputLabel sx={{ 
+                fontSize: '14px', 
+                color: '#666',
+                transform: 'translate(14px, -9px) scale(0.75)',
+                '&.MuiInputLabel-shrink': {
+                  transform: 'translate(14px, -9px) scale(0.75)',
+                }
+              }}>
+                Select Entity
+              </InputLabel>
               <MuiSelect
                 value={editFormData.entity}
                 onChange={(e) => handleEditInputChange('entity', e.target.value)}
@@ -530,6 +583,8 @@ export const UnitMasterPage = () => {
                   fontSize: '14px',
                   '& .MuiSelect-select': {
                     padding: '8px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
                   }
                 }}
               >
