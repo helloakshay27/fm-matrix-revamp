@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -75,7 +74,7 @@ export const TicketTagVendorPage = () => {
         <div className="mb-6">
           <Button 
             variant="ghost" 
-            onClick={() => navigate(`/maintenance/ticket/${id}`)}
+            onClick={() => navigate(`/maintenance/ticket/details/${id}`)}
             className="mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
