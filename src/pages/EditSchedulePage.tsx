@@ -23,7 +23,7 @@ import {
 const muiFieldStyles = {
   width: '100%',
   '& .MuiOutlinedInput-root': {
-    height: { xs: '56px', md: '56px' },
+    height: { xs: '36px', md: '45px' },
     borderRadius: '8px',
     backgroundColor: '#FFFFFF',
     '& fieldset': {
@@ -52,7 +52,7 @@ const muiFieldStyles = {
   '& .MuiOutlinedInput-input, & .MuiSelect-select': {
     color: '#1A1A1A',
     fontSize: '16px',
-    padding: { xs: '16px 14px', md: '16px 14px' },
+    padding: { xs: '8px 14px', md: '12px 14px' },
     height: 'auto',
     '&::placeholder': {
       color: '#999999',
