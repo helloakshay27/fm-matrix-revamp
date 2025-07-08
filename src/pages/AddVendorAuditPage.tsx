@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -55,15 +56,30 @@ export const AddVendorAuditPage = () => {
       {/* Toggle Buttons */}
       <div className="flex flex-wrap gap-4 mb-6">
         <div className="flex items-center space-x-2">
-          <Switch id="create-new" checked={createNew} onCheckedChange={setCreateNew} />
+          <Switch 
+            id="create-new" 
+            checked={createNew} 
+            onCheckedChange={setCreateNew}
+            className="data-[state=checked]:bg-green-500"
+          />
           <Label htmlFor="create-new">Create New</Label>
         </div>
         <div className="flex items-center space-x-2">
-          <Switch id="create-task" checked={createTask} onCheckedChange={setCreateTask} />
+          <Switch 
+            id="create-task" 
+            checked={createTask} 
+            onCheckedChange={setCreateTask}
+            className="data-[state=checked]:bg-green-500"
+          />
           <Label htmlFor="create-task">Create Task</Label>
         </div>
         <div className="flex items-center space-x-2">
-          <Switch id="weightage" checked={weightage} onCheckedChange={setWeightage} />
+          <Switch 
+            id="weightage" 
+            checked={weightage} 
+            onCheckedChange={setWeightage}
+            className="data-[state=checked]:bg-green-500"
+          />
           <Label htmlFor="weightage">Weightage</Label>
         </div>
       </div>
@@ -71,8 +87,8 @@ export const AddVendorAuditPage = () => {
       {/* Basic Info Section */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center gap-2">
-            <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs">i</div>
+          <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
+            <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs" style={{ backgroundColor: '#C72030' }}>i</div>
             Basic Info
           </CardTitle>
         </CardHeader>
@@ -128,7 +144,10 @@ export const AddVendorAuditPage = () => {
           </div>
 
           <div className="flex items-center space-x-2">
-            <Checkbox id="allow-observations" />
+            <Checkbox 
+              id="allow-observations"
+              className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+            />
             <Label htmlFor="allow-observations">Allow Observations</Label>
           </div>
         </CardContent>
@@ -137,8 +156,8 @@ export const AddVendorAuditPage = () => {
       {/* Task Section */}
       <Card className="mb-6">
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <CardTitle className="text-orange-600 flex items-center gap-2">
-            <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs">T</div>
+          <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
+            <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs" style={{ backgroundColor: '#C72030' }}>T</div>
             Task
           </CardTitle>
           <Button
@@ -185,7 +204,10 @@ export const AddVendorAuditPage = () => {
             <div className="flex flex-wrap gap-4 pt-2">
               {['Mandatory', 'Reading', 'Help Text'].map((label, idx) => (
                 <div key={idx} className="flex items-center space-x-2">
-                  <Checkbox id={label.toLowerCase().replace(' ', '-')} />
+                  <Checkbox 
+                    id={label.toLowerCase().replace(' ', '-')}
+                    className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                  />
                   <Label htmlFor={label.toLowerCase().replace(' ', '-')}>{label}</Label>
                 </div>
               ))}
@@ -203,8 +225,8 @@ export const AddVendorAuditPage = () => {
       {/* Schedule Section */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-orange-600 flex items-center gap-2">
-            <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs">S</div>
+          <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
+            <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs" style={{ backgroundColor: '#C72030' }}>S</div>
             Schedule
           </CardTitle>
         </CardHeader>
