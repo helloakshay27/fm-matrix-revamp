@@ -1,119 +1,102 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Search, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
-const initialAmcData = [
-  {
-    id: '51016',
-    assetName: '',
-    type: 'Asset',
-    vendor: 'MODWIN NETWORKS PVT.LTD',
-    startDate: '04/04/2025',
-    endDate: '02/05/2025',
-    firstService: '04/04/2025',
-    status: true,
-    createdOn: '04/04/2025, 03:25PM'
-  },
-  {
-    id: '51015',
-    assetName: '',
-    type: 'Asset',
-    vendor: 'TBS ELECTRICAL',
-    startDate: '01/04/2025',
-    endDate: '10/05/2025',
-    firstService: '09/04/2025',
-    status: true,
-    createdOn: '04/04/2025, 03:24PM'
-  },
-  {
-    id: '49130',
-    assetName: '',
-    type: 'Asset',
-    vendor: 'Mohan Khopade',
-    startDate: '04/02/2025',
-    endDate: '04/02/2025',
-    firstService: '04/02/2025',
-    status: true,
-    createdOn: '04/02/2025, 04:29PM'
-  },
-  {
-    id: '49120',
-    assetName: '',
-    type: 'Asset',
-    vendor: 'MODWIN NETWORKS PVT.LTD',
-    startDate: '04/02/2025',
-    endDate: '04/02/2025',
-    firstService: '04/02/2025',
-    status: true,
-    createdOn: '04/02/2025, 12:43AM'
-  },
-  {
-    id: '49119',
-    assetName: '',
-    type: 'Asset',
-    vendor: 'Mohammad Sageer',
-    startDate: '04/02/2025',
-    endDate: '04/02/2025',
-    firstService: '04/02/2025',
-    status: true,
-    createdOn: '04/02/2025, 12:31AM'
-  }
-];
-
+const initialAmcData = [{
+  id: '51016',
+  assetName: '',
+  type: 'Asset',
+  vendor: 'MODWIN NETWORKS PVT.LTD',
+  startDate: '04/04/2025',
+  endDate: '02/05/2025',
+  firstService: '04/04/2025',
+  status: true,
+  createdOn: '04/04/2025, 03:25PM'
+}, {
+  id: '51015',
+  assetName: '',
+  type: 'Asset',
+  vendor: 'TBS ELECTRICAL',
+  startDate: '01/04/2025',
+  endDate: '10/05/2025',
+  firstService: '09/04/2025',
+  status: true,
+  createdOn: '04/04/2025, 03:24PM'
+}, {
+  id: '49130',
+  assetName: '',
+  type: 'Asset',
+  vendor: 'Mohan Khopade',
+  startDate: '04/02/2025',
+  endDate: '04/02/2025',
+  firstService: '04/02/2025',
+  status: true,
+  createdOn: '04/02/2025, 04:29PM'
+}, {
+  id: '49120',
+  assetName: '',
+  type: 'Asset',
+  vendor: 'MODWIN NETWORKS PVT.LTD',
+  startDate: '04/02/2025',
+  endDate: '04/02/2025',
+  firstService: '04/02/2025',
+  status: true,
+  createdOn: '04/02/2025, 12:43AM'
+}, {
+  id: '49119',
+  assetName: '',
+  type: 'Asset',
+  vendor: 'Mohammad Sageer',
+  startDate: '04/02/2025',
+  endDate: '04/02/2025',
+  firstService: '04/02/2025',
+  status: true,
+  createdOn: '04/02/2025, 12:31AM'
+}];
 export const AMCDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [amcData, setAmcData] = useState(initialAmcData);
   const [filteredAMC, setFilteredAMC] = useState(initialAmcData);
-
   const handleSearch = (value: string) => {
     setSearchTerm(value);
     if (value) {
-      const filtered = amcData.filter(amc =>
-        amc.id.toLowerCase().includes(value.toLowerCase()) ||
-        amc.vendor.toLowerCase().includes(value.toLowerCase())
-      );
+      const filtered = amcData.filter(amc => amc.id.toLowerCase().includes(value.toLowerCase()) || amc.vendor.toLowerCase().includes(value.toLowerCase()));
       setFilteredAMC(filtered);
     } else {
       setFilteredAMC(amcData);
     }
   };
-
   const handleAddClick = () => {
     navigate('/maintenance/amc/add');
   };
-
   const handleViewDetails = (id: string) => {
     navigate(`/maintenance/amc/details/${id}`);
   };
-
   const handleStatusToggle = (id: string) => {
     console.log(`Toggling status for AMC ${id}`);
-    
+
     // Update the main data array
-    const updatedAmcData = amcData.map(amc => 
-      amc.id === id ? { ...amc, status: !amc.status } : amc
-    );
+    const updatedAmcData = amcData.map(amc => amc.id === id ? {
+      ...amc,
+      status: !amc.status
+    } : amc);
     setAmcData(updatedAmcData);
-    
+
     // Update the filtered data array
-    const updatedFilteredData = filteredAMC.map(amc => 
-      amc.id === id ? { ...amc, status: !amc.status } : amc
-    );
+    const updatedFilteredData = filteredAMC.map(amc => amc.id === id ? {
+      ...amc,
+      status: !amc.status
+    } : amc);
     setFilteredAMC(updatedFilteredData);
   };
-
   const handleReset = () => {
     setSearchTerm('');
     setFilteredAMC(amcData);
   };
-
-  return (
-    <div className="p-6">
+  return <div className="p-6">
       {/* Header */}
       <div className="mb-6">
         <p className="text-[#1a1a1a] opacity-70 mb-2">AMC &gt; AMC List</p>
@@ -122,29 +105,19 @@ export const AMCDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex items-center gap-3 mb-6">
-        <Button 
-  onClick={handleAddClick}
-  className="text-white bg-[#C72030] hover:bg-[#C72030]/90 [&_svg]:text-white"
->
-<Plus className="w-4 h-4 mr-2" style={{ color: '#BF213E' }} />
+        <Button onClick={handleAddClick} className="text-white bg-[#C72030] hover:bg-[#C72030]/90 [&_svg]:text-white">
+        <Plus className="w-4 h-4 mr-2" style={{
+          color: '#BF213E'
+        }} />
   Add
-</Button>
+      </Button>
 
         <div className="ml-auto flex items-center gap-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search AMC..."
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10 w-64"
-            />
+            <Input placeholder="Search AMC..." value={searchTerm} onChange={e => handleSearch(e.target.value)} className="pl-10 w-64 bg-white" />
           </div>
-          <Button 
-            variant="outline" 
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-            onClick={handleReset}
-          >
+          <Button variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10" onClick={handleReset}>
             Reset
           </Button>
         </div>
@@ -168,14 +141,9 @@ export const AMCDashboard = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredAMC.map((amc) => (
-              <TableRow key={amc.id}>
+            {filteredAMC.map(amc => <TableRow key={amc.id}>
                 <TableCell>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleViewDetails(amc.id)}
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => handleViewDetails(amc.id)}>
                     <Eye className="w-4 h-4" />
                   </Button>
                 </TableCell>
@@ -188,29 +156,20 @@ export const AMCDashboard = () => {
                 <TableCell>{amc.firstService}</TableCell>
                 <TableCell>
                   <div className="flex items-center">
-                    <div
-                      className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${amc.status ? 'bg-green-500' : 'bg-gray-300'}`}
-                      onClick={() => handleStatusToggle(amc.id)}
-                    >
-                      <span
-                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${amc.status ? 'translate-x-6' : 'translate-x-1'}`}
-                      />
+                    <div className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${amc.status ? 'bg-green-500' : 'bg-gray-300'}`} onClick={() => handleStatusToggle(amc.id)}>
+                      <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${amc.status ? 'translate-x-6' : 'translate-x-1'}`} />
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>{amc.createdOn}</TableCell>
-              </TableRow>
-            ))}
-            {filteredAMC.length === 0 && (
-              <TableRow>
+              </TableRow>)}
+            {filteredAMC.length === 0 && <TableRow>
                 <TableCell colSpan={10} className="text-center py-8 text-gray-500">
                   No AMC records found
                 </TableCell>
-              </TableRow>
-            )}
+              </TableRow>}
           </TableBody>
         </Table>
       </div>
-    </div>
-  );
+    </div>;
 };
