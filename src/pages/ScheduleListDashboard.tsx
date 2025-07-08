@@ -97,7 +97,11 @@ export const ScheduleListDashboard = () => {
           <Download className="w-4 h-4 mr-2" /> Export
         </Button>
         <div className="flex items-center gap-2">
-          <input type="checkbox" id="allowMapping" />
+          <input 
+            type="checkbox" 
+            id="allowMapping" 
+            className="w-4 h-4 text-[#C72030] bg-gray-100 border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 accent-[#C72030]"
+          />
           <label htmlFor="allowMapping" className="text-sm">Allow Automatic Mapping</label>
         </div>
         <div className="w-full sm:w-auto sm:ml-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-3 sm:mt-0">
