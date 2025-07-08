@@ -153,8 +153,10 @@ export const UtilityWasteGenerationSetupDashboard = () => {
               <CardContent>
                 <form onSubmit={handleWasteCategorySubmit} className="space-y-4">
                   <div className="space-y-2">
+                    <Label htmlFor="category">Category Name*</Label>
                     <TextField
-                      label="Category Name"
+                      id="category"
+                      placeholder="Enter category name"
                       value={wasteCategoryForm.category}
                       onChange={(e) =>
                         setWasteCategoryForm((prev) => ({ ...prev, category: e.target.value }))
@@ -167,8 +169,10 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                   </div>
 
                   <div className="space-y-2">
+                    <Label htmlFor="categoryCode">Category Code*</Label>
                     <TextField
-                      label="Category Code"
+                      id="categoryCode"
+                      placeholder="Enter category code"
                       value={wasteCategoryForm.categoryCode}
                       onChange={(e) =>
                         setWasteCategoryForm((prev) => ({
@@ -184,8 +188,10 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                   </div>
 
                   <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
                     <TextField
-                      label="Description"
+                      id="description"
+                      placeholder="Enter description"
                       value={wasteCategoryForm.description}
                       onChange={(e) =>
                         setWasteCategoryForm((prev) => ({
@@ -202,12 +208,13 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                   </div>
 
                   <div className="space-y-2">
+                    <Label htmlFor="status">Status</Label>
                     <FormControl fullWidth variant="outlined">
-                      <InputLabel>Status</InputLabel>
                       <MuiSelect
-                        label="Status"
+                        id="status"
                         value={wasteCategoryForm.status}
                         onChange={(e) => setWasteCategoryForm(prev => ({ ...prev, status: e.target.value }))}
+                        displayEmpty
                         sx={fieldStyles}
                       >
                         <MenuItem value="active">Active</MenuItem>
@@ -306,9 +313,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                       required
                       fullWidth
                       variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
-                      sx={{ mt: 1 }}
+                      sx={fieldStyles}
                     />
                   </div>
                   
@@ -322,19 +327,15 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                       required
                       fullWidth
                       variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
-                      sx={{ mt: 1 }}
+                      sx={fieldStyles}
                     />
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="commodityCategory">Category*</Label>
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                      <InputLabel id="commodity-category-label" shrink>Select Category</InputLabel>
+                    <FormControl fullWidth variant="outlined">
                       <MuiSelect
-                        labelId="commodity-category-label"
-                        label="Select Category"
+                        id="commodityCategory"
                         displayEmpty
                         value={commodityForm.category}
                         onChange={(e) => setCommodityForm(prev => ({ ...prev, category: e.target.value }))}
@@ -359,28 +360,15 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                       variant="outlined"
                       multiline
                       minRows={3}
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{
-                        sx: {
-                          '& textarea': {
-                            height: 'auto',
-                            overflow: 'hidden',
-                            resize: 'none',
-                            padding: '8px 14px',
-                          },
-                        },
-                      }}
-                      sx={{ mt: 1 }}
+                      sx={multilineFieldStyles}
                     />
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="commodityStatus">Status</Label>
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                      <InputLabel id="commodity-status-label" shrink>Select Status</InputLabel>
+                    <FormControl fullWidth variant="outlined">
                       <MuiSelect
-                        labelId="commodity-status-label"
-                        label="Select Status"
+                        id="commodityStatus"
                         value={commodityForm.status}
                         onChange={(e) => setCommodityForm(prev => ({ ...prev, status: e.target.value }))}
                         sx={fieldStyles}
@@ -468,9 +456,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                       required
                       fullWidth
                       variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
-                      sx={{ mt: 1 }}
+                      sx={fieldStyles}
                     />
                   </div>
                   
@@ -484,9 +470,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                       required
                       fullWidth
                       variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
-                      sx={{ mt: 1 }}
+                      sx={fieldStyles}
                     />
                   </div>
                   
@@ -501,28 +485,15 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                       variant="outlined"
                       multiline
                       minRows={3}
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{
-                        sx: {
-                          '& textarea': {
-                            height: 'auto',
-                            overflow: 'hidden',
-                            resize: 'none',
-                            padding: '8px 14px',
-                          },
-                        },
-                      }}
-                      sx={{ mt: 1 }}
+                      sx={multilineFieldStyles}
                     />
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="uomStatus">Status</Label>
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                      <InputLabel id="uom-status-label" shrink>Select Status</InputLabel>
+                    <FormControl fullWidth variant="outlined">
                       <MuiSelect
-                        labelId="uom-status-label"
-                        label="Select Status"
+                        id="uomStatus"
                         value={uomForm.status}
                         onChange={(e) => setUomForm(prev => ({ ...prev, status: e.target.value }))}
                         sx={fieldStyles}
