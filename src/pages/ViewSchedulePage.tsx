@@ -329,11 +329,19 @@ export const ViewSchedulePage = () => {
               </div>
               <div className="space-y-2 flex items-center gap-4 pt-6">
                 <div className="flex items-center space-x-2">
-                  <Checkbox checked disabled />
+                  <Checkbox 
+                    checked 
+                    disabled 
+                    className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white"
+                  />
                   <Label>Mandatory</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox checked disabled />
+                  <Checkbox 
+                    checked 
+                    disabled 
+                    className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white"
+                  />
                   <Label>Reading</Label>
                 </div>
               </div>
