@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -373,7 +372,7 @@ export const UnitMasterPage = () => {
           sx: {
             borderRadius: '8px',
             boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-            width: '700px',
+            width: '500px',
             maxWidth: '90vw'
           }
         }}
@@ -394,204 +393,172 @@ export const UnitMasterPage = () => {
           </IconButton>
         </DialogTitle>
         
-        <DialogContent sx={{ pt: 0, pb: 3, px: 4 }}>
+        <DialogContent sx={{ pt: 0, pb: 3, px: 3 }}>
           {/* First Row: Select Building and Select Wing */}
-          <div className="grid grid-cols-2 gap-8 mb-8">
-            <FormControl fullWidth>
-              <InputLabel 
-                shrink
-                sx={{ 
-                  fontSize: '16px', 
-                  color: '#666',
-                  fontWeight: 500,
-                  position: 'relative',
-                  transform: 'none',
-                  marginBottom: '8px'
-                }}
-              >
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Select Building
-              </InputLabel>
-              <MuiSelect
-                value={editFormData.building}
-                onChange={(e) => handleEditInputChange('building', e.target.value)}
-                displayEmpty
-                sx={{
-                  height: '45px',
-                  fontSize: '14px',
-                  marginTop: '8px',
-                  '& .MuiSelect-select': {
-                    padding: '12px 14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                  },
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#d1d5db',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#9ca3af',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#C72030',
-                  }
-                }}
-              >
-                <MenuItem value="Tower 4">Tower 4</MenuItem>
-                <MenuItem value="The Address by Wadhwa Boulevard">The Address by Wadhwa Boulevard</MenuItem>
-                <MenuItem value="ABS">ABS</MenuItem>
-                <MenuItem value="Chicago plaza">Chicago plaza</MenuItem>
-                <MenuItem value="TCS Lab">TCS Lab</MenuItem>
-                <MenuItem value="Jyoti Tower">Jyoti Tower</MenuItem>
-              </MuiSelect>
-            </FormControl>
+              </label>
+              <FormControl fullWidth>
+                <MuiSelect
+                  value={editFormData.building}
+                  onChange={(e) => handleEditInputChange('building', e.target.value)}
+                  displayEmpty
+                  sx={{
+                    height: '40px',
+                    fontSize: '14px',
+                    '& .MuiSelect-select': {
+                      padding: '10px 14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#d1d5db',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#9ca3af',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    }
+                  }}
+                >
+                  <MenuItem value="">Select Building</MenuItem>
+                  <MenuItem value="Tower 4">Tower 4</MenuItem>
+                  <MenuItem value="The Address by Wadhwa Boulevard">The Address by Wadhwa Boulevard</MenuItem>
+                  <MenuItem value="ABS">ABS</MenuItem>
+                  <MenuItem value="Chicago plaza">Chicago plaza</MenuItem>
+                  <MenuItem value="TCS Lab">TCS Lab</MenuItem>
+                  <MenuItem value="Jyoti Tower">Jyoti Tower</MenuItem>
+                </MuiSelect>
+              </FormControl>
+            </div>
 
-            <FormControl fullWidth>
-              <InputLabel 
-                shrink
-                sx={{ 
-                  fontSize: '16px', 
-                  color: '#666',
-                  fontWeight: 500,
-                  position: 'relative',
-                  transform: 'none',
-                  marginBottom: '8px'
-                }}
-              >
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Select Wing
-              </InputLabel>
-              <MuiSelect
-                value={editFormData.wing}
-                onChange={(e) => handleEditInputChange('wing', e.target.value)}
-                displayEmpty
-                sx={{
-                  height: '45px',
-                  fontSize: '14px',
-                  marginTop: '8px',
-                  '& .MuiSelect-select': {
-                    padding: '12px 14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                  },
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#d1d5db',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#9ca3af',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#C72030',
-                  }
-                }}
-              >
-                <MenuItem value="Wing1">Wing1</MenuItem>
-                <MenuItem value="B4">B4</MenuItem>
-                <MenuItem value="B3">B3</MenuItem>
-                <MenuItem value="B2">B2</MenuItem>
-                <MenuItem value="B1">B1</MenuItem>
-                <MenuItem value="A">A</MenuItem>
-                <MenuItem value="A6">A6</MenuItem>
-              </MuiSelect>
-            </FormControl>
+              </label>
+              <FormControl fullWidth>
+                <MuiSelect
+                  value={editFormData.wing}
+                  onChange={(e) => handleEditInputChange('wing', e.target.value)}
+                  displayEmpty
+                  sx={{
+                    height: '40px',
+                    fontSize: '14px',
+                    '& .MuiSelect-select': {
+                      padding: '10px 14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#d1d5db',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#9ca3af',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    }
+                  }}
+                >
+                  <MenuItem value="">Select Wing</MenuItem>
+                  <MenuItem value="Wing1">Wing1</MenuItem>
+                  <MenuItem value="B4">B4</MenuItem>
+                  <MenuItem value="B3">B3</MenuItem>
+                  <MenuItem value="B2">B2</MenuItem>
+                  <MenuItem value="B1">B1</MenuItem>
+                  <MenuItem value="A">A</MenuItem>
+                  <MenuItem value="A6">A6</MenuItem>
+                </MuiSelect>
+              </FormControl>
+            </div>
           </div>
 
           {/* Second Row: Select Area and Select Floor */}
-          <div className="grid grid-cols-2 gap-8 mb-8">
-            <FormControl fullWidth>
-              <InputLabel 
-                shrink
-                sx={{ 
-                  fontSize: '16px', 
-                  color: '#666',
-                  fontWeight: 500,
-                  position: 'relative',
-                  transform: 'none',
-                  marginBottom: '8px'
-                }}
-              >
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Select Area
-              </InputLabel>
-              <MuiSelect
-                value={editFormData.area}
-                onChange={(e) => handleEditInputChange('area', e.target.value)}
-                displayEmpty
-                sx={{
-                  height: '45px',
-                  fontSize: '14px',
-                  marginTop: '8px',
-                  '& .MuiSelect-select': {
-                    padding: '12px 14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                  },
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#d1d5db',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#9ca3af',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#C72030',
-                  }
-                }}
-              >
-                <MenuItem value="North">North</MenuItem>
-                <MenuItem value="east">east</MenuItem>
-              </MuiSelect>
-            </FormControl>
+              </label>
+              <FormControl fullWidth>
+                <MuiSelect
+                  value={editFormData.area}
+                  onChange={(e) => handleEditInputChange('area', e.target.value)}
+                  displayEmpty
+                  sx={{
+                    height: '40px',
+                    fontSize: '14px',
+                    '& .MuiSelect-select': {
+                      padding: '10px 14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#d1d5db',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#9ca3af',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    }
+                  }}
+                >
+                  <MenuItem value="">Select Area</MenuItem>
+                  <MenuItem value="North">North</MenuItem>
+                  <MenuItem value="east">east</MenuItem>
+                </MuiSelect>
+              </FormControl>
+            </div>
 
-            <FormControl fullWidth>
-              <InputLabel 
-                shrink
-                sx={{ 
-                  fontSize: '16px', 
-                  color: '#666',
-                  fontWeight: 500,
-                  position: 'relative',
-                  transform: 'none',
-                  marginBottom: '8px'
-                }}
-              >
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Select Floor
-              </InputLabel>
-              <MuiSelect
-                value={editFormData.floor}
-                onChange={(e) => handleEditInputChange('floor', e.target.value)}
-                displayEmpty
-                sx={{
-                  height: '45px',
-                  fontSize: '14px',
-                  marginTop: '8px',
-                  '& .MuiSelect-select': {
-                    padding: '12px 14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                  },
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#d1d5db',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#9ca3af',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#C72030',
-                  }
-                }}
-              >
-                <MenuItem value="1st">1st</MenuItem>
-                <MenuItem value="29D">29D</MenuItem>
-                <MenuItem value="29C">29C</MenuItem>
-                <MenuItem value="29B">29B</MenuItem>
-                <MenuItem value="29A">29A</MenuItem>
-                <MenuItem value="2nd floor">2nd floor</MenuItem>
-                <MenuItem value="12th Floor">12th Floor</MenuItem>
-                <MenuItem value="2nd Floor">2nd Floor</MenuItem>
-              </MuiSelect>
-            </FormControl>
+              </label>
+              <FormControl fullWidth>
+                <MuiSelect
+                  value={editFormData.floor}
+                  onChange={(e) => handleEditInputChange('floor', e.target.value)}
+                  displayEmpty
+                  sx={{
+                    height: '40px',
+                    fontSize: '14px',
+                    '& .MuiSelect-select': {
+                      padding: '10px 14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#d1d5db',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#9ca3af',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    }
+                  }}
+                >
+                  <MenuItem value="">Select Floor</MenuItem>
+                  <MenuItem value="1st">1st</MenuItem>
+                  <MenuItem value="29D">29D</MenuItem>
+                  <MenuItem value="29C">29C</MenuItem>
+                  <MenuItem value="29B">29B</MenuItem>
+                  <MenuItem value="29A">29A</MenuItem>
+                  <MenuItem value="2nd floor">2nd floor</MenuItem>
+                  <MenuItem value="12th Floor">12th Floor</MenuItem>
+                  <MenuItem value="2nd Floor">2nd Floor</MenuItem>
+                </MuiSelect>
+              </FormControl>
+            </div>
           </div>
 
           {/* Third Row: Unit Name and Select Entity */}
-          <div className="grid grid-cols-2 gap-8 mb-8">
+          <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
-              <label className="block text-base font-medium text-gray-600 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Unit Name
               </label>
               <TextField
@@ -601,10 +568,10 @@ export const UnitMasterPage = () => {
                 variant="outlined"
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    height: '45px',
+                    height: '40px',
                     fontSize: '14px',
                     '& input': {
-                      padding: '12px 14px',
+                      padding: '10px 14px',
                     },
                     '& fieldset': {
                       borderColor: '#d1d5db',
@@ -620,54 +587,46 @@ export const UnitMasterPage = () => {
               />
             </div>
 
-            <FormControl fullWidth>
-              <InputLabel 
-                shrink
-                sx={{ 
-                  fontSize: '16px', 
-                  color: '#666',
-                  fontWeight: 500,
-                  position: 'relative',
-                  transform: 'none',
-                  marginBottom: '8px'
-                }}
-              >
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Select Entity
-              </InputLabel>
-              <MuiSelect
-                value={editFormData.entity}
-                onChange={(e) => handleEditInputChange('entity', e.target.value)}
-                displayEmpty
-                sx={{
-                  height: '45px',
-                  fontSize: '14px',
-                  marginTop: '8px',
-                  '& .MuiSelect-select': {
-                    padding: '12px 14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                  },
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#d1d5db',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#9ca3af',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#C72030',
-                  }
-                }}
-              >
-                <MenuItem value="Noid 62">Noid 62</MenuItem>
-                <MenuItem value="TCS">TCS</MenuItem>
-                <MenuItem value="GoPhygital">GoPhygital</MenuItem>
-              </MuiSelect>
-            </FormControl>
+              </label>
+              <FormControl fullWidth>
+                <MuiSelect
+                  value={editFormData.entity}
+                  onChange={(e) => handleEditInputChange('entity', e.target.value)}
+                  displayEmpty
+                  sx={{
+                    height: '40px',
+                    fontSize: '14px',
+                    '& .MuiSelect-select': {
+                      padding: '10px 14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#d1d5db',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#9ca3af',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    }
+                  }}
+                >
+                  <MenuItem value="">Select Entity</MenuItem>
+                  <MenuItem value="Noid 62">Noid 62</MenuItem>
+                  <MenuItem value="TCS">TCS</MenuItem>
+                  <MenuItem value="GoPhygital">GoPhygital</MenuItem>
+                </MuiSelect>
+              </FormControl>
+            </div>
           </div>
 
           {/* Fourth Row: Area (full width) */}
           <div className="mb-4">
-            <label className="block text-base font-medium text-gray-600 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Area
             </label>
             <TextField
@@ -677,10 +636,10 @@ export const UnitMasterPage = () => {
               variant="outlined"
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  height: '45px',
+                  height: '40px',
                   fontSize: '14px',
                   '& input': {
-                    padding: '12px 14px',
+                    padding: '10px 14px',
                   },
                   '& fieldset': {
                     borderColor: '#d1d5db',
