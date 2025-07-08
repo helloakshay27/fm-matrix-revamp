@@ -13,6 +13,11 @@ const ActionIcons = ({ row, onEditClick }) => {
   const dispatch = useDispatch();
   const [isActive, setIsActive] = useState(!!row.original.active);
 
+  // 🔄 Sync local state with row data when it changes
+  useEffect(() => {
+    setIsActive(!!row.original.active);
+  }, [row.original.active]);
+
   const handleToggle = async () => {
     const updatedValue = !isActive;
     const userData = row.original;
@@ -28,12 +33,11 @@ const ActionIcons = ({ row, onEditClick }) => {
       await dispatch(fetchInternalUser({ token })).unwrap();
       setIsActive(updatedValue);
       toast.dismiss();
-
       toast.success(`Status ${updatedValue ? 'activated' : 'deactivated'} successfully`, {
         iconTheme: {
           primary: updatedValue ? 'green' : 'red',
           secondary: 'white',
-        }
+        },
       });
     } catch (error) {
       console.error('Toggle failed:', error);
@@ -45,7 +49,6 @@ const ActionIcons = ({ row, onEditClick }) => {
       });
     }
   };
-
 
   return (
     <div className="action-icons flex justify-start gap-5">
@@ -59,16 +62,11 @@ const ActionIcons = ({ row, onEditClick }) => {
           sx={{ fontSize: '20px', cursor: 'pointer' }}
           onClick={() => onEditClick(row.original)}
         />
-        <button
-          onClick={() => alert(`Deleting: ${row.original.name}`)}
-          title="Delete"
-        >
-          {/* <DeleteOutlineOutlinedIcon sx={{ fontSize: '20px' }} /> */}
-        </button>
       </div>
     </div>
   );
 };
+
 
 const InternalTable = () => {
   const token = localStorage.getItem('token');
