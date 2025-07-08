@@ -99,53 +99,56 @@ export const SetApprovalModal = ({ isOpen, onClose }: SetApprovalModalProps) => 
           </div>
         </DialogHeader>
         
-        <div className="space-y-4 p-2">
+        <div className="space-y-6 p-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">Order</Label>
-              <TextField
-                value={order}
-                onChange={(e) => setOrder(e.target.value)}
-                placeholder="1"
-                fullWidth
-                variant="outlined"
-                size="small"
-                sx={fieldStyles}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">Name of Level</Label>
-              <TextField
-                value={nameOfLevel}
-                onChange={(e) => setNameOfLevel(e.target.value)}
-                placeholder="Enter Name of Level"
-                fullWidth
-                variant="outlined"
-                size="small"
-                sx={fieldStyles}
-              />
-            </div>
+            <TextField
+              label="Order"
+              value={order}
+              onChange={(e) => setOrder(e.target.value)}
+              placeholder="1"
+              fullWidth
+              variant="outlined"
+              size="small"
+              sx={fieldStyles}
+            />
+            <TextField
+              label="Name of Level"
+              value={nameOfLevel}
+              onChange={(e) => setNameOfLevel(e.target.value)}
+              placeholder="Enter Name of Level"
+              fullWidth
+              variant="outlined"
+              size="small"
+              sx={fieldStyles}
+            />
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-700">Users</Label>
-            <FormControl fullWidth size="small">
-              <MuiSelect
-                value={users}
-                onChange={(e) => setUsers(e.target.value)}
-                displayEmpty
-                sx={fieldStyles}
-                MenuProps={menuProps}
-              >
-                <MenuItem value="">
-                  <em>Select up to 15 Options</em>
-                </MenuItem>
-                <MenuItem value="user1">User 1</MenuItem>
-                <MenuItem value="user2">User 2</MenuItem>
-                <MenuItem value="user3">User 3</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
+          <FormControl fullWidth size="small">
+            <InputLabel id="users-select-label" sx={{
+              color: '#6b7280',
+              '&.Mui-focused': {
+                color: '#C72030',
+              },
+            }}>
+              Users
+            </InputLabel>
+            <MuiSelect
+              labelId="users-select-label"
+              label="Users"
+              value={users}
+              onChange={(e) => setUsers(e.target.value)}
+              displayEmpty
+              sx={fieldStyles}
+              MenuProps={menuProps}
+            >
+              <MenuItem value="">
+                <em>Select up to 15 Options</em>
+              </MenuItem>
+              <MenuItem value="user1">User 1</MenuItem>
+              <MenuItem value="user2">User 2</MenuItem>
+              <MenuItem value="user3">User 3</MenuItem>
+            </MuiSelect>
+          </FormControl>
 
           <div className="flex items-center space-x-2">
             <Checkbox
