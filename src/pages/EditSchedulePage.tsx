@@ -1026,8 +1026,9 @@ export const EditSchedulePage = () => {
                 </FormControl>
               </div>
               <div className="space-y-2">
+                <Label>Plan Duration</Label>
                 <div className="flex gap-2">
-                  <FormControl variant="outlined" sx={{ flex: 1 }}>
+                  <FormControl variant="outlined">
                     <InputLabel>Duration</InputLabel>
                     <Select
                       value={planDuration}
@@ -1142,8 +1143,9 @@ export const EditSchedulePage = () => {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
+                <Label>Grace Time</Label>
                 <div className="flex gap-2">
-                  <FormControl variant="outlined" sx={{ flex: 1 }}>
+                  <FormControl variant="outlined">
                     <InputLabel>Grace Time</InputLabel>
                     <Select
                       value={graceTime}
