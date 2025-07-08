@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -28,6 +27,33 @@ const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
   '& .MuiInputBase-input, & .MuiSelect-select': {
     padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
+
+// Floating MUI TextField styles
+const floatingFieldStyles = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '8px',
+    backgroundColor: 'white',
+    '& fieldset': {
+      borderColor: '#e5e7eb',
+    },
+    '&:hover fieldset': {
+      borderColor: '#9ca3af',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    color: '#6b7280',
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+  },
+  '& .MuiInputBase-input': {
+    padding: '12px 14px',
+    fontSize: '14px',
   },
 };
 
@@ -412,39 +438,26 @@ export const AddSchedulePage = () => {
 
           <div>
             <TextField
-              placeholder="Enter Activity"
+              label="Activity Name"
               value={formData.activityName}
               onChange={(e) => handleInputChange('activityName', e.target.value)}
               fullWidth
               variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
+              sx={floatingFieldStyles}
             />
           </div>
 
           <div>
             <TextField
-              placeholder="Enter Description"
+              label="Description"
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
               fullWidth
               variant="outlined"
               multiline
-              minRows={1}
-              maxRows={10}
-              InputLabelProps={{ shrink: true }}
-              InputProps={{
-                sx: {
-                  '& textarea': {
-                    height: 'auto',
-                    overflow: 'hidden',
-                    resize: 'none',
-                    padding: '8px 14px',
-                  },
-                },
-              }}
-              sx={{ mt: 1 }}
+              minRows={3}
+              maxRows={6}
+              sx={floatingFieldStyles}
             />
           </div>
         </CardContent>
@@ -521,14 +534,12 @@ export const AddSchedulePage = () => {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div className="lg:col-span-1">
                   <TextField
-                    placeholder="Enter Task"
+                    label="Task"
                     value={section.task}
                     onChange={(e) => handleTaskSectionChange(section.id, 'task', e.target.value)}
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
+                    sx={floatingFieldStyles}
                   />
                 </div>
                 <div className="lg:col-span-1">
@@ -591,14 +602,12 @@ export const AddSchedulePage = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
                   <div>
                     <TextField
-                      placeholder="Enter Weightage"
+                      label="Weightage"
                       value={section.weightageValue}
                       onChange={(e) => handleTaskSectionChange(section.id, 'weightageValue', e.target.value)}
                       fullWidth
                       variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
-                      sx={{ mt: 1 }}
+                      sx={floatingFieldStyles}
                     />
                   </div>
                   <div className="flex items-center space-x-2 pt-2 sm:pt-6">
@@ -881,26 +890,26 @@ export const AddSchedulePage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
               <TextField
+                label="Start From"
                 type="date"
                 value={formData.startFrom}
                 onChange={(e) => handleInputChange('startFrom', e.target.value)}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
+                sx={floatingFieldStyles}
               />
             </div>
             <div>
               <TextField
+                label="End At"
                 type="date"
                 value={formData.endAt}
                 onChange={(e) => handleInputChange('endAt', e.target.value)}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
+                sx={floatingFieldStyles}
               />
             </div>
           </div>
