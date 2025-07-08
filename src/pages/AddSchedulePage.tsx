@@ -142,33 +142,33 @@ export const AddSchedulePage = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-4 mb-4">
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center gap-2 sm:gap-4 mb-4">
           <Button 
             variant="ghost" 
             onClick={() => navigate('/maintenance/schedule')}
             className="p-2 hover:bg-gray-100"
           >
-            <ArrowLeft className="w-5 h-5 text-[#C72030]" />
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030]" />
           </Button>
         </div>
         <div>
-          <p className="text-gray-600 mb-2 text-sm">Schedule &gt; Add Schedule</p>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] uppercase">ADD SCHEDULE</h1>
+          <p className="text-gray-600 mb-2 text-xs sm:text-sm">Schedule &gt; Add Schedule</p>
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-[#1a1a1a] uppercase">ADD SCHEDULE</h1>
         </div>
       </div>
 
       {/* Toggles */}
-      <div className="flex gap-6">
+      <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
         <div className="flex items-center space-x-2">
           <Switch 
             checked={createNew} 
             onCheckedChange={setCreateNew}
             id="create-new"
           />
-          <Label htmlFor="create-new">Create New</Label>
+          <Label htmlFor="create-new" className="text-sm">Create New</Label>
         </div>
         
         <div className="flex items-center space-x-2">
@@ -177,7 +177,7 @@ export const AddSchedulePage = () => {
             onCheckedChange={setCreateTicket}
             id="create-ticket"
           />
-          <Label htmlFor="create-ticket">Create Ticket</Label>
+          <Label htmlFor="create-ticket" className="text-sm">Create Ticket</Label>
         </div>
         
         <div className="flex items-center space-x-2">
@@ -186,14 +186,14 @@ export const AddSchedulePage = () => {
             onCheckedChange={setWeightage}
             id="weightage"
           />
-          <Label htmlFor="weightage">Weightage</Label>
+          <Label htmlFor="weightage" className="text-sm">Weightage</Label>
         </div>
       </div>
 
       {/* Create New Toggle Section */}
       {createNew && (
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-4 sm:pt-6">
             <div>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="template-label" shrink>Select from the existing Template</InputLabel>
@@ -220,9 +220,9 @@ export const AddSchedulePage = () => {
       {/* Create Ticket Toggle Section */}
       {createTicket && (
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-4 sm:pt-6">
             <div className="space-y-4">
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
                 <div className="flex items-center space-x-2">
                   <input 
                     type="radio" 
@@ -232,7 +232,7 @@ export const AddSchedulePage = () => {
                     checked={formData.ticketLevel === 'Checklist Level'}
                     onChange={(e) => handleInputChange('ticketLevel', e.target.value)}
                   />
-                  <Label htmlFor="checklist-level">Checklist Level</Label>
+                  <Label htmlFor="checklist-level" className="text-sm">Checklist Level</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <input 
@@ -243,11 +243,11 @@ export const AddSchedulePage = () => {
                     checked={formData.ticketLevel === 'Question Level'}
                     onChange={(e) => handleInputChange('ticketLevel', e.target.value)}
                   />
-                  <Label htmlFor="question-level">Question Level</Label>
+                  <Label htmlFor="question-level" className="text-sm">Question Level</Label>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div>
                   <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                     <InputLabel id="assigned-to-label" shrink>Select Assigned To</InputLabel>
@@ -293,48 +293,48 @@ export const AddSchedulePage = () => {
       {/* Basic Info Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">1</span>
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <span className="w-5 h-5 sm:w-6 sm:h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs sm:text-sm">1</span>
             Basic Info
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-4 mb-4">
-            <Label>Type</Label>
-            <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mb-4">
+            <Label className="text-sm font-medium">Type</Label>
+            <div className="flex flex-wrap gap-2 sm:gap-4">
               <div className="flex items-center space-x-2">
                 <input type="radio" id="ppm" name="type" value="PPM" />
-                <Label htmlFor="ppm">PPM</Label>
+                <Label htmlFor="ppm" className="text-sm">PPM</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <input type="radio" id="amc" name="type" value="AMC" />
-                <Label htmlFor="amc">AMC</Label>
+                <Label htmlFor="amc" className="text-sm">AMC</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <input type="radio" id="preparedness" name="type" value="Preparedness" />
-                <Label htmlFor="preparedness">Preparedness</Label>
+                <Label htmlFor="preparedness" className="text-sm">Preparedness</Label>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 mb-4">
-            <Label>Schedule For</Label>
-            <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mb-4">
+            <Label className="text-sm font-medium">Schedule For</Label>
+            <div className="flex flex-wrap gap-2 sm:gap-4">
               <div className="flex items-center space-x-2">
                 <input type="radio" id="asset" name="scheduleFor" value="Asset" />
-                <Label htmlFor="asset">Asset</Label>
+                <Label htmlFor="asset" className="text-sm">Asset</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <input type="radio" id="service" name="scheduleFor" value="Service" />
-                <Label htmlFor="service">Service</Label>
+                <Label htmlFor="service" className="text-sm">Service</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <input type="radio" id="vendor" name="scheduleFor" value="Vendor" />
-                <Label htmlFor="vendor">Vendor</Label>
+                <Label htmlFor="vendor" className="text-sm">Vendor</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <input type="radio" id="training" name="scheduleFor" value="Training" />
-                <Label htmlFor="training">Training</Label>
+                <Label htmlFor="training" className="text-sm">Training</Label>
               </div>
             </div>
           </div>
@@ -382,35 +382,35 @@ export const AddSchedulePage = () => {
       {/* Task Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">2</span>
-              Task
+              <span className="w-5 h-5 sm:w-6 sm:h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs sm:text-sm">2</span>
+              <span className="text-sm sm:text-base">Task</span>
             </div>
             <Button 
               onClick={handleAddSection}
-              className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+              className="bg-[#C72030] text-white hover:bg-[#C72030]/90 text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               Add Section
             </Button>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6">
           {taskSections.map((section, index) => (
-            <div key={section.id} className="space-y-4 p-4 border rounded-lg relative">
+            <div key={section.id} className="space-y-4 p-3 sm:p-4 border rounded-lg relative">
               {taskSections.length > 1 && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => handleRemoveSection(section.id)}
-                  className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                  className="absolute top-1 right-1 sm:top-2 sm:right-2 text-red-500 hover:text-red-700 p-1"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3 h-3 sm:w-4 sm:h-4" />
                 </Button>
               )}
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div>
                   <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                     <InputLabel id={`group-${section.id}-label`} shrink>Group</InputLabel>
@@ -447,8 +447,8 @@ export const AddSchedulePage = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="lg:col-span-1">
                   <TextField
                     placeholder="Enter Task"
                     value={section.task}
@@ -460,7 +460,7 @@ export const AddSchedulePage = () => {
                     sx={{ mt: 1 }}
                   />
                 </div>
-                <div>
+                <div className="lg:col-span-1">
                   <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                     <InputLabel id={`input-type-${section.id}-label`} shrink>Input Type</InputLabel>
                     <MuiSelect
@@ -478,14 +478,14 @@ export const AddSchedulePage = () => {
                     </MuiSelect>
                   </FormControl>
                 </div>
-                <div className="flex items-center gap-4 pt-6">
+                <div className="lg:col-span-1 flex flex-wrap items-center gap-2 sm:gap-4 pt-2 sm:pt-6">
                   <div className="flex items-center space-x-2">
                     <Checkbox 
                       id={`mandatory-${section.id}`}
                       checked={section.mandatory}
                       onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'mandatory', checked)}
                     />
-                    <Label htmlFor={`mandatory-${section.id}`}>Mandatory</Label>
+                    <Label htmlFor={`mandatory-${section.id}`} className="text-xs sm:text-sm">Mandatory</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox 
@@ -493,7 +493,7 @@ export const AddSchedulePage = () => {
                       checked={section.reading}
                       onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'reading', checked)}
                     />
-                    <Label htmlFor={`reading-${section.id}`}>Reading</Label>
+                    <Label htmlFor={`reading-${section.id}`} className="text-xs sm:text-sm">Reading</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox 
@@ -501,14 +501,14 @@ export const AddSchedulePage = () => {
                       checked={!!section.helpText}
                       onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'helpText', checked ? 'Help text' : '')}
                     />
-                    <Label htmlFor={`help-text-${section.id}`}>Help Text</Label>
+                    <Label htmlFor={`help-text-${section.id}`} className="text-xs sm:text-sm">Help Text</Label>
                   </div>
                 </div>
               </div>
 
               {/* Weightage option - only show when weightage toggle is on */}
               {weightage && (
-                <div className="grid grid-cols-2 gap-4 mt-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
                   <div>
                     <TextField
                       placeholder="Enter Weightage"
@@ -521,13 +521,13 @@ export const AddSchedulePage = () => {
                       sx={{ mt: 1 }}
                     />
                   </div>
-                  <div className="flex items-center space-x-2 pt-6">
+                  <div className="flex items-center space-x-2 pt-2 sm:pt-6">
                     <Checkbox 
                       id={`failing-${section.id}`}
                       checked={section.failing}
                       onCheckedChange={(checked) => handleTaskSectionChange(section.id, 'failing', checked)}
                     />
-                    <Label htmlFor={`failing-${section.id}`}>Failing</Label>
+                    <Label htmlFor={`failing-${section.id}`} className="text-sm">Failing</Label>
                   </div>
                 </div>
               )}
@@ -539,15 +539,15 @@ export const AddSchedulePage = () => {
       {/* Schedule Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">3</span>
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <span className="w-5 h-5 sm:w-6 sm:h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs sm:text-sm">3</span>
             Schedule
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-4 mb-4">
-            <Label>Checklist Type</Label>
-            <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mb-4">
+            <Label className="text-sm font-medium">Checklist Type</Label>
+            <div className="flex flex-wrap gap-2 sm:gap-4">
               <div className="flex items-center space-x-2">
                 <input 
                   type="radio" 
@@ -557,7 +557,7 @@ export const AddSchedulePage = () => {
                   checked={formData.checklistType === 'Individual'}
                   onChange={(e) => handleInputChange('checklistType', e.target.value)}
                 />
-                <Label htmlFor="individual">Individual</Label>
+                <Label htmlFor="individual" className="text-sm">Individual</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <input 
@@ -568,12 +568,12 @@ export const AddSchedulePage = () => {
                   checked={formData.checklistType === 'Asset Group'}
                   onChange={(e) => handleInputChange('checklistType', e.target.value)}
                 />
-                <Label htmlFor="asset-group">Asset Group</Label>
+                <Label htmlFor="asset-group" className="text-sm">Asset Group</Label>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="asset-label" shrink>Asset</InputLabel>
@@ -627,7 +627,7 @@ export const AddSchedulePage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="plan-duration-label" shrink>Plan Duration</InputLabel>
@@ -682,7 +682,7 @@ export const AddSchedulePage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="supervisors-label" shrink>Supervisors</InputLabel>
@@ -736,7 +736,7 @@ export const AddSchedulePage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel id="grace-time-label" shrink>Grace Time</InputLabel>
@@ -791,7 +791,7 @@ export const AddSchedulePage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
               <TextField
                 type="date"
@@ -839,19 +839,19 @@ export const AddSchedulePage = () => {
       {/* Cron Form Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">4</span>
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <span className="w-5 h-5 sm:w-6 sm:h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs sm:text-sm">4</span>
             Cron form
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex border rounded-lg overflow-hidden">
+            <div className="flex flex-wrap border rounded-lg overflow-hidden">
               {['Minutes', 'Hours', 'Day', 'Month'].map((tab, index) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 flex-1 transition-colors ${
+                  className={`px-3 py-2 sm:px-4 sm:py-2 flex-1 min-w-0 text-xs sm:text-sm transition-colors ${
                     activeTab === tab 
                       ? 'text-white' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -868,10 +868,10 @@ export const AddSchedulePage = () => {
                 <>
                   <div className="flex items-center space-x-2">
                     <input type="radio" id="specific-minutes" name="minutes-option" defaultChecked />
-                    <Label htmlFor="specific-minutes">Specific minute (choose one or many)</Label>
+                    <Label htmlFor="specific-minutes" className="text-sm">Specific minute (choose one or many)</Label>
                   </div>
 
-                  <div className="grid grid-cols-12 gap-2 text-sm">
+                  <div className="grid grid-cols-6 sm:grid-cols-10 lg:grid-cols-12 gap-2 text-sm">
                     {Array.from({ length: 60 }, (_, i) => (
                       <div key={i} className="flex items-center space-x-1">
                         <Checkbox id={`minute-${i}`} />
@@ -880,9 +880,9 @@ export const AddSchedulePage = () => {
                     ))}
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                     <input type="radio" id="every-minute" name="minutes-option" />
-                    <Label htmlFor="every-minute">Every minute between minute</Label>
+                    <Label htmlFor="every-minute" className="text-sm">Every minute between minute</Label>
                     <FormControl size="small" sx={{ minWidth: 80 }}>
                       <MuiSelect
                         value={cronFormData.minuteStart}
@@ -895,7 +895,7 @@ export const AddSchedulePage = () => {
                         ))}
                       </MuiSelect>
                     </FormControl>
-                    <span>and minute</span>
+                    <span className="text-sm">and minute</span>
                     <FormControl size="small" sx={{ minWidth: 80 }}>
                       <MuiSelect
                         value={cronFormData.minuteEnd}
@@ -1061,25 +1061,25 @@ export const AddSchedulePage = () => {
                 <div className="mt-2 font-mono text-sm">0 0 ? * *</div>
               </div>
 
-              <div className="grid grid-cols-5 gap-4 mt-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
                 <div className="text-center">
-                  <div className="font-medium mb-2">Minutes</div>
+                  <div className="font-medium mb-2 text-xs sm:text-sm">Minutes</div>
                   <div className="text-sm">*</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-medium mb-2">Hours</div>
+                  <div className="font-medium mb-2 text-xs sm:text-sm">Hours</div>
                   <div className="text-sm">*</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-medium mb-2">Day Of Month</div>
+                  <div className="font-medium mb-2 text-xs sm:text-sm">Day Of Month</div>
                   <div className="text-sm">*</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-medium mb-2">Month</div>
+                  <div className="font-medium mb-2 text-xs sm:text-sm">Month</div>
                   <div className="text-sm">*</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-medium mb-2">Day Of Week</div>
+                  <div className="font-medium mb-2 text-xs sm:text-sm">Day Of Week</div>
                   <div className="text-sm">*</div>
                 </div>
               </div>
@@ -1089,13 +1089,17 @@ export const AddSchedulePage = () => {
       </Card>
 
       {/* Action Buttons */}
-      <div className="flex justify-end gap-4">
-        <Button variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white" onClick={() => navigate('/maintenance/schedule')}>
+      <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
+        <Button 
+          variant="outline" 
+          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white order-2 sm:order-1" 
+          onClick={() => navigate('/maintenance/schedule')}
+        >
           Cancel
         </Button>
         <Button 
           onClick={handleSubmit}
-          className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+          className="bg-[#C72030] text-white hover:bg-[#C72030]/90 order-1 sm:order-2"
         >
           Save Schedule
         </Button>
