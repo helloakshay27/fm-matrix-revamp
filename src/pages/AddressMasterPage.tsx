@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // Mock data for addresses
 const addressData = [
@@ -21,10 +22,10 @@ const addressData = [
 ];
 
 export const AddressMasterPage = () => {
-  const [showForm, setShowForm] = useState(false);
+  const navigate = useNavigate();
 
   const handleAddClick = () => {
-    setShowForm(!showForm);
+    navigate('/settings/masters/address/add');
   };
 
   const handleEditClick = (address) => {
