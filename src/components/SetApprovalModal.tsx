@@ -124,12 +124,7 @@ export const SetApprovalModal = ({ isOpen, onClose }: SetApprovalModalProps) => 
           </div>
 
           <FormControl fullWidth size="small">
-            <InputLabel id="users-select-label" shrink={true} sx={{
-              color: '#6b7280',
-              '&.Mui-focused': {
-                color: '#C72030',
-              },
-            }}>
+            <InputLabel id="users-select-label" shrink={true}>
               Users
             </InputLabel>
             <MuiSelect
