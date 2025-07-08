@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -181,6 +182,7 @@ export const AddSchedulePage = () => {
             checked={createNew} 
             onCheckedChange={setCreateNew}
             id="create-new"
+            className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-gray-300"
           />
           <Label htmlFor="create-new" className="text-sm">Create New</Label>
         </div>
@@ -190,6 +192,7 @@ export const AddSchedulePage = () => {
             checked={createTicket} 
             onCheckedChange={setCreateTicket}
             id="create-ticket"
+            className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-gray-300"
           />
           <Label htmlFor="create-ticket" className="text-sm">Create Ticket</Label>
         </div>
@@ -199,6 +202,7 @@ export const AddSchedulePage = () => {
             checked={weightage} 
             onCheckedChange={setWeightage}
             id="weightage"
+            className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-gray-300"
           />
           <Label htmlFor="weightage" className="text-sm">Weightage</Label>
         </div>
