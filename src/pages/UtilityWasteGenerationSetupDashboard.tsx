@@ -8,10 +8,38 @@ import { Plus, Edit, Trash2, Search } from "lucide-react";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 const fieldStyles = {
-  height: { xs: 28, sm: 36, md: 45 },
+  height: { xs: 36, md: 45 },
   '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: { xs: '8px', sm: '10px', md: '12px' },
+    padding: { xs: '8px 14px', md: '12px 14px' },
   },
+  '& .MuiInputLabel-root': {
+    color: '#999999',
+    fontSize: '16px',
+    '&.Mui-focused': {
+      color: '#C72030'
+    }
+  },
+  '& .MuiOutlinedInput-root': {
+    '& fieldset': {
+      borderColor: '#E0E0E0'
+    },
+    '&:hover fieldset': {
+      borderColor: '#1A1A1A'
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+      borderWidth: 2
+    }
+  }
+};
+
+const multilineFieldStyles = {
+  ...fieldStyles,
+  '& .MuiOutlinedInput-root': {
+    ...fieldStyles['& .MuiOutlinedInput-root'],
+    height: 'auto',
+    alignItems: 'flex-start'
+  }
 };
 
 export const UtilityWasteGenerationSetupDashboard = () => {
@@ -124,89 +152,60 @@ export const UtilityWasteGenerationSetupDashboard = () => {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleWasteCategorySubmit} className="space-y-4">
-                  <div className="space-y-1">
- 
-  <TextField
-    id="category"
-    name="category"
-    placeholder="Enter category name"
-    value={wasteCategoryForm.category}
-    onChange={(e) =>
-      setWasteCategoryForm((prev) => ({ ...prev, category: e.target.value }))
-    }
-    required
-    fullWidth
-    variant="outlined"
-    InputLabelProps={{ shrink: false }} // disable floating label
-    InputProps={{ sx: fieldStyles }}
-    sx={{ mt: 0.5 }}
-  />
-</div>
-
-                  
-                  <div className="space-y-1">
-  
-  <TextField
-    id="categoryCode"
-    name="categoryCode"
-    placeholder="Enter category code"
-    value={wasteCategoryForm.categoryCode}
-    onChange={(e) =>
-      setWasteCategoryForm((prev) => ({
-        ...prev,
-        categoryCode: e.target.value,
-      }))
-    }
-    required
-    fullWidth
-    variant="outlined"
-    InputLabelProps={{ shrink: false }} // Disable floating label
-    InputProps={{ sx: fieldStyles }}
-    sx={{ mt: 0.5 }}
-  />
-</div>
-
-                  
-                  <div className="space-y-1">
-  
-  <TextField
-    id="description"
-    name="description"
-    placeholder="Enter description"
-    value={wasteCategoryForm.description}
-    onChange={(e) =>
-      setWasteCategoryForm((prev) => ({
-        ...prev,
-        description: e.target.value,
-      }))
-    }
-    fullWidth
-    variant="outlined"
-    multiline
-    minRows={3}
-    InputLabelProps={{ shrink: false }} // disables floating label
-    InputProps={{
-      sx: {
-        '& textarea': {
-          height: 'auto',
-          overflow: 'hidden',
-          resize: 'none',
-          padding: '8px 14px',
-        },
-      },
-    }}
-    sx={{ mt: 0.5 }}
-  />
-</div>
-
-                  
                   <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                      <InputLabel id="status-label" shrink>Select Status</InputLabel>
+                    <TextField
+                      label="Category Name"
+                      value={wasteCategoryForm.category}
+                      onChange={(e) =>
+                        setWasteCategoryForm((prev) => ({ ...prev, category: e.target.value }))
+                      }
+                      required
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <TextField
+                      label="Category Code"
+                      value={wasteCategoryForm.categoryCode}
+                      onChange={(e) =>
+                        setWasteCategoryForm((prev) => ({
+                          ...prev,
+                          categoryCode: e.target.value,
+                        }))
+                      }
+                      required
+                      fullWidth
+                      variant="outlined"
+                      sx={fieldStyles}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <TextField
+                      label="Description"
+                      value={wasteCategoryForm.description}
+                      onChange={(e) =>
+                        setWasteCategoryForm((prev) => ({
+                          ...prev,
+                          description: e.target.value,
+                        }))
+                      }
+                      fullWidth
+                      variant="outlined"
+                      multiline
+                      minRows={3}
+                      sx={multilineFieldStyles}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <FormControl fullWidth variant="outlined">
+                      <InputLabel>Status</InputLabel>
                       <MuiSelect
-                        labelId="status-label"
-                        label="Select Status"
+                        label="Status"
                         value={wasteCategoryForm.status}
                         onChange={(e) => setWasteCategoryForm(prev => ({ ...prev, status: e.target.value }))}
                         sx={fieldStyles}
@@ -238,7 +237,20 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                       size="small"
                       InputProps={{
                         startAdornment: <Search className="w-4 h-4 mr-2 text-gray-400" />,
-                        sx: { height: 40, padding: '8px 14px' }
+                      }}
+                      sx={{ 
+                        '& .MuiOutlinedInput-root': { 
+                          height: 40, 
+                          '& fieldset': {
+                            borderColor: '#E0E0E0'
+                          },
+                          '&:hover fieldset': {
+                            borderColor: '#1A1A1A'
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#C72030'
+                          }
+                        }
                       }}
                     />
                   </div>
