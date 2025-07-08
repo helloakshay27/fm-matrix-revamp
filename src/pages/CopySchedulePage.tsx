@@ -1,16 +1,68 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Upload, X } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Plus, X } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { TextField, Select, MenuItem, FormControl, InputLabel, Radio, RadioGroup, FormControlLabel, Checkbox, Box } from '@mui/material';
+
+const muiFieldStyles = {
+  width: '100%',
+  '& .MuiOutlinedInput-root': {
+    height: {
+      xs: '36px',
+      md: '45px'
+    },
+    borderRadius: '8px',
+    backgroundColor: '#FFFFFF',
+    '& fieldset': {
+      borderColor: '#E0E0E0'
+    },
+    '&:hover fieldset': {
+      borderColor: '#1A1A1A'
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+      borderWidth: 2
+    }
+  },
+  '& .MuiInputLabel-root': {
+    color: '#999999',
+    fontSize: '16px',
+    '&.Mui-focused': {
+      color: '#C72030'
+    },
+    '&.MuiInputLabel-shrink': {
+      transform: 'translate(14px, -9px) scale(0.75)',
+      backgroundColor: '#FFFFFF',
+      padding: '0 4px'
+    }
+  },
+  '& .MuiOutlinedInput-input, & .MuiSelect-select': {
+    color: '#1A1A1A',
+    fontSize: '16px',
+    padding: {
+      xs: '8px 14px',
+      md: '12px 14px'
+    },
+    height: 'auto',
+    '&::placeholder': {
+      color: '#999999',
+      opacity: 1
+    }
+  }
+};
+
+const multilineFieldStyles = {
+  ...muiFieldStyles,
+  '& .MuiOutlinedInput-root': {
+    ...muiFieldStyles['& .MuiOutlinedInput-root'],
+    height: 'auto',
+    alignItems: 'flex-start'
+  }
+};
 
 export const CopySchedulePage = () => {
   const { id } = useParams();
@@ -197,16 +249,18 @@ export const CopySchedulePage = () => {
           {/* Create New Dropdown */}
           {createNew && (
             <div className="ml-6">
-              <Select>
-                <SelectTrigger className="w-64">
-                  <SelectValue placeholder="Select from the existing Template" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="template1">Template 1</SelectItem>
-                  <SelectItem value="template2">Template 2</SelectItem>
-                  <SelectItem value="template3">Template 3</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl sx={{ minWidth: 256 }}>
+                <InputLabel>Select from the existing Template</InputLabel>
+                <Select 
+                  value=""
+                  label="Select from the existing Template"
+                  sx={muiFieldStyles}
+                >
+                  <MenuItem value="template1">Template 1</MenuItem>
+                  <MenuItem value="template2">Template 2</MenuItem>
+                  <MenuItem value="template3">Template 3</MenuItem>
+                </Select>
+              </FormControl>
             </div>
           )}
 
@@ -215,52 +269,92 @@ export const CopySchedulePage = () => {
             <div className="ml-6 space-y-3">
               <div className="flex items-center gap-4">
                 <div className="flex items-center space-x-2">
-                  <input 
-                    type="radio" 
-                    id="checklist-level" 
-                    name="category-level" 
-                    checked={categoryLevel === 'checklist-level'}
-                    onChange={() => setCategoryLevel('checklist-level')}
-                  />
-                  <Label htmlFor="checklist-level">Checklist Level</Label>
+                  <div className="relative">
+                    <input 
+                      type="radio" 
+                      id="checklist-level" 
+                      name="category-level" 
+                      checked={categoryLevel === 'checklist-level'}
+                      onChange={() => setCategoryLevel('checklist-level')}
+                      className="sr-only"
+                    />
+                    <label 
+                      htmlFor="checklist-level" 
+                      className="flex items-center cursor-pointer"
+                    >
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mr-2 ${
+                        categoryLevel === 'checklist-level' 
+                          ? 'border-[#C72030] bg-white' 
+                          : 'border-gray-300 bg-white'
+                      }`}>
+                        {categoryLevel === 'checklist-level' && (
+                          <div className="w-3 h-3 rounded-full bg-[#C72030]"></div>
+                        )}
+                      </div>
+                      <span className="text-sm">Checklist Level</span>
+                    </label>
+                  </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <input 
-                    type="radio" 
-                    id="question-level" 
-                    name="category-level" 
-                    checked={categoryLevel === 'question-level'}
-                    onChange={() => setCategoryLevel('question-level')}
-                  />
-                  <Label htmlFor="question-level">Question Level</Label>
+                  <div className="relative">
+                    <input 
+                      type="radio" 
+                      id="question-level" 
+                      name="category-level" 
+                      checked={categoryLevel === 'question-level'}
+                      onChange={() => setCategoryLevel('question-level')}
+                      className="sr-only"
+                    />
+                    <label 
+                      htmlFor="question-level" 
+                      className="flex items-center cursor-pointer"
+                    >
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mr-2 ${
+                        categoryLevel === 'question-level' 
+                          ? 'border-[#C72030] bg-white' 
+                          : 'border-gray-300 bg-white'
+                      }`}>
+                        {categoryLevel === 'question-level' && (
+                          <div className="w-3 h-3 rounded-full bg-[#C72030]"></div>
+                        )}
+                      </div>
+                      <span className="text-sm">Question Level</span>
+                    </label>
+                  </div>
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Select value={assignedTo} onValueChange={setAssignedTo}>
-                  <SelectTrigger className="w-64">
-                    <SelectValue placeholder="Select Assigned To" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user1">User 1</SelectItem>
-                    <SelectItem value="user2">User 2</SelectItem>
-                    <SelectItem value="group1">Group 1</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl sx={{ minWidth: 256 }}>
+                  <InputLabel>Select Assigned To</InputLabel>
+                  <Select 
+                    value={assignedTo} 
+                    label="Select Assigned To"
+                    onChange={(e) => setAssignedTo(e.target.value)}
+                    sx={muiFieldStyles}
+                  >
+                    <MenuItem value="user1">User 1</MenuItem>
+                    <MenuItem value="user2">User 2</MenuItem>
+                    <MenuItem value="group1">Group 1</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               
               <div className="space-y-2">
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="w-64">
-                    <SelectValue placeholder="Select Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="technical">Technical</SelectItem>
-                    <SelectItem value="non-technical">Non Technical</SelectItem>
-                    <SelectItem value="safety">Safety</SelectItem>
-                    <SelectItem value="maintenance">Maintenance</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl sx={{ minWidth: 256 }}>
+                  <InputLabel>Select Category</InputLabel>
+                  <Select 
+                    value={selectedCategory} 
+                    label="Select Category"
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    sx={muiFieldStyles}
+                  >
+                    <MenuItem value="technical">Technical</MenuItem>
+                    <MenuItem value="non-technical">Non Technical</MenuItem>
+                    <MenuItem value="safety">Safety</MenuItem>
+                    <MenuItem value="maintenance">Maintenance</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
             </div>
           )}
@@ -280,72 +374,89 @@ export const CopySchedulePage = () => {
             <div className="space-y-4">
               <div className="space-y-3">
                 <Label className="text-base font-medium">Type</Label>
-                <RadioGroup value={type} onValueChange={setType} className="flex gap-6 flex-wrap">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="PPM" id="ppm" />
-                    <Label htmlFor="ppm">PPM</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="AMC" id="amc" />
-                    <Label htmlFor="amc">AMC</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Preparedness" id="preparedness" />
-                    <Label htmlFor="preparedness">Preparedness</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Hoto" id="hoto" />
-                    <Label htmlFor="hoto">Hoto</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Routine" id="routine" />
-                    <Label htmlFor="routine">Routine</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Audit" id="audit" />
-                    <Label htmlFor="audit">Audit</Label>
-                  </div>
+                <RadioGroup value={type} onChange={(e) => setType(e.target.value)} row sx={{ gap: 3, flexWrap: 'wrap' }}>
+                  <FormControlLabel 
+                    value="PPM" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="PPM" 
+                  />
+                  <FormControlLabel 
+                    value="AMC" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="AMC" 
+                  />
+                  <FormControlLabel 
+                    value="Preparedness" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Preparedness" 
+                  />
+                  <FormControlLabel 
+                    value="Hoto" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Hoto" 
+                  />
+                  <FormControlLabel 
+                    value="Routine" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Routine" 
+                  />
+                  <FormControlLabel 
+                    value="Audit" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Audit" 
+                  />
                 </RadioGroup>
               </div>
               
               <div className="space-y-3">
                 <Label className="text-base font-medium">Schedule For</Label>
-                <RadioGroup value={scheduleFor} onValueChange={setScheduleFor} className="flex gap-6 flex-wrap">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Asset" id="asset-schedule" />
-                    <Label htmlFor="asset-schedule">Asset</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Service" id="service" />
-                    <Label htmlFor="service">Service</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Vendor" id="vendor" />
-                    <Label htmlFor="vendor">Vendor</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Training" id="training" />
-                    <Label htmlFor="training">Training</Label>
-                  </div>
+                <RadioGroup value={scheduleFor} onChange={(e) => setScheduleFor(e.target.value)} row sx={{ gap: 3, flexWrap: 'wrap' }}>
+                  <FormControlLabel 
+                    value="Asset" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Asset" 
+                  />
+                  <FormControlLabel 
+                    value="Service" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Service" 
+                  />
+                  <FormControlLabel 
+                    value="Vendor" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Vendor" 
+                  />
+                  <FormControlLabel 
+                    value="Training" 
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                    label="Training" 
+                  />
                 </RadioGroup>
               </div>
             </div>
             
             <div className="space-y-2">
-              <Label>Activity Name*</Label>
-              <Input
+              <TextField
+                label="Activity Name"
                 value={activityName}
                 onChange={(e) => setActivityName(e.target.value)}
                 placeholder="Activity Name"
+                fullWidth
+                variant="outlined"
+                sx={muiFieldStyles}
               />
             </div>
             <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea
+              <TextField
+                label="Description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Enter Description"
-                className="min-h-[100px]"
+                multiline
+                rows={4}
+                fullWidth
+                variant="outlined"
+                sx={multilineFieldStyles}
               />
             </div>
           </CardContent>
@@ -372,28 +483,32 @@ export const CopySchedulePage = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Select Group</Label>
-                <Select value={group} onValueChange={setGroup}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="group1">Group 1</SelectItem>
-                    <SelectItem value="group2">Group 2</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel>Select Group</InputLabel>
+                  <Select 
+                    value={group} 
+                    label="Select Group" 
+                    onChange={(e) => setGroup(e.target.value)}
+                    sx={muiFieldStyles}
+                  >
+                    <MenuItem value="group1">Group 1</MenuItem>
+                    <MenuItem value="group2">Group 2</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
-                <Label>Select Sub-Group</Label>
-                <Select value={subGroup} onValueChange={setSubGroup}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Sub Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="subgroup1">Sub Group 1</SelectItem>
-                    <SelectItem value="subgroup2">Sub Group 2</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel>Select Sub-Group</InputLabel>
+                  <Select 
+                    value={subGroup} 
+                    label="Select Sub-Group" 
+                    onChange={(e) => setSubGroup(e.target.value)}
+                    sx={muiFieldStyles}
+                  >
+                    <MenuItem value="subgroup1">Sub Group 1</MenuItem>
+                    <MenuItem value="subgroup2">Sub Group 2</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
             </div>
             
@@ -403,14 +518,14 @@ export const CopySchedulePage = () => {
                 <div key={section.id} className="border rounded-lg p-4 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Input
+                      <TextField
                         value={section.name}
                         onChange={(e) => {
                           setSections(sections.map(s => 
                             s.id === section.id ? { ...s, name: e.target.value } : s
                           ));
                         }}
-                        className="font-medium"
+                        sx={muiFieldStyles}
                       />
                     </div>
                     <div className="flex items-center gap-2">
@@ -440,29 +555,31 @@ export const CopySchedulePage = () => {
                     <div key={task.id} className="space-y-4 border-t pt-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>Task</Label>
-                          <Input
+                          <TextField
+                            label="Task"
                             value={task.task}
                             onChange={(e) => handleUpdateTask(section.id, task.id, 'task', e.target.value)}
                             placeholder="Enter Task"
+                            fullWidth
+                            variant="outlined"
+                            sx={muiFieldStyles}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Input Type</Label>
-                          <Select 
-                            value={task.inputType} 
-                            onValueChange={(value) => handleUpdateTask(section.id, task.id, 'inputType', value)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select Input Type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Text">Text</SelectItem>
-                              <SelectItem value="Numeric">Numeric</SelectItem>
-                              <SelectItem value="Date">Date</SelectItem>
-                              <SelectItem value="Boolean">Boolean</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <FormControl fullWidth variant="outlined">
+                            <InputLabel>Input Type</InputLabel>
+                            <Select 
+                              value={task.inputType} 
+                              label="Input Type"
+                              onChange={(e) => handleUpdateTask(section.id, task.id, 'inputType', e.target.value)}
+                              sx={muiFieldStyles}
+                            >
+                              <MenuItem value="Text">Text</MenuItem>
+                              <MenuItem value="Numeric">Numeric</MenuItem>
+                              <MenuItem value="Date">Date</MenuItem>
+                              <MenuItem value="Boolean">Boolean</MenuItem>
+                            </Select>
+                          </FormControl>
                         </div>
                       </div>
 
@@ -471,7 +588,13 @@ export const CopySchedulePage = () => {
                           <Checkbox 
                             id={`mandatory-${task.id}`}
                             checked={task.mandatory}
-                            onCheckedChange={(checked) => handleUpdateTask(section.id, task.id, 'mandatory', checked)}
+                            onChange={(e) => handleUpdateTask(section.id, task.id, 'mandatory', e.target.checked)}
+                            sx={{
+                              color: '#C72030',
+                              '&.Mui-checked': {
+                                color: '#C72030'
+                              }
+                            }}
                           />
                           <Label htmlFor={`mandatory-${task.id}`}>Mandatory</Label>
                         </div>
@@ -479,7 +602,13 @@ export const CopySchedulePage = () => {
                           <Checkbox 
                             id={`reading-${task.id}`}
                             checked={task.reading}
-                            onCheckedChange={(checked) => handleUpdateTask(section.id, task.id, 'reading', checked)}
+                            onChange={(e) => handleUpdateTask(section.id, task.id, 'reading', e.target.checked)}
+                            sx={{
+                              color: '#C72030',
+                              '&.Mui-checked': {
+                                color: '#C72030'
+                              }
+                            }}
                           />
                           <Label htmlFor={`reading-${task.id}`}>Reading</Label>
                         </div>
@@ -487,7 +616,13 @@ export const CopySchedulePage = () => {
                           <Checkbox 
                             id={`helptext-${task.id}`}
                             checked={task.helpText}
-                            onCheckedChange={(checked) => handleUpdateTask(section.id, task.id, 'helpText', checked)}
+                            onChange={(e) => handleUpdateTask(section.id, task.id, 'helpText', e.target.checked)}
+                            sx={{
+                              color: '#C72030',
+                              '&.Mui-checked': {
+                                color: '#C72030'
+                              }
+                            }}
                           />
                           <Label htmlFor={`helptext-${task.id}`}>Help Text</Label>
                         </div>
@@ -505,11 +640,14 @@ export const CopySchedulePage = () => {
                       {weightage && (
                         <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                           <div className="space-y-2">
-                            <Label>Weightage</Label>
-                            <Input
+                            <TextField
+                              label="Weightage"
                               value={task.weightageValue}
                               onChange={(e) => handleUpdateTask(section.id, task.id, 'weightageValue', e.target.value)}
                               placeholder="Enter Weightage"
+                              fullWidth
+                              variant="outlined"
+                              sx={muiFieldStyles}
                             />
                           </div>
                           <div className="flex items-center gap-4 pt-6">
@@ -517,7 +655,13 @@ export const CopySchedulePage = () => {
                               <Checkbox 
                                 id={`rating-${task.id}`}
                                 checked={task.rating}
-                                onCheckedChange={(checked) => handleUpdateTask(section.id, task.id, 'rating', checked)}
+                                onChange={(e) => handleUpdateTask(section.id, task.id, 'rating', e.target.checked)}
+                                sx={{
+                                  color: '#C72030',
+                                  '&.Mui-checked': {
+                                    color: '#C72030'
+                                  }
+                                }}
                               />
                               <Label htmlFor={`rating-${task.id}`}>Rating</Label>
                             </div>
@@ -543,67 +687,77 @@ export const CopySchedulePage = () => {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Checklist Type</Label>
-              <RadioGroup value={checklistType} onValueChange={setChecklistType} className="flex gap-4">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Individual" id="individual" />
-                  <Label htmlFor="individual">Individual</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Asset Asset Group" id="asset-group" />
-                  <Label htmlFor="asset-group">Asset Asset Group</Label>
-                </div>
+              <RadioGroup value={checklistType} onChange={(e) => setChecklistType(e.target.value)} row sx={{ gap: 2 }}>
+                <FormControlLabel 
+                  value="Individual" 
+                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                  label="Individual" 
+                />
+                <FormControlLabel 
+                  value="Asset Asset Group" 
+                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+                  label="Asset Asset Group" 
+                />
               </RadioGroup>
             </div>
 
             <div className="space-y-2">
-              <Label>Asset</Label>
-              <Select value={asset} onValueChange={setAsset}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Energy Meter 1[584931186764c2f8b565]">Energy Meter 1[584931186764c2f8b565]</SelectItem>
-                  <SelectItem value="Energy Meter 23[03835269926136105d:1]">Energy Meter 23[03835269926136105d:1]</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>Asset</InputLabel>
+                <Select 
+                  value={asset} 
+                  label="Asset"
+                  onChange={(e) => setAsset(e.target.value)}
+                  sx={muiFieldStyles}
+                >
+                  <MenuItem value="Energy Meter 1[584931186764c2f8b565]">Energy Meter 1[584931186764c2f8b565]</MenuItem>
+                  <MenuItem value="Energy Meter 23[03835269926136105d:1]">Energy Meter 23[03835269926136105d:1]</MenuItem>
+                </Select>
+              </FormControl>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Assign To</Label>
-                <Select value={assignTo} onValueChange={setAssignTo}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Users">Users</SelectItem>
-                    <SelectItem value="Groups">Groups</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel>Assign To</InputLabel>
+                  <Select 
+                    value={assignTo} 
+                    label="Assign To"
+                    onChange={(e) => setAssignTo(e.target.value)}
+                    sx={muiFieldStyles}
+                  >
+                    <MenuItem value="Users">Users</MenuItem>
+                    <MenuItem value="Groups">Groups</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
-                <Label>Select User</Label>
-                <Select value={selectUser} onValueChange={setSelectUser}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Ashiq Rasul">Ashiq Rasul</SelectItem>
-                    <SelectItem value="John Doe">John Doe</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel>Select User</InputLabel>
+                  <Select 
+                    value={selectUser} 
+                    label="Select User"
+                    onChange={(e) => setSelectUser(e.target.value)}
+                    sx={muiFieldStyles}
+                  >
+                    <MenuItem value="Ashiq Rasul">Ashiq Rasul</MenuItem>
+                    <MenuItem value="John Doe">John Doe</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
-                <Label>Scan Type</Label>
-                <Select value={scanType} onValueChange={setScanType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Scan Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="qr">QR Code</SelectItem>
-                    <SelectItem value="barcode">Barcode</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel>Scan Type</InputLabel>
+                  <Select 
+                    value={scanType} 
+                    label="Scan Type"
+                    onChange={(e) => setScanType(e.target.value)}
+                    sx={muiFieldStyles}
+                  >
+                    <MenuItem value="qr">QR Code</MenuItem>
+                    <MenuItem value="barcode">Barcode</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
             </div>
 
@@ -611,101 +765,132 @@ export const CopySchedulePage = () => {
               <div className="space-y-2">
                 <Label>Plan Duration</Label>
                 <div className="flex gap-2">
-                  <Select value={planDuration} onValueChange={setPlanDuration}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Day">Day</SelectItem>
-                      <SelectItem value="Hour">Hour</SelectItem>
-                      <SelectItem value="Week">Week</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input
+                  <FormControl variant="outlined" style={{ width: '100%' }}>
+                    <InputLabel>Duration</InputLabel>
+                    <Select 
+                      value={planDuration} 
+                      label="Duration"
+                      onChange={(e) => setPlanDuration(e.target.value)}
+                      sx={muiFieldStyles}
+                    >
+                      <MenuItem value="Day">Day</MenuItem>
+                      <MenuItem value="Hour">Hour</MenuItem>
+                      <MenuItem value="Week">Week</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    label="Value"
                     value={planDurationField}
                     onChange={(e) => setPlanDurationField(e.target.value)}
-                    className="w-20"
+                    sx={{ width: 80, ...muiFieldStyles }}
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Plan Duration Type</Label>
-                <Input value="1" readOnly />
+                <TextField
+                  label="Plan Duration Type"
+                  value="1"
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  sx={muiFieldStyles}
+                />
               </div>
               <div className="space-y-2">
-                <Label>Plan value</Label>
-                <Input value="1" readOnly />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Priority</Label>
-                <Select value={priority} onValueChange={setPriority}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Email Trigger Rule</Label>
-                <Select value={emailTriggerRule} onValueChange={setEmailTriggerRule}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Email Trigger Rule" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="rule1">Rule 1</SelectItem>
-                    <SelectItem value="rule2">Rule 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Supervisors</Label>
-                <Select value={supervisors} onValueChange={setSupervisors}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Supervisors" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="supervisor1">Supervisor 1</SelectItem>
-                    <SelectItem value="supervisor2">Supervisor 2</SelectItem>
-                  </SelectContent>
-                </Select>
+                <TextField
+                  label="Plan value"
+                  value="1"
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  sx={muiFieldStyles}
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Category</Label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Technical">Technical</SelectItem>
-                    <SelectItem value="Non Technical">Non Technical</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel>Priority</InputLabel>
+                  <Select 
+                    value={priority} 
+                    label="Priority"
+                    onChange={(e) => setPriority(e.target.value)}
+                    sx={muiFieldStyles}
+                  >
+                    <MenuItem value="high">High</MenuItem>
+                    <MenuItem value="medium">Medium</MenuItem>
+                    <MenuItem value="low">Low</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
-                <Label>Submission Type</Label>
-                <Select value={submissionTime} onValueChange={setSubmissionTime}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Submission Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="immediate">Immediate</SelectItem>
-                    <SelectItem value="delayed">Delayed</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel>Email Trigger Rule</InputLabel>
+                  <Select 
+                    value={emailTriggerRule} 
+                    label="Email Trigger Rule"
+                    onChange={(e) => setEmailTriggerRule(e.target.value)}
+                    sx={muiFieldStyles}
+                  >
+                    <MenuItem value="rule1">Rule 1</MenuItem>
+                    <MenuItem value="rule2">Rule 2</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
-                <Label>Submission Time Value</Label>
-                <Input placeholder="Enter value" />
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel>Supervisors</InputLabel>
+                  <Select 
+                    value={supervisors} 
+                    label="Supervisors"
+                    onChange={(e) => setSupervisors(e.target.value)}
+                    sx={muiFieldStyles}
+                  >
+                    <MenuItem value="supervisor1">Supervisor 1</MenuItem>
+                    <MenuItem value="supervisor2">Supervisor 2</MenuItem>
+                  </Select>
+                </FormControl>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel>Category</InputLabel>
+                  <Select 
+                    value={category} 
+                    label="Category"
+                    onChange={(e) => setCategory(e.target.value)}
+                    sx={muiFieldStyles}
+                  >
+                    <MenuItem value="Technical">Technical</MenuItem>
+                    <MenuItem value="Non Technical">Non Technical</MenuItem>
+                  </Select>
+                </FormControl>
+              </div>
+              <div className="space-y-2">
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel>Submission Type</InputLabel>
+                  <Select 
+                    value={submissionTime} 
+                    label="Submission Type"
+                    onChange={(e) => setSubmissionTime(e.target.value)}
+                    sx={muiFieldStyles}
+                  >
+                    <MenuItem value="immediate">Immediate</MenuItem>
+                    <MenuItem value="delayed">Delayed</MenuItem>
+                  </Select>
+                </FormControl>
+              </div>
+              <div className="space-y-2">
+                <TextField
+                  label="Submission Time Value"
+                  placeholder="Enter value"
+                  fullWidth
+                  variant="outlined"
+                  sx={muiFieldStyles}
+                />
               </div>
             </div>
 
@@ -713,90 +898,115 @@ export const CopySchedulePage = () => {
               <div className="space-y-2">
                 <Label>Grace Time</Label>
                 <div className="flex gap-2">
-                  <Select value={graceTime} onValueChange={setGraceTime}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Day">Day</SelectItem>
-                      <SelectItem value="Hour">Hour</SelectItem>
-                      <SelectItem value="Week">Week</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input
+                  <FormControl variant="outlined" style={{ width: '100%' }}>
+                    <InputLabel>Grace Time</InputLabel>
+                    <Select 
+                      value={graceTime} 
+                      label="Grace Time"
+                      onChange={(e) => setGraceTime(e.target.value)}
+                      sx={muiFieldStyles}
+                    >
+                      <MenuItem value="Day">Day</MenuItem>
+                      <MenuItem value="Hour">Hour</MenuItem>
+                      <MenuItem value="Week">Week</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    label="Value"
                     value={graceTimeField}
                     onChange={(e) => setGraceTimeField(e.target.value)}
-                    className="w-20"
+                    sx={{ width: 80, ...muiFieldStyles }}
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Grace Time Value</Label>
-                <Input value="3" readOnly />
+                <TextField
+                  label="Grace Time Value"
+                  value="3"
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  sx={muiFieldStyles}
+                />
               </div>
               <div className="space-y-2">
-                <Label>Lock Overdue Task</Label>
-                <Select value={lockOverdueTask} onValueChange={setLockOverdueTask}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Lock Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="yes">Yes</SelectItem>
-                    <SelectItem value="no">No</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel>Lock Overdue Task</InputLabel>
+                  <Select 
+                    value={lockOverdueTask} 
+                    label="Lock Overdue Task"
+                    onChange={(e) => setLockOverdueTask(e.target.value)}
+                    sx={muiFieldStyles}
+                  >
+                    <MenuItem value="yes">Yes</MenuItem>
+                    <MenuItem value="no">No</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Frequency</Label>
-                <Select value={frequency} onValueChange={setFrequency}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Frequency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel>Frequency</InputLabel>
+                  <Select 
+                    value={frequency} 
+                    label="Frequency"
+                    onChange={(e) => setFrequency(e.target.value)}
+                    sx={muiFieldStyles}
+                  >
+                    <MenuItem value="daily">Daily</MenuItem>
+                    <MenuItem value="weekly">Weekly</MenuItem>
+                    <MenuItem value="monthly">Monthly</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
-                <Label>Cron Expression</Label>
-                <Input
+                <TextField
+                  label="Cron Expression"
                   value={cronExpression}
                   onChange={(e) => setCronExpression(e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  sx={muiFieldStyles}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Start Time</Label>
-                <Input
+                <TextField
+                  label="Start Time"
                   value={startFrom}
                   onChange={(e) => setStartFrom(e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  sx={muiFieldStyles}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>End At</Label>
-                <Input
+                <TextField
+                  label="End At"
                   value={endAt}
                   onChange={(e) => setEndAt(e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  sx={muiFieldStyles}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Select Supplier</Label>
-                <Select value={selectSupplier} onValueChange={setSelectSupplier}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Supplier" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="supplier1">Supplier 1</SelectItem>
-                    <SelectItem value="supplier2">Supplier 2</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel>Select Supplier</InputLabel>
+                  <Select 
+                    value={selectSupplier} 
+                    label="Select Supplier"
+                    onChange={(e) => setSelectSupplier(e.target.value)}
+                    sx={muiFieldStyles}
+                  >
+                    <MenuItem value="supplier1">Supplier 1</MenuItem>
+                    <MenuItem value="supplier2">Supplier 2</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
             </div>
           </CardContent>
@@ -851,7 +1061,13 @@ export const CopySchedulePage = () => {
                 <Checkbox 
                   id="specific-minute" 
                   checked={specificMinute}
-                  onCheckedChange={(checked) => setSpecificMinute(checked === true)}
+                  onChange={(e) => setSpecificMinute(e.target.checked)}
+                  sx={{
+                    color: '#C72030',
+                    '&.Mui-checked': {
+                      color: '#C72030'
+                    }
+                  }}
                 />
                 <Label htmlFor="specific-minute">Specific minute (choose one or many)</Label>
               </div>
@@ -862,7 +1078,13 @@ export const CopySchedulePage = () => {
                     <div key={minute} className="flex items-center space-x-1">
                       <Checkbox 
                         id={`minute-${minute}`} 
-                        onCheckedChange={(checked) => console.log(`Minute ${minute}:`, checked)}
+                        onChange={(e) => console.log(`Minute ${minute}:`, e.target.checked)}
+                        sx={{
+                          color: '#C72030',
+                          '&.Mui-checked': {
+                            color: '#C72030'
+                          }
+                        }}
                       />
                       <Label htmlFor={`minute-${minute}`} className="text-xs">{minute}</Label>
                     </div>
@@ -873,27 +1095,49 @@ export const CopySchedulePage = () => {
               <div className="space-y-2">
                 <Label>Every minute between minute</Label>
                 <div className="flex items-center gap-2">
-                  <Select defaultValue="00">
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <FormControl size="small" sx={{ minWidth: 80 }}>
+                    <Select 
+                      value="00"
+                      sx={{
+                        height: { xs: '36px', md: '45px' },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#e5e7eb'
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#C72030'
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#C72030'
+                        }
+                      }}
+                    >
                       {minuteOptions.map((minute) => (
-                        <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+                        <MenuItem key={minute} value={minute}>{minute}</MenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </Select>
+                  </FormControl>
                   <span>and minute</span>
-                  <Select defaultValue="00">
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <FormControl size="small" sx={{ minWidth: 80 }}>
+                    <Select 
+                      value="00"
+                      sx={{
+                        height: { xs: '36px', md: '45px' },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#e5e7eb'
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#C72030'
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#C72030'
+                        }
+                      }}
+                    >
                       {minuteOptions.map((minute) => (
-                        <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+                        <MenuItem key={minute} value={minute}>{minute}</MenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </Select>
+                  </FormControl>
                 </div>
               </div>
 
