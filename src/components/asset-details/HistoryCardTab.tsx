@@ -29,7 +29,7 @@ export const HistoryCardTab = () => {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
       {/* First History Section */}
       <div>
         <div className="flex items-center gap-2 mb-6">
@@ -39,9 +39,9 @@ export const HistoryCardTab = () => {
           <h3 className="text-lg font-semibold text-[#C72030] uppercase">History In Details</h3>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-16 gap-y-4">
+        <div className="grid grid-cols-2 gap-x-16 gap-y-6">
           {historyData.map((item, index) => (
-            <div key={index} className="flex justify-between items-center">
+            <div key={index} className="flex justify-between items-center py-2">
               <span className="text-gray-600 text-sm">{item.label}</span>
               <span className="font-medium text-sm">: {item.value}</span>
             </div>
@@ -63,10 +63,10 @@ export const HistoryCardTab = () => {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Type of activity</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Description</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Performed by</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Type of activity</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Description</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Performed by</th>
               </tr>
             </thead>
             <tbody>
