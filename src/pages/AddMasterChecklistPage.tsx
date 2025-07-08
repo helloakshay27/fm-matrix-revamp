@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -130,11 +131,19 @@ export const AddMasterChecklistPage = () => {
 
       <div className="flex flex-wrap gap-4 mb-6">
         <div className="flex items-center space-x-2">
-          <Checkbox checked={createTask} onCheckedChange={setCreateTask} id="createTask" />
+          <Checkbox 
+            checked={createTask} 
+            onCheckedChange={(checked) => setCreateTask(checked === true)} 
+            id="createTask" 
+          />
           <Label htmlFor="createTask">Create Task</Label>
         </div>
         <div className="flex items-center space-x-2">
-          <Checkbox checked={weightage} onCheckedChange={setWeightage} id="weightage" />
+          <Checkbox 
+            checked={weightage} 
+            onCheckedChange={(checked) => setWeightage(checked === true)} 
+            id="weightage" 
+          />
           <Label htmlFor="weightage">Weightage</Label>
         </div>
       </div>
@@ -180,7 +189,7 @@ export const AddMasterChecklistPage = () => {
             <TextField
               fullWidth
               multiline
-              minRows={3}
+              rows={3}
               label="Description"
               placeholder="Enter Description"
               value={description}
@@ -298,7 +307,7 @@ export const AddMasterChecklistPage = () => {
                     <label key={field} className="flex items-center gap-2">
                       <Checkbox
                         checked={task[field]}
-                        onCheckedChange={(val) => updateTask(section.id, task.id, field, val)}
+                        onCheckedChange={(checked) => updateTask(section.id, task.id, field, checked === true)}
                       />
                       <span className="capitalize">{field}</span>
                     </label>
