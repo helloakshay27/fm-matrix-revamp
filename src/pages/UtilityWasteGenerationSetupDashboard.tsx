@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -156,9 +157,9 @@ export const UtilityWasteGenerationSetupDashboard = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3 bg-[#F2EEE9]">
-          <TabsTrigger value="waste-category" className="text-black data-[state=active]:text-white">Waste Category</TabsTrigger>
-          <TabsTrigger value="commodity" className="text-black data-[state=active]:text-white">Commodity</TabsTrigger>
-          <TabsTrigger value="uom" className="text-black data-[state=active]:text-white">UOM</TabsTrigger>
+          <TabsTrigger value="waste-category" className="text-black data-[state=active]:text-black">Waste Category</TabsTrigger>
+          <TabsTrigger value="commodity" className="text-black data-[state=active]:text-black">Commodity</TabsTrigger>
+          <TabsTrigger value="uom" className="text-black data-[state=active]:text-black">UOM</TabsTrigger>
         </TabsList>
 
         {/* Waste Category Tab */}
