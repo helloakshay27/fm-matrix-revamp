@@ -40,7 +40,7 @@ export const AddAddressPage = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6 bg-gray-50 min-h-screen">
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
@@ -49,23 +49,23 @@ export const AddAddressPage = () => {
         >
           <ArrowLeft className="w-5 h-5 text-gray-600" />
         </Button>
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">ADDRESSES</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-[#1a1a1a]">ADDRESSES</h1>
       </div>
 
-      <Card className="bg-white shadow-sm">
-        <CardHeader className="pb-4">
+      <Card className="bg-white shadow-sm max-w-6xl mx-auto">
+        <CardHeader className="pb-3 md:pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-medium text-[#C72030] flex items-center gap-2">
-              <span className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+            <CardTitle className="text-base md:text-lg font-medium text-[#C72030] flex items-center gap-2">
+              <span className="w-5 h-5 md:w-6 md:h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-xs md:text-sm font-bold">
                 2
               </span>
               ADDRESS SETUP
             </CardTitle>
-            <ChevronDown className="w-5 h-5 text-gray-400" />
+            <ChevronDown className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             <div className="space-y-2">
               <CustomTextField
                 label="Address Title*"
@@ -98,13 +98,13 @@ export const AddAddressPage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 block mb-1">
                 State*
               </label>
               <Select value={formData.state} onValueChange={(value) => handleInputChange('state', value)}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full h-12 md:h-14">
                   <SelectValue placeholder="Select State" />
                 </SelectTrigger>
                 <SelectContent>
@@ -139,7 +139,7 @@ export const AddAddressPage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             <div className="space-y-2">
               <CustomTextField
                 label="Pan Number"
@@ -178,16 +178,16 @@ export const AddAddressPage = () => {
               value={formData.notes}
               onChange={(e) => handleInputChange('notes', e.target.value)}
               multiline
-              rows={4}
+              rows={3}
               fullWidth
             />
           </div>
 
-          <div className="flex justify-center pt-4">
+          <div className="flex justify-center pt-4 md:pt-6">
             <Button
               onClick={handleSubmit}
               style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:opacity-90 px-8"
+              className="text-white hover:opacity-90 px-6 md:px-8 py-2 md:py-3 text-sm md:text-base"
             >
               Submit
             </Button>
