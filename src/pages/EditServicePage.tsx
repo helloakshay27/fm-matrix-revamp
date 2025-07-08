@@ -259,3 +259,5 @@ export const EditServicePage = () => {
     </div>
   );
 };
+
+export default EditServicePage;
