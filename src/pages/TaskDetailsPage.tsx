@@ -259,7 +259,7 @@ export const TaskDetailsPage = () => {
                       multiline 
                       rows={4}
                       minRows={4}
-                      maxRows={8}
+                      maxRows={4}
                       InputLabelProps={{
                         shrink: true
                       }} 
