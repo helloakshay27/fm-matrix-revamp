@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -10,9 +11,52 @@ import { useNavigate } from 'react-router-dom';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 const fieldStyles = {
-  height: { xs: 28, sm: 36, md: 45 },
-  '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: { xs: '8px', sm: '10px', md: '12px' },
+  width: '100%',
+  '& .MuiOutlinedInput-root': {
+    height: { xs: '36px', md: '45px' },
+    borderRadius: '8px',
+    backgroundColor: '#FFFFFF',
+    '& fieldset': {
+      borderColor: '#E0E0E0',
+    },
+    '&:hover fieldset': {
+      borderColor: '#1A1A1A',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+      borderWidth: 2,
+    },
+  },
+  '& .MuiInputLabel-root': {
+    color: '#666666',
+    fontSize: '14px',
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+    '&.MuiInputLabel-shrink': {
+      transform: 'translate(14px, -9px) scale(0.75)',
+      backgroundColor: '#FFFFFF',
+      padding: '0 4px',
+    },
+  },
+  '& .MuiOutlinedInput-input, & .MuiSelect-select': {
+    color: '#1A1A1A',
+    fontSize: '14px',
+    padding: { xs: '8px 14px', md: '12px 14px' },
+    height: 'auto',
+    '&::placeholder': {
+      color: '#999999',
+      opacity: 1,
+    },
+  },
+};
+
+const multilineFieldStyles = {
+  ...fieldStyles,
+  '& .MuiOutlinedInput-root': {
+    ...fieldStyles['& .MuiOutlinedInput-root'],
+    height: 'auto',
+    alignItems: 'flex-start',
   },
 };
 
@@ -106,40 +150,30 @@ export const AddVendorAuditPage = () => {
           </div>
 
           <div>
-            <Label htmlFor="activity-name">Activity Name*</Label>
             <TextField
-              id="activity-name"
+              label="Activity Name *"
               placeholder="Enter Activity"
               fullWidth
               variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              sx={fieldStyles}
             />
           </div>
 
           <div>
-            <Label htmlFor="description">Description</Label>
             <TextField
-              id="description"
+              label="Description"
               placeholder="Enter Description"
               fullWidth
               variant="outlined"
               multiline
-              minRows={3}
-              maxRows={10}
-              InputLabelProps={{ shrink: true }}
-              InputProps={{
-                sx: {
-                  '& textarea': {
-                    height: 'auto',
-                    overflow: 'hidden',
-                    resize: 'none',
-                    padding: '8px 14px',
-                  },
-                },
+              rows={3}
+              InputLabelProps={{
+                shrink: true,
               }}
-              sx={{ mt: 1 }}
+              sx={multilineFieldStyles}
             />
           </div>
 
@@ -171,9 +205,9 @@ export const AddVendorAuditPage = () => {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {['Group', 'Sub Group'].map((label, idx) => (
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} key={idx}>
+              <FormControl fullWidth variant="outlined" sx={fieldStyles} key={idx}>
                 <InputLabel shrink>{`Select ${label}`}</InputLabel>
-                <MuiSelect label={`Select ${label}`} displayEmpty sx={fieldStyles}>
+                <MuiSelect label={`Select ${label}`} displayEmpty>
                   <MenuItem value=""><em>Select {label}</em></MenuItem>
                   <MenuItem value={`${label.toLowerCase()}1`}>{`${label} 1`}</MenuItem>
                   <MenuItem value={`${label.toLowerCase()}2`}>{`${label} 2`}</MenuItem>
@@ -184,16 +218,18 @@ export const AddVendorAuditPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <TextField
+              label="Task"
               placeholder="Enter Task"
               fullWidth
               variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              sx={fieldStyles}
             />
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
               <InputLabel shrink>Select Input Type</InputLabel>
-              <MuiSelect label="Select Input Type" displayEmpty sx={fieldStyles}>
+              <MuiSelect label="Select Input Type" displayEmpty>
                 <MenuItem value=""><em>Select Input Type</em></MenuItem>
                 <MenuItem value="text">Text</MenuItem>
                 <MenuItem value="radio">Radio Button</MenuItem>
@@ -251,9 +287,9 @@ export const AddVendorAuditPage = () => {
           ].map((row, idx) => (
             <div key={idx} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {row.map((label, i) => (
-                <FormControl key={i} fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <FormControl key={i} fullWidth variant="outlined" sx={fieldStyles}>
                   <InputLabel shrink>{`Select ${label}`}</InputLabel>
-                  <MuiSelect label={`Select ${label}`} displayEmpty sx={fieldStyles}>
+                  <MuiSelect label={`Select ${label}`} displayEmpty>
                     <MenuItem value=""><em>Select {label}</em></MenuItem>
                     <MenuItem value={`${label.toLowerCase().replace(' ', '')}1`}>{`${label} 1`}</MenuItem>
                     <MenuItem value={`${label.toLowerCase().replace(' ', '')}2`}>{`${label} 2`}</MenuItem>
@@ -281,3 +317,4 @@ export const AddVendorAuditPage = () => {
     </div>
   );
 };
+
