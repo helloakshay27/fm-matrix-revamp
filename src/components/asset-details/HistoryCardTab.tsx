@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { FileText, Clock } from 'lucide-react';
 
 export const HistoryCardTab = () => {
   const historyData = [
@@ -34,16 +35,16 @@ export const HistoryCardTab = () => {
       <div>
         <div className="flex items-center gap-2 mb-6">
           <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-            <span className="text-white text-xs">📄</span>
+            <FileText className="w-3 h-3 text-white" />
           </div>
           <h3 className="text-lg font-semibold text-[#C72030] uppercase">History In Details</h3>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-16 gap-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 lg:gap-x-16 gap-y-4 lg:gap-y-6">
           {historyData.map((item, index) => (
-            <div key={index} className="flex justify-between items-center py-2">
+            <div key={index} className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-2 gap-1 sm:gap-0">
               <span className="text-gray-600 text-sm">{item.label}</span>
-              <span className="font-medium text-sm">: {item.value}</span>
+              <span className="font-medium text-sm break-all sm:break-normal">: {item.value}</span>
             </div>
           ))}
         </div>
@@ -53,26 +54,33 @@ export const HistoryCardTab = () => {
       <div>
         <div className="flex items-center gap-2 mb-6">
           <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-            <span className="text-white text-xs">📄</span>
+            <Clock className="w-3 h-3 text-white" />
           </div>
           <h3 className="text-lg font-semibold text-[#C72030] uppercase">History In Details</h3>
         </div>
 
         {/* Table */}
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Type of activity</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Description</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Performed by</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Empty table body */}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap">Date</th>
+                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap">Type of activity</th>
+                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap">Description</th>
+                  <th className="px-4 sm:px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap">Performed by</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {/* Empty table body */}
+                <tr>
+                  <td colSpan={4} className="px-4 sm:px-6 py-8 text-center text-gray-500 text-sm">
+                    No history records available
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
