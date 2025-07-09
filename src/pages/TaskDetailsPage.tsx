@@ -8,7 +8,6 @@ import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } fro
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-
 export const TaskDetailsPage = () => {
   const {
     id
@@ -46,14 +45,14 @@ export const TaskDetailsPage = () => {
     email: false,
     sms: false
   });
-
-  const [attachedFiles, setAttachedFiles] = useState<{[key: string]: File | null}>({
+  const [attachedFiles, setAttachedFiles] = useState<{
+    [key: string]: File | null;
+  }>({
     file1: null,
     file2: null,
     file3: null,
     file4: null
   });
-
   const handleBack = () => {
     navigate('/maintenance/task');
   };
@@ -121,7 +120,6 @@ export const TaskDetailsPage = () => {
       }
     }
   };
-
   return <>
       <div className="p-6 bg-white min-h-screen">
         {/* Header */}
@@ -152,8 +150,12 @@ export const TaskDetailsPage = () => {
         {/* Task Details Section */}
         <Card className="mb-6">
           <CardHeader className="border-b bg-white">
-            <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
-              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{ backgroundColor: '#C72030' }}>T</div>
+            <CardTitle className="flex items-center gap-2" style={{
+            color: '#C72030'
+          }}>
+              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{
+              backgroundColor: '#C72030'
+            }}>T</div>
               Task Details
             </CardTitle>
           </CardHeader>
@@ -222,8 +224,12 @@ export const TaskDetailsPage = () => {
         {/* Activity Section */}
         <Card>
           <CardHeader className="border-b bg-white">
-            <CardTitle style={{ color: '#C72030' }} className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{ backgroundColor: '#C72030' }}>A</div>
+            <CardTitle style={{
+            color: '#C72030'
+          }} className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm" style={{
+              backgroundColor: '#C72030'
+            }}>A</div>
               Activity
             </CardTitle>
           </CardHeader>
@@ -250,78 +256,52 @@ export const TaskDetailsPage = () => {
 
               {activeTab === 'Input' && <div className="space-y-4">
                   <div>
-                    <TextField 
-                      label="Input Value" 
-                      fullWidth 
-                      variant="outlined" 
-                      InputLabelProps={{
-                        shrink: true
-                      }} 
-                      InputProps={{
-                        sx: fieldStyles
-                      }} 
-                      sx={{
-                        mt: 1
-                      }} 
-                    />
+                    <TextField label="Input Value" fullWidth variant="outlined" InputLabelProps={{
+                  shrink: true
+                }} InputProps={{
+                  sx: fieldStyles
+                }} sx={{
+                  mt: 1
+                }} />
                   </div>
                   <div>
-                    <TextField 
-                      label="Notes" 
-                      fullWidth 
-                      variant="outlined" 
-                      multiline 
-                      rows={4}
-                      InputLabelProps={{
-                        shrink: true
-                      }} 
-                      sx={{
-                        mt: 1,
-                        '& .MuiOutlinedInput-root': {
-                          alignItems: 'flex-start',
-                          padding: 0
-                        },
-                        '& .MuiInputBase-inputMultiline': {
-                          padding: '12px',
-                          minHeight: 'auto',
-                          height: 'auto',
-                          lineHeight: 1.5
-                        }
-                      }} 
-                    />
+                    <TextField label="Notes" fullWidth variant="outlined" multiline rows={4} InputLabelProps={{
+                  shrink: true
+                }} sx={{
+                  mt: 1,
+                  '& .MuiOutlinedInput-root': {
+                    alignItems: 'flex-start',
+                    padding: 0
+                  },
+                  '& .MuiInputBase-inputMultiline': {
+                    padding: '12px',
+                    minHeight: 'auto',
+                    height: 'auto',
+                    lineHeight: 1.5
+                  }
+                }} />
                   </div>
                 </div>}
 
               {activeTab === 'Comments' && <div className="space-y-4">
                   <div>
-                    <TextField 
-                      label="Comment" 
-                      fullWidth 
-                      variant="outlined" 
-                      multiline 
-                      rows={4}
-                      minRows={4}
-                      maxRows={8}
-                      InputLabelProps={{
-                        shrink: true
-                      }} 
-                      InputProps={{
-                        sx: {
-                          ...fieldStyles,
-                          alignItems: 'flex-start',
-                          '& .MuiInputBase-inputMultiline': {
-                            minHeight: '80px',
-                            resize: 'vertical'
-                          }
-                        }
-                      }} 
-                      sx={{
-                        mt: 1,
-                        '& .MuiOutlinedInput-root': {
-                          minHeight: '100px'
-                        }
-                      }} 
-                    />
+                    <TextField label="Comment" fullWidth variant="outlined" multiline rows={4} minRows={4} maxRows={8} InputLabelProps={{
+                  shrink: true
+                }} InputProps={{
+                  sx: {
+                    ...fieldStyles,
+                    alignItems: 'flex-start',
+                    '& .MuiInputBase-inputMultiline': {
+                      minHeight: '80px',
+                      resize: 'vertical'
+                    }
+                  }
+                }} sx={{
+                  mt: 1,
+                  '& .MuiOutlinedInput-root': {
+                    minHeight: '100px'
+                  }
+                }} />
                   </div>
                   <Button style={{
                 backgroundColor: '#C72030'
@@ -348,24 +328,15 @@ export const TaskDetailsPage = () => {
 
               {activeTab === 'Attachments' && <div className="space-y-4">
                   <div>
-                    <TextField 
-                      label="Attachment" 
-                      type="file" 
-                      inputProps={{
-                        accept: 'image/*,application/pdf'
-                      }} 
-                      fullWidth 
-                      variant="outlined" 
-                      InputLabelProps={{
-                        shrink: true
-                      }} 
-                      InputProps={{
-                        sx: fieldStyles
-                      }} 
-                      sx={{
-                        mt: 1
-                      }} 
-                    />
+                    <TextField label="Attachment" type="file" inputProps={{
+                  accept: 'image/*,application/pdf'
+                }} fullWidth variant="outlined" InputLabelProps={{
+                  shrink: true
+                }} InputProps={{
+                  sx: fieldStyles
+                }} sx={{
+                  mt: 1
+                }} />
                   </div>
                   <Button style={{
                 backgroundColor: '#C72030'
@@ -388,8 +359,8 @@ export const TaskDetailsPage = () => {
           <div className="space-y-6 p-4">
             {/* Question 1 */}
             <div className="space-y-3">
-              <div className="bg-orange-100 p-3 rounded">
-                <h3 className="font-medium">Washroom - Ladies Washroom</h3>
+              <div className="p-3 rounded bg-white">
+                <h3 className="font-medium text-red-700">Washroom - Ladies Washroom</h3>
               </div>
               <p className="font-medium">1. Is Floor Clean ?</p>
               <div className="flex items-center space-x-2">
@@ -400,35 +371,24 @@ export const TaskDetailsPage = () => {
                 <label htmlFor="floor-clean">Yes</label>
               </div>
               <div className="space-y-2">
-                <TextField 
-                  label="Floor Comment" 
-                  placeholder="Enter Floor Comment" 
-                  value={formData.floorComment} 
-                  onChange={e => setFormData(prev => ({
-                    ...prev,
-                    floorComment: e.target.value
-                  }))} 
-                  fullWidth 
-                  variant="outlined" 
-                  multiline 
-                  rows={4}
-                  InputLabelProps={{
-                    shrink: true
-                  }} 
-                  sx={{
-                    mt: 1,
-                    '& .MuiOutlinedInput-root': {
-                      alignItems: 'flex-start',
-                      padding: 0
-                    },
-                    '& .MuiInputBase-inputMultiline': {
-                      padding: '12px',
-                      minHeight: 'auto',
-                      height: 'auto',
-                      lineHeight: 1.5
-                    }
-                  }} 
-                />
+                <TextField label="Floor Comment" placeholder="Enter Floor Comment" value={formData.floorComment} onChange={e => setFormData(prev => ({
+                ...prev,
+                floorComment: e.target.value
+              }))} fullWidth variant="outlined" multiline rows={4} InputLabelProps={{
+                shrink: true
+              }} sx={{
+                mt: 1,
+                '& .MuiOutlinedInput-root': {
+                  alignItems: 'flex-start',
+                  padding: 0
+                },
+                '& .MuiInputBase-inputMultiline': {
+                  padding: '12px',
+                  minHeight: 'auto',
+                  height: 'auto',
+                  lineHeight: 1.5
+                }
+              }} />
               </div>
               <div className="flex gap-4">
                 {[1, 2, 3, 4, 5].map(star => <span key={star} className="text-gray-300 text-xl cursor-pointer hover:text-yellow-400">☆</span>)}
@@ -437,13 +397,7 @@ export const TaskDetailsPage = () => {
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <input 
-                        type="file" 
-                        onChange={(e) => handleFileUpload(e, 'file1')} 
-                        className="hidden" 
-                        id="file-upload-1" 
-                        accept="image/*,.pdf" 
-                      />
+                      <input type="file" onChange={e => handleFileUpload(e, 'file1')} className="hidden" id="file-upload-1" accept="image/*,.pdf" />
                       <label htmlFor="file-upload-1" className="text-red-600 cursor-pointer hover:underline">
                         Choose File
                       </label>
@@ -451,12 +405,7 @@ export const TaskDetailsPage = () => {
                         {attachedFiles.file1 ? attachedFiles.file1.name : 'No file chosen'}
                       </span>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 border-red-600 hover:bg-red-50"
-                      onClick={() => document.getElementById('file-upload-1')?.click()}
-                    >
+                    <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50" onClick={() => document.getElementById('file-upload-1')?.click()}>
                       <Plus className="w-4 h-4 mr-1" />
                       Upload Files
                     </Button>
@@ -469,35 +418,24 @@ export const TaskDetailsPage = () => {
             <div className="space-y-3">
               <p className="font-medium">2. LBLR lobby*</p>
               <div className="space-y-2">
-                <TextField 
-                  label="Dust Comment" 
-                  placeholder="Enter Dust Comment" 
-                  value={formData.dustComment} 
-                  onChange={e => setFormData(prev => ({
-                    ...prev,
-                    dustComment: e.target.value
-                  }))} 
-                  fullWidth 
-                  variant="outlined" 
-                  multiline 
-                  rows={4}
-                  InputLabelProps={{
-                    shrink: true
-                  }} 
-                  sx={{
-                    mt: 1,
-                    '& .MuiOutlinedInput-root': {
-                      alignItems: 'flex-start',
-                      padding: 0
-                    },
-                    '& .MuiInputBase-inputMultiline': {
-                      padding: '12px',
-                      minHeight: 'auto',
-                      height: 'auto',
-                      lineHeight: 1.5
-                    }
-                  }} 
-                />
+                <TextField label="Dust Comment" placeholder="Enter Dust Comment" value={formData.dustComment} onChange={e => setFormData(prev => ({
+                ...prev,
+                dustComment: e.target.value
+              }))} fullWidth variant="outlined" multiline rows={4} InputLabelProps={{
+                shrink: true
+              }} sx={{
+                mt: 1,
+                '& .MuiOutlinedInput-root': {
+                  alignItems: 'flex-start',
+                  padding: 0
+                },
+                '& .MuiInputBase-inputMultiline': {
+                  padding: '12px',
+                  minHeight: 'auto',
+                  height: 'auto',
+                  lineHeight: 1.5
+                }
+              }} />
               </div>
               <div className="flex gap-4">
                 {[1, 2, 3, 4, 5].map(star => <span key={star} className="text-gray-300 text-xl cursor-pointer hover:text-yellow-400">☆</span>)}
@@ -506,13 +444,7 @@ export const TaskDetailsPage = () => {
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <input 
-                        type="file" 
-                        onChange={(e) => handleFileUpload(e, 'file2')} 
-                        className="hidden" 
-                        id="file-upload-2" 
-                        accept="image/*,.pdf" 
-                      />
+                      <input type="file" onChange={e => handleFileUpload(e, 'file2')} className="hidden" id="file-upload-2" accept="image/*,.pdf" />
                       <label htmlFor="file-upload-2" className="text-red-600 cursor-pointer hover:underline">
                         Choose File
                       </label>
@@ -520,12 +452,7 @@ export const TaskDetailsPage = () => {
                         {attachedFiles.file2 ? attachedFiles.file2.name : 'No file chosen'}
                       </span>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 border-red-600 hover:bg-red-50"
-                      onClick={() => document.getElementById('file-upload-2')?.click()}
-                    >
+                    <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50" onClick={() => document.getElementById('file-upload-2')?.click()}>
                       <Plus className="w-4 h-4 mr-1" />
                       Upload Files
                     </Button>
@@ -580,47 +507,30 @@ export const TaskDetailsPage = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <TextField 
-                  label="Lift Comment" 
-                  placeholder="Enter Lift Comment" 
-                  value={formData.liftComment} 
-                  onChange={e => setFormData(prev => ({
-                    ...prev,
-                    liftComment: e.target.value
-                  }))} 
-                  fullWidth 
-                  variant="outlined" 
-                  multiline 
-                  rows={4}
-                  InputLabelProps={{
-                    shrink: true
-                  }} 
-                  sx={{
-                    mt: 1,
-                    '& .MuiOutlinedInput-root': {
-                      alignItems: 'flex-start',
-                      padding: 0
-                    },
-                    '& .MuiInputBase-inputMultiline': {
-                      padding: '12px',
-                      minHeight: 'auto',
-                      height: 'auto',
-                      lineHeight: 1.5
-                    }
-                  }} 
-                />
+                <TextField label="Lift Comment" placeholder="Enter Lift Comment" value={formData.liftComment} onChange={e => setFormData(prev => ({
+                ...prev,
+                liftComment: e.target.value
+              }))} fullWidth variant="outlined" multiline rows={4} InputLabelProps={{
+                shrink: true
+              }} sx={{
+                mt: 1,
+                '& .MuiOutlinedInput-root': {
+                  alignItems: 'flex-start',
+                  padding: 0
+                },
+                '& .MuiInputBase-inputMultiline': {
+                  padding: '12px',
+                  minHeight: 'auto',
+                  height: 'auto',
+                  lineHeight: 1.5
+                }
+              }} />
               </div>
               <div className="space-y-2">
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <input 
-                        type="file" 
-                        onChange={(e) => handleFileUpload(e, 'file3')} 
-                        className="hidden" 
-                        id="file-upload-3" 
-                        accept="image/*,.pdf" 
-                      />
+                      <input type="file" onChange={e => handleFileUpload(e, 'file3')} className="hidden" id="file-upload-3" accept="image/*,.pdf" />
                       <label htmlFor="file-upload-3" className="text-red-600 cursor-pointer hover:underline">
                         Choose File
                       </label>
@@ -628,12 +538,7 @@ export const TaskDetailsPage = () => {
                         {attachedFiles.file3 ? attachedFiles.file3.name : 'No file chosen'}
                       </span>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 border-red-600 hover:bg-red-50"
-                      onClick={() => document.getElementById('file-upload-3')?.click()}
-                    >
+                    <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50" onClick={() => document.getElementById('file-upload-3')?.click()}>
                       <Plus className="w-4 h-4 mr-1" />
                       Upload Files
                     </Button>
@@ -644,13 +549,7 @@ export const TaskDetailsPage = () => {
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <input 
-                        type="file" 
-                        onChange={(e) => handleFileUpload(e, 'file4')} 
-                        className="hidden" 
-                        id="file-upload-4" 
-                        accept="image/*,.pdf" 
-                      />
+                      <input type="file" onChange={e => handleFileUpload(e, 'file4')} className="hidden" id="file-upload-4" accept="image/*,.pdf" />
                       <label htmlFor="file-upload-4" className="text-red-600 cursor-pointer hover:underline">
                         Choose File
                       </label>
@@ -658,12 +557,7 @@ export const TaskDetailsPage = () => {
                         {attachedFiles.file4 ? attachedFiles.file4.name : 'No file chosen'}
                       </span>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 border-red-600 hover:bg-red-50"
-                      onClick={() => document.getElementById('file-upload-4')?.click()}
-                    >
+                    <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50" onClick={() => document.getElementById('file-upload-4')?.click()}>
                       <Plus className="w-4 h-4 mr-1" />
                       Upload Files
                     </Button>
@@ -688,10 +582,7 @@ export const TaskDetailsPage = () => {
         <DialogContent className="max-w-md">
           <DialogHeader className="flex flex-row items-center justify-between">
             <DialogTitle>Task Reschedule</DialogTitle>
-            <button 
-              onClick={() => setShowRescheduleDialog(false)}
-              className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100  disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
-            >
+            <button onClick={() => setShowRescheduleDialog(false)} className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100  disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
               <X className="h-4 w-4" />
               <span className="sr-only">Close</span>
             </button>
@@ -699,73 +590,50 @@ export const TaskDetailsPage = () => {
           
           <div className="space-y-4">
             <div>
-              <h3 className="font-medium mb-4" style={{ color: '#C72030' }}>New Schedule</h3>
+              <h3 className="font-medium mb-4" style={{
+              color: '#C72030'
+            }}>New Schedule</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <TextField 
-                    label="Schedule Date" 
-                    type="date" 
-                    value={rescheduleData.scheduleDate} 
-                    onChange={e => setRescheduleData(prev => ({
-                      ...prev,
-                      scheduleDate: e.target.value
-                    }))} 
-                    fullWidth 
-                    variant="outlined" 
-                    InputLabelProps={{
-                      shrink: true
-                    }} 
-                    InputProps={{
-                      sx: fieldStyles
-                    }} 
-                    sx={{
-                      mt: 1
-                    }} 
-                  />
+                  <TextField label="Schedule Date" type="date" value={rescheduleData.scheduleDate} onChange={e => setRescheduleData(prev => ({
+                  ...prev,
+                  scheduleDate: e.target.value
+                }))} fullWidth variant="outlined" InputLabelProps={{
+                  shrink: true
+                }} InputProps={{
+                  sx: fieldStyles
+                }} sx={{
+                  mt: 1
+                }} />
                 </div>
                 <div>
-                  <TextField 
-                    label="Time" 
-                    type="time" 
-                    value={rescheduleData.time} 
-                    onChange={e => setRescheduleData(prev => ({
-                      ...prev,
-                      time: e.target.value
-                    }))} 
-                    fullWidth 
-                    variant="outlined" 
-                    InputLabelProps={{
-                      shrink: true
-                    }} 
-                    InputProps={{
-                      sx: fieldStyles
-                    }} 
-                    sx={{
-                      mt: 1
-                    }} 
-                  />
+                  <TextField label="Time" type="time" value={rescheduleData.time} onChange={e => setRescheduleData(prev => ({
+                  ...prev,
+                  time: e.target.value
+                }))} fullWidth variant="outlined" InputLabelProps={{
+                  shrink: true
+                }} InputProps={{
+                  sx: fieldStyles
+                }} sx={{
+                  mt: 1
+                }} />
                 </div>
               </div>
             </div>
 
             <div>
-              <h3 className="font-medium mb-2" style={{ color: '#C72030' }}>Notify Users</h3>
+              <h3 className="font-medium mb-2" style={{
+              color: '#C72030'
+            }}>Notify Users</h3>
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" sx={{
                 mt: 1
               }}>
                   <InputLabel id="select-users-label" shrink>Select Users</InputLabel>
-                  <MuiSelect 
-                    labelId="select-users-label" 
-                    label="Select Users" 
-                    displayEmpty 
-                    value={rescheduleData.selectUsers} 
-                    onChange={e => setRescheduleData(prev => ({
-                      ...prev,
-                      selectUsers: e.target.value
-                    }))} 
-                    sx={fieldStyles}
-                  >
+                  <MuiSelect labelId="select-users-label" label="Select Users" displayEmpty value={rescheduleData.selectUsers} onChange={e => setRescheduleData(prev => ({
+                  ...prev,
+                  selectUsers: e.target.value
+                }))} sx={fieldStyles}>
                     <MenuItem value=""><em>Select Users</em></MenuItem>
                     <MenuItem value="user1">User 1</MenuItem>
                     <MenuItem value="user2">User 2</MenuItem>
