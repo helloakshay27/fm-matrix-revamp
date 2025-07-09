@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Search, RotateCcw, Droplets, FileText, Frown, Toilet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
 const fieldStyles = {
   width: '100%',
   '& .MuiOutlinedInput-root': {
@@ -48,6 +49,7 @@ const fieldStyles = {
     }
   }
 };
+
 const mockSurveyData = [{
   id: 1,
   title: 'Soap Missing',
@@ -73,6 +75,7 @@ const mockSurveyData = [{
   status: 'pending',
   count: 0
 }];
+
 export const SurveyResponsePage = () => {
   const [formData, setFormData] = useState({
     survey: '',
@@ -85,16 +88,19 @@ export const SurveyResponsePage = () => {
     room: ''
   });
   const [showResults, setShowResults] = useState(false);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleSearch = () => {
     console.log('Search clicked with data:', formData);
     setShowResults(true);
   };
+
   const handleReset = () => {
     setFormData({
       survey: '',
@@ -108,6 +114,7 @@ export const SurveyResponsePage = () => {
     });
     setShowResults(false);
   };
+
   return <div className="flex-1 p-4 sm:p-6 md:p-8 bg-white min-h-screen">
       {/* Header */}
       <div className="mb-6">
@@ -225,32 +232,20 @@ export const SurveyResponsePage = () => {
       {/* Survey Results Section */}
       {showResults && <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Survey Results</h2>
-          <div className="space-y-4">
+          <div className="space-y-6">
             {mockSurveyData.map((item, index) => {
           const IconComponent = item.icon;
-          return <div key={item.id} className="flex items-center justify-between p-4 border-b border-gray-100 last:border-b-0">
-                  <div className="flex items-center space-x-4" style={{
-              color: '#C72030'
-            }}>
-                    <span className="font-medium text-sm text-red-700">
-                      {index + 1}.
-                    </span>
-                    <span className="font-medium text-orange-700">
-                      {item.title}
-                    </span>
+          return <div key={item.id} className="flex flex-col items-center space-y-3">
+                  <div className="flex flex-col items-center">
+                    <div className="w-16 h-16 rounded-lg border border-gray-200 flex items-center justify-center mb-2">
+                      <IconComponent className="w-8 h-8 text-gray-600" />
+                    </div>
+                    <span className="text-sm text-gray-700 text-center">{item.title}</span>
                   </div>
-                  <div className="flex items-center space-x-6">
-                    <div className="flex flex-col items-center">
-                      <div className="w-12 h-12 rounded-lg border border-gray-200 flex items-center justify-center mb-2">
-                        <IconComponent className="w-6 h-6 text-gray-600" />
-                      </div>
-                      <span className="text-xs text-gray-600">{item.title}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="bg-[#F6F4EE] text-[#C72030] px-2 py-1 rounded text-sm font-medium">
-                        {item.count}
-                      </span>
-                    </div>
+                  <div className="flex items-center justify-center">
+                    <span className="bg-[#F6F4EE] text-[#C72030] px-3 py-1 rounded text-lg font-medium">
+                      {item.count}
+                    </span>
                   </div>
                 </div>;
         })}
