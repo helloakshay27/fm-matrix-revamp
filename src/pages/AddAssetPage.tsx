@@ -275,7 +275,7 @@ const AddAssetPage = () => {
               ASSET DETAILS
             </div>
             <div className="flex items-center gap-2">
-              <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm flex items-center gap-1 hover:bg-blue-700">
+              <button className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80" style={{ backgroundColor: '#F6F4EE', color: '#C72030' }}>
                 <Plus className="w-4 h-4" />
                 Custom Field
               </button>
@@ -283,27 +283,13 @@ const AddAssetPage = () => {
             </div>
           </div>
           {expandedSections.asset && <div className="p-4 sm:p-6">
-              {/* First row: Asset Name, Asset No, Model No, Serial No, Manufacturer, Vendor */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-4">
+              {/* First row: Asset Name, Model No., Manufacturer */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                 <TextField
                   required
                   label="Asset Name"
                   placeholder="Enter Asset Name"
                   name="assetName"
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    shrink: true
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
-                />
-                <TextField
-                  required
-                  label="Asset No."
-                  placeholder="Enter Asset No"
-                  name="assetNo"
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{
@@ -328,19 +314,6 @@ const AddAssetPage = () => {
                   }}
                 />
                 <TextField
-                  label="Serial No."
-                  placeholder="Enter Serial No"
-                  name="serialNo"
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    shrink: true
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
-                />
-                <TextField
                   required
                   label="Manufacturer"
                   placeholder="Enter Manufacturer"
@@ -354,25 +327,10 @@ const AddAssetPage = () => {
                     sx: fieldStyles
                   }}
                 />
-                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
-                  <InputLabel id="vendor-select-label" shrink>Vendor</InputLabel>
-                  <MuiSelect
-                    labelId="vendor-select-label"
-                    label="Vendor"
-                    displayEmpty
-                    value=""
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value=""><em>Select Vendor</em></MenuItem>
-                    <MenuItem value="vendor1">Vendor 1</MenuItem>
-                    <MenuItem value="vendor2">Vendor 2</MenuItem>
-                    <MenuItem value="vendor3">Vendor 3</MenuItem>
-                  </MuiSelect>
-                </FormControl>
               </div>
 
-              {/* Second row: Group, Subgroup, Commissioning Date */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              {/* Second row: Group, Subgroup */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
                   <InputLabel id="group-select-label" shrink>Group</InputLabel>
                   <MuiSelect
@@ -403,20 +361,6 @@ const AddAssetPage = () => {
                     <MenuItem value="subgroup2">Subgroup 2</MenuItem>
                   </MuiSelect>
                 </FormControl>
-                <TextField
-                  label="Commissioning Date"
-                  placeholder="dd/mm/yyyy"
-                  name="commissioningDate"
-                  type="date"
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    shrink: true
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
-                />
               </div>
 
               {/* Third row: Status */}
