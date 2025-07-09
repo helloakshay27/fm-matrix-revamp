@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip } from 'lucide-react';
+import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Outlet, Frown } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
 const AddAssetPage = () => {
   const navigate = useNavigate();
   const [expandedSections, setExpandedSections] = useState({
@@ -19,6 +20,8 @@ const AddAssetPage = () => {
   const [subCategoryType, setSubCategoryType] = useState('');
   const [meterType, setMeterType] = useState('');
   const [criticalStatus, setCriticalStatus] = useState('');
+  const [showBoardRatioOptions, setShowBoardRatioOptions] = useState(false);
+  
   const [consumptionMeasures, setConsumptionMeasures] = useState([{
     id: 1,
     name: '',
@@ -48,96 +51,77 @@ const AddAssetPage = () => {
     amc: []
   });
 
-  // Meter category options
-  const getMeterCategoryOptions = () => [{
-    value: 'electrical',
-    label: 'Electrical'
-  }, {
-    value: 'water',
-    label: 'Water'
-  }, {
-    value: 'gas',
-    label: 'Gas'
-  }, {
-    value: 'steam',
-    label: 'Steam'
-  }, {
-    value: 'thermal',
-    label: 'Thermal'
-  }, {
-    value: 'flow',
-    label: 'Flow'
-  }];
+  // Meter category options matching the images
+  const getMeterCategoryOptions = () => [
+    {
+      value: 'board',
+      label: 'Board',
+      icon: BarChart3
+    },
+    {
+      value: 'dg',
+      label: 'DG',
+      icon: Zap
+    },
+    {
+      value: 'renewable',
+      label: 'Renewable',
+      icon: Sun
+    },
+    {
+      value: 'fresh-water',
+      label: 'Fresh Water',
+      icon: Droplet
+    },
+    {
+      value: 'recycled',
+      label: 'Recycled',
+      icon: Recycle
+    },
+    {
+      value: 'iex-gdam',
+      label: 'IEX-GDAM',
+      icon: BarChart
+    }
+  ];
 
-  // Sub-category options based on selected meter category
-  const getSubCategoryOptions = () => {
-    const subCategories = {
-      electrical: [{
-        value: 'kwh',
-        label: 'kWh'
-      }, {
-        value: 'kvah',
-        label: 'kVAh'
-      }, {
-        value: 'voltage',
-        label: 'Voltage'
-      }, {
-        value: 'current',
-        label: 'Current'
-      }],
-      water: [{
-        value: 'flow-rate',
-        label: 'Flow Rate'
-      }, {
-        value: 'pressure',
-        label: 'Pressure'
-      }, {
-        value: 'temperature',
-        label: 'Temperature'
-      }],
-      gas: [{
-        value: 'volume',
-        label: 'Volume'
-      }, {
-        value: 'pressure',
-        label: 'Pressure'
-      }, {
-        value: 'flow-rate',
-        label: 'Flow Rate'
-      }],
-      steam: [{
-        value: 'pressure',
-        label: 'Pressure'
-      }, {
-        value: 'temperature',
-        label: 'Temperature'
-      }, {
-        value: 'flow-rate',
-        label: 'Flow Rate'
-      }],
-      thermal: [{
-        value: 'temperature',
-        label: 'Temperature'
-      }, {
-        value: 'btu',
-        label: 'BTU'
-      }],
-      flow: [{
-        value: 'volume',
-        label: 'Volume'
-      }, {
-        value: 'mass',
-        label: 'Mass'
-      }]
-    };
-    return subCategories[meterCategoryType] || [];
-  };
+  // Board Ratio sub-options (second image)
+  const getBoardRatioOptions = () => [
+    {
+      value: 'ht-panel',
+      label: 'HT Panel',
+      icon: Plug
+    },
+    {
+      value: 'vcb',
+      label: 'VCB',
+      icon: Activity
+    },
+    {
+      value: 'transformer',
+      label: 'Transformer',
+      icon: Zap
+    },
+    {
+      value: 'lt-panel',
+      label: 'LT Panel',
+      icon: Outlet
+    }
+  ];
 
   // Handle meter category change
   const handleMeterCategoryChange = value => {
     setMeterCategoryType(value);
     setSubCategoryType(''); // Reset sub-category when main category changes
+    
+    // Show Board Ratio options if Board is selected
+    if (value === 'board') {
+      setShowBoardRatioOptions(true);
+    } else {
+      setShowBoardRatioOptions(false);
+    }
   };
+
   const handleItAssetsToggleChange = checked => {
     setItAssetsToggle(checked);
     setExpandedSections(prev => ({
@@ -244,6 +228,7 @@ const AddAssetPage = () => {
       }
     }
   };
+
   return <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
@@ -484,22 +469,19 @@ const AddAssetPage = () => {
               {expandedSections.meterCategory ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
             </div>
           </div>
-          {expandedSections.meterCategory && <div className="p-4 sm:p-6">
+          {expandedSections.meterCategory && (
+            <div className="p-4 sm:p-6">
               {/* Meter Type */}
               <div className="mb-6">
                 <div className="flex items-center gap-4 mb-4">
                   <span className="text-[#C72030] font-medium text-sm sm:text-base">Meter Type</span>
                   <div className="flex gap-6">
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="meter-type-parent" name="meterType" value="parent" checked={meterType === 'parent'} onChange={e => setMeterType(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{
-                    accentColor: '#2563eb'
-                  }} />
+                      <input type="radio" id="meter-type-parent" name="meterType" value="parent" checked={meterType === 'parent'} onChange={e => setMeterType(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{ accentColor: '#2563eb' }} />
                       <label htmlFor="meter-type-parent" className="text-sm">Parent</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="meter-type-sub" name="meterType" value="sub" checked={meterType === 'sub'} onChange={e => setMeterType(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{
-                    accentColor: '#2563eb'
-                  }} />
+                      <input type="radio" id="meter-type-sub" name="meterType" value="sub" checked={meterType === 'sub'} onChange={e => setMeterType(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{ accentColor: '#2563eb' }} />
                       <label htmlFor="meter-type-sub" className="text-sm">Sub</label>
                     </div>
                   </div>
@@ -512,15 +494,11 @@ const AddAssetPage = () => {
                   <span className="text-[#C72030] font-medium text-sm sm:text-base">CRITICAL</span>
                   <div className="flex gap-6">
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="critical-yes" name="critical" value="yes" checked={criticalStatus === 'yes'} onChange={e => setCriticalStatus(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{
-                    accentColor: '#2563eb'
-                  }} />
+                      <input type="radio" id="critical-yes" name="critical" value="yes" checked={criticalStatus === 'yes'} onChange={e => setCriticalStatus(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{ accentColor: '#2563eb' }} />
                       <label htmlFor="critical-yes" className="text-sm">Yes</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="critical-no" name="critical" value="no" checked={criticalStatus === 'no'} onChange={e => setCriticalStatus(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{
-                    accentColor: '#2563eb'
-                  }} />
+                      <input type="radio" id="critical-no" name="critical" value="no" checked={criticalStatus === 'no'} onChange={e => setCriticalStatus(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{ accentColor: '#2563eb' }} />
                       <label htmlFor="critical-no" className="text-sm">No</label>
                     </div>
                   </div>
@@ -529,38 +507,60 @@ const AddAssetPage = () => {
 
               {/* Meter Category Type */}
               <div className="mb-6">
-                <div className="rounded-lg p-4 bg-[F6F4] bg-[#f6f4ee]">
-                  <h3 className="font-medium mb-4 text-sm sm:text-base text-orange-700">METER CATEGORY TYPE</h3>
+                <div className="rounded-lg p-4 bg-[#f6f4ee]">
+                  <h3 className="font-medium mb-4 text-sm sm:text-base text-orange-700">METER DETAILS</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
-                    {getMeterCategoryOptions().map(option => <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
-                        <div className="flex items-center justify-center space-x-2">
-                          <input type="radio" id={option.value} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
-                          <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                    {getMeterCategoryOptions().map(option => {
+                      const IconComponent = option.icon;
+                      return (
+                        <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                          <div className="flex items-center justify-center space-x-2">
+                            <input 
+                              type="radio" 
+                              id={option.value} 
+                              name="meterCategory" 
+                              value={option.value} 
+                              checked={meterCategoryType === option.value} 
+                              onChange={e => handleMeterCategoryChange(e.target.value)} 
+                              className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" 
+                            />
+                            <IconComponent className="w-4 h-4 text-gray-600" />
+                            <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                          </div>
                         </div>
-                      </div>)}
+                      );
+                    })}
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-                    <div className="p-3 sm:p-4 rounded-lg text-center bg-white border">
-                      <div className="flex items-center justify-center space-x-2">
-                        <input type="radio" id="iex-gdam" name="meterCategory" value="iex-gdam" checked={meterCategoryType === 'iex-gdam'} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
-                        <label htmlFor="iex-gdam" className="text-xs sm:text-sm cursor-pointer">IEX-GDAM</label>
-                      </div>
+                  
+                  {/* Board Ratio Options (Second Image) */}
+                  {showBoardRatioOptions && (
+                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                      {getBoardRatioOptions().map(option => {
+                        const IconComponent = option.icon;
+                        return (
+                          <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                            <div className="flex items-center justify-center space-x-2">
+                              <input 
+                                type="radio" 
+                                id={`board-${option.value}`} 
+                                name="boardRatioCategory" 
+                                value={option.value} 
+                                checked={subCategoryType === option.value} 
+                                onChange={e => setSubCategoryType(e.target.value)} 
+                                className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" 
+                              />
+                              <IconComponent className="w-4 h-4 text-gray-600" />
+                              <label htmlFor={`board-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
-
-              {getSubCategoryOptions().length > 0 && <div className="mt-4 sm:mt-6">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                    {getSubCategoryOptions().map(option => <div key={option.value} className="bg-purple-100 p-3 sm:p-4 rounded-lg text-center">
-                        <div className="flex items-center justify-center space-x-2">
-                          <input type="radio" id={`sub-${option.value}`} name="subMeterCategory" value={option.value} checked={subCategoryType === option.value} onChange={e => setSubCategoryType(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
-                          <label htmlFor={`sub-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
-                        </div>
-                      </div>)}
-                  </div>
-                </div>}
-            </div>}
+            </div>
+          )}
         </div>
 
         {/* Consumption Asset Measure */}
@@ -853,4 +853,5 @@ const AddAssetPage = () => {
       </div>
     </div>;
 };
+
 export default AddAssetPage;
