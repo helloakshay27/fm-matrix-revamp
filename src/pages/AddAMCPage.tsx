@@ -83,6 +83,7 @@ export const AddAMCPage = () => {
       }
     }
   };
+
   return <div className="p-6">
       <div className="mb-6">
         <Button variant="ghost" onClick={() => navigate('/maintenance/amc')} className="mb-4">
@@ -241,7 +242,6 @@ export const AddAMCPage = () => {
     </div>
   </CardContent>
       </Card>
-
 
         {/* Attachments */}
         <Card className="mb-6">
