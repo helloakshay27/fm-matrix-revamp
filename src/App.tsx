@@ -8,6 +8,7 @@ import { SetupLayout } from './components/SetupLayout';
 // Import existing pages
 import Index from './pages/Index';
 import NotFound from './pages/NotFound';
+import { LoginPage } from './pages/LoginPage';
 
 // Import Snagging pages
 import { SnaggingDashboard } from './pages/SnaggingDashboard';
@@ -398,6 +399,9 @@ function App() {
             <LayoutProvider>
                 <Router>
                     <Routes>
+                        {/* Login Route */}
+                        <Route path="/login" element={<LoginPage />} />
+                        
                         <Route path="/" element={<Layout><div /></Layout>}>
                             <Route index element={<Index />} />
 
