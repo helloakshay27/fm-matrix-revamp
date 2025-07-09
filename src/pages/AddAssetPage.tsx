@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-
 const AddAssetPage = () => {
   const navigate = useNavigate();
   const [expandedSections, setExpandedSections] = useState({
@@ -50,67 +49,103 @@ const AddAssetPage = () => {
   });
 
   // Meter category options
-  const getMeterCategoryOptions = () => [
-    { value: 'electrical', label: 'Electrical' },
-    { value: 'water', label: 'Water' },
-    { value: 'gas', label: 'Gas' },
-    { value: 'steam', label: 'Steam' },
-    { value: 'thermal', label: 'Thermal' },
-    { value: 'flow', label: 'Flow' }
-  ];
+  const getMeterCategoryOptions = () => [{
+    value: 'electrical',
+    label: 'Electrical'
+  }, {
+    value: 'water',
+    label: 'Water'
+  }, {
+    value: 'gas',
+    label: 'Gas'
+  }, {
+    value: 'steam',
+    label: 'Steam'
+  }, {
+    value: 'thermal',
+    label: 'Thermal'
+  }, {
+    value: 'flow',
+    label: 'Flow'
+  }];
 
   // Sub-category options based on selected meter category
   const getSubCategoryOptions = () => {
     const subCategories = {
-      electrical: [
-        { value: 'kwh', label: 'kWh' },
-        { value: 'kvah', label: 'kVAh' },
-        { value: 'voltage', label: 'Voltage' },
-        { value: 'current', label: 'Current' }
-      ],
-      water: [
-        { value: 'flow-rate', label: 'Flow Rate' },
-        { value: 'pressure', label: 'Pressure' },
-        { value: 'temperature', label: 'Temperature' }
-      ],
-      gas: [
-        { value: 'volume', label: 'Volume' },
-        { value: 'pressure', label: 'Pressure' },
-        { value: 'flow-rate', label: 'Flow Rate' }
-      ],
-      steam: [
-        { value: 'pressure', label: 'Pressure' },
-        { value: 'temperature', label: 'Temperature' },
-        { value: 'flow-rate', label: 'Flow Rate' }
-      ],
-      thermal: [
-        { value: 'temperature', label: 'Temperature' },
-        { value: 'btu', label: 'BTU' }
-      ],
-      flow: [
-        { value: 'volume', label: 'Volume' },
-        { value: 'mass', label: 'Mass' }
-      ]
+      electrical: [{
+        value: 'kwh',
+        label: 'kWh'
+      }, {
+        value: 'kvah',
+        label: 'kVAh'
+      }, {
+        value: 'voltage',
+        label: 'Voltage'
+      }, {
+        value: 'current',
+        label: 'Current'
+      }],
+      water: [{
+        value: 'flow-rate',
+        label: 'Flow Rate'
+      }, {
+        value: 'pressure',
+        label: 'Pressure'
+      }, {
+        value: 'temperature',
+        label: 'Temperature'
+      }],
+      gas: [{
+        value: 'volume',
+        label: 'Volume'
+      }, {
+        value: 'pressure',
+        label: 'Pressure'
+      }, {
+        value: 'flow-rate',
+        label: 'Flow Rate'
+      }],
+      steam: [{
+        value: 'pressure',
+        label: 'Pressure'
+      }, {
+        value: 'temperature',
+        label: 'Temperature'
+      }, {
+        value: 'flow-rate',
+        label: 'Flow Rate'
+      }],
+      thermal: [{
+        value: 'temperature',
+        label: 'Temperature'
+      }, {
+        value: 'btu',
+        label: 'BTU'
+      }],
+      flow: [{
+        value: 'volume',
+        label: 'Volume'
+      }, {
+        value: 'mass',
+        label: 'Mass'
+      }]
     };
-    
     return subCategories[meterCategoryType] || [];
   };
 
   // Handle meter category change
-  const handleMeterCategoryChange = (value) => {
+  const handleMeterCategoryChange = value => {
     setMeterCategoryType(value);
     setSubCategoryType(''); // Reset sub-category when main category changes
   };
-
-  const handleItAssetsToggleChange = (checked) => {
+  const handleItAssetsToggleChange = checked => {
     setItAssetsToggle(checked);
     setExpandedSections(prev => ({
       ...prev,
       warranty: checked
     }));
   };
-
-  const handleMeterDetailsToggleChange = (checked) => {
+  const handleMeterDetailsToggleChange = checked => {
     setMeterDetailsToggle(checked);
     setExpandedSections(prev => ({
       ...prev,
@@ -120,13 +155,11 @@ const AddAssetPage = () => {
 
   // Consumption measure functions
   const updateConsumptionMeasure = (id, field, value) => {
-    setConsumptionMeasures(prev => 
-      prev.map(measure => 
-        measure.id === id ? { ...measure, [field]: value } : measure
-      )
-    );
+    setConsumptionMeasures(prev => prev.map(measure => measure.id === id ? {
+      ...measure,
+      [field]: value
+    } : measure));
   };
-
   const addConsumptionMeasure = () => {
     const newId = Math.max(...consumptionMeasures.map(m => m.id)) + 1;
     setConsumptionMeasures(prev => [...prev, {
@@ -141,20 +174,17 @@ const AddAssetPage = () => {
       checkPreviousReading: false
     }]);
   };
-
-  const removeConsumptionMeasure = (id) => {
+  const removeConsumptionMeasure = id => {
     setConsumptionMeasures(prev => prev.filter(measure => measure.id !== id));
   };
 
   // Non-consumption measure functions
   const updateNonConsumptionMeasure = (id, field, value) => {
-    setNonConsumptionMeasures(prev => 
-      prev.map(measure => 
-        measure.id === id ? { ...measure, [field]: value } : measure
-      )
-    );
+    setNonConsumptionMeasures(prev => prev.map(measure => measure.id === id ? {
+      ...measure,
+      [field]: value
+    } : measure));
   };
-
   const addNonConsumptionMeasure = () => {
     const newId = Math.max(...nonConsumptionMeasures.map(m => m.id)) + 1;
     setNonConsumptionMeasures(prev => [...prev, {
@@ -169,18 +199,15 @@ const AddAssetPage = () => {
       checkPreviousReading: false
     }]);
   };
-
-  const removeNonConsumptionMeasure = (id) => {
+  const removeNonConsumptionMeasure = id => {
     setNonConsumptionMeasures(prev => prev.filter(measure => measure.id !== id));
   };
-
   const toggleSection = section => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }));
   };
-
   const handleFileUpload = (category, files) => {
     if (files) {
       const fileArray = Array.from(files);
@@ -190,23 +217,19 @@ const AddAssetPage = () => {
       }));
     }
   };
-
   const removeFile = (category, index) => {
     setAttachments(prev => ({
       ...prev,
       [category]: prev[category].filter((_, i) => i !== index)
     }));
   };
-
   const handleSaveAndShow = () => {
     console.log('Save and show details');
     navigate('/maintenance/asset');
   };
-
   const handleSaveAndCreate = () => {
     console.log('Save and create new asset');
   };
-
   const fieldStyles = {
     height: {
       xs: 28,
@@ -221,7 +244,6 @@ const AddAssetPage = () => {
       }
     }
   };
-
   return <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
@@ -283,7 +305,10 @@ const AddAssetPage = () => {
               ASSET DETAILS
             </div>
             <div className="flex items-center gap-2">
-              <button className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80" style={{ backgroundColor: '#F6F4EE', color: '#C72030' }}>
+              <button className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80" style={{
+              backgroundColor: '#F6F4EE',
+              color: '#C72030'
+            }}>
                 <Plus className="w-4 h-4" />
                 Custom Field
               </button>
@@ -293,77 +318,40 @@ const AddAssetPage = () => {
           {expandedSections.asset && <div className="p-4 sm:p-6">
               {/* First row: Asset Name, Model No., Manufacturer */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                <TextField
-                  required
-                  label="Asset Name"
-                  placeholder="Enter Asset Name"
-                  name="assetName"
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    shrink: true
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
-                />
-                <TextField
-                  required
-                  label="Model No."
-                  placeholder="Enter Model No"
-                  name="modelNo"
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    shrink: true
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
-                />
-                <TextField
-                  required
-                  label="Manufacturer"
-                  placeholder="Enter Manufacturer"
-                  name="manufacturer"
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    shrink: true
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
-                />
+                <TextField required label="Asset Name" placeholder="Enter Asset Name" name="assetName" fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />
+                <TextField required label="Model No." placeholder="Enter Model No" name="modelNo" fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />
+                <TextField required label="Manufacturer" placeholder="Enter Manufacturer" name="manufacturer" fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />
               </div>
 
               {/* Second row: Group, Subgroup */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                <FormControl fullWidth variant="outlined" sx={{
+              minWidth: 120
+            }}>
                   <InputLabel id="group-select-label" shrink>Group</InputLabel>
-                  <MuiSelect
-                    labelId="group-select-label"
-                    label="Group"
-                    displayEmpty
-                    value=""
-                    sx={fieldStyles}
-                    required
-                  >
+                  <MuiSelect labelId="group-select-label" label="Group" displayEmpty value="" sx={fieldStyles} required>
                     <MenuItem value=""><em>Select Group</em></MenuItem>
                     <MenuItem value="group1">Group 1</MenuItem>
                     <MenuItem value="group2">Group 2</MenuItem>
                   </MuiSelect>
                 </FormControl>
-                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                <FormControl fullWidth variant="outlined" sx={{
+              minWidth: 120
+            }}>
                   <InputLabel id="subgroup-select-label" shrink>Subgroup</InputLabel>
-                  <MuiSelect
-                    labelId="subgroup-select-label"
-                    label="Subgroup"
-                    displayEmpty
-                    value=""
-                    sx={fieldStyles}
-                    required
-                  >
+                  <MuiSelect labelId="subgroup-select-label" label="Subgroup" displayEmpty value="" sx={fieldStyles} required>
                     <MenuItem value=""><em>Select Sub-Group</em></MenuItem>
                     <MenuItem value="subgroup1">Subgroup 1</MenuItem>
                     <MenuItem value="subgroup2">Subgroup 2</MenuItem>
@@ -377,26 +365,15 @@ const AddAssetPage = () => {
                   <label className="text-sm font-medium text-[#C72030] mb-2 block">Status</label>
                   <div className="flex gap-6">
                     <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id="status-inuse"
-                        name="status"
-                        value="inuse"
-                        defaultChecked
-                        className="w-4 h-4 text-blue-600 border-gray-300"
-                        style={{ accentColor: '#2563eb' }}
-                      />
+                      <input type="radio" id="status-inuse" name="status" value="inuse" defaultChecked className="w-4 h-4 text-blue-600 border-gray-300" style={{
+                    accentColor: '#2563eb'
+                  }} />
                       <label htmlFor="status-inuse" className="text-sm">In Use</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id="status-breakdown"
-                        name="status"
-                        value="breakdown"
-                        className="w-4 h-4 text-blue-600 border-gray-300"
-                        style={{ accentColor: '#2563eb' }}
-                      />
+                      <input type="radio" id="status-breakdown" name="status" value="breakdown" className="w-4 h-4 text-blue-600 border-gray-300" style={{
+                    accentColor: '#2563eb'
+                  }} />
                       <label htmlFor="status-breakdown" className="text-sm">Breakdown</label>
                     </div>
                   </div>
@@ -418,127 +395,71 @@ const AddAssetPage = () => {
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">If Applicable</span>
                 <div className="relative inline-block w-12 h-6">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    id="it-assets-toggle"
-                    checked={itAssetsToggle}
-                    onChange={(e) => handleItAssetsToggleChange(e.target.checked)}
-                  />
-                  <label
-                    htmlFor="it-assets-toggle"
-                    className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${
-                      itAssetsToggle ? 'bg-green-400' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
-                      itAssetsToggle ? 'translate-x-6' : 'translate-x-1'
-                    }`}></span>
+                  <input type="checkbox" className="sr-only peer" id="it-assets-toggle" checked={itAssetsToggle} onChange={e => handleItAssetsToggleChange(e.target.checked)} />
+                  <label htmlFor="it-assets-toggle" className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${itAssetsToggle ? 'bg-green-400' : 'bg-gray-300'}`}>
+                    <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${itAssetsToggle ? 'translate-x-6' : 'translate-x-1'}`}></span>
                   </label>
                 </div>
               </div>
-              <button className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80" style={{ backgroundColor: '#F6F4EE', color: '#C72030' }}>
+              <button className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80" style={{
+              backgroundColor: '#F6F4EE',
+              color: '#C72030'
+            }}>
                 <Plus className="w-4 h-4" />
                 Custom Field
               </button>
               {expandedSections.warranty ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
             </div>
           </div>
-          {expandedSections.warranty && (
-            <div className="p-4 sm:p-6">
+          {expandedSections.warranty && <div className="p-4 sm:p-6">
               {/* System Details */}
               <div className="mb-6">
-                <h3 className="font-semibold mb-4" style={{ color: '#C72030' }}>SYSTEM DETAILS</h3>
+                <h3 className="font-semibold mb-4" style={{
+              color: '#C72030'
+            }}>SYSTEM DETAILS</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <TextField
-                    label="OS"
-                    placeholder="Enter OS"
-                    name="os"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
-                  <TextField
-                    label="Total Memory"
-                    placeholder="Enter Total Memory"
-                    name="totalMemory"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
-                  <TextField
-                    label="Processor"
-                    placeholder="Enter Processor"
-                    name="processor"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
+                  <TextField label="OS" placeholder="Enter OS" name="os" fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} />
+                  <TextField label="Total Memory" placeholder="Enter Total Memory" name="totalMemory" fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} />
+                  <TextField label="Processor" placeholder="Enter Processor" name="processor" fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} />
                 </div>
               </div>
 
               {/* Hard Disk Details */}
               <div>
-                <h3 className="font-semibold mb-4" style={{ color: '#C72030' }}>HARD DISK DETAILS</h3>
+                <h3 className="font-semibold mb-4" style={{
+              color: '#C72030'
+            }}>HARD DISK DETAILS</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <TextField
-                    label="Model"
-                    placeholder="Enter Model"
-                    name="hdModel"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
-                  <TextField
-                    label="Serial No."
-                    placeholder="Enter Serial No."
-                    name="hdSerialNo"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
-                  <TextField
-                    label="Capacity"
-                    placeholder="Enter Capacity"
-                    name="hdCapacity"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
+                  <TextField label="Model" placeholder="Enter Model" name="hdModel" fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} />
+                  <TextField label="Serial No." placeholder="Enter Serial No." name="hdSerialNo" fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} />
+                  <TextField label="Capacity" placeholder="Enter Capacity" name="hdCapacity" fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} />
                 </div>
               </div>
-            </div>
-          )}
+            </div>}
         </div>
 
         {/* Meter Details */}
@@ -554,22 +475,9 @@ const AddAssetPage = () => {
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">If Applicable</span>
                 <div className="relative inline-block w-12 h-6">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    id="meter-details-toggle"
-                    checked={meterDetailsToggle}
-                    onChange={(e) => handleMeterDetailsToggleChange(e.target.checked)}
-                  />
-                  <label
-                    htmlFor="meter-details-toggle"
-                    className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${
-                      meterDetailsToggle ? 'bg-green-400' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
-                      meterDetailsToggle ? 'translate-x-6' : 'translate-x-1'
-                    }`}></span>
+                  <input type="checkbox" className="sr-only peer" id="meter-details-toggle" checked={meterDetailsToggle} onChange={e => handleMeterDetailsToggleChange(e.target.checked)} />
+                  <label htmlFor="meter-details-toggle" className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${meterDetailsToggle ? 'bg-green-400' : 'bg-gray-300'}`}>
+                    <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${meterDetailsToggle ? 'translate-x-6' : 'translate-x-1'}`}></span>
                   </label>
                 </div>
               </div>
@@ -583,29 +491,15 @@ const AddAssetPage = () => {
                   <span className="text-[#C72030] font-medium text-sm sm:text-base">Meter Type</span>
                   <div className="flex gap-6">
                     <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id="meter-type-parent"
-                        name="meterType"
-                        value="parent"
-                        checked={meterType === 'parent'}
-                        onChange={(e) => setMeterType(e.target.value)}
-                        className="w-4 h-4 text-blue-600 border-gray-300"
-                        style={{ accentColor: '#2563eb' }}
-                      />
+                      <input type="radio" id="meter-type-parent" name="meterType" value="parent" checked={meterType === 'parent'} onChange={e => setMeterType(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{
+                    accentColor: '#2563eb'
+                  }} />
                       <label htmlFor="meter-type-parent" className="text-sm">Parent</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id="meter-type-sub"
-                        name="meterType"
-                        value="sub"
-                        checked={meterType === 'sub'}
-                        onChange={(e) => setMeterType(e.target.value)}
-                        className="w-4 h-4 text-blue-600 border-gray-300"
-                        style={{ accentColor: '#2563eb' }}
-                      />
+                      <input type="radio" id="meter-type-sub" name="meterType" value="sub" checked={meterType === 'sub'} onChange={e => setMeterType(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{
+                    accentColor: '#2563eb'
+                  }} />
                       <label htmlFor="meter-type-sub" className="text-sm">Sub</label>
                     </div>
                   </div>
@@ -618,29 +512,15 @@ const AddAssetPage = () => {
                   <span className="text-[#C72030] font-medium text-sm sm:text-base">CRITICAL</span>
                   <div className="flex gap-6">
                     <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id="critical-yes"
-                        name="critical"
-                        value="yes"
-                        checked={criticalStatus === 'yes'}
-                        onChange={(e) => setCriticalStatus(e.target.value)}
-                        className="w-4 h-4 text-blue-600 border-gray-300"
-                        style={{ accentColor: '#2563eb' }}
-                      />
+                      <input type="radio" id="critical-yes" name="critical" value="yes" checked={criticalStatus === 'yes'} onChange={e => setCriticalStatus(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{
+                    accentColor: '#2563eb'
+                  }} />
                       <label htmlFor="critical-yes" className="text-sm">Yes</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id="critical-no"
-                        name="critical"
-                        value="no"
-                        checked={criticalStatus === 'no'}
-                        onChange={(e) => setCriticalStatus(e.target.value)}
-                        className="w-4 h-4 text-blue-600 border-gray-300"
-                        style={{ accentColor: '#2563eb' }}
-                      />
+                      <input type="radio" id="critical-no" name="critical" value="no" checked={criticalStatus === 'no'} onChange={e => setCriticalStatus(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" style={{
+                    accentColor: '#2563eb'
+                  }} />
                       <label htmlFor="critical-no" className="text-sm">No</label>
                     </div>
                   </div>
@@ -649,7 +529,7 @@ const AddAssetPage = () => {
 
               {/* Meter Category Type */}
               <div className="mb-6">
-                <div className="bg-blue-50 rounded-lg p-4">
+                <div className="rounded-lg p-4 bg-[F6F4] bg-[#f6f4ee]">
                   <h3 className="text-blue-600 font-medium mb-4 text-sm sm:text-base">METER CATEGORY TYPE</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
                     {getMeterCategoryOptions().map(option => <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
@@ -973,5 +853,4 @@ const AddAssetPage = () => {
       </div>
     </div>;
 };
-
 export default AddAssetPage;
