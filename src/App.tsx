@@ -525,8 +525,8 @@ function App() {
                             {/* Survey Routes */}
                             <Route path="/maintenance/audit/survey/list" element={<SurveyListDashboard />} />
                             <Route path="/maintenance/audit/survey/mapping" element={<SurveyMappingDashboard />} />
-                            <Route path="/maintenance/audit/survey/response" element={<SurveyResponseDashboard />} />
-                            <Route path="/maintenance/survey/response" element={<SurveyResponsePage />} />
+                            <Route path="/maintenance/audit/survey/response" element={<SurveyResponsePage />} />
+                            <Route path="/maintenance/survey/response/dashboard" element={<SurveyResponseDashboard />} />
 
                             {/* Finance Routes */}
                             <Route path="/finance/material-pr" element={<MaterialPRDashboard />} />
