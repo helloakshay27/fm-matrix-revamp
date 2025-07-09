@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent, Users } from 'lucide-react';
+import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent, Users, Settings } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 const AddAssetPage = () => {
@@ -14,6 +14,7 @@ const AddAssetPage = () => {
     nonConsumption: true,
     assetAllocation: true,
     assetLoaned: true,
+    amcDetails: true,
     attachments: true
   });
   const [itAssetsToggle, setItAssetsToggle] = useState(false);
@@ -967,6 +968,125 @@ const AddAssetPage = () => {
                     sx: fieldStyles
                   }} 
                 />
+              </div>
+            </div>}
+        </div>
+
+        {/* AMC Details */}
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div onClick={() => toggleSection('amcDetails')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
+              </span>
+              AMC DETAILS
+            </div>
+            {expandedSections.amcDetails ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
+          {expandedSections.amcDetails && <div className="p-4 sm:p-6">
+              <div className="space-y-6">
+                {/* First Row - Vendor, Start Date, End Date, First Service, Payment Terms, No. of Visits */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+                  <FormControl fullWidth variant="outlined" sx={{
+                    minWidth: 120
+                  }}>
+                    <InputLabel id="amc-vendor-select-label" shrink>Vendor</InputLabel>
+                    <MuiSelect labelId="amc-vendor-select-label" label="Vendor" displayEmpty value="" sx={fieldStyles}>
+                      <MenuItem value=""><em>Select Vendor</em></MenuItem>
+                      <MenuItem value="vendor1">Vendor 1</MenuItem>
+                      <MenuItem value="vendor2">Vendor 2</MenuItem>
+                      <MenuItem value="vendor3">Vendor 3</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                  
+                  <TextField 
+                    label="Start Date" 
+                    placeholder="dd/mm/yyyy" 
+                    name="amcStartDate" 
+                    type="date"
+                    fullWidth 
+                    variant="outlined" 
+                    InputLabelProps={{
+                      shrink: true
+                    }} 
+                    InputProps={{
+                      sx: fieldStyles
+                    }} 
+                  />
+                  
+                  <TextField 
+                    label="End Date" 
+                    placeholder="dd/mm/yyyy" 
+                    name="amcEndDate" 
+                    type="date"
+                    fullWidth 
+                    variant="outlined" 
+                    InputLabelProps={{
+                      shrink: true
+                    }} 
+                    InputProps={{
+                      sx: fieldStyles
+                    }} 
+                  />
+                  
+                  <TextField 
+                    label="First Service" 
+                    placeholder="dd/mm/yyyy" 
+                    name="amcFirstService" 
+                    type="date"
+                    fullWidth 
+                    variant="outlined" 
+                    InputLabelProps={{
+                      shrink: true
+                    }} 
+                    InputProps={{
+                      sx: fieldStyles
+                    }} 
+                  />
+                  
+                  <FormControl fullWidth variant="outlined" sx={{
+                    minWidth: 120
+                  }}>
+                    <InputLabel id="payment-terms-select-label" shrink>Payment Terms</InputLabel>
+                    <MuiSelect labelId="payment-terms-select-label" label="Payment Terms" displayEmpty value="" sx={fieldStyles}>
+                      <MenuItem value=""><em>Select Payment Terms</em></MenuItem>
+                      <MenuItem value="monthly">Monthly</MenuItem>
+                      <MenuItem value="quarterly">Quarterly</MenuItem>
+                      <MenuItem value="yearly">Yearly</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                  
+                  <TextField 
+                    label="No. of Visits" 
+                    placeholder="Enter Value" 
+                    name="amcVisits" 
+                    fullWidth 
+                    variant="outlined" 
+                    InputLabelProps={{
+                      shrink: true
+                    }} 
+                    InputProps={{
+                      sx: fieldStyles
+                    }} 
+                  />
+                </div>
+
+                {/* Second Row - AMC Cost */}
+                <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
+                  <TextField 
+                    label="AMC Cost" 
+                    placeholder="Enter AMC Cost" 
+                    name="amcCost" 
+                    fullWidth 
+                    variant="outlined" 
+                    InputLabelProps={{
+                      shrink: true
+                    }} 
+                    InputProps={{
+                      sx: fieldStyles
+                    }} 
+                  />
+                </div>
               </div>
             </div>}
         </div>
