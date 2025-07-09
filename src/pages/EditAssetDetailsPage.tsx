@@ -13,7 +13,10 @@ import {
   InputLabel,
   MenuItem,
   Select as MuiSelect,
-  SelectChangeEvent
+  SelectChangeEvent,
+  Radio,
+  RadioGroup as MuiRadioGroup,
+  FormControlLabel
 } from '@mui/material';
 
 
@@ -674,25 +677,24 @@ export const EditAssetDetailsPage = () => {
           
           {meterCategoryExpanded && (
             <div className="p-6 pt-0">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
                 {meterTypes.map((type) => (
                   <div
                     key={type.id}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-colors ${
-                      selectedMeterTypes.includes(type.id)
-                        ? 'border-[#C72030] bg-[#C72030]/10'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                    className="bg-gray-100 p-4 rounded-lg flex items-center gap-3 cursor-pointer hover:bg-gray-200 transition-colors"
                     onClick={() => handleMeterTypeToggle(type.id)}
                   >
-                    <div className="flex items-center space-x-2">
-                      <div className={`w-4 h-4 rounded-full border-2 ${
-                        selectedMeterTypes.includes(type.id)
-                          ? 'border-[#C72030] bg-[#C72030]'
-                          : 'border-gray-300'
-                      }`} />
-                      <span className="text-sm font-medium">{type.label}</span>
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        name="meterCategory"
+                        value={type.id}
+                        checked={selectedMeterTypes.includes(type.id)}
+                        onChange={() => {}}
+                        className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                      />
                     </div>
+                    <span className="text-sm font-medium text-gray-700">{type.label}</span>
                   </div>
                 ))}
               </div>
