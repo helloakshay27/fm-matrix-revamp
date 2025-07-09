@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -624,7 +623,7 @@ export const EditAssetDetailsPage = () => {
 
               {/* Hard Disk Details Section */}
               <div>
-                <h3 className="text-blue-600 font-semibold text-sm mb-4">HARD DISK DETAILS</h3>
+                <h3 className="text-[#C72030] font-semibold text-sm mb-4">HARD DISK DETAILS</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <TextField
                     label="Model"
