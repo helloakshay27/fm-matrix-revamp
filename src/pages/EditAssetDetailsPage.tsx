@@ -6,8 +6,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { TextField } from '@mui/material';
-import { ArrowLeft, ChevronDown, ChevronUp, Plus, X, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Percent } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, Plus, X, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Percent, Zap, Sun, Droplet, Recycle, BarChart3 } from 'lucide-react';
 import { FormControl, InputLabel, MenuItem, Select as MuiSelect, SelectChangeEvent, Radio, RadioGroup as MuiRadioGroup, FormControlLabel } from '@mui/material';
+
 const fieldStyles = {
   height: {
     xs: 28,
@@ -22,6 +23,7 @@ const fieldStyles = {
     }
   }
 };
+
 export const EditAssetDetailsPage = () => {
   const {
     id
@@ -108,92 +110,134 @@ export const EditAssetDetailsPage = () => {
     purchaseInvoice: [],
     amc: []
   });
+
+  const getMeterCategoryOptions = () => [
+    {
+      value: 'board',
+      label: 'Board',
+      icon: <BarChart3 className="w-6 h-6" />
+    },
+    {
+      value: 'dg',
+      label: 'DG',
+      icon: <Zap className="w-6 h-6" />
+    },
+    {
+      value: 'renewable',
+      label: 'Renewable',
+      icon: <Sun className="w-6 h-6" />
+    },
+    {
+      value: 'fresh-water',
+      label: 'Fresh Water',
+      icon: <Droplet className="w-6 h-6" />
+    },
+    {
+      value: 'recycled',
+      label: 'Recycled',
+      icon: <Recycle className="w-6 h-6" />
+    },
+    {
+      value: 'iex-gdam',
+      label: 'IEX-GDAM',
+      icon: <BarChart className="w-6 h-6" />
+    }
+  ];
+
+  const getSubCategoryOptions = () => {
+    switch (meterCategoryType) {
+      case 'board':
+        return [
+          {
+            value: 'ht-panel',
+            label: 'HT Panel',
+            icon: <Zap className="w-6 h-6" />
+          },
+          {
+            value: 'vcb',
+            label: 'VCB',
+            icon: <Package className="w-6 h-6" />
+          },
+          {
+            value: 'transformer',
+            label: 'Transformer',
+            icon: <Shield className="w-6 h-6" />
+          },
+          {
+            value: 'lt-panel',
+            label: 'LT Panel',
+            icon: <Activity className="w-6 h-6" />
+          }
+        ];
+      case 'renewable':
+        return [
+          {
+            value: 'solar',
+            label: 'Solar',
+            icon: <Sun className="w-6 h-6" />
+          },
+          {
+            value: 'bio-methanol',
+            label: 'Bio Methanol',
+            icon: <Droplet className="w-6 h-6" />
+          },
+          {
+            value: 'wind',
+            label: 'Wind',
+            icon: <Activity className="w-6 h-6" />
+          }
+        ];
+      case 'fresh-water':
+        return [
+          {
+            value: 'source',
+            label: 'Source (Input)',
+            icon: <Droplet className="w-6 h-6" />
+          },
+          {
+            value: 'destination',
+            label: 'Destination (Output)',
+            icon: <Droplet className="w-6 h-6" />
+          }
+        ];
+      default:
+        return [];
+    }
+  };
+
   const toggleSection = section => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }));
   };
+
   const handleLocationChange = (field: string, value: string) => {
     setLocationData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleItAssetChange = (field: string, value: string) => {
     setItAssetData(prev => ({
       ...prev,
       [field]: value
     }));
   };
-  const getMeterCategoryOptions = () => [{
-    value: 'board',
-    label: 'Board'
-  }, {
-    value: 'dg',
-    label: 'DG'
-  }, {
-    value: 'renewable',
-    label: 'Renewable'
-  }, {
-    value: 'fresh-water',
-    label: 'Fresh Water'
-  }, {
-    value: 'recycled',
-    label: 'Recycled'
-  }, {
-    value: 'iex-gdam',
-    label: 'IEX-GDAM'
-  }];
-  const getSubCategoryOptions = () => {
-    switch (meterCategoryType) {
-      case 'board':
-        return [{
-          value: 'ht',
-          label: 'HT'
-        }, {
-          value: 'vcb',
-          label: 'VCB'
-        }, {
-          value: 'transformer',
-          label: 'Transformer'
-        }, {
-          value: 'lt',
-          label: 'LT'
-        }];
-      case 'renewable':
-        return [{
-          value: 'solar',
-          label: 'Solar'
-        }, {
-          value: 'bio-methanol',
-          label: 'Bio Methanol'
-        }, {
-          value: 'wind',
-          label: 'Wind'
-        }];
-      case 'fresh-water':
-        return [{
-          value: 'source',
-          label: 'Source (Input)'
-        }, {
-          value: 'destination',
-          label: 'Destination (Output)'
-        }];
-      default:
-        return [];
-    }
-  };
+
   const handleMeterCategoryChange = value => {
     setMeterCategoryType(value);
     setSubCategoryType('');
   };
+
   const addConsumptionMeasure = () => {
     const newId = consumptionMeasures.length > 0 ? Math.max(...consumptionMeasures.map(m => m.id)) + 1 : 1;
     setConsumptionMeasures([...consumptionMeasures, {
@@ -208,17 +252,20 @@ export const EditAssetDetailsPage = () => {
       checkPreviousReading: false
     }]);
   };
+
   const removeConsumptionMeasure = id => {
     if (consumptionMeasures.length > 1) {
       setConsumptionMeasures(consumptionMeasures.filter(m => m.id !== id));
     }
   };
+
   const updateConsumptionMeasure = (id, field, value) => {
     setConsumptionMeasures(consumptionMeasures.map(m => m.id === id ? {
       ...m,
       [field]: value
     } : m));
   };
+
   const addNonConsumptionMeasure = () => {
     const newId = nonConsumptionMeasures.length > 0 ? Math.max(...nonConsumptionMeasures.map(m => m.id)) + 1 : 1;
     setNonConsumptionMeasures([...nonConsumptionMeasures, {
@@ -233,17 +280,20 @@ export const EditAssetDetailsPage = () => {
       checkPreviousReading: false
     }]);
   };
+
   const removeNonConsumptionMeasure = id => {
     if (nonConsumptionMeasures.length > 1) {
       setNonConsumptionMeasures(nonConsumptionMeasures.filter(m => m.id !== id));
     }
   };
+
   const updateNonConsumptionMeasure = (id, field, value) => {
     setNonConsumptionMeasures(nonConsumptionMeasures.map(m => m.id === id ? {
       ...m,
       [field]: value
     } : m));
   };
+
   const handleFileUpload = (category, files) => {
     if (files) {
       const fileArray = Array.from(files);
@@ -253,12 +303,14 @@ export const EditAssetDetailsPage = () => {
       }));
     }
   };
+
   const removeFile = (category, index) => {
     setAttachments(prev => ({
       ...prev,
       [category]: prev[category].filter((_, i) => i !== index)
     }));
   };
+
   const handleSaveAndShowDetails = () => {
     console.log('Saving and showing details:', {
       locationData,
@@ -270,6 +322,7 @@ export const EditAssetDetailsPage = () => {
     });
     navigate(`/maintenance/asset/details/${id}`);
   };
+
   const handleSaveAndCreateNew = () => {
     console.log('Saving and creating new:', {
       locationData,
@@ -281,9 +334,11 @@ export const EditAssetDetailsPage = () => {
     });
     navigate('/maintenance/asset/add');
   };
+
   const handleBack = () => {
     navigate(`/maintenance/asset/details/${id}`);
   };
+
   return <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
@@ -527,24 +582,60 @@ export const EditAssetDetailsPage = () => {
           </div>
           {expandedSections.meterCategory && <div className="p-4 sm:p-6">
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
-                {getMeterCategoryOptions().map(option => <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-[#f6f4ee]">
-                    <div className="flex items-center justify-center space-x-2">
-                      <input type="radio" id={option.value} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
-                      <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                {getMeterCategoryOptions().map(option => (
+                  <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-[#f6f4ee] border border-gray-200">
+                    <div className="flex flex-col items-center space-y-2">
+                      <div className="text-gray-600">
+                        {option.icon}
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input 
+                          type="radio" 
+                          id={option.value} 
+                          name="meterCategory" 
+                          value={option.value} 
+                          checked={meterCategoryType === option.value} 
+                          onChange={(e) => handleMeterCategoryChange(e.target.value)} 
+                          className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" 
+                        />
+                        <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer font-medium">
+                          {option.label}
+                        </label>
+                      </div>
                     </div>
-                  </div>)}
+                  </div>
+                ))}
               </div>
 
-              {getSubCategoryOptions().length > 0 && <div className="mt-4 sm:mt-6">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                    {getSubCategoryOptions().map(option => <div key={option.value} className="bg-purple-100 p-3 sm:p-4 rounded-lg text-center">
-                        <div className="flex items-center justify-center space-x-2">
-                          <input type="radio" id={`sub-${option.value}`} name="subMeterCategory" value={option.value} checked={subCategoryType === option.value} onChange={e => setSubCategoryType(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
-                          <label htmlFor={`sub-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+              {getSubCategoryOptions().length > 0 && (
+                <div className="mt-4 sm:mt-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    {getSubCategoryOptions().map(option => (
+                      <div key={option.value} className="bg-blue-50 p-3 sm:p-4 rounded-lg text-center border border-blue-200">
+                        <div className="flex flex-col items-center space-y-2">
+                          <div className="text-gray-600">
+                            {option.icon}
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <input 
+                              type="radio" 
+                              id={`sub-${option.value}`} 
+                              name="subMeterCategory" 
+                              value={option.value} 
+                              checked={subCategoryType === option.value} 
+                              onChange={(e) => setSubCategoryType(e.target.value)} 
+                              className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" 
+                            />
+                            <label htmlFor={`sub-${option.value}`} className="text-xs sm:text-sm cursor-pointer font-medium">
+                              {option.label}
+                            </label>
+                          </div>
                         </div>
-                      </div>)}
+                      </div>
+                    ))}
                   </div>
-                </div>}
+                </div>
+              )}
             </div>}
         </div>
 
