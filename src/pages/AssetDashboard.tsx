@@ -21,35 +21,195 @@ import {
 const assetData = [
   {
     id: '203696',
-    name: 'sdcsdc',
+    name: 'Dell Laptop Pro',
     code: '026d4956a50be20318za',
-    assetNo: 'sdcsdc',
+    assetNo: 'DL-001',
     status: 'In Use',
-    equipmentId: '',
-    site: 'Located',
-    building: 'sebc',
-    wing: '',
-    floor: '',
-    area: '',
-    room: '',
-    meterType: '',
-    assetType: 'Comprehensive'
+    equipmentId: 'EQ-LT-001',
+    site: 'Main Campus',
+    building: 'Building A',
+    wing: 'East Wing',
+    floor: '3rd Floor',
+    area: 'IT Department',
+    room: 'Room 301',
+    meterType: 'Power Meter',
+    assetType: 'IT Equipment'
   },
   {
     id: '203694',
-    name: 'Test History',
+    name: 'HP Printer Scanner',
     code: '5e298bffcab011bb6e16',
-    assetNo: 'f3212',
+    assetNo: 'HP-002',
     status: 'Breakdown',
-    equipmentId: 'r34f6S',
-    site: 'Located',
-    building: 'jyoti tower',
-    wing: '',
-    floor: '',
-    area: '',
-    room: '',
-    meterType: '',
-    assetType: 'Parent Meter'
+    equipmentId: 'EQ-PR-002',
+    site: 'Main Campus',
+    building: 'Building B',
+    wing: 'West Wing',
+    floor: '2nd Floor',
+    area: 'Admin Office',
+    room: 'Room 205',
+    meterType: 'Usage Meter',
+    assetType: 'Office Equipment'
+  },
+  {
+    id: '203695',
+    name: 'Air Conditioning Unit',
+    code: '7f456abc789def123456',
+    assetNo: 'AC-003',
+    status: 'In Use',
+    equipmentId: 'EQ-AC-003',
+    site: 'Branch Office',
+    building: 'Building C',
+    wing: 'North Wing',
+    floor: '1st Floor',
+    area: 'Reception',
+    room: 'Lobby',
+    meterType: 'Energy Meter',
+    assetType: 'HVAC Equipment'
+  },
+  {
+    id: '203697',
+    name: 'Security Camera System',
+    code: '9e123def456ghi789abc',
+    assetNo: 'SC-004',
+    status: 'In Use',
+    equipmentId: 'EQ-SC-004',
+    site: 'Main Campus',
+    building: 'Building A',
+    wing: 'Central',
+    floor: 'All Floors',
+    area: 'Security',
+    room: 'Multiple',
+    meterType: 'Network Meter',
+    assetType: 'Security Equipment'
+  },
+  {
+    id: '203698',
+    name: 'Conference Room Projector',
+    code: '4a789bcd012efg345hij',
+    assetNo: 'PR-005',
+    status: 'Maintenance',
+    equipmentId: 'EQ-PJ-005',
+    site: 'Main Campus',
+    building: 'Building B',
+    wing: 'South Wing',
+    floor: '4th Floor',
+    area: 'Conference Area',
+    room: 'Conference Room A',
+    meterType: 'Usage Meter',
+    assetType: 'AV Equipment'
+  },
+  {
+    id: '203699',
+    name: 'Server Rack Unit',
+    code: '6c567def890abc123def',
+    assetNo: 'SR-006',
+    status: 'In Use',
+    equipmentId: 'EQ-SR-006',
+    site: 'Data Center',
+    building: 'DC Building',
+    wing: 'Main Hall',
+    floor: 'Ground Floor',
+    area: 'Server Room',
+    room: 'Server Room 1',
+    meterType: 'Power Meter',
+    assetType: 'IT Infrastructure'
+  },
+  {
+    id: '203700',
+    name: 'Water Cooler Dispenser',
+    code: '8e901fgh234ijk567lmn',
+    assetNo: 'WC-007',
+    status: 'In Use',
+    equipmentId: 'EQ-WC-007',
+    site: 'Main Campus',
+    building: 'Building A',
+    wing: 'East Wing',
+    floor: '2nd Floor',
+    area: 'Break Room',
+    room: 'Kitchen',
+    meterType: 'Water Meter',
+    assetType: 'Utility Equipment'
+  },
+  {
+    id: '203701',
+    name: 'Industrial Generator',
+    code: '1f345ghi678jkl901mno',
+    assetNo: 'GN-008',
+    status: 'Standby',
+    equipmentId: 'EQ-GN-008',
+    site: 'Main Campus',
+    building: 'Utility Building',
+    wing: 'Rear Section',
+    floor: 'Ground Floor',
+    area: 'Power Station',
+    room: 'Generator Room',
+    meterType: 'Fuel Meter',
+    assetType: 'Power Equipment'
+  },
+  {
+    id: '203702',
+    name: 'Office Furniture Set',
+    code: '3h789ijk012lmn345opq',
+    assetNo: 'OF-009',
+    status: 'In Use',
+    equipmentId: 'EQ-OF-009',
+    site: 'Branch Office',
+    building: 'Building C',
+    wing: 'South Wing',
+    floor: '3rd Floor',
+    area: 'Workspace',
+    room: 'Open Office',
+    meterType: 'N/A',
+    assetType: 'Furniture'
+  },
+  {
+    id: '203703',
+    name: 'Fire Safety System',
+    code: '5j123klm456nop789qrs',
+    assetNo: 'FS-010',
+    status: 'In Use',
+    equipmentId: 'EQ-FS-010',
+    site: 'Main Campus',
+    building: 'All Buildings',
+    wing: 'All Wings',
+    floor: 'All Floors',
+    area: 'Safety',
+    room: 'Multiple',
+    meterType: 'Sensor Network',
+    assetType: 'Safety Equipment'
+  },
+  {
+    id: '203704',
+    name: 'WiFi Network Router',
+    code: '7l567mno890pqr123stu',
+    assetNo: 'NW-011',
+    status: 'In Use',
+    equipmentId: 'EQ-NW-011',
+    site: 'Main Campus',
+    building: 'Building A',
+    wing: 'Central',
+    floor: '1st Floor',
+    area: 'IT Room',
+    room: 'Network Closet',
+    meterType: 'Bandwidth Meter',
+    assetType: 'Network Equipment'
+  },
+  {
+    id: '203705',
+    name: 'Elevator System',
+    code: '9n901opq234rst567uvw',
+    assetNo: 'EL-012',
+    status: 'In Use',
+    equipmentId: 'EQ-EL-012',
+    site: 'Main Campus',
+    building: 'Building B',
+    wing: 'Central Core',
+    floor: 'All Floors',
+    area: 'Transportation',
+    room: 'Elevator Shaft',
+    meterType: 'Usage Counter',
+    assetType: 'Building Equipment'
   }
 ];
 
@@ -79,21 +239,22 @@ export const AssetDashboard = () => {
     assetType: true
   });
 
-  // Calculate stats dynamically from asset data
   const stats = useMemo(() => {
     const totalAssets = assetData.length;
     const inUseAssets = assetData.filter(asset => asset.status === 'In Use').length;
     const breakdownAssets = assetData.filter(asset => asset.status === 'Breakdown').length;
-    const itAssets = assetData.filter(asset => asset.assetType === 'Parent Meter').length;
+    const maintenanceAssets = assetData.filter(asset => asset.status === 'Maintenance').length;
+    const standbyAssets = assetData.filter(asset => asset.status === 'Standby').length;
+    const itAssets = assetData.filter(asset => asset.assetType.includes('IT') || asset.assetType.includes('Network')).length;
     const nonItAssets = totalAssets - itAssets;
-    const totalValue = 0; // This would be calculated from actual asset values
-    const inStoreAssets = 0; // This would be calculated from assets with 'In Store' status
-    const disposeAssets = 0; // This would be calculated from assets marked for disposal
+    const totalValue = 125000;
+    const inStoreAssets = 0;
+    const disposeAssets = 0;
     
     return {
       total: totalAssets,
       inUse: inUseAssets,
-      breakdown: breakdownAssets,
+      breakdown: breakdownAssets + maintenanceAssets + standbyAssets,
       totalValue: totalValue,
       nonItAssets: nonItAssets,
       itAssets: itAssets,
@@ -268,6 +429,10 @@ export const AssetDashboard = () => {
         return 'bg-green-500 text-white';
       case 'Breakdown':
         return 'bg-red-500 text-white';
+      case 'Maintenance':
+        return 'bg-yellow-500 text-white';
+      case 'Standby':
+        return 'bg-blue-500 text-white';
       default:
         return 'bg-gray-500 text-white';
     }
@@ -281,9 +446,28 @@ export const AssetDashboard = () => {
     setVisibleColumns(columns);
   };
 
+  const handleGridView = () => {
+    setVisibleColumns({
+      actions: true,
+      assetName: true,
+      assetId: true,
+      assetCode: false,
+      assetNo: true,
+      assetStatus: true,
+      equipmentId: false,
+      site: false,
+      building: false,
+      wing: false,
+      floor: false,
+      area: false,
+      room: false,
+      meterType: false,
+      assetType: false
+    });
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen max-w-full overflow-x-hidden">
-      {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
           <span>Assets</span>
@@ -293,19 +477,15 @@ export const AssetDashboard = () => {
         <h1 className="text-2xl font-bold text-[#1a1a1a] uppercase">ASSET LIST</h1>
       </div>
 
-      {/* Stats Cards - Restored original styling */}
       <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
         {statData.map((item, i) => (
           <div
             key={i}
             className="bg-[#f6f4ee] p-6 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4"
           >
-            {/* Icon with circle background */}
             <div className="w-14 h-14 bg-[#FBEDEC] rounded-full flex items-center justify-center">
               {item.icon}
             </div>
-
-            {/* Text block */}
             <div>
               <div className="text-2xl font-bold text-[#C72030]">{item.value}</div>
               <div className="text-sm font-medium text-gray-600">{item.label}</div>
@@ -314,7 +494,6 @@ export const AssetDashboard = () => {
         ))}
       </div>
 
-      {/* First Row of Action Buttons - Updated styling */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <Button 
           onClick={handleAddAsset}
@@ -349,7 +528,6 @@ export const AssetDashboard = () => {
           Filters
         </Button>
 
-        {/* Search Box and additional buttons aligned to right */}
         <div className="flex items-center gap-2 ml-auto">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -370,6 +548,15 @@ export const AssetDashboard = () => {
             <RotateCcw className="w-4 h-4" />
           </Button>
           
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={handleGridView}
+            className="border-gray-300 text-gray-600 bg-white hover:bg-gray-50"
+          >
+            <Grid3X3 className="w-4 h-4" />
+          </Button>
+          
           <ColumnVisibilityDropdown 
             visibleColumns={visibleColumns}
             onColumnChange={handleColumnChange}
@@ -385,7 +572,6 @@ export const AssetDashboard = () => {
         </div>
       </div>
 
-      {/* Asset Table */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
@@ -522,7 +708,6 @@ export const AssetDashboard = () => {
         </div>
       </div>
 
-      {/* Updated Pagination */}
       <div className="mt-6">
         <Pagination>
           <PaginationContent>
@@ -584,7 +769,6 @@ export const AssetDashboard = () => {
         </Pagination>
       </div>
 
-      {/* Modals */}
       <BulkUploadDialog 
         open={isBulkUploadOpen}
         onOpenChange={setIsBulkUploadOpen}
