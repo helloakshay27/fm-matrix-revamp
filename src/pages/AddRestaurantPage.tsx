@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Store, Clock, Ban, Users, ShoppingCart, Paperclip } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 
@@ -158,13 +157,13 @@ export const AddRestaurantPage = () => {
     navigate('/vas/fnb');
   };
 
-  const renderSectionHeader = (title: string, section: keyof typeof expandedSections, icon: string) => (
+  const renderSectionHeader = (title: string, section: keyof typeof expandedSections, IconComponent: React.ComponentType<{ className?: string }>) => (
     <button
       onClick={() => toggleSection(section)}
       className="flex items-center justify-between w-full p-4 bg-[#F5F3F0] border border-gray-200 rounded-lg mb-4"
     >
       <div className="flex items-center gap-2">
-        <span className="text-[#C72030] text-lg">{icon}</span>
+        <IconComponent className="w-5 h-5 text-[#C72030]" />
         <span className="font-medium text-[#1a1a1a]">{title}</span>
       </div>
       {expandedSections[section] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -181,7 +180,7 @@ export const AddRestaurantPage = () => {
 
       <div className="space-y-4">
         {/* Basic Details */}
-        {renderSectionHeader('BASIC DETAILS', 'basicDetails', '🏪')}
+        {renderSectionHeader('BASIC DETAILS', 'basicDetails', Store)}
         {expandedSections.basicDetails && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
             <div>
@@ -381,7 +380,7 @@ export const AddRestaurantPage = () => {
         )}
 
         {/* Restaurant Schedule */}
-        {renderSectionHeader('RESTAURANT SCHEDULE', 'schedule', '🕒')}
+        {renderSectionHeader('RESTAURANT SCHEDULE', 'schedule', Clock)}
         {expandedSections.schedule && (
           <div className="p-4 border border-gray-200 rounded-lg">
             <div className="overflow-x-auto">
@@ -561,7 +560,7 @@ export const AddRestaurantPage = () => {
         )}
 
         {/* Blocked Days */}
-        {renderSectionHeader('BLOCKED DAYS', 'blockedDays', '🚫')}
+        {renderSectionHeader('BLOCKED DAYS', 'blockedDays', Ban)}
         {expandedSections.blockedDays && (
           <div className="p-4 border border-gray-200 rounded-lg">
             <div className="space-y-4">
@@ -615,7 +614,7 @@ export const AddRestaurantPage = () => {
         )}
 
         {/* Table Booking Configuration */}
-        {renderSectionHeader('TABLE BOOKING CONFIGURATION', 'tableBooking', '🪑')}
+        {renderSectionHeader('TABLE BOOKING CONFIGURATION', 'tableBooking', Users)}
         {expandedSections.tableBooking && (
           <div className="p-4 border border-gray-200 rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -670,7 +669,7 @@ export const AddRestaurantPage = () => {
         )}
 
         {/* Order Configuration */}
-        {renderSectionHeader('ORDER CONFIGURATION', 'orderConfig', '🛍️')}
+        {renderSectionHeader('ORDER CONFIGURATION', 'orderConfig', ShoppingCart)}
         {expandedSections.orderConfig && (
           <div className="p-4 border border-gray-200 rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -725,7 +724,7 @@ export const AddRestaurantPage = () => {
         )}
 
         {/* Attachments */}
-        {renderSectionHeader('ATTACHMENTS', 'attachments', '📎')}
+        {renderSectionHeader('ATTACHMENTS', 'attachments', Paperclip)}
         {expandedSections.attachments && (
           <div className="p-4 border border-gray-200 rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
