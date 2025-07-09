@@ -359,7 +359,7 @@ export const TaskDetailsPage = () => {
           <div className="space-y-6 p-4">
             {/* Question 1 */}
             <div className="space-y-3">
-              <div className="p-3 rounded bg-white">
+              <div className="p-3 rounded bg-[#F6F4EE]">
                 <h3 className="font-medium text-red-700">Washroom - Ladies Washroom</h3>
               </div>
               <p className="font-medium">1. Is Floor Clean ?</p>
