@@ -7,10 +7,36 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { TextField } from '@mui/material';
+
+const fieldStyles = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '8px',
+    backgroundColor: 'white',
+    '& fieldset': {
+      borderColor: '#e5e7eb'
+    },
+    '&:hover fieldset': {
+      borderColor: '#9ca3af'
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030'
+    }
+  },
+  '& .MuiInputLabel-root': {
+    color: '#6b7280',
+    fontSize: '14px',
+    '&.Mui-focused': {
+      color: '#C72030'
+    }
+  },
+  '& .MuiInputBase-input': {
+    padding: '14px 16px',
+    fontSize: '14px'
+  }
+};
 
 interface RepairReplaceModalProps {
   isOpen: boolean;
@@ -65,41 +91,47 @@ export const RepairReplaceModal: React.FC<RepairReplaceModalProps> = ({ isOpen, 
 
           {/* Cost */}
           <div className="space-y-2">
-            <Label htmlFor="cost" className="text-sm font-medium">Cost (In Rupees )</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
-              <Input
-                id="cost"
-                type="number"
-                placeholder=""
-                value={costInRupees}
-                onChange={(e) => setCostInRupees(e.target.value)}
-                className="pl-8"
-              />
-            </div>
+            <TextField
+              label="Cost (In Rupees)"
+              type="number"
+              placeholder=""
+              value={costInRupees}
+              onChange={(e) => setCostInRupees(e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={fieldStyles}
+              InputProps={{
+                startAdornment: <span className="text-gray-500 mr-2">₹</span>,
+              }}
+            />
           </div>
 
           {/* Warranty */}
           <div className="space-y-2">
-            <Label htmlFor="warranty" className="text-sm font-medium">Warranty (In Month)</Label>
-            <Input
-              id="warranty"
+            <TextField
+              label="Warranty (In Month)"
               type="number"
               placeholder=""
               value={warrantyInMonth}
               onChange={(e) => setWarrantyInMonth(e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={fieldStyles}
             />
           </div>
 
           {/* In Use Reason */}
           <div className="space-y-2">
-            <Label htmlFor="reason" className="text-sm font-medium">In Use Reason</Label>
-            <Textarea
-              id="reason"
+            <TextField
+              label="In Use Reason"
               placeholder=""
               value={inUseReason}
               onChange={(e) => setInUseReason(e.target.value)}
+              fullWidth
+              variant="outlined"
+              multiline
               rows={3}
+              sx={fieldStyles}
             />
           </div>
 
