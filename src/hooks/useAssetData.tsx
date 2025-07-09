@@ -16,7 +16,10 @@ const assetData = [
     area: 'IT Department',
     room: 'Room 301',
     meterType: 'Power Meter',
-    assetType: 'IT Equipment'
+    assetType: 'IT Equipment',
+    serialNumber: 'DL2024001',
+    group: 'Electronics',
+    subGroup: 'Computers'
   },
   {
     id: '203694',
@@ -32,7 +35,10 @@ const assetData = [
     area: 'Admin Office',
     room: 'Room 205',
     meterType: 'Usage Meter',
-    assetType: 'Office Equipment'
+    assetType: 'Office Equipment',
+    serialNumber: 'HP2024002',
+    group: 'Office',
+    subGroup: 'Printers'
   },
   {
     id: '203695',
@@ -48,7 +54,10 @@ const assetData = [
     area: 'Reception',
     room: 'Lobby',
     meterType: 'Energy Meter',
-    assetType: 'HVAC Equipment'
+    assetType: 'HVAC Equipment',
+    serialNumber: 'AC2024003',
+    group: 'HVAC',
+    subGroup: 'Cooling'
   },
   {
     id: '203697',
@@ -64,7 +73,10 @@ const assetData = [
     area: 'Security',
     room: 'Multiple',
     meterType: 'Network Meter',
-    assetType: 'Security Equipment'
+    assetType: 'Security Equipment',
+    serialNumber: 'SC2024004',
+    group: 'Security',
+    subGroup: 'Surveillance'
   },
   {
     id: '203698',
@@ -80,7 +92,10 @@ const assetData = [
     area: 'Conference Area',
     room: 'Conference Room A',
     meterType: 'Usage Meter',
-    assetType: 'AV Equipment'
+    assetType: 'AV Equipment',
+    serialNumber: 'PR2024005',
+    group: 'AV',
+    subGroup: 'Display'
   }
 ];
 

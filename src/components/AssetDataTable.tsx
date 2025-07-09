@@ -20,6 +20,9 @@ interface Asset {
   room: string;
   meterType: string;
   assetType: string;
+  serialNumber?: string;
+  group?: string;
+  subGroup?: string;
 }
 
 interface AssetDataTableProps {
@@ -71,23 +74,20 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
               {visibleColumns.actions && (
                 <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</TableHead>
               )}
+              {visibleColumns.serialNumber && (
+                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Serial Number</TableHead>
+              )}
               {visibleColumns.assetName && (
                 <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Name</TableHead>
               )}
               {visibleColumns.assetId && (
                 <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset ID</TableHead>
               )}
-              {visibleColumns.assetCode && (
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Code</TableHead>
-              )}
               {visibleColumns.assetNo && (
                 <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset No.</TableHead>
               )}
               {visibleColumns.assetStatus && (
                 <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Status</TableHead>
-              )}
-              {visibleColumns.equipmentId && (
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Equipment Id</TableHead>
               )}
               {visibleColumns.site && (
                 <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Site</TableHead>
@@ -107,8 +107,11 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
               {visibleColumns.room && (
                 <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Room</TableHead>
               )}
-              {visibleColumns.meterType && (
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Meter Type</TableHead>
+              {visibleColumns.group && (
+                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Group</TableHead>
+              )}
+              {visibleColumns.subGroup && (
+                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Sub-Group</TableHead>
               )}
               {visibleColumns.assetType && (
                 <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Type</TableHead>
@@ -138,14 +141,14 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
                     </Button>
                   </TableCell>
                 )}
+                {visibleColumns.serialNumber && (
+                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.serialNumber || asset.code}</TableCell>
+                )}
                 {visibleColumns.assetName && (
                   <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{asset.name}</TableCell>
                 )}
                 {visibleColumns.assetId && (
                   <TableCell className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.id}</TableCell>
-                )}
-                {visibleColumns.assetCode && (
-                  <TableCell className="px-4 py-3 text-sm text-gray-600 font-mono">{asset.code}</TableCell>
                 )}
                 {visibleColumns.assetNo && (
                   <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.assetNo}</TableCell>
@@ -156,9 +159,6 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
                       {asset.status}
                     </Badge>
                   </TableCell>
-                )}
-                {visibleColumns.equipmentId && (
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.equipmentId}</TableCell>
                 )}
                 {visibleColumns.site && (
                   <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.site}</TableCell>
@@ -178,8 +178,11 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
                 {visibleColumns.room && (
                   <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.room}</TableCell>
                 )}
-                {visibleColumns.meterType && (
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.meterType}</TableCell>
+                {visibleColumns.group && (
+                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.group || 'N/A'}</TableCell>
+                )}
+                {visibleColumns.subGroup && (
+                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.subGroup || 'N/A'}</TableCell>
                 )}
                 {visibleColumns.assetType && (
                   <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.assetType}</TableCell>

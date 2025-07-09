@@ -81,19 +81,19 @@ export const ColumnVisibilityDropdown = ({
       if (visibleColumns.hasOwnProperty('assetName')) {
         const assetColumnLabels = {
           actions: 'Actions',
+          serialNumber: 'Serial Number',
           assetName: 'Asset Name',
           assetId: 'Asset ID',
-          assetCode: 'Asset Code',
           assetNo: 'Asset No.',
           assetStatus: 'Asset Status',
-          equipmentId: 'Equipment Id',
           site: 'Site',
           building: 'Building',
           wing: 'Wing',
           floor: 'Floor',
           area: 'Area',
           room: 'Room',
-          meterType: 'Meter Type',
+          group: 'Group',
+          subGroup: 'Sub-Group',
           assetType: 'Asset Type'
         };
         

@@ -24,19 +24,19 @@ export const AssetDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState({
     actions: true,
+    serialNumber: true,
     assetName: true,
     assetId: true,
-    assetCode: false,
     assetNo: true,
     assetStatus: true,
-    equipmentId: false,
     site: false,
     building: false,
     wing: false,
     floor: false,
     area: false,
     room: false,
-    meterType: false,
+    group: false,
+    subGroup: false,
     assetType: false
   });
 
