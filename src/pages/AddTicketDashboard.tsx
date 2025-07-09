@@ -372,11 +372,8 @@ export const AddTicketDashboard = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 items-start">
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
               <Textarea
                 id="description"
                 value={formData.description}
@@ -389,9 +386,7 @@ export const AddTicketDashboard = () => {
               />
             </div>
             <div>
-              <FormControl fullWidth variant="outlined" sx={{
-              mt: 1
-            }}>
+              <FormControl fullWidth variant="outlined">
                 <InputLabel id="mode-select-label" shrink>Mode</InputLabel>
                 <MuiSelect labelId="mode-select-label" label="Mode" displayEmpty value={formData.mode} onChange={e => setFormData({
                 ...formData,
