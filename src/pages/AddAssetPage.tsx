@@ -15,8 +15,11 @@ const AddAssetPage = () => {
     attachments: true
   });
   const [itAssetsToggle, setItAssetsToggle] = useState(false);
+  const [meterDetailsToggle, setMeterDetailsToggle] = useState(false);
   const [meterCategoryType, setMeterCategoryType] = useState('');
   const [subCategoryType, setSubCategoryType] = useState('');
+  const [meterType, setMeterType] = useState('');
+  const [criticalStatus, setCriticalStatus] = useState('');
   const [consumptionMeasures, setConsumptionMeasures] = useState([{
     id: 1,
     name: '',
@@ -104,6 +107,14 @@ const AddAssetPage = () => {
     setExpandedSections(prev => ({
       ...prev,
       warranty: checked
+    }));
+  };
+
+  const handleMeterDetailsToggleChange = (checked) => {
+    setMeterDetailsToggle(checked);
+    setExpandedSections(prev => ({
+      ...prev,
+      meterCategory: checked
     }));
   };
 
@@ -530,25 +541,133 @@ const AddAssetPage = () => {
           )}
         </div>
 
-        {/* Meter Category Type */}
+        {/* Meter Details */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('meterCategory')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
               <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                 <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
               </span>
-              METER CATEGORY TYPE
+              METER DETAILS
             </div>
-            {expandedSections.meterCategory ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">If Applicable</span>
+                <div className="relative inline-block w-12 h-6">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    id="meter-details-toggle"
+                    checked={meterDetailsToggle}
+                    onChange={(e) => handleMeterDetailsToggleChange(e.target.checked)}
+                  />
+                  <label
+                    htmlFor="meter-details-toggle"
+                    className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${
+                      meterDetailsToggle ? 'bg-green-400' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
+                      meterDetailsToggle ? 'translate-x-6' : 'translate-x-1'
+                    }`}></span>
+                  </label>
+                </div>
+              </div>
+              {expandedSections.meterCategory ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </div>
           </div>
           {expandedSections.meterCategory && <div className="p-4 sm:p-6">
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
-                {getMeterCategoryOptions().map(option => <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-[#f6f4ee]">
-                    <div className="flex items-center justify-center space-x-2">
-                      <input type="radio" id={option.value} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
-                      <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+              {/* Meter Type */}
+              <div className="mb-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <span className="text-blue-600 font-medium text-sm sm:text-base">Meter Type</span>
+                  <div className="flex gap-6">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="meter-type-parent"
+                        name="meterType"
+                        value="parent"
+                        checked={meterType === 'parent'}
+                        onChange={(e) => setMeterType(e.target.value)}
+                        className="w-4 h-4 text-blue-600 border-gray-300"
+                        style={{ accentColor: '#2563eb' }}
+                      />
+                      <label htmlFor="meter-type-parent" className="text-sm">Parent</label>
                     </div>
-                  </div>)}
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="meter-type-sub"
+                        name="meterType"
+                        value="sub"
+                        checked={meterType === 'sub'}
+                        onChange={(e) => setMeterType(e.target.value)}
+                        className="w-4 h-4 text-blue-600 border-gray-300"
+                        style={{ accentColor: '#2563eb' }}
+                      />
+                      <label htmlFor="meter-type-sub" className="text-sm">Sub</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Critical */}
+              <div className="mb-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <span className="text-blue-600 font-medium text-sm sm:text-base">CRITICAL</span>
+                  <div className="flex gap-6">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="critical-yes"
+                        name="critical"
+                        value="yes"
+                        checked={criticalStatus === 'yes'}
+                        onChange={(e) => setCriticalStatus(e.target.value)}
+                        className="w-4 h-4 text-blue-600 border-gray-300"
+                        style={{ accentColor: '#2563eb' }}
+                      />
+                      <label htmlFor="critical-yes" className="text-sm">Yes</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="critical-no"
+                        name="critical"
+                        value="no"
+                        checked={criticalStatus === 'no'}
+                        onChange={(e) => setCriticalStatus(e.target.value)}
+                        className="w-4 h-4 text-blue-600 border-gray-300"
+                        style={{ accentColor: '#2563eb' }}
+                      />
+                      <label htmlFor="critical-no" className="text-sm">No</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Meter Category Type */}
+              <div className="mb-6">
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <h3 className="text-blue-600 font-medium mb-4 text-sm sm:text-base">METER CATEGORY TYPE</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
+                    {getMeterCategoryOptions().map(option => <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                        <div className="flex items-center justify-center space-x-2">
+                          <input type="radio" id={option.value} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
+                          <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                        </div>
+                      </div>)}
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+                    <div className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                      <div className="flex items-center justify-center space-x-2">
+                        <input type="radio" id="iex-gdam" name="meterCategory" value="iex-gdam" checked={meterCategoryType === 'iex-gdam'} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
+                        <label htmlFor="iex-gdam" className="text-xs sm:text-sm cursor-pointer">IEX-GDAM</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {getSubCategoryOptions().length > 0 && <div className="mt-4 sm:mt-6">
