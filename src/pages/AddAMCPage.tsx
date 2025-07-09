@@ -24,17 +24,17 @@ export const AddAMCPage = () => {
     remarks: ''
   });
   const [attachments, setAttachments] = useState({
+    contracts: [] as File[],
+    invoices: [] as File[],
     manuals: [] as File[],
-    insurance: [] as File[],
-    purchaseInvoice: [] as File[],
-    amc: [] as File[]
+    insurance: [] as File[]
   });
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleFileUpload = (type: 'manuals' | 'insurance' | 'purchaseInvoice' | 'amc', files: FileList | null) => {
+  const handleFileUpload = (type: 'contracts' | 'invoices' | 'manuals' | 'insurance', files: FileList | null) => {
     if (files) {
       const fileArray = Array.from(files);
       setAttachments(prev => ({
@@ -44,7 +44,7 @@ export const AddAMCPage = () => {
     }
   };
 
-  const removeFile = (type: 'manuals' | 'insurance' | 'purchaseInvoice' | 'amc', index: number) => {
+  const removeFile = (type: 'contracts' | 'invoices' | 'manuals' | 'insurance', index: number) => {
     setAttachments(prev => ({
       ...prev,
       [type]: prev[type].filter((_, i) => i !== index)
@@ -350,32 +350,37 @@ export const AddAMCPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Manuals Upload */}
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ fontSize: '14px' }}>Manuals Upload</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white">
-                  <div className="text-sm text-gray-500 mb-3" style={{ fontSize: '14px' }}>
-                    <span className="text-[#C72030]">Choose File</span> <span className="text-gray-400">No file chosen</span>
+                <label className="block font-medium text-gray-700 mb-2" style={{ fontSize: '14px' }}>Manuals Upload</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="file" 
+                        multiple 
+                        className="hidden" 
+                        id="manuals-file-input"
+                        onChange={(e) => handleFileUpload('manuals', e.target.files)}
+                      />
+                      <label htmlFor="manuals-file-input" className="text-[#C72030] font-medium cursor-pointer hover:underline" style={{ fontSize: '14px' }}>
+                        Choose File
+                      </label>
+                      <span className="text-gray-500" style={{ fontSize: '14px' }}>No file chosen</span>
+                    </div>
+                    <Button 
+                      type="button"
+                      onClick={() => document.getElementById('manuals-file-input')?.click()}
+                      className="bg-[#F2EEE9] hover:bg-[#F2EEE9]/90 text-[#C72030] border-none px-4 py-2 rounded-none flex items-center gap-2"
+                      style={{ fontSize: '14px' }}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Upload Files
+                    </Button>
                   </div>
-                  <input 
-                    type="file" 
-                    multiple 
-                    className="hidden" 
-                    id="manuals-upload"
-                    onChange={(e) => handleFileUpload('manuals', e.target.files)}
-                  />
-                  <Button 
-                    type="button" 
-                    onClick={() => document.getElementById('manuals-upload')?.click()}
-                    className="bg-[#F2EEE9] text-[#C72030] hover:bg-[#F2EEE9]/90 border-0 text-sm font-medium px-4 py-2"
-                    style={{ fontSize: '14px' }}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Upload Files
-                  </Button>
                 </div>
                 {attachments.manuals.length > 0 && (
                   <div className="mt-2 space-y-1">
                     {attachments.manuals.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded" style={{ fontSize: '14px' }}>
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded" style={{ fontSize: '14px' }}>
                         <span>{file.name}</span>
                         <Button
                           type="button"
@@ -393,32 +398,37 @@ export const AddAMCPage = () => {
 
               {/* Insurance Details */}
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ fontSize: '14px' }}>Insurance Details</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white">
-                  <div className="text-sm text-gray-500 mb-3" style={{ fontSize: '14px' }}>
-                    <span className="text-[#C72030]">Choose File</span> <span className="text-gray-400">No file chosen</span>
+                <label className="block font-medium text-gray-700 mb-2" style={{ fontSize: '14px' }}>Insurance Details</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="file" 
+                        multiple 
+                        className="hidden" 
+                        id="insurance-file-input"
+                        onChange={(e) => handleFileUpload('insurance', e.target.files)}
+                      />
+                      <label htmlFor="insurance-file-input" className="text-[#C72030] font-medium cursor-pointer hover:underline" style={{ fontSize: '14px' }}>
+                        Choose File
+                      </label>
+                      <span className="text-gray-500" style={{ fontSize: '14px' }}>No file chosen</span>
+                    </div>
+                    <Button 
+                      type="button"
+                      onClick={() => document.getElementById('insurance-file-input')?.click()}
+                      className="bg-[#F2EEE9] hover:bg-[#F2EEE9]/90 text-[#C72030] border-none px-4 py-2 rounded-none flex items-center gap-2"
+                      style={{ fontSize: '14px' }}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Upload Files
+                    </Button>
                   </div>
-                  <input 
-                    type="file" 
-                    multiple 
-                    className="hidden" 
-                    id="insurance-upload"
-                    onChange={(e) => handleFileUpload('insurance', e.target.files)}
-                  />
-                  <Button 
-                    type="button" 
-                    onClick={() => document.getElementById('insurance-upload')?.click()}
-                    className="bg-[#F2EEE9] text-[#C72030] hover:bg-[#F2EEE9]/90 border-0 text-sm font-medium px-4 py-2"
-                    style={{ fontSize: '14px' }}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Upload Files
-                  </Button>
                 </div>
                 {attachments.insurance.length > 0 && (
                   <div className="mt-2 space-y-1">
                     {attachments.insurance.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded" style={{ fontSize: '14px' }}>
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded" style={{ fontSize: '14px' }}>
                         <span>{file.name}</span>
                         <Button
                           type="button"
@@ -436,38 +446,43 @@ export const AddAMCPage = () => {
 
               {/* Purchaselah Invoice */}
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ fontSize: '14px' }}>Purchaselah Invoice</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white">
-                  <div className="text-sm text-gray-500 mb-3" style={{ fontSize: '14px' }}>
-                    <span className="text-[#C72030]">Choose File</span> <span className="text-gray-400">No file chosen</span>
+                <label className="block font-medium text-gray-700 mb-2" style={{ fontSize: '14px' }}>Purchaselah Invoice</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="file" 
+                        multiple 
+                        className="hidden" 
+                        id="contracts-file-input"
+                        onChange={(e) => handleFileUpload('contracts', e.target.files)}
+                      />
+                      <label htmlFor="contracts-file-input" className="text-[#C72030] font-medium cursor-pointer hover:underline" style={{ fontSize: '14px' }}>
+                        Choose File
+                      </label>
+                      <span className="text-gray-500" style={{ fontSize: '14px' }}>No file chosen</span>
+                    </div>
+                    <Button 
+                      type="button"
+                      onClick={() => document.getElementById('contracts-file-input')?.click()}
+                      className="bg-[#F2EEE9] hover:bg-[#F2EEE9]/90 text-[#C72030] border-none px-4 py-2 rounded-none flex items-center gap-2"
+                      style={{ fontSize: '14px' }}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Upload Files
+                    </Button>
                   </div>
-                  <input 
-                    type="file" 
-                    multiple 
-                    className="hidden" 
-                    id="purchase-invoice-upload"
-                    onChange={(e) => handleFileUpload('purchaseInvoice', e.target.files)}
-                  />
-                  <Button 
-                    type="button" 
-                    onClick={() => document.getElementById('purchase-invoice-upload')?.click()}
-                    className="bg-[#F2EEE9] text-[#C72030] hover:bg-[#F2EEE9]/90 border-0 text-sm font-medium px-4 py-2"
-                    style={{ fontSize: '14px' }}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Upload Files
-                  </Button>
                 </div>
-                {attachments.purchaseInvoice.length > 0 && (
+                {attachments.contracts.length > 0 && (
                   <div className="mt-2 space-y-1">
-                    {attachments.purchaseInvoice.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded" style={{ fontSize: '14px' }}>
+                    {attachments.contracts.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded" style={{ fontSize: '14px' }}>
                         <span>{file.name}</span>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => removeFile('purchaseInvoice', index)}
+                          onClick={() => removeFile('contracts', index)}
                         >
                           <X className="w-3 h-3" />
                         </Button>
@@ -479,38 +494,43 @@ export const AddAMCPage = () => {
 
               {/* AMC */}
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ fontSize: '14px' }}>AMC</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white">
-                  <div className="text-sm text-gray-500 mb-3" style={{ fontSize: '14px' }}>
-                    <span className="text-[#C72030]">Choose File</span> <span className="text-gray-400">No file chosen</span>
+                <label className="block font-medium text-gray-700 mb-2" style={{ fontSize: '14px' }}>AMC</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="file" 
+                        multiple 
+                        className="hidden" 
+                        id="invoices-file-input"
+                        onChange={(e) => handleFileUpload('invoices', e.target.files)}
+                      />
+                      <label htmlFor="invoices-file-input" className="text-[#C72030] font-medium cursor-pointer hover:underline" style={{ fontSize: '14px' }}>
+                        Choose File
+                      </label>
+                      <span className="text-gray-500" style={{ fontSize: '14px' }}>No file chosen</span>
+                    </div>
+                    <Button 
+                      type="button"
+                      onClick={() => document.getElementById('invoices-file-input')?.click()}
+                      className="bg-[#F2EEE9] hover:bg-[#F2EEE9]/90 text-[#C72030] border-none px-4 py-2 rounded-none flex items-center gap-2"
+                      style={{ fontSize: '14px' }}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Upload Files
+                    </Button>
                   </div>
-                  <input 
-                    type="file" 
-                    multiple 
-                    className="hidden" 
-                    id="amc-upload"
-                    onChange={(e) => handleFileUpload('amc', e.target.files)}
-                  />
-                  <Button 
-                    type="button" 
-                    onClick={() => document.getElementById('amc-upload')?.click()}
-                    className="bg-[#F2EEE9] text-[#C72030] hover:bg-[#F2EEE9]/90 border-0 text-sm font-medium px-4 py-2"
-                    style={{ fontSize: '14px' }}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Upload Files
-                  </Button>
                 </div>
-                {attachments.amc.length > 0 && (
+                {attachments.invoices.length > 0 && (
                   <div className="mt-2 space-y-1">
-                    {attachments.amc.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded" style={{ fontSize: '14px' }}>
+                    {attachments.invoices.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded" style={{ fontSize: '14px' }}>
                         <span>{file.name}</span>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => removeFile('amc', index)}
+                          onClick={() => removeFile('invoices', index)}
                         >
                           <X className="w-3 h-3" />
                         </Button>
