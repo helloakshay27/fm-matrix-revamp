@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent, Users, Settings } from 'lucide-react';
@@ -1247,7 +1248,18 @@ const AddAssetPage = () => {
       <Dialog open={customFieldModalOpen} onOpenChange={setCustomFieldModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-gray-900">Add Custom Field</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-lg font-semibold text-gray-900">Add Custom Field</DialogTitle>
+              <button
+                onClick={() => {
+                  setCustomFieldModalOpen(false);
+                  setNewFieldName('');
+                }}
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1 rounded"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </DialogHeader>
           <div className="py-4">
             <TextField
