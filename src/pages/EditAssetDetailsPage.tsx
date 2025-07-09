@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { TextField } from '@mui/material';
 import { ArrowLeft, ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
 import { FormControl, InputLabel, MenuItem, Select as MuiSelect, SelectChangeEvent, Radio, RadioGroup as MuiRadioGroup, FormControlLabel } from '@mui/material';
+
 const fieldStyles = {
   '& .MuiOutlinedInput-root': {
     borderRadius: '8px',
@@ -33,6 +34,7 @@ const fieldStyles = {
     fontSize: '14px'
   }
 };
+
 export const EditAssetDetailsPage = () => {
   const {
     id
@@ -107,21 +109,25 @@ export const EditAssetDetailsPage = () => {
     label: 'IEX-GDAM'
   }];
   const unitTypes = ['kWh', 'kW', 'Liters', 'Cubic Meters', 'Units', 'Percentage', 'Temperature', 'Pressure'];
+
   const handleLocationChange = (field: string, value: string) => {
     setLocationData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleMeterTypeToggle = (typeId: string) => {
     setSelectedMeterTypes(prev => prev.includes(typeId) ? prev.filter(id => id !== typeId) : [...prev, typeId]);
   };
+
   const handleAddConsumptionMeasure = () => {
     const newMeasure = {
       id: Date.now(),
@@ -136,6 +142,7 @@ export const EditAssetDetailsPage = () => {
     };
     setConsumptionMeasures(prev => [...prev, newMeasure]);
   };
+
   const handleAddNonConsumptionMeasure = () => {
     const newMeasure = {
       id: Date.now(),
@@ -150,24 +157,29 @@ export const EditAssetDetailsPage = () => {
     };
     setNonConsumptionMeasures(prev => [...prev, newMeasure]);
   };
+
   const handleRemoveConsumptionMeasure = (id: number) => {
     setConsumptionMeasures(prev => prev.filter(measure => measure.id !== id));
   };
+
   const handleRemoveNonConsumptionMeasure = (id: number) => {
     setNonConsumptionMeasures(prev => prev.filter(measure => measure.id !== id));
   };
+
   const handleUpdateConsumptionMeasure = (id: number, field: string, value: string | boolean) => {
     setConsumptionMeasures(prev => prev.map(measure => measure.id === id ? {
       ...measure,
       [field]: value
     } : measure));
   };
+
   const handleUpdateNonConsumptionMeasure = (id: number, field: string, value: string | boolean) => {
     setNonConsumptionMeasures(prev => prev.map(measure => measure.id === id ? {
       ...measure,
       [field]: value
     } : measure));
   };
+
   const handleFileUpload = (category: string, event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
@@ -175,6 +187,7 @@ export const EditAssetDetailsPage = () => {
       // In a real app, you would handle the file upload here
     }
   };
+
   const handleSaveAndShowDetails = () => {
     console.log('Saving and showing details:', {
       locationData,
@@ -186,6 +199,7 @@ export const EditAssetDetailsPage = () => {
     });
     navigate(`/maintenance/asset/details/${id}`);
   };
+
   const handleSaveAndCreateNew = () => {
     console.log('Saving and creating new:', {
       locationData,
@@ -197,9 +211,11 @@ export const EditAssetDetailsPage = () => {
     });
     navigate('/maintenance/asset/add');
   };
+
   const handleBack = () => {
     navigate(`/maintenance/asset/details/${id}`);
   };
+
   return <div className="p-6 bg-[#f6f4ee] min-h-screen">
       {/* Header */}
       <div className="mb-6">
@@ -536,11 +552,11 @@ export const EditAssetDetailsPage = () => {
           
           {meterCategoryExpanded && <div className="p-6 pt-0">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                {meterTypes.map(type => <div key={type.id} onClick={() => handleMeterTypeToggle(type.id)} className="p-4 rounded-lg flex items-center gap-3 cursor-pointer transition-colors bg-[f6f4ee] bg-[#f6f4ee]">
-                    <div className="flex items-center">
+                {meterTypes.map(type => <div key={type.id} onClick={() => handleMeterTypeToggle(type.id)} className="p-4 rounded-lg flex flex-col items-center justify-center gap-3 cursor-pointer transition-colors bg-[#f6f4ee] min-h-[80px]">
+                    <div className="flex items-center justify-center">
                       <input type="radio" name="meterCategory" value={type.id} checked={selectedMeterTypes.includes(type.id)} onChange={() => {}} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
                     </div>
-                    <span className="text-sm font-medium text-gray-700">{type.label}</span>
+                    <span className="text-sm font-medium text-gray-700 text-center">{type.label}</span>
                   </div>)}
               </div>
             </div>}
