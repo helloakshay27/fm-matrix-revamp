@@ -422,7 +422,7 @@ const AddAssetPage = () => {
             <div className="p-4 sm:p-6">
               {/* System Details */}
               <div className="mb-6">
-                <h3 className="text-blue-600 font-semibold mb-4">SYSTEM DETAILS</h3>
+                <h3 className="font-semibold mb-4" style={{ color: '#C72030' }}>SYSTEM DETAILS</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <TextField
                     label="OS"
