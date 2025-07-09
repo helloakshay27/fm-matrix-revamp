@@ -1,7 +1,9 @@
 
 import React, { useState } from 'react';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Button } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem} from '@mui/material';
 import { Search, RotateCcw, Droplets, FileText, Frown, Toilet } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
 
 const fieldStyles = {
   width: '100%',
@@ -260,47 +262,23 @@ export const SurveyResponsePage = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 pt-4">
-          <Button
-            onClick={handleSearch}
-            variant="contained"
-            startIcon={<Search className="w-4 h-4" />}
-            sx={{
-              backgroundColor: '#3B82F6',
-              color: 'white',
-              padding: '10px 24px',
-              borderRadius: '8px',
-              textTransform: 'none',
-              fontSize: '16px',
-              fontWeight: '600',
-              '&:hover': {
-                backgroundColor: '#2563EB',
-              },
-            }}
-          >
-            Search
-          </Button>
-          
-          <Button
-            onClick={handleReset}
-            variant="outlined"
-            startIcon={<RotateCcw className="w-4 h-4" />}
-            sx={{
-              borderColor: '#3B82F6',
-              color: '#3B82F6',
-              padding: '10px 24px',
-              borderRadius: '8px',
-              textTransform: 'none',
-              fontSize: '16px',
-              fontWeight: '600',
-              '&:hover': {
-                borderColor: '#2563EB',
-                backgroundColor: '#F8FAFC',
-              },
-            }}
-          >
-            Reset
-          </Button>
-        </div>
+  <Button 
+    onClick={handleSearch}
+    className="bg-[#3B82F6] hover:bg-[#2563EB] text-white px-6 py-2 rounded-md text-[16px] font-semibold flex items-center"
+  >
+    <Search className="w-4 h-4 mr-2" />
+    Search
+  </Button>
+
+  <Button 
+    onClick={handleReset}
+    className="border border-[#3B82F6] text-[#3B82F6] hover:border-[#2563EB] hover:bg-[#F8FAFC] px-6 py-2 rounded-md text-[16px] font-semibold flex items-center"
+  >
+    <RotateCcw className="w-4 h-4 mr-2" />
+    Reset
+  </Button>
+</div>
+
       </div>
 
       {/* Survey Results Section */}
