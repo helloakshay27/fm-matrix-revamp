@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent } from 'lucide-react';
@@ -717,20 +718,21 @@ const AddAssetPage = () => {
           {expandedSections.nonConsumption && <div className="p-4 sm:p-6">
               <div className="space-y-6">
                 {/* Method Section */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">Method</label>
-                    <div className="flex gap-6">
-                      <div className="flex items-center space-x-2">
-                        <input type="radio" id="straight-line" name="depreciationMethod" value="straight-line" defaultChecked className="w-4 h-4 text-[#C72030] border-gray-300" style={{
-                      accentColor: '#C72030'
-                    }} />
-                        <label htmlFor="straight-line" className="text-sm">Straight Line</label>
-                      </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-4 block">Method</label>
+                  <div className="flex gap-8">
+                    <div className="flex items-center space-x-2">
+                      <input type="radio" id="straight-line" name="depreciationMethod" value="straight-line" defaultChecked className="w-4 h-4 text-[#C72030] border-gray-300" style={{
+                    accentColor: '#C72030'
+                  }} />
+                      <label htmlFor="straight-line" className="text-sm">Straight Line</label>
                     </div>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-sm font-medium text-gray-700">WDV</span>
+                    <div className="flex items-center space-x-2">
+                      <input type="radio" id="wdv" name="depreciationMethod" value="wdv" className="w-4 h-4 text-[#C72030] border-gray-300" style={{
+                    accentColor: '#C72030'
+                  }} />
+                      <label htmlFor="wdv" className="text-sm">WDV</label>
+                    </div>
                   </div>
                 </div>
 
