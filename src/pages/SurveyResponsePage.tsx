@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Button } from '@mui/material';
-import { Search, RotateCcw } from 'lucide-react';
+import { Search, RotateCcw, Droplets, FileText, Frown, Toilet } from 'lucide-react';
 
 const fieldStyles = {
   width: '100%',
@@ -44,6 +44,37 @@ const fieldStyles = {
   },
 };
 
+const mockSurveyData = [
+  {
+    id: 1,
+    title: 'Soap Missing',
+    icon: Droplets,
+    status: 'pending',
+    count: 2
+  },
+  {
+    id: 2,
+    title: 'Tissue Paper Missing',
+    icon: FileText,
+    status: 'pending',
+    count: 1
+  },
+  {
+    id: 3,
+    title: 'Foul Smell',
+    icon: Frown,
+    status: 'pending',
+    count: 1
+  },
+  {
+    id: 4,
+    title: 'Wc Choked',
+    icon: Toilet,
+    status: 'pending',
+    count: 0
+  }
+];
+
 export const SurveyResponsePage = () => {
   const [formData, setFormData] = useState({
     survey: '',
@@ -56,6 +87,8 @@ export const SurveyResponsePage = () => {
     room: ''
   });
 
+  const [showResults, setShowResults] = useState(false);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -65,6 +98,7 @@ export const SurveyResponsePage = () => {
 
   const handleSearch = () => {
     console.log('Search clicked with data:', formData);
+    setShowResults(true);
   };
 
   const handleReset = () => {
@@ -78,6 +112,7 @@ export const SurveyResponsePage = () => {
       floor: '',
       room: ''
     });
+    setShowResults(false);
   };
 
   return (
@@ -95,7 +130,7 @@ export const SurveyResponsePage = () => {
       </div>
 
       {/* Filters Form */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6 mb-6">
         {/* First Row - Survey and Date Range */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormControl fullWidth variant="outlined" sx={fieldStyles}>
@@ -267,6 +302,43 @@ export const SurveyResponsePage = () => {
           </Button>
         </div>
       </div>
+
+      {/* Survey Results Section */}
+      {showResults && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Survey Results</h2>
+          <div className="space-y-4">
+            {mockSurveyData.map((item, index) => {
+              const IconComponent = item.icon;
+              return (
+                <div key={item.id} className="flex items-center justify-between p-4 border-b border-gray-100 last:border-b-0">
+                  <div className="flex items-center space-x-4">
+                    <span className="text-blue-600 font-medium text-sm">
+                      {index + 1}.
+                    </span>
+                    <span className="text-blue-600 font-medium">
+                      {item.title}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-6">
+                    <div className="flex flex-col items-center">
+                      <div className="w-12 h-12 rounded-lg border border-gray-200 flex items-center justify-center mb-2">
+                        <IconComponent className="w-6 h-6 text-gray-600" />
+                      </div>
+                      <span className="text-xs text-gray-600">{item.title}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="bg-orange-100 text-orange-600 px-2 py-1 rounded text-sm font-medium">
+                        {item.count}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
