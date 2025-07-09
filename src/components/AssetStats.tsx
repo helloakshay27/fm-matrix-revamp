@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Package, DollarSign, Settings, Monitor, AlertTriangle, Trash2 } from 'lucide-react';
 
@@ -28,7 +27,7 @@ export const AssetStats: React.FC<AssetStatsProps> = ({ stats }) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
       {statData.map((item, i) => (
         <div
           key={i}
