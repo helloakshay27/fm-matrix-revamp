@@ -52,9 +52,6 @@ export const LoginPage = () => {
       {/* Background Image */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url('/lovable-uploads/6da86c98-c068-4c5d-b797-d79c637a8cbd.png')`
-        }}
       />
       
       {/* Overlay */}
