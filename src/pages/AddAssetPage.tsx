@@ -20,6 +20,7 @@ const AddAssetPage = () => {
   const [itAssetsToggle, setItAssetsToggle] = useState(false);
   const [meterDetailsToggle, setMeterDetailsToggle] = useState(false);
   const [assetLoanedToggle, setAssetLoanedToggle] = useState(false);
+  const [depreciationToggle, setDepreciationToggle] = useState(false);
   const [meterCategoryType, setMeterCategoryType] = useState('');
   const [subCategoryType, setSubCategoryType] = useState('');
   const [meterType, setMeterType] = useState('');
@@ -171,6 +172,13 @@ const AddAssetPage = () => {
     setExpandedSections(prev => ({
       ...prev,
       assetLoaned: checked
+    }));
+  };
+  const handleDepreciationToggleChange = checked => {
+    setDepreciationToggle(checked);
+    setExpandedSections(prev => ({
+      ...prev,
+      nonConsumption: checked
     }));
   };
 
@@ -719,9 +727,9 @@ const AddAssetPage = () => {
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">If Applicable</span>
                 <div className="relative inline-block w-12 h-6">
-                  <input type="checkbox" className="sr-only peer" id="depreciation-toggle" />
-                  <label htmlFor="depreciation-toggle" className="block w-12 h-6 rounded-full cursor-pointer transition-colors bg-red-400">
-                    <span className="block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform translate-x-6"></span>
+                  <input type="checkbox" className="sr-only peer" id="depreciation-toggle" checked={depreciationToggle} onChange={e => handleDepreciationToggleChange(e.target.checked)} />
+                  <label htmlFor="depreciation-toggle" className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${depreciationToggle ? 'bg-green-400' : 'bg-gray-300'}`}>
+                    <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${depreciationToggle ? 'translate-x-6' : 'translate-x-1'}`}></span>
                   </label>
                 </div>
               </div>
