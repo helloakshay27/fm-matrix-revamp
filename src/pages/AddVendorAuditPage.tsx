@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -127,137 +126,141 @@ export const AddVendorAuditPage = () => {
         </div>
       </div>
 
-      {/* Basic Info Section */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
-            <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs" style={{ backgroundColor: '#C72030' }}>i</div>
-            Basic Info
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label className="text-sm font-medium">Schedule For</Label>
-            <RadioGroup value={scheduleFor} onValueChange={setScheduleFor} className="flex flex-wrap gap-6 mt-2">
-              {['asset', 'service', 'vendor', 'training'].map((type) => (
-                <div key={type} className="flex items-center space-x-2">
-                  <RadioGroupItem value={type} id={type} />
-                  <Label htmlFor={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
+      {/* Basic Info Section - Hidden when Create New is toggled */}
+      {!createNew && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
+              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs" style={{ backgroundColor: '#C72030' }}>i</div>
+              Basic Info
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium">Schedule For</Label>
+              <RadioGroup value={scheduleFor} onValueChange={setScheduleFor} className="flex flex-wrap gap-6 mt-2">
+                {['asset', 'service', 'vendor', 'training'].map((type) => (
+                  <div key={type} className="flex items-center space-x-2">
+                    <RadioGroupItem value={type} id={type} />
+                    <Label htmlFor={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
 
-          <div>
-            <TextField
-              label="Activity Name *"
-              placeholder="Enter Activity"
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{
-                shrink: true,
-              }}
-              sx={fieldStyles}
-            />
-          </div>
+            <div>
+              <TextField
+                label="Activity Name *"
+                placeholder="Enter Activity"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={fieldStyles}
+              />
+            </div>
 
-          <div>
-            <TextField
-              label="Description"
-              placeholder="Enter Description"
-              fullWidth
-              variant="outlined"
-              multiline
-              rows={3}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              sx={multilineFieldStyles}
-            />
-          </div>
+            <div>
+              <TextField
+                label="Description"
+                placeholder="Enter Description"
+                fullWidth
+                variant="outlined"
+                multiline
+                rows={3}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={multilineFieldStyles}
+              />
+            </div>
 
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="allow-observations"
-              className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
-            />
-            <Label htmlFor="allow-observations">Allow Observations</Label>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="allow-observations"
+                className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+              />
+              <Label htmlFor="allow-observations">Allow Observations</Label>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Task Section */}
-      <Card className="mb-6">
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
-            <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs" style={{ backgroundColor: '#C72030' }}>T</div>
-            Task
-          </CardTitle>
-          <Button
-            onClick={handleAddSection}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:opacity-90"
-          >
-            + Add Section
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {['Group', 'Sub Group'].map((label, idx) => (
-              <FormControl fullWidth variant="outlined" sx={fieldStyles} key={idx}>
-                <InputLabel shrink>{`Select ${label}`}</InputLabel>
-                <MuiSelect label={`Select ${label}`} displayEmpty>
-                  <MenuItem value=""><em>Select {label}</em></MenuItem>
-                  <MenuItem value={`${label.toLowerCase()}1`}>{`${label} 1`}</MenuItem>
-                  <MenuItem value={`${label.toLowerCase()}2`}>{`${label} 2`}</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <TextField
-              label="Task"
-              placeholder="Enter Task"
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{
-                shrink: true,
-              }}
-              sx={fieldStyles}
-            />
-            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-              <InputLabel shrink>Select Input Type</InputLabel>
-              <MuiSelect label="Select Input Type" displayEmpty>
-                <MenuItem value=""><em>Select Input Type</em></MenuItem>
-                <MenuItem value="text">Text</MenuItem>
-                <MenuItem value="radio">Radio Button</MenuItem>
-                <MenuItem value="checkbox">Checkbox</MenuItem>
-                <MenuItem value="dropdown">Dropdown</MenuItem>
-              </MuiSelect>
-            </FormControl>
-            <div className="flex flex-wrap gap-4 pt-2">
-              {['Mandatory', 'Reading', 'Help Text'].map((label, idx) => (
-                <div key={idx} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={label.toLowerCase().replace(' ', '-')}
-                    className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
-                  />
-                  <Label htmlFor={label.toLowerCase().replace(' ', '-')}>{label}</Label>
-                </div>
+      {/* Task Section - Hidden when Create New is toggled */}
+      {!createNew && (
+        <Card className="mb-6">
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
+              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs" style={{ backgroundColor: '#C72030' }}>T</div>
+              Task
+            </CardTitle>
+            <Button
+              onClick={handleAddSection}
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:opacity-90"
+            >
+              + Add Section
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {['Group', 'Sub Group'].map((label, idx) => (
+                <FormControl fullWidth variant="outlined" sx={fieldStyles} key={idx}>
+                  <InputLabel shrink>{`Select ${label}`}</InputLabel>
+                  <MuiSelect label={`Select ${label}`} displayEmpty>
+                    <MenuItem value=""><em>Select {label}</em></MenuItem>
+                    <MenuItem value={`${label.toLowerCase()}1`}>{`${label} 1`}</MenuItem>
+                    <MenuItem value={`${label.toLowerCase()}2`}>{`${label} 2`}</MenuItem>
+                  </MuiSelect>
+                </FormControl>
               ))}
             </div>
-          </div>
 
-          <div className="flex justify-end">
-            <Button onClick={handleAddQuestion} variant="outline" className="border-gray-300">
-              + Add Question
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <TextField
+                label="Task"
+                placeholder="Enter Task"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={fieldStyles}
+              />
+              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                <InputLabel shrink>Select Input Type</InputLabel>
+                <MuiSelect label="Select Input Type" displayEmpty>
+                  <MenuItem value=""><em>Select Input Type</em></MenuItem>
+                  <MenuItem value="text">Text</MenuItem>
+                  <MenuItem value="radio">Radio Button</MenuItem>
+                  <MenuItem value="checkbox">Checkbox</MenuItem>
+                  <MenuItem value="dropdown">Dropdown</MenuItem>
+                </MuiSelect>
+              </FormControl>
+              <div className="flex flex-wrap gap-4 pt-2">
+                {['Mandatory', 'Reading', 'Help Text'].map((label, idx) => (
+                  <div key={idx} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={label.toLowerCase().replace(' ', '-')}
+                      className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                    />
+                    <Label htmlFor={label.toLowerCase().replace(' ', '-')}>{label}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-      {/* Schedule Section */}
+            <div className="flex justify-end">
+              <Button onClick={handleAddQuestion} variant="outline" className="border-gray-300">
+                + Add Question
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Schedule Section - Always visible */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
