@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { TextField } from '@mui/material';
-import { ArrowLeft, ChevronDown, ChevronUp, Plus, X, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Percent, Zap, Sun, Droplet, Recycle, BarChart3, Grid2X2 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, Plus, X, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Percent, Zap, Sun, Droplet, Recycle, BarChart3, Grid2X2, Settings } from 'lucide-react';
 import { FormControl, InputLabel, MenuItem, Select as MuiSelect, SelectChangeEvent, Radio, RadioGroup as MuiRadioGroup, FormControlLabel } from '@mui/material';
 
 const fieldStyles = {
@@ -38,6 +38,7 @@ export const EditAssetDetailsPage = () => {
     nonConsumption: true,
     assetAllocation: true,
     assetLoaned: true,
+    amcDetails: true,
     attachments: true
   });
   const [locationData, setLocationData] = useState({
@@ -132,6 +133,15 @@ export const EditAssetDetailsPage = () => {
     vendorName: '',
     agreementStartDate: '',
     agreementEndDate: ''
+  });
+  const [amcDetailsData, setAmcDetailsData] = useState({
+    vendor: '',
+    startDate: '',
+    endDate: '',
+    firstService: '',
+    paymentTerms: '',
+    noOfVisits: '',
+    amcCost: ''
   });
 
   const getMeterCategoryOptions = () => [{
@@ -331,6 +341,13 @@ export const EditAssetDetailsPage = () => {
 
   const handleAssetLoanedChange = (field: string, value: string) => {
     setAssetLoanedData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleAmcDetailsChange = (field: string, value: string) => {
+    setAmcDetailsData(prev => ({
       ...prev,
       [field]: value
     }));
@@ -1087,6 +1104,153 @@ export const EditAssetDetailsPage = () => {
                   type="date"
                   value={assetLoanedData.agreementEndDate}
                   onChange={e => handleAssetLoanedChange('agreementEndDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
+              </div>
+            </div>}
+        </div>
+
+        {/* AMC Details */}
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div onClick={() => toggleSection('amcDetails')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
+              </span>
+              AMC DETAILS
+            </div>
+            {expandedSections.amcDetails ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
+          {expandedSections.amcDetails && <div className="p-4 sm:p-6">
+              {/* First Row - Vendor, Start Date, End Date, First Service, Payment Terms, No. of Visits */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-4">
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="amc-vendor-select-label" shrink>Vendor</InputLabel>
+                  <MuiSelect 
+                    labelId="amc-vendor-select-label" 
+                    label="Vendor" 
+                    displayEmpty 
+                    value={amcDetailsData.vendor} 
+                    onChange={(e: SelectChangeEvent) => handleAmcDetailsChange('vendor', e.target.value)} 
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value="">
+                      <em>Select Vendor</em>
+                    </MenuItem>
+                    <MenuItem value="vendor1">Vendor 1</MenuItem>
+                    <MenuItem value="vendor2">Vendor 2</MenuItem>
+                    <MenuItem value="vendor3">Vendor 3</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+
+                <TextField
+                  required
+                  label="Start Date"
+                  placeholder="dd/mm/yyyy"
+                  name="startDate"
+                  type="date"
+                  value={amcDetailsData.startDate}
+                  onChange={e => handleAmcDetailsChange('startDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
+
+                <TextField
+                  required
+                  label="End Date"
+                  placeholder="dd/mm/yyyy"
+                  name="endDate"
+                  type="date"
+                  value={amcDetailsData.endDate}
+                  onChange={e => handleAmcDetailsChange('endDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
+
+                <TextField
+                  required
+                  label="First Service"
+                  placeholder="dd/mm/yyyy"
+                  name="firstService"
+                  type="date"
+                  value={amcDetailsData.firstService}
+                  onChange={e => handleAmcDetailsChange('firstService', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
+
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="payment-terms-select-label" shrink>Payment Terms</InputLabel>
+                  <MuiSelect 
+                    labelId="payment-terms-select-label" 
+                    label="Payment Terms" 
+                    displayEmpty 
+                    value={amcDetailsData.paymentTerms} 
+                    onChange={(e: SelectChangeEvent) => handleAmcDetailsChange('paymentTerms', e.target.value)} 
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value="">
+                      <em>Select Payment Terms</em>
+                    </MenuItem>
+                    <MenuItem value="monthly">Monthly</MenuItem>
+                    <MenuItem value="quarterly">Quarterly</MenuItem>
+                    <MenuItem value="half-yearly">Half Yearly</MenuItem>
+                    <MenuItem value="yearly">Yearly</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+
+                <TextField
+                  required
+                  label="No. of Visits"
+                  placeholder="Enter Value"
+                  name="noOfVisits"
+                  value={amcDetailsData.noOfVisits}
+                  onChange={e => handleAmcDetailsChange('noOfVisits', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
+              </div>
+
+              {/* Second Row - AMC Cost */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+                <TextField
+                  required
+                  label="AMC Cost"
+                  placeholder="Enter AMC Cost"
+                  name="amcCost"
+                  value={amcDetailsData.amcCost}
+                  onChange={e => handleAmcDetailsChange('amcCost', e.target.value)}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{
