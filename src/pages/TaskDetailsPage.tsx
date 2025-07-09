@@ -8,6 +8,7 @@ import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } fro
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+
 export const TaskDetailsPage = () => {
   const {
     id
@@ -352,8 +353,15 @@ export const TaskDetailsPage = () => {
       {/* Submit Task Form Dialog */}
       <Dialog open={showSubmitForm} onOpenChange={setShowSubmitForm}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
+          <DialogHeader className="flex flex-row items-center justify-between">
             <DialogTitle className="text-lg font-semibold">Test Ladies washroom Checklists</DialogTitle>
+            <button
+              onClick={() => setShowSubmitForm(false)}
+              className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </button>
           </DialogHeader>
           
           <div className="space-y-6 p-4">
