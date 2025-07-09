@@ -530,7 +530,7 @@ const AddAssetPage = () => {
               {/* Meter Category Type */}
               <div className="mb-6">
                 <div className="rounded-lg p-4 bg-[F6F4] bg-[#f6f4ee]">
-                  <h3 className="text-blue-600 font-medium mb-4 text-sm sm:text-base">METER CATEGORY TYPE</h3>
+                  <h3 className="font-medium mb-4 text-sm sm:text-base text-orange-700">METER CATEGORY TYPE</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
                     {getMeterCategoryOptions().map(option => <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
                         <div className="flex items-center justify-center space-x-2">
