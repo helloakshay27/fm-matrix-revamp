@@ -668,8 +668,8 @@ export const EditAssetDetailsPage = () => {
               <div className="p-4 rounded-lg bg-[#f6f4ee]">
                 <h3 className="font-semibold text-sm mb-4 text-red-700">METER DETAILS</h3>
                 
-                {/* All options in one row */}
-                <div className="grid grid-cols-6 gap-3 sm:gap-4 mb-4">
+                {/* Responsive grid for meter category options */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
                   {getMeterCategoryOptions().map(option => (
                     <div key={option.value} className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
                       <div className="flex items-center space-x-2">
