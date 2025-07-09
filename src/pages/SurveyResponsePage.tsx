@@ -214,7 +214,7 @@ export const SurveyResponsePage = () => {
     Search
   </Button>
 
-  <Button onClick={handleReset} className="border  text-[#3B82F6]  px-6 py-2 rounded-md text-[16px] font-semibold flex items-center">
+  <Button onClick={handleReset} className="border  text-[#3B82F6]  px-6 py-2 rounded-md text-[16px]  flex items-center">
     <RotateCcw className="w-4 h-4 mr-2" />
     Reset
   </Button>
