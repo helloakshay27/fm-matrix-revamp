@@ -67,9 +67,8 @@ export const LoginPage = () => {
           <img 
             src="https://app.lockated.com/assets/logo-87235e425cea36e6c4c9386959ec756051a0331c3a77aa6826425c1d9fabf82e.png"
             alt="Lockated Logo"
-            className="mx-auto mb-4 h-16 w-auto"
+            className="mx-auto mb-4 h-20 w-auto"
           />
-          <h1 className="text-white text-2xl font-bold">LOCKATED</h1>
         </div>
 
         {/* Login Form */}
