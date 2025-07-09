@@ -270,13 +270,15 @@ export const AddAMCPage = () => {
                       {attachments.contracts.length > 0 ? `${attachments.contracts.length} file(s) selected` : 'No file chosen'}
                     </span>
                   </div>
-                  <Button type="button" variant="outline" onClick={() => document.getElementById('contracts-upload')?.click()} style={{
-                  fontSize: '14px',
-    backgroundColor: '#f6f4ee !important' 
-                }} className="bg-[#f6f4ee] text-[#C72030] border-none">
-                    <Plus className="w-4 h-4 mr-1" />
-                    Upload Files
-                  </Button>
+                  <Button
+  type="button"
+  onClick={() => document.getElementById('contracts-upload')?.click()}
+  className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center"
+>
+  <Plus className="w-4 h-4 mr-1" />
+  Upload Files
+</Button>
+
                 </div>
                 {attachments.contracts.length > 0 && <div className="mt-2 space-y-1">
                     {attachments.contracts.map((file, index) => <div key={index} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded">
@@ -305,13 +307,15 @@ export const AddAMCPage = () => {
                       {attachments.invoices.length > 0 ? `${attachments.invoices.length} file(s) selected` : 'No file chosen'}
                     </span>
                   </div>
-                  <Button type="button" variant="outline" onClick={() => document.getElementById('invoices-upload')?.click()} className="bg-gray-200 text-[#C72030] border-none hover:bg-gray-300" style={{
-                  fontSize: '14px', 
-    backgroundColor: '#f6f4ee !important' 
-                }}>
-                    <Plus className="w-4 h-4 mr-1" />
-                    Upload Files
-                  </Button>
+                  <Button
+  type="button"
+  onClick={() => document.getElementById('invoices-upload')?.click()}
+  className="!bg-[#f6f4ee] !text-[#C72030] !border-none hover:!bg-[#f6f4ee]/90 text-sm flex items-center"
+>
+  <Plus className="w-4 h-4 mr-1" />
+  Upload Files
+</Button>
+
                 </div>
                 {attachments.invoices.length > 0 && <div className="mt-2 space-y-1">
                     {attachments.invoices.map((file, index) => <div key={index} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded">
