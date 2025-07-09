@@ -580,7 +580,7 @@ const AddAssetPage = () => {
               {/* Meter Type */}
               <div className="mb-6">
                 <div className="flex items-center gap-4 mb-4">
-                  <span className="text-blue-600 font-medium text-sm sm:text-base">Meter Type</span>
+                  <span className="text-[#C72030] font-medium text-sm sm:text-base">Meter Type</span>
                   <div className="flex gap-6">
                     <div className="flex items-center space-x-2">
                       <input
@@ -615,7 +615,7 @@ const AddAssetPage = () => {
               {/* Critical */}
               <div className="mb-6">
                 <div className="flex items-center gap-4 mb-4">
-                  <span className="text-blue-600 font-medium text-sm sm:text-base">CRITICAL</span>
+                  <span className="text-[#C72030] font-medium text-sm sm:text-base">CRITICAL</span>
                   <div className="flex gap-6">
                     <div className="flex items-center space-x-2">
                       <input
