@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Package, DollarSign, Settings, Monitor, AlertTriangle, Trash2 } from 'lucide-react';
 
@@ -37,7 +38,7 @@ export const AssetStats: React.FC<AssetStatsProps> = ({ stats }) => {
             {item.icon}
           </div>
           <div>
-            <div className="text-2xl font-bold text-[#1a1a1a]">{item.value}</div>
+            <div className="text-2xl font-bold text-[#C72030]">{item.value}</div>
             <div className="text-sm font-medium text-gray-600">{item.label}</div>
           </div>
         </div>
