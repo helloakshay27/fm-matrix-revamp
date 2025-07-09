@@ -427,7 +427,7 @@ export const EditAssetDetailsPage = () => {
               {/* Status Section */}
               <div className="mb-4">
                 <div className="flex items-center gap-4">
-                  <span className="text-blue-600 font-medium">Status</span>
+                  <span className="text-red-700 font-normal">Status</span>
                   <div className="flex items-center gap-6">
                     <div className="flex items-center space-x-2">
                       <input type="radio" id="status-inuse" name="status" value="in-use" checked={formData.status === 'in-use'} onChange={e => handleInputChange('status', e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
