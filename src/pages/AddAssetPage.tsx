@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent } from 'lucide-react';
@@ -13,6 +12,7 @@ const AddAssetPage = () => {
     meterCategory: true,
     consumption: true,
     nonConsumption: true,
+    assetAllocation: true,
     attachments: true
   });
   const [itAssetsToggle, setItAssetsToggle] = useState(false);
@@ -23,6 +23,7 @@ const AddAssetPage = () => {
   const [criticalStatus, setCriticalStatus] = useState('');
   const [showBoardRatioOptions, setShowBoardRatioOptions] = useState(false);
   const [showRenewableOptions, setShowRenewableOptions] = useState(false);
+  const [allocationBasedOn, setAllocationBasedOn] = useState('department');
   
   const [consumptionMeasures, setConsumptionMeasures] = useState([{
     id: 1,
@@ -800,6 +801,93 @@ const AddAssetPage = () => {
                       <label htmlFor="similar-product" className="text-sm">For Similar Product</label>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>}
+        </div>
+
+        {/* Asset Allocation */}
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div onClick={() => toggleSection('assetAllocation')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+              </span>
+              ASSET ALLOCATION
+            </div>
+            {expandedSections.assetAllocation ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
+          {expandedSections.assetAllocation && <div className="p-4 sm:p-6">
+              <div className="space-y-6">
+                {/* Based On Section */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-4 block">Based On</label>
+                  <div className="flex gap-8">
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="radio" 
+                        id="allocation-department" 
+                        name="allocationBasedOn" 
+                        value="department" 
+                        checked={allocationBasedOn === 'department'} 
+                        onChange={e => setAllocationBasedOn(e.target.value)} 
+                        className="w-4 h-4 text-[#C72030] border-gray-300" 
+                        style={{
+                          accentColor: '#C72030'
+                        }} 
+                      />
+                      <label htmlFor="allocation-department" className="text-sm">Department</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="radio" 
+                        id="allocation-users" 
+                        name="allocationBasedOn" 
+                        value="users" 
+                        checked={allocationBasedOn === 'users'} 
+                        onChange={e => setAllocationBasedOn(e.target.value)} 
+                        className="w-4 h-4 text-[#C72030] border-gray-300" 
+                        style={{
+                          accentColor: '#C72030'
+                        }} 
+                      />
+                      <label htmlFor="allocation-users" className="text-sm">Users</label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Department/Users Selection */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormControl fullWidth variant="outlined" sx={{
+                    minWidth: 120
+                  }}>
+                    <InputLabel id="allocation-select-label" shrink>
+                      {allocationBasedOn === 'department' ? 'Department' : 'Users'}*
+                    </InputLabel>
+                    <MuiSelect 
+                      labelId="allocation-select-label" 
+                      label={allocationBasedOn === 'department' ? 'Department' : 'Users'} 
+                      displayEmpty 
+                      value="" 
+                      sx={fieldStyles}
+                      required
+                    >
+                      <MenuItem value=""><em>Select...</em></MenuItem>
+                      {allocationBasedOn === 'department' ? (
+                        <>
+                          <MenuItem value="hr">HR Department</MenuItem>
+                          <MenuItem value="it">IT Department</MenuItem>
+                          <MenuItem value="finance">Finance Department</MenuItem>
+                        </>
+                      ) : (
+                        <>
+                          <MenuItem value="user1">User 1</MenuItem>
+                          <MenuItem value="user2">User 2</MenuItem>
+                          <MenuItem value="user3">User 3</MenuItem>
+                        </>
+                      )}
+                    </MuiSelect>
+                  </FormControl>
                 </div>
               </div>
             </div>}
