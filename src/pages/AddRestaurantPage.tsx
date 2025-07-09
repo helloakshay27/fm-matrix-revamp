@@ -1,13 +1,40 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { TextField } from '@mui/material';
+
+const fieldStyles = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '8px',
+    backgroundColor: 'white',
+    '& fieldset': {
+      borderColor: '#e5e7eb'
+    },
+    '&:hover fieldset': {
+      borderColor: '#9ca3af'
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030'
+    }
+  },
+  '& .MuiInputLabel-root': {
+    color: '#6b7280',
+    fontSize: '14px',
+    '&.Mui-focused': {
+      color: '#C72030'
+    }
+  },
+  '& .MuiInputBase-input': {
+    padding: '12px 16px',
+    fontSize: '14px'
+  }
+};
 
 interface Schedule {
   day: string;
@@ -158,63 +185,89 @@ export const AddRestaurantPage = () => {
         {expandedSections.basicDetails && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
             <div>
-              <Label htmlFor="restaurantName">Restaurant Name<span className="text-red-500">*</span></Label>
-              <Input
-                id="restaurantName"
+              <TextField
+                label="Restaurant Name"
+                required
                 value={formData.restaurantName}
                 onChange={(e) => setFormData(prev => ({ ...prev, restaurantName: e.target.value }))}
+                fullWidth
+                variant="outlined"
+                sx={fieldStyles}
+                InputLabelProps={{ shrink: true }}
               />
             </div>
             <div>
-              <Label htmlFor="costForTwo">Cost For Two<span className="text-red-500">*</span></Label>
-              <Input
-                id="costForTwo"
+              <TextField
+                label="Cost For Two"
+                required
                 value={formData.costForTwo}
                 onChange={(e) => setFormData(prev => ({ ...prev, costForTwo: e.target.value }))}
+                fullWidth
+                variant="outlined"
+                sx={fieldStyles}
+                InputLabelProps={{ shrink: true }}
               />
             </div>
             <div>
-              <Label htmlFor="mobileNumber">Mobile Number<span className="text-red-500">*</span></Label>
-              <Input
-                id="mobileNumber"
+              <TextField
+                label="Mobile Number"
+                required
                 placeholder="Enter Number"
                 value={formData.mobileNumber}
                 onChange={(e) => setFormData(prev => ({ ...prev, mobileNumber: e.target.value }))}
+                fullWidth
+                variant="outlined"
+                sx={fieldStyles}
+                InputLabelProps={{ shrink: true }}
               />
             </div>
             <div>
-              <Label htmlFor="anotherMobileNumber">Another Mobile Number<span className="text-red-500">*</span></Label>
-              <Input
-                id="anotherMobileNumber"
+              <TextField
+                label="Another Mobile Number"
+                required
                 placeholder="Enter Number"
                 value={formData.anotherMobileNumber}
                 onChange={(e) => setFormData(prev => ({ ...prev, anotherMobileNumber: e.target.value }))}
+                fullWidth
+                variant="outlined"
+                sx={fieldStyles}
+                InputLabelProps={{ shrink: true }}
               />
             </div>
             <div>
-              <Label htmlFor="landlineNumber">Landline Number<span className="text-red-500">*</span></Label>
-              <Input
-                id="landlineNumber"
+              <TextField
+                label="Landline Number"
+                required
                 placeholder="Enter Number"
                 value={formData.landlineNumber}
                 onChange={(e) => setFormData(prev => ({ ...prev, landlineNumber: e.target.value }))}
+                fullWidth
+                variant="outlined"
+                sx={fieldStyles}
+                InputLabelProps={{ shrink: true }}
               />
             </div>
             <div>
-              <Label htmlFor="deliveryTime">Delivery Time</Label>
-              <Input
-                id="deliveryTime"
+              <TextField
+                label="Delivery Time"
                 placeholder="Mins"
                 value={formData.deliveryTime}
                 onChange={(e) => setFormData(prev => ({ ...prev, deliveryTime: e.target.value }))}
+                fullWidth
+                variant="outlined"
+                sx={fieldStyles}
+                InputLabelProps={{ shrink: true }}
               />
             </div>
             <div>
-              <Label htmlFor="cuisines">Cuisines</Label>
-              <Input
-                id="cuisines"
+              <TextField
+                label="Cuisines"
                 value={formData.cuisines}
                 onChange={(e) => setFormData(prev => ({ ...prev, cuisines: e.target.value }))}
+                fullWidth
+                variant="outlined"
+                sx={fieldStyles}
+                InputLabelProps={{ shrink: true }}
               />
             </div>
             <div>
@@ -266,39 +319,55 @@ export const AddRestaurantPage = () => {
               </Select>
             </div>
             <div className="md:col-span-3">
-              <Label htmlFor="address">Address</Label>
-              <Textarea
-                id="address"
+              <TextField
+                label="Address"
                 value={formData.address}
                 onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                className="min-h-[80px]"
+                fullWidth
+                variant="outlined"
+                multiline
+                rows={3}
+                sx={fieldStyles}
+                InputLabelProps={{ shrink: true }}
               />
             </div>
             <div>
-              <Label htmlFor="tAndC">T&C</Label>
-              <Textarea
-                id="tAndC"
+              <TextField
+                label="T&C"
                 value={formData.tAndC}
                 onChange={(e) => setFormData(prev => ({ ...prev, tAndC: e.target.value }))}
-                className="min-h-[80px]"
+                fullWidth
+                variant="outlined"
+                multiline
+                rows={3}
+                sx={fieldStyles}
+                InputLabelProps={{ shrink: true }}
               />
             </div>
             <div>
-              <Label htmlFor="disclaimer">Disclaimer</Label>
-              <Textarea
-                id="disclaimer"
+              <TextField
+                label="Disclaimer"
                 value={formData.disclaimer}
                 onChange={(e) => setFormData(prev => ({ ...prev, disclaimer: e.target.value }))}
-                className="min-h-[80px]"
+                fullWidth
+                variant="outlined"
+                multiline
+                rows={3}
+                sx={fieldStyles}
+                InputLabelProps={{ shrink: true }}
               />
             </div>
             <div>
-              <Label htmlFor="closingMessage">Closing Message</Label>
-              <Textarea
-                id="closingMessage"
+              <TextField
+                label="Closing Message"
                 value={formData.closingMessage}
                 onChange={(e) => setFormData(prev => ({ ...prev, closingMessage: e.target.value }))}
-                className="min-h-[80px]"
+                fullWidth
+                variant="outlined"
+                multiline
+                rows={3}
+                sx={fieldStyles}
+                InputLabelProps={{ shrink: true }}
               />
             </div>
           </div>
@@ -491,13 +560,13 @@ export const AddRestaurantPage = () => {
             <div className="space-y-4">
               {blockedDays.map((day, index) => (
                 <div key={index} className="flex items-center gap-4 p-3 border border-gray-200 rounded">
-                  <Input
+                  <input
                     type="date"
                     value={day.date}
                     onChange={(e) => setBlockedDays(prev => prev.map((item, i) => 
                       i === index ? { ...item, date: e.target.value } : item
                     ))}
-                    className="flex-1"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
                   />
                   <div className="flex items-center gap-2">
                     <Checkbox
@@ -544,35 +613,49 @@ export const AddRestaurantPage = () => {
           <div className="p-4 border border-gray-200 rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="minPerson">Min Person</Label>
-                <Input
-                  id="minPerson"
+                <TextField
+                  label="Min Person"
                   value={tableBooking.minPerson}
                   onChange={(e) => setTableBooking(prev => ({ ...prev, minPerson: e.target.value }))}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                  InputLabelProps={{ shrink: true }}
                 />
               </div>
               <div>
-                <Label htmlFor="maxPerson">Max Person</Label>
-                <Input
-                  id="maxPerson"
+                <TextField
+                  label="Max Person"
                   value={tableBooking.maxPerson}
                   onChange={(e) => setTableBooking(prev => ({ ...prev, maxPerson: e.target.value }))}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                  InputLabelProps={{ shrink: true }}
                 />
               </div>
               <div>
-                <Label htmlFor="canCancelBefore">Can Cancel Before (Hours)</Label>
-                <Input
-                  id="canCancelBefore"
+                <TextField
+                  label="Can Cancel Before (Hours)"
                   value={tableBooking.canCancelBefore}
                   onChange={(e) => setTableBooking(prev => ({ ...prev, canCancelBefore: e.target.value }))}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                  InputLabelProps={{ shrink: true }}
                 />
               </div>
               <div>
-                <Label htmlFor="bookingNotAvailableText">Booking Not Available Text</Label>
-                <Textarea
-                  id="bookingNotAvailableText"
+                <TextField
+                  label="Booking Not Available Text"
                   value={tableBooking.bookingNotAvailableText}
                   onChange={(e) => setTableBooking(prev => ({ ...prev, bookingNotAvailableText: e.target.value }))}
+                  fullWidth
+                  variant="outlined"
+                  multiline
+                  rows={3}
+                  sx={fieldStyles}
+                  InputLabelProps={{ shrink: true }}
                 />
               </div>
             </div>
@@ -585,35 +668,49 @@ export const AddRestaurantPage = () => {
           <div className="p-4 border border-gray-200 rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="gst">GST (%)</Label>
-                <Input
-                  id="gst"
+                <TextField
+                  label="GST (%)"
                   value={orderConfig.gst}
                   onChange={(e) => setOrderConfig(prev => ({ ...prev, gst: e.target.value }))}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                  InputLabelProps={{ shrink: true }}
                 />
               </div>
               <div>
-                <Label htmlFor="deliveryCharge">Delivery Charge (₹)</Label>
-                <Input
-                  id="deliveryCharge"
+                <TextField
+                  label="Delivery Charge (₹)"
                   value={orderConfig.deliveryCharge}
                   onChange={(e) => setOrderConfig(prev => ({ ...prev, deliveryCharge: e.target.value }))}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                  InputLabelProps={{ shrink: true }}
                 />
               </div>
               <div>
-                <Label htmlFor="minimumOrder">Minimum Order (₹)</Label>
-                <Input
-                  id="minimumOrder"
+                <TextField
+                  label="Minimum Order (₹)"
                   value={orderConfig.minimumOrder}
                   onChange={(e) => setOrderConfig(prev => ({ ...prev, minimumOrder: e.target.value }))}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                  InputLabelProps={{ shrink: true }}
                 />
               </div>
               <div>
-                <Label htmlFor="orderNotAllowedText">Order Not Allowed Text</Label>
-                <Textarea
-                  id="orderNotAllowedText"
+                <TextField
+                  label="Order Not Allowed Text"
                   value={orderConfig.orderNotAllowedText}
                   onChange={(e) => setOrderConfig(prev => ({ ...prev, orderNotAllowedText: e.target.value }))}
+                  fullWidth
+                  variant="outlined"
+                  multiline
+                  rows={3}
+                  sx={fieldStyles}
+                  InputLabelProps={{ shrink: true }}
                 />
               </div>
             </div>
@@ -627,30 +724,33 @@ export const AddRestaurantPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="coverImage">Cover Image</Label>
-                <Input
+                <input
                   id="coverImage"
                   type="file"
                   accept="image/*"
                   onChange={(e) => setAttachments(prev => ({ ...prev, coverImage: e.target.files?.[0] || null }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
               <div>
                 <Label htmlFor="menu">Menu</Label>
-                <Input
+                <input
                   id="menu"
                   type="file"
                   accept="image/*,.pdf"
                   onChange={(e) => setAttachments(prev => ({ ...prev, menu: e.target.files?.[0] || null }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
               <div>
                 <Label htmlFor="gallery">Gallery</Label>
-                <Input
+                <input
                   id="gallery"
                   type="file"
                   accept="image/*"
                   multiple
                   onChange={(e) => setAttachments(prev => ({ ...prev, gallery: e.target.files }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
             </div>
