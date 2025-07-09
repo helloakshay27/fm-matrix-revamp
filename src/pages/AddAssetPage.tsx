@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip } from 'lucide-react';
@@ -366,7 +367,7 @@ const AddAssetPage = () => {
               {/* Third row: Status */}
               <div className="mb-4">
                 <div>
-                  <label className="text-sm font-medium text-blue-600 mb-2 block">Status</label>
+                  <label className="text-sm font-medium text-[#C72030] mb-2 block">Status</label>
                   <div className="flex gap-6">
                     <div className="flex items-center space-x-2">
                       <input
