@@ -556,7 +556,7 @@ export const EditAssetDetailsPage = () => {
                     <div className="flex items-center justify-center">
                       <input type="radio" name="meterCategory" value={type.id} checked={selectedMeterTypes.includes(type.id)} onChange={() => {}} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
                     </div>
-                    <span className="text-sm font-medium text-gray-700 text-center">{type.label}</span>
+                    <span className="font-medium text-gray-700 text-center" style={{ fontSize: '14px' }}>{type.label}</span>
                   </div>)}
               </div>
             </div>}
