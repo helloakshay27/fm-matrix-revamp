@@ -614,107 +614,80 @@ const AddAssetPage = () => {
           )}
         </div>
 
-        {/* Consumption Asset Measure */}
+        {/* Purchase Details */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('consumption')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
               <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                 <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
               </span>
-              CONSUMPTION ASSET MEASURE
+              PURCHASE DETAILS
             </div>
             {expandedSections.consumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
           {expandedSections.consumption && <div className="p-4 sm:p-6">
-              <div className="space-y-4 sm:space-y-6">
-                {consumptionMeasures.map(measure => <div key={measure.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="font-medium text-gray-700 text-sm sm:text-base">Consumption Asset Measure</h4>
-                      {consumptionMeasures.length > 1 && <button onClick={() => removeConsumptionMeasure(measure.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
-                          <X className="w-4 h-4" />
-                        </button>}
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-                      {[{
-                  label: 'Name',
-                  name: `name-${measure.id}`,
-                  placeholder: 'Enter Text',
-                  value: measure.name,
-                  onChange: e => updateConsumptionMeasure(measure.id, 'name', e.target.value)
-                }, {
-                  label: 'Min',
-                  name: `min-${measure.id}`,
-                  placeholder: 'Enter Number',
-                  type: 'number',
-                  value: measure.min,
-                  onChange: e => updateConsumptionMeasure(measure.id, 'min', e.target.value)
-                }, {
-                  label: 'Max',
-                  name: `max-${measure.id}`,
-                  placeholder: 'Enter Number',
-                  type: 'number',
-                  value: measure.max,
-                  onChange: e => updateConsumptionMeasure(measure.id, 'max', e.target.value)
-                }, {
-                  label: 'Alert Below Val.',
-                  name: `alertBelow-${measure.id}`,
-                  placeholder: 'Enter Value',
-                  type: 'number',
-                  value: measure.alertBelowVal,
-                  onChange: e => updateConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)
-                }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} value={field.value} onChange={field.onChange} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} />)}
-                      <FormControl fullWidth variant="outlined" sx={{
-                  minWidth: 120
-                }}>
-                        <InputLabel id={`unitType-select-label-${measure.id}`} shrink>Unit Type</InputLabel>
-                        <MuiSelect labelId={`unitType-select-label-${measure.id}`} label="Unit Type" displayEmpty value={measure.unitType} onChange={e => updateConsumptionMeasure(measure.id, 'unitType', e.target.value)} sx={fieldStyles}>
-                          <MenuItem value=""><em>Select Unit Type</em></MenuItem>
-                          <MenuItem value="kwh">kWh</MenuItem>
-                          <MenuItem value="liters">Liters</MenuItem>
-                          <MenuItem value="cubic-meters">Cubic Meters</MenuItem>
-                          <MenuItem value="units">Units</MenuItem>
-                        </MuiSelect>
-                      </FormControl>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                      {[{
-                  label: 'Alert Above Val.',
-                  name: `alertAbove-${measure.id}`,
-                  placeholder: 'Enter Value',
-                  type: 'number',
-                  value: measure.alertAboveVal,
-                  onChange: e => updateConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)
-                }, {
-                  label: 'Multiplier Factor',
-                  name: `multiplier-${measure.id}`,
-                  placeholder: 'Enter Text',
-                  value: measure.multiplierFactor,
-                  onChange: e => updateConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)
-                }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} value={field.value} onChange={field.onChange} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} />)}
-                    </div>
-
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <TextField 
+                  required
+                  label="Purchase Cost" 
+                  placeholder="Enter cost" 
+                  name="purchaseCost" 
+                  fullWidth 
+                  variant="outlined" 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  InputProps={{
+                    sx: fieldStyles
+                  }} 
+                />
+                <TextField 
+                  required
+                  label="Purchase Date" 
+                  placeholder="dd/mm/yyyy" 
+                  name="purchaseDate" 
+                  type="date"
+                  fullWidth 
+                  variant="outlined" 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  InputProps={{
+                    sx: fieldStyles
+                  }} 
+                />
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Under Warranty</label>
+                  <div className="flex gap-6">
                     <div className="flex items-center space-x-2">
-                      <input type="checkbox" id={`checkPrevious-${measure.id}`} checked={measure.checkPreviousReading} onChange={e => updateConsumptionMeasure(measure.id, 'checkPreviousReading', e.target.checked)} className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]" style={{
-                  accentColor: '#C72030'
-                }} />
-                      <label htmlFor={`checkPrevious-${measure.id}`} className="text-xs sm:text-sm">Check Previous Reading</label>
+                      <input type="radio" id="warranty-yes" name="underWarranty" value="yes" className="w-4 h-4 text-blue-600 border-gray-300" style={{
+                        accentColor: '#2563eb'
+                      }} />
+                      <label htmlFor="warranty-yes" className="text-sm">Yes</label>
                     </div>
-                  </div>)}
-                
-                <button onClick={addConsumptionMeasure} className="px-4 py-2 rounded-md flex items-center text-sm sm:text-base bg-[#f6f4ee] text-red-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Measure
-                </button>
+                    <div className="flex items-center space-x-2">
+                      <input type="radio" id="warranty-no" name="underWarranty" value="no" className="w-4 h-4 text-blue-600 border-gray-300" style={{
+                        accentColor: '#2563eb'
+                      }} />
+                      <label htmlFor="warranty-no" className="text-sm">No</label>
+                    </div>
+                  </div>
+                </div>
+                <TextField 
+                  required
+                  label="Warranty Expires On" 
+                  placeholder="dd/mm/yyyy" 
+                  name="warrantyExpiresOn" 
+                  type="date"
+                  fullWidth 
+                  variant="outlined" 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  InputProps={{
+                    sx: fieldStyles
+                  }} 
+                />
               </div>
             </div>}
         </div>
