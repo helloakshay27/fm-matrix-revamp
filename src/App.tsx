@@ -523,9 +523,9 @@ function App() {
                             <Route path="/maintenance/audit/waste/generation/add" element={<AddWasteGenerationPage />} />
 
                             {/* Survey Routes */}
-                            <Route path="/maintenance/audit/survey/list" element={<SurveyListDashboard />} />
-                            <Route path="/maintenance/audit/survey/mapping" element={<SurveyMappingDashboard />} />
-                            <Route path="/maintenance/audit/survey/response" element={<SurveyResponsePage />} />
+                            <Route path="/maintenance/survey/list" element={<SurveyListDashboard />} />
+                            <Route path="/maintenance/survey/mapping" element={<SurveyMappingDashboard />} />
+                            <Route path="/maintenance/survey/response" element={<SurveyResponsePage />} />
                             <Route path="/maintenance/survey/response/dashboard" element={<SurveyResponseDashboard />} />
 
                             {/* Finance Routes */}
