@@ -8,7 +8,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { TextField } from '@mui/material';
 import { ArrowLeft, ChevronDown, ChevronUp, Plus, X, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Percent, Zap, Sun, Droplet, Recycle, BarChart3 } from 'lucide-react';
 import { FormControl, InputLabel, MenuItem, Select as MuiSelect, SelectChangeEvent, Radio, RadioGroup as MuiRadioGroup, FormControlLabel } from '@mui/material';
-
 const fieldStyles = {
   height: {
     xs: 28,
@@ -23,7 +22,6 @@ const fieldStyles = {
     }
   }
 };
-
 export const EditAssetDetailsPage = () => {
   const {
     id
@@ -113,134 +111,107 @@ export const EditAssetDetailsPage = () => {
     purchaseInvoice: [],
     amc: []
   });
-
-  const getMeterCategoryOptions = () => [
-    {
-      value: 'board',
-      label: 'Board',
-      icon: <BarChart3 className="w-6 h-6" />
-    },
-    {
-      value: 'dg',
-      label: 'DG',
-      icon: <Zap className="w-6 h-6" />
-    },
-    {
-      value: 'renewable',
-      label: 'Renewable',
-      icon: <Sun className="w-6 h-6" />
-    },
-    {
-      value: 'fresh-water',
-      label: 'Fresh Water',
-      icon: <Droplet className="w-6 h-6" />
-    },
-    {
-      value: 'recycled',
-      label: 'Recycled',
-      icon: <Recycle className="w-6 h-6" />
-    },
-    {
-      value: 'iex-gdam',
-      label: 'IEX-GDAM',
-      icon: <BarChart className="w-6 h-6" />
-    }
-  ];
-
+  const getMeterCategoryOptions = () => [{
+    value: 'board',
+    label: 'Board',
+    icon: <BarChart3 className="w-6 h-6" />
+  }, {
+    value: 'dg',
+    label: 'DG',
+    icon: <Zap className="w-6 h-6" />
+  }, {
+    value: 'renewable',
+    label: 'Renewable',
+    icon: <Sun className="w-6 h-6" />
+  }, {
+    value: 'fresh-water',
+    label: 'Fresh Water',
+    icon: <Droplet className="w-6 h-6" />
+  }, {
+    value: 'recycled',
+    label: 'Recycled',
+    icon: <Recycle className="w-6 h-6" />
+  }, {
+    value: 'iex-gdam',
+    label: 'IEX-GDAM',
+    icon: <BarChart className="w-6 h-6" />
+  }];
   const getSubCategoryOptions = () => {
     switch (meterCategoryType) {
       case 'board':
-        return [
-          {
-            value: 'ht-panel',
-            label: 'HT Panel',
-            icon: <Zap className="w-6 h-6" />
-          },
-          {
-            value: 'vcb',
-            label: 'VCB',
-            icon: <Package className="w-6 h-6" />
-          },
-          {
-            value: 'transformer',
-            label: 'Transformer',
-            icon: <Shield className="w-6 h-6" />
-          },
-          {
-            value: 'lt-panel',
-            label: 'LT Panel',
-            icon: <Activity className="w-6 h-6" />
-          }
-        ];
+        return [{
+          value: 'ht-panel',
+          label: 'HT Panel',
+          icon: <Zap className="w-6 h-6" />
+        }, {
+          value: 'vcb',
+          label: 'VCB',
+          icon: <Package className="w-6 h-6" />
+        }, {
+          value: 'transformer',
+          label: 'Transformer',
+          icon: <Shield className="w-6 h-6" />
+        }, {
+          value: 'lt-panel',
+          label: 'LT Panel',
+          icon: <Activity className="w-6 h-6" />
+        }];
       case 'renewable':
-        return [
-          {
-            value: 'solar',
-            label: 'Solar',
-            icon: <Sun className="w-6 h-6" />
-          },
-          {
-            value: 'bio-methanol',
-            label: 'Bio Methanol',
-            icon: <Droplet className="w-6 h-6" />
-          },
-          {
-            value: 'wind',
-            label: 'Wind',
-            icon: <Activity className="w-6 h-6" />
-          }
-        ];
+        return [{
+          value: 'solar',
+          label: 'Solar',
+          icon: <Sun className="w-6 h-6" />
+        }, {
+          value: 'bio-methanol',
+          label: 'Bio Methanol',
+          icon: <Droplet className="w-6 h-6" />
+        }, {
+          value: 'wind',
+          label: 'Wind',
+          icon: <Activity className="w-6 h-6" />
+        }];
       case 'fresh-water':
-        return [
-          {
-            value: 'source',
-            label: 'Source (Input)',
-            icon: <Droplet className="w-6 h-6" />
-          },
-          {
-            value: 'destination',
-            label: 'Destination (Output)',
-            icon: <Droplet className="w-6 h-6" />
-          }
-        ];
+        return [{
+          value: 'source',
+          label: 'Source (Input)',
+          icon: <Droplet className="w-6 h-6" />
+        }, {
+          value: 'destination',
+          label: 'Destination (Output)',
+          icon: <Droplet className="w-6 h-6" />
+        }];
       default:
         return [];
     }
   };
-
   const toggleSection = section => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }));
   };
-
   const handleLocationChange = (field: string, value: string) => {
     setLocationData(prev => ({
       ...prev,
       [field]: value
     }));
   };
-
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
-
   const handleItAssetChange = (field: string, value: string) => {
     setItAssetData(prev => ({
       ...prev,
       [field]: value
     }));
   };
-
   const handleMeterCategoryChange = value => {
     setMeterCategoryType(value);
     setSubCategoryType('');
   };
-
   const addConsumptionMeasure = () => {
     const newId = consumptionMeasures.length > 0 ? Math.max(...consumptionMeasures.map(m => m.id)) + 1 : 1;
     setConsumptionMeasures([...consumptionMeasures, {
@@ -255,20 +226,17 @@ export const EditAssetDetailsPage = () => {
       checkPreviousReading: false
     }]);
   };
-
   const removeConsumptionMeasure = id => {
     if (consumptionMeasures.length > 1) {
       setConsumptionMeasures(consumptionMeasures.filter(m => m.id !== id));
     }
   };
-
   const updateConsumptionMeasure = (id, field, value) => {
     setConsumptionMeasures(consumptionMeasures.map(m => m.id === id ? {
       ...m,
       [field]: value
     } : m));
   };
-
   const addNonConsumptionMeasure = () => {
     const newId = nonConsumptionMeasures.length > 0 ? Math.max(...nonConsumptionMeasures.map(m => m.id)) + 1 : 1;
     setNonConsumptionMeasures([...nonConsumptionMeasures, {
@@ -283,20 +251,17 @@ export const EditAssetDetailsPage = () => {
       checkPreviousReading: false
     }]);
   };
-
   const removeNonConsumptionMeasure = id => {
     if (nonConsumptionMeasures.length > 1) {
       setNonConsumptionMeasures(nonConsumptionMeasures.filter(m => m.id !== id));
     }
   };
-
   const updateNonConsumptionMeasure = (id, field, value) => {
     setNonConsumptionMeasures(nonConsumptionMeasures.map(m => m.id === id ? {
       ...m,
       [field]: value
     } : m));
   };
-
   const handleFileUpload = (category, files) => {
     if (files) {
       const fileArray = Array.from(files);
@@ -306,14 +271,12 @@ export const EditAssetDetailsPage = () => {
       }));
     }
   };
-
   const removeFile = (category, index) => {
     setAttachments(prev => ({
       ...prev,
       [category]: prev[category].filter((_, i) => i !== index)
     }));
   };
-
   const handleSaveAndShowDetails = () => {
     console.log('Saving and showing details:', {
       locationData,
@@ -325,7 +288,6 @@ export const EditAssetDetailsPage = () => {
     });
     navigate(`/maintenance/asset/details/${id}`);
   };
-
   const handleSaveAndCreateNew = () => {
     console.log('Saving and creating new:', {
       locationData,
@@ -337,11 +299,9 @@ export const EditAssetDetailsPage = () => {
     });
     navigate('/maintenance/asset/add');
   };
-
   const handleBack = () => {
     navigate(`/maintenance/asset/details/${id}`);
   };
-
   return <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
@@ -582,12 +542,7 @@ export const EditAssetDetailsPage = () => {
               METER DETAILS
               <div className="flex items-center gap-2 ml-4">
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer" 
-                    checked={meterDetailsApplicable}
-                    onChange={(e) => setMeterDetailsApplicable(e.target.checked)}
-                  />
+                  <input type="checkbox" className="sr-only peer" checked={meterDetailsApplicable} onChange={e => setMeterDetailsApplicable(e.target.checked)} />
                   <div className="w-11 h-6 bg-red-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                 </label>
                 <span className="text-sm text-gray-600">If Applicable</span>
@@ -599,30 +554,14 @@ export const EditAssetDetailsPage = () => {
               {/* Meter Type Section */}
               <div className="mb-6">
                 <div className="flex items-center gap-4 mb-4">
-                  <span className="text-blue-600 font-medium">Meter Type</span>
+                  <span className="font-medium text-red-700">Meter Type</span>
                   <div className="flex items-center gap-6">
                     <div className="flex items-center space-x-2">
-                      <input 
-                        type="radio" 
-                        id="meter-parent" 
-                        name="meterType" 
-                        value="parent" 
-                        checked={meterType === 'parent'} 
-                        onChange={e => setMeterType(e.target.value)} 
-                        className="w-4 h-4 text-blue-600 border-gray-300" 
-                      />
+                      <input type="radio" id="meter-parent" name="meterType" value="parent" checked={meterType === 'parent'} onChange={e => setMeterType(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
                       <label htmlFor="meter-parent" className="text-sm">Parent</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input 
-                        type="radio" 
-                        id="meter-sub" 
-                        name="meterType" 
-                        value="sub" 
-                        checked={meterType === 'sub'} 
-                        onChange={e => setMeterType(e.target.value)} 
-                        className="w-4 h-4 text-blue-600 border-gray-300" 
-                      />
+                      <input type="radio" id="meter-sub" name="meterType" value="sub" checked={meterType === 'sub'} onChange={e => setMeterType(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
                       <label htmlFor="meter-sub" className="text-sm">Sub</label>
                     </div>
                   </div>
@@ -632,30 +571,14 @@ export const EditAssetDetailsPage = () => {
               {/* Critical Section */}
               <div className="mb-6">
                 <div className="flex items-center gap-4">
-                  <span className="text-blue-600 font-medium">CRITICAL</span>
+                  <span className="font-medium text-red-700">CRITICAL</span>
                   <div className="flex items-center gap-6">
                     <div className="flex items-center space-x-2">
-                      <input 
-                        type="radio" 
-                        id="critical-yes" 
-                        name="critical" 
-                        value="yes" 
-                        checked={critical === 'yes'} 
-                        onChange={e => setCritical(e.target.value)} 
-                        className="w-4 h-4 text-blue-600 border-gray-300" 
-                      />
+                      <input type="radio" id="critical-yes" name="critical" value="yes" checked={critical === 'yes'} onChange={e => setCritical(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
                       <label htmlFor="critical-yes" className="text-sm">Yes</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input 
-                        type="radio" 
-                        id="critical-no" 
-                        name="critical" 
-                        value="no" 
-                        checked={critical === 'no'} 
-                        onChange={e => setCritical(e.target.value)} 
-                        className="w-4 h-4 text-blue-600 border-gray-300" 
-                      />
+                      <input type="radio" id="critical-no" name="critical" value="no" checked={critical === 'no'} onChange={e => setCritical(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
                       <label htmlFor="critical-no" className="text-sm">No</label>
                     </div>
                   </div>
@@ -663,93 +586,61 @@ export const EditAssetDetailsPage = () => {
               </div>
 
               {/* Meter Category Type Section */}
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="text-blue-600 font-semibold text-sm mb-4">METER CATEGORY TYPE</h3>
+              <div className="p-4 rounded-lg bg-[#f6f4ee]">
+                <h3 className="font-semibold text-sm mb-4 text-red-700">METER CATEGORY TYPE</h3>
                 
                 {/* First row with 5 boxes */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-4">
-                  {getMeterCategoryOptions().slice(0, 5).map(option => (
-                    <div key={option.value} className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
+                  {getMeterCategoryOptions().slice(0, 5).map(option => <div key={option.value} className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
                       <div className="flex flex-col items-center space-y-2">
                         <div className="text-gray-600">
                           {option.icon}
                         </div>
                         <div className="flex items-center space-x-2">
-                          <input 
-                            type="radio" 
-                            id={option.value} 
-                            name="meterCategory" 
-                            value={option.value} 
-                            checked={meterCategoryType === option.value} 
-                            onChange={(e) => handleMeterCategoryChange(e.target.value)} 
-                            className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" 
-                          />
+                          <input type="radio" id={option.value} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
                           <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer font-medium">
                             {option.label}
                           </label>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
 
                 {/* Second row with remaining box centered */}
                 <div className="flex justify-center">
-                  {getMeterCategoryOptions().slice(5).map(option => (
-                    <div key={option.value} className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm w-48">
+                  {getMeterCategoryOptions().slice(5).map(option => <div key={option.value} className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm w-48">
                       <div className="flex flex-col items-center space-y-2">
                         <div className="text-gray-600">
                           {option.icon}
                         </div>
                         <div className="flex items-center space-x-2">
-                          <input 
-                            type="radio" 
-                            id={option.value} 
-                            name="meterCategory" 
-                            value={option.value} 
-                            checked={meterCategoryType === option.value} 
-                            onChange={(e) => handleMeterCategoryChange(e.target.value)} 
-                            className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" 
-                          />
+                          <input type="radio" id={option.value} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
                           <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer font-medium">
                             {option.label}
                           </label>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
 
                 {/* Subcategory options for Board */}
-                {meterCategoryType === 'board' && getSubCategoryOptions().length > 0 && (
-                  <div className="mt-6">
+                {meterCategoryType === 'board' && getSubCategoryOptions().length > 0 && <div className="mt-6">
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                      {getSubCategoryOptions().map(option => (
-                        <div key={option.value} className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
+                      {getSubCategoryOptions().map(option => <div key={option.value} className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
                           <div className="flex flex-col items-center space-y-2">
                             <div className="text-gray-600">
                               {option.icon}
                             </div>
                             <div className="flex items-center space-x-2">
-                              <input 
-                                type="radio" 
-                                id={`sub-${option.value}`} 
-                                name="subMeterCategory" 
-                                value={option.value} 
-                                checked={subCategoryType === option.value} 
-                                onChange={(e) => setSubCategoryType(e.target.value)} 
-                                className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" 
-                              />
+                              <input type="radio" id={`sub-${option.value}`} name="subMeterCategory" value={option.value} checked={subCategoryType === option.value} onChange={e => setSubCategoryType(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
                               <label htmlFor={`sub-${option.value}`} className="text-xs sm:text-sm cursor-pointer font-medium">
                                 {option.label}
                               </label>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        </div>)}
                     </div>
-                  </div>
-                )}
+                  </div>}
               </div>
             </div>}
         </div>
