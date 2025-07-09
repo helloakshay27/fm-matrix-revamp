@@ -672,7 +672,7 @@ export const EditAssetDetailsPage = () => {
                 <div className="grid grid-cols-6 gap-3 sm:gap-4 mb-4">
                   {getMeterCategoryOptions().map(option => (
                     <div key={option.value} className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
-                      <div className="flex flex-col items-center space-y-2">
+                      <div className="flex items-center space-x-2">
                         <div className="text-gray-600">
                           {option.icon}
                         </div>
