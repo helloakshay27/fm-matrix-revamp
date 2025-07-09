@@ -460,7 +460,7 @@ export const EditAssetDetailsPage = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button className="bg-blue-600 text-white px-3 py-1 rounded-md text-sm flex items-center gap-1">
+              <button className="px-3 py-1 rounded-md text-sm flex items-center gap-1 bg-[#f6f4ee] text-red-700">
                 <Plus className="w-4 h-4" />
                 Custom Field
               </button>
