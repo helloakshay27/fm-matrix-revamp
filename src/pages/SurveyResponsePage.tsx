@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Search, RotateCcw, Droplets, FileText, Frown, Toilet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
 const fieldStyles = {
   width: '100%',
   '& .MuiOutlinedInput-root': {
@@ -48,6 +49,7 @@ const fieldStyles = {
     }
   }
 };
+
 const mockSurveyData = [{
   id: 1,
   title: 'Soap Missing',
@@ -73,6 +75,7 @@ const mockSurveyData = [{
   status: 'pending',
   count: 0
 }];
+
 export const SurveyResponsePage = () => {
   const [formData, setFormData] = useState({
     survey: '',
@@ -85,16 +88,19 @@ export const SurveyResponsePage = () => {
     room: ''
   });
   const [showResults, setShowResults] = useState(false);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleSearch = () => {
     console.log('Search clicked with data:', formData);
     setShowResults(true);
   };
+
   const handleReset = () => {
     setFormData({
       survey: '',
@@ -108,6 +114,7 @@ export const SurveyResponsePage = () => {
     });
     setShowResults(false);
   };
+
   return <div className="flex-1 p-4 sm:p-6 md:p-8 bg-white min-h-screen">
       {/* Header */}
       <div className="mb-6">
@@ -229,7 +236,7 @@ export const SurveyResponsePage = () => {
             {mockSurveyData.map((item, index) => {
           const IconComponent = item.icon;
           return <div key={item.id} className="flex items-center justify-between p-4 border-b border-gray-100 last:border-b-0">
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-4" style={{ color: '#C72030' }}>
                     <span className="text-blue-600 font-medium text-sm">
                       {index + 1}.
                     </span>
