@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent } from 'lucide-react';
+import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent, Users } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 const AddAssetPage = () => {
@@ -13,10 +13,12 @@ const AddAssetPage = () => {
     consumption: true,
     nonConsumption: true,
     assetAllocation: true,
+    assetLoaned: true,
     attachments: true
   });
   const [itAssetsToggle, setItAssetsToggle] = useState(false);
   const [meterDetailsToggle, setMeterDetailsToggle] = useState(false);
+  const [assetLoanedToggle, setAssetLoanedToggle] = useState(false);
   const [meterCategoryType, setMeterCategoryType] = useState('');
   const [subCategoryType, setSubCategoryType] = useState('');
   const [meterType, setMeterType] = useState('');
@@ -161,6 +163,13 @@ const AddAssetPage = () => {
     setExpandedSections(prev => ({
       ...prev,
       meterCategory: checked
+    }));
+  };
+  const handleAssetLoanedToggleChange = checked => {
+    setAssetLoanedToggle(checked);
+    setExpandedSections(prev => ({
+      ...prev,
+      assetLoaned: checked
     }));
   };
 
@@ -889,6 +898,75 @@ const AddAssetPage = () => {
                     </MuiSelect>
                   </FormControl>
                 </div>
+              </div>
+            </div>}
+        </div>
+
+        {/* Asset Loaned */}
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div onClick={() => toggleSection('assetLoaned')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+              </span>
+              ASSET LOANED
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">If Applicable</span>
+                <div className="relative inline-block w-12 h-6">
+                  <input type="checkbox" className="sr-only peer" id="asset-loaned-toggle" checked={assetLoanedToggle} onChange={e => handleAssetLoanedToggleChange(e.target.checked)} />
+                  <label htmlFor="asset-loaned-toggle" className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${assetLoanedToggle ? 'bg-green-400' : 'bg-gray-300'}`}>
+                    <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${assetLoanedToggle ? 'translate-x-6' : 'translate-x-1'}`}></span>
+                  </label>
+                </div>
+              </div>
+              {expandedSections.assetLoaned ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </div>
+          </div>
+          {expandedSections.assetLoaned && <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <FormControl fullWidth variant="outlined" sx={{
+              minWidth: 120
+            }}>
+                  <InputLabel id="vendor-select-label" shrink>Vendor Name*</InputLabel>
+                  <MuiSelect labelId="vendor-select-label" label="Vendor Name" displayEmpty value="" sx={fieldStyles} required>
+                    <MenuItem value=""><em>Select Vendor</em></MenuItem>
+                    <MenuItem value="vendor1">Vendor 1</MenuItem>
+                    <MenuItem value="vendor2">Vendor 2</MenuItem>
+                    <MenuItem value="vendor3">Vendor 3</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+                <TextField 
+                  required
+                  label="Agreement Start Date*" 
+                  placeholder="dd/mm/yyyy" 
+                  name="agreementStartDate" 
+                  type="date"
+                  fullWidth 
+                  variant="outlined" 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  InputProps={{
+                    sx: fieldStyles
+                  }} 
+                />
+                <TextField 
+                  required
+                  label="Agreement End Date*" 
+                  placeholder="dd/mm/yyyy" 
+                  name="agreementEndDate" 
+                  type="date"
+                  fullWidth 
+                  variant="outlined" 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  InputProps={{
+                    sx: fieldStyles
+                  }} 
+                />
               </div>
             </div>}
         </div>
