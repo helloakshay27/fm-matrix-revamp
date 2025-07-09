@@ -518,14 +518,14 @@ function App() {
                             <Route path="/maintenance/audit/assets/details/:id" element={<AssetAuditDetailsPage />} />
 
                             {/* Waste Generation Routes */}
-                            <Route path="/maintenance/audit/waste/generation" element={<UtilityWasteGenerationDashboard />} />
-                            <Route path="/maintenance/audit/waste/setup" element={<UtilityWasteGenerationSetupDashboard />} />
-                            <Route path="/maintenance/audit/waste/generation/add" element={<AddWasteGenerationPage />} />
+                            <Route path="/maintenance/waste/generation" element={<UtilityWasteGenerationDashboard />} />
+                            <Route path="/maintenance/waste/setup" element={<UtilityWasteGenerationSetupDashboard />} />
+                            <Route path="/maintenance/waste/generation/add" element={<AddWasteGenerationPage />} />
 
                             {/* Survey Routes */}
                             <Route path="/maintenance/survey/list" element={<SurveyListDashboard />} />
-                            <Route path="/maintenance/audit/survey/mapping" element={<SurveyMappingDashboard />} />
-                            <Route path="/maintenance/audit/survey/response" element={<SurveyResponsePage />} />
+                            <Route path="/maintenance/survey/mapping" element={<SurveyMappingDashboard />} />
+                            <Route path="/maintenance/survey/response" element={<SurveyResponsePage />} />
                             <Route path="/maintenance/survey/response/dashboard" element={<SurveyResponseDashboard />} />
 
                             {/* Finance Routes */}

@@ -79,20 +79,20 @@ const modulesByPackage = {
     {
       name: 'Waste',
       icon: Trash2,
-      href: '/maintenance/audit/waste',
+      href: '/maintenance/waste',
       subItems: [
-        { name: 'Waste Generation', href: '/maintenance/audit/waste/generation', color: 'text-[#1a1a1a]' },
-        { name: 'Setup', href: '/maintenance/audit/waste/setup', color: 'text-[#1a1a1a]' }
+        { name: 'Waste Generation', href: '/maintenance/waste/generation', color: 'text-[#1a1a1a]' },
+        { name: 'Setup', href: '/maintenance/waste/setup', color: 'text-[#1a1a1a]' }
       ]
     },
     {
       name: 'Survey',
       icon: FileSpreadsheet,
-      href: '/maintenance/audit/survey',
+      href: '/maintenance/survey',
       subItems: [
-        { name: 'Survey List', href: '/maintenance/audit/survey/list', color: 'text-[#1a1a1a]' },
-        { name: 'Mapping', href: '/maintenance/audit/survey/mapping', color: 'text-[#1a1a1a]' },
-        { name: 'Response', href: '/maintenance/audit/survey/response', color: 'text-[#1a1a1a]' }
+        { name: 'Survey List', href: '/maintenance/survey/list', color: 'text-[#1a1a1a]' },
+        { name: 'Mapping', href: '/maintenance/survey/mapping', color: 'text-[#1a1a1a]' },
+        { name: 'Response', href: '/maintenance/survey/response', color: 'text-[#1a1a1a]' }
       ]
     }
   ],
