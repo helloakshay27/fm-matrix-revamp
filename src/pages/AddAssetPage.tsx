@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind } from 'lucide-react';
+import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 const AddAssetPage = () => {
@@ -692,108 +692,113 @@ const AddAssetPage = () => {
             </div>}
         </div>
 
-        {/* Non Consumption Asset Measure */}
+        {/* Depreciation Rule */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('nonConsumption')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
               <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                <BarChart className="w-3 h-3 sm:w-4 sm:h-4" />
+                <Percent className="w-3 h-3 sm:w-4 sm:h-4" />
               </span>
-              NON CONSUMPTION ASSET MEASURE
+              DEPRECIATION RULE
             </div>
-            {expandedSections.nonConsumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">If Applicable</span>
+                <div className="relative inline-block w-12 h-6">
+                  <input type="checkbox" className="sr-only peer" id="depreciation-toggle" />
+                  <label htmlFor="depreciation-toggle" className="block w-12 h-6 rounded-full cursor-pointer transition-colors bg-red-400">
+                    <span className="block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform translate-x-6"></span>
+                  </label>
+                </div>
+              </div>
+              {expandedSections.nonConsumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </div>
           </div>
           {expandedSections.nonConsumption && <div className="p-4 sm:p-6">
-              <div className="space-y-4 sm:space-y-6">
-                {nonConsumptionMeasures.map(measure => <div key={measure.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="font-medium text-gray-700 text-sm sm:text-base">Non Consumption Asset Measure</h4>
-                      {nonConsumptionMeasures.length > 1 && <button onClick={() => removeNonConsumptionMeasure(measure.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
-                          <X className="w-4 h-4" />
-                        </button>}
+              <div className="space-y-6">
+                {/* Method Section */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Method</label>
+                    <div className="flex gap-6">
+                      <div className="flex items-center space-x-2">
+                        <input type="radio" id="straight-line" name="depreciationMethod" value="straight-line" defaultChecked className="w-4 h-4 text-[#C72030] border-gray-300" style={{
+                      accentColor: '#C72030'
+                    }} />
+                        <label htmlFor="straight-line" className="text-sm">Straight Line</label>
+                      </div>
                     </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-                      {[{
-                  label: 'Name',
-                  name: `nc-name-${measure.id}`,
-                  placeholder: 'Name',
-                  value: measure.name,
-                  onChange: e => updateNonConsumptionMeasure(measure.id, 'name', e.target.value)
-                }, {
-                  label: 'Min',
-                  name: `nc-min-${measure.id}`,
-                  placeholder: 'Min',
-                  type: 'number',
-                  value: measure.min,
-                  onChange: e => updateNonConsumptionMeasure(measure.id, 'min', e.target.value)
-                }, {
-                  label: 'Max',
-                  name: `nc-max-${measure.id}`,
-                  placeholder: 'Max',
-                  type: 'number',
-                  value: measure.max,
-                  onChange: e => updateNonConsumptionMeasure(measure.id, 'max', e.target.value)
-                }, {
-                  label: 'Alert Below Val.',
-                  name: `nc-alertBelow-${measure.id}`,
-                  placeholder: 'Alert Below Value',
-                  type: 'number',
-                  value: measure.alertBelowVal,
-                  onChange: e => updateNonConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)
-                }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} value={field.value} onChange={field.onChange} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} />)}
-                      <FormControl fullWidth variant="outlined" sx={{
-                  minWidth: 120
-                }}>
-                        <InputLabel id={`nc-unitType-select-label-${measure.id}`} shrink>Unit Type</InputLabel>
-                        <MuiSelect labelId={`nc-unitType-select-label-${measure.id}`} label="Unit Type" displayEmpty value={measure.unitType} onChange={e => updateNonConsumptionMeasure(measure.id, 'unitType', e.target.value)} sx={fieldStyles}>
-                          <MenuItem value=""><em>Select Unit Type</em></MenuItem>
-                          <MenuItem value="temperature">Temperature</MenuItem>
-                          <MenuItem value="pressure">Pressure</MenuItem>
-                          <MenuItem value="voltage">Voltage</MenuItem>
-                          <MenuItem value="current">Current</MenuItem>
-                          <MenuItem value="frequency">Frequency</MenuItem>
-                        </MuiSelect>
-                      </FormControl>
-                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-sm font-medium text-gray-700">WDV</span>
+                  </div>
+                </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                      {[{
-                  label: 'Alert Above Val.',
-                  name: `nc-alertAbove-${measure.id}`,
-                  placeholder: 'Alert Above Value',
-                  type: 'number',
-                  value: measure.alertAboveVal,
-                  onChange: e => updateNonConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)
-                }, {
-                  label: 'Multiplier Factor',
-                  name: `nc-multiplier-${measure.id}`,
-                  placeholder: 'Multiplier Factor',
-                  value: measure.multiplierFactor,
-                  onChange: e => updateNonConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)
-                }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} value={field.value} onChange={field.onChange} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} />)}
-                    </div>
+                {/* Input Fields Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <TextField 
+                    required
+                    label="Useful Life (in yrs)" 
+                    placeholder="YRS" 
+                    name="usefulLife" 
+                    fullWidth 
+                    variant="outlined" 
+                    InputLabelProps={{
+                      shrink: true
+                    }} 
+                    InputProps={{
+                      sx: fieldStyles
+                    }} 
+                  />
+                  <TextField 
+                    required
+                    label="Salvage Value" 
+                    placeholder="Enter Value" 
+                    name="salvageValue" 
+                    fullWidth 
+                    variant="outlined" 
+                    InputLabelProps={{
+                      shrink: true
+                    }} 
+                    InputProps={{
+                      sx: fieldStyles
+                    }} 
+                  />
+                  <TextField 
+                    required
+                    label="Depreciation Rate" 
+                    placeholder="Enter Value" 
+                    name="depreciationRate" 
+                    fullWidth 
+                    variant="outlined" 
+                    InputLabelProps={{
+                      shrink: true
+                    }} 
+                    InputProps={{
+                      sx: fieldStyles
+                    }} 
+                  />
+                </div>
 
+                {/* Radio Options */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
                     <div className="flex items-center space-x-2">
-                      <input type="checkbox" id={`nc-checkPrevious-${measure.id}`} checked={measure.checkPreviousReading} onChange={e => updateNonConsumptionMeasure(measure.id, 'checkPreviousReading', e.target.checked)} className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]" style={{
-                  accentColor: '#C72030'
-                }} />
-                      <label htmlFor={`nc-checkPrevious-${measure.id}`} className="text-xs sm:text-sm">Check Previous Reading</label>
+                      <input type="radio" id="configure-this" name="depreciationConfig" value="configure-this" defaultChecked className="w-4 h-4 text-[#C72030] border-gray-300" style={{
+                    accentColor: '#C72030'
+                  }} />
+                      <label htmlFor="configure-this" className="text-sm">Configure Depreciation Only For This</label>
                     </div>
-                  </div>)}
-                
-                <button onClick={addNonConsumptionMeasure} className="px-4 py-2 rounded-md flex items-center text-sm sm:text-base bg-[#f6f4ee] text-orange-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Measure
-                </button>
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <input type="radio" id="similar-product" name="depreciationConfig" value="similar-product" className="w-4 h-4 text-[#C72030] border-gray-300" style={{
+                    accentColor: '#C72030'
+                  }} />
+                      <label htmlFor="similar-product" className="text-sm">For Similar Product</label>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>}
         </div>
