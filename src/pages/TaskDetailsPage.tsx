@@ -406,15 +406,22 @@ export const TaskDetailsPage = () => {
                   fullWidth 
                   variant="outlined" 
                   multiline 
-                  rows={3} 
+                  rows={4}
                   InputLabelProps={{
                     shrink: true
                   }} 
-                  InputProps={{
-                    sx: fieldStyles
-                  }} 
                   sx={{
-                    mt: 1
+                    mt: 1,
+                    '& .MuiOutlinedInput-root': {
+                      alignItems: 'flex-start',
+                      padding: 0
+                    },
+                    '& .MuiInputBase-inputMultiline': {
+                      padding: '12px',
+                      minHeight: 'auto',
+                      height: 'auto',
+                      lineHeight: 1.5
+                    }
                   }} 
                 />
               </div>
@@ -447,15 +454,22 @@ export const TaskDetailsPage = () => {
                   fullWidth 
                   variant="outlined" 
                   multiline 
-                  rows={3} 
+                  rows={4}
                   InputLabelProps={{
                     shrink: true
                   }} 
-                  InputProps={{
-                    sx: fieldStyles
-                  }} 
                   sx={{
-                    mt: 1
+                    mt: 1,
+                    '& .MuiOutlinedInput-root': {
+                      alignItems: 'flex-start',
+                      padding: 0
+                    },
+                    '& .MuiInputBase-inputMultiline': {
+                      padding: '12px',
+                      minHeight: 'auto',
+                      height: 'auto',
+                      lineHeight: 1.5
+                    }
                   }} 
                 />
               </div>
@@ -530,15 +544,22 @@ export const TaskDetailsPage = () => {
                   fullWidth 
                   variant="outlined" 
                   multiline 
-                  rows={3} 
+                  rows={4}
                   InputLabelProps={{
                     shrink: true
                   }} 
-                  InputProps={{
-                    sx: fieldStyles
-                  }} 
                   sx={{
-                    mt: 1
+                    mt: 1,
+                    '& .MuiOutlinedInput-root': {
+                      alignItems: 'flex-start',
+                      padding: 0
+                    },
+                    '& .MuiInputBase-inputMultiline': {
+                      padding: '12px',
+                      minHeight: 'auto',
+                      height: 'auto',
+                      lineHeight: 1.5
+                    }
                   }} 
                 />
               </div>
@@ -694,4 +715,3 @@ export const TaskDetailsPage = () => {
       </Dialog>
     </>;
 };
-
