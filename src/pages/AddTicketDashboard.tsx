@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { ArrowLeft, Upload, Paperclip, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
 const mockUsers = [{
   id: '1',
   name: 'Ankit Gupta',
@@ -26,6 +28,7 @@ const mockUsers = [{
   name: 'Jane Smith',
   type: 'fm'
 }];
+
 export const AddTicketDashboard = () => {
   const navigate = useNavigate();
   const {
@@ -51,12 +54,14 @@ export const AddTicketDashboard = () => {
     referenceNumber: '',
     mode: ''
   });
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
       setAttachedFiles(Array.from(files));
     }
   };
+
   const handleSubmit = () => {
     console.log('Submitting ticket:', {
       onBehalfOf,
@@ -72,6 +77,7 @@ export const AddTicketDashboard = () => {
     });
     navigate('/maintenance/ticket');
   };
+
   const filteredUsers = onBehalfOf === 'occupant-user' ? mockUsers.filter(user => user.type === 'occupant') : onBehalfOf === 'fm-user' ? mockUsers.filter(user => user.type === 'fm') : [];
 
   // Responsive styles for TextField and Select
@@ -122,6 +128,7 @@ export const AddTicketDashboard = () => {
       }
     }
   };
+
   return <div className="p-4 sm:p-6 bg-white min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -367,16 +374,16 @@ export const AddTicketDashboard = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
-              <TextField label="Description" value={formData.description} onChange={e => setFormData({
-              ...formData,
-              description: e.target.value
-            })} fullWidth variant="outlined" multiline rows={3} InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} sx={{
-              mt: 1
-            }} />
+              <Textarea
+                label="Description"
+                value={formData.description}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  description: e.target.value
+                })}
+                placeholder="Enter description"
+                className="min-h-[120px]"
+              />
             </div>
             <div>
               <FormControl fullWidth variant="outlined" sx={{
