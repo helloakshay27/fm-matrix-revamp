@@ -716,8 +716,8 @@ export const EditAssetDetailsPage = () => {
                         </label>
                         <span className="text-gray-500" style={{ fontSize: '14px' }}>No file chosen</span>
                       </div>
-                      <Button onClick={() => document.getElementById('manuals-file-input')?.click()} className="bg-gray-100 hover:bg-gray-200 text-[#C72030] border-none text-sm" variant="outline">
-                        <Plus className="w-4 h-4 mr-2" />
+                      <Button onClick={() => document.getElementById('manuals-file-input')?.click()} className="bg-[#F2EEE9] hover:bg-[#F2EEE9]/90 text-[#C72030] border-none text-sm px-4 py-2 rounded-none flex items-center gap-2">
+                        <Plus className="w-4 h-4" />
                         Upload Files
                       </Button>
                     </div>
@@ -736,8 +736,8 @@ export const EditAssetDetailsPage = () => {
                         </label>
                         <span className="text-gray-500" style={{ fontSize: '14px' }}>No file chosen</span>
                       </div>
-                      <Button onClick={() => document.getElementById('insurance-file-input')?.click()} className="bg-gray-100 hover:bg-gray-200 text-[#C72030] border-none text-sm" variant="outline">
-                        <Plus className="w-4 h-4 mr-2" />
+                      <Button onClick={() => document.getElementById('insurance-file-input')?.click()} className="bg-[#F2EEE9] hover:bg-[#F2EEE9]/90 text-[#C72030] border-none text-sm px-4 py-2 rounded-none flex items-center gap-2">
+                        <Plus className="w-4 h-4" />
                         Upload Files
                       </Button>
                     </div>
@@ -756,8 +756,8 @@ export const EditAssetDetailsPage = () => {
                         </label>
                         <span className="text-gray-500" style={{ fontSize: '14px' }}>No file chosen</span>
                       </div>
-                      <Button onClick={() => document.getElementById('invoice-file-input')?.click()} className="bg-gray-100 hover:bg-gray-200 text-[#C72030] border-none text-sm" variant="outline">
-                        <Plus className="w-4 h-4 mr-2" />
+                      <Button onClick={() => document.getElementById('invoice-file-input')?.click()} className="bg-[#F2EEE9] hover:bg-[#F2EEE9]/90 text-[#C72030] border-none text-sm px-4 py-2 rounded-none flex items-center gap-2">
+                        <Plus className="w-4 h-4" />
                         Upload Files
                       </Button>
                     </div>
@@ -776,8 +776,8 @@ export const EditAssetDetailsPage = () => {
                         </label>
                         <span className="text-gray-500" style={{ fontSize: '14px' }}>No file chosen</span>
                       </div>
-                      <Button onClick={() => document.getElementById('amc-file-input')?.click()} className="bg-gray-100 hover:bg-gray-200 text-[#C72030] border-none text-sm" variant="outline">
-                        <Plus className="w-4 h-4 mr-2" />
+                      <Button onClick={() => document.getElementById('amc-file-input')?.click()} className="bg-[#F2EEE9] hover:bg-[#F2EEE9]/90 text-[#C72030] border-none text-sm px-4 py-2 rounded-none flex items-center gap-2">
+                        <Plus className="w-4 h-4" />
                         Upload Files
                       </Button>
                     </div>
