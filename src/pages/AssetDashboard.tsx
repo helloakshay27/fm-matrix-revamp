@@ -268,112 +268,71 @@ const statData = [
       </div>
 
       {/* Stats Cards - Restored original styling */}
-<div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
-      {statData.map((item, i) => (
-        <div
-          key={i}
-          className="bg-[#f6f4ee] p-6 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4"
-        >
-          {/* Icon with circle background */}
-          <div className="w-14 h-14 bg-[#FBEDEC] rounded-full flex items-center justify-center">
-            {item.icon}
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
+        {statData.map((item, i) => (
+          <div
+            key={i}
+            className="bg-[#f6f4ee] p-6 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4"
+          >
+            {/* Icon with circle background */}
+            <div className="w-14 h-14 bg-[#FBEDEC] rounded-full flex items-center justify-center">
+              {item.icon}
+            </div>
 
-          {/* Text block */}
-          <div>
-            <div className="text-2xl font-bold text-[#C72030]">{item.value}</div>
-            <div className="text-sm font-medium text-gray-600">{item.label}</div>
+            {/* Text block */}
+            <div>
+              <div className="text-2xl font-bold text-[#C72030]">{item.value}</div>
+              <div className="text-sm font-medium text-gray-600">{item.label}</div>
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
 
-      {/* First Row of Action Buttons */}
+      {/* First Row of Action Buttons - Updated styling */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <Button 
-  onClick={handleAddAsset}
-  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6"
->
-<Plus className="w-4 h-4 mr-2" style={{ color: '#BF213E' }} />
-  Add
-</Button>
+          onClick={handleAddAsset}
+          className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-6"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add
+        </Button>
 
         <Button 
           onClick={handleImport}
-          variant="outline" 
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4"
+          className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4"
         >
           <Upload className="w-4 h-4 mr-2" />
           Import
         </Button>
+        
         <Button 
           onClick={handleUpdate}
-          variant="outline" 
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4"
+          className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4"
         >
           <Download className="w-4 h-4 mr-2" />
-          Update
+          Download QR All Asset
         </Button>
+        
         <Button 
-          onClick={handleExportAll}
+          onClick={() => setIsFilterOpen(true)}
           variant="outline" 
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4"
+          className="border-gray-600 text-gray-800 bg-white hover:bg-gray-50 px-4"
         >
-          <Download className="w-4 h-4 mr-2" />
-          Export All
-        </Button>
-        <Button 
-          onClick={handlePrintQR}
-          variant="outline" 
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4"
-        >
-          <FileText className="w-4 h-4 mr-2" />
-          Print QR
+          <Filter className="w-4 h-4 mr-2" />
+          Filters
         </Button>
 
         {/* Search Box aligned to right */}
         <div className="relative ml-auto">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
-            placeholder="Search assets..."
+            placeholder="Search"
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
             className="pl-10 w-64 bg-white border-gray-300"
           />
         </div>
-        <Button 
-          style={{ backgroundColor: '#F2F0E9', color: '#BF213E' }}
-          className="hover:opacity-90 px-4"
-        >
-          Go!
-        </Button>
-      </div>
-
-      {/* Second Row of Action Buttons */}
-      <div className="flex flex-wrap items-center gap-3 mb-6">
-        <Button 
-          onClick={handleInActiveAssets}
-          variant="outline" 
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4"
-        >
-          In-Active Assets
-        </Button>
-        <Button 
-          onClick={handlePrintAllQR}
-          variant="outline" 
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4"
-        >
-          <FileText className="w-4 h-4 mr-2" />
-          Print All QR
-        </Button>
-        <Button 
-          onClick={() => setIsFilterOpen(true)}
-          variant="outline" 
-          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4"
-        >
-          <Filter className="w-4 h-4 mr-2" />
-          Filters
-        </Button>
       </div>
 
       {/* Asset Table */}
