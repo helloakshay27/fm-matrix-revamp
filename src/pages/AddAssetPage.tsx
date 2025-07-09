@@ -45,6 +45,115 @@ const AddAssetPage = () => {
     amc: []
   });
 
+  // Meter category options
+  const getMeterCategoryOptions = () => [
+    { value: 'electrical', label: 'Electrical' },
+    { value: 'water', label: 'Water' },
+    { value: 'gas', label: 'Gas' },
+    { value: 'steam', label: 'Steam' },
+    { value: 'thermal', label: 'Thermal' },
+    { value: 'flow', label: 'Flow' }
+  ];
+
+  // Sub-category options based on selected meter category
+  const getSubCategoryOptions = () => {
+    const subCategories = {
+      electrical: [
+        { value: 'kwh', label: 'kWh' },
+        { value: 'kvah', label: 'kVAh' },
+        { value: 'voltage', label: 'Voltage' },
+        { value: 'current', label: 'Current' }
+      ],
+      water: [
+        { value: 'flow-rate', label: 'Flow Rate' },
+        { value: 'pressure', label: 'Pressure' },
+        { value: 'temperature', label: 'Temperature' }
+      ],
+      gas: [
+        { value: 'volume', label: 'Volume' },
+        { value: 'pressure', label: 'Pressure' },
+        { value: 'flow-rate', label: 'Flow Rate' }
+      ],
+      steam: [
+        { value: 'pressure', label: 'Pressure' },
+        { value: 'temperature', label: 'Temperature' },
+        { value: 'flow-rate', label: 'Flow Rate' }
+      ],
+      thermal: [
+        { value: 'temperature', label: 'Temperature' },
+        { value: 'btu', label: 'BTU' }
+      ],
+      flow: [
+        { value: 'volume', label: 'Volume' },
+        { value: 'mass', label: 'Mass' }
+      ]
+    };
+    
+    return subCategories[meterCategoryType] || [];
+  };
+
+  // Handle meter category change
+  const handleMeterCategoryChange = (value) => {
+    setMeterCategoryType(value);
+    setSubCategoryType(''); // Reset sub-category when main category changes
+  };
+
+  // Consumption measure functions
+  const updateConsumptionMeasure = (id, field, value) => {
+    setConsumptionMeasures(prev => 
+      prev.map(measure => 
+        measure.id === id ? { ...measure, [field]: value } : measure
+      )
+    );
+  };
+
+  const addConsumptionMeasure = () => {
+    const newId = Math.max(...consumptionMeasures.map(m => m.id)) + 1;
+    setConsumptionMeasures(prev => [...prev, {
+      id: newId,
+      name: '',
+      unitType: '',
+      min: '',
+      max: '',
+      alertBelowVal: '',
+      alertAboveVal: '',
+      multiplierFactor: '',
+      checkPreviousReading: false
+    }]);
+  };
+
+  const removeConsumptionMeasure = (id) => {
+    setConsumptionMeasures(prev => prev.filter(measure => measure.id !== id));
+  };
+
+  // Non-consumption measure functions
+  const updateNonConsumptionMeasure = (id, field, value) => {
+    setNonConsumptionMeasures(prev => 
+      prev.map(measure => 
+        measure.id === id ? { ...measure, [field]: value } : measure
+      )
+    );
+  };
+
+  const addNonConsumptionMeasure = () => {
+    const newId = Math.max(...nonConsumptionMeasures.map(m => m.id)) + 1;
+    setNonConsumptionMeasures(prev => [...prev, {
+      id: newId,
+      name: '',
+      unitType: '',
+      min: '',
+      max: '',
+      alertBelowVal: '',
+      alertAboveVal: '',
+      multiplierFactor: '',
+      checkPreviousReading: false
+    }]);
+  };
+
+  const removeNonConsumptionMeasure = (id) => {
+    setNonConsumptionMeasures(prev => prev.filter(measure => measure.id !== id));
+  };
+
   const toggleSection = section => {
     setExpandedSections(prev => ({
       ...prev,
