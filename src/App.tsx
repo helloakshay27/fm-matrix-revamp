@@ -698,7 +698,7 @@ function App() {
               <Route path="/market-place/cloud-telephony" element={<CloudTelephonyDetailPage />} />
               <Route path="/market-place/accounting" element={<AccountingDetailPage />} />
 
-              <Route path="/maintenance/audit/waste/generation/add" element={<AddWasteGenerationPage />} />
+              <Route path="/maintenance/waste/generation/add" element={<AddWasteGenerationPage />} />
               <Route path="*" element={<NotFound />} />
             </Route>
 
