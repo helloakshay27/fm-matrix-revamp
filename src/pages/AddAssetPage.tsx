@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, X, Plus } from 'lucide-react';
+import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
 const AddAssetPage = () => {
   const navigate = useNavigate();
   const [expandedSections, setExpandedSections] = useState({
@@ -43,12 +44,14 @@ const AddAssetPage = () => {
     purchaseInvoice: [],
     amc: []
   });
+
   const toggleSection = section => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }));
   };
+
   const handleFileUpload = (category, files) => {
     if (files) {
       const fileArray = Array.from(files);
@@ -58,19 +61,23 @@ const AddAssetPage = () => {
       }));
     }
   };
+
   const removeFile = (category, index) => {
     setAttachments(prev => ({
       ...prev,
       [category]: prev[category].filter((_, i) => i !== index)
     }));
   };
+
   const handleSaveAndShow = () => {
     console.log('Save and show details');
     navigate('/maintenance/asset');
   };
+
   const handleSaveAndCreate = () => {
     console.log('Save and create new asset');
   };
+
   const getMeterCategoryOptions = () => [{
     value: 'board',
     label: 'Board'
@@ -90,6 +97,7 @@ const AddAssetPage = () => {
     value: 'iex-gdam',
     label: 'IEX-GDAM'
   }];
+
   const getSubCategoryOptions = () => {
     switch (meterCategoryType) {
       case 'board':
@@ -129,10 +137,12 @@ const AddAssetPage = () => {
         return [];
     }
   };
+
   const handleMeterCategoryChange = value => {
     setMeterCategoryType(value);
     setSubCategoryType('');
   };
+
   const addConsumptionMeasure = () => {
     const newId = consumptionMeasures.length > 0 ? Math.max(...consumptionMeasures.map(m => m.id)) + 1 : 1;
     setConsumptionMeasures([...consumptionMeasures, {
@@ -147,17 +157,20 @@ const AddAssetPage = () => {
       checkPreviousReading: false
     }]);
   };
+
   const removeConsumptionMeasure = id => {
     if (consumptionMeasures.length > 1) {
       setConsumptionMeasures(consumptionMeasures.filter(m => m.id !== id));
     }
   };
+
   const updateConsumptionMeasure = (id, field, value) => {
     setConsumptionMeasures(consumptionMeasures.map(m => m.id === id ? {
       ...m,
       [field]: value
     } : m));
   };
+
   const addNonConsumptionMeasure = () => {
     const newId = nonConsumptionMeasures.length > 0 ? Math.max(...nonConsumptionMeasures.map(m => m.id)) + 1 : 1;
     setNonConsumptionMeasures([...nonConsumptionMeasures, {
@@ -172,17 +185,20 @@ const AddAssetPage = () => {
       checkPreviousReading: false
     }]);
   };
+
   const removeNonConsumptionMeasure = id => {
     if (nonConsumptionMeasures.length > 1) {
       setNonConsumptionMeasures(nonConsumptionMeasures.filter(m => m.id !== id));
     }
   };
+
   const updateNonConsumptionMeasure = (id, field, value) => {
     setNonConsumptionMeasures(nonConsumptionMeasures.map(m => m.id === id ? {
       ...m,
       [field]: value
     } : m));
   };
+
   const fieldStyles = {
     height: {
       xs: 28,
@@ -197,6 +213,7 @@ const AddAssetPage = () => {
       }
     }
   };
+
   return <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
@@ -213,7 +230,9 @@ const AddAssetPage = () => {
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('location')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">1</span>
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
+              </span>
               LOCATION DETAILS
             </div>
             {expandedSections.location ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -250,7 +269,9 @@ const AddAssetPage = () => {
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('asset')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">2</span>
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <Package className="w-3 h-3 sm:w-4 sm:h-4" />
+              </span>
               ASSET DETAILS
             </div>
             {expandedSections.asset ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -429,7 +450,9 @@ const AddAssetPage = () => {
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('warranty')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">3</span>
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
+              </span>
               WARRANTY DETAILS
             </div>
             {expandedSections.warranty ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -480,7 +503,9 @@ const AddAssetPage = () => {
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('meterCategory')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">4</span>
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
+              </span>
               METER CATEGORY TYPE
             </div>
             {expandedSections.meterCategory ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -512,7 +537,9 @@ const AddAssetPage = () => {
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('consumption')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">5</span>
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
+              </span>
               CONSUMPTION ASSET MEASURE
             </div>
             {expandedSections.consumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -615,7 +642,9 @@ const AddAssetPage = () => {
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('nonConsumption')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">6</span>
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <BarChart className="w-3 h-3 sm:w-4 sm:h-4" />
+              </span>
               NON CONSUMPTION ASSET MEASURE
             </div>
             {expandedSections.nonConsumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -719,7 +748,9 @@ const AddAssetPage = () => {
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('attachments')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">7</span>
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <Paperclip className="w-3 h-3 sm:w-4 sm:h-4" />
+              </span>
               ATTACHMENTS
             </div>
             {expandedSections.attachments ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -792,4 +823,5 @@ const AddAssetPage = () => {
       </div>
     </div>;
 };
+
 export default AddAssetPage;
