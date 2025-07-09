@@ -366,159 +366,227 @@ export const AssetDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
-        {statData.map((stat, index) => (
-          <div key={index} className="bg-white rounded-lg shadow-sm border p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-                <p className="text-2xl font-bold" style={{ color: '#1a1a1a' }}>
-                  {typeof stat.value === 'number' ? stat.value : stat.value}
-                </p>
-              </div>
-              <div className="ml-2">
-                {stat.icon}
-              </div>
+        {statData.map((item, i) => (
+          <div
+            key={i}
+            className="bg-[#f6f4ee] p-6 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4"
+          >
+            <div className="w-14 h-14 bg-[#FBEDEC] rounded-full flex items-center justify-center">
+              {item.icon}
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-[#C72030]">{item.value}</div>
+              <div className="text-sm font-medium text-gray-600">{item.label}</div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        <Button onClick={handleAddAsset} className="bg-[#C72030] hover:bg-[#A61B2A] text-white">
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <Button 
+          onClick={handleAddAsset}
+          className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-6"
+        >
           <Plus className="w-4 h-4 mr-2" />
-          Add Asset
+          Add
         </Button>
-        <Button onClick={handleImport} variant="outline" className="text-gray-700 bg-white hover:bg-gray-50">
+
+        <Button 
+          onClick={handleImport}
+          className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4"
+        >
           <Upload className="w-4 h-4 mr-2" />
           Import
         </Button>
-        <Button onClick={handleUpdate} variant="outline" className="text-gray-700 bg-white hover:bg-gray-50">
-          <Upload className="w-4 h-4 mr-2" />
-          Update
-        </Button>
-        <Button onClick={handleExportAll} variant="outline" className="text-gray-700 bg-white hover:bg-gray-50">
+        
+        <Button 
+          onClick={handleUpdate}
+          className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4"
+        >
           <Download className="w-4 h-4 mr-2" />
-          Export All
+          Download QR All Asset
         </Button>
-        <Button onClick={handlePrintQR} variant="outline" className="text-gray-700 bg-white hover:bg-gray-50">
-          <FileText className="w-4 h-4 mr-2" />
-          Print QR
-        </Button>
-        <Button onClick={handlePrintAllQR} variant="outline" className="text-gray-700 bg-white hover:bg-gray-50">
-          <FileText className="w-4 h-4 mr-2" />
-          Print All QR
-        </Button>
-        <Button onClick={() => setIsFilterOpen(true)} variant="outline" className="text-gray-700 bg-white hover:bg-gray-50">
+        
+        <Button 
+          onClick={() => setIsFilterOpen(true)}
+          variant="outline" 
+          className="border-gray-600 text-gray-800 bg-white hover:bg-gray-50 px-4"
+        >
           <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
-        <Button onClick={handleInActiveAssets} variant="outline" className="text-gray-700 bg-white hover:bg-gray-50">
-          <ExternalLink className="w-4 h-4 mr-2" />
-          In Active Assets
-        </Button>
-        <Button onClick={handleRefresh} variant="outline" className="text-gray-700 bg-white hover:bg-gray-50">
-          <RotateCcw className="w-4 h-4 mr-2" />
-          Refresh
-        </Button>
-        <Button onClick={handleGridView} variant="outline" className="text-gray-700 bg-white hover:bg-gray-50">
-          Grid View
-        </Button>
-        <ColumnVisibilityDropdown 
-          visibleColumns={visibleColumns}
-          onColumnChange={handleColumnChange}
-        />
 
-        <div className="relative ml-auto w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            placeholder="Search assets..."
-            value={searchTerm}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="pl-10 bg-white"
+        <div className="flex items-center gap-2 ml-auto">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search"
+              value={searchTerm}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="pl-10 w-64 bg-white border-gray-300"
+            />
+          </div>
+          
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={handleRefresh}
+            className="border-gray-300 text-gray-600 bg-white hover:bg-gray-50"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </Button>
+          
+          <ColumnVisibilityDropdown 
+            visibleColumns={visibleColumns}
+            onColumnChange={handleColumnChange}
           />
+          
+          <Button 
+            variant="outline" 
+            size="icon"
+            className="border-gray-300 text-gray-600 bg-white hover:bg-gray-50"
+          >
+            <ExternalLink className="w-4 h-4" />
+          </Button>
         </div>
       </div>
 
-      {/* Assets Table */}
-      <div className="overflow-x-auto bg-white rounded-lg border border-gray-200 shadow-sm">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-[#f6f4ee]">
-              <TableHead>
-                <input
-                  type="checkbox"
-                  checked={selectedAssets.length === filteredAssets.length}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="rounded border-gray-300"
-                />
-              </TableHead>
-              {visibleColumns.actions && <TableHead>Actions</TableHead>}
-              {visibleColumns.assetName && <TableHead>Asset Name</TableHead>}
-              {visibleColumns.assetId && <TableHead>Asset ID</TableHead>}
-              {visibleColumns.assetCode && <TableHead>Asset Code</TableHead>}
-              {visibleColumns.assetNo && <TableHead>Asset No.</TableHead>}
-              {visibleColumns.assetStatus && <TableHead>Asset Status</TableHead>}
-              {visibleColumns.equipmentId && <TableHead>Equipment Id</TableHead>}
-              {visibleColumns.site && <TableHead>Site</TableHead>}
-              {visibleColumns.building && <TableHead>Building</TableHead>}
-              {visibleColumns.wing && <TableHead>Wing</TableHead>}
-              {visibleColumns.floor && <TableHead>Floor</TableHead>}
-              {visibleColumns.area && <TableHead>Area</TableHead>}
-              {visibleColumns.room && <TableHead>Room</TableHead>}
-              {visibleColumns.meterType && <TableHead>Meter Type</TableHead>}
-              {visibleColumns.assetType && <TableHead>Asset Type</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredAssets.map((asset) => (
-              <TableRow key={asset.id}>
-                <TableCell>
-                  <input
-                    type="checkbox"
-                    checked={selectedAssets.includes(asset.id)}
-                    onChange={(e) => handleSelectAsset(asset.id, e.target.checked)}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50 border-b border-gray-200">
+                <TableHead className="w-12 px-4 py-3">
+                  <input 
+                    type="checkbox" 
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    checked={selectedAssets.length === filteredAssets.length && filteredAssets.length > 0}
                     className="rounded border-gray-300"
                   />
-                </TableCell>
+                </TableHead>
                 {visibleColumns.actions && (
-                  <TableCell>
-                    <Button variant="ghost" size="sm" onClick={() => handleViewAsset(asset.id)}>
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </TableCell>
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</TableHead>
                 )}
-                {visibleColumns.assetName && <TableCell>{asset.name}</TableCell>}
-                {visibleColumns.assetId && <TableCell style={{ color: '#1a1a1a' }}>{asset.id}</TableCell>}
-                {visibleColumns.assetCode && <TableCell className="font-mono text-xs">{asset.code}</TableCell>}
-                {visibleColumns.assetNo && <TableCell>{asset.assetNo}</TableCell>}
+                {visibleColumns.assetName && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Name</TableHead>
+                )}
+                {visibleColumns.assetId && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset ID</TableHead>
+                )}
+                {visibleColumns.assetCode && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Code</TableHead>
+                )}
+                {visibleColumns.assetNo && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset No.</TableHead>
+                )}
                 {visibleColumns.assetStatus && (
-                  <TableCell>
-                    <Badge className={`px-3 py-1 text-xs font-medium ${getStatusColor(asset.status)}`}>
-                      {asset.status}
-                    </Badge>
-                  </TableCell>
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Status</TableHead>
                 )}
-                {visibleColumns.equipmentId && <TableCell>{asset.equipmentId}</TableCell>}
-                {visibleColumns.site && <TableCell>{asset.site}</TableCell>}
-                {visibleColumns.building && <TableCell>{asset.building}</TableCell>}
-                {visibleColumns.wing && <TableCell>{asset.wing}</TableCell>}
-                {visibleColumns.floor && <TableCell>{asset.floor}</TableCell>}
-                {visibleColumns.area && <TableCell>{asset.area}</TableCell>}
-                {visibleColumns.room && <TableCell>{asset.room}</TableCell>}
-                {visibleColumns.meterType && <TableCell>{asset.meterType}</TableCell>}
-                {visibleColumns.assetType && <TableCell>{asset.assetType}</TableCell>}
+                {visibleColumns.equipmentId && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Equipment Id</TableHead>
+                )}
+                {visibleColumns.site && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Site</TableHead>
+                )}
+                {visibleColumns.building && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Building</TableHead>
+                )}
+                {visibleColumns.wing && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Wing</TableHead>
+                )}
+                {visibleColumns.floor && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Floor</TableHead>
+                )}
+                {visibleColumns.area && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Area</TableHead>
+                )}
+                {visibleColumns.room && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Room</TableHead>
+                )}
+                {visibleColumns.meterType && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Meter Type</TableHead>
+                )}
+                {visibleColumns.assetType && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Type</TableHead>
+                )}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-
-        <div className="p-4 border-t bg-gray-50 text-sm text-gray-600 text-right">
-          Showing 1 - {filteredAssets.length} of {assetData.length} assets
+            </TableHeader>
+            <TableBody>
+              {filteredAssets.map((asset) => (
+                <TableRow key={asset.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <TableCell className="px-4 py-3">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedAssets.includes(asset.id)}
+                      onChange={(e) => handleSelectAsset(asset.id, e.target.checked)}
+                      className="rounded border-gray-300"
+                    />
+                  </TableCell>
+                  {visibleColumns.actions && (
+                    <TableCell className="px-4 py-3">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleViewAsset(asset.id)}
+                        className="p-1 h-8 w-8"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  )}
+                  {visibleColumns.assetName && (
+                    <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{asset.name}</TableCell>
+                  )}
+                  {visibleColumns.assetId && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.id}</TableCell>
+                  )}
+                  {visibleColumns.assetCode && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600 font-mono">{asset.code}</TableCell>
+                  )}
+                  {visibleColumns.assetNo && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.assetNo}</TableCell>
+                  )}
+                  {visibleColumns.assetStatus && (
+                    <TableCell className="px-4 py-3">
+                      <Badge className={`${getStatusColor(asset.status)} text-xs px-2 py-1`}>
+                        {asset.status}
+                      </Badge>
+                    </TableCell>
+                  )}
+                  {visibleColumns.equipmentId && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.equipmentId}</TableCell>
+                  )}
+                  {visibleColumns.site && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.site}</TableCell>
+                  )}
+                  {visibleColumns.building && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.building}</TableCell>
+                  )}
+                  {visibleColumns.wing && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.wing}</TableCell>
+                  )}
+                  {visibleColumns.floor && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.floor}</TableCell>
+                  )}
+                  {visibleColumns.area && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.area}</TableCell>
+                  )}
+                  {visibleColumns.room && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.room}</TableCell>
+                  )}
+                  {visibleColumns.meterType && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.meterType}</TableCell>
+                  )}
+                  {visibleColumns.assetType && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.assetType}</TableCell>
+                  )}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </div>
 
-      {/* Pagination */}
       <div className="mt-6">
         <Pagination>
           <PaginationContent>
@@ -526,19 +594,52 @@ export const AssetDashboard = () => {
               <PaginationPrevious href="#" />
             </PaginationItem>
             <PaginationItem>
-              <PaginationLink href="#" isActive>1</PaginationLink>
+              <PaginationLink href="#" isActive>
+                1
+              </PaginationLink>
             </PaginationItem>
             <PaginationItem>
-              <PaginationLink href="#">2</PaginationLink>
+              <PaginationLink href="#">
+                2
+              </PaginationLink>
             </PaginationItem>
             <PaginationItem>
-              <PaginationLink href="#">3</PaginationLink>
+              <PaginationLink href="#">
+                3
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">
+                4
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">
+                5
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">
+                6
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">
+                7
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">
+                8
+              </PaginationLink>
             </PaginationItem>
             <PaginationItem>
               <PaginationEllipsis />
             </PaginationItem>
             <PaginationItem>
-              <PaginationLink href="#">10</PaginationLink>
+              <PaginationLink href="#">
+                Last
+              </PaginationLink>
             </PaginationItem>
             <PaginationItem>
               <PaginationNext href="#" />
@@ -547,12 +648,12 @@ export const AssetDashboard = () => {
         </Pagination>
       </div>
 
-      {/* Dialogs */}
       <BulkUploadDialog 
-        open={isBulkUploadOpen} 
+        open={isBulkUploadOpen}
         onOpenChange={setIsBulkUploadOpen}
         title={uploadType === 'import' ? 'Import Assets' : 'Update Assets'}
       />
+
       <AssetFilterDialog 
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
