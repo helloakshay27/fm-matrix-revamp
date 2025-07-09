@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -62,6 +61,7 @@ export const EditAssetDetailsPage = () => {
     purchaseDate: '2024-05-26',
     expiryDate: '',
     manufacturer: '',
+    vendor: '',
     locationType: 'common-area',
     assetType: 'parent',
     status: 'in-use',
@@ -354,185 +354,194 @@ export const EditAssetDetailsPage = () => {
               </span>
               ASSET DETAILS
             </div>
-            {expandedSections.asset ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            <div className="flex items-center gap-2">
+              <button className="bg-blue-600 text-white px-3 py-1 rounded-md text-sm flex items-center gap-1">
+                <Plus className="w-4 h-4" />
+                Custom Field
+              </button>
+              {expandedSections.asset ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </div>
           </div>
           {expandedSections.asset && <div className="p-4 sm:p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                {[{
-              label: 'Asset Name',
-              name: 'assetName',
-              placeholder: 'Enter Name',
-              required: true,
-              value: formData.assetName
-            }, {
-              label: 'Asset No.',
-              name: 'assetNo',
-              placeholder: 'Enter Number',
-              required: true,
-              value: formData.assetNo
-            }, {
-              label: 'Equipment ID',
-              name: 'equipmentId',
-              placeholder: 'Enter Number',
-              required: true,
-              value: formData.equipmentId
-            }].map(field => <TextField key={field.name} required={field.required} label={field.label} placeholder={field.placeholder} name={field.name} value={field.value} onChange={e => handleInputChange(field.name, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />)}
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                {[{
-              label: 'Model No.',
-              name: 'modelNo',
-              placeholder: 'Enter Number',
-              value: formData.modelNo
-            }, {
-              label: 'Serial No.',
-              name: 'serialNo',
-              placeholder: 'Enter Number',
-              value: formData.serialNo
-            }, {
-              label: 'Consumer No.',
-              name: 'consumerNo',
-              placeholder: 'Enter Number',
-              value: formData.consumerNo
-            }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} value={field.value} onChange={e => handleInputChange(field.name, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />)}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                {[{
-              label: 'Purchase Cost',
-              name: 'purchaseCost',
-              placeholder: 'Enter Numeric value',
-              type: 'number',
-              required: true,
-              value: formData.purchaseCost
-            }, {
-              label: 'Capacity',
-              name: 'capacity',
-              placeholder: 'Enter Text',
-              value: formData.capacity
-            }, {
-              label: 'Unit',
-              name: 'unit',
-              placeholder: 'Enter Text',
-              value: formData.unit
-            }].map(field => <TextField key={field.name} required={field.required} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} value={field.value} onChange={e => handleInputChange(field.name, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />)}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                {['Group', 'Subgroup'].map(label => <FormControl key={label} fullWidth variant="outlined" sx={{
-              minWidth: 120
-            }}>
-                    <InputLabel id={`${label.toLowerCase()}-select-label`} shrink>{label}</InputLabel>
-                    <MuiSelect labelId={`${label.toLowerCase()}-select-label`} label={label} displayEmpty value={formData[label.toLowerCase()]} onChange={(e: SelectChangeEvent) => handleInputChange(label.toLowerCase(), e.target.value)} sx={fieldStyles}>
-                      <MenuItem value=""><em>Select {label}</em></MenuItem>
-                      <MenuItem value="Electrical">Electrical</MenuItem>
-                      <MenuItem value="Mechanical">Mechanical</MenuItem>
-                    </MuiSelect>
-                  </FormControl>)}
-                <TextField label="Purchased ON Date" placeholder="Select Date" name="purchaseDate" type="date" value={formData.purchaseDate} onChange={e => handleInputChange('purchaseDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                {[{
-              label: 'Expiry date',
-              name: 'expiryDate',
-              type: 'date',
-              value: formData.expiryDate
-            }, {
-              label: 'Manufacturer',
-              name: 'manufacturer',
-              placeholder: 'Enter Text',
-              value: formData.manufacturer
-            }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder || 'Select Date'} name={field.name} type={field.type || 'text'} value={field.value} onChange={e => handleInputChange(field.name, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />)}
+              {/* First Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-4">
+                <TextField
+                  required
+                  label="Asset Name"
+                  placeholder="Enter Asset Name"
+                  name="assetName"
+                  value={formData.assetName}
+                  onChange={e => handleInputChange('assetName', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
+                <TextField
+                  required
+                  label="Asset No"
+                  placeholder="Enter Asset No"
+                  name="assetNo"
+                  value={formData.assetNo}
+                  onChange={e => handleInputChange('assetNo', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
+                <TextField
+                  required
+                  label="Model No"
+                  placeholder="Enter Model No"
+                  name="modelNo"
+                  value={formData.modelNo}
+                  onChange={e => handleInputChange('modelNo', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
+                <TextField
+                  label="Serial No"
+                  placeholder="Enter Serial No"
+                  name="serialNo"
+                  value={formData.serialNo}
+                  onChange={e => handleInputChange('serialNo', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
+                <TextField
+                  required
+                  label="Manufacturer"
+                  placeholder="Enter Manufacturer"
+                  name="manufacturer"
+                  value={formData.manufacturer}
+                  onChange={e => handleInputChange('manufacturer', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="vendor-select-label" shrink>Vendor</InputLabel>
+                  <MuiSelect
+                    labelId="vendor-select-label"
+                    label="Vendor"
+                    displayEmpty
+                    value={formData.vendor}
+                    onChange={(e: SelectChangeEvent) => handleInputChange('vendor', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Vendor</em></MenuItem>
+                    <MenuItem value="vendor1">Vendor 1</MenuItem>
+                    <MenuItem value="vendor2">Vendor 2</MenuItem>
+                  </MuiSelect>
+                </FormControl>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4">
-                {[{
-              label: 'Location Type',
-              name: 'locationType',
-              options: [{
-                value: 'common',
-                label: 'Common Area'
-              }, {
-                value: 'customer',
-                label: 'Customer'
-              }, {
-                value: 'na',
-                label: 'NA'
-              }],
-              defaultValue: 'common'
-            }, {
-              label: 'Asset Type',
-              name: 'assetType',
-              options: [{
-                value: 'parent',
-                label: 'Parent'
-              }, {
-                value: 'sub',
-                label: 'Sub'
-              }],
-              defaultValue: 'parent'
-            }, {
-              label: 'Status',
-              name: 'status',
-              options: [{
-                value: 'inuse',
-                label: 'In Use'
-              }, {
-                value: 'breakdown',
-                label: 'Breakdown'
-              }],
-              defaultValue: 'inuse'
-            }, {
-              label: 'Critical',
-              name: 'critical',
-              options: [{
-                value: 'yes',
-                label: 'Yes'
-              }, {
-                value: 'no',
-                label: 'No'
-              }],
-              defaultValue: 'no'
-            }].map(field => <div key={field.name}>
-                    <label className="text-xs sm:text-sm font-medium text-gray-700">{field.label}</label>
-                    <div className="flex flex-wrap gap-4 sm:gap-6 mt-2">
-                      {field.options.map(option => <div key={option.value} className="flex items-center space-x-2">
-                          <input type="radio" id={`${field.name}-${option.value}`} name={field.name} value={option.value} checked={formData[field.name] === option.value} onChange={e => handleInputChange(field.name, e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
-                    accentColor: '#C72030'
-                  }} />
-                          <label htmlFor={`${field.name}-${option.value}`} className="text-xs sm:text-sm">{option.label}</label>
-                        </div>)}
+              {/* Second Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="group-select-label" shrink>Group</InputLabel>
+                  <MuiSelect
+                    labelId="group-select-label"
+                    label="Group"
+                    displayEmpty
+                    value={formData.group}
+                    onChange={(e: SelectChangeEvent) => handleInputChange('group', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Group</em></MenuItem>
+                    <MenuItem value="Electrical">Electrical</MenuItem>
+                    <MenuItem value="Mechanical">Mechanical</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="subgroup-select-label" shrink>Subgroup</InputLabel>
+                  <MuiSelect
+                    labelId="subgroup-select-label"
+                    label="Subgroup"
+                    displayEmpty
+                    value={formData.subgroup}
+                    onChange={(e: SelectChangeEvent) => handleInputChange('subgroup', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Sub-Group</em></MenuItem>
+                    <MenuItem value="Electric Meter">Electric Meter</MenuItem>
+                    <MenuItem value="Water Meter">Water Meter</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+                <TextField
+                  label="Commissioning Date"
+                  placeholder="dd/mm/yyyy"
+                  name="commissioningDate"
+                  type="date"
+                  value={formData.commissioningDate}
+                  onChange={e => handleInputChange('commissioningDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
+              </div>
+
+              {/* Status Section */}
+              <div className="mb-4">
+                <div className="flex items-center gap-4">
+                  <span className="text-blue-600 font-medium">Status</span>
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="status-inuse"
+                        name="status"
+                        value="in-use"
+                        checked={formData.status === 'in-use'}
+                        onChange={e => handleInputChange('status', e.target.value)}
+                        className="w-4 h-4 text-blue-600 border-gray-300"
+                      />
+                      <label htmlFor="status-inuse" className="text-sm">In Use</label>
                     </div>
-                  </div>)}
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input type="checkbox" id="meterApplicable" checked={formData.meterApplicable} onChange={e => handleInputChange('meterApplicable', e.target.checked)} className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]" style={{
-              accentColor: '#C72030'
-            }} />
-                <label htmlFor="meterApplicable" className="text-xs sm:text-sm">Meter Applicable</label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="status-breakdown"
+                        name="status"
+                        value="breakdown"
+                        checked={formData.status === 'breakdown'}
+                        onChange={e => handleInputChange('status', e.target.value)}
+                        className="w-4 h-4 text-blue-600 border-gray-300"
+                      />
+                      <label htmlFor="status-breakdown" className="text-sm">Breakdown</label>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>}
         </div>
