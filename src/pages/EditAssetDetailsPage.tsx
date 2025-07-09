@@ -671,25 +671,23 @@ export const EditAssetDetailsPage = () => {
                 {/* Responsive grid for meter category options */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
                   {getMeterCategoryOptions().map(option => (
-                    <div key={option.value} className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
-                      <div className="flex items-center space-x-2">
+                    <div key={option.value} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                      <div className="flex items-center justify-center space-x-3">
+                        <input 
+                          type="radio" 
+                          id={option.value} 
+                          name="meterCategory" 
+                          value={option.value} 
+                          checked={meterCategoryType === option.value} 
+                          onChange={e => handleMeterCategoryChange(e.target.value)} 
+                          className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" 
+                        />
                         <div className="text-gray-600">
                           {option.icon}
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <input 
-                            type="radio" 
-                            id={option.value} 
-                            name="meterCategory" 
-                            value={option.value} 
-                            checked={meterCategoryType === option.value} 
-                            onChange={e => handleMeterCategoryChange(e.target.value)} 
-                            className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" 
-                          />
-                          <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer font-medium">
-                            {option.label}
-                          </label>
-                        </div>
+                        <label htmlFor={option.value} className="text-sm cursor-pointer font-medium text-center">
+                          {option.label}
+                        </label>
                       </div>
                     </div>
                   ))}
