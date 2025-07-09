@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -669,58 +668,63 @@ export const EditAssetDetailsPage = () => {
               <div className="p-4 rounded-lg bg-[#f6f4ee]">
                 <h3 className="font-semibold text-sm mb-4 text-red-700">METER DETAILS</h3>
                 
-                {/* First row with 5 boxes */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-4">
-                  {getMeterCategoryOptions().slice(0, 5).map(option => <div key={option.value} className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
+                {/* All options in one row */}
+                <div className="grid grid-cols-6 gap-3 sm:gap-4 mb-4">
+                  {getMeterCategoryOptions().map(option => (
+                    <div key={option.value} className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
                       <div className="flex flex-col items-center space-y-2">
                         <div className="text-gray-600">
                           {option.icon}
                         </div>
                         <div className="flex items-center space-x-2">
-                          <input type="radio" id={option.value} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
+                          <input 
+                            type="radio" 
+                            id={option.value} 
+                            name="meterCategory" 
+                            value={option.value} 
+                            checked={meterCategoryType === option.value} 
+                            onChange={e => handleMeterCategoryChange(e.target.value)} 
+                            className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" 
+                          />
                           <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer font-medium">
                             {option.label}
                           </label>
                         </div>
                       </div>
-                    </div>)}
-                </div>
-
-                {/* Second row with remaining box centered */}
-                <div className="flex justify-center">
-                  {getMeterCategoryOptions().slice(5).map(option => <div key={option.value} className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm w-48">
-                      <div className="flex flex-col items-center space-y-2">
-                        <div className="text-gray-600">
-                          {option.icon}
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input type="radio" id={option.value} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
-                          <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer font-medium">
-                            {option.label}
-                          </label>
-                        </div>
-                      </div>
-                    </div>)}
+                    </div>
+                  ))}
                 </div>
 
                 {/* Subcategory options for Board and Renewable */}
-                {(meterCategoryType === 'board' || meterCategoryType === 'renewable') && getSubCategoryOptions().length > 0 && <div className="mt-6">
+                {(meterCategoryType === 'board' || meterCategoryType === 'renewable') && getSubCategoryOptions().length > 0 && (
+                  <div className="mt-6">
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                      {getSubCategoryOptions().map(option => <div key={option.value} className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
+                      {getSubCategoryOptions().map(option => (
+                        <div key={option.value} className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
                           <div className="flex flex-col items-center space-y-2">
                             <div className="text-gray-600">
                               {option.icon}
                             </div>
                             <div className="flex items-center space-x-2">
-                              <input type="radio" id={`sub-${option.value}`} name="subMeterCategory" value={option.value} checked={subCategoryType === option.value} onChange={e => setSubCategoryType(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
+                              <input 
+                                type="radio" 
+                                id={`sub-${option.value}`} 
+                                name="subMeterCategory" 
+                                value={option.value} 
+                                checked={subCategoryType === option.value} 
+                                onChange={e => setSubCategoryType(e.target.value)} 
+                                className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" 
+                              />
                               <label htmlFor={`sub-${option.value}`} className="text-xs sm:text-sm cursor-pointer font-medium">
                                 {option.label}
                               </label>
                             </div>
                           </div>
-                        </div>)}
+                        </div>
+                      ))}
                     </div>
-                  </div>}
+                  </div>
+                )}
               </div>
             </div>}
         </div>
