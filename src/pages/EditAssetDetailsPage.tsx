@@ -473,7 +473,11 @@ export const EditAssetDetailsPage = () => {
 
               <div>
                 <h4 className="font-medium text-gray-700 mb-4">METER DETAILS</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <RadioGroup
+                  value={formData.meterCategory}
+                  onValueChange={(value) => handleInputChange('meterCategory', value)}
+                  className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
+                >
                   {[
                     { value: 'board', label: 'Board' },
                     { value: 'dg', label: 'DG' },
@@ -486,12 +490,11 @@ export const EditAssetDetailsPage = () => {
                       <RadioGroupItem 
                         value={option.value} 
                         id={option.value}
-                        name="meterCategory"
                       />
                       <Label htmlFor={option.value} className="text-sm">{option.label}</Label>
                     </div>
                   ))}
-                </div>
+                </RadioGroup>
               </div>
             </CardContent>
           )}
