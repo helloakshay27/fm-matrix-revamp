@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-
 const AddAssetPage = () => {
   const navigate = useNavigate();
   const [expandedSections, setExpandedSections] = useState({
@@ -14,12 +13,8 @@ const AddAssetPage = () => {
     nonConsumption: true,
     attachments: true
   });
-  const [itAssetsToggle, setItAssetsToggle] = useState(false);
-  const [meterDetailsToggle, setMeterDetailsToggle] = useState(false);
   const [meterCategoryType, setMeterCategoryType] = useState('');
   const [subCategoryType, setSubCategoryType] = useState('');
-  const [meterType, setMeterType] = useState('');
-  const [criticalStatus, setCriticalStatus] = useState('');
   const [consumptionMeasures, setConsumptionMeasures] = useState([{
     id: 1,
     name: '',
@@ -48,139 +43,12 @@ const AddAssetPage = () => {
     purchaseInvoice: [],
     amc: []
   });
-
-  // Meter category options
-  const getMeterCategoryOptions = () => [
-    { value: 'electrical', label: 'Electrical' },
-    { value: 'water', label: 'Water' },
-    { value: 'gas', label: 'Gas' },
-    { value: 'steam', label: 'Steam' },
-    { value: 'thermal', label: 'Thermal' },
-    { value: 'flow', label: 'Flow' }
-  ];
-
-  // Sub-category options based on selected meter category
-  const getSubCategoryOptions = () => {
-    const subCategories = {
-      electrical: [
-        { value: 'kwh', label: 'kWh' },
-        { value: 'kvah', label: 'kVAh' },
-        { value: 'voltage', label: 'Voltage' },
-        { value: 'current', label: 'Current' }
-      ],
-      water: [
-        { value: 'flow-rate', label: 'Flow Rate' },
-        { value: 'pressure', label: 'Pressure' },
-        { value: 'temperature', label: 'Temperature' }
-      ],
-      gas: [
-        { value: 'volume', label: 'Volume' },
-        { value: 'pressure', label: 'Pressure' },
-        { value: 'flow-rate', label: 'Flow Rate' }
-      ],
-      steam: [
-        { value: 'pressure', label: 'Pressure' },
-        { value: 'temperature', label: 'Temperature' },
-        { value: 'flow-rate', label: 'Flow Rate' }
-      ],
-      thermal: [
-        { value: 'temperature', label: 'Temperature' },
-        { value: 'btu', label: 'BTU' }
-      ],
-      flow: [
-        { value: 'volume', label: 'Volume' },
-        { value: 'mass', label: 'Mass' }
-      ]
-    };
-    
-    return subCategories[meterCategoryType] || [];
-  };
-
-  // Handle meter category change
-  const handleMeterCategoryChange = (value) => {
-    setMeterCategoryType(value);
-    setSubCategoryType(''); // Reset sub-category when main category changes
-  };
-
-  const handleItAssetsToggleChange = (checked) => {
-    setItAssetsToggle(checked);
-    setExpandedSections(prev => ({
-      ...prev,
-      warranty: checked
-    }));
-  };
-
-  const handleMeterDetailsToggleChange = (checked) => {
-    setMeterDetailsToggle(checked);
-    setExpandedSections(prev => ({
-      ...prev,
-      meterCategory: checked
-    }));
-  };
-
-  // Consumption measure functions
-  const updateConsumptionMeasure = (id, field, value) => {
-    setConsumptionMeasures(prev => 
-      prev.map(measure => 
-        measure.id === id ? { ...measure, [field]: value } : measure
-      )
-    );
-  };
-
-  const addConsumptionMeasure = () => {
-    const newId = Math.max(...consumptionMeasures.map(m => m.id)) + 1;
-    setConsumptionMeasures(prev => [...prev, {
-      id: newId,
-      name: '',
-      unitType: '',
-      min: '',
-      max: '',
-      alertBelowVal: '',
-      alertAboveVal: '',
-      multiplierFactor: '',
-      checkPreviousReading: false
-    }]);
-  };
-
-  const removeConsumptionMeasure = (id) => {
-    setConsumptionMeasures(prev => prev.filter(measure => measure.id !== id));
-  };
-
-  // Non-consumption measure functions
-  const updateNonConsumptionMeasure = (id, field, value) => {
-    setNonConsumptionMeasures(prev => 
-      prev.map(measure => 
-        measure.id === id ? { ...measure, [field]: value } : measure
-      )
-    );
-  };
-
-  const addNonConsumptionMeasure = () => {
-    const newId = Math.max(...nonConsumptionMeasures.map(m => m.id)) + 1;
-    setNonConsumptionMeasures(prev => [...prev, {
-      id: newId,
-      name: '',
-      unitType: '',
-      min: '',
-      max: '',
-      alertBelowVal: '',
-      alertAboveVal: '',
-      multiplierFactor: '',
-      checkPreviousReading: false
-    }]);
-  };
-
-  const removeNonConsumptionMeasure = (id) => {
-    setNonConsumptionMeasures(prev => prev.filter(measure => measure.id !== id));
-  };
-
   const toggleSection = section => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }));
   };
-
   const handleFileUpload = (category, files) => {
     if (files) {
       const fileArray = Array.from(files);
@@ -190,23 +58,131 @@ const AddAssetPage = () => {
       }));
     }
   };
-
   const removeFile = (category, index) => {
     setAttachments(prev => ({
       ...prev,
       [category]: prev[category].filter((_, i) => i !== index)
     }));
   };
-
   const handleSaveAndShow = () => {
     console.log('Save and show details');
     navigate('/maintenance/asset');
   };
-
   const handleSaveAndCreate = () => {
     console.log('Save and create new asset');
   };
-
+  const getMeterCategoryOptions = () => [{
+    value: 'board',
+    label: 'Board'
+  }, {
+    value: 'dg',
+    label: 'DG'
+  }, {
+    value: 'renewable',
+    label: 'Renewable'
+  }, {
+    value: 'fresh-water',
+    label: 'Fresh Water'
+  }, {
+    value: 'recycled',
+    label: 'Recycled'
+  }, {
+    value: 'iex-gdam',
+    label: 'IEX-GDAM'
+  }];
+  const getSubCategoryOptions = () => {
+    switch (meterCategoryType) {
+      case 'board':
+        return [{
+          value: 'ht',
+          label: 'HT'
+        }, {
+          value: 'vcb',
+          label: 'VCB'
+        }, {
+          value: 'transformer',
+          label: 'Transformer'
+        }, {
+          value: 'lt',
+          label: 'LT'
+        }];
+      case 'renewable':
+        return [{
+          value: 'solar',
+          label: 'Solar'
+        }, {
+          value: 'bio-methanol',
+          label: 'Bio Methanol'
+        }, {
+          value: 'wind',
+          label: 'Wind'
+        }];
+      case 'fresh-water':
+        return [{
+          value: 'source',
+          label: 'Source (Input)'
+        }, {
+          value: 'destination',
+          label: 'Destination (Output)'
+        }];
+      default:
+        return [];
+    }
+  };
+  const handleMeterCategoryChange = value => {
+    setMeterCategoryType(value);
+    setSubCategoryType('');
+  };
+  const addConsumptionMeasure = () => {
+    const newId = consumptionMeasures.length > 0 ? Math.max(...consumptionMeasures.map(m => m.id)) + 1 : 1;
+    setConsumptionMeasures([...consumptionMeasures, {
+      id: newId,
+      name: '',
+      unitType: '',
+      min: '',
+      max: '',
+      alertBelowVal: '',
+      alertAboveVal: '',
+      multiplierFactor: '',
+      checkPreviousReading: false
+    }]);
+  };
+  const removeConsumptionMeasure = id => {
+    if (consumptionMeasures.length > 1) {
+      setConsumptionMeasures(consumptionMeasures.filter(m => m.id !== id));
+    }
+  };
+  const updateConsumptionMeasure = (id, field, value) => {
+    setConsumptionMeasures(consumptionMeasures.map(m => m.id === id ? {
+      ...m,
+      [field]: value
+    } : m));
+  };
+  const addNonConsumptionMeasure = () => {
+    const newId = nonConsumptionMeasures.length > 0 ? Math.max(...nonConsumptionMeasures.map(m => m.id)) + 1 : 1;
+    setNonConsumptionMeasures([...nonConsumptionMeasures, {
+      id: newId,
+      name: '',
+      unitType: '',
+      min: '',
+      max: '',
+      alertBelowVal: '',
+      alertAboveVal: '',
+      multiplierFactor: '',
+      checkPreviousReading: false
+    }]);
+  };
+  const removeNonConsumptionMeasure = id => {
+    if (nonConsumptionMeasures.length > 1) {
+      setNonConsumptionMeasures(nonConsumptionMeasures.filter(m => m.id !== id));
+    }
+  };
+  const updateNonConsumptionMeasure = (id, field, value) => {
+    setNonConsumptionMeasures(nonConsumptionMeasures.map(m => m.id === id ? {
+      ...m,
+      [field]: value
+    } : m));
+  };
   const fieldStyles = {
     height: {
       xs: 28,
@@ -221,7 +197,6 @@ const AddAssetPage = () => {
       }
     }
   };
-
   return <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
@@ -282,392 +257,250 @@ const AddAssetPage = () => {
               </span>
               ASSET DETAILS
             </div>
-            <div className="flex items-center gap-2">
-              <button className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80" style={{ backgroundColor: '#F6F4EE', color: '#C72030' }}>
-                <Plus className="w-4 h-4" />
-                Custom Field
-              </button>
-              {expandedSections.asset ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-            </div>
+            {expandedSections.asset ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
           {expandedSections.asset && <div className="p-4 sm:p-6">
-              {/* First row: Asset Name, Model No., Manufacturer */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                <TextField
-                  required
-                  label="Asset Name"
-                  placeholder="Enter Asset Name"
-                  name="assetName"
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    shrink: true
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
-                />
-                <TextField
-                  required
-                  label="Model No."
-                  placeholder="Enter Model No"
-                  name="modelNo"
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    shrink: true
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
-                />
-                <TextField
-                  required
-                  label="Manufacturer"
-                  placeholder="Enter Manufacturer"
-                  name="manufacturer"
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    shrink: true
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
-                />
+                {[{
+              label: 'Asset Name',
+              name: 'assetName',
+              placeholder: 'Enter Name',
+              required: true
+            }, {
+              label: 'Asset No.',
+              name: 'assetNo',
+              placeholder: 'Enter Number',
+              required: true
+            }, {
+              label: 'Equipment ID',
+              name: 'equipmentId',
+              placeholder: 'Enter Number',
+              required: true
+            }].map(field => <TextField key={field.name} required={field.required} label={field.label} placeholder={field.placeholder} name={field.name} fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />)}
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                {[{
+              label: 'Model No.',
+              name: 'modelNo',
+              placeholder: 'Enter Number'
+            }, {
+              label: 'Serial No.',
+              name: 'serialNo',
+              placeholder: 'Enter Number'
+            }, {
+              label: 'Consumer No.',
+              name: 'consumerNo',
+              placeholder: 'Enter Number'
+            }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />)}
               </div>
 
-              {/* Second row: Group, Subgroup */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
-                  <InputLabel id="group-select-label" shrink>Group</InputLabel>
-                  <MuiSelect
-                    labelId="group-select-label"
-                    label="Group"
-                    displayEmpty
-                    value=""
-                    sx={fieldStyles}
-                    required
-                  >
-                    <MenuItem value=""><em>Select Group</em></MenuItem>
-                    <MenuItem value="group1">Group 1</MenuItem>
-                    <MenuItem value="group2">Group 2</MenuItem>
-                  </MuiSelect>
-                </FormControl>
-                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
-                  <InputLabel id="subgroup-select-label" shrink>Subgroup</InputLabel>
-                  <MuiSelect
-                    labelId="subgroup-select-label"
-                    label="Subgroup"
-                    displayEmpty
-                    value=""
-                    sx={fieldStyles}
-                    required
-                  >
-                    <MenuItem value=""><em>Select Sub-Group</em></MenuItem>
-                    <MenuItem value="subgroup1">Subgroup 1</MenuItem>
-                    <MenuItem value="subgroup2">Subgroup 2</MenuItem>
-                  </MuiSelect>
-                </FormControl>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                {[{
+              label: 'Purchase Cost',
+              name: 'purchaseCost',
+              placeholder: 'Enter Numeric value',
+              type: 'number',
+              required: true
+            }, {
+              label: 'Capacity',
+              name: 'capacity',
+              placeholder: 'Enter Text'
+            }, {
+              label: 'Unit',
+              name: 'unit',
+              placeholder: 'Enter Text'
+            }].map(field => <TextField key={field.name} required={field.required} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />)}
               </div>
 
-              {/* Third row: Status */}
-              <div className="mb-4">
-                <div>
-                  <label className="text-sm font-medium text-[#C72030] mb-2 block">Status</label>
-                  <div className="flex gap-6">
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id="status-inuse"
-                        name="status"
-                        value="inuse"
-                        defaultChecked
-                        className="w-4 h-4 text-blue-600 border-gray-300"
-                        style={{ accentColor: '#2563eb' }}
-                      />
-                      <label htmlFor="status-inuse" className="text-sm">In Use</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                {['Group', 'Subgroup'].map(label => <FormControl key={label} fullWidth variant="outlined" sx={{
+              minWidth: 120
+            }}>
+                    <InputLabel id={`${label.toLowerCase()}-select-label`} shrink>{label}</InputLabel>
+                    <MuiSelect labelId={`${label.toLowerCase()}-select-label`} label={label} displayEmpty value="" sx={fieldStyles}>
+                      <MenuItem value=""><em>Select {label}</em></MenuItem>
+                      <MenuItem value={`${label.toLowerCase()}1`}>{label} 1</MenuItem>
+                      <MenuItem value={`${label.toLowerCase()}2`}>{label} 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>)}
+                <TextField label="Purchased ON Date" placeholder="Select Date" name="purchaseDate" type="date" fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                {[{
+              label: 'Expiry date',
+              name: 'expiryDate',
+              type: 'date'
+            }, {
+              label: 'Manufacturer',
+              name: 'manufacturer',
+              placeholder: 'Enter Text'
+            }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder || 'Select Date'} name={field.name} type={field.type || 'text'} fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />)}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4">
+                {[{
+              label: 'Location Type',
+              name: 'locationType',
+              options: [{
+                value: 'common',
+                label: 'Common Area'
+              }, {
+                value: 'customer',
+                label: 'Customer'
+              }, {
+                value: 'na',
+                label: 'NA'
+              }],
+              defaultValue: 'common'
+            }, {
+              label: 'Asset Type',
+              name: 'assetType',
+              options: [{
+                value: 'parent',
+                label: 'Parent'
+              }, {
+                value: 'sub',
+                label: 'Sub'
+              }],
+              defaultValue: 'parent'
+            }, {
+              label: 'Status',
+              name: 'status',
+              options: [{
+                value: 'inuse',
+                label: 'In Use'
+              }, {
+                value: 'breakdown',
+                label: 'Breakdown'
+              }],
+              defaultValue: 'inuse'
+            }, {
+              label: 'Critical',
+              name: 'critical',
+              options: [{
+                value: 'yes',
+                label: 'Yes'
+              }, {
+                value: 'no',
+                label: 'No'
+              }],
+              defaultValue: 'no'
+            }].map(field => <div key={field.name}>
+                    <label className="text-xs sm:text-sm font-medium text-gray-700">{field.label}</label>
+                    <div className="flex flex-wrap gap-4 sm:gap-6 mt-2">
+                      {field.options.map(option => <div key={option.value} className="flex items-center space-x-2">
+                          <input type="radio" id={`${field.name}-${option.value}`} name={field.name} value={option.value} defaultChecked={option.value === field.defaultValue} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
+                    accentColor: '#C72030'
+                  }} />
+                          <label htmlFor={`${field.name}-${option.value}`} className="text-xs sm:text-sm">{option.label}</label>
+                        </div>)}
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id="status-breakdown"
-                        name="status"
-                        value="breakdown"
-                        className="w-4 h-4 text-blue-600 border-gray-300"
-                        style={{ accentColor: '#2563eb' }}
-                      />
-                      <label htmlFor="status-breakdown" className="text-sm">Breakdown</label>
-                    </div>
-                  </div>
-                </div>
+                  </div>)}
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input type="checkbox" id="meterApplicable" className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]" style={{
+              accentColor: '#C72030'
+            }} />
+                <label htmlFor="meterApplicable" className="text-xs sm:text-sm">Meter Applicable</label>
               </div>
             </div>}
         </div>
 
-        {/* IT Assets Details */}
+        {/* Warranty Details */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('warranty')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
               <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                 <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
               </span>
-              IT ASSETS DETAILS
+              WARRANTY DETAILS
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">If Applicable</span>
-                <div className="relative inline-block w-12 h-6">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    id="it-assets-toggle"
-                    checked={itAssetsToggle}
-                    onChange={(e) => handleItAssetsToggleChange(e.target.checked)}
-                  />
-                  <label
-                    htmlFor="it-assets-toggle"
-                    className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${
-                      itAssetsToggle ? 'bg-green-400' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
-                      itAssetsToggle ? 'translate-x-6' : 'translate-x-1'
-                    }`}></span>
-                  </label>
-                </div>
-              </div>
-              <button className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80" style={{ backgroundColor: '#F6F4EE', color: '#C72030' }}>
-                <Plus className="w-4 h-4" />
-                Custom Field
-              </button>
-              {expandedSections.warranty ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-            </div>
+            {expandedSections.warranty ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
-          {expandedSections.warranty && (
-            <div className="p-4 sm:p-6">
-              {/* System Details */}
-              <div className="mb-6">
-                <h3 className="font-semibold mb-4" style={{ color: '#C72030' }}>SYSTEM DETAILS</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <TextField
-                    label="OS"
-                    placeholder="Enter OS"
-                    name="os"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
-                  <TextField
-                    label="Total Memory"
-                    placeholder="Enter Total Memory"
-                    name="totalMemory"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
-                  <TextField
-                    label="Processor"
-                    placeholder="Enter Processor"
-                    name="processor"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
+          {expandedSections.warranty && <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4">
+                <div>
+                  <label className="text-xs sm:text-sm font-medium text-gray-700">Under Warranty</label>
+                  <div className="flex gap-4 sm:gap-6 mt-2">
+                    {[{
+                  value: 'yes',
+                  label: 'Yes'
+                }, {
+                  value: 'no',
+                  label: 'No'
+                }].map(option => <div key={option.value} className="flex items-center space-x-2">
+                        <input type="radio" id={`warranty-${option.value}`} name="underWarranty" value={option.value} defaultChecked={option.value === 'no'} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
+                    accentColor: '#C72030'
+                  }} />
+                        <label htmlFor={`warranty-${option.value}`} className="text-xs sm:text-sm">{option.label}</label>
+                      </div>)}
+                  </div>
                 </div>
               </div>
-
-              {/* Hard Disk Details */}
-              <div>
-                <h3 className="font-semibold mb-4" style={{ color: '#C72030' }}>HARD DISK DETAILS</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <TextField
-                    label="Model"
-                    placeholder="Enter Model"
-                    name="hdModel"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
-                  <TextField
-                    label="Serial No."
-                    placeholder="Enter Serial No."
-                    name="hdSerialNo"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
-                  <TextField
-                    label="Capacity"
-                    placeholder="Enter Capacity"
-                    name="hdCapacity"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{
-                      shrink: true
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                  />
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[{
+              label: 'Warranty Start Date',
+              name: 'warrantyStart',
+              type: 'date'
+            }, {
+              label: 'Warranty expires on',
+              name: 'warrantyExpires',
+              type: 'date'
+            }, {
+              label: 'Commissioning Date',
+              name: 'commissioningDate',
+              type: 'date'
+            }].map(field => <TextField key={field.name} label={field.label} placeholder="Select Date" name={field.name} type={field.type} fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />)}
               </div>
-            </div>
-          )}
+            </div>}
         </div>
 
-        {/* Meter Details */}
+        {/* Meter Category Type */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('meterCategory')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
               <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                 <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
               </span>
-              METER DETAILS
+              METER CATEGORY TYPE
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">If Applicable</span>
-                <div className="relative inline-block w-12 h-6">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    id="meter-details-toggle"
-                    checked={meterDetailsToggle}
-                    onChange={(e) => handleMeterDetailsToggleChange(e.target.checked)}
-                  />
-                  <label
-                    htmlFor="meter-details-toggle"
-                    className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${
-                      meterDetailsToggle ? 'bg-green-400' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
-                      meterDetailsToggle ? 'translate-x-6' : 'translate-x-1'
-                    }`}></span>
-                  </label>
-                </div>
-              </div>
-              {expandedSections.meterCategory ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-            </div>
+            {expandedSections.meterCategory ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
           {expandedSections.meterCategory && <div className="p-4 sm:p-6">
-              {/* Meter Type */}
-              <div className="mb-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <span className="text-blue-600 font-medium text-sm sm:text-base">Meter Type</span>
-                  <div className="flex gap-6">
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id="meter-type-parent"
-                        name="meterType"
-                        value="parent"
-                        checked={meterType === 'parent'}
-                        onChange={(e) => setMeterType(e.target.value)}
-                        className="w-4 h-4 text-blue-600 border-gray-300"
-                        style={{ accentColor: '#2563eb' }}
-                      />
-                      <label htmlFor="meter-type-parent" className="text-sm">Parent</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
+                {getMeterCategoryOptions().map(option => <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-[#f6f4ee]">
+                    <div className="flex items-center justify-center space-x-2">
+                      <input type="radio" id={option.value} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
+                      <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id="meter-type-sub"
-                        name="meterType"
-                        value="sub"
-                        checked={meterType === 'sub'}
-                        onChange={(e) => setMeterType(e.target.value)}
-                        className="w-4 h-4 text-blue-600 border-gray-300"
-                        style={{ accentColor: '#2563eb' }}
-                      />
-                      <label htmlFor="meter-type-sub" className="text-sm">Sub</label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Critical */}
-              <div className="mb-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <span className="text-blue-600 font-medium text-sm sm:text-base">CRITICAL</span>
-                  <div className="flex gap-6">
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id="critical-yes"
-                        name="critical"
-                        value="yes"
-                        checked={criticalStatus === 'yes'}
-                        onChange={(e) => setCriticalStatus(e.target.value)}
-                        className="w-4 h-4 text-blue-600 border-gray-300"
-                        style={{ accentColor: '#2563eb' }}
-                      />
-                      <label htmlFor="critical-yes" className="text-sm">Yes</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id="critical-no"
-                        name="critical"
-                        value="no"
-                        checked={criticalStatus === 'no'}
-                        onChange={(e) => setCriticalStatus(e.target.value)}
-                        className="w-4 h-4 text-blue-600 border-gray-300"
-                        style={{ accentColor: '#2563eb' }}
-                      />
-                      <label htmlFor="critical-no" className="text-sm">No</label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Meter Category Type */}
-              <div className="mb-6">
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <h3 className="text-blue-600 font-medium mb-4 text-sm sm:text-base">METER CATEGORY TYPE</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
-                    {getMeterCategoryOptions().map(option => <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
-                        <div className="flex items-center justify-center space-x-2">
-                          <input type="radio" id={option.value} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
-                          <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
-                        </div>
-                      </div>)}
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-                    <div className="p-3 sm:p-4 rounded-lg text-center bg-white border">
-                      <div className="flex items-center justify-center space-x-2">
-                        <input type="radio" id="iex-gdam" name="meterCategory" value="iex-gdam" checked={meterCategoryType === 'iex-gdam'} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
-                        <label htmlFor="iex-gdam" className="text-xs sm:text-sm cursor-pointer">IEX-GDAM</label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  </div>)}
               </div>
 
               {getSubCategoryOptions().length > 0 && <div className="mt-4 sm:mt-6">
@@ -799,7 +632,7 @@ const AddAssetPage = () => {
             </div>
             {expandedSections.nonConsumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
-          {expandedSections.nonConsumption && <div className="p-4 sm:p-6">
+          {expandedSections.nonConsumption && <div className="p-4 sm:p-6 bg-[t#] bg-[#f6f4ee]">
               <div className="space-y-4 sm:space-y-6">
                 {nonConsumptionMeasures.map(measure => <div key={measure.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-center mb-4">
@@ -918,7 +751,7 @@ const AddAssetPage = () => {
               category: 'insuranceDetails',
               accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
             }, {
-              label: 'Purchase Invoice',
+              label: 'Purchaselah Invoice',
               id: 'invoice-upload',
               category: 'purchaseInvoice',
               accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
@@ -973,5 +806,4 @@ const AddAssetPage = () => {
       </div>
     </div>;
 };
-
 export default AddAssetPage;
