@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -10,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { TextField } from '@mui/material';
+import { X } from 'lucide-react';
 
 const fieldStyles = {
   '& .MuiOutlinedInput-root': {
@@ -70,8 +70,15 @@ export const RepairReplaceModal: React.FC<RepairReplaceModalProps> = ({ isOpen, 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
-        <DialogHeader>
+        <DialogHeader className="relative">
           <DialogTitle className="text-lg font-semibold text-gray-900">Asset Status Update</DialogTitle>
+          <button
+            onClick={onClose}
+            className="absolute right-0 top-0 p-1 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </button>
         </DialogHeader>
         
         <div className="space-y-6 py-4">
