@@ -10,7 +10,8 @@ import { X } from 'lucide-react';
 interface AddCustomFieldModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddField: (fieldName: string, section: string) => void;
+  onAddField: (fieldName: string, section?: string) => void;
+  isItAsset?: boolean;
 }
 
 const fieldStyles = {
@@ -31,14 +32,19 @@ const fieldStyles = {
 export const AddCustomFieldModal: React.FC<AddCustomFieldModalProps> = ({
   isOpen,
   onClose,
-  onAddField
+  onAddField,
+  isItAsset = false
 }) => {
   const [fieldName, setFieldName] = useState('');
   const [selectedSection, setSelectedSection] = useState('System Details');
 
   const handleAddField = () => {
-    if (fieldName.trim() && selectedSection) {
-      onAddField(fieldName.trim(), selectedSection);
+    if (fieldName.trim()) {
+      if (isItAsset && selectedSection) {
+        onAddField(fieldName.trim(), selectedSection);
+      } else {
+        onAddField(fieldName.trim());
+      }
       setFieldName('');
       setSelectedSection('System Details');
       onClose();
@@ -83,23 +89,25 @@ export const AddCustomFieldModal: React.FC<AddCustomFieldModalProps> = ({
             />
           </div>
 
-          <div>
-            <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
-              <InputLabel id="section-select-label" shrink>
-                Section
-              </InputLabel>
-              <MuiSelect
-                labelId="section-select-label"
-                label="Section"
-                value={selectedSection}
-                onChange={handleSectionChange}
-                sx={fieldStyles}
-              >
-                <MenuItem value="System Details">System Details</MenuItem>
-                <MenuItem value="Hard Disk Details">Hard Disk Details</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
+          {isItAsset && (
+            <div>
+              <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                <InputLabel id="section-select-label" shrink>
+                  Section
+                </InputLabel>
+                <MuiSelect
+                  labelId="section-select-label"
+                  label="Section"
+                  value={selectedSection}
+                  onChange={handleSectionChange}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="System Details">System Details</MenuItem>
+                  <MenuItem value="Hard Disk Details">Hard Disk Details</MenuItem>
+                </MuiSelect>
+              </FormControl>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-center gap-4 pt-4">
