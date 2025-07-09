@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,25 +5,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-
 const ParkingBookingsDashboard = () => {
   const [building, setBuilding] = useState('');
   const [floor, setFloor] = useState('');
   const [parkingSlot, setParkingSlot] = useState('');
   const navigate = useNavigate();
-
   const handleSubmit = () => {
-    console.log('Parking booking submitted:', { building, floor, parkingSlot });
+    console.log('Parking booking submitted:', {
+      building,
+      floor,
+      parkingSlot
+    });
   };
-
-  return (
-    <div className="p-6 space-y-6 bg-[#f6f4ee] min-h-screen">
+  return <div className="p-6 space-y-6 min-h-screen bg-white">
       <div className="flex items-center mb-6">
-        <Button 
-          onClick={() => navigate('/vas/parking')} 
-          variant="ghost" 
-          className="mr-4 p-2 hover:bg-[#C72030]/10"
-        >
+        <Button onClick={() => navigate('/vas/parking')} variant="ghost" className="mr-4 p-2 hover:bg-[#C72030]/10">
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <h1 className="text-xl font-bold text-[#C72030]">Parking</h1>
@@ -36,7 +31,7 @@ const ParkingBookingsDashboard = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
             <div>
-              <Label htmlFor="building" className="text-sm font-medium text-[#C72030] mb-2 block">Building</Label>
+              <Label htmlFor="building" className="text-sm font-medium text-[#C72030] mb-2 block bg-white">Building</Label>
               <Select value={building} onValueChange={setBuilding}>
                 <SelectTrigger className="w-full border-[#C72030] focus:ring-[#C72030]">
                   <SelectValue placeholder="Select Building" />
@@ -78,18 +73,13 @@ const ParkingBookingsDashboard = () => {
             </div>
 
             <div className="flex justify-start">
-              <Button 
-                onClick={handleSubmit}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2 rounded-none border-none shadow-none"
-              >
+              <Button onClick={handleSubmit} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2 rounded-none border-none shadow-none">
                 Submit
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
-
 export default ParkingBookingsDashboard;
