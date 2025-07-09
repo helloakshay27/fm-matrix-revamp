@@ -29,15 +29,15 @@ export const AssetDashboard = () => {
     assetId: true,
     assetNo: true,
     assetStatus: true,
-    site: false,
-    building: false,
-    wing: false,
-    floor: false,
-    area: false,
-    room: false,
-    group: false,
-    subGroup: false,
-    assetType: false
+    site: true,
+    building: true,
+    wing: true,
+    floor: true,
+    area: true,
+    room: true,
+    group: true,
+    subGroup: true,
+    assetType: true
   });
 
   const {
