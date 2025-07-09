@@ -1,10 +1,55 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { TextField, Select, MenuItem, FormControl, InputLabel, Radio, RadioGroup, FormControlLabel } from '@mui/material';
+
+const muiFieldStyles = {
+  width: '100%',
+  '& .MuiOutlinedInput-root': {
+    height: {
+      xs: '36px',
+      md: '45px'
+    },
+    borderRadius: '8px',
+    backgroundColor: '#FFFFFF',
+    '& fieldset': {
+      borderColor: '#E0E0E0'
+    },
+    '&:hover fieldset': {
+      borderColor: '#1A1A1A'
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+      borderWidth: 2
+    }
+  },
+  '& .MuiInputLabel-root': {
+    color: '#999999',
+    fontSize: '16px',
+    '&.Mui-focused': {
+      color: '#C72030'
+    },
+    '&.MuiInputLabel-shrink': {
+      transform: 'translate(14px, -9px) scale(0.75)',
+      backgroundColor: '#FFFFFF',
+      padding: '0 4px'
+    }
+  },
+  '& .MuiOutlinedInput-input, & .MuiSelect-select': {
+    color: '#1A1A1A',
+    fontSize: '16px',
+    padding: {
+      xs: '8px 14px',
+      md: '12px 14px'
+    },
+    height: 'auto',
+    '&::placeholder': {
+      color: '#999999',
+      opacity: 1
+    }
+  }
+};
 
 export const ScheduleExportPage = () => {
   const [masterChecklist, setMasterChecklist] = useState('');
@@ -69,129 +114,154 @@ export const ScheduleExportPage = () => {
         {/* Master Checklist */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Master Checklist</Label>
-          <Select value={masterChecklist} onValueChange={setMasterChecklist}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Master Checklist" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="checklist1">Master Checklist 1</SelectItem>
-              <SelectItem value="checklist2">Master Checklist 2</SelectItem>
-            </SelectContent>
-          </Select>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel>Select Master Checklist</InputLabel>
+            <Select 
+              value={masterChecklist} 
+              label="Select Master Checklist"
+              onChange={(e) => setMasterChecklist(e.target.value)}
+              sx={muiFieldStyles}
+            >
+              <MenuItem value="checklist1">Master Checklist 1</MenuItem>
+              <MenuItem value="checklist2">Master Checklist 2</MenuItem>
+            </Select>
+          </FormControl>
         </div>
 
         {/* Site */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Site</Label>
-          <Select value={site} onValueChange={setSite}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Here" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="site1">Site 1</SelectItem>
-              <SelectItem value="site2">Site 2</SelectItem>
-            </SelectContent>
-          </Select>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel>Select Here</InputLabel>
+            <Select 
+              value={site} 
+              label="Select Here"
+              onChange={(e) => setSite(e.target.value)}
+              sx={muiFieldStyles}
+            >
+              <MenuItem value="site1">Site 1</MenuItem>
+              <MenuItem value="site2">Site 2</MenuItem>
+            </Select>
+          </FormControl>
         </div>
 
         {/* Schedule For */}
         <div className="space-y-3">
           <Label className="text-sm font-medium">Schedule For</Label>
-          <RadioGroup value={scheduleFor} onValueChange={setScheduleFor} className="flex gap-6">
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="asset" id="asset" />
-              <Label htmlFor="asset">Asset</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="service" id="service" />
-              <Label htmlFor="service">Service</Label>
-            </div>
+          <RadioGroup value={scheduleFor} onChange={(e) => setScheduleFor(e.target.value)} row sx={{ gap: 3, flexWrap: 'wrap' }}>
+            <FormControlLabel 
+              value="asset" 
+              control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+              label="Asset" 
+            />
+            <FormControlLabel 
+              value="service" 
+              control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+              label="Service" 
+            />
           </RadioGroup>
         </div>
 
         {/* Checklist Type */}
         <div className="space-y-3">
           <Label className="text-sm font-medium">Checklist Type</Label>
-          <RadioGroup defaultValue="individual" className="flex gap-6">
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="individual" id="individual" />
-              <Label htmlFor="individual">Individual</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="assetGroup" id="assetGroup" />
-              <Label htmlFor="assetGroup">Asset Group</Label>
-            </div>
+          <RadioGroup defaultValue="individual" row sx={{ gap: 3, flexWrap: 'wrap' }}>
+            <FormControlLabel 
+              value="individual" 
+              control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+              label="Individual" 
+            />
+            <FormControlLabel 
+              value="assetGroup" 
+              control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
+              label="Asset Group" 
+            />
           </RadioGroup>
         </div>
 
         {/* Asset */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Asset</Label>
-          <Select value={asset} onValueChange={setAsset}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Asset" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="asset1">Asset 1</SelectItem>
-              <SelectItem value="asset2">Asset 2</SelectItem>
-            </SelectContent>
-          </Select>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel>Select Asset</InputLabel>
+            <Select 
+              value={asset} 
+              label="Select Asset"
+              onChange={(e) => setAsset(e.target.value)}
+              sx={muiFieldStyles}
+            >
+              <MenuItem value="asset1">Asset 1</MenuItem>
+              <MenuItem value="asset2">Asset 2</MenuItem>
+            </Select>
+          </FormControl>
         </div>
 
         {/* Assign To */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Assign To</Label>
-          <Select value={assignTo} onValueChange={setAssignTo}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Assign To" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="user1">User 1</SelectItem>
-              <SelectItem value="user2">User 2</SelectItem>
-            </SelectContent>
-          </Select>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel>Select Assign To</InputLabel>
+            <Select 
+              value={assignTo} 
+              label="Select Assign To"
+              onChange={(e) => setAssignTo(e.target.value)}
+              sx={muiFieldStyles}
+            >
+              <MenuItem value="user1">User 1</MenuItem>
+              <MenuItem value="user2">User 2</MenuItem>
+            </Select>
+          </FormControl>
         </div>
 
         {/* Email Trigger Rule */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Email Trigger Rule</Label>
-          <Select value={emailTriggerRule} onValueChange={setEmailTriggerRule}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Email Trigger Rule" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="rule1">Rule 1</SelectItem>
-              <SelectItem value="rule2">Rule 2</SelectItem>
-            </SelectContent>
-          </Select>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel>Select Email Trigger Rule</InputLabel>
+            <Select 
+              value={emailTriggerRule} 
+              label="Select Email Trigger Rule"
+              onChange={(e) => setEmailTriggerRule(e.target.value)}
+              sx={muiFieldStyles}
+            >
+              <MenuItem value="rule1">Rule 1</MenuItem>
+              <MenuItem value="rule2">Rule 2</MenuItem>
+            </Select>
+          </FormControl>
         </div>
 
         {/* Supplier */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Supplier</Label>
-          <Select value={supplier} onValueChange={setSupplier}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Suppliers" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="supplier1">Supplier 1</SelectItem>
-              <SelectItem value="supplier2">Supplier 2</SelectItem>
-            </SelectContent>
-          </Select>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel>Select Suppliers</InputLabel>
+            <Select 
+              value={supplier} 
+              label="Select Suppliers"
+              onChange={(e) => setSupplier(e.target.value)}
+              sx={muiFieldStyles}
+            >
+              <MenuItem value="supplier1">Supplier 1</MenuItem>
+              <MenuItem value="supplier2">Supplier 2</MenuItem>
+            </Select>
+          </FormControl>
         </div>
 
         {/* Supervisors */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Supervisors</Label>
-          <Select value={supervisors} onValueChange={setSupervisors}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Supervisors" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="supervisor1">Supervisor 1</SelectItem>
-              <SelectItem value="supervisor2">Supervisor 2</SelectItem>
-            </SelectContent>
-          </Select>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel>Select Supervisors</InputLabel>
+            <Select 
+              value={supervisors} 
+              label="Select Supervisors"
+              onChange={(e) => setSupervisors(e.target.value)}
+              sx={muiFieldStyles}
+            >
+              <MenuItem value="supervisor1">Supervisor 1</MenuItem>
+              <MenuItem value="supervisor2">Supervisor 2</MenuItem>
+            </Select>
+          </FormControl>
         </div>
 
         {/* Action Buttons */}
