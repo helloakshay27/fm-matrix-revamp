@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Grid } from 'lucide-react';
+import { Grid3X3 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +30,21 @@ interface ColumnVisibilityDropdownProps {
     expiredOn?: boolean;
     expired?: boolean;
     attachment?: boolean;
+    // Asset Dashboard interface
+    assetName?: boolean;
+    assetId?: boolean;
+    assetCode?: boolean;
+    assetNo?: boolean;
+    assetStatus?: boolean;
+    equipmentId?: boolean;
+    site?: boolean;
+    building?: boolean;
+    wing?: boolean;
+    floor?: boolean;
+    area?: boolean;
+    room?: boolean;
+    meterType?: boolean;
+    assetType?: boolean;
   };
   onColumnChange?: (columns: any) => void;
   
@@ -62,6 +77,33 @@ export const ColumnVisibilityDropdown = ({
   // Generate column labels based on which interface is being used
   const getColumnData = () => {
     if (visibleColumns) {
+      // Check if this is the asset dashboard columns
+      if (visibleColumns.hasOwnProperty('assetName')) {
+        const assetColumnLabels = {
+          actions: 'Actions',
+          assetName: 'Asset Name',
+          assetId: 'Asset ID',
+          assetCode: 'Asset Code',
+          assetNo: 'Asset No.',
+          assetStatus: 'Asset Status',
+          equipmentId: 'Equipment Id',
+          site: 'Site',
+          building: 'Building',
+          wing: 'Wing',
+          floor: 'Floor',
+          area: 'Area',
+          room: 'Room',
+          meterType: 'Meter Type',
+          assetType: 'Asset Type'
+        };
+        
+        return Object.entries(assetColumnLabels).map(([key, label]) => ({
+          key,
+          label,
+          visible: visibleColumns[key as keyof typeof visibleColumns] ?? false
+        }));
+      }
+      
       // Determine which column set we're using
       const columnLabels = visibleColumns.hasOwnProperty('action') ? {
         // Broadcast columns
@@ -103,8 +145,8 @@ export const ColumnVisibilityDropdown = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="border-gray-300">
-          <Grid className="h-4 w-4" />
+        <Button variant="outline" size="icon" className="border-gray-300 text-gray-600 bg-white hover:bg-gray-50">
+          <Grid3X3 className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 bg-white border border-gray-200 shadow-lg z-50">

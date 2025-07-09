@@ -1,13 +1,13 @@
-
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Upload, Download, FileText, Search, Filter, Eye, Settings, DollarSign, Laptop, Monitor, Package, AlertTriangle, Trash2, RotateCcw, Grid3X3 } from 'lucide-react';
+import { Plus, Upload, Download, FileText, Search, Filter, Eye, Settings, DollarSign, Laptop, Monitor, Package, AlertTriangle, Trash2, RotateCcw, Grid3X3, ExternalLink } from 'lucide-react';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { AssetFilterDialog } from '@/components/AssetFilterDialog';
+import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
 import {
   Pagination,
   PaginationContent,
@@ -61,6 +61,23 @@ export const AssetDashboard = () => {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState({
+    actions: true,
+    assetName: true,
+    assetId: true,
+    assetCode: true,
+    assetNo: true,
+    assetStatus: true,
+    equipmentId: true,
+    site: true,
+    building: true,
+    wing: true,
+    floor: true,
+    area: true,
+    room: true,
+    meterType: true,
+    assetType: true
+  });
 
   // Calculate stats dynamically from asset data
   const stats = useMemo(() => {
@@ -89,16 +106,16 @@ export const AssetDashboard = () => {
     navigate('/maintenance/asset/add');
   };
 
-const statData = [
-  { label: "Total Assets", value: stats.total, icon: <Package className="w-6 h-6 text-[#C72030]" /> },
-  { label: "Total Value", value: `₹${stats.totalValue.toFixed(2)}`, icon: <DollarSign className="w-6 h-6 text-[#C72030]" /> },
-  { label: "Non IT Assets", value: stats.nonItAssets, icon: <Settings className="w-6 h-6 text-[#C72030]" /> },
-  { label: "IT Assets", value: stats.itAssets, icon: <Monitor className="w-6 h-6 text-[#C72030]" /> },
-  { label: "In Use", value: stats.inUse, icon: <Settings className="w-6 h-6 text-[#C72030]" /> },
-  { label: "Breakdown", value: stats.breakdown, icon: <AlertTriangle className="w-6 h-6 text-[#C72030]" /> },
-  { label: "In Store", value: stats.inStore, icon: <Package className="w-6 h-6 text-[#C72030]" /> },
-  { label: "Dispose Assets", value: stats.dispose, icon: <Trash2 className="w-6 h-6 text-[#C72030]" /> },
-];
+  const statData = [
+    { label: "Total Assets", value: stats.total, icon: <Package className="w-6 h-6 text-[#C72030]" /> },
+    { label: "Total Value", value: `₹${stats.totalValue.toFixed(2)}`, icon: <DollarSign className="w-6 h-6 text-[#C72030]" /> },
+    { label: "Non IT Assets", value: stats.nonItAssets, icon: <Settings className="w-6 h-6 text-[#C72030]" /> },
+    { label: "IT Assets", value: stats.itAssets, icon: <Monitor className="w-6 h-6 text-[#C72030]" /> },
+    { label: "In Use", value: stats.inUse, icon: <Settings className="w-6 h-6 text-[#C72030]" /> },
+    { label: "Breakdown", value: stats.breakdown, icon: <AlertTriangle className="w-6 h-6 text-[#C72030]" /> },
+    { label: "In Store", value: stats.inStore, icon: <Package className="w-6 h-6 text-[#C72030]" /> },
+    { label: "Dispose Assets", value: stats.dispose, icon: <Trash2 className="w-6 h-6 text-[#C72030]" /> },
+  ];
 
   const handleImport = () => {
     setUploadType('import');
@@ -256,6 +273,14 @@ const statData = [
     }
   };
 
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
+  const handleColumnChange = (columns: typeof visibleColumns) => {
+    setVisibleColumns(columns);
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen max-w-full overflow-x-hidden">
       {/* Header */}
@@ -339,17 +364,23 @@ const statData = [
           <Button 
             variant="outline" 
             size="icon"
+            onClick={handleRefresh}
             className="border-gray-300 text-gray-600 bg-white hover:bg-gray-50"
           >
             <RotateCcw className="w-4 h-4" />
           </Button>
+          
+          <ColumnVisibilityDropdown 
+            visibleColumns={visibleColumns}
+            onColumnChange={handleColumnChange}
+          />
           
           <Button 
             variant="outline" 
             size="icon"
             className="border-gray-300 text-gray-600 bg-white hover:bg-gray-50"
           >
-            <Grid3X3 className="w-4 h-4" />
+            <ExternalLink className="w-4 h-4" />
           </Button>
         </div>
       </div>
@@ -368,21 +399,51 @@ const statData = [
                     className="rounded border-gray-300"
                   />
                 </TableHead>
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</TableHead>
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Name</TableHead>
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset ID</TableHead>
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Code</TableHead>
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset No.</TableHead>
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Status</TableHead>
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Equipment Id</TableHead>
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Site</TableHead>
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Building</TableHead>
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Wing</TableHead>
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Floor</TableHead>
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Area</TableHead>
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Room</TableHead>
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Meter Type</TableHead>
-                <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Type</TableHead>
+                {visibleColumns.actions && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</TableHead>
+                )}
+                {visibleColumns.assetName && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Name</TableHead>
+                )}
+                {visibleColumns.assetId && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset ID</TableHead>
+                )}
+                {visibleColumns.assetCode && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Code</TableHead>
+                )}
+                {visibleColumns.assetNo && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset No.</TableHead>
+                )}
+                {visibleColumns.assetStatus && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Status</TableHead>
+                )}
+                {visibleColumns.equipmentId && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Equipment Id</TableHead>
+                )}
+                {visibleColumns.site && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Site</TableHead>
+                )}
+                {visibleColumns.building && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Building</TableHead>
+                )}
+                {visibleColumns.wing && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Wing</TableHead>
+                )}
+                {visibleColumns.floor && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Floor</TableHead>
+                )}
+                {visibleColumns.area && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Area</TableHead>
+                )}
+                {visibleColumns.room && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Room</TableHead>
+                )}
+                {visibleColumns.meterType && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Meter Type</TableHead>
+                )}
+                {visibleColumns.assetType && (
+                  <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asset Type</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -396,34 +457,64 @@ const statData = [
                       className="rounded border-gray-300"
                     />
                   </TableCell>
-                  <TableCell className="px-4 py-3">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleViewAsset(asset.id)}
-                      className="p-1 h-8 w-8"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{asset.name}</TableCell>
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.id}</TableCell>
-                  <TableCell className="px-4 py-3 text-sm text-gray-600 font-mono">{asset.code}</TableCell>
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.assetNo}</TableCell>
-                  <TableCell className="px-4 py-3">
-                    <Badge className={`${getStatusColor(asset.status)} text-xs px-2 py-1`}>
-                      {asset.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.equipmentId}</TableCell>
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.site}</TableCell>
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.building}</TableCell>
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.wing}</TableCell>
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.floor}</TableCell>
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.area}</TableCell>
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.room}</TableCell>
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.meterType}</TableCell>
-                  <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.assetType}</TableCell>
+                  {visibleColumns.actions && (
+                    <TableCell className="px-4 py-3">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleViewAsset(asset.id)}
+                        className="p-1 h-8 w-8"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  )}
+                  {visibleColumns.assetName && (
+                    <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{asset.name}</TableCell>
+                  )}
+                  {visibleColumns.assetId && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.id}</TableCell>
+                  )}
+                  {visibleColumns.assetCode && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600 font-mono">{asset.code}</TableCell>
+                  )}
+                  {visibleColumns.assetNo && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.assetNo}</TableCell>
+                  )}
+                  {visibleColumns.assetStatus && (
+                    <TableCell className="px-4 py-3">
+                      <Badge className={`${getStatusColor(asset.status)} text-xs px-2 py-1`}>
+                        {asset.status}
+                      </Badge>
+                    </TableCell>
+                  )}
+                  {visibleColumns.equipmentId && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.equipmentId}</TableCell>
+                  )}
+                  {visibleColumns.site && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.site}</TableCell>
+                  )}
+                  {visibleColumns.building && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.building}</TableCell>
+                  )}
+                  {visibleColumns.wing && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.wing}</TableCell>
+                  )}
+                  {visibleColumns.floor && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.floor}</TableCell>
+                  )}
+                  {visibleColumns.area && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.area}</TableCell>
+                  )}
+                  {visibleColumns.room && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.room}</TableCell>
+                  )}
+                  {visibleColumns.meterType && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.meterType}</TableCell>
+                  )}
+                  {visibleColumns.assetType && (
+                    <TableCell className="px-4 py-3 text-sm text-gray-600">{asset.assetType}</TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
