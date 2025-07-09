@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Upload, Download, FileText, Search, Filter, Eye, Settings } from 'lucide-react';
+import { Plus, Upload, Download, FileText, Search, Filter, Eye, Settings, DollarSign, Laptop, Monitor, Package, AlertTriangle, Trash2 } from 'lucide-react';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { AssetFilterDialog } from '@/components/AssetFilterDialog';
 import {
@@ -66,11 +66,21 @@ export const AssetDashboard = () => {
     const totalAssets = assetData.length;
     const inUseAssets = assetData.filter(asset => asset.status === 'In Use').length;
     const breakdownAssets = assetData.filter(asset => asset.status === 'Breakdown').length;
+    const itAssets = assetData.filter(asset => asset.assetType === 'Parent Meter').length;
+    const nonItAssets = totalAssets - itAssets;
+    const totalValue = 0; // This would be calculated from actual asset values
+    const inStoreAssets = 0; // This would be calculated from assets with 'In Store' status
+    const disposeAssets = 0; // This would be calculated from assets marked for disposal
     
     return {
       total: totalAssets,
       inUse: inUseAssets,
-      breakdown: breakdownAssets
+      breakdown: breakdownAssets,
+      totalValue: totalValue,
+      nonItAssets: nonItAssets,
+      itAssets: itAssets,
+      inStore: inStoreAssets,
+      dispose: disposeAssets
     };
   }, []);
 
@@ -79,9 +89,14 @@ export const AssetDashboard = () => {
   };
 
 const statData = [
-  { label: "Total Asset", value: stats.total, icon: <Settings className="w-6 h-6 text-[#C72030]" /> },
-  { label: "In Use", value: stats.inUse, icon: <Settings className="w-6 h-6 text-[#C72030]" /> },
-  { label: "Breakdown", value: stats.breakdown, icon: <Settings className="w-6 h-6 text-[#C72030]" /> },
+  { label: "Total Assets", value: stats.total, icon: <Package className="w-6 h-6 text-white" />, bgColor: "bg-blue-500" },
+  { label: "Total Value", value: `₹${stats.totalValue.toFixed(2)}`, icon: <DollarSign className="w-6 h-6 text-white" />, bgColor: "bg-orange-500" },
+  { label: "Non IT Assets", value: stats.nonItAssets, icon: <Settings className="w-6 h-6 text-white" />, bgColor: "bg-teal-500" },
+  { label: "IT Assets", value: stats.itAssets, icon: <Monitor className="w-6 h-6 text-white" />, bgColor: "bg-purple-500" },
+  { label: "In Use", value: stats.inUse, icon: <Settings className="w-6 h-6 text-white" />, bgColor: "bg-green-500" },
+  { label: "Breakdown", value: stats.breakdown, icon: <AlertTriangle className="w-6 h-6 text-white" />, bgColor: "bg-red-500" },
+  { label: "In Store", value: stats.inStore, icon: <Package className="w-6 h-6 text-white" />, bgColor: "bg-blue-600" },
+  { label: "Dispose Assets", value: stats.dispose, icon: <Trash2 className="w-6 h-6 text-white" />, bgColor: "bg-pink-600" },
 ];
 
   const handleImport = () => {
@@ -252,28 +267,26 @@ const statData = [
         <h1 className="text-2xl font-bold text-[#1a1a1a] uppercase">ASSET LIST</h1>
       </div>
 
-      {/* Stats Cards - Now using dynamic data */}
-<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      {/* Stats Cards - Updated with all cards from the image */}
+<div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
       {statData.map((item, i) => (
         <div
           key={i}
-          className="bg-[#f6f4ee] p-6 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4"
+          className={`${item.bgColor} p-4 rounded-lg shadow-sm flex items-center gap-3 text-white min-h-[80px]`}
         >
           {/* Icon with circle background */}
-          <div className="w-14 h-14 bg-[#FBEDEC] rounded-full flex items-center justify-center">
+          <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center flex-shrink-0">
             {item.icon}
           </div>
 
           {/* Text block */}
-          <div>
-            <div className="text-2xl font-bold text-[#C72030]">{item.value}</div>
-            <div className="text-sm font-medium text-gray-600">{item.label}</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xl font-bold text-white truncate">{item.value}</div>
+            <div className="text-sm text-white opacity-90 truncate">{item.label}</div>
           </div>
         </div>
       ))}
     </div>
-
-
 
       {/* First Row of Action Buttons */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
