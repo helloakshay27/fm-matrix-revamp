@@ -411,7 +411,7 @@ const AddAssetPage = () => {
                   </label>
                 </div>
               </div>
-              <button className="px-3 py-1 rounded text-sm flex items-center gap-1 text-white bg-blue-600 hover:bg-blue-700">
+              <button className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80" style={{ backgroundColor: '#F6F4EE', color: '#C72030' }}>
                 <Plus className="w-4 h-4" />
                 Custom Field
               </button>
