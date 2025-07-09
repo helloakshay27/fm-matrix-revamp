@@ -558,8 +558,8 @@ export const EditAssetDetailsPage = () => {
         {/* IT Assets Details */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('warranty')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
-            <div className="flex items-center gap-2 text-blue-600 text-sm sm:text-base font-semibold">
-              <span className="bg-blue-600 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                 <Percent className="w-3 h-3 sm:w-4 sm:h-4" />
               </span>
               IT Asset Details
