@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -307,7 +308,8 @@ export const EditAssetDetailsPage = () => {
     navigate(`/maintenance/asset/details/${id}`);
   };
 
-  return <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50">
+  return (
+    <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
         <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
@@ -333,32 +335,46 @@ export const EditAssetDetailsPage = () => {
             </div>
             {expandedSections.location ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
-          {expandedSections.location && <div className="p-4 sm:p-6">
+          {expandedSections.location && (
+            <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-                {['Site', 'Building', 'Wing', 'Area', 'Floor'].map(label => <FormControl key={label} fullWidth variant="outlined" sx={{
-              minWidth: 120
-            }}>
+                {['Site', 'Building', 'Wing', 'Area', 'Floor'].map(label => (
+                  <FormControl key={label} fullWidth variant="outlined" sx={{ minWidth: 120 }}>
                     <InputLabel id={`${label.toLowerCase()}-select-label`} shrink>{label}</InputLabel>
-                    <MuiSelect labelId={`${label.toLowerCase()}-select-label`} label={label} displayEmpty value={locationData[label.toLowerCase()] || ''} onChange={(e: SelectChangeEvent) => handleLocationChange(label.toLowerCase(), e.target.value)} sx={fieldStyles}>
+                    <MuiSelect 
+                      labelId={`${label.toLowerCase()}-select-label`} 
+                      label={label} 
+                      displayEmpty 
+                      value={locationData[label.toLowerCase()] || ''} 
+                      onChange={(e: SelectChangeEvent) => handleLocationChange(label.toLowerCase(), e.target.value)} 
+                      sx={fieldStyles}
+                    >
                       <MenuItem value=""><em>Select {label}</em></MenuItem>
                       <MenuItem value={`${label.toLowerCase()}1`}>{label} 1</MenuItem>
                       <MenuItem value={`${label.toLowerCase()}2`}>{label} 2</MenuItem>
                     </MuiSelect>
-                  </FormControl>)}
+                  </FormControl>
+                ))}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <FormControl fullWidth variant="outlined" sx={{
-              minWidth: 120
-            }}>
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
                   <InputLabel id="room-select-label" shrink>Room</InputLabel>
-                  <MuiSelect labelId="room-select-label" label="Room" displayEmpty value={locationData.room || ''} onChange={(e: SelectChangeEvent) => handleLocationChange('room', e.target.value)} sx={fieldStyles}>
+                  <MuiSelect 
+                    labelId="room-select-label" 
+                    label="Room" 
+                    displayEmpty 
+                    value={locationData.room || ''} 
+                    onChange={(e: SelectChangeEvent) => handleLocationChange('room', e.target.value)} 
+                    sx={fieldStyles}
+                  >
                     <MenuItem value=""><em>Select Room</em></MenuItem>
                     <MenuItem value="room1">Room 1</MenuItem>
                     <MenuItem value="room2">Room 2</MenuItem>
                   </MuiSelect>
                 </FormControl>
               </div>
-            </div>}
+            </div>
+          )}
         </div>
 
         {/* Asset Details */}
@@ -378,7 +394,8 @@ export const EditAssetDetailsPage = () => {
               {expandedSections.asset ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
             </div>
           </div>
-          {expandedSections.asset && <div className="p-4 sm:p-6">
+          {expandedSections.asset && (
+            <div className="p-4 sm:p-6">
               {/* First Row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-4">
                 <TextField
@@ -390,12 +407,8 @@ export const EditAssetDetailsPage = () => {
                   onChange={e => handleInputChange('assetName', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{
-                    shrink: true
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
                 />
                 <TextField
                   required
@@ -406,12 +419,8 @@ export const EditAssetDetailsPage = () => {
                   onChange={e => handleInputChange('assetNo', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{
-                    shrink: true
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
                 />
                 <TextField
                   required
@@ -422,12 +431,8 @@ export const EditAssetDetailsPage = () => {
                   onChange={e => handleInputChange('modelNo', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{
-                    shrink: true
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
                 />
                 <TextField
                   label="Serial No"
@@ -437,12 +442,8 @@ export const EditAssetDetailsPage = () => {
                   onChange={e => handleInputChange('serialNo', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{
-                    shrink: true
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
                 />
                 <TextField
                   required
@@ -453,12 +454,8 @@ export const EditAssetDetailsPage = () => {
                   onChange={e => handleInputChange('manufacturer', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{
-                    shrink: true
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
                 />
                 <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
                   <InputLabel id="vendor-select-label" shrink>Vendor</InputLabel>
@@ -518,12 +515,8 @@ export const EditAssetDetailsPage = () => {
                   onChange={e => handleInputChange('commissioningDate', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{
-                    shrink: true
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
                 />
               </div>
 
@@ -559,7 +552,8 @@ export const EditAssetDetailsPage = () => {
                   </div>
                 </div>
               </div>
-            </div>}
+            </div>
+          )}
         </div>
 
         {/* IT Assets Details */}
@@ -586,7 +580,8 @@ export const EditAssetDetailsPage = () => {
               {expandedSections.warranty ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
             </div>
           </div>
-          {expandedSections.warranty && <div className="p-4 sm:p-6">
+          {expandedSections.warranty && (
+            <div className="p-4 sm:p-6">
               {/* System Details Section */}
               <div className="mb-6">
                 <h3 className="text-blue-600 font-semibold text-sm mb-4">SYSTEM DETAILS</h3>
@@ -599,12 +594,8 @@ export const EditAssetDetailsPage = () => {
                     onChange={e => handleItAssetChange('os', e.target.value)}
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{
-                      shrink: true
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
                   />
                   <TextField
                     label="Total Memory"
@@ -614,12 +605,8 @@ export const EditAssetDetailsPage = () => {
                     onChange={e => handleItAssetChange('totalMemory', e.target.value)}
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{
-                      shrink: true
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
                   />
                   <TextField
                     label="Processor"
@@ -629,12 +616,8 @@ export const EditAssetDetailsPage = () => {
                     onChange={e => handleItAssetChange('processor', e.target.value)}
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{
-                      shrink: true
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
                   />
                 </div>
               </div>
@@ -651,12 +634,8 @@ export const EditAssetDetailsPage = () => {
                     onChange={e => handleItAssetChange('model', e.target.value)}
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{
-                      shrink: true
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
                   />
                   <TextField
                     label="Serial No."
@@ -666,12 +645,8 @@ export const EditAssetDetailsPage = () => {
                     onChange={e => handleItAssetChange('serialNo', e.target.value)}
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{
-                      shrink: true
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
                   />
                   <TextField
                     label="Capacity"
@@ -681,16 +656,13 @@ export const EditAssetDetailsPage = () => {
                     onChange={e => handleItAssetChange('capacity', e.target.value)}
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{
-                      shrink: true
-                    }}
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
                   />
                 </div>
               </div>
-            </div>}
+            </div>
+          )}
         </div>
 
         {/* Meter Category Type */}
@@ -704,27 +676,51 @@ export const EditAssetDetailsPage = () => {
             </div>
             {expandedSections.meterCategory ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
-          {expandedSections.meterCategory && <div className="p-4 sm:p-6">
+          {expandedSections.meterCategory && (
+            <div className="p-4 sm:p-6">
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
-                {getMeterCategoryOptions().map(option => <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-[#f6f4ee]">
+                {getMeterCategoryOptions().map(option => (
+                  <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-[#f6f4ee]">
                     <div className="flex items-center justify-center space-x-2">
-                      <input type="radio" id={option.value} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
+                      <input 
+                        type="radio" 
+                        id={option.value} 
+                        name="meterCategory" 
+                        value={option.value} 
+                        checked={meterCategoryType === option.value} 
+                        onChange={e => handleMeterCategoryChange(e.target.value)} 
+                        className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" 
+                      />
                       <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
                     </div>
-                  </div>)}
+                  </div>
+                ))}
               </div>
 
-              {getSubCategoryOptions().length > 0 && <div className="mt-4 sm:mt-6">
+              {getSubCategoryOptions().length > 0 && (
+                <div className="mt-4 sm:mt-6">
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                    {getSubCategoryOptions().map(option => <div key={option.value} className="bg-purple-100 p-3 sm:p-4 rounded-lg text-center">
+                    {getSubCategoryOptions().map(option => (
+                      <div key={option.value} className="bg-purple-100 p-3 sm:p-4 rounded-lg text-center">
                         <div className="flex items-center justify-center space-x-2">
-                          <input type="radio" id={`sub-${option.value}`} name="subMeterCategory" value={option.value} checked={subCategoryType === option.value} onChange={e => setSubCategoryType(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
+                          <input 
+                            type="radio" 
+                            id={`sub-${option.value}`} 
+                            name="subMeterCategory" 
+                            value={option.value} 
+                            checked={subCategoryType === option.value} 
+                            onChange={e => setSubCategoryType(e.target.value)} 
+                            className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" 
+                          />
                           <label htmlFor={`sub-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
                         </div>
-                      </div>)}
+                      </div>
+                    ))}
                   </div>
-                </div>}
-            </div>}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Consumption Asset Measure */}
@@ -738,97 +734,134 @@ export const EditAssetDetailsPage = () => {
             </div>
             {expandedSections.consumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
-          {expandedSections.consumption && <div className="p-4 sm:p-6">
+          {expandedSections.consumption && (
+            <div className="p-4 sm:p-6">
               <div className="space-y-4 sm:space-y-6">
-                {consumptionMeasures.map(measure => <div key={measure.id} className="border border-gray-200 rounded-lg p-4">
+                {consumptionMeasures.map(measure => (
+                  <div key={measure.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-center mb-4">
                       <h4 className="font-medium text-gray-700 text-sm sm:text-base">Consumption Asset Measure</h4>
-                      {consumptionMeasures.length > 1 && <button onClick={() => removeConsumptionMeasure(measure.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                      {consumptionMeasures.length > 1 && (
+                        <button onClick={() => removeConsumptionMeasure(measure.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
                           <X className="w-4 h-4" />
-                        </button>}
+                        </button>
+                      )}
                     </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
                       {[{
-                  label: 'Name',
-                  name: `name-${measure.id}`,
-                  placeholder: 'Enter Text',
-                  value: measure.name,
-                  onChange: e => updateConsumptionMeasure(measure.id, 'name', e.target.value)
-                }, {
-                  label: 'Min',
-                  name: `min-${measure.id}`,
-                  placeholder: 'Enter Number',
-                  type: 'number',
-                  value: measure.min,
-                  onChange: e => updateConsumptionMeasure(measure.id, 'min', e.target.value)
-                }, {
-                  label: 'Max',
-                  name: `max-${measure.id}`,
-                  placeholder: 'Enter Number',
-                  type: 'number',
-                  value: measure.max,
-                  onChange: e => updateConsumptionMeasure(measure.id, 'max', e.target.value)
-                }, {
-                  label: 'Alert Below Val.',
-                  name: `alertBelow-${measure.id}`,
-                  placeholder: 'Enter Value',
-                  type: 'number',
-                  value: measure.alertBelowVal,
-                  onChange: e => updateConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)
-                }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} value={field.value} onChange={field.onChange} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} />)}
-                      <FormControl fullWidth variant="outlined" sx={{
-                  minWidth: 120
-                }}>
-                  <InputLabel id={`unitType-select-label-${measure.id}`} shrink>Unit Type</InputLabel>
-                  <MuiSelect labelId={`unitType-select-label-${measure.id}`} label="Unit Type" displayEmpty value={measure.unitType} onChange={e => updateConsumptionMeasure(measure.id, 'unitType', e.target.value)} sx={fieldStyles}>
-                    <MenuItem value=""><em>Select Unit Type</em></MenuItem>
-                    <MenuItem value="kwh">kWh</MenuItem>
-                    <MenuItem value="liters">Liters</MenuItem>
-                    <MenuItem value="cubic-meters">Cubic Meters</MenuItem>
-                    <MenuItem value="units">Units</MenuItem>
-                  </MuiSelect>
-                </FormControl>
-              </div>
+                        label: 'Name',
+                        name: `name-${measure.id}`,
+                        placeholder: 'Enter Text',
+                        value: measure.name,
+                        onChange: e => updateConsumptionMeasure(measure.id, 'name', e.target.value)
+                      }, {
+                        label: 'Min',
+                        name: `min-${measure.id}`,
+                        placeholder: 'Enter Number',
+                        type: 'number',
+                        value: measure.min,
+                        onChange: e => updateConsumptionMeasure(measure.id, 'min', e.target.value)
+                      }, {
+                        label: 'Max',
+                        name: `max-${measure.id}`,
+                        placeholder: 'Enter Number',
+                        type: 'number',
+                        value: measure.max,
+                        onChange: e => updateConsumptionMeasure(measure.id, 'max', e.target.value)
+                      }, {
+                        label: 'Alert Below Val.',
+                        name: `alertBelow-${measure.id}`,
+                        placeholder: 'Enter Value',
+                        type: 'number',
+                        value: measure.alertBelowVal,
+                        onChange: e => updateConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)
+                      }].map(field => (
+                        <TextField 
+                          key={field.name} 
+                          label={field.label} 
+                          placeholder={field.placeholder} 
+                          name={field.name} 
+                          type={field.type || 'text'} 
+                          value={field.value} 
+                          onChange={field.onChange} 
+                          fullWidth 
+                          variant="outlined" 
+                          InputLabelProps={{ shrink: true }} 
+                          InputProps={{ sx: fieldStyles }} 
+                        />
+                      ))}
+                      <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                        <InputLabel id={`unitType-select-label-${measure.id}`} shrink>Unit Type</InputLabel>
+                        <MuiSelect 
+                          labelId={`unitType-select-label-${measure.id}`} 
+                          label="Unit Type" 
+                          displayEmpty 
+                          value={measure.unitType} 
+                          onChange={e => updateConsumptionMeasure(measure.id, 'unitType', e.target.value)} 
+                          sx={fieldStyles}
+                        >
+                          <MenuItem value=""><em>Select Unit Type</em></MenuItem>
+                          <MenuItem value="kwh">kWh</MenuItem>
+                          <MenuItem value="liters">Liters</MenuItem>
+                          <MenuItem value="cubic-meters">Cubic Meters</MenuItem>
+                          <MenuItem value="units">Units</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
+                    </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                {[{
-              label: 'Alert Above Val.',
-              name: `alertAbove-${measure.id}`,
-              placeholder: 'Enter Value',
-              type: 'number',
-              value: measure.alertAboveVal,
-              onChange: e => updateConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)
-            }, {
-              label: 'Multiplier Factor',
-              name: `multiplier-${measure.id}`,
-              placeholder: 'Enter Text',
-              value: measure.multiplierFactor,
-              onChange: e => updateConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)
-            }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} value={field.value} onChange={field.onChange} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />)}
-              </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                      {[{
+                        label: 'Alert Above Val.',
+                        name: `alertAbove-${measure.id}`,
+                        placeholder: 'Enter Value',
+                        type: 'number',
+                        value: measure.alertAboveVal,
+                        onChange: e => updateConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)
+                      }, {
+                        label: 'Multiplier Factor',
+                        name: `multiplier-${measure.id}`,
+                        placeholder: 'Enter Text',
+                        value: measure.multiplierFactor,
+                        onChange: e => updateConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)
+                      }].map(field => (
+                        <TextField 
+                          key={field.name} 
+                          label={field.label} 
+                          placeholder={field.placeholder} 
+                          name={field.name} 
+                          type={field.type || 'text'} 
+                          value={field.value} 
+                          onChange={field.onChange} 
+                          fullWidth 
+                          variant="outlined" 
+                          InputLabelProps={{ shrink: true }} 
+                          InputProps={{ sx: fieldStyles }} 
+                        />
+                      ))}
+                    </div>
 
-              <div className="flex items-center space-x-2">
-                <input type="checkbox" id={`checkPrevious-${measure.id}`} checked={measure.checkPreviousReading} onChange={e => updateConsumptionMeasure(measure.id, 'checkPreviousReading', e.target.checked)} className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]" style={{
-                  accentColor: '#C72030'
-                }} />
-                <label htmlFor={`checkPrevious-${measure.id}`} className="text-xs sm:text-sm">Check Previous Reading</label>
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        id={`checkPrevious-${measure.id}`} 
+                        checked={measure.checkPreviousReading} 
+                        onChange={e => updateConsumptionMeasure(measure.id, 'checkPreviousReading', e.target.checked)} 
+                        className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]" 
+                        style={{ accentColor: '#C72030' }} 
+                      />
+                      <label htmlFor={`checkPrevious-${measure.id}`} className="text-xs sm:text-sm">Check Previous Reading</label>
+                    </div>
+                  </div>
+                ))}
+                
+                <button onClick={addConsumptionMeasure} className="px-4 py-2 rounded-md flex items-center text-sm sm:text-base bg-[#f6f4ee] text-red-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Measure
+                </button>
               </div>
-            </div>)}
-            
-            <button onClick={addConsumptionMeasure} className="px-4 py-2 rounded-md flex items-center text-sm sm:text-base bg-[#f6f4ee] text-red-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Measure
-            </button>
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Non Consumption Asset Measure */}
@@ -842,98 +875,135 @@ export const EditAssetDetailsPage = () => {
             </div>
             {expandedSections.nonConsumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
-          {expandedSections.nonConsumption && <div className="p-4 sm:p-6">
+          {expandedSections.nonConsumption && (
+            <div className="p-4 sm:p-6">
               <div className="space-y-4 sm:space-y-6">
-                {nonConsumptionMeasures.map(measure => <div key={measure.id} className="border border-gray-200 rounded-lg p-4">
+                {nonConsumptionMeasures.map(measure => (
+                  <div key={measure.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-center mb-4">
                       <h4 className="font-medium text-gray-700 text-sm sm:text-base">Non Consumption Asset Measure</h4>
-                      {nonConsumptionMeasures.length > 1 && <button onClick={() => removeNonConsumptionMeasure(measure.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                      {nonConsumptionMeasures.length > 1 && (
+                        <button onClick={() => removeNonConsumptionMeasure(measure.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
                           <X className="w-4 h-4" />
-                        </button>}
+                        </button>
+                      )}
                     </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
                       {[{
-                  label: 'Name',
-                  name: `nc-name-${measure.id}`,
-                  placeholder: 'Name',
-                  value: measure.name,
-                  onChange: e => updateNonConsumptionMeasure(measure.id, 'name', e.target.value)
-                }, {
-                  label: 'Min',
-                  name: `nc-min-${measure.id}`,
-                  placeholder: 'Min',
-                  type: 'number',
-                  value: measure.min,
-                  onChange: e => updateNonConsumptionMeasure(measure.id, 'min', e.target.value)
-                }, {
-                  label: 'Max',
-                  name: `nc-max-${measure.id}`,
-                  placeholder: 'Max',
-                  type: 'number',
-                  value: measure.max,
-                  onChange: e => updateNonConsumptionMeasure(measure.id, 'max', e.target.value)
-                }, {
-                  label: 'Alert Below Val.',
-                  name: `nc-alertBelow-${measure.id}`,
-                  placeholder: 'Alert Below Value',
-                  type: 'number',
-                  value: measure.alertBelowVal,
-                  onChange: e => updateNonConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)
-                }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} value={field.value} onChange={field.onChange} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} />)}
-                      <FormControl fullWidth variant="outlined" sx={{
-                  minWidth: 120
-                }}>
-                  <InputLabel id={`nc-unitType-select-label-${measure.id}`} shrink>Unit Type</InputLabel>
-                  <MuiSelect labelId={`nc-unitType-select-label-${measure.id}`} label="Unit Type" displayEmpty value={measure.unitType} onChange={e => updateNonConsumptionMeasure(measure.id, 'unitType', e.target.value)} sx={fieldStyles}>
-                    <MenuItem value=""><em>Select Unit Type</em></MenuItem>
-                    <MenuItem value="temperature">Temperature</MenuItem>
-                    <MenuItem value="pressure">Pressure</MenuItem>
-                    <MenuItem value="voltage">Voltage</MenuItem>
-                    <MenuItem value="current">Current</MenuItem>
-                    <MenuItem value="frequency">Frequency</MenuItem>
-                  </MuiSelect>
-                </FormControl>
-              </div>
+                        label: 'Name',
+                        name: `nc-name-${measure.id}`,
+                        placeholder: 'Name',
+                        value: measure.name,
+                        onChange: e => updateNonConsumptionMeasure(measure.id, 'name', e.target.value)
+                      }, {
+                        label: 'Min',
+                        name: `nc-min-${measure.id}`,
+                        placeholder: 'Min',
+                        type: 'number',
+                        value: measure.min,
+                        onChange: e => updateNonConsumptionMeasure(measure.id, 'min', e.target.value)
+                      }, {
+                        label: 'Max',
+                        name: `nc-max-${measure.id}`,
+                        placeholder: 'Max',
+                        type: 'number',
+                        value: measure.max,
+                        onChange: e => updateNonConsumptionMeasure(measure.id, 'max', e.target.value)
+                      }, {
+                        label: 'Alert Below Val.',
+                        name: `nc-alertBelow-${measure.id}`,
+                        placeholder: 'Alert Below Value',
+                        type: 'number',
+                        value: measure.alertBelowVal,
+                        onChange: e => updateNonConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)
+                      }].map(field => (
+                        <TextField 
+                          key={field.name} 
+                          label={field.label} 
+                          placeholder={field.placeholder} 
+                          name={field.name} 
+                          type={field.type || 'text'} 
+                          value={field.value} 
+                          onChange={field.onChange} 
+                          fullWidth 
+                          variant="outlined" 
+                          InputLabelProps={{ shrink: true }} 
+                          InputProps={{ sx: fieldStyles }} 
+                        />
+                      ))}
+                      <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                        <InputLabel id={`nc-unitType-select-label-${measure.id}`} shrink>Unit Type</InputLabel>
+                        <MuiSelect 
+                          labelId={`nc-unitType-select-label-${measure.id}`} 
+                          label="Unit Type" 
+                          displayEmpty 
+                          value={measure.unitType} 
+                          onChange={e => updateNonConsumptionMeasure(measure.id, 'unitType', e.target.value)} 
+                          sx={fieldStyles}
+                        >
+                          <MenuItem value=""><em>Select Unit Type</em></MenuItem>
+                          <MenuItem value="temperature">Temperature</MenuItem>
+                          <MenuItem value="pressure">Pressure</MenuItem>
+                          <MenuItem value="voltage">Voltage</MenuItem>
+                          <MenuItem value="current">Current</MenuItem>
+                          <MenuItem value="frequency">Frequency</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
+                    </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                {[{
-              label: 'Alert Above Val.',
-              name: `nc-alertAbove-${measure.id}`,
-              placeholder: 'Alert Above Value',
-              type: 'number',
-              value: measure.alertAboveVal,
-              onChange: e => updateNonConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)
-            }, {
-              label: 'Multiplier Factor',
-              name: `nc-multiplier-${measure.id}`,
-              placeholder: 'Multiplier Factor',
-              value: measure.multiplierFactor,
-              onChange: e => updateNonConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)
-            }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} value={field.value} onChange={field.onChange} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} />)}
-              </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                      {[{
+                        label: 'Alert Above Val.',
+                        name: `nc-alertAbove-${measure.id}`,
+                        placeholder: 'Alert Above Value',
+                        type: 'number',
+                        value: measure.alertAboveVal,
+                        onChange: e => updateNonConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)
+                      }, {
+                        label: 'Multiplier Factor',
+                        name: `nc-multiplier-${measure.id}`,
+                        placeholder: 'Multiplier Factor',
+                        value: measure.multiplierFactor,
+                        onChange: e => updateNonConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)
+                      }].map(field => (
+                        <TextField 
+                          key={field.name} 
+                          label={field.label} 
+                          placeholder={field.placeholder} 
+                          name={field.name} 
+                          type={field.type || 'text'} 
+                          value={field.value} 
+                          onChange={field.onChange} 
+                          fullWidth 
+                          variant="outlined" 
+                          InputLabelProps={{ shrink: true }} 
+                          InputProps={{ sx: fieldStyles }} 
+                        />
+                      ))}
+                    </div>
 
-              <div className="flex items-center space-x-2">
-                <input type="checkbox" id={`nc-checkPrevious-${measure.id}`} checked={measure.checkPreviousReading} onChange={e => updateNonConsumptionMeasure(measure.id, 'checkPreviousReading', e.target.checked)} className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]" style={{
-                  accentColor: '#C72030'
-                }} />
-                <label htmlFor={`nc-checkPrevious-${measure.id}`} className="text-xs sm:text-sm">Check Previous Reading</label>
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        id={`nc-checkPrevious-${measure.id}`} 
+                        checked={measure.checkPreviousReading} 
+                        onChange={e => updateNonConsumptionMeasure(measure.id, 'checkPreviousReading', e.target.checked)} 
+                        className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]" 
+                        style={{ accentColor: '#C72030' }} 
+                      />
+                      <label htmlFor={`nc-checkPrevious-${measure.id}`} className="text-xs sm:text-sm">Check Previous Reading</label>
+                    </div>
+                  </div>
+                ))}
+                
+                <button onClick={addNonConsumptionMeasure} className="px-4 py-2 rounded-md flex items-center text-sm sm:text-base bg-[#f6f4ee] text-orange-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Measure
+                </button>
               </div>
-            </div>)}
-            
-            <button onClick={addNonConsumptionMeasure} className="px-4 py-2 rounded-md flex items-center text-sm sm:text-base bg-[#f6f4ee] text-orange-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Measure
-            </button>
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Attachments */}
@@ -947,32 +1017,41 @@ export const EditAssetDetailsPage = () => {
             </div>
             {expandedSections.attachments ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
-          {expandedSections.attachments && <div className="p-4 sm:p-6">
+          {expandedSections.attachments && (
+            <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 {[{
-              label: 'Manuals Upload',
-              id: 'manuals-upload',
-              category: 'manualsUpload',
-              accept: '.pdf,.doc,.docx,.txt'
-            }, {
-              label: 'Insurance Details',
-              id: 'insurance-upload',
-              category: 'insuranceDetails',
-              accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-            }, {
-              label: 'Purchaselah Invoice',
-              id: 'invoice-upload',
-              category: 'purchaseInvoice',
-              accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-            }, {
-              label: 'AMC',
-              id: 'amc-upload',
-              category: 'amc',
-              accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-            }].map(field => <div key={field.id}>
+                  label: 'Manuals Upload',
+                  id: 'manuals-upload',
+                  category: 'manualsUpload',
+                  accept: '.pdf,.doc,.docx,.txt'
+                }, {
+                  label: 'Insurance Details',
+                  id: 'insurance-upload',
+                  category: 'insuranceDetails',
+                  accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
+                }, {
+                  label: 'Purchaselah Invoice',
+                  id: 'invoice-upload',
+                  category: 'purchaseInvoice',
+                  accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
+                }, {
+                  label: 'AMC',
+                  id: 'amc-upload',
+                  category: 'amc',
+                  accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
+                }].map(field => (
+                  <div key={field.id}>
                     <label className="text-xs sm:text-sm font-medium text-gray-700 mb-2 block">{field.label}</label>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                      <input type="file" multiple accept={field.accept} onChange={e => handleFileUpload(field.category, e.target.files)} className="hidden" id={field.id} />
+                      <input 
+                        type="file" 
+                        multiple 
+                        accept={field.accept} 
+                        onChange={e => handleFileUpload(field.category, e.target.files)} 
+                        className="hidden" 
+                        id={field.id} 
+                      />
                       <label htmlFor={field.id} className="cursor-pointer block">
                         <div className="flex items-center justify-center space-x-2 mb-2">
                           <span className="text-[#C72030] font-medium text-xs sm:text-sm">Choose File</span>
@@ -981,14 +1060,18 @@ export const EditAssetDetailsPage = () => {
                           </span>
                         </div>
                       </label>
-                      {attachments[field.category].length > 0 && <div className="mt-2 space-y-1">
-                          {attachments[field.category].map((file, index) => <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                      {attachments[field.category].length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {attachments[field.category].map((file, index) => (
+                            <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
                               <span className="text-xs sm:text-sm truncate">{file.name}</span>
                               <button onClick={() => removeFile(field.category, index)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
                                 <X className="w-4 h-4" />
                               </button>
-                            </div>)}
-                        </div>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <div className="mt-2">
                         <label htmlFor={field.id}>
                           <button className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto">
@@ -998,9 +1081,11 @@ export const EditAssetDetailsPage = () => {
                         </label>
                       </div>
                     </div>
-                  </div>)}
+                  </div>
+                ))}
               </div>
-            </div>}
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -1013,5 +1098,6 @@ export const EditAssetDetailsPage = () => {
           </button>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
