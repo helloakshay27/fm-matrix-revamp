@@ -14,6 +14,7 @@ const AddAssetPage = () => {
     nonConsumption: true,
     attachments: true
   });
+  const [itAssetsToggle, setItAssetsToggle] = useState(false);
   const [meterCategoryType, setMeterCategoryType] = useState('');
   const [subCategoryType, setSubCategoryType] = useState('');
   const [consumptionMeasures, setConsumptionMeasures] = useState([{
@@ -96,6 +97,14 @@ const AddAssetPage = () => {
   const handleMeterCategoryChange = (value) => {
     setMeterCategoryType(value);
     setSubCategoryType(''); // Reset sub-category when main category changes
+  };
+
+  const handleItAssetsToggleChange = (checked) => {
+    setItAssetsToggle(checked);
+    setExpandedSections(prev => ({
+      ...prev,
+      warranty: checked
+    }));
   };
 
   // Consumption measure functions
@@ -402,12 +411,18 @@ const AddAssetPage = () => {
                     type="checkbox"
                     className="sr-only peer"
                     id="it-assets-toggle"
+                    checked={itAssetsToggle}
+                    onChange={(e) => handleItAssetsToggleChange(e.target.checked)}
                   />
                   <label
                     htmlFor="it-assets-toggle"
-                    className="block w-12 h-6 bg-red-500 rounded-full cursor-pointer peer-checked:bg-red-500"
+                    className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${
+                      itAssetsToggle ? 'bg-green-400' : 'bg-gray-300'
+                    }`}
                   >
-                    <span className="block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform translate-x-6 peer-checked:translate-x-1"></span>
+                    <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
+                      itAssetsToggle ? 'translate-x-6' : 'translate-x-1'
+                    }`}></span>
                   </label>
                 </div>
               </div>
