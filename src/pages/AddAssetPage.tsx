@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip } from 'lucide-react';
@@ -77,127 +76,6 @@ const AddAssetPage = () => {
 
   const handleSaveAndCreate = () => {
     console.log('Save and create new asset');
-  };
-
-  const getMeterCategoryOptions = () => [{
-    value: 'board',
-    label: 'Board'
-  }, {
-    value: 'dg',
-    label: 'DG'
-  }, {
-    value: 'renewable',
-    label: 'Renewable'
-  }, {
-    value: 'fresh-water',
-    label: 'Fresh Water'
-  }, {
-    value: 'recycled',
-    label: 'Recycled'
-  }, {
-    value: 'iex-gdam',
-    label: 'IEX-GDAM'
-  }];
-
-  const getSubCategoryOptions = () => {
-    switch (meterCategoryType) {
-      case 'board':
-        return [{
-          value: 'ht',
-          label: 'HT'
-        }, {
-          value: 'vcb',
-          label: 'VCB'
-        }, {
-          value: 'transformer',
-          label: 'Transformer'
-        }, {
-          value: 'lt',
-          label: 'LT'
-        }];
-      case 'renewable':
-        return [{
-          value: 'solar',
-          label: 'Solar'
-        }, {
-          value: 'bio-methanol',
-          label: 'Bio Methanol'
-        }, {
-          value: 'wind',
-          label: 'Wind'
-        }];
-      case 'fresh-water':
-        return [{
-          value: 'source',
-          label: 'Source (Input)'
-        }, {
-          value: 'destination',
-          label: 'Destination (Output)'
-        }];
-      default:
-        return [];
-    }
-  };
-
-  const handleMeterCategoryChange = value => {
-    setMeterCategoryType(value);
-    setSubCategoryType('');
-  };
-
-  const addConsumptionMeasure = () => {
-    const newId = consumptionMeasures.length > 0 ? Math.max(...consumptionMeasures.map(m => m.id)) + 1 : 1;
-    setConsumptionMeasures([...consumptionMeasures, {
-      id: newId,
-      name: '',
-      unitType: '',
-      min: '',
-      max: '',
-      alertBelowVal: '',
-      alertAboveVal: '',
-      multiplierFactor: '',
-      checkPreviousReading: false
-    }]);
-  };
-
-  const removeConsumptionMeasure = id => {
-    if (consumptionMeasures.length > 1) {
-      setConsumptionMeasures(consumptionMeasures.filter(m => m.id !== id));
-    }
-  };
-
-  const updateConsumptionMeasure = (id, field, value) => {
-    setConsumptionMeasures(consumptionMeasures.map(m => m.id === id ? {
-      ...m,
-      [field]: value
-    } : m));
-  };
-
-  const addNonConsumptionMeasure = () => {
-    const newId = nonConsumptionMeasures.length > 0 ? Math.max(...nonConsumptionMeasures.map(m => m.id)) + 1 : 1;
-    setNonConsumptionMeasures([...nonConsumptionMeasures, {
-      id: newId,
-      name: '',
-      unitType: '',
-      min: '',
-      max: '',
-      alertBelowVal: '',
-      alertAboveVal: '',
-      multiplierFactor: '',
-      checkPreviousReading: false
-    }]);
-  };
-
-  const removeNonConsumptionMeasure = id => {
-    if (nonConsumptionMeasures.length > 1) {
-      setNonConsumptionMeasures(nonConsumptionMeasures.filter(m => m.id !== id));
-    }
-  };
-
-  const updateNonConsumptionMeasure = (id, field, value) => {
-    setNonConsumptionMeasures(nonConsumptionMeasures.map(m => m.id === id ? {
-      ...m,
-      [field]: value
-    } : m));
   };
 
   const fieldStyles = {
@@ -398,57 +276,134 @@ const AddAssetPage = () => {
             </div>}
         </div>
 
-        {/* Warranty Details */}
+        {/* IT Assets Details */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('warranty')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
             <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
               <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                 <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
               </span>
-              WARRANTY DETAILS
+              IT ASSETS DETAILS
             </div>
-            {expandedSections.warranty ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </div>
-          {expandedSections.warranty && <div className="p-4 sm:p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4">
-                <div>
-                  <label className="text-xs sm:text-sm font-medium text-gray-700">Under Warranty</label>
-                  <div className="flex gap-4 sm:gap-6 mt-2">
-                    {[{
-                  value: 'yes',
-                  label: 'Yes'
-                }, {
-                  value: 'no',
-                  label: 'No'
-                }].map(option => <div key={option.value} className="flex items-center space-x-2">
-                        <input type="radio" id={`warranty-${option.value}`} name="underWarranty" value={option.value} defaultChecked={option.value === 'no'} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
-                    accentColor: '#C72030'
-                  }} />
-                        <label htmlFor={`warranty-${option.value}`} className="text-xs sm:text-sm">{option.label}</label>
-                      </div>)}
-                  </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">If Applicable</span>
+                <div className="relative inline-block w-12 h-6">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    id="it-assets-toggle"
+                  />
+                  <label
+                    htmlFor="it-assets-toggle"
+                    className="block w-12 h-6 bg-red-500 rounded-full cursor-pointer peer-checked:bg-red-500"
+                  >
+                    <span className="block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform translate-x-6 peer-checked:translate-x-1"></span>
+                  </label>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[{
-              label: 'Warranty Start Date',
-              name: 'warrantyStart',
-              type: 'date'
-            }, {
-              label: 'Warranty expires on',
-              name: 'warrantyExpires',
-              type: 'date'
-            }, {
-              label: 'Commissioning Date',
-              name: 'commissioningDate',
-              type: 'date'
-            }].map(field => <TextField key={field.name} label={field.label} placeholder="Select Date" name={field.name} type={field.type} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />)}
+              <button className="px-3 py-1 rounded text-sm flex items-center gap-1 text-white bg-blue-600 hover:bg-blue-700">
+                <Plus className="w-4 h-4" />
+                Custom Field
+              </button>
+              {expandedSections.warranty ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </div>
+          </div>
+          {expandedSections.warranty && (
+            <div className="p-4 sm:p-6">
+              {/* System Details */}
+              <div className="mb-6">
+                <h3 className="text-blue-600 font-semibold mb-4">SYSTEM DETAILS</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <TextField
+                    label="OS"
+                    placeholder="Enter OS"
+                    name="os"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true
+                    }}
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
+                  />
+                  <TextField
+                    label="Total Memory"
+                    placeholder="Enter Total Memory"
+                    name="totalMemory"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true
+                    }}
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
+                  />
+                  <TextField
+                    label="Processor"
+                    placeholder="Enter Processor"
+                    name="processor"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true
+                    }}
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
+                  />
+                </div>
               </div>
-            </div>}
+
+              {/* Hard Disk Details */}
+              <div>
+                <h3 className="text-blue-600 font-semibold mb-4">HARD DISK DETAILS</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <TextField
+                    label="Model"
+                    placeholder="Enter Model"
+                    name="hdModel"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true
+                    }}
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
+                  />
+                  <TextField
+                    label="Serial No."
+                    placeholder="Enter Serial No."
+                    name="hdSerialNo"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true
+                    }}
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
+                  />
+                  <TextField
+                    label="Capacity"
+                    placeholder="Enter Capacity"
+                    name="hdCapacity"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true
+                    }}
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Meter Category Type */}
@@ -720,7 +675,7 @@ const AddAssetPage = () => {
               category: 'insuranceDetails',
               accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
             }, {
-              label: 'Purchaselah Invoice',
+              label: 'Purchase Invoice',
               id: 'invoice-upload',
               category: 'purchaseInvoice',
               accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
