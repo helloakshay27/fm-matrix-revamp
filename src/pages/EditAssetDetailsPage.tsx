@@ -2,28 +2,13 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { TextField } from '@mui/material';
 import { ArrowLeft, ChevronDown, ChevronUp, Plus, X, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip } from 'lucide-react';
-import { FormControl, InputLabel, MenuItem, Select as MuiSelect, SelectChangeEvent, Radio, RadioGroup as MuiRadioGroup, FormControlLabel } from '@mui/material';
-
-const fieldStyles = {
-  height: {
-    xs: 28,
-    sm: 36,
-    md: 45
-  },
-  '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: {
-      xs: '8px',
-      sm: '10px',
-      md: '12px'
-    }
-  }
-};
 
 export const EditAssetDetailsPage = () => {
   const { id } = useParams();
@@ -291,629 +276,865 @@ export const EditAssetDetailsPage = () => {
     navigate(`/maintenance/asset/details/${id}`);
   };
 
-  return <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="mb-4 sm:mb-6">
-        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
-          <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800">
-            <ArrowLeft className="w-4 h-4" />
-            Asset List
-          </button>
-          <span>&gt;</span>
-          <span className="text-gray-900 font-medium">Edit Asset</span>
-        </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">EDIT ASSET</h1>
-      </div>
-
-      <div className="space-y-4 sm:space-y-6">
-        {/* Location Details */}
-        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-          <div onClick={() => toggleSection('location')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
-            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
-              </span>
-              LOCATION DETAILS
-            </div>
-            {expandedSections.location ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+  return (
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-7xl">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+            <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800">
+              <ArrowLeft className="w-4 h-4" />
+              Asset List
+            </button>
+            <span>&gt;</span>
+            <span className="text-gray-900 font-medium">Edit Asset</span>
           </div>
-          {expandedSections.location && <div className="p-4 sm:p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-                {['Site', 'Building', 'Wing', 'Area', 'Floor'].map(label => <FormControl key={label} fullWidth variant="outlined" sx={{
-              minWidth: 120
-            }}>
-                    <InputLabel id={`${label.toLowerCase()}-select-label`} shrink>{label}</InputLabel>
-                    <MuiSelect labelId={`${label.toLowerCase()}-select-label`} label={label} displayEmpty value={locationData[label.toLowerCase()] || ''} onChange={(e: SelectChangeEvent) => handleLocationChange(label.toLowerCase(), e.target.value)} sx={fieldStyles}>
-                      <MenuItem value=""><em>Select {label}</em></MenuItem>
-                      <MenuItem value={`${label.toLowerCase()}1`}>{label} 1</MenuItem>
-                      <MenuItem value={`${label.toLowerCase()}2`}>{label} 2</MenuItem>
-                    </MuiSelect>
-                  </FormControl>)}
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <FormControl fullWidth variant="outlined" sx={{
-              minWidth: 120
-            }}>
-                  <InputLabel id="room-select-label" shrink>Room</InputLabel>
-                  <MuiSelect labelId="room-select-label" label="Room" displayEmpty value={locationData.room || ''} onChange={(e: SelectChangeEvent) => handleLocationChange('room', e.target.value)} sx={fieldStyles}>
-                    <MenuItem value=""><em>Select Room</em></MenuItem>
-                    <MenuItem value="room1">Room 1</MenuItem>
-                    <MenuItem value="room2">Room 2</MenuItem>
-                  </MuiSelect>
-                </FormControl>
-              </div>
-            </div>}
+          <h1 className="text-2xl font-bold text-gray-900">EDIT ASSET</h1>
         </div>
 
-        {/* Asset Details */}
-        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-          <div onClick={() => toggleSection('asset')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
-            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                <Package className="w-3 h-3 sm:w-4 sm:h-4" />
-              </span>
-              ASSET DETAILS
+        <div className="space-y-6">
+          {/* Location Details */}
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div 
+              onClick={() => toggleSection('location')} 
+              className="cursor-pointer border-l-4 border-l-[#C72030] p-6 flex justify-between items-center bg-white"
+            >
+              <div className="flex items-center gap-2 text-[#C72030] text-base font-semibold">
+                <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">
+                  <MapPin className="w-4 h-4" />
+                </span>
+                LOCATION DETAILS
+              </div>
+              {expandedSections.location ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
             </div>
-            {expandedSections.asset ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </div>
-          {expandedSections.asset && <div className="p-4 sm:p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                {[{
-              label: 'Asset Name',
-              name: 'assetName',
-              placeholder: 'Enter Name',
-              required: true,
-              value: formData.assetName
-            }, {
-              label: 'Asset No.',
-              name: 'assetNo',
-              placeholder: 'Enter Number',
-              required: true,
-              value: formData.assetNo
-            }, {
-              label: 'Equipment ID',
-              name: 'equipmentId',
-              placeholder: 'Enter Number',
-              required: true,
-              value: formData.equipmentId
-            }].map(field => <TextField key={field.name} required={field.required} label={field.label} placeholder={field.placeholder} name={field.name} value={field.value} onChange={e => handleInputChange(field.name, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />)}
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                {[{
-              label: 'Model No.',
-              name: 'modelNo',
-              placeholder: 'Enter Number',
-              value: formData.modelNo
-            }, {
-              label: 'Serial No.',
-              name: 'serialNo',
-              placeholder: 'Enter Number',
-              value: formData.serialNo
-            }, {
-              label: 'Consumer No.',
-              name: 'consumerNo',
-              placeholder: 'Enter Number',
-              value: formData.consumerNo
-            }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} value={field.value} onChange={e => handleInputChange(field.name, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />)}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                {[{
-              label: 'Purchase Cost',
-              name: 'purchaseCost',
-              placeholder: 'Enter Numeric value',
-              type: 'number',
-              required: true,
-              value: formData.purchaseCost
-            }, {
-              label: 'Capacity',
-              name: 'capacity',
-              placeholder: 'Enter Text',
-              value: formData.capacity
-            }, {
-              label: 'Unit',
-              name: 'unit',
-              placeholder: 'Enter Text',
-              value: formData.unit
-            }].map(field => <TextField key={field.name} required={field.required} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} value={field.value} onChange={e => handleInputChange(field.name, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />)}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                {['Group', 'Subgroup'].map(label => <FormControl key={label} fullWidth variant="outlined" sx={{
-              minWidth: 120
-            }}>
-                    <InputLabel id={`${label.toLowerCase()}-select-label`} shrink>{label}</InputLabel>
-                    <MuiSelect labelId={`${label.toLowerCase()}-select-label`} label={label} displayEmpty value={formData[label.toLowerCase()]} onChange={(e: SelectChangeEvent) => handleInputChange(label.toLowerCase(), e.target.value)} sx={fieldStyles}>
-                      <MenuItem value=""><em>Select {label}</em></MenuItem>
-                      <MenuItem value="Electrical">Electrical</MenuItem>
-                      <MenuItem value="Mechanical">Mechanical</MenuItem>
-                    </MuiSelect>
-                  </FormControl>)}
-                <TextField label="Purchased ON Date" placeholder="Select Date" name="purchaseDate" type="date" value={formData.purchaseDate} onChange={e => handleInputChange('purchaseDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                {[{
-              label: 'Expiry date',
-              name: 'expiryDate',
-              type: 'date',
-              value: formData.expiryDate
-            }, {
-              label: 'Manufacturer',
-              name: 'manufacturer',
-              placeholder: 'Enter Text',
-              value: formData.manufacturer
-            }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder || 'Select Date'} name={field.name} type={field.type || 'text'} value={field.value} onChange={e => handleInputChange(field.name, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />)}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4">
-                {[{
-              label: 'Location Type',
-              name: 'locationType',
-              options: [{
-                value: 'common',
-                label: 'Common Area'
-              }, {
-                value: 'customer',
-                label: 'Customer'
-              }, {
-                value: 'na',
-                label: 'NA'
-              }],
-              defaultValue: 'common'
-            }, {
-              label: 'Asset Type',
-              name: 'assetType',
-              options: [{
-                value: 'parent',
-                label: 'Parent'
-              }, {
-                value: 'sub',
-                label: 'Sub'
-              }],
-              defaultValue: 'parent'
-            }, {
-              label: 'Status',
-              name: 'status',
-              options: [{
-                value: 'inuse',
-                label: 'In Use'
-              }, {
-                value: 'breakdown',
-                label: 'Breakdown'
-              }],
-              defaultValue: 'inuse'
-            }, {
-              label: 'Critical',
-              name: 'critical',
-              options: [{
-                value: 'yes',
-                label: 'Yes'
-              }, {
-                value: 'no',
-                label: 'No'
-              }],
-              defaultValue: 'no'
-            }].map(field => <div key={field.name}>
-                    <label className="text-xs sm:text-sm font-medium text-gray-700">{field.label}</label>
-                    <div className="flex flex-wrap gap-4 sm:gap-6 mt-2">
-                      {field.options.map(option => <div key={option.value} className="flex items-center space-x-2">
-                          <input type="radio" id={`${field.name}-${option.value}`} name={field.name} value={option.value} checked={formData[field.name] === option.value} onChange={e => handleInputChange(field.name, e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
-                    accentColor: '#C72030'
-                  }} />
-                          <label htmlFor={`${field.name}-${option.value}`} className="text-xs sm:text-sm">{option.label}</label>
-                        </div>)}
+            {expandedSections.location && (
+              <div className="p-6 border-t">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
+                  {['Site', 'Building', 'Wing', 'Area', 'Floor'].map(label => (
+                    <div key={label} className="space-y-2">
+                      <Label htmlFor={label.toLowerCase()}>{label}</Label>
+                      <Select 
+                        value={locationData[label.toLowerCase()] || ''} 
+                        onValueChange={(value) => handleLocationChange(label.toLowerCase(), value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={`Select ${label}`} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={`${label.toLowerCase()}1`}>{label} 1</SelectItem>
+                          <SelectItem value={`${label.toLowerCase()}2`}>{label} 2</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </div>)}
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input type="checkbox" id="meterApplicable" checked={formData.meterApplicable} onChange={e => handleInputChange('meterApplicable', e.target.checked)} className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]" style={{
-              accentColor: '#C72030'
-            }} />
-                <label htmlFor="meterApplicable" className="text-xs sm:text-sm">Meter Applicable</label>
-              </div>
-            </div>}
-        </div>
-
-        {/* Warranty Details */}
-        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-          <div onClick={() => toggleSection('warranty')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
-            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
-              </span>
-              WARRANTY DETAILS
-            </div>
-            {expandedSections.warranty ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </div>
-          {expandedSections.warranty && <div className="p-4 sm:p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4">
-                <div>
-                  <label className="text-xs sm:text-sm font-medium text-gray-700">Under Warranty</label>
-                  <div className="flex gap-4 sm:gap-6 mt-2">
-                    {[{
-                  value: 'yes',
-                  label: 'Yes'
-                }, {
-                  value: 'no',
-                  label: 'No'
-                }].map(option => <div key={option.value} className="flex items-center space-x-2">
-                        <input type="radio" id={`warranty-${option.value}`} name="underWarranty" value={option.value} checked={formData.underWarranty === option.value} onChange={e => handleInputChange('underWarranty', e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
-                    accentColor: '#C72030'
-                  }} />
-                        <label htmlFor={`warranty-${option.value}`} className="text-xs sm:text-sm">{option.label}</label>
-                      </div>)}
+                  ))}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="room">Room</Label>
+                    <Select 
+                      value={locationData.room || ''} 
+                      onValueChange={(value) => handleLocationChange('room', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Room" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="room1">Room 1</SelectItem>
+                        <SelectItem value="room2">Room 2</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[{
-              label: 'Warranty Start Date',
-              name: 'warrantyStartDate',
-              type: 'date',
-              value: formData.warrantyStartDate
-            }, {
-              label: 'Warranty expires on',
-              name: 'warrantyExpiresOn',
-              type: 'date',
-              value: formData.warrantyExpiresOn
-            }, {
-              label: 'Commissioning Date',
-              name: 'commissioningDate',
-              type: 'date',
-              value: formData.commissioningDate
-            }].map(field => <TextField key={field.name} label={field.label} placeholder="Select Date" name={field.name} type={field.type} value={field.value} onChange={e => handleInputChange(field.name, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />)}
-              </div>
-            </div>}
-        </div>
-
-        {/* Meter Category Type */}
-        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-          <div onClick={() => toggleSection('meterCategory')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
-            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
-              </span>
-              METER CATEGORY TYPE
-            </div>
-            {expandedSections.meterCategory ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            )}
           </div>
-          {expandedSections.meterCategory && <div className="p-4 sm:p-6">
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
-                {getMeterCategoryOptions().map(option => <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-[#f6f4ee]">
-                    <div className="flex items-center justify-center space-x-2">
-                      <input type="radio" id={option.value} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
-                      <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
-                    </div>
-                  </div>)}
-              </div>
 
-              {getSubCategoryOptions().length > 0 && <div className="mt-4 sm:mt-6">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                    {getSubCategoryOptions().map(option => <div key={option.value} className="bg-purple-100 p-3 sm:p-4 rounded-lg text-center">
-                        <div className="flex items-center justify-center space-x-2">
-                          <input type="radio" id={`sub-${option.value}`} name="subMeterCategory" value={option.value} checked={subCategoryType === option.value} onChange={e => setSubCategoryType(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
-                          <label htmlFor={`sub-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
-                        </div>
-                      </div>)}
+          {/* Asset Details */}
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div 
+              onClick={() => toggleSection('asset')} 
+              className="cursor-pointer border-l-4 border-l-[#C72030] p-6 flex justify-between items-center bg-white"
+            >
+              <div className="flex items-center gap-2 text-[#C72030] text-base font-semibold">
+                <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">
+                  <Package className="w-4 h-4" />
+                </span>
+                ASSET DETAILS
+              </div>
+              {expandedSections.asset ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </div>
+            {expandedSections.asset && (
+              <div className="p-6 border-t">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="assetName">Asset Name *</Label>
+                    <Input
+                      id="assetName"
+                      placeholder="Enter Name"
+                      value={formData.assetName}
+                      onChange={(e) => handleInputChange('assetName', e.target.value)}
+                    />
                   </div>
-                </div>}
-            </div>}
-        </div>
-
-        {/* Consumption Asset Measure */}
-        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-          <div onClick={() => toggleSection('consumption')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
-            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
-              </span>
-              CONSUMPTION ASSET MEASURE
-            </div>
-            {expandedSections.consumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </div>
-          {expandedSections.consumption && <div className="p-4 sm:p-6">
-              <div className="space-y-4 sm:space-y-6">
-                {consumptionMeasures.map(measure => <div key={measure.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="font-medium text-gray-700 text-sm sm:text-base">Consumption Asset Measure</h4>
-                      {consumptionMeasures.length > 1 && <button onClick={() => removeConsumptionMeasure(measure.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
-                          <X className="w-4 h-4" />
-                        </button>}
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-                      {[{
-                  label: 'Name',
-                  name: `name-${measure.id}`,
-                  placeholder: 'Enter Text',
-                  value: measure.name,
-                  onChange: e => updateConsumptionMeasure(measure.id, 'name', e.target.value)
-                }, {
-                  label: 'Min',
-                  name: `min-${measure.id}`,
-                  placeholder: 'Enter Number',
-                  type: 'number',
-                  value: measure.min,
-                  onChange: e => updateConsumptionMeasure(measure.id, 'min', e.target.value)
-                }, {
-                  label: 'Max',
-                  name: `max-${measure.id}`,
-                  placeholder: 'Enter Number',
-                  type: 'number',
-                  value: measure.max,
-                  onChange: e => updateConsumptionMeasure(measure.id, 'max', e.target.value)
-                }, {
-                  label: 'Alert Below Val.',
-                  name: `alertBelow-${measure.id}`,
-                  placeholder: 'Enter Value',
-                  type: 'number',
-                  value: measure.alertBelowVal,
-                  onChange: e => updateConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)
-                }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} value={field.value} onChange={field.onChange} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} />)}
-                      <FormControl fullWidth variant="outlined" sx={{
-                  minWidth: 120
-                }}>
-                        <InputLabel id={`unitType-select-label-${measure.id}`} shrink>Unit Type</InputLabel>
-                        <MuiSelect labelId={`unitType-select-label-${measure.id}`} label="Unit Type" displayEmpty value={measure.unitType} onChange={e => updateConsumptionMeasure(measure.id, 'unitType', e.target.value)} sx={fieldStyles}>
-                          <MenuItem value=""><em>Select Unit Type</em></MenuItem>
-                          <MenuItem value="kwh">kWh</MenuItem>
-                          <MenuItem value="liters">Liters</MenuItem>
-                          <MenuItem value="cubic-meters">Cubic Meters</MenuItem>
-                          <MenuItem value="units">Units</MenuItem>
-                        </MuiSelect>
-                      </FormControl>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                      {[{
-                  label: 'Alert Above Val.',
-                  name: `alertAbove-${measure.id}`,
-                  placeholder: 'Enter Value',
-                  type: 'number',
-                  value: measure.alertAboveVal,
-                  onChange: e => updateConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)
-                }, {
-                  label: 'Multiplier Factor',
-                  name: `multiplier-${measure.id}`,
-                  placeholder: 'Enter Text',
-                  value: measure.multiplierFactor,
-                  onChange: e => updateConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)
-                }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} value={field.value} onChange={field.onChange} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} />)}
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <input type="checkbox" id={`checkPrevious-${measure.id}`} checked={measure.checkPreviousReading} onChange={e => updateConsumptionMeasure(measure.id, 'checkPreviousReading', e.target.checked)} className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]" style={{
-                  accentColor: '#C72030'
-                }} />
-                      <label htmlFor={`checkPrevious-${measure.id}`} className="text-xs sm:text-sm">Check Previous Reading</label>
-                    </div>
-                  </div>)}
+                  <div className="space-y-2">
+                    <Label htmlFor="assetNo">Asset No. *</Label>
+                    <Input
+                      id="assetNo"
+                      placeholder="Enter Number"
+                      value={formData.assetNo}
+                      onChange={(e) => handleInputChange('assetNo', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="equipmentId">Equipment ID *</Label>
+                    <Input
+                      id="equipmentId"
+                      placeholder="Enter Number"
+                      value={formData.equipmentId}
+                      onChange={(e) => handleInputChange('equipmentId', e.target.value)}
+                    />
+                  </div>
+                </div>
                 
-                <button onClick={addConsumptionMeasure} className="px-4 py-2 rounded-md flex items-center text-sm sm:text-base bg-[#f6f4ee] text-red-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Measure
-                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="modelNo">Model No.</Label>
+                    <Input
+                      id="modelNo"
+                      placeholder="Enter Number"
+                      value={formData.modelNo}
+                      onChange={(e) => handleInputChange('modelNo', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="serialNo">Serial No.</Label>
+                    <Input
+                      id="serialNo"
+                      placeholder="Enter Number"
+                      value={formData.serialNo}
+                      onChange={(e) => handleInputChange('serialNo', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="consumerNo">Consumer No.</Label>
+                    <Input
+                      id="consumerNo"
+                      placeholder="Enter Number"
+                      value={formData.consumerNo}
+                      onChange={(e) => handleInputChange('consumerNo', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="purchaseCost">Purchase Cost *</Label>
+                    <Input
+                      id="purchaseCost"
+                      type="number"
+                      placeholder="Enter Numeric value"
+                      value={formData.purchaseCost}
+                      onChange={(e) => handleInputChange('purchaseCost', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="capacity">Capacity</Label>
+                    <Input
+                      id="capacity"
+                      placeholder="Enter Text"
+                      value={formData.capacity}
+                      onChange={(e) => handleInputChange('capacity', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="unit">Unit</Label>
+                    <Input
+                      id="unit"
+                      placeholder="Enter Text"
+                      value={formData.unit}
+                      onChange={(e) => handleInputChange('unit', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="group">Group</Label>
+                    <Select 
+                      value={formData.group} 
+                      onValueChange={(value) => handleInputChange('group', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Group" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Electrical">Electrical</SelectItem>
+                        <SelectItem value="Mechanical">Mechanical</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="subgroup">Subgroup</Label>
+                    <Select 
+                      value={formData.subgroup} 
+                      onValueChange={(value) => handleInputChange('subgroup', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Subgroup" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Electric Meter">Electric Meter</SelectItem>
+                        <SelectItem value="Water Meter">Water Meter</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="purchaseDate">Purchased ON Date</Label>
+                    <Input
+                      id="purchaseDate"
+                      type="date"
+                      value={formData.purchaseDate}
+                      onChange={(e) => handleInputChange('purchaseDate', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="expiryDate">Expiry date</Label>
+                    <Input
+                      id="expiryDate"
+                      type="date"
+                      value={formData.expiryDate}
+                      onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="manufacturer">Manufacturer</Label>
+                    <Input
+                      id="manufacturer"
+                      placeholder="Enter Text"
+                      value={formData.manufacturer}
+                      onChange={(e) => handleInputChange('manufacturer', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-6">
+                  {[
+                    {
+                      label: 'Location Type',
+                      name: 'locationType',
+                      options: [
+                        { value: 'common-area', label: 'Common Area' },
+                        { value: 'customer', label: 'Customer' },
+                        { value: 'na', label: 'NA' }
+                      ]
+                    },
+                    {
+                      label: 'Asset Type',
+                      name: 'assetType',
+                      options: [
+                        { value: 'parent', label: 'Parent' },
+                        { value: 'sub', label: 'Sub' }
+                      ]
+                    },
+                    {
+                      label: 'Status',
+                      name: 'status',
+                      options: [
+                        { value: 'in-use', label: 'In Use' },
+                        { value: 'breakdown', label: 'Breakdown' }
+                      ]
+                    },
+                    {
+                      label: 'Critical',
+                      name: 'critical',
+                      options: [
+                        { value: 'yes', label: 'Yes' },
+                        { value: 'no', label: 'No' }
+                      ]
+                    }
+                  ].map(field => (
+                    <div key={field.name} className="space-y-3">
+                      <Label className="text-sm font-medium">{field.label}</Label>
+                      <RadioGroup
+                        value={formData[field.name]}
+                        onValueChange={(value) => handleInputChange(field.name, value)}
+                        className="flex flex-wrap gap-6"
+                      >
+                        {field.options.map(option => (
+                          <div key={option.value} className="flex items-center space-x-2">
+                            <RadioGroupItem 
+                              value={option.value} 
+                              id={`${field.name}-${option.value}`}
+                              className="border-gray-300 text-[#C72030]"
+                            />
+                            <Label htmlFor={`${field.name}-${option.value}`} className="text-sm cursor-pointer">
+                              {option.label}
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="meterApplicable"
+                    checked={formData.meterApplicable}
+                    onCheckedChange={(checked) => handleInputChange('meterApplicable', checked)}
+                    className="border-gray-300 text-[#C72030]"
+                  />
+                  <Label htmlFor="meterApplicable" className="text-sm cursor-pointer">
+                    Meter Applicable
+                  </Label>
+                </div>
               </div>
-            </div>}
-        </div>
-
-        {/* Non Consumption Asset Measure */}
-        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-          <div onClick={() => toggleSection('nonConsumption')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
-            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                <BarChart className="w-3 h-3 sm:w-4 sm:h-4" />
-              </span>
-              NON CONSUMPTION ASSET MEASURE
-            </div>
-            {expandedSections.nonConsumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            )}
           </div>
-          {expandedSections.nonConsumption && <div className="p-4 sm:p-6">
-              <div className="space-y-4 sm:space-y-6">
-                {nonConsumptionMeasures.map(measure => <div key={measure.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="font-medium text-gray-700 text-sm sm:text-base">Non Consumption Asset Measure</h4>
-                      {nonConsumptionMeasures.length > 1 && <button onClick={() => removeNonConsumptionMeasure(measure.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
-                          <X className="w-4 h-4" />
-                        </button>}
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-                      {[{
-                  label: 'Name',
-                  name: `nc-name-${measure.id}`,
-                  placeholder: 'Name',
-                  value: measure.name,
-                  onChange: e => updateNonConsumptionMeasure(measure.id, 'name', e.target.value)
-                }, {
-                  label: 'Min',
-                  name: `nc-min-${measure.id}`,
-                  placeholder: 'Min',
-                  type: 'number',
-                  value: measure.min,
-                  onChange: e => updateNonConsumptionMeasure(measure.id, 'min', e.target.value)
-                }, {
-                  label: 'Max',
-                  name: `nc-max-${measure.id}`,
-                  placeholder: 'Max',
-                  type: 'number',
-                  value: measure.max,
-                  onChange: e => updateNonConsumptionMeasure(measure.id, 'max', e.target.value)
-                }, {
-                  label: 'Alert Below Val.',
-                  name: `nc-alertBelow-${measure.id}`,
-                  placeholder: 'Alert Below Value',
-                  type: 'number',
-                  value: measure.alertBelowVal,
-                  onChange: e => updateNonConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)
-                }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} value={field.value} onChange={field.onChange} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} />)}
-                      <FormControl fullWidth variant="outlined" sx={{
-                  minWidth: 120
-                }}>
-                        <InputLabel id={`nc-unitType-select-label-${measure.id}`} shrink>Unit Type</InputLabel>
-                        <MuiSelect labelId={`nc-unitType-select-label-${measure.id}`} label="Unit Type" displayEmpty value={measure.unitType} onChange={e => updateNonConsumptionMeasure(measure.id, 'unitType', e.target.value)} sx={fieldStyles}>
-                          <MenuItem value=""><em>Select Unit Type</em></MenuItem>
-                          <MenuItem value="temperature">Temperature</MenuItem>
-                          <MenuItem value="pressure">Pressure</MenuItem>
-                          <MenuItem value="voltage">Voltage</MenuItem>
-                          <MenuItem value="current">Current</MenuItem>
-                          <MenuItem value="frequency">Frequency</MenuItem>
-                        </MuiSelect>
-                      </FormControl>
-                    </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                      {[{
-                  label: 'Alert Above Val.',
-                  name: `nc-alertAbove-${measure.id}`,
-                  placeholder: 'Alert Above Value',
-                  type: 'number',
-                  value: measure.alertAboveVal,
-                  onChange: e => updateNonConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)
-                }, {
-                  label: 'Multiplier Factor',
-                  name: `nc-multiplier-${measure.id}`,
-                  placeholder: 'Multiplier Factor',
-                  value: measure.multiplierFactor,
-                  onChange: e => updateNonConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)
-                }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} value={field.value} onChange={field.onChange} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} />)}
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <input type="checkbox" id={`nc-checkPrevious-${measure.id}`} checked={measure.checkPreviousReading} onChange={e => updateNonConsumptionMeasure(measure.id, 'checkPreviousReading', e.target.checked)} className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]" style={{
-                  accentColor: '#C72030'
-                }} />
-                      <label htmlFor={`nc-checkPrevious-${measure.id}`} className="text-xs sm:text-sm">Check Previous Reading</label>
-                    </div>
-                  </div>)}
-                
-                <button onClick={addNonConsumptionMeasure} className="px-4 py-2 rounded-md flex items-center text-sm sm:text-base bg-[#f6f4ee] text-orange-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Measure
-                </button>
+          {/* Warranty Details */}
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div 
+              onClick={() => toggleSection('warranty')} 
+              className="cursor-pointer border-l-4 border-l-[#C72030] p-6 flex justify-between items-center bg-white"
+            >
+              <div className="flex items-center gap-2 text-[#C72030] text-base font-semibold">
+                <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">
+                  <Shield className="w-4 h-4" />
+                </span>
+                WARRANTY DETAILS
               </div>
-            </div>}
-        </div>
-
-        {/* Attachments */}
-        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-          <div onClick={() => toggleSection('attachments')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
-            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                <Paperclip className="w-3 h-3 sm:w-4 sm:h-4" />
-              </span>
-              ATTACHMENTS
+              {expandedSections.warranty ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
             </div>
-            {expandedSections.attachments ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </div>
-          {expandedSections.attachments && <div className="p-4 sm:p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                {[{
-              label: 'Manuals Upload',
-              id: 'manuals-upload',
-              category: 'manualsUpload',
-              accept: '.pdf,.doc,.docx,.txt'
-            }, {
-              label: 'Insurance Details',
-              id: 'insurance-upload',
-              category: 'insuranceDetails',
-              accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-            }, {
-              label: 'Purchaselah Invoice',
-              id: 'invoice-upload',
-              category: 'purchaseInvoice',
-              accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-            }, {
-              label: 'AMC',
-              id: 'amc-upload',
-              category: 'amc',
-              accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-            }].map(field => <div key={field.id}>
-                    <label className="text-xs sm:text-sm font-medium text-gray-700 mb-2 block">{field.label}</label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                      <input type="file" multiple accept={field.accept} onChange={e => handleFileUpload(field.category, e.target.files)} className="hidden" id={field.id} />
-                      <label htmlFor={field.id} className="cursor-pointer block">
-                        <div className="flex items-center justify-center space-x-2 mb-2">
-                          <span className="text-[#C72030] font-medium text-xs sm:text-sm">Choose File</span>
-                          <span className="text-gray-500 text-xs sm:text-sm">
-                            {attachments[field.category].length > 0 ? `${attachments[field.category].length} file(s) selected` : 'No file chosen'}
-                          </span>
+            {expandedSections.warranty && (
+              <div className="p-6 border-t">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-6">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Under Warranty</Label>
+                    <RadioGroup
+                      value={formData.underWarranty}
+                      onValueChange={(value) => handleInputChange('underWarranty', value)}
+                      className="flex gap-6"
+                    >
+                      {[
+                        { value: 'yes', label: 'Yes' },
+                        { value: 'no', label: 'No' }
+                      ].map(option => (
+                        <div key={option.value} className="flex items-center space-x-2">
+                          <RadioGroupItem 
+                            value={option.value} 
+                            id={`warranty-${option.value}`}
+                            className="border-gray-300 text-[#C72030]"
+                          />
+                          <Label htmlFor={`warranty-${option.value}`} className="text-sm cursor-pointer">
+                            {option.label}
+                          </Label>
                         </div>
-                      </label>
-                      {attachments[field.category].length > 0 && <div className="mt-2 space-y-1">
-                          {attachments[field.category].map((file, index) => <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
-                              <span className="text-xs sm:text-sm truncate">{file.name}</span>
-                              <button onClick={() => removeFile(field.category, index)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>)}
-                        </div>}
-                      <div className="mt-2">
-                        <label htmlFor={field.id}>
-                          <button className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto">
-                            <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
-                            Upload Files
-                          </button>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="warrantyStartDate">Warranty Start Date</Label>
+                    <Input
+                      id="warrantyStartDate"
+                      type="date"
+                      value={formData.warrantyStartDate}
+                      onChange={(e) => handleInputChange('warrantyStartDate', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="warrantyExpiresOn">Warranty expires on</Label>
+                    <Input
+                      id="warrantyExpiresOn"
+                      type="date"
+                      value={formData.warrantyExpiresOn}
+                      onChange={(e) => handleInputChange('warrantyExpiresOn', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="commissioningDate">Commissioning Date</Label>
+                    <Input
+                      id="commissioningDate"
+                      type="date"
+                      value={formData.commissioningDate}
+                      onChange={(e) => handleInputChange('commissioningDate', e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Meter Category Type */}
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div 
+              onClick={() => toggleSection('meterCategory')} 
+              className="cursor-pointer border-l-4 border-l-[#C72030] p-6 flex justify-between items-center bg-white"
+            >
+              <div className="flex items-center gap-2 text-[#C72030] text-base font-semibold">
+                <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">
+                  <Activity className="w-4 h-4" />
+                </span>
+                METER CATEGORY TYPE
+              </div>
+              {expandedSections.meterCategory ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </div>
+            {expandedSections.meterCategory && (
+              <div className="p-6 border-t">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+                  {getMeterCategoryOptions().map(option => (
+                    <div key={option.value} className="p-4 rounded-lg text-center bg-[#f6f4ee]">
+                      <div className="flex items-center justify-center space-x-2">
+                        <input
+                          type="radio"
+                          id={option.value}
+                          name="meterCategory"
+                          value={option.value}
+                          checked={meterCategoryType === option.value}
+                          onChange={(e) => handleMeterCategoryChange(e.target.value)}
+                          className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                        />
+                        <label htmlFor={option.value} className="text-sm cursor-pointer">
+                          {option.label}
                         </label>
                       </div>
                     </div>
-                  </div>)}
-              </div>
-            </div>}
-        </div>
+                  ))}
+                </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">
-          <button onClick={handleSaveAndShowDetails} className="border border-[#C72030] text-[#C72030] px-6 sm:px-8 py-2 rounded-md hover:bg-[#C72030] hover:text-white text-sm sm:text-base">
-            Save & Show Details
-          </button>
-          <button onClick={handleSaveAndCreateNew} className="px-6 sm:px-8 py-2 rounded-md text-sm sm:text-base bg-[#f6f4ee] text-red-700">
-            Save & Create New Asset
-          </button>
+                {getSubCategoryOptions().length > 0 && (
+                  <div className="mt-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {getSubCategoryOptions().map(option => (
+                        <div key={option.value} className="bg-purple-100 p-4 rounded-lg text-center">
+                          <div className="flex items-center justify-center space-x-2">
+                            <input
+                              type="radio"
+                              id={`sub-${option.value}`}
+                              name="subMeterCategory"
+                              value={option.value}
+                              checked={subCategoryType === option.value}
+                              onChange={(e) => setSubCategoryType(e.target.value)}
+                              className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                            />
+                            <label htmlFor={`sub-${option.value}`} className="text-sm cursor-pointer">
+                              {option.label}
+                            </label>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Consumption Asset Measure */}
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div 
+              onClick={() => toggleSection('consumption')} 
+              className="cursor-pointer border-l-4 border-l-[#C72030] p-6 flex justify-between items-center bg-white"
+            >
+              <div className="flex items-center gap-2 text-[#C72030] text-base font-semibold">
+                <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">
+                  <TrendingUp className="w-4 h-4" />
+                </span>
+                CONSUMPTION ASSET MEASURE
+              </div>
+              {expandedSections.consumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </div>
+            {expandedSections.consumption && (
+              <div className="p-6 border-t">
+                <div className="space-y-6">
+                  {consumptionMeasures.map(measure => (
+                    <div key={measure.id} className="border border-gray-200 rounded-lg p-6">
+                      <div className="flex justify-between items-center mb-6">
+                        <h4 className="font-medium text-gray-700 text-base">Consumption Asset Measure</h4>
+                        {consumptionMeasures.length > 1 && (
+                          <button
+                            onClick={() => removeConsumptionMeasure(measure.id)}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
+                        <div className="space-y-2">
+                          <Label htmlFor={`name-${measure.id}`}>Name</Label>
+                          <Input
+                            id={`name-${measure.id}`}
+                            placeholder="Enter Text"
+                            value={measure.name}
+                            onChange={(e) => updateConsumptionMeasure(measure.id, 'name', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`min-${measure.id}`}>Min</Label>
+                          <Input
+                            id={`min-${measure.id}`}
+                            type="number"
+                            placeholder="Enter Number"
+                            value={measure.min}
+                            onChange={(e) => updateConsumptionMeasure(measure.id, 'min', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`max-${measure.id}`}>Max</Label>
+                          <Input
+                            id={`max-${measure.id}`}
+                            type="number"
+                            placeholder="Enter Number"
+                            value={measure.max}
+                            onChange={(e) => updateConsumptionMeasure(measure.id, 'max', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`alertBelow-${measure.id}`}>Alert Below Val.</Label>
+                          <Input
+                            id={`alertBelow-${measure.id}`}
+                            type="number"
+                            placeholder="Enter Value"
+                            value={measure.alertBelowVal}
+                            onChange={(e) => updateConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`unitType-${measure.id}`}>Unit Type</Label>
+                          <Select 
+                            value={measure.unitType} 
+                            onValueChange={(value) => updateConsumptionMeasure(measure.id, 'unitType', value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select Unit Type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="kwh">kWh</SelectItem>
+                              <SelectItem value="liters">Liters</SelectItem>
+                              <SelectItem value="cubic-meters">Cubic Meters</SelectItem>
+                              <SelectItem value="units">Units</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                        <div className="space-y-2">
+                          <Label htmlFor={`alertAbove-${measure.id}`}>Alert Above Val.</Label>
+                          <Input
+                            id={`alertAbove-${measure.id}`}
+                            type="number"
+                            placeholder="Enter Value"
+                            value={measure.alertAboveVal}
+                            onChange={(e) => updateConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`multiplier-${measure.id}`}>Multiplier Factor</Label>
+                          <Input
+                            id={`multiplier-${measure.id}`}
+                            placeholder="Enter Text"
+                            value={measure.multiplierFactor}
+                            onChange={(e) => updateConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`checkPrevious-${measure.id}`}
+                          checked={measure.checkPreviousReading}
+                          onCheckedChange={(checked) => updateConsumptionMeasure(measure.id, 'checkPreviousReading', checked)}
+                          className="border-gray-300 text-[#C72030]"
+                        />
+                        <Label htmlFor={`checkPrevious-${measure.id}`} className="text-sm cursor-pointer">
+                          Check Previous Reading
+                        </Label>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <Button
+                    onClick={addConsumptionMeasure}
+                    variant="outline"
+                    className="bg-[#f6f4ee] text-red-700 border-red-200 hover:bg-[#f0ebe0]"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Measure
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Non Consumption Asset Measure */}
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div 
+              onClick={() => toggleSection('nonConsumption')} 
+              className="cursor-pointer border-l-4 border-l-[#C72030] p-6 flex justify-between items-center bg-white"
+            >
+              <div className="flex items-center gap-2 text-[#C72030] text-base font-semibold">
+                <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">
+                  <BarChart className="w-4 h-4" />
+                </span>
+                NON CONSUMPTION ASSET MEASURE
+              </div>
+              {expandedSections.nonConsumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </div>
+            {expandedSections.nonConsumption && (
+              <div className="p-6 border-t">
+                <div className="space-y-6">
+                  {nonConsumptionMeasures.map(measure => (
+                    <div key={measure.id} className="border border-gray-200 rounded-lg p-6">
+                      <div className="flex justify-between items-center mb-6">
+                        <h4 className="font-medium text-gray-700 text-base">Non Consumption Asset Measure</h4>
+                        {nonConsumptionMeasures.length > 1 && (
+                          <button
+                            onClick={() => removeNonConsumptionMeasure(measure.id)}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
+                        <div className="space-y-2">
+                          <Label htmlFor={`nc-name-${measure.id}`}>Name</Label>
+                          <Input
+                            id={`nc-name-${measure.id}`}
+                            placeholder="Name"
+                            value={measure.name}
+                            onChange={(e) => updateNonConsumptionMeasure(measure.id, 'name', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`nc-min-${measure.id}`}>Min</Label>
+                          <Input
+                            id={`nc-min-${measure.id}`}
+                            type="number"
+                            placeholder="Min"
+                            value={measure.min}
+                            onChange={(e) => updateNonConsumptionMeasure(measure.id, 'min', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`nc-max-${measure.id}`}>Max</Label>
+                          <Input
+                            id={`nc-max-${measure.id}`}
+                            type="number"
+                            placeholder="Max"
+                            value={measure.max}
+                            onChange={(e) => updateNonConsumptionMeasure(measure.id, 'max', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`nc-alertBelow-${measure.id}`}>Alert Below Val.</Label>
+                          <Input
+                            id={`nc-alertBelow-${measure.id}`}
+                            type="number"
+                            placeholder="Alert Below Value"
+                            value={measure.alertBelowVal}
+                            onChange={(e) => updateNonConsumptionMeasure(measure.id, 'alertBelowVal', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`nc-unitType-${measure.id}`}>Unit Type</Label>
+                          <Select 
+                            value={measure.unitType} 
+                            onValueChange={(value) => updateNonConsumptionMeasure(measure.id, 'unitType', value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select Unit Type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="temperature">Temperature</SelectItem>
+                              <SelectItem value="pressure">Pressure</SelectItem>
+                              <SelectItem value="voltage">Voltage</SelectItem>
+                              <SelectItem value="current">Current</SelectItem>
+                              <SelectItem value="frequency">Frequency</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                        <div className="space-y-2">
+                          <Label htmlFor={`nc-alertAbove-${measure.id}`}>Alert Above Val.</Label>
+                          <Input
+                            id={`nc-alertAbove-${measure.id}`}
+                            type="number"
+                            placeholder="Alert Above Value"
+                            value={measure.alertAboveVal}
+                            onChange={(e) => updateNonConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`nc-multiplier-${measure.id}`}>Multiplier Factor</Label>
+                          <Input
+                            id={`nc-multiplier-${measure.id}`}
+                            placeholder="Multiplier Factor"
+                            value={measure.multiplierFactor}
+                            onChange={(e) => updateNonConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`nc-checkPrevious-${measure.id}`}
+                          checked={measure.checkPreviousReading}
+                          onCheckedChange={(checked) => updateNonConsumptionMeasure(measure.id, 'checkPreviousReading', checked)}
+                          className="border-gray-300 text-[#C72030]"
+                        />
+                        <Label htmlFor={`nc-checkPrevious-${measure.id}`} className="text-sm cursor-pointer">
+                          Check Previous Reading
+                        </Label>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <Button
+                    onClick={addNonConsumptionMeasure}
+                    variant="outline"
+                    className="bg-[#f6f4ee] text-orange-700 border-orange-200 hover:bg-[#f0ebe0]"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Measure
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Attachments */}
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div 
+              onClick={() => toggleSection('attachments')} 
+              className="cursor-pointer border-l-4 border-l-[#C72030] p-6 flex justify-between items-center bg-white"
+            >
+              <div className="flex items-center gap-2 text-[#C72030] text-base font-semibold">
+                <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">
+                  <Paperclip className="w-4 h-4" />
+                </span>
+                ATTACHMENTS
+              </div>
+              {expandedSections.attachments ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </div>
+            {expandedSections.attachments && (
+              <div className="p-6 border-t">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {[
+                    {
+                      label: 'Manuals Upload',
+                      id: 'manuals-upload',
+                      category: 'manualsUpload',
+                      accept: '.pdf,.doc,.docx,.txt'
+                    },
+                    {
+                      label: 'Insurance Details',
+                      id: 'insurance-upload',
+                      category: 'insuranceDetails',
+                      accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
+                    },
+                    {
+                      label: 'Purchase Invoice',
+                      id: 'invoice-upload',
+                      category: 'purchaseInvoice',
+                      accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
+                    },
+                    {
+                      label: 'AMC',
+                      id: 'amc-upload',
+                      category: 'amc',
+                      accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
+                    }
+                  ].map(field => (
+                    <div key={field.id}>
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">{field.label}</Label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                        <input
+                          type="file"
+                          multiple
+                          accept={field.accept}
+                          onChange={(e) => handleFileUpload(field.category, e.target.files)}
+                          className="hidden"
+                          id={field.id}
+                        />
+                        <label htmlFor={field.id} className="cursor-pointer block">
+                          <div className="flex items-center justify-center space-x-2 mb-2">
+                            <span className="text-[#C72030] font-medium text-sm">Choose File</span>
+                            <span className="text-gray-500 text-sm">
+                              {attachments[field.category].length > 0 
+                                ? `${attachments[field.category].length} file(s) selected` 
+                                : 'No file chosen'
+                              }
+                            </span>
+                          </div>
+                        </label>
+                        {attachments[field.category].length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {attachments[field.category].map((file, index) => (
+                              <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                                <span className="text-sm truncate">{file.name}</span>
+                                <button
+                                  onClick={() => removeFile(field.category, index)}
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div className="mt-2">
+                          <label htmlFor={field.id}>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="bg-[#f6f4ee] text-[#C72030] border-red-200 hover:bg-[#f0ebe0]"
+                              asChild
+                            >
+                              <span className="flex items-center cursor-pointer">
+                                <Plus className="w-4 h-4 mr-2" />
+                                Upload Files
+                              </span>
+                            </Button>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row justify-center gap-4 pt-6">
+            <Button
+              onClick={handleSaveAndShowDetails}
+              variant="outline"
+              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-8 py-2"
+            >
+              Save & Show Details
+            </Button>
+            <Button
+              onClick={handleSaveAndCreateNew}
+              className="bg-[#f6f4ee] text-red-700 hover:bg-[#f0ebe0] px-8 py-2"
+            >
+              Save & Create New Asset
+            </Button>
+          </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
