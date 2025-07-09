@@ -9,7 +9,6 @@ import { TextField } from '@mui/material';
 import { ArrowLeft, ChevronDown, ChevronUp, Plus, X, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Percent, Zap, Sun, Droplet, Recycle, BarChart3, Grid2X2, Settings } from 'lucide-react';
 import { FormControl, InputLabel, MenuItem, Select as MuiSelect, SelectChangeEvent, Radio, RadioGroup as MuiRadioGroup, FormControlLabel } from '@mui/material';
 import { AddCustomFieldModal } from '@/components/AddCustomFieldModal';
-
 const fieldStyles = {
   height: {
     xs: 28,
@@ -24,7 +23,6 @@ const fieldStyles = {
     }
   }
 };
-
 export const EditAssetDetailsPage = () => {
   const {
     id
@@ -144,16 +142,19 @@ export const EditAssetDetailsPage = () => {
     noOfVisits: '',
     amcCost: ''
   });
-  const [customFields, setCustomFields] = useState<{ id: string; name: string; value: string }[]>([]);
-  const [itCustomFields, setItCustomFields] = useState<{ 
-    id: string; 
-    name: string; 
-    value: string; 
-    section: 'System Details' | 'Hard Disk Details' 
+  const [customFields, setCustomFields] = useState<{
+    id: string;
+    name: string;
+    value: string;
+  }[]>([]);
+  const [itCustomFields, setItCustomFields] = useState<{
+    id: string;
+    name: string;
+    value: string;
+    section: 'System Details' | 'Hard Disk Details';
   }[]>([]);
   const [isCustomFieldModalOpen, setIsCustomFieldModalOpen] = useState(false);
   const [activeCustomFieldSection, setActiveCustomFieldSection] = useState<'asset' | 'it'>('asset');
-
   const getMeterCategoryOptions = () => [{
     value: 'board',
     label: 'Board',
@@ -179,7 +180,6 @@ export const EditAssetDetailsPage = () => {
     label: 'IEX-GDAM',
     icon: <BarChart className="w-6 h-6" />
   }];
-
   const getSubCategoryOptions = () => {
     switch (meterCategoryType) {
       case 'board':
@@ -228,40 +228,34 @@ export const EditAssetDetailsPage = () => {
         return [];
     }
   };
-
   const toggleSection = section => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }));
   };
-
   const handleLocationChange = (field: string, value: string) => {
     setLocationData(prev => ({
       ...prev,
       [field]: value
     }));
   };
-
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
-
   const handleItAssetChange = (field: string, value: string) => {
     setItAssetData(prev => ({
       ...prev,
       [field]: value
     }));
   };
-
   const handleMeterCategoryChange = value => {
     setMeterCategoryType(value);
     setSubCategoryType('');
   };
-
   const addConsumptionMeasure = () => {
     const newId = consumptionMeasures.length > 0 ? Math.max(...consumptionMeasures.map(m => m.id)) + 1 : 1;
     setConsumptionMeasures([...consumptionMeasures, {
@@ -276,20 +270,17 @@ export const EditAssetDetailsPage = () => {
       checkPreviousReading: false
     }]);
   };
-
   const removeConsumptionMeasure = id => {
     if (consumptionMeasures.length > 1) {
       setConsumptionMeasures(consumptionMeasures.filter(m => m.id !== id));
     }
   };
-
   const updateConsumptionMeasure = (id, field, value) => {
     setConsumptionMeasures(consumptionMeasures.map(m => m.id === id ? {
       ...m,
       [field]: value
     } : m));
   };
-
   const addNonConsumptionMeasure = () => {
     const newId = nonConsumptionMeasures.length > 0 ? Math.max(...nonConsumptionMeasures.map(m => m.id)) + 1 : 1;
     setNonConsumptionMeasures([...nonConsumptionMeasures, {
@@ -304,20 +295,17 @@ export const EditAssetDetailsPage = () => {
       checkPreviousReading: false
     }]);
   };
-
   const removeNonConsumptionMeasure = id => {
     if (nonConsumptionMeasures.length > 1) {
       setNonConsumptionMeasures(nonConsumptionMeasures.filter(m => m.id !== id));
     }
   };
-
   const updateNonConsumptionMeasure = (id, field, value) => {
     setNonConsumptionMeasures(nonConsumptionMeasures.map(m => m.id === id ? {
       ...m,
       [field]: value
     } : m));
   };
-
   const handleFileUpload = (category, files) => {
     if (files) {
       const fileArray = Array.from(files);
@@ -327,42 +315,36 @@ export const EditAssetDetailsPage = () => {
       }));
     }
   };
-
   const removeFile = (category, index) => {
     setAttachments(prev => ({
       ...prev,
       [category]: prev[category].filter((_, i) => i !== index)
     }));
   };
-
   const handleDepreciationDataChange = (field: string, value: string) => {
     setDepreciationData(prev => ({
       ...prev,
       [field]: value
     }));
   };
-
   const handleAssetAllocationChange = (field: string, value: string) => {
     setAssetAllocationData(prev => ({
       ...prev,
       [field]: value
     }));
   };
-
   const handleAssetLoanedChange = (field: string, value: string) => {
     setAssetLoanedData(prev => ({
       ...prev,
       [field]: value
     }));
   };
-
   const handleAmcDetailsChange = (field: string, value: string) => {
     setAmcDetailsData(prev => ({
       ...prev,
       [field]: value
     }));
   };
-
   const handleSaveAndShowDetails = () => {
     console.log('Saving and showing details:', {
       locationData,
@@ -374,7 +356,6 @@ export const EditAssetDetailsPage = () => {
     });
     navigate(`/maintenance/asset/details/${id}`);
   };
-
   const handleSaveAndCreateNew = () => {
     console.log('Saving and creating new:', {
       locationData,
@@ -386,11 +367,9 @@ export const EditAssetDetailsPage = () => {
     });
     navigate('/maintenance/asset/add');
   };
-
   const handleBack = () => {
     navigate(`/maintenance/asset/details/${id}`);
   };
-
   const handleAddCustomField = (fieldName: string, section?: string) => {
     if (activeCustomFieldSection === 'it' && section) {
       const newField = {
@@ -409,36 +388,28 @@ export const EditAssetDetailsPage = () => {
       setCustomFields(prev => [...prev, newField]);
     }
   };
-
   const handleCustomFieldChange = (id: string, value: string) => {
-    setCustomFields(prev => 
-      prev.map(field => 
-        field.id === id ? { ...field, value } : field
-      )
-    );
+    setCustomFields(prev => prev.map(field => field.id === id ? {
+      ...field,
+      value
+    } : field));
   };
-
   const handleItCustomFieldChange = (id: string, value: string) => {
-    setItCustomFields(prev => 
-      prev.map(field => 
-        field.id === id ? { ...field, value } : field
-      )
-    );
+    setItCustomFields(prev => prev.map(field => field.id === id ? {
+      ...field,
+      value
+    } : field));
   };
-
   const removeCustomField = (id: string) => {
     setCustomFields(prev => prev.filter(field => field.id !== id));
   };
-
   const removeItCustomField = (id: string) => {
     setItCustomFields(prev => prev.filter(field => field.id !== id));
   };
-
   const openCustomFieldModal = (section: 'asset' | 'it') => {
     setActiveCustomFieldSection(section);
     setIsCustomFieldModalOpen(true);
   };
-
   return <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
@@ -503,13 +474,10 @@ export const EditAssetDetailsPage = () => {
               ASSET DETAILS
             </div>
             <div className="flex items-center gap-2">
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openCustomFieldModal('asset');
-                }}
-                className="px-3 py-1 rounded-md text-sm flex items-center gap-1 bg-[#f6f4ee] text-red-700"
-              >
+              <button onClick={e => {
+              e.stopPropagation();
+              openCustomFieldModal('asset');
+            }} className="px-3 py-1 rounded-md text-sm flex items-center gap-1 bg-[#f6f4ee] text-red-700">
                 <Plus className="w-4 h-4" />
                 Custom Field
               </button>
@@ -586,34 +554,18 @@ export const EditAssetDetailsPage = () => {
               </div>
 
               {/* Custom Fields */}
-              {customFields.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-4">
-                  {customFields.map((field) => (
-                    <div key={field.id} className="relative">
-                      <TextField
-                        label={field.name}
-                        placeholder={`Enter ${field.name}`}
-                        value={field.value}
-                        onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{
-                          shrink: true
-                        }}
-                        InputProps={{
-                          sx: fieldStyles
-                        }}
-                      />
-                      <button
-                        onClick={() => removeCustomField(field.id)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600"
-                      >
+              {customFields.length > 0 && <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-4">
+                  {customFields.map(field => <div key={field.id} className="relative">
+                      <TextField label={field.name} placeholder={`Enter ${field.name}`} value={field.value} onChange={e => handleCustomFieldChange(field.id, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} />
+                      <button onClick={() => removeCustomField(field.id)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600">
                         <X className="w-3 h-3" />
                       </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    </div>)}
+                </div>}
 
               {/* Status Section */}
               <div className="mb-4">
@@ -651,13 +603,10 @@ export const EditAssetDetailsPage = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openCustomFieldModal('it');
-                }}
-                className="px-3 py-1 rounded-md text-sm flex items-center gap-1 bg-[#f6f4ee] text-red-700"
-              >
+              <button onClick={e => {
+              e.stopPropagation();
+              openCustomFieldModal('it');
+            }} className="px-3 py-1 rounded-md text-sm flex items-center gap-1 bg-[#f6f4ee] text-red-700">
                 <Plus className="w-4 h-4" />
                 Custom Field
               </button>
@@ -669,35 +618,33 @@ export const EditAssetDetailsPage = () => {
               <div className="mb-6">
                 <h3 className="text-[#C72030] font-semibold text-sm mb-4">SYSTEM DETAILS</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <TextField label="OS" placeholder="Enter OS" name="os" value={itAssetData.os} onChange={e => handleItAssetChange('os', e.target.value)} fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-                  <TextField label="Total Memory" placeholder="Enter Total Memory" name="totalMemory" value={itAssetData.totalMemory} onChange={e => handleItAssetChange('totalMemory', e.target.value)} fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-                  <TextField label="Processor" placeholder="Enter Processor" name="processor" value={itAssetData.processor} onChange={e => handleItAssetChange('processor', e.target.value)} fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+                  <TextField label="OS" placeholder="Enter OS" name="os" value={itAssetData.os} onChange={e => handleItAssetChange('os', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} />
+                  <TextField label="Total Memory" placeholder="Enter Total Memory" name="totalMemory" value={itAssetData.totalMemory} onChange={e => handleItAssetChange('totalMemory', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} />
+                  <TextField label="Processor" placeholder="Enter Processor" name="processor" value={itAssetData.processor} onChange={e => handleItAssetChange('processor', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} />
                   
                   {/* Custom Fields for System Details */}
-                  {itCustomFields.filter(field => field.section === 'System Details').map((field) => (
-                    <div key={field.id} className="relative">
-                      <TextField
-                        label={field.name}
-                        placeholder={`Enter ${field.name}`}
-                        value={field.value}
-                        onChange={(e) => handleItCustomFieldChange(field.id, e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{
-                          shrink: true
-                        }}
-                        InputProps={{
-                          sx: fieldStyles
-                        }}
-                      />
-                      <button
-                        onClick={() => removeItCustomField(field.id)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600"
-                      >
+                  {itCustomFields.filter(field => field.section === 'System Details').map(field => <div key={field.id} className="relative">
+                      <TextField label={field.name} placeholder={`Enter ${field.name}`} value={field.value} onChange={e => handleItCustomFieldChange(field.id, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                  shrink: true
+                }} InputProps={{
+                  sx: fieldStyles
+                }} />
+                      <button onClick={() => removeItCustomField(field.id)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600">
                         <X className="w-3 h-3" />
                       </button>
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
               </div>
 
@@ -705,35 +652,33 @@ export const EditAssetDetailsPage = () => {
               <div>
                 <h3 className="text-[#C72030] font-semibold text-sm mb-4">HARD DISK DETAILS</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <TextField label="Model" placeholder="Enter Model" name="model" value={itAssetData.model} onChange={e => handleItAssetChange('model', e.target.value)} fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-                  <TextField label="Serial No." placeholder="Enter Serial No." name="serialNo" value={itAssetData.serialNo} onChange={e => handleItAssetChange('serialNo', e.target.value)} fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-                  <TextField label="Capacity" placeholder="Enter Capacity" name="capacity" value={itAssetData.capacity} onChange={e => handleItAssetChange('capacity', e.target.value)} fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+                  <TextField label="Model" placeholder="Enter Model" name="model" value={itAssetData.model} onChange={e => handleItAssetChange('model', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} />
+                  <TextField label="Serial No." placeholder="Enter Serial No." name="serialNo" value={itAssetData.serialNo} onChange={e => handleItAssetChange('serialNo', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} />
+                  <TextField label="Capacity" placeholder="Enter Capacity" name="capacity" value={itAssetData.capacity} onChange={e => handleItAssetChange('capacity', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} />
                   
                   {/* Custom Fields for Hard Disk Details */}
-                  {itCustomFields.filter(field => field.section === 'Hard Disk Details').map((field) => (
-                    <div key={field.id} className="relative">
-                      <TextField
-                        label={field.name}
-                        placeholder={`Enter ${field.name}`}
-                        value={field.value}
-                        onChange={(e) => handleItCustomFieldChange(field.id, e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{
-                          shrink: true
-                        }}
-                        InputProps={{
-                          sx: fieldStyles
-                        }}
-                      />
-                      <button
-                        onClick={() => removeItCustomField(field.id)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600"
-                      >
+                  {itCustomFields.filter(field => field.section === 'Hard Disk Details').map(field => <div key={field.id} className="relative">
+                      <TextField label={field.name} placeholder={`Enter ${field.name}`} value={field.value} onChange={e => handleItCustomFieldChange(field.id, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                  shrink: true
+                }} InputProps={{
+                  sx: fieldStyles
+                }} />
+                      <button onClick={() => removeItCustomField(field.id)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600">
                         <X className="w-3 h-3" />
                       </button>
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
               </div>
             </div>}
@@ -799,7 +744,7 @@ export const EditAssetDetailsPage = () => {
                 {/* Responsive grid for meter category options */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
                   {getMeterCategoryOptions().map(option => <div key={option.value} className="bg-white  rounded-lg border border-gray-200 shadow-sm">
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 px-0 py-[7px]">
                         <div className="text-gray-600">
                           {option.icon}
                         </div>
@@ -848,9 +793,17 @@ export const EditAssetDetailsPage = () => {
           </div>
           {expandedSections.consumption && <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <TextField required label="Purchase Cost" placeholder="Enter Purchase Cost" name="purchaseCost" value={formData.purchaseCost} onChange={e => handleInputChange('purchaseCost', e.target.value)} fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+                <TextField required label="Purchase Cost" placeholder="Enter Purchase Cost" name="purchaseCost" value={formData.purchaseCost} onChange={e => handleInputChange('purchaseCost', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />
                 
-                <TextField required label="Purchase Date" placeholder="dd/mm/yyyy" name="purchaseDate" type="date" value={formData.purchaseDate} onChange={e => handleInputChange('purchaseDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+                <TextField required label="Purchase Date" placeholder="dd/mm/yyyy" name="purchaseDate" type="date" value={formData.purchaseDate} onChange={e => handleInputChange('purchaseDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />
 
                 <div className="space-y-2">
                   <span className="text-sm font-medium text-gray-700">Under Warranty</span>
@@ -866,7 +819,11 @@ export const EditAssetDetailsPage = () => {
                   </div>
                 </div>
 
-                <TextField required label="Warranty Expires On" placeholder="dd/mm/yyyy" name="warrantyExpiresOn" type="date" value={formData.warrantyExpiresOn} onChange={e => handleInputChange('warrantyExpiresOn', e.target.value)} fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+                <TextField required label="Warranty Expires On" placeholder="dd/mm/yyyy" name="warrantyExpiresOn" type="date" value={formData.warrantyExpiresOn} onChange={e => handleInputChange('warrantyExpiresOn', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />
               </div>
             </div>}
         </div>
@@ -909,11 +866,23 @@ export const EditAssetDetailsPage = () => {
 
               {/* Input Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                <TextField required label="Useful Life (in yrs)" placeholder="yrs" name="usefulLife" value={depreciationData.usefulLife} onChange={e => handleDepreciationDataChange('usefulLife', e.target.value)} fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+                <TextField required label="Useful Life (in yrs)" placeholder="yrs" name="usefulLife" value={depreciationData.usefulLife} onChange={e => handleDepreciationDataChange('usefulLife', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />
                 
-                <TextField required label="Salvage Value" placeholder="Enter Value" name="salvageValue" value={depreciationData.salvageValue} onChange={e => handleDepreciationDataChange('salvageValue', e.target.value)} fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+                <TextField required label="Salvage Value" placeholder="Enter Value" name="salvageValue" value={depreciationData.salvageValue} onChange={e => handleDepreciationDataChange('salvageValue', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />
 
-                <TextField required label="Depreciation Rate" placeholder="Enter Value" name="depreciationRate" value={depreciationData.depreciationRate} onChange={e => handleDepreciationDataChange('depreciationRate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+                <TextField required label="Depreciation Rate" placeholder="Enter Value" name="depreciationRate" value={depreciationData.depreciationRate} onChange={e => handleDepreciationDataChange('depreciationRate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />
               </div>
 
               {/* Configuration Scope */}
@@ -1013,9 +982,17 @@ export const EditAssetDetailsPage = () => {
                   </MuiSelect>
                 </FormControl>
 
-                <TextField required label="Agreement Start Date" placeholder="dd/mm/yyyy" name="agreementStartDate" type="date" value={assetLoanedData.agreementStartDate} onChange={e => handleAssetLoanedChange('agreementStartDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+                <TextField required label="Agreement Start Date" placeholder="dd/mm/yyyy" name="agreementStartDate" type="date" value={assetLoanedData.agreementStartDate} onChange={e => handleAssetLoanedChange('agreementStartDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />
 
-                <TextField required label="Agreement End Date" placeholder="dd/mm/yyyy" name="agreementEndDate" type="date" value={assetLoanedData.agreementEndDate} onChange={e => handleAssetLoanedChange('agreementEndDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+                <TextField required label="Agreement End Date" placeholder="dd/mm/yyyy" name="agreementEndDate" type="date" value={assetLoanedData.agreementEndDate} onChange={e => handleAssetLoanedChange('agreementEndDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />
               </div>
             </div>}
         </div>
@@ -1048,11 +1025,23 @@ export const EditAssetDetailsPage = () => {
                   </MuiSelect>
                 </FormControl>
 
-                <TextField required label="Start Date" placeholder="dd/mm/yyyy" name="startDate" type="date" value={amcDetailsData.startDate} onChange={e => handleAmcDetailsChange('startDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+                <TextField required label="Start Date" placeholder="dd/mm/yyyy" name="startDate" type="date" value={amcDetailsData.startDate} onChange={e => handleAmcDetailsChange('startDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />
 
-                <TextField required label="End Date" placeholder="dd/mm/yyyy" name="endDate" type="date" value={amcDetailsData.endDate} onChange={e => handleAmcDetailsChange('endDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+                <TextField required label="End Date" placeholder="dd/mm/yyyy" name="endDate" type="date" value={amcDetailsData.endDate} onChange={e => handleAmcDetailsChange('endDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />
 
-                <TextField required label="First Service" placeholder="dd/mm/yyyy" name="firstService" type="date" value={amcDetailsData.firstService} onChange={e => handleAmcDetailsChange('firstService', e.target.value)} fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+                <TextField required label="First Service" placeholder="dd/mm/yyyy" name="firstService" type="date" value={amcDetailsData.firstService} onChange={e => handleAmcDetailsChange('firstService', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />
 
                 <FormControl fullWidth variant="outlined" sx={{
               minWidth: 120
@@ -1069,12 +1058,20 @@ export const EditAssetDetailsPage = () => {
                   </MuiSelect>
                 </FormControl>
 
-                <TextField required label="No. of Visits" placeholder="Enter Value" name="noOfVisits" value={amcDetailsData.noOfVisits} onChange={e => handleAmcDetailsChange('noOfVisits', e.target.value)} fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+                <TextField required label="No. of Visits" placeholder="Enter Value" name="noOfVisits" value={amcDetailsData.noOfVisits} onChange={e => handleAmcDetailsChange('noOfVisits', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />
               </div>
 
               {/* Second Row - AMC Cost */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-                <TextField required label="AMC Cost" placeholder="Enter AMC Cost" name="amcCost" value={amcDetailsData.amcCost} onChange={e => handleAmcDetailsChange('amcCost', e.target.value)} fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+                <TextField required label="AMC Cost" placeholder="Enter AMC Cost" name="amcCost" value={amcDetailsData.amcCost} onChange={e => handleAmcDetailsChange('amcCost', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />
               </div>
             </div>}
         </div>
@@ -1158,10 +1155,6 @@ export const EditAssetDetailsPage = () => {
       </div>
 
       {/* Add Custom Field Modal */}
-      <AddCustomFieldModal
-        isOpen={isCustomFieldModalOpen}
-        onClose={() => setIsCustomFieldModalOpen(false)}
-        onAddField={handleAddCustomField}
-      />
+      <AddCustomFieldModal isOpen={isCustomFieldModalOpen} onClose={() => setIsCustomFieldModalOpen(false)} onAddField={handleAddCustomField} />
     </div>;
 };
