@@ -271,7 +271,8 @@ export const AddAMCPage = () => {
                     </span>
                   </div>
                   <Button type="button" variant="outline" onClick={() => document.getElementById('contracts-upload')?.click()} style={{
-                  fontSize: '14px'
+                  fontSize: '14px',
+    backgroundColor: '#f6f4ee !important' 
                 }} className="bg-[#f6f4ee] text-[#C72030] border-none">
                     <Plus className="w-4 h-4 mr-1" />
                     Upload Files
@@ -305,7 +306,8 @@ export const AddAMCPage = () => {
                     </span>
                   </div>
                   <Button type="button" variant="outline" onClick={() => document.getElementById('invoices-upload')?.click()} className="bg-gray-200 text-[#C72030] border-none hover:bg-gray-300" style={{
-                  fontSize: '14px'
+                  fontSize: '14px', 
+    backgroundColor: '#f6f4ee !important' 
                 }}>
                     <Plus className="w-4 h-4 mr-1" />
                     Upload Files
