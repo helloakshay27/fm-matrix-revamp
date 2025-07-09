@@ -158,7 +158,7 @@ export const EditAssetDetailsPage = () => {
   const getMeterCategoryOptions = () => [{
     value: 'board',
     label: 'Board',
-    icon: <BarChart3 className="w-3 h-3" />
+    icon: <BarChart3 className="w-4 h-4" />
   }, {
     value: 'dg',
     label: 'DG',
