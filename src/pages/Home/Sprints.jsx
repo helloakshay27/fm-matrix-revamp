@@ -4,12 +4,16 @@ import SprintBoardSection from "../../components/Home/Sprints/SprintBoardSection
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProjects } from "../../redux/slices/projectSlice";
 import { fetchTasksOfProject } from "../../redux/slices/taskSlice";
+import { useNavigate } from "react-router-dom";
 
 const Sprints = () => {
   const token = localStorage.getItem("token");
   const [isOpen, setIsOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
+  const [hasFetchedInitial, setHasFetchedInitial] = useState(false);
+
+  const navigate = useNavigate()
 
   const dropdownRef = useRef(null);
   const dispatch = useDispatch();
@@ -20,7 +24,21 @@ const Sprints = () => {
     if (!fetchProject?.fetchProjects?.length) {
       dispatch(fetchProjects({ token }));
     }
-  }, [dispatch, fetchProject]);
+  }, [dispatch, fetchProject, token]);
+
+  // ⬇️ Automatically select and fetch the first project on page load
+  useEffect(() => {
+    if (
+      !hasFetchedInitial &&
+      fetchProject?.fetchProjects?.length > 0 &&
+      !selectedProject?.id
+    ) {
+      const firstProject = fetchProject.fetchProjects[0];
+      setSelectedProject(firstProject);
+      dispatch(fetchTasksOfProject({ token, id: firstProject.id }));
+      setHasFetchedInitial(true);
+    }
+  }, [fetchProject, selectedProject, hasFetchedInitial, dispatch, token]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -38,29 +56,17 @@ const Sprints = () => {
       return;
     }
     setSelectedProject(project);
-    dispatch(fetchTasksOfProject({ token, id: project.id }));
     setIsOpen(false);
-    setSearchTerm(""); // Clear search input after selection
+    setSearchTerm("");
   };
 
-  useEffect(() => {
-    if (fetchProject?.fetchProjects?.length && !selectedProject?.title) {
-      const defaultProject = fetchProject.fetchProjects.find(
-        (project) => project.title === "DEmo New One for test"
-      );
-
-      if (defaultProject) {
-        setSelectedProject(defaultProject);
-        dispatch(fetchTasksOfProject({ token, id: defaultProject.id }));
-      } else {
-        const fallbackProject = fetchProject.fetchProjects[0];
-        setSelectedProject(fallbackProject);
-        dispatch(fetchTasksOfProject({ token, id: fallbackProject.id }));
-      }
+  const handleSearch = () => {
+    if (selectedProject?.id) {
+      dispatch(fetchTasksOfProject({ token, id: selectedProject.id }));
     }
-  }, [fetchProject, selectedProject, dispatch]);
+  };
 
-  const filteredProjects = fetchProject?.fetchProjects.filter((project) =>
+  const filteredProjects = fetchProject?.fetchProjects?.filter((project) =>
     project.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -69,7 +75,7 @@ const Sprints = () => {
       <div className="flex items-center justify-between mx-6 mt-3 mb-2">
         <h3 className="text-base">Sprint Planning</h3>
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-1 text-[13px] text-[#E95420] cursor-pointer">
+          <div className="flex items-center gap-1 text-[13px] text-[#E95420] cursor-pointer" onClick={() => navigate(-1)}>
             <ArrowLeft size={13} color="#000" />
             Back
           </div>
@@ -102,7 +108,7 @@ const Sprints = () => {
               </div>
 
               <ul className="text-sm divide-y">
-                {filteredProjects.length ? (
+                {filteredProjects?.length ? (
                   filteredProjects.map((project) => (
                     <li
                       key={project.id}
@@ -120,7 +126,11 @@ const Sprints = () => {
           )}
         </div>
 
-        <button className="bg-[#C72030] text-white rounded-none p-2 text-[14px] w-32">
+        <button
+          onClick={handleSearch}
+          disabled={!selectedProject?.id}
+          className="bg-[#C72030] text-white rounded-none p-2 text-[14px] w-32 disabled:bg-gray-400"
+        >
           Search
         </button>
       </div>

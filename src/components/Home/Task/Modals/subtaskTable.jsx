@@ -266,9 +266,9 @@ const calculateDuration = (startDateStr, endDateStr) => {
   return `${days}d : ${hours}h : ${minutes}m`;
 };
 
-const SubtaskTable = () => {
+const SubtaskTable = ({ projectId }) => {
   const token = localStorage.getItem("token");
-  const { id, mid = "", tid: parentId } = useParams();
+  const { mid = "", tid: parentId } = useParams();
   const dispatch = useDispatch();
 
   const {
@@ -322,14 +322,16 @@ const SubtaskTable = () => {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        await dispatch(fetchProjectTeamMembers({ token, id })).unwrap();
+        await dispatch(fetchProjectTeamMembers({ token, id: projectId })).unwrap();
       } catch (error) {
         console.error("Failed to fetch team members:", error);
       }
     };
 
-    fetchMembers();
-  }, [dispatch, token, id]);
+    if (projectId) {
+      fetchMembers();
+    }
+  }, [dispatch, token, projectId]);
 
 
   const handleOnChange = useCallback(
@@ -673,7 +675,7 @@ const SubtaskTable = () => {
         }))
         : []),
     ],
-    [users]
+    [projectTeamMembers]
   );
 
   const tagNamesForDropdown = useMemo(() => {

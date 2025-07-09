@@ -6,6 +6,7 @@ import {
     resetSendMessage,
 } from "../../../../redux/slices/channelSlice";
 import { useWebSocket } from "../../../../hooks/useWebSocket";
+import toast from "react-hot-toast";
 
 const ChatView = ({ type, id }) => {
     const token = localStorage.getItem("token");
@@ -16,38 +17,77 @@ const ChatView = ({ type, id }) => {
 
     const [input, setInput] = useState("");
     const [messages, setMessages] = useState([]);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const chatContainerRef = useRef(null);
+    const isUserInitiatedScroll = useRef(false);
 
     const { manager: webSocketManager } = useWebSocket();
 
     useEffect(() => {
-        if (bottomRef.current) {
-            bottomRef.current.scrollIntoView();
+        if (bottomRef.current && !isUserInitiatedScroll.current) {
+            bottomRef.current.scrollIntoView({ behavior: "smooth" });
         }
     }, [messages]);
 
-    // 1. Sync initial messages
     useEffect(() => {
         const fetchMessages = async () => {
+            const container = chatContainerRef.current;
+            const prevScrollHeight = container?.scrollHeight ?? 0;
+            const prevScrollTop = container?.scrollTop ?? 0;
+
             try {
-                const response = await dispatch(
-                    fetchMessagesOfConversation({ token, id })
+                const { messages: fetchedMessages, meta } = await dispatch(
+                    fetchMessagesOfConversation({ token, id, page })
                 ).unwrap();
-                setMessages(response);
+
+                setMessages((prevMessages) => {
+                    const existingIds = new Set(prevMessages.map((msg) => msg.id));
+                    const newMessages = fetchedMessages.filter((msg) => !existingIds.has(msg.id));
+                    return [...prevMessages, ...newMessages];
+                });
+
+                setHasMore(meta.next_page !== null);
+
+                setTimeout(() => {
+                    if (container) {
+                        const newScrollHeight = container.scrollHeight;
+                        const scrollDiff = newScrollHeight - prevScrollHeight;
+                        container.scrollTop = prevScrollTop + scrollDiff;
+                    }
+                }, 0);
             } catch (error) {
-                console.log(error);
+                console.error("Failed to fetch messages:", error);
             }
         };
 
-        fetchMessages();
-    }, []);
+        if (page && token && id) {
+            fetchMessages();
+        }
+    }, [page, token, id, dispatch]);
 
-    // 2. Setup WebSocket
+    useEffect(() => {
+        const container = chatContainerRef.current;
+        if (!container) return;
+
+        const handleScroll = () => {
+            if (container.scrollTop === 0 && hasMore) {
+                isUserInitiatedScroll.current = true;
+                setPage((prev) => prev + 1);
+            }
+        };
+
+        container.addEventListener("scroll", handleScroll);
+        return () => container.removeEventListener("scroll", handleScroll);
+    }, [hasMore]);
+
     useEffect(() => {
         if (type === "chat") {
             webSocketManager.subscribeToConversation(id, {
                 onNewMessage: (message) => {
                     console.log("📩 Chat message received:", message);
                     setMessages((prev) => [...prev, message]);
+                    isUserInitiatedScroll.current = false;
                 },
             });
         } else if (type === "group") {
@@ -55,6 +95,7 @@ const ChatView = ({ type, id }) => {
                 onNewMessage: (message) => {
                     console.log("📩 Group message received:", message);
                     setMessages((prev) => [...prev, message]);
+                    isUserInitiatedScroll.current = false;
                 },
             });
         }
@@ -71,17 +112,20 @@ const ChatView = ({ type, id }) => {
         };
 
         try {
-            const response = await dispatch(createMessage({ token, payload })).unwrap();
+            const response = await dispatch(
+                createMessage({ token, payload })
+            ).unwrap();
 
             setMessages((prev) => [response, ...prev]);
-
             setInput("");
             dispatch(resetSendMessage());
+            isUserInitiatedScroll.current = false;
         } catch (err) {
             console.error("Failed to send message:", err);
+            toast.dismiss();
+            toast.error("Internal server error");
         }
     };
-
 
     useEffect(() => {
         if (success) {
@@ -103,16 +147,17 @@ const ChatView = ({ type, id }) => {
 
     return (
         <div className="flex flex-col w-full h-full overflow-hidden">
-            <div className="flex-1 w-full bg-[#F9F9F9] px-6 py-4 overflow-y-auto max-h-[calc(100vh-160px)]">
+            <div
+                ref={chatContainerRef}
+                className="flex-1 w-full bg-[#F9F9F9] px-6 py-4 overflow-y-auto max-h-[calc(100vh-160px)]"
+            >
                 {[...messages].reverse().map((message, index) => (
                     <div
                         key={index}
-                        className={`mb-6 flex flex-col ${message.user_id === currentUser.id ? "items-end" : "items-start"
-                            }`}
+                        className={`mb-6 flex flex-col ${message.user_id === currentUser.id ? "items-end" : "items-start"}`}
                     >
                         <div
-                            className={`text-xs text-gray-500 mb-2 ${message.user_id === currentUser.id ? "mr-14" : "ml-14"
-                                }`}
+                            className={`text-xs text-gray-500 mb-2 ${message.user_id === currentUser.id ? "mr-14" : "ml-14"}`}
                         >
                             {formatTimestamp(message.created_at)}
                         </div>
@@ -133,7 +178,6 @@ const ChatView = ({ type, id }) => {
                         </div>
                     </div>
                 ))}
-                {/* 🔽 Place the bottomRef here */}
                 <div ref={bottomRef} className="h-0" />
             </div>
 
@@ -150,7 +194,11 @@ const ChatView = ({ type, id }) => {
                         }}
                     />
                 </div>
-                <button type="button" className="text-gray-500 text-xl" onClick={sendMessage}>
+                <button
+                    type="button"
+                    className="text-gray-500 text-xl"
+                    onClick={sendMessage}
+                >
                     <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
                         <path
                             d="M4.25 28.3332V19.8332L15.5833 16.9998L4.25 14.1665V5.6665L31.1667 16.9998L4.25 28.3332Z"

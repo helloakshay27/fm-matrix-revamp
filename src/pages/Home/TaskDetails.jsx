@@ -1166,7 +1166,7 @@ const TaskDetails = () => {
                         </div>
                         <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
                         <div>
-                            {tab === "Subtasks" && <SubtaskTable />}
+                            {tab === "Subtasks" && <SubtaskTable projectId={task.project_management_id} />}
                             {tab === "Dependency" && <DependancyKanban id={tid} />}
                             {tab === "Comments" && <Comments comments={task?.comments} />}
                             {tab === "Attachments" && (

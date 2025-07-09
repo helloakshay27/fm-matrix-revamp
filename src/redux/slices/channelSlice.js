@@ -120,18 +120,32 @@ export const startConversation = createAsyncThunk('startConversation', async ({ 
     }
 })
 
-export const fetchMessagesOfConversation = createAsyncThunk('fetchMessagesOfConversation', async ({ token, id }) => {
-    try {
-        const response = await axios.get(`${baseURL}/messages.json?q[conversation_id_eq]=${id}`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-        return response.data;
-    } catch (error) {
-        console.log(error)
+export const fetchMessagesOfConversation = createAsyncThunk(
+    'fetchMessagesOfConversation',
+    async ({ token, id, page = 1 }) => {
+        try {
+            const response = await axios.get(`${baseURL}/messages.json`, {
+                params: {
+                    'q[conversation_id_eq]': id,
+                    page,
+                    per_page: 50
+                },
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            return {
+                messages: response.data.messages,
+                meta: response.data.meta,
+            };
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
     }
-})
+);
+
 
 export const fetchChannelsSlice = createApiSlice('fetchChannels', fetchChannels);
 export const fetchConversationsSlice = createApiSlice('fetchConversations', fetchConversations);

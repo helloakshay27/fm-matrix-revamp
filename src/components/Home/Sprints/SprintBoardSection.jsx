@@ -564,25 +564,28 @@ const SprintBoardSection = ({ selectedProject }) => {
                     {selectedSprint.status === "completed" ? (
                       <CircleCheck size={15} color="green" />
                     ) : selectedSprint.status === "stopped" ? (
-                      <Play
-                        size={15}
-                        fill="#000"
-                        className="cursor-pointer"
-                        onClick={handlePlayClick}
-                      />
-                    ) : (
-                      <>
-                        <Square
+                      <button onClick={handlePlayClick} title="Start">
+                        <Play
                           size={15}
                           fill="#000"
                           className="cursor-pointer"
-                          onClick={() => handleIconClick("stopped")}
                         />
-                        <Circle
-                          size={15}
-                          className="cursor-pointer"
-                          onClick={() => handleIconClick("completed")}
-                        />
+                      </button>
+                    ) : (
+                      <>
+                        <button onClick={() => handleIconClick("stopped")} title="Stop">
+                          <Square
+                            size={15}
+                            fill="#000"
+                            className="cursor-pointer"
+                          />
+                        </button>
+                        <button onClick={() => handleIconClick("completed")} title="Complete">
+                          <Circle
+                            size={15}
+                            className="cursor-pointer"
+                          />
+                        </button>
                       </>
                     )}
                   </>

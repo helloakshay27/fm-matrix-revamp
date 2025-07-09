@@ -151,22 +151,24 @@ const IssuesTable = () => {
 
   const {
     fetchIssue: allIssuesFromStore,
+    pagination: { current_page, total_pages, total_count },
     loading: loadingAllIssues,
     error: allIssuesError,
-  } = useSelector(
-    (state) =>
-      state.fetchIssues || { fetchIssue: [], loading: false, error: null }
-  );
+  } = useSelector((state) => state.fetchIssues);
 
   const {
     filterIssue: filteredIssues,
+    pagination: filterPagination,
     loading: loadingFilteredIssues,
     error: filteredIssuesError,
     success: filterSuccess,
-  } = useSelector(
-    (state) =>
-      state.filterIssue || { filterIssue: [], loading: false, error: null }
-  );
+  } = useSelector((state) => state.filterIssue || {
+    filterIssue: [],
+    pagination: { current_page: 1, total_pages: 1, total_count: 0 },
+    loading: false,
+    error: null,
+    success: false,
+  });
 
   const {
     fetchUsers: users,
@@ -255,6 +257,11 @@ const IssuesTable = () => {
   const [isFileDialogOpen, setIsFileDialogOpen] = useState(false);
   const [validator, setValidator] = useState(false);
 
+  const [pagination, setPagination] = useState({
+    pageIndex: current_page - 1, // Convert to 0-based index for TanStack Table
+    pageSize: 10, // Matches per_page in API call
+  });
+
   const newIssuesTitleInputRef = useRef(null);
   const newIssueFormRowRef = useRef(null);
   const newIssueAttachmentInputRef = useRef(null);
@@ -294,10 +301,31 @@ const IssuesTable = () => {
       !allIssuesError &&
       !allIssuesFetchInitiatedRef.current
     ) {
-      dispatch(fetchIssue({ token }));
+      dispatch(
+        fetchIssue({
+          token,
+          page: pagination.pageIndex + 1, // Convert to 1-based index for API
+          per_page: pagination.pageSize,
+        })
+      );
       allIssuesFetchInitiatedRef.current = true;
     }
-  }, [dispatch, allIssuesFromStore, loadingAllIssues, allIssuesError, token]);
+  }, [
+    dispatch,
+    allIssuesFromStore,
+    loadingAllIssues,
+    allIssuesError,
+    token,
+    pagination.pageIndex,
+    pagination.pageSize,
+  ]);
+
+  useEffect(() => {
+    setPagination((prev) => ({
+      ...prev,
+      pageIndex: current_page - 1, // Convert to 0-based index
+    }));
+  }, [current_page]);
 
   // Fetch tasks when milestone changes
   useEffect(() => {
@@ -439,7 +467,6 @@ const IssuesTable = () => {
       (localStorage.getItem("IssueFilters") ||
         localStorage.getItem("issueStatus"))
     ) {
-      console.log("hi");
       allIssues = filteredIssues;
     } else {
       allIssues = allIssuesFromStore;
@@ -468,7 +495,7 @@ const IssuesTable = () => {
           : "",
         commentId: issue.comments?.length
           ? issue.comments[issue.comments.length - 1].id
-          : null, // Store comment ID
+          : null,
         attachments: issue.attachments || [],
       }));
       setData(processedIssues);
@@ -563,7 +590,13 @@ const IssuesTable = () => {
 
     try {
       await dispatch(createIssue({ token, payload: formData })).unwrap();
-      dispatch(fetchIssue({ token }));
+      dispatch(
+        fetchIssue({
+          token,
+          page: pagination.pageIndex + 1,
+          per_page: pagination.pageSize,
+        })
+      );
       setIsAddingNewIssues(false);
       resetNewIssuesForm();
     } catch (error) {
@@ -593,6 +626,8 @@ const IssuesTable = () => {
     newIssuesTaskId,
     attachments,
     token,
+    pagination.pageIndex,
+    pagination.pageSize,
   ]);
 
   const handleDeleteExistingIssues = useCallback((IssuesId) => {
@@ -634,24 +669,34 @@ const IssuesTable = () => {
             "q[task_management_id_in][]":
               item.selectedTasks.length > 0 ? item.selectedTasks : [],
           };
-          console.log(newFilter);
-          if (newFilter) {
-            const queryString = qs.stringify(newFilter, {
-              arrayFormat: "repeat",
-            });
-
-            await dispatch(
-              filterIssue({ token, filter: queryString })
-            ).unwrap();
-          }
+          const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
+          await dispatch(
+            filterIssue({
+              token,
+              filter: queryString,
+              page: pagination.pageIndex + 1,
+              per_page: pagination.pageSize,
+            })
+          ).unwrap();
         } else if (localStorage.getItem("issueStatus")) {
           const status = localStorage.getItem("issueStatus");
-          const filter = {
-            "q[status_eq]": status,
-          };
-          await dispatch(filterIssue({ token, filter })).unwrap();
+          const filter = { "q[status_eq]": status };
+          await dispatch(
+            filterIssue({
+              token,
+              filter,
+              page: pagination.pageIndex + 1,
+              per_page: pagination.pageSize,
+            })
+          ).unwrap();
         } else {
-          await dispatch(fetchIssue({ token })).unwrap();
+          await dispatch(
+            fetchIssue({
+              token,
+              page: pagination.pageIndex + 1,
+              per_page: pagination.pageSize,
+            })
+          ).unwrap();
         }
       } catch (error) {
         console.error("Failed to update issue:", error);
@@ -660,12 +705,18 @@ const IssuesTable = () => {
           error?.message ||
           "Failed to update issue.";
         setLocalError(errorMessage);
-        dispatch(fetchIssue({ token }));
+        dispatch(
+          fetchIssue({
+            token,
+            page: pagination.pageIndex + 1,
+            per_page: pagination.pageSize,
+          })
+        );
       } finally {
         setIsUpdatingIssue(false);
       }
     },
-    [dispatch, token]
+    [dispatch, token, pagination.pageIndex, pagination.pageSize]
   );
 
   const handleUpdateComment = useCallback(
@@ -676,7 +727,6 @@ const IssuesTable = () => {
 
       try {
         if (commentId) {
-          // Update existing comment
           const sendComment = new FormData();
           sendComment.append("comment[body]", newComment);
           await dispatch(
@@ -694,7 +744,6 @@ const IssuesTable = () => {
             })
           ).unwrap();
         }
-        // Refresh issues after comment update
         if (localStorage.getItem("IssueFilters")) {
           const item = JSON.parse(localStorage.getItem("IssueFilters"));
           const newFilter = {
@@ -716,13 +765,33 @@ const IssuesTable = () => {
               item.selectedTasks.length > 0 ? item.selectedTasks : [],
           };
           const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
-          await dispatch(filterIssue({ token, filter: queryString })).unwrap();
+          await dispatch(
+            filterIssue({
+              token,
+              filter: queryString,
+              page: pagination.pageIndex + 1,
+              per_page: pagination.pageSize,
+            })
+          ).unwrap();
         } else if (localStorage.getItem("issueStatus")) {
           const status = localStorage.getItem("issueStatus");
           const filter = { "q[status_eq]": status };
-          await dispatch(filterIssue({ token, filter })).unwrap();
+          await dispatch(
+            filterIssue({
+              token,
+              filter,
+              page: pagination.pageIndex + 1,
+              per_page: pagination.pageSize,
+            })
+          ).unwrap();
         } else {
-          await dispatch(fetchIssue({ token })).unwrap();
+          await dispatch(
+            fetchIssue({
+              token,
+              page: pagination.pageIndex + 1,
+              per_page: pagination.pageSize,
+            })
+          ).unwrap();
         }
       } catch (error) {
         console.error("Failed to update comment:", error);
@@ -731,12 +800,18 @@ const IssuesTable = () => {
           error?.message ||
           "Failed to update comment.";
         setLocalError(errorMessage);
-        dispatch(fetchIssue({ token }));
+        dispatch(
+          fetchIssue({
+            token,
+            page: pagination.pageIndex + 1,
+            per_page: pagination.pageSize,
+          })
+        );
       } finally {
         setIsUpdatingIssue(false);
       }
     },
-    [dispatch, token]
+    [dispatch, token, pagination.pageIndex, pagination.pageSize]
   );
 
   // Clear filters on unload
@@ -808,11 +883,6 @@ const IssuesTable = () => {
     ],
     [users]
   );
-
-  const [pagination, setPagination] = useState({
-    pageIndex: 0,
-    pageSize: 10,
-  });
 
   const fixedRowsPerPage = 10;
   const rowHeight = 45;
@@ -994,10 +1064,23 @@ const IssuesTable = () => {
     data,
     columns,
     state: { pagination },
-    onPaginationChange: setPagination,
+    onPaginationChange: (updater) => {
+      setPagination((prev) => {
+        const newState = typeof updater === "function" ? updater(prev) : updater;
+        // Dispatch fetchIssue with new page
+        dispatch(
+          fetchIssue({
+            token,
+            page: newState.pageIndex + 1, // Convert to 1-based index
+            per_page: newState.pageSize,
+          })
+        );
+        return newState;
+      });
+    },
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    manualPagination: false,
+    pageCount: filterSuccess ? filterPagination.total_pages : total_pages, // Use filter pagination if filters are applied
+    manualPagination: true, // Enable manual pagination
   });
 
   let pageContent;
@@ -1169,7 +1252,6 @@ const IssuesTable = () => {
                         setIsFileDialogOpen={setIsFileDialogOpen}
                       />
                     </td>
-
                     <td className="border p-1 align-middle">
                       <StatusBadge
                         status={newIssuesStatus}
@@ -1251,7 +1333,7 @@ const IssuesTable = () => {
             </table>
           </div>
           {data.length > 0 && (
-            <div className="flex items-center justify-start gap-4 w-full ml-3 text-[12px]">
+            <div className="flex items-center justify-start gap-4 w-full ml-3 text-[12px] my-4">
               <button
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
@@ -1260,27 +1342,24 @@ const IssuesTable = () => {
                 {"<"}
               </button>
               {(() => {
-                const totalPages = table.getPageCount();
-                const currentPage = table.getState().pagination.pageIndex;
+                const { current_page: currPage, total_pages: totPages } = filterSuccess
+                  ? filterPagination
+                  : { current_page, total_pages };
                 const visiblePages = 3;
-                let start = Math.max(
-                  0,
-                  currentPage - Math.floor(visiblePages / 2)
-                );
+                let start = Math.max(0, currPage - 1 - Math.floor(visiblePages / 2));
                 let end = start + visiblePages;
-                if (end > totalPages) {
-                  end = totalPages;
+                if (end > totPages) {
+                  end = totPages;
                   start = Math.max(0, end - visiblePages);
                 }
                 return [...Array(end - start)].map((_, i) => {
                   const page = start + i;
-                  const isActive = page === currentPage;
+                  const isActive = page === currPage - 1;
                   return (
                     <button
                       key={page}
                       onClick={() => table.setPageIndex(page)}
-                      className={`px-3 py-1 ${isActive ? "bg-gray-200 font-semibold" : ""
-                        }`}
+                      className={`px-3 py-1 ${isActive ? "bg-gray-200 font-semibold" : ""}`}
                     >
                       {page + 1}
                     </button>

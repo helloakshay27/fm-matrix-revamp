@@ -34,16 +34,16 @@ const SideBar = () => {
         }));
     };
 
-    const handleCreateConversation = (userId) => {
-        const payload = {
-            conversation: {
-                sender_id: JSON.parse(localStorage.getItem('user')).id,
-                recipient_id: userId,
-            }
-        }
+    // const handleCreateConversation = (userId) => {
+    //     const payload = {
+    //         conversation: {
+    //             sender_id: JSON.parse(localStorage.getItem('user')).id,
+    //             recipient_id: userId,
+    //         }
+    //     }
 
-        dispatch(startConversation({ token, payload }))
-    }
+    //     dispatch(startConversation({ token, payload }))
+    // }
 
     useEffect(() => {
         if (newConversation && !Array.isArray(newConversation)) {
@@ -109,7 +109,7 @@ const SideBar = () => {
                         </ul>
                     )}
                 </div>
-                <div>
+                {/* <div>
                     <div
                         onClick={() => toggleSection('users')}
                         className="flex items-center justify-between cursor-pointer hover:text-gray-600"
@@ -142,7 +142,7 @@ const SideBar = () => {
                             }
                         </ul>
                     )}
-                </div>
+                </div> */}
             </div>
         </div>
     );

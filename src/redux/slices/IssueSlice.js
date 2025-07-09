@@ -9,6 +9,11 @@ const createApiSlice = (name, fetchThunk) => createSlice({
         success: false,
         error: null,
         [name]: [],
+        pagination: {
+            current_page: 1,
+            total_pages: 1,
+            total_count: 0,
+        },
     },
     reducers: {
         resetIssueSuccess: (state) => {
@@ -23,10 +28,16 @@ const createApiSlice = (name, fetchThunk) => createSlice({
                 state.error = null;
             })
             .addCase(fetchThunk.fulfilled, (state, action) => {
+                const { issues, pagination } = action.payload || {};
                 state.loading = false;
                 state.success = true;
                 state.error = null;
-                state[name] = action.payload;
+                state[name] = issues || [];
+                state.pagination = pagination || {
+                    current_page: 1,
+                    total_pages: 1,
+                    total_count: issues?.length || 0,
+                };
             })
             .addCase(fetchThunk.rejected, (state, action) => {
                 state.loading = false;
@@ -53,16 +64,26 @@ export const createIssue = createAsyncThunk("createIssue", async ({ token, paylo
     }
 })
 
-export const fetchIssue = createAsyncThunk("fetchIssue", async ({ token }) => {
+export const fetchIssue = createAsyncThunk("fetchIssue", async ({ token, page = 1, per_page = 10 }) => {
     try {
         const response = await axios.get(`${baseURL}/issues.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
-
+            params: {
+                page,
+                per_page,
+            },
         });
 
-        return response.data;
+        return {
+            issues: response.data.issues,
+            pagination: {
+                current_page: response.data.meta.current_page || page,
+                total_pages: response.data.meta.total_pages || 1,
+                total_count: response.data.meta.total_count,
+            },
+        };
     }
     catch (error) {
         console.log(error);
