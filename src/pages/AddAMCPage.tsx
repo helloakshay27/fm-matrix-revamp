@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, X } from 'lucide-react';
+import { ArrowLeft, X, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
@@ -24,14 +25,16 @@ export const AddAMCPage = () => {
   });
   const [attachments, setAttachments] = useState({
     contracts: [] as File[],
-    invoices: [] as File[]
+    invoices: [] as File[],
+    manuals: [] as File[],
+    insurance: [] as File[]
   });
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleFileUpload = (type: 'contracts' | 'invoices', files: FileList | null) => {
+  const handleFileUpload = (type: 'contracts' | 'invoices' | 'manuals' | 'insurance', files: FileList | null) => {
     if (files) {
       const fileArray = Array.from(files);
       setAttachments(prev => ({
@@ -41,7 +44,7 @@ export const AddAMCPage = () => {
     }
   };
 
-  const removeFile = (type: 'contracts' | 'invoices', index: number) => {
+  const removeFile = (type: 'contracts' | 'invoices' | 'manuals' | 'insurance', index: number) => {
     setAttachments(prev => ({
       ...prev,
       [type]: prev[type].filter((_, i) => i !== index)
@@ -80,6 +83,7 @@ export const AddAMCPage = () => {
       padding: { xs: '8px', sm: '10px', md: '12px' },
     },
   };
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -206,135 +210,133 @@ export const AddAMCPage = () => {
         </Card>
 
         {/* AMC Details */}
-<Card className="mb-6">
-  <CardHeader>
-    <CardTitle className="text-lg text-[#C72030] flex items-center">
-      <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
-      AMC DETAILS
-    </CardTitle>
-  </CardHeader>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg text-[#C72030] flex items-center">
+              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+              AMC DETAILS
+            </CardTitle>
+          </CardHeader>
 
-  <CardContent className="space-y-4">
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div>
-        <TextField
-          label="Cost"
-          placeholder="Enter Cost"
-          name="cost"
-          type="number"
-          value={formData.cost}
-          onChange={(e) => handleInputChange('cost', e.target.value)}
-          fullWidth
-          variant="outlined"
-          InputLabelProps={{ shrink: true }}
-          InputProps={{ sx: fieldStyles }}
-        />
-      </div>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <TextField
+                  label="Cost"
+                  placeholder="Enter Cost"
+                  name="cost"
+                  type="number"
+                  value={formData.cost}
+                  onChange={(e) => handleInputChange('cost', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                />
+              </div>
 
-      <div>
-        <TextField
-          required
-          label="Start Date"
-          placeholder="Select Date"
-          name="startDate"
-          type="date"
-          value={formData.startDate}
-          onChange={(e) => handleInputChange('startDate', e.target.value)}
-          fullWidth
-          variant="outlined"
-          InputLabelProps={{ shrink: true }}
-          InputProps={{ sx: fieldStyles }}
-        />
-      </div>
+              <div>
+                <TextField
+                  required
+                  label="Start Date"
+                  placeholder="Select Date"
+                  name="startDate"
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e) => handleInputChange('startDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                />
+              </div>
 
-      <div>
-        <TextField
-          required
-          label="First Service Date"
-          placeholder="Select Date"
-          name="firstService"
-          type="date"
-          value={formData.firstService}
-          onChange={(e) => handleInputChange('firstService', e.target.value)}
-          fullWidth
-          variant="outlined"
-          InputLabelProps={{ shrink: true }}
-          InputProps={{ sx: fieldStyles }}
-        />
-      </div>
+              <div>
+                <TextField
+                  required
+                  label="First Service Date"
+                  placeholder="Select Date"
+                  name="firstService"
+                  type="date"
+                  value={formData.firstService}
+                  onChange={(e) => handleInputChange('firstService', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                />
+              </div>
 
-      <div>
-        <FormControl fullWidth variant="outlined">
-          <InputLabel id="payment-terms-select-label" shrink>
-            Payment Terms
-          </InputLabel>
-          <MuiSelect
-            labelId="payment-terms-select-label"
-            label="Payment Terms"
-            displayEmpty
-            value={formData.paymentTerms}
-            onChange={(e) => handleInputChange('paymentTerms', e.target.value)}
-            sx={fieldStyles}
-          >
-            <MenuItem value=""><em>Select Payment Term</em></MenuItem>
-            <MenuItem value="monthly">Monthly</MenuItem>
-            <MenuItem value="quarterly">Quarterly</MenuItem>
-            <MenuItem value="half-yearly">Half Yearly</MenuItem>
-            <MenuItem value="yearly">Yearly</MenuItem>
-          </MuiSelect>
-        </FormControl>
-      </div>
+              <div>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="payment-terms-select-label" shrink>
+                    Payment Terms
+                  </InputLabel>
+                  <MuiSelect
+                    labelId="payment-terms-select-label"
+                    label="Payment Terms"
+                    displayEmpty
+                    value={formData.paymentTerms}
+                    onChange={(e) => handleInputChange('paymentTerms', e.target.value)}
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Payment Term</em></MenuItem>
+                    <MenuItem value="monthly">Monthly</MenuItem>
+                    <MenuItem value="quarterly">Quarterly</MenuItem>
+                    <MenuItem value="half-yearly">Half Yearly</MenuItem>
+                    <MenuItem value="yearly">Yearly</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </div>
 
-      <div>
-        <TextField
-          required
-          label="End Date"
-          placeholder="Select Date"
-          name="endDate"
-          type="date"
-          value={formData.endDate}
-          onChange={(e) => handleInputChange('endDate', e.target.value)}
-          fullWidth
-          variant="outlined"
-          InputLabelProps={{ shrink: true }}
-          InputProps={{ sx: fieldStyles }}
-        />
-      </div>
+              <div>
+                <TextField
+                  required
+                  label="End Date"
+                  placeholder="Select Date"
+                  name="endDate"
+                  type="date"
+                  value={formData.endDate}
+                  onChange={(e) => handleInputChange('endDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                />
+              </div>
 
-      <div>
-        <TextField
-          label="No. of Visits"
-          placeholder="Enter No. of Visit"
-          name="noOfVisits"
-          type="number"
-          value={formData.noOfVisits}
-          onChange={(e) => handleInputChange('noOfVisits', e.target.value)}
-          fullWidth
-          variant="outlined"
-          InputLabelProps={{ shrink: true }}
-          InputProps={{ sx: fieldStyles }}
-        />
-      </div>
+              <div>
+                <TextField
+                  label="No. of Visits"
+                  placeholder="Enter No. of Visit"
+                  name="noOfVisits"
+                  type="number"
+                  value={formData.noOfVisits}
+                  onChange={(e) => handleInputChange('noOfVisits', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                />
+              </div>
 
-      {/* Remarks Field - full width in grid */}
-     <div className="md:col-span-3">
-  <label htmlFor="remarks" className="block text-sm font-medium text-gray-700 mb-1">
-    Remarks
-  </label>
-  <textarea
-    id="remarks"
-    name="remarks"
-    value={formData.remarks}
-    onChange={(e) => handleInputChange('remarks', e.target.value)}
-    placeholder="Enter Remarks"
-    rows={3}
-    className="w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] resize-none"
-  />
-</div>
-    </div>
-  </CardContent>
-</Card>
-
+              <div className="md:col-span-3">
+                <label htmlFor="remarks" className="block text-sm font-medium text-gray-700 mb-1">
+                  Remarks
+                </label>
+                <textarea
+                  id="remarks"
+                  name="remarks"
+                  value={formData.remarks}
+                  onChange={(e) => handleInputChange('remarks', e.target.value)}
+                  placeholder="Enter Remarks"
+                  rows={3}
+                  className="w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] resize-none"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Attachments */}
         <Card className="mb-6">
@@ -346,35 +348,135 @@ export const AddAMCPage = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* AMC Contracts */}
+              {/* Manuals Upload */}
               <div>
-                <label className="block text-sm font-medium mb-2">AMC Contracts</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <input 
-                    type="file" 
-                    multiple 
-                    className="hidden" 
-                    id="contracts-upload"
-                    onChange={(e) => handleFileUpload('contracts', e.target.files)}
-                  />
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => document.getElementById('contracts-upload')?.click()}
-                    className="w-full"
-                  >
-                    Choose File
-                  </Button>
-                  <p className="text-xs text-gray-500 mt-2">
-                    {attachments.contracts.length > 0 
-                      ? `${attachments.contracts.length} file(s) selected` 
-                      : 'No file chosen'}
-                  </p>
+                <label className="block font-medium text-gray-700 mb-2" style={{ fontSize: '14px' }}>Manuals Upload</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="file" 
+                        multiple 
+                        className="hidden" 
+                        id="manuals-file-input"
+                        onChange={(e) => handleFileUpload('manuals', e.target.files)}
+                      />
+                      <label htmlFor="manuals-file-input" className="text-[#C72030] font-medium cursor-pointer hover:underline" style={{ fontSize: '14px' }}>
+                        Choose File
+                      </label>
+                      <span className="text-gray-500" style={{ fontSize: '14px' }}>No file chosen</span>
+                    </div>
+                    <Button 
+                      type="button"
+                      onClick={() => document.getElementById('manuals-file-input')?.click()}
+                      className="bg-[#F2EEE9] hover:bg-[#F2EEE9]/90 text-[#C72030] border-none px-4 py-2 rounded-none flex items-center gap-2"
+                      style={{ fontSize: '14px' }}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Upload Files
+                    </Button>
+                  </div>
+                </div>
+                {attachments.manuals.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {attachments.manuals.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded" style={{ fontSize: '14px' }}>
+                        <span>{file.name}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFile('manuals', index)}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Insurance Details */}
+              <div>
+                <label className="block font-medium text-gray-700 mb-2" style={{ fontSize: '14px' }}>Insurance Details</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="file" 
+                        multiple 
+                        className="hidden" 
+                        id="insurance-file-input"
+                        onChange={(e) => handleFileUpload('insurance', e.target.files)}
+                      />
+                      <label htmlFor="insurance-file-input" className="text-[#C72030] font-medium cursor-pointer hover:underline" style={{ fontSize: '14px' }}>
+                        Choose File
+                      </label>
+                      <span className="text-gray-500" style={{ fontSize: '14px' }}>No file chosen</span>
+                    </div>
+                    <Button 
+                      type="button"
+                      onClick={() => document.getElementById('insurance-file-input')?.click()}
+                      className="bg-[#F2EEE9] hover:bg-[#F2EEE9]/90 text-[#C72030] border-none px-4 py-2 rounded-none flex items-center gap-2"
+                      style={{ fontSize: '14px' }}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Upload Files
+                    </Button>
+                  </div>
+                </div>
+                {attachments.insurance.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {attachments.insurance.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded" style={{ fontSize: '14px' }}>
+                        <span>{file.name}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFile('insurance', index)}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Purchaselah Invoice */}
+              <div>
+                <label className="block font-medium text-gray-700 mb-2" style={{ fontSize: '14px' }}>Purchaselah Invoice</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="file" 
+                        multiple 
+                        className="hidden" 
+                        id="contracts-file-input"
+                        onChange={(e) => handleFileUpload('contracts', e.target.files)}
+                      />
+                      <label htmlFor="contracts-file-input" className="text-[#C72030] font-medium cursor-pointer hover:underline" style={{ fontSize: '14px' }}>
+                        Choose File
+                      </label>
+                      <span className="text-gray-500" style={{ fontSize: '14px' }}>No file chosen</span>
+                    </div>
+                    <Button 
+                      type="button"
+                      onClick={() => document.getElementById('contracts-file-input')?.click()}
+                      className="bg-[#F2EEE9] hover:bg-[#F2EEE9]/90 text-[#C72030] border-none px-4 py-2 rounded-none flex items-center gap-2"
+                      style={{ fontSize: '14px' }}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Upload Files
+                    </Button>
+                  </div>
                 </div>
                 {attachments.contracts.length > 0 && (
                   <div className="mt-2 space-y-1">
                     {attachments.contracts.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded">
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded" style={{ fontSize: '14px' }}>
                         <span>{file.name}</span>
                         <Button
                           type="button"
@@ -390,35 +492,39 @@ export const AddAMCPage = () => {
                 )}
               </div>
 
-              {/* AMC Invoice */}
+              {/* AMC */}
               <div>
-                <label className="block text-sm font-medium mb-2">AMC Invoice</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <input 
-                    type="file" 
-                    multiple 
-                    className="hidden" 
-                    id="invoices-upload"
-                    onChange={(e) => handleFileUpload('invoices', e.target.files)}
-                  />
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => document.getElementById('invoices-upload')?.click()}
-                    className="w-full"
-                  >
-                    Choose File
-                  </Button>
-                  <p className="text-xs text-gray-500 mt-2">
-                    {attachments.invoices.length > 0 
-                      ? `${attachments.invoices.length} file(s) selected` 
-                      : 'No file chosen'}
-                  </p>
+                <label className="block font-medium text-gray-700 mb-2" style={{ fontSize: '14px' }}>AMC</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="file" 
+                        multiple 
+                        className="hidden" 
+                        id="invoices-file-input"
+                        onChange={(e) => handleFileUpload('invoices', e.target.files)}
+                      />
+                      <label htmlFor="invoices-file-input" className="text-[#C72030] font-medium cursor-pointer hover:underline" style={{ fontSize: '14px' }}>
+                        Choose File
+                      </label>
+                      <span className="text-gray-500" style={{ fontSize: '14px' }}>No file chosen</span>
+                    </div>
+                    <Button 
+                      type="button"
+                      onClick={() => document.getElementById('invoices-file-input')?.click()}
+                      className="bg-[#F2EEE9] hover:bg-[#F2EEE9]/90 text-[#C72030] border-none px-4 py-2 rounded-none flex items-center gap-2"
+                      style={{ fontSize: '14px' }}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Upload Files
+                    </Button>
+                  </div>
                 </div>
                 {attachments.invoices.length > 0 && (
                   <div className="mt-2 space-y-1">
                     {attachments.invoices.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded">
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded" style={{ fontSize: '14px' }}>
                         <span>{file.name}</span>
                         <Button
                           type="button"
