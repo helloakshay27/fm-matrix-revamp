@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown } from 'lucide-react';
+import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 const AddAssetPage = () => {
@@ -21,6 +21,7 @@ const AddAssetPage = () => {
   const [meterType, setMeterType] = useState('');
   const [criticalStatus, setCriticalStatus] = useState('');
   const [showBoardRatioOptions, setShowBoardRatioOptions] = useState(false);
+  const [showRenewableOptions, setShowRenewableOptions] = useState(false);
   
   const [consumptionMeasures, setConsumptionMeasures] = useState([{
     id: 1,
@@ -109,6 +110,25 @@ const AddAssetPage = () => {
     }
   ];
 
+  // Renewable energy sub-options
+  const getRenewableOptions = () => [
+    {
+      value: 'solar',
+      label: 'Solar',
+      icon: Sun
+    },
+    {
+      value: 'bio-methanol',
+      label: 'Bio Methanol',
+      icon: Droplet
+    },
+    {
+      value: 'wind',
+      label: 'Wind',
+      icon: Wind
+    }
+  ];
+
   // Handle meter category change
   const handleMeterCategoryChange = value => {
     setMeterCategoryType(value);
@@ -117,8 +137,13 @@ const AddAssetPage = () => {
     // Show Board Ratio options if Board is selected
     if (value === 'board') {
       setShowBoardRatioOptions(true);
+      setShowRenewableOptions(false);
+    } else if (value === 'renewable') {
+      setShowRenewableOptions(true);
+      setShowBoardRatioOptions(false);
     } else {
       setShowBoardRatioOptions(false);
+      setShowRenewableOptions(false);
     }
   };
 
@@ -551,6 +576,32 @@ const AddAssetPage = () => {
                               />
                               <IconComponent className="w-4 h-4 text-gray-600" />
                               <label htmlFor={`board-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Renewable Options */}
+                  {showRenewableOptions && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                      {getRenewableOptions().map(option => {
+                        const IconComponent = option.icon;
+                        return (
+                          <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                            <div className="flex items-center justify-center space-x-2">
+                              <input 
+                                type="radio" 
+                                id={`renewable-${option.value}`} 
+                                name="renewableCategory" 
+                                value={option.value} 
+                                checked={subCategoryType === option.value} 
+                                onChange={e => setSubCategoryType(e.target.value)} 
+                                className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" 
+                              />
+                              <IconComponent className="w-4 h-4 text-gray-600" />
+                              <label htmlFor={`renewable-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
                             </div>
                           </div>
                         );
