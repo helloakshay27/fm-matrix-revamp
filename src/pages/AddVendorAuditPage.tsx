@@ -1,5 +1,4 @@
 
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -281,23 +280,135 @@ export const AddVendorAuditPage = () => {
             </RadioGroup>
           </div>
 
-          {[
-            ['Asset', 'Assign To', 'Scan Type'],
-            ['Plan Duration', 'Priority']
-          ].map((row, idx) => (
-            <div key={idx} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {row.map((label, i) => (
-                <FormControl key={i} fullWidth variant="outlined" sx={fieldStyles}>
-                  <InputLabel shrink>{`Select ${label}`}</InputLabel>
-                  <MuiSelect label={`Select ${label}`} displayEmpty>
-                    <MenuItem value=""><em>Select {label}</em></MenuItem>
-                    <MenuItem value={`${label.toLowerCase().replace(' ', '')}1`}>{`${label} 1`}</MenuItem>
-                    <MenuItem value={`${label.toLowerCase().replace(' ', '')}2`}>{`${label} 2`}</MenuItem>
-                  </MuiSelect>
-                </FormControl>
-              ))}
-            </div>
-          ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+              <InputLabel shrink>Select Asset</InputLabel>
+              <MuiSelect label="Select Asset" displayEmpty>
+                <MenuItem value=""><em>Select Asset</em></MenuItem>
+                <MenuItem value="asset1">Asset 1</MenuItem>
+                <MenuItem value="asset2">Asset 2</MenuItem>
+              </MuiSelect>
+            </FormControl>
+            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+              <InputLabel shrink>Select Assign To</InputLabel>
+              <MuiSelect label="Select Assign To" displayEmpty>
+                <MenuItem value=""><em>Select Assign To</em></MenuItem>
+                <MenuItem value="user1">User 1</MenuItem>
+                <MenuItem value="user2">User 2</MenuItem>
+              </MuiSelect>
+            </FormControl>
+            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+              <InputLabel shrink>Select Scan Type</InputLabel>
+              <MuiSelect label="Select Scan Type" displayEmpty>
+                <MenuItem value=""><em>Select Scan Type</em></MenuItem>
+                <MenuItem value="qr">QR Code</MenuItem>
+                <MenuItem value="barcode">Barcode</MenuItem>
+              </MuiSelect>
+            </FormControl>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+              <InputLabel shrink>Select Plan Duration</InputLabel>
+              <MuiSelect label="Select Plan Duration" displayEmpty>
+                <MenuItem value=""><em>Select Plan Duration</em></MenuItem>
+                <MenuItem value="daily">Daily</MenuItem>
+                <MenuItem value="weekly">Weekly</MenuItem>
+                <MenuItem value="monthly">Monthly</MenuItem>
+              </MuiSelect>
+            </FormControl>
+            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+              <InputLabel shrink>Select Priority</InputLabel>
+              <MuiSelect label="Select Priority" displayEmpty>
+                <MenuItem value=""><em>Select Priority</em></MenuItem>
+                <MenuItem value="high">High</MenuItem>
+                <MenuItem value="medium">Medium</MenuItem>
+                <MenuItem value="low">Low</MenuItem>
+              </MuiSelect>
+            </FormControl>
+            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+              <InputLabel shrink>Select Email Trigger Rule</InputLabel>
+              <MuiSelect label="Select Email Trigger Rule" displayEmpty>
+                <MenuItem value=""><em>Select Email Trigger Rule</em></MenuItem>
+                <MenuItem value="immediately">Immediately</MenuItem>
+                <MenuItem value="daily">Daily</MenuItem>
+                <MenuItem value="weekly">Weekly</MenuItem>
+              </MuiSelect>
+            </FormControl>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+              <InputLabel shrink>Select Supervisors</InputLabel>
+              <MuiSelect label="Select Supervisors" displayEmpty>
+                <MenuItem value=""><em>Select Supervisors</em></MenuItem>
+                <MenuItem value="supervisor1">Supervisor 1</MenuItem>
+                <MenuItem value="supervisor2">Supervisor 2</MenuItem>
+              </MuiSelect>
+            </FormControl>
+            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+              <InputLabel shrink>Select Category</InputLabel>
+              <MuiSelect label="Select Category" displayEmpty>
+                <MenuItem value=""><em>Select Category</em></MenuItem>
+                <MenuItem value="technical">Technical</MenuItem>
+                <MenuItem value="safety">Safety</MenuItem>
+                <MenuItem value="quality">Quality</MenuItem>
+              </MuiSelect>
+            </FormControl>
+            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+              <InputLabel shrink>Select Lock Status</InputLabel>
+              <MuiSelect label="Select Lock Status" displayEmpty>
+                <MenuItem value=""><em>Select Lock Status</em></MenuItem>
+                <MenuItem value="yes">Yes</MenuItem>
+                <MenuItem value="no">No</MenuItem>
+              </MuiSelect>
+            </FormControl>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+              <InputLabel shrink>Select Frequency</InputLabel>
+              <MuiSelect label="Select Frequency" displayEmpty>
+                <MenuItem value=""><em>Select Frequency</em></MenuItem>
+                <MenuItem value="daily">Daily</MenuItem>
+                <MenuItem value="weekly">Weekly</MenuItem>
+                <MenuItem value="monthly">Monthly</MenuItem>
+                <MenuItem value="quarterly">Quarterly</MenuItem>
+              </MuiSelect>
+            </FormControl>
+            <TextField
+              label="Start From"
+              type="date"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              sx={fieldStyles}
+            />
+            <TextField
+              label="End At"
+              type="date"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              sx={fieldStyles}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+              <InputLabel shrink>Select Supplier</InputLabel>
+              <MuiSelect label="Select Supplier" displayEmpty>
+                <MenuItem value=""><em>Select Supplier</em></MenuItem>
+                <MenuItem value="supplier1">Supplier 1</MenuItem>
+                <MenuItem value="supplier2">Supplier 2</MenuItem>
+                <MenuItem value="supplier3">Supplier 3</MenuItem>
+              </MuiSelect>
+            </FormControl>
+          </div>
         </CardContent>
       </Card>
 
@@ -317,4 +428,3 @@ export const AddVendorAuditPage = () => {
     </div>
   );
 };
-
