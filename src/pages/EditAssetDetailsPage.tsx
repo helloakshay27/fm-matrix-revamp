@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { TextField } from '@mui/material';
 import { ArrowLeft, ChevronDown, ChevronUp, Plus, X, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Percent, Zap, Sun, Droplet, Recycle, BarChart3, Grid2X2, Settings } from 'lucide-react';
 import { FormControl, InputLabel, MenuItem, Select as MuiSelect, SelectChangeEvent, Radio, RadioGroup as MuiRadioGroup, FormControlLabel } from '@mui/material';
+import { AddCustomFieldModal } from '@/components/AddCustomFieldModal';
+
 const fieldStyles = {
   height: {
     xs: 28,
@@ -22,6 +24,7 @@ const fieldStyles = {
     }
   }
 };
+
 export const EditAssetDetailsPage = () => {
   const {
     id
@@ -141,6 +144,9 @@ export const EditAssetDetailsPage = () => {
     noOfVisits: '',
     amcCost: ''
   });
+  const [customFields, setCustomFields] = useState<{ id: string; name: string; value: string }[]>([]);
+  const [isCustomFieldModalOpen, setIsCustomFieldModalOpen] = useState(false);
+
   const getMeterCategoryOptions = () => [{
     value: 'board',
     label: 'Board',
@@ -166,6 +172,7 @@ export const EditAssetDetailsPage = () => {
     label: 'IEX-GDAM',
     icon: <BarChart className="w-6 h-6" />
   }];
+
   const getSubCategoryOptions = () => {
     switch (meterCategoryType) {
       case 'board':
@@ -214,34 +221,40 @@ export const EditAssetDetailsPage = () => {
         return [];
     }
   };
+
   const toggleSection = section => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }));
   };
+
   const handleLocationChange = (field: string, value: string) => {
     setLocationData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleItAssetChange = (field: string, value: string) => {
     setItAssetData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleMeterCategoryChange = value => {
     setMeterCategoryType(value);
     setSubCategoryType('');
   };
+
   const addConsumptionMeasure = () => {
     const newId = consumptionMeasures.length > 0 ? Math.max(...consumptionMeasures.map(m => m.id)) + 1 : 1;
     setConsumptionMeasures([...consumptionMeasures, {
@@ -256,17 +269,20 @@ export const EditAssetDetailsPage = () => {
       checkPreviousReading: false
     }]);
   };
+
   const removeConsumptionMeasure = id => {
     if (consumptionMeasures.length > 1) {
       setConsumptionMeasures(consumptionMeasures.filter(m => m.id !== id));
     }
   };
+
   const updateConsumptionMeasure = (id, field, value) => {
     setConsumptionMeasures(consumptionMeasures.map(m => m.id === id ? {
       ...m,
       [field]: value
     } : m));
   };
+
   const addNonConsumptionMeasure = () => {
     const newId = nonConsumptionMeasures.length > 0 ? Math.max(...nonConsumptionMeasures.map(m => m.id)) + 1 : 1;
     setNonConsumptionMeasures([...nonConsumptionMeasures, {
@@ -281,17 +297,20 @@ export const EditAssetDetailsPage = () => {
       checkPreviousReading: false
     }]);
   };
+
   const removeNonConsumptionMeasure = id => {
     if (nonConsumptionMeasures.length > 1) {
       setNonConsumptionMeasures(nonConsumptionMeasures.filter(m => m.id !== id));
     }
   };
+
   const updateNonConsumptionMeasure = (id, field, value) => {
     setNonConsumptionMeasures(nonConsumptionMeasures.map(m => m.id === id ? {
       ...m,
       [field]: value
     } : m));
   };
+
   const handleFileUpload = (category, files) => {
     if (files) {
       const fileArray = Array.from(files);
@@ -301,36 +320,42 @@ export const EditAssetDetailsPage = () => {
       }));
     }
   };
+
   const removeFile = (category, index) => {
     setAttachments(prev => ({
       ...prev,
       [category]: prev[category].filter((_, i) => i !== index)
     }));
   };
+
   const handleDepreciationDataChange = (field: string, value: string) => {
     setDepreciationData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleAssetAllocationChange = (field: string, value: string) => {
     setAssetAllocationData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleAssetLoanedChange = (field: string, value: string) => {
     setAssetLoanedData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleAmcDetailsChange = (field: string, value: string) => {
     setAmcDetailsData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleSaveAndShowDetails = () => {
     console.log('Saving and showing details:', {
       locationData,
@@ -342,6 +367,7 @@ export const EditAssetDetailsPage = () => {
     });
     navigate(`/maintenance/asset/details/${id}`);
   };
+
   const handleSaveAndCreateNew = () => {
     console.log('Saving and creating new:', {
       locationData,
@@ -353,9 +379,32 @@ export const EditAssetDetailsPage = () => {
     });
     navigate('/maintenance/asset/add');
   };
+
   const handleBack = () => {
     navigate(`/maintenance/asset/details/${id}`);
   };
+
+  const handleAddCustomField = (fieldName: string) => {
+    const newField = {
+      id: Date.now().toString(),
+      name: fieldName,
+      value: ''
+    };
+    setCustomFields(prev => [...prev, newField]);
+  };
+
+  const handleCustomFieldChange = (id: string, value: string) => {
+    setCustomFields(prev => 
+      prev.map(field => 
+        field.id === id ? { ...field, value } : field
+      )
+    );
+  };
+
+  const removeCustomField = (id: string) => {
+    setCustomFields(prev => prev.filter(field => field.id !== id));
+  };
+
   return <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
@@ -420,7 +469,13 @@ export const EditAssetDetailsPage = () => {
               ASSET DETAILS
             </div>
             <div className="flex items-center gap-2">
-              <button className="px-3 py-1 rounded-md text-sm flex items-center gap-1 bg-[#f6f4ee] text-red-700">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsCustomFieldModalOpen(true);
+                }}
+                className="px-3 py-1 rounded-md text-sm flex items-center gap-1 bg-[#f6f4ee] text-red-700"
+              >
                 <Plus className="w-4 h-4" />
                 Custom Field
               </button>
@@ -495,6 +550,36 @@ export const EditAssetDetailsPage = () => {
               sx: fieldStyles
             }} />
               </div>
+
+              {/* Custom Fields */}
+              {customFields.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-4">
+                  {customFields.map((field) => (
+                    <div key={field.id} className="relative">
+                      <TextField
+                        label={field.name}
+                        placeholder={`Enter ${field.name}`}
+                        value={field.value}
+                        onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{
+                          shrink: true
+                        }}
+                        InputProps={{
+                          sx: fieldStyles
+                        }}
+                      />
+                      <button
+                        onClick={() => removeCustomField(field.id)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Status Section */}
               <div className="mb-4">
@@ -1055,5 +1140,12 @@ export const EditAssetDetailsPage = () => {
           </button>
         </div>
       </div>
+
+      {/* Add Custom Field Modal */}
+      <AddCustomFieldModal
+        isOpen={isCustomFieldModalOpen}
+        onClose={() => setIsCustomFieldModalOpen(false)}
+        onAddField={handleAddCustomField}
+      />
     </div>;
 };
