@@ -70,6 +70,7 @@ import AddWasteGenerationPage from './pages/AddWasteGenerationPage';
 import { SurveyListDashboard } from './pages/SurveyListDashboard';
 import { SurveyMappingDashboard } from './pages/SurveyMappingDashboard';
 import { SurveyResponseDashboard } from './pages/SurveyResponseDashboard';
+import { SurveyResponsePage } from './pages/SurveyResponsePage';
 
 // Import Schedule pages
 import { ScheduleListDashboard } from './pages/ScheduleListDashboard';
@@ -525,6 +526,7 @@ function App() {
                             <Route path="/maintenance/audit/survey/list" element={<SurveyListDashboard />} />
                             <Route path="/maintenance/audit/survey/mapping" element={<SurveyMappingDashboard />} />
                             <Route path="/maintenance/audit/survey/response" element={<SurveyResponseDashboard />} />
+                            <Route path="/maintenance/survey/response" element={<SurveyResponsePage />} />
 
                             {/* Finance Routes */}
                             <Route path="/finance/material-pr" element={<MaterialPRDashboard />} />
