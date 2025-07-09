@@ -425,7 +425,7 @@ export const AssetDashboard = () => {
           Grid View
         </Button>
         <ColumnVisibilityDropdown 
-          columns={visibleColumns}
+          visibleColumns={visibleColumns}
           onColumnChange={handleColumnChange}
         />
 
@@ -554,9 +554,8 @@ export const AssetDashboard = () => {
         title={uploadType === 'import' ? 'Import Assets' : 'Update Assets'}
       />
       <AssetFilterDialog 
-        open={isFilterOpen}
-        onOpenChange={setIsFilterOpen}
-        onApply={(filters) => console.log('Applied filters:', filters)}
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
       />
     </div>
   );
