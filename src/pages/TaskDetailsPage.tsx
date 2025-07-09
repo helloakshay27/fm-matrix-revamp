@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -244,39 +245,45 @@ export const TaskDetailsPage = () => {
 
               {activeTab === 'Input' && <div className="space-y-4">
                   <div>
-                    <TextField label="Input Value" fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} sx={{
-                  mt: 1
-                }} />
+                    <TextField 
+                      label="Input Value" 
+                      fullWidth 
+                      variant="outlined" 
+                      InputLabelProps={{
+                        shrink: true
+                      }} 
+                      InputProps={{
+                        sx: fieldStyles
+                      }} 
+                      sx={{
+                        mt: 1
+                      }} 
+                    />
                   </div>
                   <div>
                     <TextField 
-  label="Notes" 
-  fullWidth 
-  variant="outlined" 
-  multiline 
-  rows={4}
-  InputLabelProps={{
-    shrink: true
-  }} 
-  sx={{
-    mt: 1,
-    '& .MuiOutlinedInput-root': {
-      alignItems: 'flex-start',
-      padding: 0
-    },
-    '& .MuiInputBase-inputMultiline': {
-      padding: '12px',
-      minHeight: 'auto',
-      height: 'auto',
-      lineHeight: 1.5
-    }
-  }} 
-/>
-
+                      label="Notes" 
+                      fullWidth 
+                      variant="outlined" 
+                      multiline 
+                      rows={4}
+                      InputLabelProps={{
+                        shrink: true
+                      }} 
+                      sx={{
+                        mt: 1,
+                        '& .MuiOutlinedInput-root': {
+                          alignItems: 'flex-start',
+                          padding: 0
+                        },
+                        '& .MuiInputBase-inputMultiline': {
+                          padding: '12px',
+                          minHeight: 'auto',
+                          height: 'auto',
+                          lineHeight: 1.5
+                        }
+                      }} 
+                    />
                   </div>
                 </div>}
 
@@ -336,15 +343,24 @@ export const TaskDetailsPage = () => {
 
               {activeTab === 'Attachments' && <div className="space-y-4">
                   <div>
-                    <TextField label="Attachment" type="file" inputProps={{
-                  accept: 'image/*,application/pdf'
-                }} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} sx={{
-                  mt: 1
-                }} />
+                    <TextField 
+                      label="Attachment" 
+                      type="file" 
+                      inputProps={{
+                        accept: 'image/*,application/pdf'
+                      }} 
+                      fullWidth 
+                      variant="outlined" 
+                      InputLabelProps={{
+                        shrink: true
+                      }} 
+                      InputProps={{
+                        sx: fieldStyles
+                      }} 
+                      sx={{
+                        mt: 1
+                      }} 
+                    />
                   </div>
                   <Button style={{
                 backgroundColor: '#C72030'
@@ -379,16 +395,28 @@ export const TaskDetailsPage = () => {
                 <label htmlFor="floor-clean">Yes</label>
               </div>
               <div className="space-y-2">
-                <TextField label="Floor Comment" placeholder="Enter Floor Comment" value={formData.floorComment} onChange={e => setFormData(prev => ({
-                ...prev,
-                floorComment: e.target.value
-              }))} fullWidth variant="outlined" multiline rows={3} InputLabelProps={{
-                shrink: true
-              }} InputProps={{
-                sx: fieldStyles
-              }} sx={{
-                mt: 1
-              }} />
+                <TextField 
+                  label="Floor Comment" 
+                  placeholder="Enter Floor Comment" 
+                  value={formData.floorComment} 
+                  onChange={e => setFormData(prev => ({
+                    ...prev,
+                    floorComment: e.target.value
+                  }))} 
+                  fullWidth 
+                  variant="outlined" 
+                  multiline 
+                  rows={3} 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  InputProps={{
+                    sx: fieldStyles
+                  }} 
+                  sx={{
+                    mt: 1
+                  }} 
+                />
               </div>
               <div className="flex gap-4">
                 {[1, 2, 3, 4, 5].map(star => <span key={star} className="text-gray-300 text-xl cursor-pointer hover:text-yellow-400">☆</span>)}
@@ -408,16 +436,28 @@ export const TaskDetailsPage = () => {
             <div className="space-y-3">
               <p className="font-medium">2. LBLR lobby*</p>
               <div className="space-y-2">
-                <TextField label="Dust Comment" placeholder="Enter Dust Comment" value={formData.dustComment} onChange={e => setFormData(prev => ({
-                ...prev,
-                dustComment: e.target.value
-              }))} fullWidth variant="outlined" multiline rows={3} InputLabelProps={{
-                shrink: true
-              }} InputProps={{
-                sx: fieldStyles
-              }} sx={{
-                mt: 1
-              }} />
+                <TextField 
+                  label="Dust Comment" 
+                  placeholder="Enter Dust Comment" 
+                  value={formData.dustComment} 
+                  onChange={e => setFormData(prev => ({
+                    ...prev,
+                    dustComment: e.target.value
+                  }))} 
+                  fullWidth 
+                  variant="outlined" 
+                  multiline 
+                  rows={3} 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  InputProps={{
+                    sx: fieldStyles
+                  }} 
+                  sx={{
+                    mt: 1
+                  }} 
+                />
               </div>
               <div className="flex gap-4">
                 {[1, 2, 3, 4, 5].map(star => <span key={star} className="text-gray-300 text-xl cursor-pointer hover:text-yellow-400">☆</span>)}
@@ -479,16 +519,28 @@ export const TaskDetailsPage = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <TextField label="Lift Comment" placeholder="Enter Lift Comment" value={formData.liftComment} onChange={e => setFormData(prev => ({
-                ...prev,
-                liftComment: e.target.value
-              }))} fullWidth variant="outlined" multiline rows={3} InputLabelProps={{
-                shrink: true
-              }} InputProps={{
-                sx: fieldStyles
-              }} sx={{
-                mt: 1
-              }} />
+                <TextField 
+                  label="Lift Comment" 
+                  placeholder="Enter Lift Comment" 
+                  value={formData.liftComment} 
+                  onChange={e => setFormData(prev => ({
+                    ...prev,
+                    liftComment: e.target.value
+                  }))} 
+                  fullWidth 
+                  variant="outlined" 
+                  multiline 
+                  rows={3} 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  InputProps={{
+                    sx: fieldStyles
+                  }} 
+                  sx={{
+                    mt: 1
+                  }} 
+                />
               </div>
               <div className="space-y-2">
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
@@ -540,28 +592,48 @@ export const TaskDetailsPage = () => {
               <h3 className="font-medium mb-4" style={{ color: '#C72030' }}>New Schedule</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <TextField label="Schedule Date" type="date" value={rescheduleData.scheduleDate} onChange={e => setRescheduleData(prev => ({
-                  ...prev,
-                  scheduleDate: e.target.value
-                }))} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} sx={{
-                  mt: 1
-                }} />
+                  <TextField 
+                    label="Schedule Date" 
+                    type="date" 
+                    value={rescheduleData.scheduleDate} 
+                    onChange={e => setRescheduleData(prev => ({
+                      ...prev,
+                      scheduleDate: e.target.value
+                    }))} 
+                    fullWidth 
+                    variant="outlined" 
+                    InputLabelProps={{
+                      shrink: true
+                    }} 
+                    InputProps={{
+                      sx: fieldStyles
+                    }} 
+                    sx={{
+                      mt: 1
+                    }} 
+                  />
                 </div>
                 <div>
-                  <TextField label="Time" type="time" value={rescheduleData.time} onChange={e => setRescheduleData(prev => ({
-                  ...prev,
-                  time: e.target.value
-                }))} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} sx={{
-                  mt: 1
-                }} />
+                  <TextField 
+                    label="Time" 
+                    type="time" 
+                    value={rescheduleData.time} 
+                    onChange={e => setRescheduleData(prev => ({
+                      ...prev,
+                      time: e.target.value
+                    }))} 
+                    fullWidth 
+                    variant="outlined" 
+                    InputLabelProps={{
+                      shrink: true
+                    }} 
+                    InputProps={{
+                      sx: fieldStyles
+                    }} 
+                    sx={{
+                      mt: 1
+                    }} 
+                  />
                 </div>
               </div>
             </div>
@@ -573,10 +645,17 @@ export const TaskDetailsPage = () => {
                 mt: 1
               }}>
                   <InputLabel id="select-users-label" shrink>Select Users</InputLabel>
-                  <MuiSelect labelId="select-users-label" label="Select Users" displayEmpty value={rescheduleData.selectUsers} onChange={e => setRescheduleData(prev => ({
-                  ...prev,
-                  selectUsers: e.target.value
-                }))} sx={fieldStyles}>
+                  <MuiSelect 
+                    labelId="select-users-label" 
+                    label="Select Users" 
+                    displayEmpty 
+                    value={rescheduleData.selectUsers} 
+                    onChange={e => setRescheduleData(prev => ({
+                      ...prev,
+                      selectUsers: e.target.value
+                    }))} 
+                    sx={fieldStyles}
+                  >
                     <MenuItem value=""><em>Select Users</em></MenuItem>
                     <MenuItem value="user1">User 1</MenuItem>
                     <MenuItem value="user2">User 2</MenuItem>
@@ -615,3 +694,4 @@ export const TaskDetailsPage = () => {
       </Dialog>
     </>;
 };
+
