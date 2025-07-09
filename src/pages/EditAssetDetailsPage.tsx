@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -979,68 +980,135 @@ export const EditAssetDetailsPage = () => {
           {attachmentsExpanded && (
             <div className="p-6 pt-0 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Manuals Upload</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <input
-                      type="file"
-                      multiple
-                      onChange={(e) => handleFileUpload('manuals', e)}
-                      className="hidden"
-                      id="manuals-upload"
-                    />
-                    <label htmlFor="manuals-upload" className="cursor-pointer">
-                      <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-500">Click to upload files</p>
-                    </label>
+                {/* Manuals Upload */}
+                <div className="space-y-3">
+                  <Label className="text-base font-medium text-gray-700">Manuals Upload</Label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="file"
+                          multiple
+                          onChange={(e) => handleFileUpload('manuals', e)}
+                          className="hidden"
+                          id="manuals-file-input"
+                        />
+                        <label 
+                          htmlFor="manuals-file-input" 
+                          className="text-[#C72030] font-medium cursor-pointer hover:underline"
+                        >
+                          Choose File
+                        </label>
+                        <span className="text-gray-500">No file chosen</span>
+                      </div>
+                      <Button
+                        onClick={() => document.getElementById('manuals-file-input')?.click()}
+                        className="bg-gray-100 hover:bg-gray-200 text-[#C72030] border-none"
+                        variant="outline"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Upload Files
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Insurance Details</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <input
-                      type="file"
-                      multiple
-                      onChange={(e) => handleFileUpload('insurance', e)}
-                      className="hidden"
-                      id="insurance-upload"
-                    />
-                    <label htmlFor="insurance-upload" className="cursor-pointer">
-                      <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-500">Click to upload files</p>
-                    </label>
+
+                {/* Insurance Details */}
+                <div className="space-y-3">
+                  <Label className="text-base font-medium text-gray-700">Insurance Details</Label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="file"
+                          multiple
+                          onChange={(e) => handleFileUpload('insurance', e)}
+                          className="hidden"
+                          id="insurance-file-input"
+                        />
+                        <label 
+                          htmlFor="insurance-file-input" 
+                          className="text-[#C72030] font-medium cursor-pointer hover:underline"
+                        >
+                          Choose File
+                        </label>
+                        <span className="text-gray-500">No file chosen</span>
+                      </div>
+                      <Button
+                        onClick={() => document.getElementById('insurance-file-input')?.click()}
+                        className="bg-gray-100 hover:bg-gray-200 text-[#C72030] border-none"
+                        variant="outline"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Upload Files
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Purchase Invoice</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <input
-                      type="file"
-                      multiple
-                      onChange={(e) => handleFileUpload('invoice', e)}
-                      className="hidden"
-                      id="invoice-upload"
-                    />
-                    <label htmlFor="invoice-upload" className="cursor-pointer">
-                      <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-500">Click to upload files</p>
-                    </label>
+
+                {/* Purchase Invoice */}
+                <div className="space-y-3">
+                  <Label className="text-base font-medium text-gray-700">Purchaselah Invoice</Label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="file"
+                          multiple
+                          onChange={(e) => handleFileUpload('invoice', e)}
+                          className="hidden"
+                          id="invoice-file-input"
+                        />
+                        <label 
+                          htmlFor="invoice-file-input" 
+                          className="text-[#C72030] font-medium cursor-pointer hover:underline"
+                        >
+                          Choose File
+                        </label>
+                        <span className="text-gray-500">No file chosen</span>
+                      </div>
+                      <Button
+                        onClick={() => document.getElementById('invoice-file-input')?.click()}
+                        className="bg-gray-100 hover:bg-gray-200 text-[#C72030] border-none"
+                        variant="outline"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Upload Files
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">AMC</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <input
-                      type="file"
-                      multiple
-                      onChange={(e) => handleFileUpload('amc', e)}
-                      className="hidden"
-                      id="amc-upload"
-                    />
-                    <label htmlFor="amc-upload" className="cursor-pointer">
-                      <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-500">Click to upload files</p>
-                    </label>
+
+                {/* AMC */}
+                <div className="space-y-3">
+                  <Label className="text-base font-medium text-gray-700">AMC</Label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="file"
+                          multiple
+                          onChange={(e) => handleFileUpload('amc', e)}
+                          className="hidden"
+                          id="amc-file-input"
+                        />
+                        <label 
+                          htmlFor="amc-file-input" 
+                          className="text-[#C72030] font-medium cursor-pointer hover:underline"
+                        >
+                          Choose File
+                        </label>
+                        <span className="text-gray-500">No file chosen</span>
+                      </div>
+                      <Button
+                        onClick={() => document.getElementById('amc-file-input')?.click()}
+                        className="bg-gray-100 hover:bg-gray-200 text-[#C72030] border-none"
+                        variant="outline"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Upload Files
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
