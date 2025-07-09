@@ -158,27 +158,27 @@ export const EditAssetDetailsPage = () => {
   const getMeterCategoryOptions = () => [{
     value: 'board',
     label: 'Board',
-    icon: <BarChart3 className="w-6 h-6" />
+    icon: <BarChart3 className="w-3 h-3" />
   }, {
     value: 'dg',
     label: 'DG',
-    icon: <Zap className="w-6 h-6" />
+    icon: <Zap className="w-4 h-4" />
   }, {
     value: 'renewable',
     label: 'Renewable',
-    icon: <Sun className="w-6 h-6" />
+    icon: <Sun className="w-4 h-4" />
   }, {
     value: 'fresh-water',
     label: 'Fresh Water',
-    icon: <Droplet className="w-6 h-6" />
+    icon: <Droplet className="w-4 h-4" />
   }, {
     value: 'recycled',
     label: 'Recycled',
-    icon: <Recycle className="w-6 h-6" />
+    icon: <Recycle className="w-4 h-4" />
   }, {
     value: 'iex-gdam',
     label: 'IEX-GDAM',
-    icon: <BarChart className="w-6 h-6" />
+    icon: <BarChart className="w-4 h-4" />
   }];
   const getSubCategoryOptions = () => {
     switch (meterCategoryType) {
