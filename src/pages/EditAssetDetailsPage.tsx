@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { TextField } from '@mui/material';
 import { ArrowLeft, ChevronDown, ChevronUp, Plus, X, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Percent, Zap, Sun, Droplet, Recycle, BarChart3, Grid2X2, Settings } from 'lucide-react';
 import { FormControl, InputLabel, MenuItem, Select as MuiSelect, SelectChangeEvent, Radio, RadioGroup as MuiRadioGroup, FormControlLabel } from '@mui/material';
+
 const fieldStyles = {
   height: {
     xs: 28,
@@ -22,6 +23,7 @@ const fieldStyles = {
     }
   }
 };
+
 export const EditAssetDetailsPage = () => {
   const {
     id
@@ -141,6 +143,7 @@ export const EditAssetDetailsPage = () => {
     noOfVisits: '',
     amcCost: ''
   });
+
   const getMeterCategoryOptions = () => [{
     value: 'board',
     label: 'Board',
@@ -166,6 +169,7 @@ export const EditAssetDetailsPage = () => {
     label: 'IEX-GDAM',
     icon: <BarChart className="w-6 h-6" />
   }];
+
   const getSubCategoryOptions = () => {
     switch (meterCategoryType) {
       case 'board':
@@ -214,34 +218,40 @@ export const EditAssetDetailsPage = () => {
         return [];
     }
   };
+
   const toggleSection = section => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }));
   };
+
   const handleLocationChange = (field: string, value: string) => {
     setLocationData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleItAssetChange = (field: string, value: string) => {
     setItAssetData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleMeterCategoryChange = value => {
     setMeterCategoryType(value);
     setSubCategoryType('');
   };
+
   const addConsumptionMeasure = () => {
     const newId = consumptionMeasures.length > 0 ? Math.max(...consumptionMeasures.map(m => m.id)) + 1 : 1;
     setConsumptionMeasures([...consumptionMeasures, {
@@ -256,17 +266,20 @@ export const EditAssetDetailsPage = () => {
       checkPreviousReading: false
     }]);
   };
+
   const removeConsumptionMeasure = id => {
     if (consumptionMeasures.length > 1) {
       setConsumptionMeasures(consumptionMeasures.filter(m => m.id !== id));
     }
   };
+
   const updateConsumptionMeasure = (id, field, value) => {
     setConsumptionMeasures(consumptionMeasures.map(m => m.id === id ? {
       ...m,
       [field]: value
     } : m));
   };
+
   const addNonConsumptionMeasure = () => {
     const newId = nonConsumptionMeasures.length > 0 ? Math.max(...nonConsumptionMeasures.map(m => m.id)) + 1 : 1;
     setNonConsumptionMeasures([...nonConsumptionMeasures, {
@@ -281,17 +294,20 @@ export const EditAssetDetailsPage = () => {
       checkPreviousReading: false
     }]);
   };
+
   const removeNonConsumptionMeasure = id => {
     if (nonConsumptionMeasures.length > 1) {
       setNonConsumptionMeasures(nonConsumptionMeasures.filter(m => m.id !== id));
     }
   };
+
   const updateNonConsumptionMeasure = (id, field, value) => {
     setNonConsumptionMeasures(nonConsumptionMeasures.map(m => m.id === id ? {
       ...m,
       [field]: value
     } : m));
   };
+
   const handleFileUpload = (category, files) => {
     if (files) {
       const fileArray = Array.from(files);
@@ -301,36 +317,42 @@ export const EditAssetDetailsPage = () => {
       }));
     }
   };
+
   const removeFile = (category, index) => {
     setAttachments(prev => ({
       ...prev,
       [category]: prev[category].filter((_, i) => i !== index)
     }));
   };
+
   const handleDepreciationDataChange = (field: string, value: string) => {
     setDepreciationData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleAssetAllocationChange = (field: string, value: string) => {
     setAssetAllocationData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleAssetLoanedChange = (field: string, value: string) => {
     setAssetLoanedData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleAmcDetailsChange = (field: string, value: string) => {
     setAmcDetailsData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleSaveAndShowDetails = () => {
     console.log('Saving and showing details:', {
       locationData,
@@ -342,6 +364,7 @@ export const EditAssetDetailsPage = () => {
     });
     navigate(`/maintenance/asset/details/${id}`);
   };
+
   const handleSaveAndCreateNew = () => {
     console.log('Saving and creating new:', {
       locationData,
@@ -353,9 +376,11 @@ export const EditAssetDetailsPage = () => {
     });
     navigate('/maintenance/asset/add');
   };
+
   const handleBack = () => {
     navigate(`/maintenance/asset/details/${id}`);
   };
+
   return <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
@@ -645,39 +670,61 @@ export const EditAssetDetailsPage = () => {
                 
                 {/* Responsive grid for meter category options */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
-                  {getMeterCategoryOptions().map(option => <div key={option.value} className="bg-white  rounded-lg border border-gray-200 shadow-sm">
+                  {getMeterCategoryOptions().map(option => (
+                    <div key={option.value} className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
                       <div className="flex items-center space-x-2">
                         <div className="text-gray-600">
                           {option.icon}
                         </div>
                         <div className="flex items-center space-x-2">
-                          <input type="radio" id={option.value} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
+                          <input 
+                            type="radio" 
+                            id={option.value} 
+                            name="meterCategory" 
+                            value={option.value} 
+                            checked={meterCategoryType === option.value} 
+                            onChange={e => handleMeterCategoryChange(e.target.value)} 
+                            className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" 
+                          />
                           <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer font-medium">
                             {option.label}
                           </label>
                         </div>
                       </div>
-                    </div>)}
+                    </div>
+                  ))}
                 </div>
 
                 {/* Subcategory options for Board and Renewable */}
-                {(meterCategoryType === 'board' || meterCategoryType === 'renewable') && getSubCategoryOptions().length > 0 && <div className="mt-6">
+                {(meterCategoryType === 'board' || meterCategoryType === 'renewable') && getSubCategoryOptions().length > 0 && (
+                  <div className="mt-6">
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                      {getSubCategoryOptions().map(option => <div key={option.value} className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
+                      {getSubCategoryOptions().map(option => (
+                        <div key={option.value} className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
                           <div className="flex flex-col items-center space-y-2">
                             <div className="text-gray-600">
                               {option.icon}
                             </div>
                             <div className="flex items-center space-x-2">
-                              <input type="radio" id={`sub-${option.value}`} name="subMeterCategory" value={option.value} checked={subCategoryType === option.value} onChange={e => setSubCategoryType(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
+                              <input 
+                                type="radio" 
+                                id={`sub-${option.value}`} 
+                                name="subMeterCategory" 
+                                value={option.value} 
+                                checked={subCategoryType === option.value} 
+                                onChange={e => setSubCategoryType(e.target.value)} 
+                                className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" 
+                              />
                               <label htmlFor={`sub-${option.value}`} className="text-xs sm:text-sm cursor-pointer font-medium">
                                 {option.label}
                               </label>
                             </div>
                           </div>
-                        </div>)}
+                        </div>
+                      ))}
                     </div>
-                  </div>}
+                  </div>
+                )}
               </div>
             </div>}
         </div>
@@ -695,37 +742,88 @@ export const EditAssetDetailsPage = () => {
           </div>
           {expandedSections.consumption && <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <TextField required label="Purchase Cost" placeholder="Enter Purchase Cost" name="purchaseCost" value={formData.purchaseCost} onChange={e => handleInputChange('purchaseCost', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
+                <TextField
+                  required
+                  label="Purchase Cost"
+                  placeholder="Enter Purchase Cost"
+                  name="purchaseCost"
+                  value={formData.purchaseCost}
+                  onChange={e => handleInputChange('purchaseCost', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
                 
-                <TextField required label="Purchase Date" placeholder="dd/mm/yyyy" name="purchaseDate" type="date" value={formData.purchaseDate} onChange={e => handleInputChange('purchaseDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
+                <TextField
+                  required
+                  label="Purchase Date"
+                  placeholder="dd/mm/yyyy"
+                  name="purchaseDate"
+                  type="date"
+                  value={formData.purchaseDate}
+                  onChange={e => handleInputChange('purchaseDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
 
                 <div className="space-y-2">
                   <span className="text-sm font-medium text-gray-700">Under Warranty</span>
                   <div className="flex items-center gap-6">
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="warranty-yes" name="underWarranty" value="yes" checked={formData.underWarranty === 'yes'} onChange={e => handleInputChange('underWarranty', e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                      <input
+                        type="radio"
+                        id="warranty-yes"
+                        name="underWarranty"
+                        value="yes"
+                        checked={formData.underWarranty === 'yes'}
+                        onChange={e => handleInputChange('underWarranty', e.target.value)}
+                        className="w-4 h-4 text-blue-600 border-gray-300"
+                      />
                       <label htmlFor="warranty-yes" className="text-sm">Yes</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="warranty-no" name="underWarranty" value="no" checked={formData.underWarranty === 'no'} onChange={e => handleInputChange('underWarranty', e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                      <input
+                        type="radio"
+                        id="warranty-no"
+                        name="underWarranty"
+                        value="no"
+                        checked={formData.underWarranty === 'no'}
+                        onChange={e => handleInputChange('underWarranty', e.target.value)}
+                        className="w-4 h-4 text-blue-600 border-gray-300"
+                      />
                       <label htmlFor="warranty-no" className="text-sm">No</label>
                     </div>
                   </div>
                 </div>
 
-                <TextField required label="Warranty Expires On" placeholder="dd/mm/yyyy" name="warrantyExpiresOn" type="date" value={formData.warrantyExpiresOn} onChange={e => handleInputChange('warrantyExpiresOn', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
+                <TextField
+                  required
+                  label="Warranty Expires On"
+                  placeholder="dd/mm/yyyy"
+                  name="warrantyExpiresOn"
+                  type="date"
+                  value={formData.warrantyExpiresOn}
+                  onChange={e => handleInputChange('warrantyExpiresOn', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
               </div>
             </div>}
         </div>
@@ -740,7 +838,12 @@ export const EditAssetDetailsPage = () => {
               DEPRECIATION RULE
               <div className="flex items-center gap-2 ml-4">
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" checked={depreciationApplicable} onChange={e => setDepreciationApplicable(e.target.checked)} />
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={depreciationApplicable} 
+                    onChange={e => setDepreciationApplicable(e.target.checked)} 
+                  />
                   <div className="w-11 h-6 bg-green-400 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                 </label>
                 <span className="text-sm text-gray-600">If Applicable</span>
@@ -755,11 +858,27 @@ export const EditAssetDetailsPage = () => {
                   <span className="font-medium text-gray-700">Method</span>
                   <div className="flex items-center gap-6">
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="method-straight-line" name="depreciationMethod" value="straight-line" checked={depreciationMethod === 'straight-line'} onChange={e => setDepreciationMethod(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                      <input 
+                        type="radio" 
+                        id="method-straight-line" 
+                        name="depreciationMethod" 
+                        value="straight-line" 
+                        checked={depreciationMethod === 'straight-line'} 
+                        onChange={e => setDepreciationMethod(e.target.value)} 
+                        className="w-4 h-4 text-blue-600 border-gray-300" 
+                      />
                       <label htmlFor="method-straight-line" className="text-sm">Straight Line</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="method-wdv" name="depreciationMethod" value="wdv" checked={depreciationMethod === 'wdv'} onChange={e => setDepreciationMethod(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                      <input 
+                        type="radio" 
+                        id="method-wdv" 
+                        name="depreciationMethod" 
+                        value="wdv" 
+                        checked={depreciationMethod === 'wdv'} 
+                        onChange={e => setDepreciationMethod(e.target.value)} 
+                        className="w-4 h-4 text-blue-600 border-gray-300" 
+                      />
                       <label htmlFor="method-wdv" className="text-sm">WDV</label>
                     </div>
                   </div>
@@ -768,33 +887,82 @@ export const EditAssetDetailsPage = () => {
 
               {/* Input Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                <TextField required label="Useful Life (in yrs)" placeholder="yrs" name="usefulLife" value={depreciationData.usefulLife} onChange={e => handleDepreciationDataChange('usefulLife', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
+                <TextField
+                  required
+                  label="Useful Life (in yrs)"
+                  placeholder="yrs"
+                  name="usefulLife"
+                  value={depreciationData.usefulLife}
+                  onChange={e => handleDepreciationDataChange('usefulLife', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
                 
-                <TextField required label="Salvage Value" placeholder="Enter Value" name="salvageValue" value={depreciationData.salvageValue} onChange={e => handleDepreciationDataChange('salvageValue', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
+                <TextField
+                  required
+                  label="Salvage Value"
+                  placeholder="Enter Value"
+                  name="salvageValue"
+                  value={depreciationData.salvageValue}
+                  onChange={e => handleDepreciationDataChange('salvageValue', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
 
-                <TextField required label="Depreciation Rate" placeholder="Enter Value" name="depreciationRate" value={depreciationData.depreciationRate} onChange={e => handleDepreciationDataChange('depreciationRate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
+                <TextField
+                  required
+                  label="Depreciation Rate"
+                  placeholder="Enter Value"
+                  name="depreciationRate"
+                  value={depreciationData.depreciationRate}
+                  onChange={e => handleDepreciationDataChange('depreciationRate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
               </div>
 
               {/* Configuration Scope */}
               <div className="flex items-center gap-6">
                 <div className="flex items-center space-x-2">
-                  <input type="radio" id="scope-this-only" name="depreciationScope" value="this-only" checked={depreciationScope === 'this-only'} onChange={e => setDepreciationScope(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                  <input 
+                    type="radio" 
+                    id="scope-this-only" 
+                    name="depreciationScope" 
+                    value="this-only" 
+                    checked={depreciationScope === 'this-only'} 
+                    onChange={e => setDepreciationScope(e.target.value)} 
+                    className="w-4 h-4 text-blue-600 border-gray-300" 
+                  />
                   <label htmlFor="scope-this-only" className="text-sm">Configure Depreciation Only For This</label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <input type="radio" id="scope-similar" name="depreciationScope" value="similar" checked={depreciationScope === 'similar'} onChange={e => setDepreciationScope(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                  <input 
+                    type="radio" 
+                    id="scope-similar" 
+                    name="depreciationScope" 
+                    value="similar" 
+                    checked={depreciationScope === 'similar'} 
+                    onChange={e => setDepreciationScope(e.target.value)} 
+                    className="w-4 h-4 text-blue-600 border-gray-300" 
+                  />
                   <label htmlFor="scope-similar" className="text-sm">For Similar Product</label>
                 </div>
               </div>
@@ -819,11 +987,27 @@ export const EditAssetDetailsPage = () => {
                   <span className="font-medium text-gray-700">Based On</span>
                   <div className="flex items-center gap-6">
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="allocation-department" name="basedOn" value="department" checked={assetAllocationData.basedOn === 'department'} onChange={e => handleAssetAllocationChange('basedOn', e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                      <input 
+                        type="radio" 
+                        id="allocation-department" 
+                        name="basedOn" 
+                        value="department" 
+                        checked={assetAllocationData.basedOn === 'department'} 
+                        onChange={e => handleAssetAllocationChange('basedOn', e.target.value)} 
+                        className="w-4 h-4 text-blue-600 border-gray-300" 
+                      />
                       <label htmlFor="allocation-department" className="text-sm">Department</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="allocation-users" name="basedOn" value="users" checked={assetAllocationData.basedOn === 'users'} onChange={e => handleAssetAllocationChange('basedOn', e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                      <input 
+                        type="radio" 
+                        id="allocation-users" 
+                        name="basedOn" 
+                        value="users" 
+                        checked={assetAllocationData.basedOn === 'users'} 
+                        onChange={e => handleAssetAllocationChange('basedOn', e.target.value)} 
+                        className="w-4 h-4 text-blue-600 border-gray-300" 
+                      />
                       <label htmlFor="allocation-users" className="text-sm">Users</label>
                     </div>
                   </div>
@@ -832,11 +1016,16 @@ export const EditAssetDetailsPage = () => {
 
               {/* Department Dropdown */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <FormControl fullWidth variant="outlined" sx={{
-              minWidth: 120
-            }}>
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
                   <InputLabel id="department-select-label" shrink>Department*</InputLabel>
-                  <MuiSelect labelId="department-select-label" label="Department*" displayEmpty value={assetAllocationData.department} onChange={(e: SelectChangeEvent) => handleAssetAllocationChange('department', e.target.value)} sx={fieldStyles}>
+                  <MuiSelect 
+                    labelId="department-select-label" 
+                    label="Department*" 
+                    displayEmpty 
+                    value={assetAllocationData.department} 
+                    onChange={(e: SelectChangeEvent) => handleAssetAllocationChange('department', e.target.value)} 
+                    sx={fieldStyles}
+                  >
                     <MenuItem value="">
                       <em>Select...</em>
                     </MenuItem>
@@ -860,7 +1049,12 @@ export const EditAssetDetailsPage = () => {
               ASSET LOANED
               <div className="flex items-center gap-2 ml-4">
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" checked={assetLoanedApplicable} onChange={e => setAssetLoanedApplicable(e.target.checked)} />
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={assetLoanedApplicable} 
+                    onChange={e => setAssetLoanedApplicable(e.target.checked)} 
+                  />
                   <div className="w-11 h-6 bg-green-400 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                 </label>
                 <span className="text-sm text-gray-600">If Applicable</span>
@@ -870,11 +1064,16 @@ export const EditAssetDetailsPage = () => {
           </div>
           {expandedSections.assetLoaned && <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <FormControl fullWidth variant="outlined" sx={{
-              minWidth: 120
-            }}>
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
                   <InputLabel id="vendor-name-select-label" shrink>Vendor Name*</InputLabel>
-                  <MuiSelect labelId="vendor-name-select-label" label="Vendor Name*" displayEmpty value={assetLoanedData.vendorName} onChange={(e: SelectChangeEvent) => handleAssetLoanedChange('vendorName', e.target.value)} sx={fieldStyles}>
+                  <MuiSelect 
+                    labelId="vendor-name-select-label" 
+                    label="Vendor Name*" 
+                    displayEmpty 
+                    value={assetLoanedData.vendorName} 
+                    onChange={(e: SelectChangeEvent) => handleAssetLoanedChange('vendorName', e.target.value)} 
+                    sx={fieldStyles}
+                  >
                     <MenuItem value="">
                       <em>Select Vendor</em>
                     </MenuItem>
@@ -884,17 +1083,41 @@ export const EditAssetDetailsPage = () => {
                   </MuiSelect>
                 </FormControl>
 
-                <TextField required label="Agreement Start Date" placeholder="dd/mm/yyyy" name="agreementStartDate" type="date" value={assetLoanedData.agreementStartDate} onChange={e => handleAssetLoanedChange('agreementStartDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
+                <TextField
+                  required
+                  label="Agreement Start Date"
+                  placeholder="dd/mm/yyyy"
+                  name="agreementStartDate"
+                  type="date"
+                  value={assetLoanedData.agreementStartDate}
+                  onChange={e => handleAssetLoanedChange('agreementStartDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
 
-                <TextField required label="Agreement End Date" placeholder="dd/mm/yyyy" name="agreementEndDate" type="date" value={assetLoanedData.agreementEndDate} onChange={e => handleAssetLoanedChange('agreementEndDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
+                <TextField
+                  required
+                  label="Agreement End Date"
+                  placeholder="dd/mm/yyyy"
+                  name="agreementEndDate"
+                  type="date"
+                  value={assetLoanedData.agreementEndDate}
+                  onChange={e => handleAssetLoanedChange('agreementEndDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
               </div>
             </div>}
         </div>
@@ -913,11 +1136,16 @@ export const EditAssetDetailsPage = () => {
           {expandedSections.amcDetails && <div className="p-4 sm:p-6">
               {/* First Row - Vendor, Start Date, End Date, First Service, Payment Terms, No. of Visits */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-4">
-                <FormControl fullWidth variant="outlined" sx={{
-              minWidth: 120
-            }}>
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
                   <InputLabel id="amc-vendor-select-label" shrink>Vendor</InputLabel>
-                  <MuiSelect labelId="amc-vendor-select-label" label="Vendor" displayEmpty value={amcDetailsData.vendor} onChange={(e: SelectChangeEvent) => handleAmcDetailsChange('vendor', e.target.value)} sx={fieldStyles}>
+                  <MuiSelect 
+                    labelId="amc-vendor-select-label" 
+                    label="Vendor" 
+                    displayEmpty 
+                    value={amcDetailsData.vendor} 
+                    onChange={(e: SelectChangeEvent) => handleAmcDetailsChange('vendor', e.target.value)} 
+                    sx={fieldStyles}
+                  >
                     <MenuItem value="">
                       <em>Select Vendor</em>
                     </MenuItem>
@@ -927,29 +1155,70 @@ export const EditAssetDetailsPage = () => {
                   </MuiSelect>
                 </FormControl>
 
-                <TextField required label="Start Date" placeholder="dd/mm/yyyy" name="startDate" type="date" value={amcDetailsData.startDate} onChange={e => handleAmcDetailsChange('startDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
+                <TextField
+                  required
+                  label="Start Date"
+                  placeholder="dd/mm/yyyy"
+                  name="startDate"
+                  type="date"
+                  value={amcDetailsData.startDate}
+                  onChange={e => handleAmcDetailsChange('startDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
 
-                <TextField required label="End Date" placeholder="dd/mm/yyyy" name="endDate" type="date" value={amcDetailsData.endDate} onChange={e => handleAmcDetailsChange('endDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
+                <TextField
+                  required
+                  label="End Date"
+                  placeholder="dd/mm/yyyy"
+                  name="endDate"
+                  type="date"
+                  value={amcDetailsData.endDate}
+                  onChange={e => handleAmcDetailsChange('endDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
 
-                <TextField required label="First Service" placeholder="dd/mm/yyyy" name="firstService" type="date" value={amcDetailsData.firstService} onChange={e => handleAmcDetailsChange('firstService', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
+                <TextField
+                  required
+                  label="First Service"
+                  placeholder="dd/mm/yyyy"
+                  name="firstService"
+                  type="date"
+                  value={amcDetailsData.firstService}
+                  onChange={e => handleAmcDetailsChange('firstService', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
 
-                <FormControl fullWidth variant="outlined" sx={{
-              minWidth: 120
-            }}>
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
                   <InputLabel id="payment-terms-select-label" shrink>Payment Terms</InputLabel>
-                  <MuiSelect labelId="payment-terms-select-label" label="Payment Terms" displayEmpty value={amcDetailsData.paymentTerms} onChange={(e: SelectChangeEvent) => handleAmcDetailsChange('paymentTerms', e.target.value)} sx={fieldStyles}>
+                  <MuiSelect 
+                    labelId="payment-terms-select-label" 
+                    label="Payment Terms" 
+                    displayEmpty 
+                    value={amcDetailsData.paymentTerms} 
+                    onChange={(e: SelectChangeEvent) => handleAmcDetailsChange('paymentTerms', e.target.value)} 
+                    sx={fieldStyles}
+                  >
                     <MenuItem value="">
                       <em>Select Payment Terms</em>
                     </MenuItem>
@@ -960,20 +1229,42 @@ export const EditAssetDetailsPage = () => {
                   </MuiSelect>
                 </FormControl>
 
-                <TextField required label="No. of Visits" placeholder="Enter Value" name="noOfVisits" value={amcDetailsData.noOfVisits} onChange={e => handleAmcDetailsChange('noOfVisits', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
+                <TextField
+                  required
+                  label="No. of Visits"
+                  placeholder="Enter Value"
+                  name="noOfVisits"
+                  value={amcDetailsData.noOfVisits}
+                  onChange={e => handleAmcDetailsChange('noOfVisits', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
               </div>
 
               {/* Second Row - AMC Cost */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-                <TextField required label="AMC Cost" placeholder="Enter AMC Cost" name="amcCost" value={amcDetailsData.amcCost} onChange={e => handleAmcDetailsChange('amcCost', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
+                <TextField
+                  required
+                  label="AMC Cost"
+                  placeholder="Enter AMC Cost"
+                  name="amcCost"
+                  value={amcDetailsData.amcCost}
+                  onChange={e => handleAmcDetailsChange('amcCost', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
               </div>
             </div>}
         </div>
