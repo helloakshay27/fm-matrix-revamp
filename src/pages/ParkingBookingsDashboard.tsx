@@ -49,7 +49,7 @@ const ParkingBookingsDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
             <div>
               <FormControl fullWidth size="small">
-                <InputLabel id="building-label" sx={{ color: '#C72030', '&.Mui-focused': { color: '#C72030' } }}>
+                <InputLabel id="building-label">
                   Building
                 </InputLabel>
                 <Select
@@ -58,17 +58,6 @@ const ParkingBookingsDashboard = () => {
                   value={building}
                   label="Building"
                   onChange={handleBuildingChange}
-                  sx={{
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#C72030',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#C72030',
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#C72030',
-                    },
-                  }}
                 >
                   <MenuItem value="building1">Building 1</MenuItem>
                   <MenuItem value="building2">Building 2</MenuItem>
@@ -79,7 +68,7 @@ const ParkingBookingsDashboard = () => {
 
             <div>
               <FormControl fullWidth size="small">
-                <InputLabel id="floor-label" sx={{ color: '#C72030', '&.Mui-focused': { color: '#C72030' } }}>
+                <InputLabel id="floor-label">
                   Floor
                 </InputLabel>
                 <Select
@@ -88,17 +77,6 @@ const ParkingBookingsDashboard = () => {
                   value={floor}
                   label="Floor"
                   onChange={handleFloorChange}
-                  sx={{
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#C72030',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#C72030',
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#C72030',
-                    },
-                  }}
                 >
                   <MenuItem value="ground">Ground Floor</MenuItem>
                   <MenuItem value="first">First Floor</MenuItem>
@@ -109,7 +87,7 @@ const ParkingBookingsDashboard = () => {
 
             <div>
               <FormControl fullWidth size="small">
-                <InputLabel id="parking-slot-label" sx={{ color: '#C72030', '&.Mui-focused': { color: '#C72030' } }}>
+                <InputLabel id="parking-slot-label">
                   Parking Slot
                 </InputLabel>
                 <Select
@@ -118,17 +96,6 @@ const ParkingBookingsDashboard = () => {
                   value={parkingSlot}
                   label="Parking Slot"
                   onChange={handleParkingSlotChange}
-                  sx={{
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#C72030',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#C72030',
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#C72030',
-                    },
-                  }}
                 >
                   <MenuItem value="slot1">A-001</MenuItem>
                   <MenuItem value="slot2">A-002</MenuItem>
