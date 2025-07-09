@@ -13,7 +13,7 @@ const UtilityWasteGenerationDashboard = () => {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
 
-  const handleAdd = () => navigate('/maintenance/audit/waste/generation/add');
+  const handleAdd = () => navigate('/maintenance/waste/generation/add');
   const handleImport = () => setIsImportOpen(true);
   const handleUpdate = () => setIsUpdateOpen(true);
   const handleFilters = () => setIsFilterOpen(true);
