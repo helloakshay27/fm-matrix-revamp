@@ -274,174 +274,181 @@ const AddAssetPage = () => {
               </span>
               ASSET DETAILS
             </div>
-            {expandedSections.asset ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            <div className="flex items-center gap-2">
+              <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm flex items-center gap-1 hover:bg-blue-700">
+                <Plus className="w-4 h-4" />
+                Custom Field
+              </button>
+              {expandedSections.asset ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </div>
           </div>
           {expandedSections.asset && <div className="p-4 sm:p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                {[{
-              label: 'Asset Name',
-              name: 'assetName',
-              placeholder: 'Enter Name',
-              required: true
-            }, {
-              label: 'Asset No.',
-              name: 'assetNo',
-              placeholder: 'Enter Number',
-              required: true
-            }, {
-              label: 'Equipment ID',
-              name: 'equipmentId',
-              placeholder: 'Enter Number',
-              required: true
-            }].map(field => <TextField key={field.name} required={field.required} label={field.label} placeholder={field.placeholder} name={field.name} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />)}
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                {[{
-              label: 'Model No.',
-              name: 'modelNo',
-              placeholder: 'Enter Number'
-            }, {
-              label: 'Serial No.',
-              name: 'serialNo',
-              placeholder: 'Enter Number'
-            }, {
-              label: 'Consumer No.',
-              name: 'consumerNo',
-              placeholder: 'Enter Number'
-            }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />)}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                {[{
-              label: 'Purchase Cost',
-              name: 'purchaseCost',
-              placeholder: 'Enter Numeric value',
-              type: 'number',
-              required: true
-            }, {
-              label: 'Capacity',
-              name: 'capacity',
-              placeholder: 'Enter Text'
-            }, {
-              label: 'Unit',
-              name: 'unit',
-              placeholder: 'Enter Text'
-            }].map(field => <TextField key={field.name} required={field.required} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />)}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                {['Group', 'Subgroup'].map(label => <FormControl key={label} fullWidth variant="outlined" sx={{
-              minWidth: 120
-            }}>
-                    <InputLabel id={`${label.toLowerCase()}-select-label`} shrink>{label}</InputLabel>
-                    <MuiSelect labelId={`${label.toLowerCase()}-select-label`} label={label} displayEmpty value="" sx={fieldStyles}>
-                      <MenuItem value=""><em>Select {label}</em></MenuItem>
-                      <MenuItem value={`${label.toLowerCase()}1`}>{label} 1</MenuItem>
-                      <MenuItem value={`${label.toLowerCase()}2`}>{label} 2</MenuItem>
-                    </MuiSelect>
-                  </FormControl>)}
-                <TextField label="Purchased ON Date" placeholder="Select Date" name="purchaseDate" type="date" fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                {[{
-              label: 'Expiry date',
-              name: 'expiryDate',
-              type: 'date'
-            }, {
-              label: 'Manufacturer',
-              name: 'manufacturer',
-              placeholder: 'Enter Text'
-            }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder || 'Select Date'} name={field.name} type={field.type || 'text'} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />)}
+              {/* First row: Asset Name, Asset No, Model No, Serial No, Manufacturer, Vendor */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-4">
+                <TextField
+                  required
+                  label="Asset Name"
+                  placeholder="Enter Asset Name"
+                  name="assetName"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
+                <TextField
+                  required
+                  label="Asset No."
+                  placeholder="Enter Asset No"
+                  name="assetNo"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
+                <TextField
+                  required
+                  label="Model No."
+                  placeholder="Enter Model No"
+                  name="modelNo"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
+                <TextField
+                  label="Serial No."
+                  placeholder="Enter Serial No"
+                  name="serialNo"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
+                <TextField
+                  required
+                  label="Manufacturer"
+                  placeholder="Enter Manufacturer"
+                  name="manufacturer"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="vendor-select-label" shrink>Vendor</InputLabel>
+                  <MuiSelect
+                    labelId="vendor-select-label"
+                    label="Vendor"
+                    displayEmpty
+                    value=""
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value=""><em>Select Vendor</em></MenuItem>
+                    <MenuItem value="vendor1">Vendor 1</MenuItem>
+                    <MenuItem value="vendor2">Vendor 2</MenuItem>
+                    <MenuItem value="vendor3">Vendor 3</MenuItem>
+                  </MuiSelect>
+                </FormControl>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4">
-                {[{
-              label: 'Location Type',
-              name: 'locationType',
-              options: [{
-                value: 'common',
-                label: 'Common Area'
-              }, {
-                value: 'customer',
-                label: 'Customer'
-              }, {
-                value: 'na',
-                label: 'NA'
-              }],
-              defaultValue: 'common'
-            }, {
-              label: 'Asset Type',
-              name: 'assetType',
-              options: [{
-                value: 'parent',
-                label: 'Parent'
-              }, {
-                value: 'sub',
-                label: 'Sub'
-              }],
-              defaultValue: 'parent'
-            }, {
-              label: 'Status',
-              name: 'status',
-              options: [{
-                value: 'inuse',
-                label: 'In Use'
-              }, {
-                value: 'breakdown',
-                label: 'Breakdown'
-              }],
-              defaultValue: 'inuse'
-            }, {
-              label: 'Critical',
-              name: 'critical',
-              options: [{
-                value: 'yes',
-                label: 'Yes'
-              }, {
-                value: 'no',
-                label: 'No'
-              }],
-              defaultValue: 'no'
-            }].map(field => <div key={field.name}>
-                    <label className="text-xs sm:text-sm font-medium text-gray-700">{field.label}</label>
-                    <div className="flex flex-wrap gap-4 sm:gap-6 mt-2">
-                      {field.options.map(option => <div key={option.value} className="flex items-center space-x-2">
-                          <input type="radio" id={`${field.name}-${option.value}`} name={field.name} value={option.value} defaultChecked={option.value === field.defaultValue} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
-                    accentColor: '#C72030'
-                  }} />
-                          <label htmlFor={`${field.name}-${option.value}`} className="text-xs sm:text-sm">{option.label}</label>
-                        </div>)}
+              {/* Second row: Group, Subgroup, Commissioning Date */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="group-select-label" shrink>Group</InputLabel>
+                  <MuiSelect
+                    labelId="group-select-label"
+                    label="Group"
+                    displayEmpty
+                    value=""
+                    sx={fieldStyles}
+                    required
+                  >
+                    <MenuItem value=""><em>Select Group</em></MenuItem>
+                    <MenuItem value="group1">Group 1</MenuItem>
+                    <MenuItem value="group2">Group 2</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="subgroup-select-label" shrink>Subgroup</InputLabel>
+                  <MuiSelect
+                    labelId="subgroup-select-label"
+                    label="Subgroup"
+                    displayEmpty
+                    value=""
+                    sx={fieldStyles}
+                    required
+                  >
+                    <MenuItem value=""><em>Select Sub-Group</em></MenuItem>
+                    <MenuItem value="subgroup1">Subgroup 1</MenuItem>
+                    <MenuItem value="subgroup2">Subgroup 2</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+                <TextField
+                  label="Commissioning Date"
+                  placeholder="dd/mm/yyyy"
+                  name="commissioningDate"
+                  type="date"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
+              </div>
+
+              {/* Third row: Status */}
+              <div className="mb-4">
+                <div>
+                  <label className="text-sm font-medium text-blue-600 mb-2 block">Status</label>
+                  <div className="flex gap-6">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="status-inuse"
+                        name="status"
+                        value="inuse"
+                        defaultChecked
+                        className="w-4 h-4 text-blue-600 border-gray-300"
+                        style={{ accentColor: '#2563eb' }}
+                      />
+                      <label htmlFor="status-inuse" className="text-sm">In Use</label>
                     </div>
-                  </div>)}
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input type="checkbox" id="meterApplicable" className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]" style={{
-              accentColor: '#C72030'
-            }} />
-                <label htmlFor="meterApplicable" className="text-xs sm:text-sm">Meter Applicable</label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="status-breakdown"
+                        name="status"
+                        value="breakdown"
+                        className="w-4 h-4 text-blue-600 border-gray-300"
+                        style={{ accentColor: '#2563eb' }}
+                      />
+                      <label htmlFor="status-breakdown" className="text-sm">Breakdown</label>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>}
         </div>
