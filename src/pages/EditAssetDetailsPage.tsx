@@ -585,9 +585,9 @@ export const EditAssetDetailsPage = () => {
                 </div>
               </div>
 
-              {/* Meter Category Type Section */}
+              {/* Meter Details Section */}
               <div className="p-4 rounded-lg bg-[#f6f4ee]">
-                <h3 className="font-semibold text-sm mb-4 text-red-700">METER CATEGORY TYPE</h3>
+                <h3 className="font-semibold text-sm mb-4 text-red-700">METER DETAILS</h3>
                 
                 {/* First row with 5 boxes */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-4">
@@ -623,8 +623,8 @@ export const EditAssetDetailsPage = () => {
                     </div>)}
                 </div>
 
-                {/* Subcategory options for Board */}
-                {meterCategoryType === 'board' && getSubCategoryOptions().length > 0 && <div className="mt-6">
+                {/* Subcategory options for Board and Renewable */}
+                {(meterCategoryType === 'board' || meterCategoryType === 'renewable') && getSubCategoryOptions().length > 0 && <div className="mt-6">
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                       {getSubCategoryOptions().map(option => <div key={option.value} className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
                           <div className="flex flex-col items-center space-y-2">
