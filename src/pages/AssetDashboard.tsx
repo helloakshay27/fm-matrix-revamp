@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Upload, Download, FileText, Search, Filter, Eye, Settings, DollarSign, Laptop, Monitor, Package, AlertTriangle, Trash2, RotateCcw, Grid3X3, ExternalLink } from 'lucide-react';
+import { Plus, Upload, Download, FileText, Search, Filter, Eye, Settings, DollarSign, Laptop, Monitor, Package, AlertTriangle, Trash2, RotateCcw, ExternalLink } from 'lucide-react';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { AssetFilterDialog } from '@/components/AssetFilterDialog';
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
@@ -546,15 +546,6 @@ export const AssetDashboard = () => {
             className="border-gray-300 text-gray-600 bg-white hover:bg-gray-50"
           >
             <RotateCcw className="w-4 h-4" />
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={handleGridView}
-            className="border-gray-300 text-gray-600 bg-white hover:bg-gray-50"
-          >
-            <Grid3X3 className="w-4 h-4" />
           </Button>
           
           <ColumnVisibilityDropdown 
