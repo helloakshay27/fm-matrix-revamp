@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { TextField } from '@mui/material';
-import { ArrowLeft, ChevronDown, ChevronUp, Plus, X, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Percent, Zap, Sun, Droplet, Recycle, BarChart3 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, Plus, X, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Percent, Zap, Sun, Droplet, Recycle, BarChart3, Grid2X2 } from 'lucide-react';
 import { FormControl, InputLabel, MenuItem, Select as MuiSelect, SelectChangeEvent, Radio, RadioGroup as MuiRadioGroup, FormControlLabel } from '@mui/material';
 
 const fieldStyles = {
@@ -36,6 +36,7 @@ export const EditAssetDetailsPage = () => {
     meterCategory: true,
     consumption: true,
     nonConsumption: true,
+    assetAllocation: true,
     attachments: true
   });
   const [locationData, setLocationData] = useState({
@@ -121,6 +122,10 @@ export const EditAssetDetailsPage = () => {
     depreciationRate: ''
   });
   const [depreciationScope, setDepreciationScope] = useState('this-only');
+  const [assetAllocationData, setAssetAllocationData] = useState({
+    basedOn: 'department',
+    department: ''
+  });
 
   const getMeterCategoryOptions = () => [{
     value: 'board',
@@ -305,6 +310,13 @@ export const EditAssetDetailsPage = () => {
 
   const handleDepreciationDataChange = (field: string, value: string) => {
     setDepreciationData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleAssetAllocationChange = (field: string, value: string) => {
+    setAssetAllocationData(prev => ({
       ...prev,
       [field]: value
     }));
@@ -917,6 +929,76 @@ export const EditAssetDetailsPage = () => {
                   />
                   <label htmlFor="scope-similar" className="text-sm">For Similar Product</label>
                 </div>
+              </div>
+            </div>}
+        </div>
+
+        {/* Asset Allocation */}
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div onClick={() => toggleSection('assetAllocation')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <Grid2X2 className="w-3 h-3 sm:w-4 sm:h-4" />
+              </span>
+              ASSET ALLOCATION
+            </div>
+            {expandedSections.assetAllocation ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
+          {expandedSections.assetAllocation && <div className="p-4 sm:p-6">
+              {/* Based On Section */}
+              <div className="mb-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <span className="font-medium text-gray-700">Based On</span>
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="radio" 
+                        id="allocation-department" 
+                        name="basedOn" 
+                        value="department" 
+                        checked={assetAllocationData.basedOn === 'department'} 
+                        onChange={e => handleAssetAllocationChange('basedOn', e.target.value)} 
+                        className="w-4 h-4 text-blue-600 border-gray-300" 
+                      />
+                      <label htmlFor="allocation-department" className="text-sm">Department</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="radio" 
+                        id="allocation-users" 
+                        name="basedOn" 
+                        value="users" 
+                        checked={assetAllocationData.basedOn === 'users'} 
+                        onChange={e => handleAssetAllocationChange('basedOn', e.target.value)} 
+                        className="w-4 h-4 text-blue-600 border-gray-300" 
+                      />
+                      <label htmlFor="allocation-users" className="text-sm">Users</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Department Dropdown */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="department-select-label" shrink>Department*</InputLabel>
+                  <MuiSelect 
+                    labelId="department-select-label" 
+                    label="Department*" 
+                    displayEmpty 
+                    value={assetAllocationData.department} 
+                    onChange={(e: SelectChangeEvent) => handleAssetAllocationChange('department', e.target.value)} 
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value="">
+                      <em>Select...</em>
+                    </MenuItem>
+                    <MenuItem value="hr">HR Department</MenuItem>
+                    <MenuItem value="it">IT Department</MenuItem>
+                    <MenuItem value="finance">Finance Department</MenuItem>
+                    <MenuItem value="operations">Operations Department</MenuItem>
+                  </MuiSelect>
+                </FormControl>
               </div>
             </div>}
         </div>
