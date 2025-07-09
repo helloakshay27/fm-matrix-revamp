@@ -209,7 +209,7 @@ export const SurveyResponsePage = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 pt-4">
-  <Button onClick={handleSearch} className="bg-[#3B82F6] hover:bg-[#2563EB] text-white px-6 py-2 rounded-md text-[16px] font-semibold flex items-center">
+  <Button onClick={handleSearch} className="bg-[#3B82F6]  text-white px-6 py-2 rounded-md text-[16px] font-semibold flex items-center">
     <Search className="w-4 h-4 mr-2" />
     Search
   </Button>
