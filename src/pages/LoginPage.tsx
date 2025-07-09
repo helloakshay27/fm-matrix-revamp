@@ -53,7 +53,7 @@ export const LoginPage = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('/lovable-uploads/6da86c98-c068-4c5d-b797-d79c637a8cbd.png')`
+          backgroundImage: `url('https://images.pexels.com/photos/6493936/pexels-photo-6493936.jpeg')`
         }}
       />
       
