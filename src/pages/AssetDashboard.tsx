@@ -1,10 +1,11 @@
+
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Upload, Download, FileText, Search, Filter, Eye, Settings, DollarSign, Laptop, Monitor, Package, AlertTriangle, Trash2 } from 'lucide-react';
+import { Plus, Upload, Download, FileText, Search, Filter, Eye, Settings, DollarSign, Laptop, Monitor, Package, AlertTriangle, Trash2, RotateCcw, Grid3X3 } from 'lucide-react';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { AssetFilterDialog } from '@/components/AssetFilterDialog';
 import {
@@ -323,15 +324,33 @@ const statData = [
           Filters
         </Button>
 
-        {/* Search Box aligned to right */}
-        <div className="relative ml-auto">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            placeholder="Search"
-            value={searchTerm}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="pl-10 w-64 bg-white border-gray-300"
-          />
+        {/* Search Box and additional buttons aligned to right */}
+        <div className="flex items-center gap-2 ml-auto">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search"
+              value={searchTerm}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="pl-10 w-64 bg-white border-gray-300"
+            />
+          </div>
+          
+          <Button 
+            variant="outline" 
+            size="icon"
+            className="border-gray-300 text-gray-600 bg-white hover:bg-gray-50"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="icon"
+            className="border-gray-300 text-gray-600 bg-white hover:bg-gray-50"
+          >
+            <Grid3X3 className="w-4 h-4" />
+          </Button>
         </div>
       </div>
 
