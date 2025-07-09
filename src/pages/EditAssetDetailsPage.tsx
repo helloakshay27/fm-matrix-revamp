@@ -37,6 +37,7 @@ export const EditAssetDetailsPage = () => {
     consumption: true,
     nonConsumption: true,
     assetAllocation: true,
+    assetLoaned: true,
     attachments: true
   });
   const [locationData, setLocationData] = useState({
@@ -125,6 +126,12 @@ export const EditAssetDetailsPage = () => {
   const [assetAllocationData, setAssetAllocationData] = useState({
     basedOn: 'department',
     department: ''
+  });
+  const [assetLoanedApplicable, setAssetLoanedApplicable] = useState(true);
+  const [assetLoanedData, setAssetLoanedData] = useState({
+    vendorName: '',
+    agreementStartDate: '',
+    agreementEndDate: ''
   });
 
   const getMeterCategoryOptions = () => [{
@@ -317,6 +324,13 @@ export const EditAssetDetailsPage = () => {
 
   const handleAssetAllocationChange = (field: string, value: string) => {
     setAssetAllocationData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleAssetLoanedChange = (field: string, value: string) => {
+    setAssetLoanedData(prev => ({
       ...prev,
       [field]: value
     }));
@@ -999,6 +1013,89 @@ export const EditAssetDetailsPage = () => {
                     <MenuItem value="operations">Operations Department</MenuItem>
                   </MuiSelect>
                 </FormControl>
+              </div>
+            </div>}
+        </div>
+
+        {/* Asset Loaned */}
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+          <div onClick={() => toggleSection('assetLoaned')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <Package className="w-3 h-3 sm:w-4 sm:h-4" />
+              </span>
+              ASSET LOANED
+              <div className="flex items-center gap-2 ml-4">
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    checked={assetLoanedApplicable} 
+                    onChange={e => setAssetLoanedApplicable(e.target.checked)} 
+                  />
+                  <div className="w-11 h-6 bg-red-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                </label>
+                <span className="text-sm text-gray-600">If Applicable</span>
+              </div>
+            </div>
+            {expandedSections.assetLoaned ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
+          {expandedSections.assetLoaned && <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+                  <InputLabel id="vendor-name-select-label" shrink>Vendor Name*</InputLabel>
+                  <MuiSelect 
+                    labelId="vendor-name-select-label" 
+                    label="Vendor Name*" 
+                    displayEmpty 
+                    value={assetLoanedData.vendorName} 
+                    onChange={(e: SelectChangeEvent) => handleAssetLoanedChange('vendorName', e.target.value)} 
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value="">
+                      <em>Select Vendor</em>
+                    </MenuItem>
+                    <MenuItem value="vendor1">Vendor 1</MenuItem>
+                    <MenuItem value="vendor2">Vendor 2</MenuItem>
+                    <MenuItem value="vendor3">Vendor 3</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+
+                <TextField
+                  required
+                  label="Agreement Start Date"
+                  placeholder="dd/mm/yyyy"
+                  name="agreementStartDate"
+                  type="date"
+                  value={assetLoanedData.agreementStartDate}
+                  onChange={e => handleAssetLoanedChange('agreementStartDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
+
+                <TextField
+                  required
+                  label="Agreement End Date"
+                  placeholder="dd/mm/yyyy"
+                  name="agreementEndDate"
+                  type="date"
+                  value={assetLoanedData.agreementEndDate}
+                  onChange={e => handleAssetLoanedChange('agreementEndDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  InputProps={{
+                    sx: fieldStyles
+                  }}
+                />
               </div>
             </div>}
         </div>
