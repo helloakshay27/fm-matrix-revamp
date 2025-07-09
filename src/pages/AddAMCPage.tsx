@@ -5,6 +5,7 @@ import { ArrowLeft, X, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
 export const AddAMCPage = () => {
   const navigate = useNavigate();
   const {
@@ -256,7 +257,7 @@ export const AddAMCPage = () => {
               {/* AMC Contracts */}
               <div>
                 <label className="block text-sm font-medium mb-2">AMC Contracts</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
                   <input type="file" multiple className="hidden" id="contracts-upload" onChange={e => handleFileUpload('contracts', e.target.files)} />
                   <div className="flex items-center justify-center gap-2 mb-4">
                     <span className="text-[#C72030] font-medium cursor-pointer" style={{
@@ -273,7 +274,7 @@ export const AddAMCPage = () => {
                   <Button
   type="button"
   onClick={() => document.getElementById('contracts-upload')?.click()}
-  className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center"
+  className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center justify-center"
 >
   <Plus className="w-4 h-4 mr-1" />
   Upload Files
@@ -293,7 +294,7 @@ export const AddAMCPage = () => {
               {/* AMC Invoice */}
               <div>
                 <label className="block text-sm font-medium mb-2">AMC Invoice</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50 flex flex-col items-center justify-center">
                   <input type="file" multiple className="hidden" id="invoices-upload" onChange={e => handleFileUpload('invoices', e.target.files)} />
                   <div className="flex items-center justify-center gap-2 mb-4">
                     <span className="text-[#C72030] font-medium cursor-pointer" style={{
@@ -310,7 +311,7 @@ export const AddAMCPage = () => {
                   <Button
   type="button"
   onClick={() => document.getElementById('invoices-upload')?.click()}
-  className="!bg-[#f6f4ee] !text-[#C72030] !border-none hover:!bg-[#f6f4ee]/90 text-sm flex items-center"
+  className="!bg-[#f6f4ee] !text-[#C72030] !border-none hover:!bg-[#f6f4ee]/90 text-sm flex items-center justify-center"
 >
   <Plus className="w-4 h-4 mr-1" />
   Upload Files
