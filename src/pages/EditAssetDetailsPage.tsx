@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { TextField } from '@mui/material';
-import { ArrowLeft, ChevronDown, ChevronUp, Plus, X, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, Plus, X, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Percent } from 'lucide-react';
 import { FormControl, InputLabel, MenuItem, Select as MuiSelect, SelectChangeEvent, Radio, RadioGroup as MuiRadioGroup, FormControlLabel } from '@mui/material';
 
 const fieldStyles = {
@@ -73,6 +73,15 @@ export const EditAssetDetailsPage = () => {
     commissioningDate: ''
   });
 
+  const [itAssetData, setItAssetData] = useState({
+    os: '',
+    totalMemory: '',
+    processor: '',
+    model: '',
+    serialNo: '',
+    capacity: ''
+  });
+
   const [meterCategoryType, setMeterCategoryType] = useState('');
   const [subCategoryType, setSubCategoryType] = useState('');
   const [consumptionMeasures, setConsumptionMeasures] = useState([{
@@ -120,6 +129,13 @@ export const EditAssetDetailsPage = () => {
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleItAssetChange = (field: string, value: string) => {
+    setItAssetData(prev => ({
       ...prev,
       [field]: value
     }));
@@ -546,58 +562,133 @@ export const EditAssetDetailsPage = () => {
             </div>}
         </div>
 
-        {/* Warranty Details */}
+        {/* IT Assets Details */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div onClick={() => toggleSection('warranty')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
-            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
+            <div className="flex items-center gap-2 text-blue-600 text-sm sm:text-base font-semibold">
+              <span className="bg-blue-600 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                <Percent className="w-3 h-3 sm:w-4 sm:h-4" />
               </span>
-              WARRANTY DETAILS
+              IT Asset Details
+              <div className="flex items-center gap-2 ml-4">
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <div className="w-11 h-6 bg-red-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                </label>
+                <span className="text-sm text-gray-600">If Applicable</span>
+              </div>
             </div>
-            {expandedSections.warranty ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            <div className="flex items-center gap-2">
+              <button className="bg-blue-600 text-white px-3 py-1 rounded-md text-sm flex items-center gap-1">
+                <Plus className="w-4 h-4" />
+                Custom Field
+              </button>
+              {expandedSections.warranty ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </div>
           </div>
           {expandedSections.warranty && <div className="p-4 sm:p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4">
-                <div>
-                  <label className="text-xs sm:text-sm font-medium text-gray-700">Under Warranty</label>
-                  <div className="flex gap-4 sm:gap-6 mt-2">
-                    {[{
-                  value: 'yes',
-                  label: 'Yes'
-                }, {
-                  value: 'no',
-                  label: 'No'
-                }].map(option => <div key={option.value} className="flex items-center space-x-2">
-                        <input type="radio" id={`warranty-${option.value}`} name="underWarranty" value={option.value} checked={formData.underWarranty === option.value} onChange={e => handleInputChange('underWarranty', e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
-                    accentColor: '#C72030'
-                  }} />
-                        <label htmlFor={`warranty-${option.value}`} className="text-xs sm:text-sm">{option.label}</label>
-                      </div>)}
-                  </div>
+              {/* System Details Section */}
+              <div className="mb-6">
+                <h3 className="text-blue-600 font-semibold text-sm mb-4">SYSTEM DETAILS</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <TextField
+                    label="OS"
+                    placeholder="Enter OS"
+                    name="os"
+                    value={itAssetData.os}
+                    onChange={e => handleItAssetChange('os', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true
+                    }}
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
+                  />
+                  <TextField
+                    label="Total Memory"
+                    placeholder="Enter Total Memory"
+                    name="totalMemory"
+                    value={itAssetData.totalMemory}
+                    onChange={e => handleItAssetChange('totalMemory', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true
+                    }}
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
+                  />
+                  <TextField
+                    label="Processor"
+                    placeholder="Enter Processor"
+                    name="processor"
+                    value={itAssetData.processor}
+                    onChange={e => handleItAssetChange('processor', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true
+                    }}
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
+                  />
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[{
-              label: 'Warranty Start Date',
-              name: 'warrantyStartDate',
-              type: 'date',
-              value: formData.warrantyStartDate
-            }, {
-              label: 'Warranty expires on',
-              name: 'warrantyExpiresOn',
-              type: 'date',
-              value: formData.warrantyExpiresOn
-            }, {
-              label: 'Commissioning Date',
-              name: 'commissioningDate',
-              type: 'date',
-              value: formData.commissioningDate
-            }].map(field => <TextField key={field.name} label={field.label} placeholder="Select Date" name={field.name} type={field.type} value={field.value} onChange={e => handleInputChange(field.name, e.target.value)} fullWidth variant="outlined" InputLabelProps={{
-              shrink: true
-            }} InputProps={{
-              sx: fieldStyles
-            }} />)}
+
+              {/* Hard Disk Details Section */}
+              <div>
+                <h3 className="text-blue-600 font-semibold text-sm mb-4">HARD DISK DETAILS</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <TextField
+                    label="Model"
+                    placeholder="Enter Model"
+                    name="model"
+                    value={itAssetData.model}
+                    onChange={e => handleItAssetChange('model', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true
+                    }}
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
+                  />
+                  <TextField
+                    label="Serial No."
+                    placeholder="Enter Serial No."
+                    name="serialNo"
+                    value={itAssetData.serialNo}
+                    onChange={e => handleItAssetChange('serialNo', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true
+                    }}
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
+                  />
+                  <TextField
+                    label="Capacity"
+                    placeholder="Enter Capacity"
+                    name="capacity"
+                    value={itAssetData.capacity}
+                    onChange={e => handleItAssetChange('capacity', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{
+                      shrink: true
+                    }}
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
+                  />
+                </div>
               </div>
             </div>}
         </div>
@@ -693,52 +784,51 @@ export const EditAssetDetailsPage = () => {
                       <FormControl fullWidth variant="outlined" sx={{
                   minWidth: 120
                 }}>
-                        <InputLabel id={`unitType-select-label-${measure.id}`} shrink>Unit Type</InputLabel>
-                        <MuiSelect labelId={`unitType-select-label-${measure.id}`} label="Unit Type" displayEmpty value={measure.unitType} onChange={e => updateConsumptionMeasure(measure.id, 'unitType', e.target.value)} sx={fieldStyles}>
-                          <MenuItem value=""><em>Select Unit Type</em></MenuItem>
-                          <MenuItem value="kwh">kWh</MenuItem>
-                          <MenuItem value="liters">Liters</MenuItem>
-                          <MenuItem value="cubic-meters">Cubic Meters</MenuItem>
-                          <MenuItem value="units">Units</MenuItem>
-                        </MuiSelect>
-                      </FormControl>
-                    </div>
+                  <InputLabel id={`unitType-select-label-${measure.id}`} shrink>Unit Type</InputLabel>
+                  <MuiSelect labelId={`unitType-select-label-${measure.id}`} label="Unit Type" displayEmpty value={measure.unitType} onChange={e => updateConsumptionMeasure(measure.id, 'unitType', e.target.value)} sx={fieldStyles}>
+                    <MenuItem value=""><em>Select Unit Type</em></MenuItem>
+                    <MenuItem value="kwh">kWh</MenuItem>
+                    <MenuItem value="liters">Liters</MenuItem>
+                    <MenuItem value="cubic-meters">Cubic Meters</MenuItem>
+                    <MenuItem value="units">Units</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                      {[{
-                  label: 'Alert Above Val.',
-                  name: `alertAbove-${measure.id}`,
-                  placeholder: 'Enter Value',
-                  type: 'number',
-                  value: measure.alertAboveVal,
-                  onChange: e => updateConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)
-                }, {
-                  label: 'Multiplier Factor',
-                  name: `multiplier-${measure.id}`,
-                  placeholder: 'Enter Text',
-                  value: measure.multiplierFactor,
-                  onChange: e => updateConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)
-                }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} value={field.value} onChange={field.onChange} fullWidth variant="outlined" InputLabelProps={{
-                  shrink: true
-                }} InputProps={{
-                  sx: fieldStyles
-                }} />)}
-                    </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                {[{
+              label: 'Alert Above Val.',
+              name: `alertAbove-${measure.id}`,
+              placeholder: 'Enter Value',
+              type: 'number',
+              value: measure.alertAboveVal,
+              onChange: e => updateConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)
+            }, {
+              label: 'Multiplier Factor',
+              name: `multiplier-${measure.id}`,
+              placeholder: 'Enter Text',
+              value: measure.multiplierFactor,
+              onChange: e => updateConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)
+            }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} value={field.value} onChange={field.onChange} fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} />)}
+              </div>
 
-                    <div className="flex items-center space-x-2">
-                      <input type="checkbox" id={`checkPrevious-${measure.id}`} checked={measure.checkPreviousReading} onChange={e => updateConsumptionMeasure(measure.id, 'checkPreviousReading', e.target.checked)} className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]" style={{
+              <div className="flex items-center space-x-2">
+                <input type="checkbox" id={`checkPrevious-${measure.id}`} checked={measure.checkPreviousReading} onChange={e => updateConsumptionMeasure(measure.id, 'checkPreviousReading', e.target.checked)} className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]" style={{
                   accentColor: '#C72030'
                 }} />
-                      <label htmlFor={`checkPrevious-${measure.id}`} className="text-xs sm:text-sm">Check Previous Reading</label>
-                    </div>
-                  </div>)}
-                
-                <button onClick={addConsumptionMeasure} className="px-4 py-2 rounded-md flex items-center text-sm sm:text-base bg-[#f6f4ee] text-red-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Measure
-                </button>
+                <label htmlFor={`checkPrevious-${measure.id}`} className="text-xs sm:text-sm">Check Previous Reading</label>
               </div>
-            </div>}
+            </div>)}
+            
+            <button onClick={addConsumptionMeasure} className="px-4 py-2 rounded-md flex items-center text-sm sm:text-base bg-[#f6f4ee] text-red-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Measure
+            </button>
+          </div>
         </div>
 
         {/* Non Consumption Asset Measure */}
@@ -798,53 +888,52 @@ export const EditAssetDetailsPage = () => {
                       <FormControl fullWidth variant="outlined" sx={{
                   minWidth: 120
                 }}>
-                        <InputLabel id={`nc-unitType-select-label-${measure.id}`} shrink>Unit Type</InputLabel>
-                        <MuiSelect labelId={`nc-unitType-select-label-${measure.id}`} label="Unit Type" displayEmpty value={measure.unitType} onChange={e => updateNonConsumptionMeasure(measure.id, 'unitType', e.target.value)} sx={fieldStyles}>
-                          <MenuItem value=""><em>Select Unit Type</em></MenuItem>
-                          <MenuItem value="temperature">Temperature</MenuItem>
-                          <MenuItem value="pressure">Pressure</MenuItem>
-                          <MenuItem value="voltage">Voltage</MenuItem>
-                          <MenuItem value="current">Current</MenuItem>
-                          <MenuItem value="frequency">Frequency</MenuItem>
-                        </MuiSelect>
-                      </FormControl>
-                    </div>
+                  <InputLabel id={`nc-unitType-select-label-${measure.id}`} shrink>Unit Type</InputLabel>
+                  <MuiSelect labelId={`nc-unitType-select-label-${measure.id}`} label="Unit Type" displayEmpty value={measure.unitType} onChange={e => updateNonConsumptionMeasure(measure.id, 'unitType', e.target.value)} sx={fieldStyles}>
+                    <MenuItem value=""><em>Select Unit Type</em></MenuItem>
+                    <MenuItem value="temperature">Temperature</MenuItem>
+                    <MenuItem value="pressure">Pressure</MenuItem>
+                    <MenuItem value="voltage">Voltage</MenuItem>
+                    <MenuItem value="current">Current</MenuItem>
+                    <MenuItem value="frequency">Frequency</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                      {[{
-                  label: 'Alert Above Val.',
-                  name: `nc-alertAbove-${measure.id}`,
-                  placeholder: 'Alert Above Value',
-                  type: 'number',
-                  value: measure.alertAboveVal,
-                  onChange: e => updateNonConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)
-                }, {
-                  label: 'Multiplier Factor',
-                  name: `nc-multiplier-${measure.id}`,
-                  placeholder: 'Multiplier Factor',
-                  value: measure.multiplierFactor,
-                  onChange: e => updateNonConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)
-                }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} value={field.value} onChange={field.onChange} fullWidth variant="outlined" InputLabelProps={{
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                {[{
+              label: 'Alert Above Val.',
+              name: `nc-alertAbove-${measure.id}`,
+              placeholder: 'Alert Above Value',
+              type: 'number',
+              value: measure.alertAboveVal,
+              onChange: e => updateNonConsumptionMeasure(measure.id, 'alertAboveVal', e.target.value)
+            }, {
+              label: 'Multiplier Factor',
+              name: `nc-multiplier-${measure.id}`,
+              placeholder: 'Multiplier Factor',
+              value: measure.multiplierFactor,
+              onChange: e => updateNonConsumptionMeasure(measure.id, 'multiplierFactor', e.target.value)
+            }].map(field => <TextField key={field.name} label={field.label} placeholder={field.placeholder} name={field.name} type={field.type || 'text'} value={field.value} onChange={field.onChange} fullWidth variant="outlined" InputLabelProps={{
                   shrink: true
                 }} InputProps={{
                   sx: fieldStyles
                 }} />)}
-                    </div>
+              </div>
 
-                    <div className="flex items-center space-x-2">
-                      <input type="checkbox" id={`nc-checkPrevious-${measure.id}`} checked={measure.checkPreviousReading} onChange={e => updateNonConsumptionMeasure(measure.id, 'checkPreviousReading', e.target.checked)} className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]" style={{
+              <div className="flex items-center space-x-2">
+                <input type="checkbox" id={`nc-checkPrevious-${measure.id}`} checked={measure.checkPreviousReading} onChange={e => updateNonConsumptionMeasure(measure.id, 'checkPreviousReading', e.target.checked)} className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]" style={{
                   accentColor: '#C72030'
                 }} />
-                      <label htmlFor={`nc-checkPrevious-${measure.id}`} className="text-xs sm:text-sm">Check Previous Reading</label>
-                    </div>
-                  </div>)}
-                
-                <button onClick={addNonConsumptionMeasure} className="px-4 py-2 rounded-md flex items-center text-sm sm:text-base bg-[#f6f4ee] text-orange-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Measure
-                </button>
+                <label htmlFor={`nc-checkPrevious-${measure.id}`} className="text-xs sm:text-sm">Check Previous Reading</label>
               </div>
-            </div>}
+            </div>)}
+            
+            <button onClick={addNonConsumptionMeasure} className="px-4 py-2 rounded-md flex items-center text-sm sm:text-base bg-[#f6f4ee] text-orange-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Measure
+            </button>
+          </div>
         </div>
 
         {/* Attachments */}
