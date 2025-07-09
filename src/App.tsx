@@ -397,7 +397,7 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <Router>
-      <QueryClient client={queryClient}>
+      <QueryClientProvider client={queryClient}>
         <LayoutProvider>
           <Routes>
             {/* Login Route */}
@@ -698,7 +698,7 @@ function App() {
               <Route path="/market-place/cloud-telephony" element={<CloudTelephonyDetailPage />} />
               <Route path="/market-place/accounting" element={<AccountingDetailPage />} />
 
-              <Route path="/maintenance/audit/waste/generation/add" element={<Layout><AddWasteGenerationPage /></Layout>} />
+              <Route path="/maintenance/audit/waste/generation/add" element={<AddWasteGenerationPage />} />
               <Route path="*" element={<NotFound />} />
             </Route>
 
@@ -737,7 +737,7 @@ function App() {
           </Routes>
           <Toaster />
         </LayoutProvider>
-      </QueryClient>
+      </QueryClientProvider>
     </Router>
   );
 }
