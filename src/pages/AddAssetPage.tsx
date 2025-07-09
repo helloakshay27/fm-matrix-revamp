@@ -491,7 +491,7 @@ const AddAssetPage = () => {
                 <span className="text-sm text-gray-600">If Applicable</span>
                 <div className="relative inline-block w-12 h-6">
                   <input type="checkbox" className="sr-only peer" id="it-assets-toggle" checked={itAssetsToggle} onChange={e => handleItAssetsToggleChange(e.target.checked)} />
-                  <label htmlFor="it-assets-toggle" className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${itAssetsToggle ? 'bg-green-400' : 'bg-gray-300'}`}>
+                  <label htmlFor="it-assets-toggle" className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${itAssetsToggle ? 'bg-green-400' : 'bg-gray-300'}`}>
                     <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${itAssetsToggle ? 'translate-x-6' : 'translate-x-1'}`}></span>
                   </label>
                 </div>
@@ -793,7 +793,7 @@ const AddAssetPage = () => {
                 <span className="text-sm text-gray-600">If Applicable</span>
                 <div className="relative inline-block w-12 h-6">
                   <input type="checkbox" className="sr-only peer" id="depreciation-toggle" checked={depreciationToggle} onChange={e => handleDepreciationToggleChange(e.target.checked)} />
-                  <label htmlFor="depreciation-toggle" className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${depreciationToggle ? 'bg-green-400' : 'bg-gray-300'}`}>
+                  <label htmlFor="depreciation-toggle" className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${depreciationToggle ? 'bg-green-400' : 'bg-gray-300'}`}>
                     <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${depreciationToggle ? 'translate-x-6' : 'translate-x-1'}`}></span>
                   </label>
                 </div>
@@ -992,9 +992,19 @@ const AddAssetPage = () => {
                 <span className="text-sm text-gray-600">If Applicable</span>
                 <div className="relative inline-block w-12 h-6">
                   <input type="checkbox" className="sr-only peer" id="asset-loaned-toggle" checked={assetLoanedToggle} onChange={e => handleAssetLoanedToggleChange(e.target.checked)} />
-                  <label htmlFor="asset-loaned-toggle" className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${assetLoanedToggle ? 'bg-green-400' : 'bg-gray-300'}`}>
-                    <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${assetLoanedToggle ? 'translate-x-6' : 'translate-x-1'}`}></span>
-                  </label>
+                  <label
+  htmlFor="asset-loaned-toggle"
+  className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${
+    assetLoanedToggle ? 'bg-green-400' : 'bg-gray-300'
+  }`}
+>
+  <span
+    className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
+      assetLoanedToggle ? 'translate-x-6' : 'translate-x-1'
+    }`}
+  ></span>
+</label>
+
                 </div>
               </div>
               {expandedSections.assetLoaned ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
