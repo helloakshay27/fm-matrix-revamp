@@ -1,15 +1,30 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
+
 const ParkingBookingsDashboard = () => {
   const [building, setBuilding] = useState('');
   const [floor, setFloor] = useState('');
   const [parkingSlot, setParkingSlot] = useState('');
   const navigate = useNavigate();
+
+  const handleBuildingChange = (event: SelectChangeEvent) => {
+    setBuilding(event.target.value);
+  };
+
+  const handleFloorChange = (event: SelectChangeEvent) => {
+    setFloor(event.target.value);
+  };
+
+  const handleParkingSlotChange = (event: SelectChangeEvent) => {
+    setParkingSlot(event.target.value);
+  };
+
   const handleSubmit = () => {
     console.log('Parking booking submitted:', {
       building,
@@ -17,7 +32,9 @@ const ParkingBookingsDashboard = () => {
       parkingSlot
     });
   };
-  return <div className="p-6 space-y-6 min-h-screen bg-white">
+
+  return (
+    <div className="p-6 space-y-6 min-h-screen bg-white">
       <div className="flex items-center mb-6">
         <Button onClick={() => navigate('/vas/parking')} variant="ghost" className="mr-4 p-2 hover:bg-[#C72030]/10">
           <ArrowLeft className="w-5 h-5" />
@@ -31,45 +48,93 @@ const ParkingBookingsDashboard = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
             <div>
-              <Label htmlFor="building" className="text-sm font-medium text-[#C72030] mb-2 block bg-white">Building</Label>
-              <Select value={building} onValueChange={setBuilding}>
-                <SelectTrigger className="w-full border-[#C72030] focus:ring-[#C72030]">
-                  <SelectValue placeholder="Select Building" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="building1">Building 1</SelectItem>
-                  <SelectItem value="building2">Building 2</SelectItem>
-                  <SelectItem value="building3">Building 3</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth size="small">
+                <InputLabel id="building-label" sx={{ color: '#C72030', '&.Mui-focused': { color: '#C72030' } }}>
+                  Building
+                </InputLabel>
+                <Select
+                  labelId="building-label"
+                  id="building"
+                  value={building}
+                  label="Building"
+                  onChange={handleBuildingChange}
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                  }}
+                >
+                  <MenuItem value="building1">Building 1</MenuItem>
+                  <MenuItem value="building2">Building 2</MenuItem>
+                  <MenuItem value="building3">Building 3</MenuItem>
+                </Select>
+              </FormControl>
             </div>
 
             <div>
-              <Label htmlFor="floor" className="text-sm font-medium text-[#C72030] mb-2 block">Floor</Label>
-              <Select value={floor} onValueChange={setFloor}>
-                <SelectTrigger className="w-full border-[#C72030] focus:ring-[#C72030]">
-                  <SelectValue placeholder="Select Floor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ground">Ground Floor</SelectItem>
-                  <SelectItem value="first">First Floor</SelectItem>
-                  <SelectItem value="second">Second Floor</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth size="small">
+                <InputLabel id="floor-label" sx={{ color: '#C72030', '&.Mui-focused': { color: '#C72030' } }}>
+                  Floor
+                </InputLabel>
+                <Select
+                  labelId="floor-label"
+                  id="floor"
+                  value={floor}
+                  label="Floor"
+                  onChange={handleFloorChange}
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                  }}
+                >
+                  <MenuItem value="ground">Ground Floor</MenuItem>
+                  <MenuItem value="first">First Floor</MenuItem>
+                  <MenuItem value="second">Second Floor</MenuItem>
+                </Select>
+              </FormControl>
             </div>
 
             <div>
-              <Label htmlFor="parkingSlot" className="text-sm font-medium text-[#C72030] mb-2 block">Parking Slot</Label>
-              <Select value={parkingSlot} onValueChange={setParkingSlot}>
-                <SelectTrigger className="w-full border-[#C72030] focus:ring-[#C72030]">
-                  <SelectValue placeholder="Select Parking Slot" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="slot1">A-001</SelectItem>
-                  <SelectItem value="slot2">A-002</SelectItem>
-                  <SelectItem value="slot3">B-001</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth size="small">
+                <InputLabel id="parking-slot-label" sx={{ color: '#C72030', '&.Mui-focused': { color: '#C72030' } }}>
+                  Parking Slot
+                </InputLabel>
+                <Select
+                  labelId="parking-slot-label"
+                  id="parkingSlot"
+                  value={parkingSlot}
+                  label="Parking Slot"
+                  onChange={handleParkingSlotChange}
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#C72030',
+                    },
+                  }}
+                >
+                  <MenuItem value="slot1">A-001</MenuItem>
+                  <MenuItem value="slot2">A-002</MenuItem>
+                  <MenuItem value="slot3">B-001</MenuItem>
+                </Select>
+              </FormControl>
             </div>
 
             <div className="flex justify-start">
@@ -80,6 +145,8 @@ const ParkingBookingsDashboard = () => {
           </div>
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 };
+
 export default ParkingBookingsDashboard;
