@@ -1,12 +1,11 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, ChevronUp, Store, Clock, Ban, Users, ShoppingCart, Paperclip } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { TextField, Select, MenuItem, FormControl, InputLabel, Checkbox as MuiCheckbox, FormControlLabel } from '@mui/material';
 
 const fieldStyles = {
   '& .MuiOutlinedInput-root': {
@@ -19,14 +18,14 @@ const fieldStyles = {
       borderColor: '#9ca3af'
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#C72030'
+      borderColor: '#3b82f6'
     }
   },
   '& .MuiInputLabel-root': {
     color: '#6b7280',
     fontSize: '16px',
     '&.Mui-focused': {
-      color: '#C72030'
+      color: '#3b82f6'
     }
   },
   '& .MuiInputBase-input': {
@@ -402,11 +401,17 @@ export const AddRestaurantPage = () => {
                     <tr key={item.day} className="border-b">
                       <td className="p-2">
                         <div className="flex items-center gap-2">
-                          <Checkbox
-                            checked={item.enabled}
-                            onCheckedChange={(checked) => updateSchedule(index, 'enabled', checked)}
+                          <FormControlLabel
+                            control={
+                              <MuiCheckbox
+                                checked={item.enabled}
+                                onChange={(e) => updateSchedule(index, 'enabled', e.target.checked)}
+                                size="small"
+                              />
+                            }
+                            label={item.day}
+                            sx={{ margin: 0 }}
                           />
-                          <span>{item.day}</span>
                         </div>
                       </td>
                       <td className="p-2">
@@ -514,15 +519,17 @@ export const AddRestaurantPage = () => {
                         </div>
                       </td>
                       <td className="p-2">
-                        <Checkbox
+                        <MuiCheckbox
                           checked={item.bookingAllowed}
-                          onCheckedChange={(checked) => updateSchedule(index, 'bookingAllowed', checked)}
+                          onChange={(e) => updateSchedule(index, 'bookingAllowed', e.target.checked)}
+                          size="small"
                         />
                       </td>
                       <td className="p-2">
-                        <Checkbox
+                        <MuiCheckbox
                           checked={item.orderAllowed}
-                          onCheckedChange={(checked) => updateSchedule(index, 'orderAllowed', checked)}
+                          onChange={(e) => updateSchedule(index, 'orderAllowed', e.target.checked)}
+                          size="small"
                         />
                       </td>
                       <td className="p-2">
@@ -566,32 +573,37 @@ export const AddRestaurantPage = () => {
             <div className="space-y-4">
               {blockedDays.map((day, index) => (
                 <div key={index} className="flex items-center gap-4 p-3 border border-gray-200 rounded">
-                  <input
+                  <TextField
                     type="date"
                     value={day.date}
                     onChange={(e) => setBlockedDays(prev => prev.map((item, i) => 
                       i === index ? { ...item, date: e.target.value } : item
                     ))}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
+                    sx={fieldStyles}
+                    InputLabelProps={{ shrink: true }}
                   />
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      checked={day.orderBlocked}
-                      onCheckedChange={(checked) => setBlockedDays(prev => prev.map((item, i) => 
-                        i === index ? { ...item, orderBlocked: checked === true } : item
-                      ))}
-                    />
-                    <Label>Order Blocked</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      checked={day.bookingBlocked}
-                      onCheckedChange={(checked) => setBlockedDays(prev => prev.map((item, i) => 
-                        i === index ? { ...item, bookingBlocked: checked === true } : item
-                      ))}
-                    />
-                    <Label>Booking Blocked</Label>
-                  </div>
+                  <FormControlLabel
+                    control={
+                      <MuiCheckbox
+                        checked={day.orderBlocked}
+                        onChange={(e) => setBlockedDays(prev => prev.map((item, i) => 
+                          i === index ? { ...item, orderBlocked: e.target.checked } : item
+                        ))}
+                      />
+                    }
+                    label="Order Blocked"
+                  />
+                  <FormControlLabel
+                    control={
+                      <MuiCheckbox
+                        checked={day.bookingBlocked}
+                        onChange={(e) => setBlockedDays(prev => prev.map((item, i) => 
+                          i === index ? { ...item, bookingBlocked: e.target.checked } : item
+                        ))}
+                      />
+                    }
+                    label="Booking Blocked"
+                  />
                   <Button
                     variant="outline"
                     size="sm"
@@ -729,34 +741,48 @@ export const AddRestaurantPage = () => {
           <div className="p-4 border border-gray-200 rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="coverImage">Cover Image</Label>
-                <input
-                  id="coverImage"
+                <TextField
+                  label="Cover Image"
                   type="file"
-                  accept="image/*"
-                  onChange={(e) => setAttachments(prev => ({ ...prev, coverImage: e.target.files?.[0] || null }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  inputProps={{ accept: "image/*" }}
+                  onChange={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    setAttachments(prev => ({ ...prev, coverImage: target.files?.[0] || null }));
+                  }}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                  InputLabelProps={{ shrink: true }}
                 />
               </div>
               <div>
-                <Label htmlFor="menu">Menu</Label>
-                <input
-                  id="menu"
+                <TextField
+                  label="Menu"
                   type="file"
-                  accept="image/*,.pdf"
-                  onChange={(e) => setAttachments(prev => ({ ...prev, menu: e.target.files?.[0] || null }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  inputProps={{ accept: "image/*,.pdf" }}
+                  onChange={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    setAttachments(prev => ({ ...prev, menu: target.files?.[0] || null }));
+                  }}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                  InputLabelProps={{ shrink: true }}
                 />
               </div>
               <div>
-                <Label htmlFor="gallery">Gallery</Label>
-                <input
-                  id="gallery"
+                <TextField
+                  label="Gallery"
                   type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => setAttachments(prev => ({ ...prev, gallery: e.target.files }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  inputProps={{ accept: "image/*", multiple: true }}
+                  onChange={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    setAttachments(prev => ({ ...prev, gallery: target.files }));
+                  }}
+                  fullWidth
+                  variant="outlined"
+                  sx={fieldStyles}
+                  InputLabelProps={{ shrink: true }}
                 />
               </div>
             </div>
