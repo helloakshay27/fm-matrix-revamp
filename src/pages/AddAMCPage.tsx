@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, X } from 'lucide-react';
+import { ArrowLeft, X, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
@@ -349,7 +350,7 @@ export const AddAMCPage = () => {
               {/* AMC Contracts */}
               <div>
                 <label className="block text-sm font-medium mb-2">AMC Contracts</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
                   <input 
                     type="file" 
                     multiple 
@@ -357,19 +358,30 @@ export const AddAMCPage = () => {
                     id="contracts-upload"
                     onChange={(e) => handleFileUpload('contracts', e.target.files)}
                   />
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <span 
+                      className="text-[#C72030] font-medium cursor-pointer" 
+                      style={{ fontSize: '14px' }}
+                      onClick={() => document.getElementById('contracts-upload')?.click()}
+                    >
+                      Choose File
+                    </span>
+                    <span className="text-gray-500" style={{ fontSize: '14px' }}>
+                      {attachments.contracts.length > 0 
+                        ? `${attachments.contracts.length} file(s) selected` 
+                        : 'No file chosen'}
+                    </span>
+                  </div>
                   <Button 
                     type="button" 
                     variant="outline" 
                     onClick={() => document.getElementById('contracts-upload')?.click()}
-                    className="w-full"
+                    className="bg-gray-200 text-[#C72030] border-none hover:bg-gray-300"
+                    style={{ fontSize: '14px' }}
                   >
-                    Choose File
+                    <Plus className="w-4 h-4 mr-1" />
+                    Upload Files
                   </Button>
-                  <p className="text-xs text-gray-500 mt-2">
-                    {attachments.contracts.length > 0 
-                      ? `${attachments.contracts.length} file(s) selected` 
-                      : 'No file chosen'}
-                  </p>
                 </div>
                 {attachments.contracts.length > 0 && (
                   <div className="mt-2 space-y-1">
@@ -393,7 +405,7 @@ export const AddAMCPage = () => {
               {/* AMC Invoice */}
               <div>
                 <label className="block text-sm font-medium mb-2">AMC Invoice</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
                   <input 
                     type="file" 
                     multiple 
@@ -401,19 +413,30 @@ export const AddAMCPage = () => {
                     id="invoices-upload"
                     onChange={(e) => handleFileUpload('invoices', e.target.files)}
                   />
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <span 
+                      className="text-[#C72030] font-medium cursor-pointer" 
+                      style={{ fontSize: '14px' }}
+                      onClick={() => document.getElementById('invoices-upload')?.click()}
+                    >
+                      Choose File
+                    </span>
+                    <span className="text-gray-500" style={{ fontSize: '14px' }}>
+                      {attachments.invoices.length > 0 
+                        ? `${attachments.invoices.length} file(s) selected` 
+                        : 'No file chosen'}
+                    </span>
+                  </div>
                   <Button 
                     type="button" 
                     variant="outline" 
                     onClick={() => document.getElementById('invoices-upload')?.click()}
-                    className="w-full"
+                    className="bg-gray-200 text-[#C72030] border-none hover:bg-gray-300"
+                    style={{ fontSize: '14px' }}
                   >
-                    Choose File
+                    <Plus className="w-4 h-4 mr-1" />
+                    Upload Files
                   </Button>
-                  <p className="text-xs text-gray-500 mt-2">
-                    {attachments.invoices.length > 0 
-                      ? `${attachments.invoices.length} file(s) selected` 
-                      : 'No file chosen'}
-                  </p>
                 </div>
                 {attachments.invoices.length > 0 && (
                   <div className="mt-2 space-y-1">
