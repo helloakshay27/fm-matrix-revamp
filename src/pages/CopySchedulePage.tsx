@@ -202,7 +202,7 @@ export const CopySchedulePage = () => {
   const dayOptions = Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, '0'));
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-6 mx-auto">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1a1a1a] mb-4">Copy Schedule</h1>
