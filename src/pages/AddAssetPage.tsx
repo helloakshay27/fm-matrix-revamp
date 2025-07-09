@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent, Users, Settings } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 const AddAssetPage = () => {
   const navigate = useNavigate();
@@ -28,6 +29,9 @@ const AddAssetPage = () => {
   const [showBoardRatioOptions, setShowBoardRatioOptions] = useState(false);
   const [showRenewableOptions, setShowRenewableOptions] = useState(false);
   const [allocationBasedOn, setAllocationBasedOn] = useState('department');
+  const [customFieldModalOpen, setCustomFieldModalOpen] = useState(false);
+  const [newFieldName, setNewFieldName] = useState('');
+  const [customFields, setCustomFields] = useState([]);
   
   const [consumptionMeasures, setConsumptionMeasures] = useState([{
     id: 1,
@@ -180,6 +184,30 @@ const AddAssetPage = () => {
       ...prev,
       nonConsumption: checked
     }));
+  };
+
+  // Custom field functions
+  const handleAddCustomField = () => {
+    if (newFieldName.trim()) {
+      const newField = {
+        id: Date.now(),
+        name: newFieldName.trim(),
+        value: ''
+      };
+      setCustomFields(prev => [...prev, newField]);
+      setNewFieldName('');
+      setCustomFieldModalOpen(false);
+    }
+  };
+
+  const handleCustomFieldChange = (id, value) => {
+    setCustomFields(prev => prev.map(field => 
+      field.id === id ? { ...field, value } : field
+    ));
+  };
+
+  const removeCustomField = (id) => {
+    setCustomFields(prev => prev.filter(field => field.id !== id));
   };
 
   // Consumption measure functions
@@ -335,10 +363,14 @@ const AddAssetPage = () => {
               ASSET DETAILS
             </div>
             <div className="flex items-center gap-2">
-              <button className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80" style={{
-              backgroundColor: '#F6F4EE',
-              color: '#C72030'
-            }}>
+              <button 
+                onClick={() => setCustomFieldModalOpen(true)}
+                className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80" 
+                style={{
+                  backgroundColor: '#F6F4EE',
+                  color: '#C72030'
+                }}
+              >
                 <Plus className="w-4 h-4" />
                 Custom Field
               </button>
@@ -388,6 +420,38 @@ const AddAssetPage = () => {
                   </MuiSelect>
                 </FormControl>
               </div>
+
+              {/* Custom Fields */}
+              {customFields.length > 0 && (
+                <div className="mb-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {customFields.map(field => (
+                      <div key={field.id} className="relative">
+                        <TextField 
+                          label={field.name}
+                          placeholder={`Enter ${field.name}`}
+                          value={field.value}
+                          onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
+                          fullWidth 
+                          variant="outlined" 
+                          InputLabelProps={{
+                            shrink: true
+                          }} 
+                          InputProps={{
+                            sx: fieldStyles
+                          }} 
+                        />
+                        <button
+                          onClick={() => removeCustomField(field.id)}
+                          className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Third row: Status */}
               <div className="mb-4">
@@ -1178,6 +1242,53 @@ const AddAssetPage = () => {
           </button>
         </div>
       </div>
+
+      {/* Custom Field Modal */}
+      <Dialog open={customFieldModalOpen} onOpenChange={setCustomFieldModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-gray-900">Add Custom Field</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <TextField
+              label="New Field Name"
+              placeholder="New Field Name"
+              value={newFieldName}
+              onChange={(e) => setNewFieldName(e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{
+                shrink: true
+              }}
+              InputProps={{
+                sx: {
+                  height: 45,
+                  '& .MuiInputBase-input': {
+                    padding: '12px'
+                  }
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => {
+                setCustomFieldModalOpen(false);
+                setNewFieldName('');
+              }}
+              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAddCustomField}
+              className="px-6 py-2 bg-[#C72030] text-white rounded-md hover:bg-[#A01B28] text-sm"
+            >
+              Add Field
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>;
 };
 
