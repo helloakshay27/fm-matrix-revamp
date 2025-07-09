@@ -374,8 +374,11 @@ export const AddTicketDashboard = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
               <Textarea
-                label="Description"
+                id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({
                   ...formData,
