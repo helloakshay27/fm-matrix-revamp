@@ -637,7 +637,8 @@ const AddAssetPage = () => {
             </div>
             {expandedSections.consumption ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
-          {expandedSections.consumption && <div className="p-4 sm:p-6">
+          {expandedSections.consumption && (
+            <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <TextField 
                   required
@@ -668,6 +669,21 @@ const AddAssetPage = () => {
                     sx: fieldStyles
                   }} 
                 />
+                <TextField 
+                  required
+                  label="Warranty Expires On" 
+                  placeholder="dd/mm/yyyy" 
+                  name="warrantyExpiresOn" 
+                  type="date"
+                  fullWidth 
+                  variant="outlined" 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  InputProps={{
+                    sx: fieldStyles
+                  }} 
+                />
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-2 block">Under Warranty</label>
                   <div className="flex gap-6">
@@ -685,23 +701,9 @@ const AddAssetPage = () => {
                     </div>
                   </div>
                 </div>
-                <TextField 
-                  required
-                  label="Warranty Expires On" 
-                  placeholder="dd/mm/yyyy" 
-                  name="warrantyExpiresOn" 
-                  type="date"
-                  fullWidth 
-                  variant="outlined" 
-                  InputLabelProps={{
-                    shrink: true
-                  }} 
-                  InputProps={{
-                    sx: fieldStyles
-                  }} 
-                />
               </div>
-            </div>}
+            </div>
+          )}
         </div>
 
         {/* Depreciation Rule */}
