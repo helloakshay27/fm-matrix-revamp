@@ -4,13 +4,29 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { FormControl, InputLabel, MenuItem, Select as MuiSelect, SelectChangeEvent } from '@mui/material';
 import { X } from 'lucide-react';
 
 interface AddCustomFieldModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddField: (fieldName: string) => void;
+  onAddField: (fieldName: string, section: string) => void;
 }
+
+const fieldStyles = {
+  height: {
+    xs: 28,
+    sm: 36,
+    md: 45
+  },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: {
+      xs: '8px',
+      sm: '10px',
+      md: '12px'
+    }
+  }
+};
 
 export const AddCustomFieldModal: React.FC<AddCustomFieldModalProps> = ({
   isOpen,
@@ -18,18 +34,25 @@ export const AddCustomFieldModal: React.FC<AddCustomFieldModalProps> = ({
   onAddField
 }) => {
   const [fieldName, setFieldName] = useState('');
+  const [selectedSection, setSelectedSection] = useState('System Details');
 
   const handleAddField = () => {
-    if (fieldName.trim()) {
-      onAddField(fieldName.trim());
+    if (fieldName.trim() && selectedSection) {
+      onAddField(fieldName.trim(), selectedSection);
       setFieldName('');
+      setSelectedSection('System Details');
       onClose();
     }
   };
 
   const handleCancel = () => {
     setFieldName('');
+    setSelectedSection('System Details');
     onClose();
+  };
+
+  const handleSectionChange = (event: SelectChangeEvent) => {
+    setSelectedSection(event.target.value);
   };
 
   return (
@@ -59,6 +82,24 @@ export const AddCustomFieldModal: React.FC<AddCustomFieldModalProps> = ({
               className="mt-1"
             />
           </div>
+
+          <div>
+            <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+              <InputLabel id="section-select-label" shrink>
+                Section
+              </InputLabel>
+              <MuiSelect
+                labelId="section-select-label"
+                label="Section"
+                value={selectedSection}
+                onChange={handleSectionChange}
+                sx={fieldStyles}
+              >
+                <MenuItem value="System Details">System Details</MenuItem>
+                <MenuItem value="Hard Disk Details">Hard Disk Details</MenuItem>
+              </MuiSelect>
+            </FormControl>
+          </div>
         </div>
 
         <div className="flex justify-center gap-4 pt-4">
@@ -73,7 +114,7 @@ export const AddCustomFieldModal: React.FC<AddCustomFieldModalProps> = ({
             onClick={handleAddField}
             className="px-8 py-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
           >
-            Add Field
+            + Add Field
           </Button>
         </div>
       </DialogContent>
