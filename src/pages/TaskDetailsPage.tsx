@@ -1,11 +1,9 @@
-
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, X } from 'lucide-react';
+import { ArrowLeft, X, Plus } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -49,6 +47,13 @@ export const TaskDetailsPage = () => {
     sms: false
   });
 
+  const [attachedFiles, setAttachedFiles] = useState<{[key: string]: File | null}>({
+    file1: null,
+    file2: null,
+    file3: null,
+    file4: null
+  });
+
   const handleBack = () => {
     navigate('/maintenance/task');
   };
@@ -89,12 +94,12 @@ export const TaskDetailsPage = () => {
       description: "Task rescheduled successfully!"
     });
   };
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, fileKey: string) => {
     const file = event.target.files?.[0];
     if (file) {
-      setFormData(prev => ({
+      setAttachedFiles(prev => ({
         ...prev,
-        attachments: file
+        [fileKey]: file
       }));
       console.log('File uploaded:', file.name);
     }
@@ -429,12 +434,33 @@ export const TaskDetailsPage = () => {
                 {[1, 2, 3, 4, 5].map(star => <span key={star} className="text-gray-300 text-xl cursor-pointer hover:text-yellow-400">☆</span>)}
               </div>
               <div className="space-y-2">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <input type="file" onChange={handleFileUpload} className="hidden" id="file-upload-1" accept="image/*,.pdf" />
-                  <label htmlFor="file-upload-1" className="cursor-pointer">
-                    <div className="text-gray-500">+</div>
-                    <div className="text-sm text-gray-500">Click to upload</div>
-                  </label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="file" 
+                        onChange={(e) => handleFileUpload(e, 'file1')} 
+                        className="hidden" 
+                        id="file-upload-1" 
+                        accept="image/*,.pdf" 
+                      />
+                      <label htmlFor="file-upload-1" className="text-red-600 cursor-pointer hover:underline">
+                        Choose File
+                      </label>
+                      <span className="text-gray-500">
+                        {attachedFiles.file1 ? attachedFiles.file1.name : 'No file chosen'}
+                      </span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 border-red-600 hover:bg-red-50"
+                      onClick={() => document.getElementById('file-upload-1')?.click()}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Upload Files
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -477,12 +503,33 @@ export const TaskDetailsPage = () => {
                 {[1, 2, 3, 4, 5].map(star => <span key={star} className="text-gray-300 text-xl cursor-pointer hover:text-yellow-400">☆</span>)}
               </div>
               <div className="space-y-2">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <input type="file" className="hidden" id="file-upload-2" accept="image/*,.pdf" />
-                  <label htmlFor="file-upload-2" className="cursor-pointer">
-                    <div className="text-gray-500">+</div>
-                    <div className="text-sm text-gray-500">Click to upload</div>
-                  </label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="file" 
+                        onChange={(e) => handleFileUpload(e, 'file2')} 
+                        className="hidden" 
+                        id="file-upload-2" 
+                        accept="image/*,.pdf" 
+                      />
+                      <label htmlFor="file-upload-2" className="text-red-600 cursor-pointer hover:underline">
+                        Choose File
+                      </label>
+                      <span className="text-gray-500">
+                        {attachedFiles.file2 ? attachedFiles.file2.name : 'No file chosen'}
+                      </span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 border-red-600 hover:bg-red-50"
+                      onClick={() => document.getElementById('file-upload-2')?.click()}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Upload Files
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -564,21 +611,63 @@ export const TaskDetailsPage = () => {
                 />
               </div>
               <div className="space-y-2">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <input type="file" className="hidden" id="file-upload-3" accept="image/*,.pdf" />
-                  <label htmlFor="file-upload-3" className="cursor-pointer">
-                    <div className="text-gray-500">+</div>
-                    <div className="text-sm text-gray-500">Click to upload</div>
-                  </label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="file" 
+                        onChange={(e) => handleFileUpload(e, 'file3')} 
+                        className="hidden" 
+                        id="file-upload-3" 
+                        accept="image/*,.pdf" 
+                      />
+                      <label htmlFor="file-upload-3" className="text-red-600 cursor-pointer hover:underline">
+                        Choose File
+                      </label>
+                      <span className="text-gray-500">
+                        {attachedFiles.file3 ? attachedFiles.file3.name : 'No file chosen'}
+                      </span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 border-red-600 hover:bg-red-50"
+                      onClick={() => document.getElementById('file-upload-3')?.click()}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Upload Files
+                    </Button>
+                  </div>
                 </div>
               </div>
               <div className="space-y-2">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <input type="file" className="hidden" id="file-upload-4" accept="image/*,.pdf" />
-                  <label htmlFor="file-upload-4" className="cursor-pointer">
-                    <div className="text-gray-500">+</div>
-                    <div className="text-sm text-gray-500">Click to upload</div>
-                  </label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="file" 
+                        onChange={(e) => handleFileUpload(e, 'file4')} 
+                        className="hidden" 
+                        id="file-upload-4" 
+                        accept="image/*,.pdf" 
+                      />
+                      <label htmlFor="file-upload-4" className="text-red-600 cursor-pointer hover:underline">
+                        Choose File
+                      </label>
+                      <span className="text-gray-500">
+                        {attachedFiles.file4 ? attachedFiles.file4.name : 'No file chosen'}
+                      </span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 border-red-600 hover:bg-red-50"
+                      onClick={() => document.getElementById('file-upload-4')?.click()}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Upload Files
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
