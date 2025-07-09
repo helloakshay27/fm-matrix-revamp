@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Button } from '@mui/material';
-import { Search, RotateCcw, Plus } from 'lucide-react';
+import { Search, RotateCcw } from 'lucide-react';
 
 const fieldStyles = {
   width: '100%',
@@ -224,29 +225,23 @@ export const SurveyResponsePage = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 pt-4">
-          <Button 
-            onClick={handleSearch}
-            className="bg-[#3B82F6] hover:bg-[#2563EB] text-white px-6 py-2 rounded-md text-[16px] font-semibold flex items-center"
-          >
-            <Search className="w-4 h-4 mr-2" />
-            Search
-          </Button>
+  <Button 
+    onClick={handleSearch}
+    className="bg-[#3B82F6] hover:bg-[#2563EB] text-white px-6 py-2 rounded-md text-[16px] font-semibold flex items-center"
+  >
+    <Search className="w-4 h-4 mr-2" />
+    Search
+  </Button>
 
-          <Button 
-            onClick={handleReset}
-            className="border border-[#3B82F6] text-[#3B82F6] hover:border-[#2563EB] hover:bg-[#F8FAFC] px-6 py-2 rounded-md text-[16px] font-semibold flex items-center"
-          >
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Reset
-          </Button>
+  <Button 
+    onClick={handleReset}
+    className="border border-[#3B82F6] text-[#3B82F6] hover:border-[#2563EB] hover:bg-[#F8FAFC] px-6 py-2 rounded-md text-[16px] font-semibold flex items-center"
+  >
+    <RotateCcw className="w-4 h-4 mr-2" />
+    Reset
+  </Button>
+</div>
 
-          <Button 
-            className="bg-[#F2EEE9] text-[#C72030] hover:bg-[#E5DDD7] px-6 py-2 rounded-md text-[16px] font-semibold flex items-center"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add
-          </Button>
-        </div>
       </div>
     </div>
   );
