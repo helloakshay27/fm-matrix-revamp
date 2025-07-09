@@ -1,13 +1,13 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { TextField } from '@mui/material';
+import { TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 
 const fieldStyles = {
   '& .MuiOutlinedInput-root': {
@@ -271,52 +271,59 @@ export const AddRestaurantPage = () => {
               />
             </div>
             <div>
-              <Label htmlFor="servesAlcohol">Serves Alcohol<span className="text-red-500">*</span></Label>
-              <Select value={formData.servesAlcohol} onValueChange={(value) => setFormData(prev => ({ ...prev, servesAlcohol: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="yes">Yes</SelectItem>
-                  <SelectItem value="no">No</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                <InputLabel required>Serves Alcohol</InputLabel>
+                <Select
+                  value={formData.servesAlcohol}
+                  onChange={(e) => setFormData(prev => ({ ...prev, servesAlcohol: e.target.value }))}
+                  label="Serves Alcohol"
+                >
+                  <MenuItem value="">Select</MenuItem>
+                  <MenuItem value="yes">Yes</MenuItem>
+                  <MenuItem value="no">No</MenuItem>
+                </Select>
+              </FormControl>
             </div>
             <div>
-              <Label htmlFor="wheelchairAccessible">Wheelchair Accessible<span className="text-red-500">*</span></Label>
-              <Select value={formData.wheelchairAccessible} onValueChange={(value) => setFormData(prev => ({ ...prev, wheelchairAccessible: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="yes">Yes</SelectItem>
-                  <SelectItem value="no">No</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                <InputLabel required>Wheelchair Accessible</InputLabel>
+                <Select
+                  value={formData.wheelchairAccessible}
+                  onChange={(e) => setFormData(prev => ({ ...prev, wheelchairAccessible: e.target.value }))}
+                  label="Wheelchair Accessible"
+                >
+                  <MenuItem value="">Select</MenuItem>
+                  <MenuItem value="yes">Yes</MenuItem>
+                  <MenuItem value="no">No</MenuItem>
+                </Select>
+              </FormControl>
             </div>
             <div>
-              <Label htmlFor="cashOnDelivery">Cash on Delivery<span className="text-red-500">*</span></Label>
-              <Select value={formData.cashOnDelivery} onValueChange={(value) => setFormData(prev => ({ ...prev, cashOnDelivery: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="yes">Yes</SelectItem>
-                  <SelectItem value="no">No</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                <InputLabel required>Cash on Delivery</InputLabel>
+                <Select
+                  value={formData.cashOnDelivery}
+                  onChange={(e) => setFormData(prev => ({ ...prev, cashOnDelivery: e.target.value }))}
+                  label="Cash on Delivery"
+                >
+                  <MenuItem value="">Select</MenuItem>
+                  <MenuItem value="yes">Yes</MenuItem>
+                  <MenuItem value="no">No</MenuItem>
+                </Select>
+              </FormControl>
             </div>
             <div>
-              <Label htmlFor="pureVeg">Pure Veg<span className="text-red-500">*</span></Label>
-              <Select value={formData.pureVeg} onValueChange={(value) => setFormData(prev => ({ ...prev, pureVeg: value }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="yes">Yes</SelectItem>
-                  <SelectItem value="no">No</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                <InputLabel required>Pure Veg</InputLabel>
+                <Select
+                  value={formData.pureVeg}
+                  onChange={(e) => setFormData(prev => ({ ...prev, pureVeg: e.target.value }))}
+                  label="Pure Veg"
+                >
+                  <MenuItem value="yes">Yes</MenuItem>
+                  <MenuItem value="no">No</MenuItem>
+                </Select>
+              </FormControl>
             </div>
             <div className="md:col-span-3">
               <TextField
