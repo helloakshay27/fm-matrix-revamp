@@ -228,8 +228,8 @@ export const FnBRestaurantDetailsPage = () => {
             {/* Basic Detail */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-medium text-orange-600 flex items-center gap-2">
-                  <span className="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                <CardTitle className="text-lg font-medium text-[#C72030] flex items-center gap-2">
+                  <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
                   BASIC DETAIL
                 </CardTitle>
               </CardHeader>
@@ -300,8 +300,8 @@ export const FnBRestaurantDetailsPage = () => {
             {/* Restaurant Schedule */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-medium text-orange-600 flex items-center gap-2">
-                  <span className="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
+                <CardTitle className="text-lg font-medium text-[#C72030] flex items-center gap-2">
+                  <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
                   RESTAURANT SCHEDULE
                 </CardTitle>
               </CardHeader>
@@ -430,9 +430,9 @@ export const FnBRestaurantDetailsPage = () => {
             {/* Other Info */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-medium text-orange-600 flex items-center gap-2">
-                  <span className="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
-                  Other Info
+                <CardTitle className="text-lg font-medium text-[#C72030] flex items-center gap-2">
+                  <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
+                  OTHER INFO
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -497,9 +497,9 @@ export const FnBRestaurantDetailsPage = () => {
             {/* Cover */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-medium text-orange-600 flex items-center gap-2">
-                  <span className="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">4</span>
-                  Cover
+                <CardTitle className="text-lg font-medium text-[#C72030] flex items-center gap-2">
+                  <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">4</span>
+                  COVER
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -515,8 +515,8 @@ export const FnBRestaurantDetailsPage = () => {
             {/* Menu */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-medium text-orange-600 flex items-center gap-2">
-                  <span className="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">5</span>
+                <CardTitle className="text-lg font-medium text-[#C72030] flex items-center gap-2">
+                  <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">5</span>
                   MENU
                 </CardTitle>
               </CardHeader>
@@ -533,8 +533,8 @@ export const FnBRestaurantDetailsPage = () => {
             {/* Gallery */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-medium text-orange-600 flex items-center gap-2">
-                  <span className="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
+                <CardTitle className="text-lg font-medium text-[#C72030] flex items-center gap-2">
+                  <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
                   GALLERY
                 </CardTitle>
               </CardHeader>
