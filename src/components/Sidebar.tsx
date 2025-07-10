@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -15,9 +16,6 @@ import {
 } from 'lucide-react';
 
 const modulesByPackage = {
-  'Audit': [
-    { name: 'Audit List', icon: Clipboard, href: '/audit/list' }
-  ],
   'Transitioning': [
     { name: 'HOTO', icon: FileText, href: '/transitioning/hoto' },
     { 
@@ -321,9 +319,7 @@ export const Sidebar = () => {
 
   React.useEffect(() => {
     const path = location.pathname;
-    if (path.startsWith('/audit')) {
-      setCurrentSection('Audit');
-    } else if (path.startsWith('/utility')) {
+    if (path.startsWith('/utility')) {
       setCurrentSection('Utility');
     } else if (path.startsWith('/transitioning')) {
       setCurrentSection('Transitioning');
@@ -458,6 +454,7 @@ export const Sidebar = () => {
                 value={selectedDepartment}
                 onChange={(e) => setSelectedDepartment(e.target.value)}
                 className="!w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030]"
+
               >
                 <option value="">Select Department</option>
                 <option value="engineering">Engineering</option>
@@ -473,7 +470,7 @@ export const Sidebar = () => {
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                className="!w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030]"
+className="!w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030]"
               >
                 <option value="">Select Role</option>
                 <option value="manager">Manager</option>
