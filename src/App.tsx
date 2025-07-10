@@ -6,7 +6,6 @@ import { DynamicHeader } from './components/DynamicHeader';
 import { Sidebar } from './components/Sidebar';
 import { ApprovalMatrixDashboard } from './pages/settings/ApprovalMatrixDashboard';
 import { AssetSetupApprovalMatrix } from './pages/settings/AssetSetupApprovalMatrix';
-import { AssetGroups } from './pages/settings/AssetGroups';
 
 const HomePage = () => (
   <div className="p-6">
@@ -37,7 +36,6 @@ function App() {
                 {/* Settings Routes */}
                 <Route path="/settings/approval-matrix" element={<ApprovalMatrixDashboard />} />
                 <Route path="/settings/asset-setup/approval-matrix" element={<AssetSetupApprovalMatrix />} />
-                <Route path="/settings/asset-setup/groups" element={<AssetGroups />} />
                 
                 {/* Placeholder routes for other sections */}
                 <Route path="/transitioning/*" element={<PlaceholderPage title="Transitioning" />} />
