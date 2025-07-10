@@ -26,12 +26,12 @@ export const AddStatusModal: React.FC<AddStatusModalProps> = ({ isOpen, onClose,
 
   const fieldStyles = {
     '& .MuiOutlinedInput-root': {
-      borderRadius: 0,
+      borderRadius: '6px',
       backgroundColor: '#FFFFFF',
       height: '45px', // Desktop height
       '& fieldset': {
         borderColor: '#E0E0E0',
-        borderRadius: 0,
+        borderRadius: '6px',
       },
       '&:hover fieldset': {
         borderColor: '#1A1A1A',
@@ -56,11 +56,11 @@ export const AddStatusModal: React.FC<AddStatusModalProps> = ({ isOpen, onClose,
 
   const descriptionFieldStyles = {
     '& .MuiOutlinedInput-root': {
-      borderRadius: 0,
+      borderRadius: '6px',
       backgroundColor: '#FFFFFF',
       '& fieldset': {
         borderColor: '#E0E0E0',
-        borderRadius: 0,
+        borderRadius: '6px',
       },
       '&:hover fieldset': {
         borderColor: '#1A1A1A',
