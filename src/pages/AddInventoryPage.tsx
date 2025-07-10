@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -28,7 +27,11 @@ export const AddInventoryPage = () => {
     vendor: '',
     maxStockLevel: '',
     minStockLevel: '',
-    minOrderLevel: ''
+    minOrderLevel: '',
+    sacHsnCode: '',
+    sgstRate: '',
+    cgstRate: '',
+    igstRate: ''
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -412,7 +415,7 @@ export const AddInventoryPage = () => {
           </button>
           
           {taxDetailsExpanded && (
-            <div className="p-6 pt-0">
+            <div className="p-6 pt-0 space-y-6">
               <div className="flex items-center space-x-2">
                 <Checkbox 
                   id="tax-applicable" 
@@ -421,6 +424,67 @@ export const AddInventoryPage = () => {
                 />
                 <label htmlFor="tax-applicable" className="text-sm font-medium text-black">Tax Applicable</label>
               </div>
+
+              {/* Tax Rate Fields - Only show when Tax Applicable is checked */}
+              {taxApplicable && (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <FormControl fullWidth variant="outlined" sx={selectStyles}>
+                      <InputLabel shrink>SAC/HSN Code</InputLabel>
+                      <MuiSelect
+                        value={formData.sacHsnCode}
+                        onChange={handleSelectChange('sacHsnCode')}
+                        label="SAC/HSN Code"
+                        notched
+                        displayEmpty
+                      >
+                        <MenuItem value="">Select SAC/HSN Code</MenuItem>
+                        <MenuItem value="sac001">SAC 001</MenuItem>
+                        <MenuItem value="hsn001">HSN 001</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  <div>
+                    <TextField
+                      label="SGST Rate"
+                      placeholder="SGST Rate"
+                      value={formData.sgstRate}
+                      onChange={(e) => handleInputChange('sgstRate', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+                  </div>
+
+                  <div>
+                    <TextField
+                      label="CGST Rate"
+                      placeholder="CGST Rate"
+                      value={formData.cgstRate}
+                      onChange={(e) => handleInputChange('cgstRate', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+                  </div>
+
+                  <div>
+                    <TextField
+                      label="IGST Rate"
+                      placeholder="IGST Rate"
+                      value={formData.igstRate}
+                      onChange={(e) => handleInputChange('igstRate', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
