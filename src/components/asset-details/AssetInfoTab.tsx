@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MapPin, QrCode, Settings, CreditCard, UserCheck, TrendingUp, User, FileText, CheckCircle, Box, Clock, UserIcon } from 'lucide-react';
 
@@ -215,86 +214,9 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Purchase Details */}
-        <div className="bg-white rounded-lg p-6 shadow-sm border-2">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
-              <CreditCard className="w-4 h-4 text-white" />
-            </div>
-            <h3 className="text-lg font-semibold uppercase" style={{ color: '#C72030' }}>Purchase Details</h3>
-          </div>
-
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Purchase Cost</div>
-                <div className="font-medium">₹ 100000</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Current Date Cost</div>
-                <div className="font-medium">₹ 52000 <span className="text-sm text-gray-500">(Straight Line)</span></div>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Purchase Date</div>
-                <div className="font-medium">01/02/2019</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Under Warranty</div>
-                <div className="font-medium">Yes</div>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Period</div>
-                <div className="font-medium">2 years</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Warranty Expires On</div>
-                <div className="font-medium">10/02/2022</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Asset Loaned */}
-        <div className="bg-white rounded-lg p-6 shadow-sm border">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
-              <UserCheck className="w-4 h-4 text-white" />
-            </div>
-            <h3 className="text-lg font-semibold uppercase" style={{ color: '#C72030' }}>Asset Loaned</h3>
-          </div>
-
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Vendor</div>
-                <div className="font-medium">Croma Electronics</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Agreement From</div>
-                <div className="font-medium">01/02/2019</div>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Agreement To</div>
-                <div className="font-medium">01/02/2021</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="flex gap-6">
         {/* Movement Details */}
-        <div className="bg-white rounded-lg p-6 shadow-sm border">
+        <div className="w-4/5 bg-white rounded-lg p-6 shadow-sm border">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <TrendingUp className="w-5 h-5 text-white" />
@@ -384,7 +306,7 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         </div>
 
         {/* Vendor Contact Details */}
-        <div className="bg-white rounded-lg p-6 shadow-sm border">
+        <div className="w-1/5 bg-white rounded-lg p-6 shadow-sm border">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <User className="w-4 h-4 text-white" />
