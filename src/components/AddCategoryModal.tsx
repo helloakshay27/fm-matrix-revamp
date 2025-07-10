@@ -76,7 +76,15 @@ export const AddCategoryModal = ({
         <div className="px-12 pb-12 space-y-6">
           {/* Category Dropdown */}
           <div className="w-full">
-            <select className="w-full h-12 px-4 text-gray-600 bg-white border border-gray-300 rounded-md appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 4 5\"><path fill=\"%23666\" d=\"M2 0L0 2h4zm0 5L0 3h4z\"/></svg>')] bg-no-repeat bg-right bg-[length:12px] pr-8 focus:outline-none focus:border-[#C72030]">
+            <select 
+              className="w-full h-12 px-4 text-gray-600 bg-white border border-gray-300 rounded-md appearance-none pr-8 focus:outline-none focus:border-[#C72030]"
+              style={{
+                backgroundImage: `url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3E%3Cpath fill='%23666' d='M2 0L0 2h4zm0 5L0 3h4z'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 12px center',
+                backgroundSize: '12px'
+              }}
+            >
               <option value="">Category</option>
             </select>
           </div>
