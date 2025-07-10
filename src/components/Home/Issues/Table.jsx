@@ -965,6 +965,7 @@ const IssuesTable = () => {
                 selectedOptionValue
               )
             }
+            className="w-full"
           />
         ),
       },
