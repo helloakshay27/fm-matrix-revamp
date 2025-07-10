@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { MapPin, QrCode, Settings, CreditCard, UserCheck, TrendingUp, User } from 'lucide-react';
 
@@ -9,27 +10,18 @@ interface AssetInfoTabProps {
 export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
   return (
     <div className="space-y-6 bg-gray-50 min-h-full p-6">
-      {/* Location Details & QR Code Combined */}
-      <div className="bg-white rounded-lg p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Location Details */}
+        <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-8">
             <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
               <MapPin className="w-4 h-4 text-white" />
             </div>
             <h3 className="text-lg font-semibold text-blue-600 uppercase">Location Details</h3>
           </div>
-          
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-              <QrCode className="w-4 h-4 text-white" />
-            </div>
-            <h3 className="text-lg font-semibold text-blue-600 uppercase">QR Code</h3>
-          </div>
-        </div>
 
-        <div className="flex justify-between items-center">
           {/* Location Timeline */}
-          <div className="flex-1 mr-12">
+          <div className="flex-1">
             <div className="relative flex items-center">
               {/* Site */}
               <div className="flex flex-col items-center relative">
@@ -89,8 +81,17 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* QR Code */}
+        <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+              <QrCode className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold text-blue-600 uppercase">QR Code</h3>
+          </div>
           
-          {/* QR Code */}
           <div className="flex flex-col items-center">
             <div className="w-32 h-32 bg-white border border-gray-300 rounded flex items-center justify-center mb-3">
               <div className="w-28 h-28 bg-black flex items-center justify-center">
@@ -383,3 +384,4 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
     </div>
   );
 };
+
