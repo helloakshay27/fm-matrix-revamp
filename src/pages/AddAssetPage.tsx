@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, TrendingUp, BarChart, Paperclip, Zap, Sun, Droplet, Recycle, BarChart3, Plug, Frown, Wind, Percent, Users, Settings } from 'lucide-react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AddCustomFieldModal } from '@/components/AddCustomFieldModal';
 
 const AddAssetPage = () => {
   const navigate = useNavigate();
@@ -31,8 +31,13 @@ const AddAssetPage = () => {
   const [showRenewableOptions, setShowRenewableOptions] = useState(false);
   const [allocationBasedOn, setAllocationBasedOn] = useState('department');
   const [customFieldModalOpen, setCustomFieldModalOpen] = useState(false);
+  const [itAssetsCustomFieldModalOpen, setItAssetsCustomFieldModalOpen] = useState(false);
   const [newFieldName, setNewFieldName] = useState('');
   const [customFields, setCustomFields] = useState([]);
+  const [itAssetsCustomFields, setItAssetsCustomFields] = useState({
+    'System Details': [],
+    'Hard Disk Details': []
+  });
   
   const [consumptionMeasures, setConsumptionMeasures] = useState([{
     id: 1,
@@ -187,7 +192,7 @@ const AddAssetPage = () => {
     }));
   };
 
-  // Custom field functions
+  // Custom field functions for Asset Details
   const handleAddCustomField = () => {
     if (newFieldName.trim()) {
       const newField = {
@@ -209,6 +214,35 @@ const AddAssetPage = () => {
 
   const removeCustomField = (id) => {
     setCustomFields(prev => prev.filter(field => field.id !== id));
+  };
+
+  // Custom field functions for IT Assets
+  const handleAddItAssetsCustomField = (fieldName, section = 'System Details') => {
+    const newField = {
+      id: Date.now(),
+      name: fieldName,
+      value: ''
+    };
+    setItAssetsCustomFields(prev => ({
+      ...prev,
+      [section]: [...prev[section], newField]
+    }));
+  };
+
+  const handleItAssetsCustomFieldChange = (section, id, value) => {
+    setItAssetsCustomFields(prev => ({
+      ...prev,
+      [section]: prev[section].map(field => 
+        field.id === id ? { ...field, value } : field
+      )
+    }));
+  };
+
+  const removeItAssetsCustomField = (section, id) => {
+    setItAssetsCustomFields(prev => ({
+      ...prev,
+      [section]: prev[section].filter(field => field.id !== id)
+    }));
   };
 
   // Consumption measure functions
@@ -496,10 +530,14 @@ const AddAssetPage = () => {
                   </label>
                 </div>
               </div>
-              <button className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80" style={{
-              backgroundColor: '#F6F4EE',
-              color: '#C72030'
-            }}>
+              <button 
+                onClick={() => setItAssetsCustomFieldModalOpen(true)}
+                className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80" 
+                style={{
+                  backgroundColor: '#F6F4EE',
+                  color: '#C72030'
+                }}
+              >
                 <Plus className="w-4 h-4" />
                 Custom Field
               </button>
@@ -528,6 +566,32 @@ const AddAssetPage = () => {
               }} InputProps={{
                 sx: fieldStyles
               }} />
+                  
+                  {/* Custom Fields for System Details */}
+                  {itAssetsCustomFields['System Details'].map(field => (
+                    <div key={field.id} className="relative">
+                      <TextField 
+                        label={field.name}
+                        placeholder={`Enter ${field.name}`}
+                        value={field.value}
+                        onChange={(e) => handleItAssetsCustomFieldChange('System Details', field.id, e.target.value)}
+                        fullWidth 
+                        variant="outlined" 
+                        InputLabelProps={{
+                          shrink: true
+                        }} 
+                        InputProps={{
+                          sx: fieldStyles
+                        }} 
+                      />
+                      <button
+                        onClick={() => removeItAssetsCustomField('System Details', field.id)}
+                        className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -552,6 +616,32 @@ const AddAssetPage = () => {
               }} InputProps={{
                 sx: fieldStyles
               }} />
+                  
+                  {/* Custom Fields for Hard Disk Details */}
+                  {itAssetsCustomFields['Hard Disk Details'].map(field => (
+                    <div key={field.id} className="relative">
+                      <TextField 
+                        label={field.name}
+                        placeholder={`Enter ${field.name}`}
+                        value={field.value}
+                        onChange={(e) => handleItAssetsCustomFieldChange('Hard Disk Details', field.id, e.target.value)}
+                        fullWidth 
+                        variant="outlined" 
+                        InputLabelProps={{
+                          shrink: true
+                        }} 
+                        InputProps={{
+                          sx: fieldStyles
+                        }} 
+                      />
+                      <button
+                        onClick={() => removeItAssetsCustomField('Hard Disk Details', field.id)}
+                        className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>}
@@ -1254,7 +1344,7 @@ const AddAssetPage = () => {
         </div>
       </div>
 
-      {/* Custom Field Modal */}
+      {/* Custom Field Modal for Asset Details */}
       <Dialog open={customFieldModalOpen} onOpenChange={setCustomFieldModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -1311,6 +1401,14 @@ const AddAssetPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Custom Field Modal for IT Assets */}
+      <AddCustomFieldModal
+        isOpen={itAssetsCustomFieldModalOpen}
+        onClose={() => setItAssetsCustomFieldModalOpen(false)}
+        onAddField={handleAddItAssetsCustomField}
+        isItAsset={true}
+      />
     </div>;
 };
 
