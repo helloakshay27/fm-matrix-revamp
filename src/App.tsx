@@ -4,9 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
-import HomePage from './pages/HomePage';
-import AssetListDashboard from './pages/AssetListDashboard';
-import AssetDetailsPage from './pages/AssetDetailsPage';
+import { AssetDetailsPage } from './pages/AssetDetailsPage';
 import AuditAssetDashboard from './pages/AuditAssetDashboard';
 
 function App() {
@@ -17,8 +15,8 @@ function App() {
           <Header />
           <Sidebar />
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/maintenance/asset" element={<AssetListDashboard />} />
+            <Route path="/" element={<div className="p-6" style={{ marginLeft: '16rem' }}><h1 className="text-2xl font-bold">Welcome to Asset Management</h1></div>} />
+            <Route path="/maintenance/asset" element={<div className="p-6" style={{ marginLeft: '16rem' }}><h1 className="text-2xl font-bold">Asset List Dashboard</h1></div>} />
             <Route path="/maintenance/audit-asset" element={<AuditAssetDashboard />} />
             <Route path="/asset/:id" element={<AssetDetailsPage />} />
           </Routes>
