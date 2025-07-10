@@ -216,7 +216,7 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Purchase Details */}
-        <div className="bg-white rounded-lg p-6 shadow-sm">
+        <div className="bg-white rounded-lg p-6 shadow-sm border-2">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <CreditCard className="w-4 h-4 text-white" />
@@ -261,7 +261,7 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         </div>
 
         {/* Asset Loaned */}
-        <div className="bg-white rounded-lg p-6 shadow-sm">
+        <div className="bg-white rounded-lg p-6 shadow-sm border">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <UserCheck className="w-4 h-4 text-white" />
@@ -293,7 +293,7 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Movement Details */}
-        <div className="bg-white rounded-lg p-6 shadow-sm">
+        <div className="bg-white rounded-lg p-6 shadow-sm border">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <TrendingUp className="w-4 h-4 text-white" />
@@ -345,7 +345,7 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         </div>
 
         {/* Vendor Contact Details */}
-        <div className="bg-white rounded-lg p-6 shadow-sm">
+        <div className="bg-white rounded-lg p-6 shadow-sm border">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <User className="w-4 h-4 text-white" />
