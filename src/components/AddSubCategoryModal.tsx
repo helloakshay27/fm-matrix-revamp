@@ -42,7 +42,7 @@ export const AddSubCategoryModal = ({
             </DialogTitle>
             <button
               onClick={onClose}
-              className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+              className="p-1 rounded-md transition-colors"
             >
               <X size={20} className="text-gray-500" />
             </button>
@@ -53,9 +53,10 @@ export const AddSubCategoryModal = ({
           <FormControl fullWidth>
             <InputLabel 
               id="category-label" 
+              shrink={true}
               sx={{ 
                 color: '#666',
-                fontSize: '14px',
+                fontSize: '16px',
                 '&.Mui-focused': { color: '#000000' }
               }}
             >
@@ -123,7 +124,7 @@ export const AddSubCategoryModal = ({
               },
               '& .MuiInputLabel-root': {
                 color: '#666',
-                fontSize: '14px',
+                fontSize: '16px',
                 '&.Mui-focused': {
                   color: '#000000',
                 },
@@ -162,7 +163,7 @@ export const AddSubCategoryModal = ({
               },
               '& .MuiInputLabel-root': {
                 color: '#666',
-                fontSize: '14px',
+                fontSize: '16px',
                 '&.Mui-focused': {
                   color: '#000000',
                 },
