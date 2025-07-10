@@ -65,6 +65,7 @@ export const EditInventoryPage = () => {
           .MuiOutlinedInput-root {
             border-radius: 6px !important;
             width: 100% !important;
+            height: 45px !important;
           }
           .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
             border-color: #C72030 !important;
@@ -74,6 +75,13 @@ export const EditInventoryPage = () => {
           }
           .MuiTextField-root {
             width: 100% !important;
+          }
+          
+          /* Mobile responsive height */
+          @media (max-width: 767px) {
+            .MuiOutlinedInput-root {
+              height: 36px !important;
+            }
           }
         `}
       </style>
