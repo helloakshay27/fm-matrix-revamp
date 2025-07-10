@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -604,11 +605,11 @@ export const EditAssetDetailsPage = () => {
                   <span className="text-red-700 font-normal">Status</span>
                   <div className="flex items-center gap-6">
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="status-inuse" name="status" value="in-use" checked={formData.status === 'in-use'} onChange={e => handleInputChange('status', e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                      <input type="radio" id="status-inuse" name="status" value="in-use" checked={formData.status === 'in-use'} onChange={e => handleInputChange('status', e.target.value)} className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]" />
                       <label htmlFor="status-inuse" className="text-sm">In Use</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="status-breakdown" name="status" value="breakdown" checked={formData.status === 'breakdown'} onChange={e => handleInputChange('status', e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                      <input type="radio" id="status-breakdown" name="status" value="breakdown" checked={formData.status === 'breakdown'} onChange={e => handleInputChange('status', e.target.value)} className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]" />
                       <label htmlFor="status-breakdown" className="text-sm">Breakdown</label>
                     </div>
                   </div>
@@ -740,11 +741,11 @@ export const EditAssetDetailsPage = () => {
                   <span className="font-medium text-red-700">Meter Type</span>
                   <div className="flex items-center gap-6">
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="meter-parent" name="meterType" value="parent" checked={meterType === 'parent'} onChange={e => setMeterType(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                      <input type="radio" id="meter-parent" name="meterType" value="parent" checked={meterType === 'parent'} onChange={e => setMeterType(e.target.value)} className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]" />
                       <label htmlFor="meter-parent" className="text-sm">Parent</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="meter-sub" name="meterType" value="sub" checked={meterType === 'sub'} onChange={e => setMeterType(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                      <input type="radio" id="meter-sub" name="meterType" value="sub" checked={meterType === 'sub'} onChange={e => setMeterType(e.target.value)} className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]" />
                       <label htmlFor="meter-sub" className="text-sm">Sub</label>
                     </div>
                   </div>
@@ -757,11 +758,11 @@ export const EditAssetDetailsPage = () => {
                   <span className="font-medium text-red-700">CRITICAL</span>
                   <div className="flex items-center gap-6">
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="critical-yes" name="critical" value="yes" checked={critical === 'yes'} onChange={e => setCritical(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                      <input type="radio" id="critical-yes" name="critical" value="yes" checked={critical === 'yes'} onChange={e => setCritical(e.target.value)} className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]" />
                       <label htmlFor="critical-yes" className="text-sm">Yes</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="critical-no" name="critical" value="no" checked={critical === 'no'} onChange={e => setCritical(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                      <input type="radio" id="critical-no" name="critical" value="no" checked={critical === 'no'} onChange={e => setCritical(e.target.value)} className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]" />
                       <label htmlFor="critical-no" className="text-sm">No</label>
                     </div>
                   </div>
@@ -780,7 +781,7 @@ export const EditAssetDetailsPage = () => {
                           {option.icon}
                         </div>
                         <div className="flex items-center space-x-2">
-                          <input type="radio" id={option.value} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
+                          <input type="radio" id={option.value} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]" />
                           <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer font-medium text-center">
                             {option.label}
                           </label>
@@ -798,7 +799,7 @@ export const EditAssetDetailsPage = () => {
                               {option.icon}
                             </div>
                             <div className="flex items-center space-x-2">
-                              <input type="radio" id={`sub-${option.value}`} name="subMeterCategory" value={option.value} checked={subCategoryType === option.value} onChange={e => setSubCategoryType(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" />
+                              <input type="radio" id={`sub-${option.value}`} name="subMeterCategory" value={option.value} checked={subCategoryType === option.value} onChange={e => setSubCategoryType(e.target.value)} className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]" />
                               <label htmlFor={`sub-${option.value}`} className="text-xs sm:text-sm cursor-pointer font-medium text-center">
                                 {option.label}
                               </label>
@@ -840,11 +841,11 @@ export const EditAssetDetailsPage = () => {
                   <span className="text-sm font-medium text-gray-700">Under Warranty</span>
                   <div className="flex items-center gap-6">
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="warranty-yes" name="underWarranty" value="yes" checked={formData.underWarranty === 'yes'} onChange={e => handleInputChange('underWarranty', e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                      <input type="radio" id="warranty-yes" name="underWarranty" value="yes" checked={formData.underWarranty === 'yes'} onChange={e => handleInputChange('underWarranty', e.target.value)} className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]" />
                       <label htmlFor="warranty-yes" className="text-sm">Yes</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="warranty-no" name="underWarranty" value="no" checked={formData.underWarranty === 'no'} onChange={e => handleInputChange('underWarranty', e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                      <input type="radio" id="warranty-no" name="underWarranty" value="no" checked={formData.underWarranty === 'no'} onChange={e => handleInputChange('underWarranty', e.target.value)} className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]" />
                       <label htmlFor="warranty-no" className="text-sm">No</label>
                     </div>
                   </div>
@@ -884,11 +885,11 @@ export const EditAssetDetailsPage = () => {
                   <span className="font-medium text-gray-700">Method</span>
                   <div className="flex items-center gap-6">
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="method-straight-line" name="depreciationMethod" value="straight-line" checked={depreciationMethod === 'straight-line'} onChange={e => setDepreciationMethod(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                      <input type="radio" id="method-straight-line" name="depreciationMethod" value="straight-line" checked={depreciationMethod === 'straight-line'} onChange={e => setDepreciationMethod(e.target.value)} className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]" />
                       <label htmlFor="method-straight-line" className="text-sm">Straight Line</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="method-wdv" name="depreciationMethod" value="wdv" checked={depreciationMethod === 'wdv'} onChange={e => setDepreciationMethod(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                      <input type="radio" id="method-wdv" name="depreciationMethod" value="wdv" checked={depreciationMethod === 'wdv'} onChange={e => setDepreciationMethod(e.target.value)} className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]" />
                       <label htmlFor="method-wdv" className="text-sm">WDV</label>
                     </div>
                   </div>
@@ -919,11 +920,11 @@ export const EditAssetDetailsPage = () => {
               {/* Configuration Scope */}
               <div className="flex items-center gap-6">
                 <div className="flex items-center space-x-2">
-                  <input type="radio" id="scope-this-only" name="depreciationScope" value="this-only" checked={depreciationScope === 'this-only'} onChange={e => setDepreciationScope(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                  <input type="radio" id="scope-this-only" name="depreciationScope" value="this-only" checked={depreciationScope === 'this-only'} onChange={e => setDepreciationScope(e.target.value)} className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]" />
                   <label htmlFor="scope-this-only" className="text-sm">Configure Depreciation Only For This</label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <input type="radio" id="scope-similar" name="depreciationScope" value="similar" checked={depreciationScope === 'similar'} onChange={e => setDepreciationScope(e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                  <input type="radio" id="scope-similar" name="depreciationScope" value="similar" checked={depreciationScope === 'similar'} onChange={e => setDepreciationScope(e.target.value)} className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]" />
                   <label htmlFor="scope-similar" className="text-sm">For Similar Product</label>
                 </div>
               </div>
@@ -948,11 +949,11 @@ export const EditAssetDetailsPage = () => {
                   <span className="font-medium text-gray-700">Based On</span>
                   <div className="flex items-center gap-6">
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="allocation-department" name="basedOn" value="department" checked={assetAllocationData.basedOn === 'department'} onChange={e => handleAssetAllocationChange('basedOn', e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                      <input type="radio" id="allocation-department" name="basedOn" value="department" checked={assetAllocationData.basedOn === 'department'} onChange={e => handleAssetAllocationChange('basedOn', e.target.value)} className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]" />
                       <label htmlFor="allocation-department" className="text-sm">Department</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input type="radio" id="allocation-users" name="basedOn" value="users" checked={assetAllocationData.basedOn === 'users'} onChange={e => handleAssetAllocationChange('basedOn', e.target.value)} className="w-4 h-4 text-blue-600 border-gray-300" />
+                      <input type="radio" id="allocation-users" name="basedOn" value="users" checked={assetAllocationData.basedOn === 'users'} onChange={e => handleAssetAllocationChange('basedOn', e.target.value)} className="w-4 h-4 border-gray-300 focus:ring-[#C72030] text-[#C72030]" />
                       <label htmlFor="allocation-users" className="text-sm">Users</label>
                     </div>
                   </div>
