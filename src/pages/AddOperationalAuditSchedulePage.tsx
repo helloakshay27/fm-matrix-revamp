@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -525,27 +524,42 @@ export const AddOperationalAuditSchedulePage = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-            <TextField
-              label="Activity Name"
-              placeholder="Enter Activity Name"
-              value={basicInfo.activityName}
-              onChange={(e) => setBasicInfo(prev => ({ ...prev, activityName: e.target.value }))}
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              sx={fieldStyles}
-            />
+            <div className="w-full">
+              <TextField
+                label="Activity Name"
+                placeholder="Enter Activity Name"
+                value={basicInfo.activityName}
+                onChange={(e) => setBasicInfo(prev => ({ ...prev, activityName: e.target.value }))}
+                variant="outlined"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                sx={fieldStyles}
+              />
+            </div>
 
-            <TextField
-              label="Description"
-              placeholder="Enter Description"
-              value={basicInfo.description}
-              onChange={(e) => setBasicInfo(prev => ({ ...prev, description: e.target.value }))}
-              variant="outlined"
-              multiline
-              rows={3}
-              InputLabelProps={{ shrink: true }}
-              sx={multilineFieldStyles}
-            />
+            <div className="w-full">
+              <TextField
+                label="Description"
+                placeholder="Enter Description"
+                value={basicInfo.description}
+                onChange={(e) => setBasicInfo(prev => ({ ...prev, description: e.target.value }))}
+                variant="outlined"
+                fullWidth
+                multiline
+                rows={3}
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  ...multilineFieldStyles,
+                  width: '100%',
+                  '& .MuiOutlinedInput-root': {
+                    ...multilineFieldStyles['& .MuiOutlinedInput-root'],
+                    width: '100%',
+                    minHeight: '80px',
+                    maxWidth: '100%'
+                  }
+                }}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
