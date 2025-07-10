@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,11 +10,11 @@ export const PPMTab = () => {
   const [statusFilter, setStatusFilter] = useState('Scheduled');
 
   const statusCards = [
-    { count: 12, label: 'Scheduled', color: 'bg-blue-500', icon: Calendar },
-    { count: 8, label: 'Open', color: 'bg-orange-500', icon: Lock },
-    { count: 2, label: 'In Progress', color: 'bg-yellow-500', icon: AlertTriangle },
-    { count: 4, label: 'Closed', color: 'bg-green-500', icon: CheckCircle },
-    { count: 8, label: 'Overdue', color: 'bg-red-500', icon: Clock }
+    { count: 12, label: 'Scheduled', icon: Calendar },
+    { count: 8, label: 'Open', icon: Lock },
+    { count: 2, label: 'In Progress', icon: AlertTriangle },
+    { count: 4, label: 'Closed', icon: CheckCircle },
+    { count: 8, label: 'Overdue', icon: Clock }
   ];
 
   const ppmData = [
@@ -105,14 +104,14 @@ export const PPMTab = () => {
         {statusCards.map((card, index) => {
           const IconComponent = card.icon;
           return (
-            <div key={index} className={`${card.color} text-white p-4 rounded-lg`}>
+            <div key={index} className="p-4 rounded-lg" style={{ backgroundColor: '#F6F4EE' }}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                  <IconComponent className="w-5 h-5" />
+                  <IconComponent className="w-5 h-5" style={{ color: '#C72030' }} />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold">{card.count.toString().padStart(2, '0')}</div>
-                  <div className="text-sm font-medium">{card.label}</div>
+                  <div className="text-2xl font-bold text-black">{card.count.toString().padStart(2, '0')}</div>
+                  <div className="text-sm font-medium text-black">{card.label}</div>
                 </div>
               </div>
             </div>
