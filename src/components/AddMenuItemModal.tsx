@@ -3,9 +3,9 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { X } from "lucide-react";
 
 interface AddMenuItemModalProps {
@@ -71,6 +71,64 @@ export const AddMenuItemModal = ({
     setSelectedFile(file || null);
   };
 
+  const fieldStyles = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: 0,
+      backgroundColor: '#FFFFFF',
+      height: '45px',
+      '& fieldset': {
+        borderColor: '#E0E0E0',
+        borderRadius: 0,
+      },
+      '&:hover fieldset': {
+        borderColor: '#1A1A1A',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+        borderWidth: 2,
+      },
+      '@media (max-width: 768px)': {
+        height: '36px',
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: '#1A1A1A',
+      fontWeight: 500,
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+    },
+  };
+
+  const selectFieldStyles = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: 0,
+      backgroundColor: '#FFFFFF',
+      minHeight: '45px',
+      '& fieldset': {
+        borderColor: '#E0E0E0',
+        borderRadius: 0,
+      },
+      '&:hover fieldset': {
+        borderColor: '#1A1A1A',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+        borderWidth: 2,
+      },
+      '@media (max-width: 768px)': {
+        minHeight: '36px',
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: '#1A1A1A',
+      fontWeight: 500,
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+    },
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
@@ -91,168 +149,168 @@ export const AddMenuItemModal = ({
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-6">
           <div className="space-y-2">
-            <Label htmlFor="productName" className="text-sm">
-              Product Name*
-            </Label>
-            <Input
-              id="productName"
+            <TextField
+              label="Product Name*"
+              placeholder="Product Name"
               value={formData.productName}
               onChange={(e) => setFormData(prev => ({ ...prev, productName: e.target.value }))}
-              className="w-full"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="sku" className="text-sm">
-              SKU*
-            </Label>
-            <Input
-              id="sku"
+            <TextField
+              label="SKU*"
+              placeholder="SKU"
               value={formData.sku}
               onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
-              className="w-full"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="masterPrice" className="text-sm">
-              Master Price*
-            </Label>
-            <Input
-              id="masterPrice"
+            <TextField
+              label="Master Price*"
+              placeholder="Master Price"
               type="number"
               value={formData.masterPrice}
               onChange={(e) => setFormData(prev => ({ ...prev, masterPrice: e.target.value }))}
-              className="w-full"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="displayPrice" className="text-sm">
-              Display Price
-            </Label>
-            <Input
-              id="displayPrice"
+            <TextField
+              label="Display Price"
+              placeholder="Display Price"
               type="number"
               value={formData.displayPrice}
               onChange={(e) => setFormData(prev => ({ ...prev, displayPrice: e.target.value }))}
-              className="w-full"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="stock" className="text-sm">
-              Stock
-            </Label>
-            <Input
-              id="stock"
+            <TextField
+              label="Stock"
+              placeholder="Stock"
               value={formData.stock}
               onChange={(e) => setFormData(prev => ({ ...prev, stock: e.target.value }))}
-              className="w-full"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="active" className="text-sm">
-              Active
-            </Label>
-            <Select 
-              value={formData.active} 
-              onValueChange={(value) => setFormData(prev => ({ ...prev, active: value }))}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Yes">Yes</SelectItem>
-                <SelectItem value="No">No</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormControl fullWidth variant="outlined" sx={selectFieldStyles}>
+              <InputLabel shrink>Active</InputLabel>
+              <MuiSelect
+                value={formData.active}
+                onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.value }))}
+                label="Active"
+                notched
+              >
+                <MenuItem value="Yes">Yes</MenuItem>
+                <MenuItem value="No">No</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="category" className="text-sm">
-              Category*
-            </Label>
-            <Select 
-              value={formData.category} 
-              onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Category" />
-              </SelectTrigger>
-              <SelectContent>
+            <FormControl fullWidth variant="outlined" sx={selectFieldStyles}>
+              <InputLabel shrink>Category*</InputLabel>
+              <MuiSelect
+                value={formData.category}
+                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                label="Category*"
+                notched
+              >
                 {categories.map(category => (
-                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                  <MenuItem key={category} value={category}>{category}</MenuItem>
                 ))}
-              </SelectContent>
-            </Select>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="subCategory" className="text-sm">
-              Select Subcategory*
-            </Label>
-            <Select 
-              value={formData.subCategory} 
-              onValueChange={(value) => setFormData(prev => ({ ...prev, subCategory: value }))}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Subcategory" />
-              </SelectTrigger>
-              <SelectContent>
+            <FormControl fullWidth variant="outlined" sx={selectFieldStyles}>
+              <InputLabel shrink>Select Subcategory*</InputLabel>
+              <MuiSelect
+                value={formData.subCategory}
+                onChange={(e) => setFormData(prev => ({ ...prev, subCategory: e.target.value }))}
+                label="Select Subcategory*"
+                notched
+              >
                 {subCategories.map(subCategory => (
-                  <SelectItem key={subCategory} value={subCategory}>{subCategory}</SelectItem>
+                  <MenuItem key={subCategory} value={subCategory}>{subCategory}</MenuItem>
                 ))}
-              </SelectContent>
-            </Select>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="sgstRate" className="text-sm">
-              SGST Rate
-            </Label>
-            <Input
-              id="sgstRate"
+            <TextField
+              label="SGST Rate"
+              placeholder="SGST Rate"
               value={formData.sgstRate}
               onChange={(e) => setFormData(prev => ({ ...prev, sgstRate: e.target.value }))}
-              className="w-full"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="cgstRate" className="text-sm">
-              CGST Rate
-            </Label>
-            <Input
-              id="cgstRate"
+            <TextField
+              label="CGST Rate"
+              placeholder="CGST Rate"
               value={formData.cgstRate}
               onChange={(e) => setFormData(prev => ({ ...prev, cgstRate: e.target.value }))}
-              className="w-full"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="sgstAmount" className="text-sm">
-              SGST Amount
-            </Label>
-            <Input
-              id="sgstAmount"
+            <TextField
+              label="SGST Amount"
+              placeholder="SGST Amount"
               value={formData.sgstAmount}
               onChange={(e) => setFormData(prev => ({ ...prev, sgstAmount: e.target.value }))}
-              className="w-full"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="cgstAmount" className="text-sm">
-              CGST Amount
-            </Label>
-            <Input
-              id="cgstAmount"
+            <TextField
+              label="CGST Amount"
+              placeholder="CGST Amount"
               value={formData.cgstAmount}
               onChange={(e) => setFormData(prev => ({ ...prev, cgstAmount: e.target.value }))}
-              className="w-full"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
             />
           </div>
         </div>
