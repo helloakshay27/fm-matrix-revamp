@@ -72,12 +72,12 @@ export const AddMenuItemModal = ({
 
   const fieldStyles = {
     '& .MuiOutlinedInput-root': {
-      borderRadius: 0,
+      borderRadius: '6px',
       backgroundColor: '#FFFFFF',
       height: '45px',
       '& fieldset': {
         borderColor: '#E0E0E0',
-        borderRadius: 0,
+        borderRadius: '6px',
       },
       '&:hover fieldset': {
         borderColor: '#1A1A1A',
@@ -101,12 +101,12 @@ export const AddMenuItemModal = ({
 
   const selectFieldStyles = {
     '& .MuiOutlinedInput-root': {
-      borderRadius: 0,
+      borderRadius: '6px',
       backgroundColor: '#FFFFFF',
       minHeight: '45px',
       '& fieldset': {
         borderColor: '#E0E0E0',
-        borderRadius: 0,
+        borderRadius: '6px',
       },
       '&:hover fieldset': {
         borderColor: '#1A1A1A',
