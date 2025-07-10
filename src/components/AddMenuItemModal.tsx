@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -70,10 +71,13 @@ export const AddMenuItemModal = ({
   };
 
   const fieldStyles = {
+    '& .MuiInputBase-root': {
+      height: { xs: '36px', sm: '45px' },
+      borderRadius: '6px',
+    },
     '& .MuiOutlinedInput-root': {
       borderRadius: '6px',
       backgroundColor: '#FFFFFF',
-      height: '45px',
       '& fieldset': {
         borderColor: '#E0E0E0',
         borderRadius: '6px',
@@ -85,9 +89,6 @@ export const AddMenuItemModal = ({
         borderColor: '#C72030',
         borderWidth: 2,
       },
-      '@media (max-width: 768px)': {
-        height: '36px',
-      },
     },
     '& .MuiInputLabel-root': {
       color: '#1A1A1A',
@@ -97,6 +98,10 @@ export const AddMenuItemModal = ({
         color: '#C72030',
       },
     },
+    '& .MuiInputBase-input': {
+      padding: '8px 14px',
+      fontSize: '14px',
+    }
   };
 
   const textareaFieldStyles = {
@@ -127,10 +132,13 @@ export const AddMenuItemModal = ({
   };
 
   const selectFieldStyles = {
+    '& .MuiInputBase-root': {
+      height: { xs: '36px', sm: '45px' },
+      borderRadius: '6px',
+    },
     '& .MuiOutlinedInput-root': {
       borderRadius: '6px',
       backgroundColor: '#FFFFFF',
-      minHeight: '45px',
       '& fieldset': {
         borderColor: '#E0E0E0',
         borderRadius: '6px',
@@ -142,9 +150,6 @@ export const AddMenuItemModal = ({
         borderColor: '#C72030',
         borderWidth: 2,
       },
-      '@media (max-width: 768px)': {
-        minHeight: '36px',
-      },
     },
     '& .MuiInputLabel-root': {
       color: '#1A1A1A',
@@ -154,6 +159,11 @@ export const AddMenuItemModal = ({
         color: '#C72030',
       },
     },
+    '& .MuiSelect-select': {
+      padding: '8px 14px',
+      display: 'flex',
+      alignItems: 'center',
+    }
   };
 
   return (
