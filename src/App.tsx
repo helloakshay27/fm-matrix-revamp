@@ -11,6 +11,7 @@ import { ChecklistGroupsPage } from './pages/settings/ChecklistGroupsPage';
 import { EmailRulePage } from './pages/settings/EmailRulePage';
 import { TaskEscalationPage } from './pages/settings/TaskEscalationPage';
 import { PermitSetupPage } from './pages/settings/PermitSetupPage';
+import { IncidentSetupPage } from './pages/settings/IncidentSetupPage';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Route path="settings/checklist-setup/email-rule" element={<EmailRulePage />} />
             <Route path="settings/checklist-setup/task-escalation" element={<TaskEscalationPage />} />
             <Route path="settings/safety/permit/setup" element={<PermitSetupPage />} />
+            <Route path="settings/safety/incident/setup" element={<IncidentSetupPage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
