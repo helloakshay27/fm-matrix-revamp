@@ -56,6 +56,7 @@ export const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClos
               }}
               sx={{
                 '& .MuiInputBase-root': {
+                  height: { xs: '36px', sm: '45px' },
                   borderRadius: '6px',
                 },
                 '& .MuiOutlinedInput-root': {
@@ -78,6 +79,10 @@ export const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClos
                   '&.Mui-focused': {
                     color: '#C72030',
                   },
+                },
+                '& .MuiInputBase-input': {
+                  padding: '8px 14px',
+                  fontSize: '14px',
                 },
               }}
             />
