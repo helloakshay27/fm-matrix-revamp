@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { MapPin, QrCode, Settings, CreditCard, UserCheck, TrendingUp, User, FileText, CheckCircle, Box, Clock, UserIcon } from 'lucide-react';
 
@@ -208,6 +209,84 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
               <div>
                 <div className="text-sm text-gray-500 mb-2">Department</div>
                 <div className="font-medium text-gray-800">Technical, Finance</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Purchase Details and Asset Loaned - New sections */}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Purchase Details */}
+        <div className="w-full lg:w-1/2 bg-white rounded-lg p-6 shadow-sm border">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#4A90E2' }}>
+              <CreditCard className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#4A90E2]">Purchase Details</h3>
+          </div>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Purchase Cost</div>
+                <div className="font-medium">₹ 1,00000</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Current Date Cost</div>
+                <div className="font-medium">₹ 52000 (Straight Line)</div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Purchase Date</div>
+                <div className="font-medium">01/02/2019</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Under Warranty</div>
+                <div className="font-medium">Yes</div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Period</div>
+                <div className="font-medium">2 years</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Warranty Expires On</div>
+                <div className="font-medium">10/02/2022</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Asset Loaned */}
+        <div className="w-full lg:w-1/2 bg-white rounded-lg p-6 shadow-sm border">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#4A90E2' }}>
+              <UserCheck className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#4A90E2]">Asset Loaned</h3>
+          </div>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Vendor</div>
+                <div className="font-medium">Croma Electronics</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Agreement From</div>
+                <div className="font-medium">01/02/2019</div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Agreement To</div>
+                <div className="font-medium">01/02/2021</div>
               </div>
             </div>
           </div>
