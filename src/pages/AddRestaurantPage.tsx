@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown, ChevronUp, Store, Clock, Ban, Users, ShoppingCart, Paperclip } from 'lucide-react';
+import { ChevronDown, ChevronUp, Store, Clock, Ban, Users, ShoppingCart, Paperclip, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, Select, MenuItem, FormControl, InputLabel, Checkbox as MuiCheckbox, FormControlLabel } from '@mui/material';
 
@@ -162,6 +162,10 @@ export const AddRestaurantPage = () => {
     navigate('/vas/fnb');
   };
 
+  const handleGoBack = () => {
+    navigate(-1);
+  };
+
   const renderSectionHeader = (title: string, section: keyof typeof expandedSections, IconComponent: React.ComponentType<{ className?: string }>) => (
     <button
       onClick={() => toggleSection(section)}
@@ -179,7 +183,16 @@ export const AddRestaurantPage = () => {
     <div className="p-4 sm:p-6 bg-white min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <p className="text-gray-600 mb-2 text-sm">F&B List &gt; Create New F&B</p>
+        <div className="flex items-center gap-2 mb-2">
+          <button 
+            onClick={handleGoBack}
+            className="text-gray-600 hover:text-gray-800 transition-colors"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <p className="text-gray-600 text-sm">F&B List &gt; Create New F&B</p>
+        </div>
         <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] uppercase">NEW F&B</h1>
       </div>
 
