@@ -21,15 +21,15 @@ export const DepreciationTab = () => {
   const chartData = [
     { year: '2020', value: 80000, color: '#FF8C00' },
     { year: '2021', value: 68000, color: '#FF8C00' },
-    { year: '2022', value: 48000, color: '#4A90E2' },
-    { year: '2023', value: 35000, color: '#4A90E2' },
+    { year: '2022', value: 48000, color: '#C72030' },
+    { year: '2023', value: 35000, color: '#C72030' },
     { year: '2024', value: 19000, color: '#00C896' }
   ];
 
   const chartConfig = {
     value: {
       label: 'Book Value',
-      color: '#4A90E2'
+      color: '#C72030'
     }
   };
 
@@ -46,8 +46,8 @@ export const DepreciationTab = () => {
       {/* Depreciation Rule */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-[#4A90E2] text-lg">
-            <div className="w-6 h-6 bg-[#4A90E2] rounded-full flex items-center justify-center text-white text-xs">●</div>
+          <CardTitle className="flex items-center gap-2 text-[#C72030] text-lg">
+            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-xs">●</div>
             DEPRECIATION RULE
           </CardTitle>
         </CardHeader>
@@ -74,8 +74,8 @@ export const DepreciationTab = () => {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-[#4A90E2] text-lg">
-                <div className="w-6 h-6 bg-[#4A90E2] rounded-full flex items-center justify-center text-white text-xs">●</div>
+              <CardTitle className="flex items-center gap-2 text-[#C72030] text-lg">
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-xs">●</div>
                 DEPRECIATION TABLE
               </CardTitle>
             </CardHeader>
@@ -118,8 +118,8 @@ export const DepreciationTab = () => {
         <div>
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-[#4A90E2] text-lg">
-                <div className="w-6 h-6 bg-[#4A90E2] rounded-full flex items-center justify-center text-white text-xs">●</div>
+              <CardTitle className="flex items-center gap-2 text-[#C72030] text-lg">
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-xs">●</div>
                 ACTUAL COST CALCULATOR
               </CardTitle>
             </CardHeader>
@@ -201,8 +201,8 @@ export const DepreciationTab = () => {
       {/* Book Value Graph */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-[#4A90E2] text-lg">
-            <div className="w-6 h-6 bg-[#4A90E2] rounded-full flex items-center justify-center text-white text-xs">●</div>
+          <CardTitle className="flex items-center gap-2 text-[#C72030] text-lg">
+            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-xs">●</div>
             BOOK VALUE GRAPH <span className="text-sm font-normal">(YEARLY STATS)</span>
           </CardTitle>
         </CardHeader>
@@ -232,10 +232,10 @@ export const DepreciationTab = () => {
                   <Line 
                     type="monotone" 
                     dataKey="value" 
-                    stroke="#4A90E2"
+                    stroke="#C72030"
                     strokeWidth={3}
-                    dot={{ fill: '#4A90E2', strokeWidth: 2, r: 6 }}
-                    activeDot={{ r: 8, fill: '#4A90E2' }}
+                    dot={{ fill: '#C72030', strokeWidth: 2, r: 6 }}
+                    activeDot={{ r: 8, fill: '#C72030' }}
                   />
                 </LineChart>
               </ResponsiveContainer>
