@@ -86,6 +86,7 @@
   .status-in-progress { background-color: orange; }
   .status-planning { background-color: blue; }
   .status-on-hold { background-color: grey; }
+  .status-stopped {background-color: gray;}
   
   
   .action-icons button {

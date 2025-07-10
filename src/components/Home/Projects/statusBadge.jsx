@@ -1,6 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from "react";
 
-const StatusBadge = ({ status: initialStatus, statusOptions, onStatusChange }) => {
+const StatusBadge = ({
+  status: initialStatus,
+  statusOptions,
+  onStatusChange,
+}) => {
   const [currentStatus, setCurrentStatus] = useState(initialStatus);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -33,21 +37,21 @@ const StatusBadge = ({ status: initialStatus, statusOptions, onStatusChange }) =
     };
 
     if (isDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     } else {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     }
 
     // Cleanup listener on unmount or when dropdown closes
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isDropdownOpen]);
 
   return (
     <div
       className="status-badge-wrapper"
-      style={{ position: 'relative', display: 'inline-block' }}
+      style={{ position: "relative", display: "inline-block" }}
       ref={wrapperRef} // Attach ref here
     >
       <div
@@ -55,16 +59,21 @@ const StatusBadge = ({ status: initialStatus, statusOptions, onStatusChange }) =
         className="status-display"
         role="button"
         tabIndex={0}
-        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleDropdown()}
+        onKeyDown={(e) =>
+          (e.key === "Enter" || e.key === " ") && toggleDropdown()
+        }
       >
         <span
-          className={`status-${currentStatus?.toLowerCase().replace('_', '-')} rounded-full w-[5px] h-[5px]`}
+          className={`status-${currentStatus
+            ?.toLowerCase()
+            .replace("_", "-")} rounded-full w-[5px] h-[5px]`}
         ></span>
         <span>
-          {currentStatus && currentStatus
-            .split('_')
-            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ')}
+          {currentStatus &&
+            currentStatus
+              .split("_")
+              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(" ")}
         </span>
       </div>
 
@@ -72,36 +81,40 @@ const StatusBadge = ({ status: initialStatus, statusOptions, onStatusChange }) =
         <div
           className="status-dropdown"
           style={{
-            position: 'absolute',
-            top: '100%',
+            position: "absolute",
+            top: "100%",
             left: 0,
-            minWidth: '100%',
+            minWidth: "100%",
             zIndex: 1000,
           }}
         >
-          {console.log(statusOptions)}
-          {statusOptions && statusOptions?.map((option) => (
-            <span
-              key={option}
-              onClick={() => handleStatusSelect(option)}
-              className={`dropdown-item ${
-                option?.toLowerCase().replace(' ', '-') === currentStatus?.toLowerCase().replace(' ', '-')
-                  ? 'selected'
-                  : ''
-              }`}
-              role="option"
-              aria-selected={
-                option?.toLowerCase().replace(' ', '-') === currentStatus?.toLowerCase().replace(' ', '-')
-              }
-              tabIndex={0}
-              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleStatusSelect(option)}
-            >
-              {option
-                .split('_')
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ')}
-            </span>
-          ))}
+          {statusOptions &&
+            statusOptions?.map((option) => (
+              <span
+                key={option}
+                onClick={() => handleStatusSelect(option)}
+                className={`dropdown-item ${option?.toLowerCase().replace(" ", "-") ===
+                  currentStatus?.toLowerCase().replace(" ", "-")
+                  ? "selected"
+                  : ""
+                  }`}
+                role="option"
+                aria-selected={
+                  option?.toLowerCase().replace(" ", "-") ===
+                  currentStatus?.toLowerCase().replace(" ", "-")
+                }
+                tabIndex={0}
+                onKeyDown={(e) =>
+                  (e.key === "Enter" || e.key === " ") &&
+                  handleStatusSelect(option)
+                }
+              >
+                {option
+                  .split("_")
+                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                  .join(" ")}
+              </span>
+            ))}
         </div>
       )}
     </div>
