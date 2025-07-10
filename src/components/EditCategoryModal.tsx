@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CustomTextField } from '@/components/ui/custom-text-field';
+import { TextField } from '@mui/material';
+import { X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Category {
@@ -73,51 +74,79 @@ export const EditCategoryModal = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">Edit Status</DialogTitle>
-        </DialogHeader>
+    <>
+      <style jsx global>{`
+        .MuiInputLabel-root {
+          font-size: 16px !important;
+        }
+      `}</style>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader className="relative">
+            <DialogTitle className="text-lg font-semibold">Edit Status</DialogTitle>
+            <button
+              onClick={onClose}
+              className="absolute top-0 right-0 p-1 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <X size={20} className="text-gray-500" />
+            </button>
+          </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <CustomTextField
-            label="Category Name"
-            placeholder="Enter Category Name"
-            value={formData.category}
-            onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-            fullWidth
-          />
-
-          {showTimings && (
-            <CustomTextField
-              label="Timings"
-              placeholder="Enter Timings"
-              value={formData.timings}
-              onChange={(e) => setFormData(prev => ({ ...prev, timings: e.target.value }))}
+          <div className="space-y-4 py-4">
+            <TextField
+              label="Category Name"
+              placeholder="Enter Category Name"
+              value={formData.category}
+              onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
               fullWidth
+              variant="outlined"
+              InputProps={{
+                style: { borderRadius: '6px' }
+              }}
+              InputLabelProps={{ shrink: true }}
             />
-          )}
 
-          {showAmount && (
-            <CustomTextField
-              label="Amount"
-              placeholder="Enter Amount"
-              value={formData.amount}
-              onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-              fullWidth
-            />
-          )}
-        </div>
+            {showTimings && (
+              <TextField
+                label="Timings"
+                placeholder="Enter Timings"
+                value={formData.timings}
+                onChange={(e) => setFormData(prev => ({ ...prev, timings: e.target.value }))}
+                fullWidth
+                variant="outlined"
+                InputProps={{
+                  style: { borderRadius: '6px' }
+                }}
+                InputLabelProps={{ shrink: true }}
+              />
+            )}
 
-        <div className="flex justify-center pt-4">
-          <Button 
-            onClick={handleSubmit}
-            className="bg-green-600 hover:bg-green-700 text-white px-8"
-          >
-            Submit
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+            {showAmount && (
+              <TextField
+                label="Amount"
+                placeholder="Enter Amount"
+                value={formData.amount}
+                onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+                fullWidth
+                variant="outlined"
+                InputProps={{
+                  style: { borderRadius: '6px' }
+                }}
+                InputLabelProps={{ shrink: true }}
+              />
+            )}
+          </div>
+
+          <div className="flex justify-center pt-4">
+            <Button 
+              onClick={handleSubmit}
+              className="bg-green-600 hover:bg-green-700 text-white px-8"
+            >
+              Submit
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
