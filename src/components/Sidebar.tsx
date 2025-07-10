@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
@@ -228,7 +227,19 @@ const modulesByPackage = {
     { name: 'Updates', icon: Download, href: '/market-place/updates', color: 'text-[#1a1a1a]' }
   ],
   'Settings': [
-    { name: 'General', icon: Settings, href: '/settings/general' },
+    { 
+      name: 'General', 
+      icon: Settings, 
+      href: '/settings/general',
+      subItems: [
+        { name: 'Holiday Calendar', href: '/settings/general/holiday-calendar', color: 'text-[#1a1a1a]' },
+        { name: 'About', href: '/settings/general/about', color: 'text-[#1a1a1a]' },
+        { name: 'Language', href: '/settings/general/language', color: 'text-[#1a1a1a]' },
+        { name: 'Company Logo Upload', href: '/settings/general/company-logo-upload', color: 'text-[#1a1a1a]' },
+        { name: 'Report Setup', href: '/settings/general/report-setup', color: 'text-[#1a1a1a]' },
+        { name: 'Notification Setup', href: '/settings/general/notification-setup', color: 'text-[#1a1a1a]' }
+      ]
+    },
     { name: 'Account', icon: Users, href: '/settings/account' },
     { name: 'Users', icon: Users, href: '/settings/users' },
     { 
