@@ -9,6 +9,7 @@ import { ApprovalMatrixPage } from './pages/settings/ApprovalMatrixPage';
 import { AssetSetupApprovalMatrixPage } from './pages/setup/AssetSetupApprovalMatrixPage';
 import { ChecklistGroupsPage } from './pages/settings/ChecklistGroupsPage';
 import { EmailRulePage } from './pages/settings/EmailRulePage';
+import { TaskEscalationPage } from './pages/settings/TaskEscalationPage';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Route path="settings/approval-matrix" element={<ApprovalMatrixPage />} />
             <Route path="settings/checklist-setup/groups" element={<ChecklistGroupsPage />} />
             <Route path="settings/checklist-setup/email-rule" element={<EmailRulePage />} />
+            <Route path="settings/checklist-setup/task-escalation" element={<TaskEscalationPage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
