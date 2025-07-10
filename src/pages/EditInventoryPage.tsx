@@ -351,22 +351,13 @@ export const EditInventoryPage = () => {
           </Card>
 
           {/* Submit Button */}
-          <div className="flex justify-end">
-            <Button 
+          <div className="flex justify-center mt-8">
+            <button 
               onClick={handleSubmit}
-              sx={{ 
-                backgroundColor: '#C72030',
-                '&:hover': {
-                  backgroundColor: '#A01A28'
-                },
-                paddingX: 4,
-                paddingY: 1.5
-              }}
-              variant="contained"
-              size="large"
+              className="bg-[#F2EEE9] text-[#C72030] px-8 py-3 rounded-none font-medium text-base hover:bg-[#E8E0D5] transition-colors duration-200 min-w-[120px] border-0"
             >
               Submit
-            </Button>
+            </button>
           </div>
         </div>
       </div>
