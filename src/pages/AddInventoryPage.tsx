@@ -171,12 +171,13 @@ export const AddInventoryPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <div className="space-y-2">
                   <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                    <InputLabel id="asset-name-label">Select Asset Name</InputLabel>
+                    <InputLabel id="asset-name-label" shrink>Select Asset Name</InputLabel>
                     <MuiSelect
                       labelId="asset-name-label"
                       value={formData.assetName}
                       onChange={handleSelectChange('assetName')}
                       label="Select Asset Name"
+                      notched
                     >
                       <MenuItem value="">
                         <em>Select an Option...</em>
@@ -256,12 +257,13 @@ export const AddInventoryPage = () => {
 
                 <div className="space-y-2">
                   <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                    <InputLabel id="unit-label">Select Unit</InputLabel>
+                    <InputLabel id="unit-label" shrink>Select Unit</InputLabel>
                     <MuiSelect
                       labelId="unit-label"
                       value={formData.unit}
                       onChange={handleSelectChange('unit')}
                       label="Select Unit"
+                      notched
                     >
                       <MenuItem value="">
                         <em>Select Unit</em>
@@ -289,12 +291,13 @@ export const AddInventoryPage = () => {
 
                 <div className="space-y-2">
                   <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                    <InputLabel id="category-label">Select Category</InputLabel>
+                    <InputLabel id="category-label" shrink>Select Category</InputLabel>
                     <MuiSelect
                       labelId="category-label"
                       value={formData.category}
                       onChange={handleSelectChange('category')}
                       label="Select Category"
+                      notched
                     >
                       <MenuItem value="">
                         <em>Select an Option...</em>
@@ -307,12 +310,13 @@ export const AddInventoryPage = () => {
 
                 <div className="space-y-2">
                   <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                    <InputLabel id="vendor-label">Vendor</InputLabel>
+                    <InputLabel id="vendor-label" shrink>Vendor</InputLabel>
                     <MuiSelect
                       labelId="vendor-label"
                       value={formData.vendor}
                       onChange={handleSelectChange('vendor')}
                       label="Vendor"
+                      notched
                     >
                       <MenuItem value="">
                         <em>Select Vendor</em>
