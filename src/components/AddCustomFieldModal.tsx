@@ -81,6 +81,9 @@ export const AddCustomFieldModal: React.FC<AddCustomFieldModalProps> = ({
               onChange={(e) => setFieldName(e.target.value)}
               placeholder="New Field Name"
               sx={fieldStyles}
+              InputLabelProps={{
+                shrink: true,
+              }}
             />
           </div>
 
