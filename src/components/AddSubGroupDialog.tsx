@@ -21,7 +21,7 @@ export const AddSubGroupDialog = ({ open, onOpenChange }: AddSubGroupDialogProps
     'Electrical',
     'Non Electrical',
     'Stand',
-    'APS',
+    'ARS',
     'Technical services',
     'hvac',
     'CCTV Camera',
