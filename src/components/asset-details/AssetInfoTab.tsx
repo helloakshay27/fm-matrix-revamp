@@ -82,7 +82,7 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         </div>
 
         {/* QR Code - 20% width */}
-        <div className="w-1/5 bg-white rounded-lg p-6 shadow-sm">
+        <div className="w-1/5 bg-white rounded-lg p-6 shadow-sm border">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
               <QrCode className="w-4 h-4 text-white" />
