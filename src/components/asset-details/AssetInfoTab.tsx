@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { MapPin, QrCode, Settings, CreditCard, UserCheck, TrendingUp, User } from 'lucide-react';
 
@@ -29,40 +30,61 @@ export const AssetInfoTab = ({ assetId }: AssetInfoTabProps) => {
         <div className="flex justify-between items-center">
           {/* Location Timeline */}
           <div className="flex-1 mr-12">
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col items-center">
-                <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
-                <div className="text-xs text-gray-500 mb-1">Site</div>
+            <div className="relative flex items-center">
+              {/* Site */}
+              <div className="flex flex-col items-center relative">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div className="text-xs text-gray-500 mt-2 mb-1">Site</div>
                 <div className="text-sm font-medium text-center">Haven Infoline</div>
               </div>
-              <div className="flex-1 h-px bg-blue-300 mx-4"></div>
-              <div className="flex flex-col items-center">
-                <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
-                <div className="text-xs text-gray-500 mb-1">Building</div>
+              
+              {/* Connecting line */}
+              <div className="flex-1 h-px bg-blue-500 mx-6"></div>
+              
+              {/* Building */}
+              <div className="flex flex-col items-center relative">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div className="text-xs text-gray-500 mt-2 mb-1">Building</div>
                 <div className="text-sm font-medium text-center">Jyoti Tower</div>
               </div>
-              <div className="flex-1 h-px bg-blue-300 mx-4"></div>
-              <div className="flex flex-col items-center">
-                <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
-                <div className="text-xs text-gray-500 mb-1">Wing</div>
+              
+              {/* Connecting line */}
+              <div className="flex-1 h-px bg-blue-500 mx-6"></div>
+              
+              {/* Wing */}
+              <div className="flex flex-col items-center relative">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div className="text-xs text-gray-500 mt-2 mb-1">Wing</div>
                 <div className="text-sm font-medium text-center">J - Wing</div>
               </div>
-              <div className="flex-1 h-px bg-blue-300 mx-4"></div>
-              <div className="flex flex-col items-center">
-                <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
-                <div className="text-xs text-gray-500 mb-1">Floor</div>
-                <div className="text-sm font-medium text-center">02nd</div>
+              
+              {/* Connecting line */}
+              <div className="flex-1 h-px bg-blue-500 mx-6"></div>
+              
+              {/* Floor */}
+              <div className="flex flex-col items-center relative">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div className="text-xs text-gray-500 mt-2 mb-1">Floor</div>
+                <div className="text-sm font-medium text-center">02<sup>nd</sup></div>
               </div>
-              <div className="flex-1 h-px bg-blue-300 mx-4"></div>
-              <div className="flex flex-col items-center">
-                <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
-                <div className="text-xs text-gray-500 mb-1">Area</div>
+              
+              {/* Connecting line */}
+              <div className="flex-1 h-px bg-blue-500 mx-6"></div>
+              
+              {/* Area */}
+              <div className="flex flex-col items-center relative">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div className="text-xs text-gray-500 mt-2 mb-1">Area</div>
                 <div className="text-sm font-medium text-center">East</div>
               </div>
-              <div className="flex-1 h-px bg-blue-300 mx-4"></div>
-              <div className="flex flex-col items-center">
-                <div className="w-3 h-3 bg-blue-500 rounded-full mb-2"></div>
-                <div className="text-xs text-gray-500 mb-1">Room</div>
+              
+              {/* Connecting line */}
+              <div className="flex-1 h-px bg-blue-500 mx-6"></div>
+              
+              {/* Room */}
+              <div className="flex flex-col items-center relative">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div className="text-xs text-gray-500 mt-2 mb-1">Room</div>
                 <div className="text-sm font-medium text-center">R 202</div>
               </div>
             </div>
