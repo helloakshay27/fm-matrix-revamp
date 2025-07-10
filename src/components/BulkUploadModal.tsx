@@ -1,10 +1,7 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Upload } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface BulkUploadModalProps {
   isOpen: boolean;
@@ -12,59 +9,60 @@ interface BulkUploadModalProps {
 }
 
 export const BulkUploadModal = ({ isOpen, onClose }: BulkUploadModalProps) => {
-  const [file, setFile] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
-  };
-
-  const handleUpload = () => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
-      console.log('Uploading file:', file.name);
-      setFile(null);
-      onClose();
+      setSelectedFile(file);
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Bulk Upload</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="file">Choose File</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="file"
+        
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
+              <input
                 type="file"
                 onChange={handleFileChange}
+                className="hidden"
+                id="file-upload"
                 accept=".csv,.xlsx,.xls"
               />
-              <Upload className="w-4 h-4" />
+              <label 
+                htmlFor="file-upload" 
+                className="text-orange-500 hover:text-orange-600 cursor-pointer"
+              >
+                Choose File
+              </label>
+              <span className="ml-2 text-gray-500">
+                {selectedFile ? selectedFile.name : 'No file chosen'}
+              </span>
             </div>
-            {file && (
-              <p className="text-sm text-gray-600 mt-1">
-                Selected: {file.name}
-              </p>
-            )}
+          </div>
+
+          <div className="flex justify-between">
+            <Button 
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:bg-[#C72030]/90 text-white px-6"
+            >
+              Download Sample Format
+            </Button>
+            <Button 
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:bg-[#C72030]/90 text-white px-6"
+              onClick={onClose}
+            >
+              Import
+            </Button>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleUpload} 
-            disabled={!file}
-            className="bg-purple-700 hover:bg-purple-800"
-          >
-            Upload
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
