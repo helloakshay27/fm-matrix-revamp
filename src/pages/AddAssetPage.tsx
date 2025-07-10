@@ -4,7 +4,6 @@ import { ChevronDown, ChevronUp, X, Plus, MapPin, Package, Shield, Activity, Tre
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AddCustomFieldModal } from '@/components/AddCustomFieldModal';
-
 const AddAssetPage = () => {
   const navigate = useNavigate();
   const [expandedSections, setExpandedSections] = useState({
@@ -66,7 +65,6 @@ const AddAssetPage = () => {
     purchaseInvoice: [],
     amc: []
   });
-
   const handleGoBack = () => {
     navigate(-1);
   };
@@ -324,11 +322,7 @@ const AddAssetPage = () => {
       {/* Header */}
       <div className="mb-4 sm:mb-6">
         <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
-          <button 
-            onClick={handleGoBack}
-            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors"
-            aria-label="Go back"
-          >
+          <button onClick={handleGoBack} aria-label="Go back" className="flex items-center justify-center w-8 h-8 rounded-md ">
             <ArrowLeft className="w-4 h-4 text-gray-600" />
           </button>
           <span>Asset List</span>
@@ -660,8 +654,8 @@ const AddAssetPage = () => {
                   return <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
                           <div className="flex items-center justify-center space-x-2">
                             <input type="radio" id={option.value} name="meterCategory" value={option.value} checked={meterCategoryType === option.value} onChange={e => handleMeterCategoryChange(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" style={{
-                              accentColor: '#C72030'
-                            }} />
+                        accentColor: '#C72030'
+                      }} />
                             <IconComponent className="w-4 h-4 text-gray-600" />
                             <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
                           </div>
@@ -676,8 +670,8 @@ const AddAssetPage = () => {
                   return <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
                             <div className="flex items-center justify-center space-x-2">
                               <input type="radio" id={`board-${option.value}`} name="boardRatioCategory" value={option.value} checked={subCategoryType === option.value} onChange={e => setSubCategoryType(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" style={{
-                                accentColor: '#C72030'
-                              }} />
+                        accentColor: '#C72030'
+                      }} />
                               <IconComponent className="w-4 h-4 text-gray-600" />
                               <label htmlFor={`board-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
                             </div>
@@ -692,8 +686,8 @@ const AddAssetPage = () => {
                   return <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
                             <div className="flex items-center justify-center space-x-2">
                               <input type="radio" id={`renewable-${option.value}`} name="renewableCategory" value={option.value} checked={subCategoryType === option.value} onChange={e => setSubCategoryType(e.target.value)} className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]" style={{
-                                accentColor: '#C72030'
-                              }} />
+                        accentColor: '#C72030'
+                      }} />
                               <IconComponent className="w-4 h-4 text-gray-600" />
                               <label htmlFor={`renewable-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
                             </div>
@@ -1129,9 +1123,9 @@ const AddAssetPage = () => {
           </div>
           <DialogFooter className="flex justify-center gap-4">
             <button onClick={() => {
-              setCustomFieldModalOpen(false);
-              setNewFieldName('');
-            }} className="px-6 py-2 border border-[#C72030] rounded-md hover:bg-gray-50 text-sm text-orange-700">
+            setCustomFieldModalOpen(false);
+            setNewFieldName('');
+          }} className="px-6 py-2 border border-[#C72030] rounded-md hover:bg-gray-50 text-sm text-orange-700">
               Cancel
             </button>
             <button onClick={handleAddCustomField} className="px-6 py-2 rounded-md text-sm bg-[#f6f4ee] text-red-700">
