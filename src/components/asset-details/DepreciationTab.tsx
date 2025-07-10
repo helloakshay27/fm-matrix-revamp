@@ -203,7 +203,7 @@ export const DepreciationTab = () => {
       </div>
 
       {/* Book Value Graph */}
-      <Card className="w-full">
+      <Card className="w-full overflow-hidden">
         <CardHeader className="pb-4 lg:pb-6">
           <CardTitle className="flex items-center gap-2 text-[#C72030] text-lg lg:text-xl">
             <div className="w-5 h-5 lg:w-6 lg:h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-xs">●</div>
@@ -211,7 +211,7 @@ export const DepreciationTab = () => {
             <span className="text-sm lg:text-base font-normal text-gray-600">(YEARLY STATS)</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 px-2 sm:px-6">
           <div className="h-80 lg:h-96 w-full">
             <ChartContainer config={chartConfig}>
               <ResponsiveContainer width="100%" height="100%">
@@ -219,8 +219,8 @@ export const DepreciationTab = () => {
                   data={chartData} 
                   margin={{ 
                     top: 20, 
-                    right: 30, 
-                    left: 20, 
+                    right: 60, 
+                    left: 60, 
                     bottom: 40 
                   }}
                 >
@@ -243,6 +243,7 @@ export const DepreciationTab = () => {
                   <ChartTooltip 
                     content={<ChartTooltipContent />}
                     formatter={(value) => [`₹${value.toLocaleString()}`, 'Book Value']}
+                    wrapperStyle={{ zIndex: 1000 }}
                   />
                   <Line 
                     type="monotone" 
